@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+// ------------------------------------------------------
+// USER & IDENTITY
+// ------------------------------------------------------
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  clerkId       String?   @unique // For future auth provider
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  profile       Profile?
+  ledgers       DCoinLedger[]
+  properties    Property[]
+  events        EventClaim[]
+  businesses    Business[]
+}
+
+model Profile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  username      String    @unique
+  displayName   String
+  avatarUrl     String?
+  
+  // Game Stats
+  level         Int       @default(1)
+  xp            Int       @default(0)
+  reputation    Int       @default(50)
+  dCoins        Int       @default(50000)
+  
+  // Job
+  jobId         String?
+  job           Job?      @relation(fields: [jobId], references: [id])
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ------------------------------------------------------
+// GAME ECONOMY
+// ------------------------------------------------------
+
+model DCoinLedger {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  type            String   // e.g. "JOB_SALARY", "RENT_PAYMENT", "EVENT_REWARD"
+  amount          Int
+  balanceBefore   Int
+  balanceAfter    Int
+  referenceType   String?  // e.g. "JOB", "PROPERTY"
+  referenceId     String?
+  createdAt       DateTime @default(now())
+}
+
+model Job {
+  id              String    @id @default(uuid())
+  title           String
+  level           Int       @default(1)
+  salary          Int
+  workingFreq     String    @default("DAILY")
+  
+  profiles        Profile[]
+}
+
+// ------------------------------------------------------
+// CITY & REAL ESTATE
+// ------------------------------------------------------
+
+model Property {
+  id              String    @id @default(uuid())
+  name            String
+  district        String
+  type            String    // e.g. "STUDIO", "1_BDR", "VILLA"
+  rentPrice       Int
+  capacity        Int       @default(1)
+  
+  ownerId         String?
+  owner           User?     @relation(fields: [ownerId], references: [id])
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Business {
+  id              String    @id @default(uuid())
+  name            String
+  type            String    // e.g. "CLUB", "RESTAURANT"
+  district        String
+  isVerified      Boolean   @default(false)
+  
+  ownerId         String
+  owner           User      @relation(fields: [ownerId], references: [id])
+  
+  venues          Venue[]
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Venue {
+  id              String    @id @default(uuid())
+  businessId      String?
+  business        Business? @relation(fields: [businessId], references: [id])
+  
+  name            String
+  description     String?
+  type            String    @default("hotel") // "club", "hotel", "mall", "beach"
+  physicalLat     Float?
+  physicalLng     Float?
+  virtualX        Float?
+  virtualY        Float?
+  virtualZ        Float?
+  
+  events          Event[]
+  
+  createdAt       DateTime  @default(now())
+}
+
+// ------------------------------------------------------
+// EVENTS & CLAIMS
+// ------------------------------------------------------
+
+model Event {
+  id              String    @id @default(uuid())
+  venueId         String
+  venue           Venue     @relation(fields: [venueId], references: [id])
+  
+  title           String
+  date            DateTime
+  rewardXp        Int       @default(100)
+  rewardCoins     Int       @default(0)
+  
+  claims          EventClaim[]
+  
+  createdAt       DateTime  @default(now())
+}
+
+model EventClaim {
+  id              String    @id @default(uuid())
+  eventId         String
+  event           Event     @relation(fields: [eventId], references: [id])
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  
+  status          String    @default("CLAIMED") // CLAIMED, CHECKED_IN, REWARDED
+  
+  createdAt       DateTime  @default(now())
+}
