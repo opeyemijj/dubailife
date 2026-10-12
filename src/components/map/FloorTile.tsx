@@ -28,43 +28,45 @@ export const FloorTile: React.FC<FloorTileProps> = ({
   const activeColor = color || upperColor || "#b8cf9e";
   const displayName = (name || "ISLAND").toUpperCase();
 
-  // Perspective: Looking down from an upper camera and from the top-left
-  // The plane recedes towards the top-left; the lower side (bottom edge) is in the foreground
-  const topL = { x: 92, y: 32 };
-  const topR = { x: 554, y: 38 };
-  const bottomR = { x: 524, y: 246 };
-  const bottomL = { x: 42, y: 238 };
+  // True Unified 2.5D Isometric Block Geometry
+  // Slant depth dx = 0.2355 * H, Horizontal baseline slope dy = 0.01667 * (W - slantX)
+  const W = Math.max(120, width || 600);
+  const H = Math.max(80, height || 260);
+  const slantX = Math.round(H * 0.2355);
+  const tiltY = Math.max(2, Math.round((W - slantX) * 0.01667));
 
-  // Main flat surface path with smooth rounded corners
+  // 4 True Isometric Vertices with 100% parallel edges
+  const pBottomL = { x: 4, y: H - tiltY - 4 };
+  const pBottomR = { x: W - slantX - 4, y: H - 4 };
+  const pTopR = { x: W - 4, y: tiltY + 4 };
+  const pTopL = { x: slantX + 4, y: 4 };
+
+  // Smooth crisp-cornered quadrilateral (curbed urban block)
   const surfacePath = `
-    M 108,${topL.y} 
-    L 538,${topR.y} 
-    Q 556,${topR.y} 552,56 
-    L 528,230 
-    Q 524,246 506,246 
-    L 60,238 
-    Q 42,238 46,222 
-    L 82,48 
-    Q 86,${topL.y} 108,${topL.y} 
+    M ${pTopL.x + 8},${pTopL.y - 1} 
+    L ${pTopR.x - 8},${pTopR.y - 1} 
+    Q ${pTopR.x},${pTopR.y} ${pTopR.x - 2},${pTopR.y + 6} 
+    L ${pBottomR.x + 2},${pBottomR.y - 6} 
+    Q ${pBottomR.x},${pBottomR.y} ${pBottomR.x - 8},${pBottomR.y} 
+    L ${pBottomL.x + 8},${pBottomL.y} 
+    Q ${pBottomL.x},${pBottomL.y} ${pBottomL.x + 2},${pBottomL.y - 6} 
+    L ${pTopL.x - 2},${pTopL.y + 6} 
+    Q ${pTopL.x},${pTopL.y} ${pTopL.x + 8},${pTopL.y - 1} 
     Z
   `;
 
-  // Lower side emboss band (runs STRICTLY along the bottom lower edge only, slim subtle ~2.2px lip)
+  // Slim subtle lower-edge emboss curb (runs along the bottom edge only)
   const lowerEmbossPath = `
-    M 48,226 
-    Q 43,238 60,238 
-    L 506,246 
-    Q 523,246 526,234 
-    L 527,236.5 
-    Q 524,248.5 506,248.5 
-    L 60,240.5 
-    Q 42,240.5 47,228.5 
+    M ${pBottomL.x},${pBottomL.y - 1}
+    L ${pBottomR.x},${pBottomR.y - 1}
+    L ${pBottomR.x},${pBottomR.y + 2.5}
+    L ${pBottomL.x},${pBottomL.y + 2.5}
     Z
   `;
 
   return (
     <svg 
-      viewBox="0 0 600 280" 
+      viewBox={`0 0 ${W} ${H}`} 
       preserveAspectRatio="none"
       style={{ 
         width: width ? `${width}px` : '100%', 
@@ -75,66 +77,58 @@ export const FloorTile: React.FC<FloorTileProps> = ({
       onClick={onClick}
     >
       <defs>
-        {/* Clip path for grid lines so they stay strictly inside the main surface */}
         <clipPath id="ft-top-surface-clip">
           <path d={surfacePath} />
         </clipPath>
       </defs>
 
-      {/* ==================================================================== */}
-      {/* 1. LOWER SIDE EMBOSS (ONLY the lower side, delicate & slim)           */}
-      {/* ==================================================================== */}
-      
-      {/* Base of lower emboss in the exact same color */}
-      <path 
-        d={lowerEmbossPath} 
-        fill={activeColor} 
-      />
+      {/* 1. LOWER SIDE EMBOSS (Subtle curb depth lip) */}
+      <path d={lowerEmbossPath} fill={activeColor} />
+      <path d={lowerEmbossPath} fill="#000000" opacity="0.14" />
 
-      {/* Subtle, soft emboss shading of the same color (gentle depth) */}
-      <path 
-        d={lowerEmbossPath} 
-        fill="#000000" 
-        opacity="0.13" 
-      />
-
-      {/* ==================================================================== */}
-      {/* 2. MAIN FLAT PLAIN SURFACE (Seen from upper camera, pure plain color)*/}
-      {/* Top, Left, and Right have ZERO shadow and ZERO emboss                */}
-      {/* ==================================================================== */}
+      {/* 2. MAIN FLAT PLAIN SURFACE */}
       <path 
         d={surfacePath} 
         fill={activeColor} 
+        stroke="rgba(255,255,255,0.45)" 
+        strokeWidth="1.2" 
       />
 
-      {/* ==================================================================== */}
-      {/* 3. OPTIONAL SUBTLE GRID & LABEL (Clipped cleanly within the plain)    */}
-      {/* ==================================================================== */}
+      {/* 3. SUBTLE INTERNAL LOT GRIDLINES (Parallel to isometric block edges) */}
       {showGrid && (
-        <g clipPath="url(#ft-top-surface-clip)" stroke="rgba(255,255,255,0.18)" strokeWidth="0.8" strokeDasharray="3 3">
-          {/* Isometric grid lines aligned with top-left perspective */}
-          <line x1="190" y1="20" x2="135" y2="260" />
-          <line x1="295" y1="20" x2="240" y2="260" />
-          <line x1="400" y1="20" x2="345" y2="260" />
-          <line x1="505" y1="20" x2="450" y2="260" />
-          {/* Transverse grid lines */}
-          <line x1="65" y1="95" x2="550" y2="100" />
-          <line x1="45" y1="170" x2="535" y2="175" />
+        <g clipPath="url(#ft-top-surface-clip)" stroke="rgba(255,255,255,0.22)" strokeWidth="0.8" strokeDasharray="3 3">
+          {/* Longitudinal Depth Lines (Parallel to slant) */}
+          {[0.2, 0.4, 0.6, 0.8].map((u) => {
+            const x1 = pTopL.x + u * (pTopR.x - pTopL.x);
+            const y1 = pTopL.y + u * (pTopR.y - pTopL.y);
+            const x2 = pBottomL.x + u * (pBottomR.x - pBottomL.x);
+            const y2 = pBottomL.y + u * (pBottomR.y - pBottomL.y);
+            return <line key={`lon-${u}`} x1={x1} y1={y1} x2={x2} y2={y2} />;
+          })}
+
+          {/* Transverse Lines (Parallel to horizontal baseline) */}
+          {[0.33, 0.66].map((v) => {
+            const x1 = pTopL.x + v * (pBottomL.x - pTopL.x);
+            const y1 = pTopL.y + v * (pBottomL.y - pTopL.y);
+            const x2 = pTopR.x + v * (pBottomR.x - pTopR.x);
+            const y2 = pTopR.y + v * (pBottomR.y - pTopR.y);
+            return <line key={`lat-${v}`} x1={x1} y1={y1} x2={x2} y2={y2} />;
+          })}
         </g>
       )}
 
-      {/* Subtle Header Label (e.g. "ISLAND", "COMMUNITY", "DOWNTOWN") */}
+      {/* 4. DISTRICT HEADER LABEL */}
       {showLabel && displayName && (
-        <g transform="translate(150, 52)" className="pointer-events-none select-none">
+        <g transform={`translate(${pTopL.x + 24}, ${pTopL.y + 36})`} className="pointer-events-none select-none">
           <text 
             x="0" 
             y="0" 
             fill="#ffffff" 
-            fontSize="13" 
+            fontSize="12" 
             fontWeight="900" 
             fontFamily="system-ui, -apple-system, sans-serif" 
-            letterSpacing="4" 
-            opacity="0.5"
+            letterSpacing="3" 
+            opacity="0.65"
           >
             {displayName}
           </text>

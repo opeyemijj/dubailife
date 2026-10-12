@@ -100,10 +100,10 @@ export default function AdminMapEditor() {
         <TransformWrapper
           initialScale={1}
           minScale={0.3}
-          maxScale={4}
+          maxScale={1.5}
           centerOnInit
-          smooth={false}
-          wheel={{ step: 0.04 }}
+          smooth={true}
+          wheel={{ step: 0.02 }}
           doubleClick={{ disabled: true }}
           disabled={isAdding}
         >

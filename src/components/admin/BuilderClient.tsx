@@ -9,44 +9,104 @@ import { Button } from '@/components/ui/button';
 
 export default function BuilderClient() {
     const [venues, setVenues] = useState<any[]>(mapSeed);
-  const [config, setConfig] = useState(initialConfig || { pitch: 45, yaw: 0, startX: -1000, startY: -500, startScale: 0.8 });
-    const [selectedId, setSelectedId] = useState(null);
+  const [config, setConfig] = useState(initialConfig || { pitch: 45, yaw: 0, startX: -120, startY: -140, startScale: 0.35 });
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const selectedId = selectedIds.length > 0 ? selectedIds[selectedIds.length - 1] : null;
+    const setSelectedId = (id: string | null) => {
+        setSelectedIds(id ? [id] : []);
+    };
     const [isDragging, setIsDragging] = useState(false);
     
     // Drag state
-    const dragRef = useRef({ id: null as string | null, startX: 0, startY: 0, initialVx: 0, initialVy: 0 });
+    const dragRef = useRef<{
+        activeIds: string[];
+        startX: number;
+        startY: number;
+        initialPositions: Map<string, { x: number; y: number }>;
+        hasMoved: boolean;
+        wasMulti: boolean;
+        wasAlreadySelected: boolean;
+        clickedId: string | null;
+    }>({ 
+        activeIds: [], 
+        startX: 0, 
+        startY: 0, 
+        initialPositions: new Map(), 
+        hasMoved: false, 
+        wasMulti: false, 
+        wasAlreadySelected: false, 
+        clickedId: null 
+    });
 
     const handlePointerDown = (e: React.PointerEvent, id: string) => {
         e.stopPropagation();
-        (e.target as HTMLElement).setPointerCapture(e.pointerId);
-        
         const venue = venues.find(v => v.id === id);
         if (!venue) return;
-        
-        setSelectedId(id as any);
+
+        // Shift or Command/Control multi-select
+        const isMulti = e.shiftKey || e.metaKey || e.ctrlKey;
+        const wasAlreadySelected = selectedIds.includes(id);
+        let newActiveIds: string[];
+
+        if (isMulti) {
+            if (wasAlreadySelected) {
+                // Keep selected for potential drag; will toggle off on pointerUp if no drag
+                newActiveIds = selectedIds;
+            } else {
+                newActiveIds = [...selectedIds, id];
+                setSelectedIds(newActiveIds);
+            }
+        } else {
+            // Single click without modifier
+            if (wasAlreadySelected) {
+                newActiveIds = selectedIds;
+            } else {
+                newActiveIds = [id];
+                setSelectedIds(newActiveIds);
+            }
+        }
+
         setIsDragging(true);
-        
+        try {
+            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        } catch (err) {}
+
+        const positions = new Map<string, { x: number; y: number }>();
+        venues.forEach(v => {
+            if (newActiveIds.includes(v.id)) {
+                positions.set(v.id, { x: v.virtualX, y: v.virtualY });
+            }
+        });
+
         dragRef.current = {
-            id,
+            activeIds: newActiveIds,
             startX: e.clientX,
             startY: e.clientY,
-            initialVx: venue.virtualX,
-            initialVy: venue.virtualY,
+            initialPositions: positions,
+            hasMoved: false,
+            wasMulti: isMulti,
+            wasAlreadySelected,
+            clickedId: id,
         };
     };
 
     const handlePointerMove = (e: React.PointerEvent) => {
-        if (!isDragging || !dragRef.current.id) return;
+        if (!isDragging || !dragRef.current.activeIds || dragRef.current.activeIds.length === 0) return;
         
         const dx = e.clientX - dragRef.current.startX;
         const dy = e.clientY - dragRef.current.startY;
+
+        if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+            dragRef.current.hasMoved = true;
+        }
         
         setVenues(prev => prev.map(v => {
-            if (v.id === dragRef.current.id) {
+            const initPos = dragRef.current.initialPositions.get(v.id);
+            if (initPos) {
                 return {
                     ...v,
-                    virtualX: Math.round(dragRef.current.initialVx + dx),
-                    virtualY: Math.round(dragRef.current.initialVy - dy)
+                    virtualX: Math.round(initPos.x + dx),
+                    virtualY: Math.round(initPos.y - dy)
                 };
             }
             return v;
@@ -56,10 +116,17 @@ export default function BuilderClient() {
     const handlePointerUp = (e: React.PointerEvent) => {
         if (!isDragging) return;
         setIsDragging(false);
-        dragRef.current.id = null;
+
+        // If it was a Shift/Cmd click and no drag happened, and it was already selected beforehand, toggle it off
+        if (dragRef.current.wasMulti && !dragRef.current.hasMoved && dragRef.current.wasAlreadySelected && dragRef.current.clickedId) {
+            const cid = dragRef.current.clickedId;
+            setSelectedIds(prev => prev.filter(x => x !== cid));
+        }
+
+        dragRef.current.activeIds = [];
         try {
-            (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-        } catch (e) {}
+            (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+        } catch (err) {}
     };
 
     const handleSave = async () => {
@@ -93,9 +160,10 @@ export default function BuilderClient() {
     };
 
     const deleteSelected = () => {
-        if (!selectedId) return;
-        setVenues(prev => prev.filter(v => v.id !== selectedId));
-        setSelectedId(null);
+        const idsToDelete = selectedIds.length > 0 ? selectedIds : (selectedId ? [selectedId] : []);
+        if (idsToDelete.length === 0) return;
+        setVenues(prev => prev.filter(v => !idsToDelete.includes(v.id)));
+        setSelectedIds([]);
     };
 
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; id: string } | null>(null);
@@ -112,20 +180,25 @@ export default function BuilderClient() {
     };
 
     const handleDuplicateOne = (targetId?: string) => {
-        const idToDup = targetId || selectedId;
-        if (!idToDup) return;
-        const item = venues.find(v => v.id === idToDup);
-        if (!item) return;
-        const newId = `${item.type || 'item'}-${Date.now()}`;
-        const newItem = {
-            ...item,
-            id: newId,
-            name: `${item.name} (Copy)`,
-            virtualX: item.virtualX + 60,
-            virtualY: item.virtualY - 60,
-        };
-        setVenues(prev => [...prev, newItem]);
-        setSelectedId(newId as any);
+        const idsToDup = targetId ? [targetId] : (selectedIds.length > 0 ? selectedIds : (selectedId ? [selectedId] : []));
+        if (idsToDup.length === 0) return;
+        const newItems: any[] = [];
+        const newIds: string[] = [];
+        idsToDup.forEach((id, idx) => {
+            const item = venues.find(v => v.id === id);
+            if (!item) return;
+            const newId = `${item.type || 'item'}-${Date.now()}-${idx}`;
+            newIds.push(newId);
+            newItems.push({
+                ...item,
+                id: newId,
+                name: `${item.name} (Copy)`,
+                virtualX: item.virtualX + 40,
+                virtualY: item.virtualY - 20,
+            });
+        });
+        setVenues(prev => [...prev, ...newItems]);
+        setSelectedIds(newIds);
     };
 
     const [dupCount, setDupCount] = useState<number>(3);
@@ -188,8 +261,21 @@ export default function BuilderClient() {
         if (type === 'skyline') return <Icons.SkylineTower seed={1} />;
         if (type === 'atlantis-the-royal') return <Icons.AtlantisTheRoyalIcon />;
         if (type === 'bulgari') return <Icons.BulgariIslandIcon />;
-        if (type === 'jumeirah-beach-hotel') return <Icons.JumeirahBeachHotelIcon />;
         if (type === 'bridge') return <Icons.BridgeBlock width={loc.width} height={loc.height} />;
+        if (type === 'dubai-opera') return <Icons.DubaiOpera width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'souk-al-bahar') return <Icons.SoukAlBahar width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'burj-park') return <Icons.BurjPark width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'address-downtown') return <Icons.AddressDowntown width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'address-skyview') return <Icons.AddressSkyView width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'palace-downtown') return <Icons.PalaceDowntown width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'dubai-fountain') return <Icons.DubaiFountain width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'timeout-market') return <Icons.TimeOutMarket width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'the-guild') return <Icons.TheGuild width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'armani-prive') return <Icons.ArmaniPrive width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'dubai-aquarium') return <Icons.DubaiAquarium width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'blu-dubai') return <Icons.BluDubaiClub width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'one-oak') return <Icons.OneOakClub width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'ting-irie') return <Icons.TingIrie width={loc.width} height={loc.height} name={name || loc.name} />;
         if (type === 'beach-club') return <Icons.BeachClubIconNew />;
         if (type === 'community-palm') return <Icons.PalmCommunityBlock width={loc.width} height={loc.height} />;
         if (type === 'community-bluewaters') return <Icons.BluewatersBlock />;
@@ -1844,8 +1930,14 @@ export default function BuilderClient() {
                         {venues.map(v => (
                             <div 
                                 key={v.id}
-                                className={`text-sm p-3 rounded-md cursor-pointer flex justify-between items-center transition-all ${selectedId === v.id ? 'bg-blue-600 text-white shadow-md' : 'bg-white hover:bg-slate-100 border border-slate-200 text-slate-700'}`}
-                                onClick={() => setSelectedId(v.id as any)}
+                                className={`text-sm p-3 rounded-md cursor-pointer flex justify-between items-center transition-all ${selectedIds.includes(v.id) ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-400' : 'bg-white hover:bg-slate-100 border border-slate-200 text-slate-700'}`}
+                                onClick={(e) => {
+                                    if (e.shiftKey || e.metaKey || e.ctrlKey) {
+                                        setSelectedIds(prev => prev.includes(v.id) ? prev.filter(x => x !== v.id) : [...prev, v.id]);
+                                    } else {
+                                        setSelectedIds([v.id]);
+                                    }
+                                }}
                             >
                                 <div className="truncate flex-1 pr-2">
                                     <strong className="block truncate">{v.name}</strong> 
@@ -1872,6 +1964,7 @@ export default function BuilderClient() {
                 <div 
                     style={{ width: Icons.WORLD_WIDTH, height: Icons.WORLD_HEIGHT }}
                     className="relative bg-[#d6bc8a]"
+                    onClick={() => setSelectedIds([])}
                 >
                     <MapBackground />
                     
@@ -1880,12 +1973,7 @@ export default function BuilderClient() {
                         const isOverlay = isFloorTile || loc.type === 'bridge' || loc.type.startsWith('community') || loc.type === 'generic-district' || loc.type === 'salik' || loc.type === 'road-sign' || loc.type === 'airport' || loc.type === 'marina' || loc.type === 'marina-harbour' || loc.type === "ad-land" || loc.type === "estate-base";
                         const baseTransform = isOverlay ? 'translate(-50%, -50%)' : 'translate(-50%, -90%)';
                         const domY = Icons.WORLD_HEIGHT - loc.virtualY;
-                        const isSelected = selectedId === loc.id;
-                        
-                        const skewTransform = (loc.skewX || loc.skewY) ? `skew(${loc.skewX || 0}deg, ${loc.skewY || 0}deg)` : (loc.skew !== undefined ? `skewX(${loc.skew}deg)` : '');
-                        const perspectiveTransform = (loc.tilt || loc.yaw) ? 'perspective(1000px)' : '';
-                        const tiltTransform = loc.tilt !== undefined && loc.tilt !== 0 ? `rotateX(${loc.tilt}deg)` : '';
-                        const yawTransform = loc.yaw !== undefined && loc.yaw !== 0 ? `rotateY(${loc.yaw}deg)` : '';
+                        const isSelected = selectedIds.includes(loc.id);
                         
                         return (
                             <div
@@ -1894,7 +1982,7 @@ export default function BuilderClient() {
                                 style={{
                                     left: `${loc.virtualX}px`,
                                     top: `${domY}px`,
-                                    transform: `${baseTransform} ${perspectiveTransform} ${yawTransform} ${tiltTransform} rotate(${loc.rotate || 0}deg) scale(${loc.scale || 1}) ${skewTransform}`.trim(),
+                                    transform: `${baseTransform} scale(${loc.scale || 1}) rotate(${loc.rotate || 0}deg)`.trim(),
                                     transformStyle: 'preserve-3d',
                                     zIndex: isSelected ? 1000 : (isFloorTile ? 1 : Math.floor(domY)),
                                     outline: isSelected ? '3px solid #3b82f6' : 'none',
@@ -1906,13 +1994,98 @@ export default function BuilderClient() {
                                 onPointerUp={handlePointerUp}
                                 onPointerCancel={handlePointerUp}
                                 onContextMenu={(e) => handleContextMenu(e, loc.id)}
+                                onClick={(e) => e.stopPropagation()}
                             >
+                                {isSelected && (
+                                    <div className="absolute -top-9 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-xl whitespace-nowrap pointer-events-none flex items-center gap-1 z-50 border border-blue-400">
+                                        <span>{loc.name}</span>
+                                        {selectedIds.length > 1 && (
+                                            <span className="bg-amber-400 text-slate-950 px-1 rounded font-black">
+                                                {selectedIds.indexOf(loc.id) + 1}/{selectedIds.length}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
                                 {renderIcon(loc.type, loc.name, loc)}
                             </div>
                         );
                     })}
                 </div>
             </div>
+
+            
+            {/* Multi-Selection Floating Action Bar in Admin */}
+            {selectedIds.length > 1 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] bg-slate-900/95 backdrop-blur-2xl border border-blue-500/60 rounded-2xl shadow-2xl p-3 px-5 text-white flex items-center gap-4 animate-in slide-in-from-bottom-5 duration-200">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping" />
+                        <span className="font-black text-sm text-blue-300">{selectedIds.length} Items Selected</span>
+                        <span className="text-xs text-slate-400 font-medium">(Drag any to move all together)</span>
+                    </div>
+
+                    <div className="h-5 w-px bg-white/20" />
+
+                    {/* Batch Nudge Buttons */}
+                    <div className="flex items-center gap-1">
+                        <span className="text-[10px] text-slate-400 mr-1 font-bold">NUDGE:</span>
+                        <button 
+                            type="button"
+                            onClick={() => setVenues(prev => prev.map(v => selectedIds.includes(v.id) ? { ...v, virtualX: v.virtualX - 20 } : v))} 
+                            className="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold font-mono"
+                        >
+                            X-20
+                        </button>
+                        <button 
+                            type="button"
+                            onClick={() => setVenues(prev => prev.map(v => selectedIds.includes(v.id) ? { ...v, virtualX: v.virtualX + 20 } : v))} 
+                            className="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold font-mono"
+                        >
+                            X+20
+                        </button>
+                        <button 
+                            type="button"
+                            onClick={() => setVenues(prev => prev.map(v => selectedIds.includes(v.id) ? { ...v, virtualY: v.virtualY - 20 } : v))} 
+                            className="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold font-mono"
+                        >
+                            Y-20
+                        </button>
+                        <button 
+                            type="button"
+                            onClick={() => setVenues(prev => prev.map(v => selectedIds.includes(v.id) ? { ...v, virtualY: v.virtualY + 20 } : v))} 
+                            className="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold font-mono"
+                        >
+                            Y+20
+                        </button>
+                    </div>
+
+                    <div className="h-5 w-px bg-white/20" />
+
+                    <button 
+                        type="button"
+                        onClick={() => handleDuplicateOne()} 
+                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-indigo-600/30"
+                    >
+                        <span>Duplicate All ({selectedIds.length})</span>
+                    </button>
+
+                    <button 
+                        type="button"
+                        onClick={() => deleteSelected()} 
+                        className="px-3 py-1.5 bg-red-600 hover:bg-red-500 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-red-600/30"
+                    >
+                        <span>Delete All ({selectedIds.length})</span>
+                    </button>
+
+                    <button 
+                        type="button"
+                        onClick={() => setSelectedIds([])} 
+                        className="p-1.5 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-colors ml-1"
+                        title="Clear Selection"
+                    >
+                        ✕
+                    </button>
+                </div>
+            )}
 
             {/* Right-Click Context Menu for any component */}
             {contextMenu && (() => {

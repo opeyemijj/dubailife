@@ -1,8 +1,17 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fredoka } from "next/font/google";
 import "./globals.css";
 
 const fredoka = Fredoka({ subsets: ["latin"], display: 'swap' });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#000000",
+};
 
 export const metadata: Metadata = {
   title: "COME TO DUBAI",

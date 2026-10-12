@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { MallBlock, type MallBlockProps } from './MallBlock';
 import { MuseumOfFutureIcon, type MuseumOfFutureProps } from './MuseumOfFuture';
 import { HotelBlock, type HotelBlockProps, HotelResortComponent } from './HotelBlock';
@@ -6,6 +6,22 @@ import { BurjKhalifa, type BurjKhalifaProps, BurjKhalifaIcon } from './BurjKhali
 import { FloorTile, type FloorTileProps, IslandFloorTile } from './FloorTile';
 import { TallBuilding, type TallBuildingProps, type TallBuildingShape, type RoofFeature } from './TallBuilding';
 import { Plot, type PlotProps, type PlotTheme } from './Plot';
+import { 
+  DubaiOpera, 
+  SoukAlBahar, 
+  BurjPark, 
+  AddressDowntown, 
+  AddressSkyView, 
+  PalaceDowntown,
+  DubaiFountain,
+  TimeOutMarket,
+  TheGuild,
+  ArmaniPrive,
+  DubaiAquarium,
+  BluDubaiClub,
+  OneOakClub,
+  TingIrie
+} from './DowntownAmenities';
 
 export const isoToScreen = (gx: number, gy: number, originX = 150, originY = 80) => ({
   x: originX + (gx - gy) * 0.866,
@@ -39,6 +55,7 @@ export interface IsometricHouseProps {
 }
 
 export const IsometricHouse: React.FC<IsometricHouseProps> = ({
+  id,
   width = 80,
   height = 70,
   roofColor = "#22c55e",
@@ -49,6 +66,9 @@ export const IsometricHouse: React.FC<IsometricHouseProps> = ({
   onClick,
   className = ""
 }) => {
+  const roofGradId = `houseRoof-${id ? id.replace(/[^a-zA-Z0-9_-]/g, '') : Math.random().toString(36).slice(2, 7)}`;
+  const plotGradId = `housePlot-${id ? id.replace(/[^a-zA-Z0-9_-]/g, '') : Math.random().toString(36).slice(2, 7)}`;
+
   return (
     <svg 
       viewBox="0 0 100 85" 
@@ -59,14 +79,14 @@ export const IsometricHouse: React.FC<IsometricHouseProps> = ({
     >
       <defs>
         {/* Roof tile gradient */}
-        <linearGradient id="houseRoofFront" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id={roofGradId} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor={roofColor} />
-          <stop offset="100%" stopColor="#15803d" />
+          <stop offset="100%" stopColor="#0f172a" stopOpacity="0.3" />
         </linearGradient>
         {/* Plot Paver Gradient */}
-        <linearGradient id="housePlotGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <linearGradient id={plotGradId} x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stopColor={plotColor} />
-          <stop offset="100%" stopColor="#e2e8f0" />
+          <stop offset="100%" stopColor="#cbd5e1" />
         </linearGradient>
       </defs>
 
@@ -77,7 +97,7 @@ export const IsometricHouse: React.FC<IsometricHouseProps> = ({
         {/* Upper Plot Surface */}
         <polygon 
           points="10,71 88,72.3 98,34.3 20,33" 
-          fill="url(#housePlotGrad)" 
+          fill={`url(#${plotGradId})`} 
           stroke="#cbd5e1" 
           strokeWidth="0.8" 
         />
@@ -162,8 +182,8 @@ export const IsometricHouse: React.FC<IsometricHouseProps> = ({
         {/* Front Slanted Roof Pitch (Facing Camera) */}
         <polygon 
           points="25,41.5 76,42.3 79,24.3 29,23.5" 
-          fill="url(#houseRoofFront)" 
-          stroke="#166534" 
+          fill={`url(#${roofGradId})`} 
+          stroke={roofColor} 
           strokeWidth="0.8" 
         />
         {/* Roof Tiles texture lines */}
@@ -172,19 +192,25 @@ export const IsometricHouse: React.FC<IsometricHouseProps> = ({
           const y2 = 42.3 + t * (24.3 - 42.3);
           const x1 = 25 + t * (29 - 25);
           const x2 = 76 + t * (79 - 76);
-          return <line key={`rt-${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#14532d" strokeWidth="0.6" opacity="0.5" />;
+          return <line key={`rt-${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#000000" strokeWidth="0.6" opacity="0.25" />;
         })}
 
         {/* Rear Slanted Roof Pitch */}
         <polygon 
           points="29,23.5 79,24.3 82,34.3 33,33.5" 
-          fill="#14532d" 
-          stroke="#0f391e" 
-          strokeWidth="0.8" 
+          fill={roofColor} 
+          stroke="#000000" 
+          strokeWidth="0.5" 
+          strokeOpacity="0.3" 
+        />
+        <polygon 
+          points="29,23.5 79,24.3 82,34.3 33,33.5" 
+          fill="#000000" 
+          opacity="0.35" 
         />
 
         {/* Roof Ridge Cap Highlight */}
-        <line x1="29" y1="23.5" x2="79" y2="24.3" stroke="#86efac" strokeWidth="1" opacity="0.75" />
+        <line x1="29" y1="23.5" x2="79" y2="24.3" stroke="#ffffff" strokeWidth="1" opacity="0.6" />
 
         {/* Chimney */}
         <polygon points="66,28 70,28 70,20 66,20" fill="#b91c1c" />
@@ -1308,6 +1334,70 @@ export const venueActions: Record<string, ActionDef[]> = {
   stadium: [{ label: "Watch Match", amount: -200, color: "bg-green-600" }],
   casino: [{ label: "Gamble", amount: -500, color: "bg-emerald-600" }],
   park: [{ label: "Walk in Park", amount: 0, color: "bg-green-500" }],
+  'burj-khalifa': [
+    { label: "At The Top Sky L148 Pass", amount: -399, color: "bg-blue-600" },
+    { label: "At.mosphere L122 High Tea", amount: -550, color: "bg-amber-600" }
+  ],
+  'dubai-mall': [
+    { label: "VIP Luxury Personal Shopper", amount: -1000, color: "bg-purple-600" },
+    { label: "Aquarium & Underwater Zoo Pass", amount: -199, color: "bg-cyan-600" }
+  ],
+  'dubai-opera': [
+    { label: "Reserve Grand Stall Opera Seats", amount: -450, color: "bg-amber-600" },
+    { label: "Backstage Architectural Tour", amount: -120, color: "bg-blue-600" }
+  ],
+  'souk-al-bahar': [
+    { label: "Waterfront Terrace Dining", amount: -280, color: "bg-orange-600" },
+    { label: "Traditional Perfume & Oud Tour", amount: -150, color: "bg-amber-700" }
+  ],
+  'burj-park': [
+    { label: "Rent Boardwalk Bike", amount: -50, color: "bg-emerald-600" },
+    { label: "Fountain Lawn Picnic", amount: 0, color: "bg-green-500" }
+  ],
+  'address-downtown': [
+    { label: "Book Fountain Suite", amount: -1800, color: "bg-yellow-600" },
+    { label: "Neos 63rd Floor Cocktail", amount: -160, color: "bg-indigo-600" }
+  ],
+  'address-skyview': [
+    { label: "CÉ LA VI Sky Lounge Table", amount: -600, color: "bg-rose-600" },
+    { label: "Sky Views Glass Slide Pass", amount: -95, color: "bg-sky-600" }
+  ],
+  'palace-downtown': [
+    { label: "Arabian Royal Hammam & Spa", amount: -750, color: "bg-teal-600" },
+    { label: "Thiptara Lake Dinner", amount: -420, color: "bg-amber-600" }
+  ],
+  'dubai-fountain': [
+    { label: "Fountain Lake Ride Abra Boat", amount: -65, color: "bg-cyan-600" },
+    { label: "VIP Fountain Boardwalk Pass", amount: -20, color: "bg-blue-600" }
+  ],
+  'timeout-market': [
+    { label: "Taste 17 Gourmet Chef Dishes", amount: -240, color: "bg-red-600" },
+    { label: "Sunset Terrace Cocktail", amount: -150, color: "bg-amber-600" }
+  ],
+  'the-guild': [
+    { label: "Chef's Tasting Table & Salon", amount: -680, color: "bg-amber-700" },
+    { label: "Craft Cocktail at The Nurseries", amount: -120, color: "bg-orange-600" }
+  ],
+  'armani-prive': [
+    { label: "VIP Bottle Service & Table", amount: -2500, color: "bg-neutral-900" },
+    { label: "Guestlist Club Entry", amount: -250, color: "bg-pink-700" }
+  ],
+  'dubai-aquarium': [
+    { label: "Shark Trainer Experience", amount: -630, color: "bg-blue-600" },
+    { label: "270-Degree Glass Tunnel Walk", amount: -145, color: "bg-cyan-600" }
+  ],
+  'blu-dubai': [
+    { label: "VIP Multi-Level Table & Show", amount: -3000, color: "bg-blue-600" },
+    { label: "General Club Entry", amount: -200, color: "bg-cyan-600" }
+  ],
+  'one-oak': [
+    { label: "Celebrity DJ VIP Table", amount: -2200, color: "bg-amber-600" },
+    { label: "Guestlist Red Carpet Entry", amount: -200, color: "bg-orange-600" }
+  ],
+  'ting-irie': [
+    { label: "Jerk Chicken & Rum Punch", amount: -180, color: "bg-amber-600" },
+    { label: "Reggae Afrobeat VIP Night", amount: -350, color: "bg-yellow-500" }
+  ],
 };
 
 
@@ -1382,49 +1472,294 @@ export const JumeirahBeachHotelIcon = () => (
   </svg>
 );
 
-export const BurjAlArabIcon = () => (
-  <svg viewBox="0 0 160 320" className="w-[120px] h-[240px] drop-shadow-2xl z-40 relative cursor-pointer hover:scale-110 transition-transform origin-bottom">
-    <ellipse cx="80" cy="285" rx="70" ry="15" fill="#d6bc8a" />
-    <path d="M 20 280 L 140 280 L 130 290 L 30 290 Z" fill="#94a3b8" />
-    
-    <rect x="55" y="40" width="12" height="240" fill="#f8fafc" />
-    <rect x="61" y="40" width="6" height="240" fill="#cbd5e1" />
-    
-    <polygon points="55,40 67,40 61,0" fill="#f8fafc" />
-    <polygon points="61,40 67,40 61,0" fill="#cbd5e1" />
-    
-    <path d="M 55 75 L 15 75 L 15 88 L 55 98 Z" fill="#0ea5e9" opacity="0.9" stroke="#0284c7" strokeWidth="1" />
-    <path d="M 55 70 L 15 70 L 15 75 L 55 75 Z" fill="#f8fafc" />
-    <polygon points="55,98 15,88 55,110" fill="#cbd5e1" opacity="0.5" />
-    
-    <path d="M 67 60 Q 180 180 67 280 Z" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1" />
-    <path d="M 67 60 Q 120 180 67 280 Z" fill="#bae6fd" opacity="0.6" stroke="#7dd3fc" strokeWidth="2" />
-    
-    <path d="M 67 60 L 105 130 L 67 170" fill="none" stroke="#f8fafc" strokeWidth="4" strokeLinejoin="round" />
-    <path d="M 67 170 L 120 220 L 67 280" fill="none" stroke="#f8fafc" strokeWidth="5" strokeLinejoin="round" />
-    <path d="M 67 60 L 105 130 L 67 170" fill="none" stroke="#cbd5e1" strokeWidth="1" strokeLinejoin="round" />
-    <path d="M 67 170 L 120 220 L 67 280" fill="none" stroke="#cbd5e1" strokeWidth="1" strokeLinejoin="round" />
+export const BurjAlArabIcon = ({ width = 140, height = 250, name = "Burj Al Arab" }: { width?: number, height?: number, name?: string }) => (
+  <svg 
+    viewBox="0 0 180 300" 
+    preserveAspectRatio="none"
+    style={{ width: `${width}px`, height: `${height}px` }} 
+    className="drop-shadow-2xl z-40 relative cursor-pointer hover:scale-105 transition-transform origin-bottom select-none"
+  >
+    <defs>
+      {/* PTFE Fiberglass Sail Membrane Gradient */}
+      <linearGradient id="baa-sail-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#ffffff" />
+        <stop offset="35%" stopColor="#f8fafc" />
+        <stop offset="75%" stopColor="#e2e8f0" />
+        <stop offset="100%" stopColor="#cbd5e1" />
+      </linearGradient>
 
-    <path d="M 67 100 Q 125 150 67 200" fill="none" stroke="#cbd5e1" strokeWidth="1" opacity="0.5" />
-    <path d="M 67 130 Q 140 180 67 240" fill="none" stroke="#cbd5e1" strokeWidth="1" opacity="0.5" />
-    
-    <path d="M 67 90 L 110 80" fill="none" stroke="#64748b" strokeWidth="4" />
-    <ellipse cx="120" cy="78" rx="22" ry="6" fill="#22c55e" stroke="#ffffff" strokeWidth="2" />
-    <ellipse cx="120" cy="78" rx="14" ry="4" fill="none" stroke="#ffffff" strokeWidth="1" />
-    <text x="120" y="80.5" fill="#ffffff" fontSize="6" fontWeight="bold" textAnchor="middle">H</text>
+      {/* Exoskeleton Steel Truss Gradient */}
+      <linearGradient id="baa-truss-steel" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#94a3b8" />
+        <stop offset="40%" stopColor="#f1f5f9" />
+        <stop offset="80%" stopColor="#cbd5e1" />
+        <stop offset="100%" stopColor="#64748b" />
+      </linearGradient>
 
-    <text x="80" y="315" fill="#1d4ed8" fontSize="16" fontWeight="black" textAnchor="middle" className="drop-shadow-md tracking-wider">BURJ AL ARAB</text>
+      {/* Shaded Depth Wall (Along FloorTile 0.2355 slant) */}
+      <linearGradient id="baa-depth-wall" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#334155" />
+        <stop offset="60%" stopColor="#1e293b" />
+        <stop offset="100%" stopColor="#0f172a" />
+      </linearGradient>
+
+      {/* Azure Glass Atrium Curtain Wall */}
+      <linearGradient id="baa-glass-atrium" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#bae6fd" />
+        <stop offset="40%" stopColor="#38bdf8" />
+        <stop offset="80%" stopColor="#0284c7" />
+        <stop offset="100%" stopColor="#0369a1" />
+      </linearGradient>
+
+      {/* Island Beach Sand */}
+      <linearGradient id="baa-island-sand" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#fef3c7" />
+        <stop offset="50%" stopColor="#fde68a" />
+        <stop offset="100%" stopColor="#d4b270" />
+      </linearGradient>
+
+      {/* Luxury Terrace Infinity Pool */}
+      <linearGradient id="baa-pool-water" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#38bdf8" />
+        <stop offset="50%" stopColor="#06b6d4" />
+        <stop offset="100%" stopColor="#0284c7" />
+      </linearGradient>
+    </defs>
+
+    {/* ==================================================================== */}
+    {/* 1. ISOMETRIC ARTIFICIAL ISLAND PLINTH (Matches FloorTile Geometry)    */}
+    {/* Baseline tilt: +0.01667, Depth slant: +0.2355                       */}
+    {/* ==================================================================== */}
+    <g>
+      {/* Soft Water Base Contact Shadow */}
+      <polygon points="18,284 158,286.3 166,258.3 26,256" fill="#0f172a" opacity="0.3" />
+
+      {/* Island Lower Emboss Lip (FloorTile style) */}
+      <polygon points="22,282 154,284.2 154,287.5 22,285.3" fill="#0f172a" opacity="0.4" />
+      <polygon points="22,282 154,284.2 154,285.8 22,283.6" fill="#334155" />
+
+      {/* Rocky White Armor Block Breakwater */}
+      <polygon points="22,282 154,284.2 163,254.2 31,252" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="0.8" />
+
+      {/* Private Island Sandy Grounds */}
+      <polygon points="26,280 150,282.1 158,255.1 34,253" fill="url(#baa-island-sand)" stroke="#ffffff" strokeWidth="0.5" />
+
+      {/* The Terrace Luxury Fan Deck over Water */}
+      <polygon points="98,281 146,281.8 154,263.8 106,263" fill="#78350f" stroke="#b45309" strokeWidth="0.6" />
+      {/* Azure Fan-Shaped Infinity Pool */}
+      <polygon points="104,279 142,279.6 148,266.6 110,266" fill="url(#baa-pool-water)" stroke="#ffffff" strokeWidth="0.5" />
+      {/* Cabana Shading Umbrellas */}
+      <circle cx="108" cy="273" r="2.2" fill="#ffffff" />
+      <circle cx="118" cy="274" r="2.2" fill="#38bdf8" />
+      <circle cx="128" cy="274" r="2.2" fill="#ffffff" />
+      <circle cx="138" cy="274" r="2.2" fill="#38bdf8" />
+
+      {/* Arrival Bridge Causeway to Mainland */}
+      <polygon points="22,266 38,266.3 20,250.3 4,250" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.6" />
+    </g>
+
+    {/* ==================================================================== */}
+    {/* 2. 3D SAIL TOWER STRUCTURE (Curved Dhow Sail & Steel Exoskeleton)    */}
+    {/* ==================================================================== */}
+    <g>
+      {/* Central Concrete Mast Tower Core (Straight vertical elevation) */}
+      {/* Shaded Depth Flank (along FloorTile depth slant) */}
+      <polygon points="62,260 69,260.1 69,22.1 62,22" fill="url(#baa-depth-wall)" />
+      {/* Front Face of Mast Core */}
+      <polygon points="69,260.1 76,260.2 76,22.2 69,22.1" fill="url(#baa-truss-steel)" stroke="#cbd5e1" strokeWidth="0.4" />
+
+      {/* Spire Needle at Apex (321m height) */}
+      <polygon points="68,22 71,22 70,2 69,2" fill="#f8fafc" stroke="#94a3b8" strokeWidth="0.4" />
+      <line x1="69.5" y1="2" x2="69.5" y2="0" stroke="#ffffff" strokeWidth="0.8" />
+      <circle cx="69.5" cy="1" r="1.2" fill="#ef4444" className="animate-pulse" />
+
+      {/* Glass Atrium Curtain V-Wall (Inner facing) */}
+      <path 
+        d="M 69 40 L 76 40 L 76 256 L 69 256 Z" 
+        fill="url(#baa-glass-atrium)" 
+        stroke="#38bdf8" 
+        strokeWidth="0.5" 
+        opacity="0.85" 
+      />
+
+      {/* Iconic Curved Dhow Sail (PTFE Teflon Fabric Facade) */}
+      <path 
+        d="
+          M 76 42 
+          Q 156 160 76 258 
+          L 69 258 
+          Q 146 160 69 42 Z
+        " 
+        fill="url(#baa-sail-grad)" 
+        stroke="#cbd5e1" 
+        strokeWidth="0.8" 
+      />
+
+      {/* Horizontal Membrane Rib Louvers */}
+      {[0.12, 0.24, 0.36, 0.48, 0.60, 0.72, 0.84].map((ratio, idx) => {
+        const y = 42 + ratio * (258 - 42);
+        const curveOffset = Math.sin(ratio * Math.PI) * 70;
+        const xOuter = 76 + curveOffset;
+        return (
+          <path 
+            key={`baa-rib-${idx}`} 
+            d={`M 76 ${y} Q ${76 + curveOffset * 0.5} ${y} ${xOuter} ${y + 1}`} 
+            stroke="#94a3b8" 
+            strokeWidth="0.6" 
+            fill="none" 
+            opacity="0.6" 
+          />
+        );
+      })}
+
+      {/* Outer Curved Exoskeleton Bow Truss (White Steel Arch) */}
+      <path 
+        d="
+          M 76 42 
+          Q 160 160 76 260
+        " 
+        fill="none" 
+        stroke="url(#baa-truss-steel)" 
+        strokeWidth="3.2" 
+        strokeLinecap="round" 
+      />
+
+      {/* Diagonal Structural K-Bracing Struts */}
+      <line x1="76" y1="42" x2="114" y2="108" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" />
+      <line x1="76" y1="42" x2="114" y2="108" stroke="#94a3b8" strokeWidth="1" strokeLinecap="round" />
+      <line x1="114" y1="108" x2="76" y2="152" stroke="#ffffff" strokeWidth="3.2" strokeLinecap="round" />
+      <line x1="114" y1="108" x2="76" y2="152" stroke="#94a3b8" strokeWidth="1" strokeLinecap="round" />
+
+      <line x1="76" y1="152" x2="128" y2="204" stroke="#ffffff" strokeWidth="3.4" strokeLinecap="round" />
+      <line x1="76" y1="152" x2="128" y2="204" stroke="#94a3b8" strokeWidth="1" strokeLinecap="round" />
+      <line x1="128" y1="204" x2="76" y2="258" stroke="#ffffff" strokeWidth="3.4" strokeLinecap="round" />
+      <line x1="128" y1="204" x2="76" y2="258" stroke="#94a3b8" strokeWidth="1" strokeLinecap="round" />
+
+      {/* ==================================================================== */}
+      {/* 3. FAMOUS CANTILEVERED HELIPAD (North Side, 210m elevation)          */}
+      {/* Aligned to 2.5D Isometric Tilt & Depth                               */}
+      {/* ==================================================================== */}
+      <g>
+        {/* Support Strut Girders from Mast Core */}
+        <line x1="76" y1="74" x2="120" y2="65" stroke="#334155" strokeWidth="2.5" />
+        <line x1="76" y1="78" x2="118" y2="67" stroke="#475569" strokeWidth="1.5" />
+
+        {/* Circular Helipad Suspended Platform (Foreshortened 2.5D disc) */}
+        <ellipse cx="120" cy="65" rx="18" ry="6.5" fill="#334155" stroke="#475569" strokeWidth="0.8" />
+        <ellipse cx="120" cy="64.5" rx="17.5" ry="6" fill="#15803d" stroke="#ffffff" strokeWidth="1.2" />
+        <ellipse cx="120" cy="64.5" rx="12" ry="4" fill="none" stroke="#ffffff" strokeWidth="0.8" strokeDasharray="3 2" />
+        {/* White Helipad 'H' Landing Target */}
+        <text x="120" y="66.5" fill="#ffffff" fontSize="5.5" fontWeight="black" textAnchor="middle">H</text>
+        {/* Edge Safety Perimeter Net */}
+        <ellipse cx="120" cy="64.5" rx="19.5" ry="7" fill="none" stroke="#94a3b8" strokeWidth="0.4" strokeDasharray="2 2" />
+      </g>
+
+      {/* ==================================================================== */}
+      {/* 4. SKYVIEW BAR CANTILEVERED OBSERVATION POD (South Side)             */}
+      {/* ==================================================================== */}
+      <g>
+        {/* Cantilevered Pod extending seaward */}
+        <polygon points="62,62 34,61.5 30,67.5 62,69" fill="url(#baa-glass-atrium)" stroke="#0284c7" strokeWidth="0.6" />
+        <polygon points="62,62 34,61.5 36,60 62,60.5" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.5" />
+        {/* Underbelly Depth Shadow */}
+        <polygon points="34,61.5 30,67.5 33,69 36,63" fill="#0f172a" opacity="0.6" />
+      </g>
+    </g>
   </svg>
 );
 
 export { MuseumOfFutureIcon, type MuseumOfFutureProps };
 export const MuseumOfTheFutureIcon = MuseumOfFutureIcon;
 
-export const DubaiFrameIcon = ({ width = 80, height = 110 }: { width?: number, height?: number }) => (
-  <svg viewBox="0 0 100 140" style={{ width: `${width}px`, height: `${height}px` }} className="drop-shadow-xl z-30 cursor-pointer hover:scale-110 transition-transform">
-     <rect x="15" y="15" width="70" height="110" fill="none" stroke="#eab308" strokeWidth="14" rx="4" />
-     <rect x="18" y="18" width="64" height="104" fill="none" stroke="#fef08a" strokeWidth="4" rx="2" />
-     <text x="50" y="138" fill="#ca8a04" fontSize="10" fontWeight="black" textAnchor="middle">DUBAI FRAME</text>
+export const DubaiFrameIcon = ({ width = 110, height = 150, name = "Dubai Frame" }: { width?: number, height?: number, name?: string }) => (
+  <svg 
+    viewBox="0 0 160 210" 
+    preserveAspectRatio="none"
+    style={{ width: `${width}px`, height: `${height}px` }} 
+    className="drop-shadow-2xl z-30 cursor-pointer hover:scale-105 transition-transform origin-bottom select-none"
+  >
+    <defs>
+      <linearGradient id="df-gold-face" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#ca8a04" />
+        <stop offset="25%" stopColor="#fde047" />
+        <stop offset="60%" stopColor="#eab308" />
+        <stop offset="90%" stopColor="#f59e0b" />
+        <stop offset="100%" stopColor="#a16207" />
+      </linearGradient>
+      <linearGradient id="df-gold-side" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#854d0e" />
+        <stop offset="50%" stopColor="#713f12" />
+        <stop offset="100%" stopColor="#451a03" />
+      </linearGradient>
+      <linearGradient id="df-skybridge-glass" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#bae6fd" stopOpacity="0.9" />
+        <stop offset="50%" stopColor="#0284c7" stopOpacity="0.85" />
+        <stop offset="100%" stopColor="#0369a1" stopOpacity="0.95" />
+      </linearGradient>
+      <linearGradient id="df-plinth-grass" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#86efac" />
+        <stop offset="50%" stopColor="#4ade80" />
+        <stop offset="100%" stopColor="#16a34a" />
+      </linearGradient>
+    </defs>
+
+    {/* 1. Isometric Zabeel Park Ground Plinth */}
+    <g>
+      {/* Lower Plinth Bevel Lip */}
+      <polygon points="12,192 148,194.3 148,198 12,195.7" fill="#0f172a" opacity="0.3" />
+      <polygon points="12,192 148,194.3 148,196 12,193.7" fill="#475569" />
+      {/* Travertine Base Foundation */}
+      <polygon points="12,192 148,194.3 162,168 26,165.7" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.8" />
+      {/* Landscaped Green Lawn */}
+      <polygon points="16,190 144,192.1 156,170 28,167.9" fill="url(#df-plinth-grass)" />
+      {/* Fountain Pool at Base */}
+      <polygon points="56,183 104,183.8 110,174 62,173.2" fill="#38bdf8" stroke="#ffffff" strokeWidth="0.8" />
+    </g>
+
+    {/* 2. South Tower (Left 3D Tower) */}
+    <g>
+      {/* Left Shaded Depth Face (along depth slant dx = +0.2355*dy) */}
+      <polygon points="26,183 36,185 36,25 26,23" fill="url(#df-gold-side)" />
+      {/* Front Face */}
+      <polygon points="36,185 50,185.2 50,25.2 36,25" fill="url(#df-gold-face)" stroke="#fef08a" strokeWidth="0.5" />
+      {/* Golden Honeycomb Lattice Filigree Lines */}
+      {Array.from({ length: 14 }).map((_, i) => (
+        <line key={`lh-${i}`} x1="36" y1={36 + i * 10.5} x2="50" y2={36.2 + i * 10.5} stroke="#ca8a04" strokeWidth="0.8" opacity="0.8" />
+      ))}
+    </g>
+
+    {/* 3. North Tower (Right 3D Tower) */}
+    <g>
+      {/* Left Shaded Depth Face */}
+      <polygon points="110,186.2 120,188.2 120,28.2 110,26.2" fill="url(#df-gold-side)" />
+      {/* Front Face */}
+      <polygon points="120,188.2 134,188.4 134,28.4 120,28.2" fill="url(#df-gold-face)" stroke="#fef08a" strokeWidth="0.5" />
+      {Array.from({ length: 14 }).map((_, i) => (
+        <line key={`rh-${i}`} x1="120" y1={39.2 + i * 10.5} x2="134" y2={39.4 + i * 10.5} stroke="#ca8a04" strokeWidth="0.8" opacity="0.8" />
+      ))}
+    </g>
+
+    {/* 4. Top Skybridge (3D Bridge with Glass Floor) */}
+    <g>
+      {/* Top Roof Cap (illuminated) */}
+      <polygon points="26,23 110,24.4 134,28.4 36,25" fill="#fef08a" stroke="#ca8a04" strokeWidth="0.5" />
+      {/* Front Golden Facade */}
+      <polygon points="36,25 134,28.4 134,42.4 36,39" fill="url(#df-gold-face)" stroke="#fef08a" strokeWidth="0.5" />
+      {/* Panoramic Glass Floor Ribbon */}
+      <polygon points="40,29 130,32 130,38 40,35" fill="url(#df-skybridge-glass)" stroke="#ffffff" strokeWidth="0.5" />
+      {/* Glass Strut Divisors */}
+      {[55, 70, 85, 100, 115].map(gx => (
+        <line key={`g-${gx}`} x1={gx} y1={29 + (gx - 40) * 0.033} x2={gx} y2={35 + (gx - 40) * 0.033} stroke="#ffffff" strokeWidth="0.8" opacity="0.8" />
+      ))}
+    </g>
+
+    {/* 5. Ground Visitor Pavilion (Base) */}
+    <g>
+      <polygon points="36,172 134,173.6 134,188.4 36,185" fill="url(#df-gold-face)" stroke="#ca8a04" strokeWidth="0.5" />
+      <polygon points="46,175 124,176.3 124,185 46,183.7" fill="#0f172a" opacity="0.85" />
+      <rect x="62" y="177" width="36" height="5.5" rx="1" fill="#fef08a" />
+      <text x="80" y="181.5" fill="#78350f" fontSize="3.8" fontWeight="black" textAnchor="middle" letterSpacing="0.5">DUBAI FRAME</text>
+    </g>
   </svg>
 );
 
@@ -1437,56 +1772,333 @@ export const AtlantisIcon = () => (
   </svg>
 );
 
-export const EmiratesTowersIcon = () => (
-  <svg viewBox="0 0 150 350" className="w-[120px] h-[280px] drop-shadow-2xl">
-    <path d="M 10 350 L 50 350 L 50 50 L 10 100 Z" fill="#94a3b8" />
-    <path d="M 50 350 L 70 350 L 70 150 L 50 50 Z" fill="#cbd5e1" opacity="0.8" />
-    <path d="M 80 350 L 120 350 L 120 120 L 80 170 Z" fill="#94a3b8" />
-    <path d="M 120 350 L 140 350 L 140 220 L 120 120 Z" fill="#cbd5e1" opacity="0.8" />
+export const EmiratesTowersIcon = ({ width = 130, height = 280 }: { width?: number, height?: number }) => (
+  <svg 
+    viewBox="0 0 160 320" 
+    preserveAspectRatio="none"
+    style={{ width: `${width}px`, height: `${height}px` }} 
+    className="drop-shadow-2xl z-30 cursor-pointer hover:scale-105 transition-transform origin-bottom select-none"
+  >
+    <defs>
+      <linearGradient id="et-bronze-face" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#d97706" />
+        <stop offset="35%" stopColor="#fde68a" />
+        <stop offset="70%" stopColor="#f59e0b" />
+        <stop offset="100%" stopColor="#b45309" />
+      </linearGradient>
+      <linearGradient id="et-steel-side" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#475569" />
+        <stop offset="50%" stopColor="#334155" />
+        <stop offset="100%" stopColor="#1e293b" />
+      </linearGradient>
+      <linearGradient id="et-plinth-lawn" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#86efac" />
+        <stop offset="50%" stopColor="#4ade80" />
+        <stop offset="100%" stopColor="#16a34a" />
+      </linearGradient>
+    </defs>
+
+    {/* Ground Plinth (FloorTile matching: baseline +0.01667, depth slant +0.2355) */}
+    <g>
+      <polygon points="12,306 148,308.3 158,284.3 22,282" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="0.8" />
+      <polygon points="16,304 144,306.1 154,285.1 26,283" fill="url(#et-plinth-lawn)" />
+      {/* Central Boulevard Walkway */}
+      <polygon points="68,305 92,305.4 96,284.4 72,284" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.5" />
+    </g>
+
+    {/* TOWER 1: Office Tower (Tallest, 354m) - Left */}
+    <g>
+      {/* Shaded Depth Wall (along FloorTile 0.2355 slant) */}
+      <polygon points="28,282 42,284.2 42,32.2 28,68" fill="url(#et-steel-side)" />
+      {/* Sunlit Triangular Front Facade */}
+      <polygon points="42,284.2 68,284.6 68,32.6 42,32.2" fill="url(#et-bronze-face)" stroke="#fef08a" strokeWidth="0.5" />
+      {/* Triangular Slanted Bevel Apex */}
+      <polygon points="28,68 42,32.2 68,32.6" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.5" />
+      <line x1="68" y1="32.6" x2="68" y2="10" stroke="#f8fafc" strokeWidth="1.2" />
+      <circle cx="68" cy="9" r="1.5" fill="#ef4444" className="animate-pulse" />
+      {/* Window mullion bands */}
+      {Array.from({ length: 18 }).map((_, i) => (
+        <line key={`et1-w-${i}`} x1="42" y1={46 + i * 13} x2="68" y2={46.4 + i * 13} stroke="#78350f" strokeWidth="0.8" opacity="0.75" />
+      ))}
+    </g>
+
+    {/* TOWER 2: Jumeirah Emirates Towers Hotel (309m) - Right */}
+    <g>
+      <polygon points="94,285 108,287.2 108,78.2 94,112" fill="url(#et-steel-side)" />
+      <polygon points="108,287.2 132,287.6 132,78.6 108,78.2" fill="url(#et-bronze-face)" stroke="#fef08a" strokeWidth="0.5" />
+      <polygon points="94,112 108,78.2 132,78.6" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.5" />
+      <line x1="132" y1="78.6" x2="132" y2="58" stroke="#f8fafc" strokeWidth="1.2" />
+      <circle cx="132" cy="57" r="1.5" fill="#ef4444" className="animate-pulse" />
+      {Array.from({ length: 15 }).map((_, i) => (
+        <line key={`et2-w-${i}`} x1="108" y1={92 + i * 13} x2="132" y2={92.4 + i * 13} stroke="#78350f" strokeWidth="0.8" opacity="0.75" />
+      ))}
+    </g>
+
+    {/* Connecting Podium Galleria Retail Spine */}
+    <polygon points="68,284.6 94,285 94,250 68,250" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.6" />
+    <polygon points="72,256 90,256.3 90,278 72,278" fill="#38bdf8" opacity="0.8" />
   </svg>
 );
 
-export const GevoraIcon = () => (
-  <svg viewBox="0 0 100 450" className="w-[60px] h-[350px] drop-shadow-2xl">
-    <rect x="30" y="100" width="40" height="350" fill="#d97706" />
-    <rect x="35" y="100" width="30" height="350" fill="#f59e0b" />
-    <path d="M 30 100 L 70 100 L 60 40 L 40 40 Z" fill="#fbbf24" />
-    <path d="M 40 40 L 60 40 L 50 0 Z" fill="#fef3c7" />
+export const GevoraIcon = ({ width = 80, height = 300 }: { width?: number, height?: number }) => (
+  <svg 
+    viewBox="0 0 100 360" 
+    preserveAspectRatio="none"
+    style={{ width: `${width}px`, height: `${height}px` }} 
+    className="drop-shadow-2xl z-30 cursor-pointer hover:scale-105 transition-transform origin-bottom select-none"
+  >
+    <defs>
+      <linearGradient id="gevora-gold-front" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#ca8a04" />
+        <stop offset="35%" stopColor="#fef08a" />
+        <stop offset="70%" stopColor="#f59e0b" />
+        <stop offset="100%" stopColor="#a16207" />
+      </linearGradient>
+      <linearGradient id="gevora-gold-side" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#78350f" />
+        <stop offset="100%" stopColor="#451a03" />
+      </linearGradient>
+    </defs>
+
+    {/* Isometric Podium Base */}
+    <polygon points="18,348 82,349 88,336 24,335" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="0.8" />
+    <polygon points="22,347 78,348 82,337 26,336" fill="#f8fafc" />
+
+    {/* 3D Main Golden Tower Body */}
+    <g>
+      {/* Shaded Left Depth Facade */}
+      <polygon points="28,336 40,337.5 40,55.5 28,54" fill="url(#gevora-gold-side)" />
+      {/* Sunlit Front Golden Facade */}
+      <polygon points="40,337.5 72,338 72,56 40,55.5" fill="url(#gevora-gold-front)" stroke="#fef08a" strokeWidth="0.5" />
+      {/* Vertical Golden Louver Ribs */}
+      {[46, 52, 58, 64].map(rx => (
+        <line key={`gev-rib-${rx}`} x1={rx} y1="56" x2={rx} y2="338" stroke="#ca8a04" strokeWidth="0.8" />
+      ))}
+      {/* Horizontal Floor Bands */}
+      {Array.from({ length: 22 }).map((_, i) => (
+        <line key={`gev-fl-${i}`} x1="40" y1={68 + i * 12} x2="72" y2={68.5 + i * 12} stroke="#78350f" strokeWidth="0.6" opacity="0.6" />
+      ))}
+    </g>
+
+    {/* Iconic Golden Pyramid Crown & Spire */}
+    <g>
+      <polygon points="28,54 40,55.5 56,18 44,17" fill="url(#gevora-gold-side)" />
+      <polygon points="40,55.5 72,56 56,18" fill="url(#gevora-gold-front)" stroke="#fef08a" strokeWidth="0.6" />
+      <line x1="56" y1="18" x2="56" y2="4" stroke="#fef08a" strokeWidth="1.2" />
+      <circle cx="56" cy="3" r="1.5" fill="#ef4444" className="animate-pulse" />
+    </g>
   </svg>
 );
 
-export const RoseRayhaanIcon = () => (
-  <svg viewBox="0 0 100 400" className="w-[70px] h-[300px] drop-shadow-2xl">
-    <rect x="25" y="100" width="50" height="300" fill="#0284c7" />
-    <rect x="35" y="100" width="30" height="300" fill="#38bdf8" />
-    <path d="M 25 100 Q 50 0 75 100 Z" fill="#7dd3fc" />
-    <circle cx="50" cy="50" r="8" fill="#e0f2fe" />
-    <path d="M 48 50 L 52 50 L 50 10 Z" fill="#e0f2fe" />
+export const RoseRayhaanIcon = ({ width = 80, height = 280 }: { width?: number, height?: number }) => (
+  <svg 
+    viewBox="0 0 100 340" 
+    preserveAspectRatio="none"
+    style={{ width: `${width}px`, height: `${height}px` }} 
+    className="drop-shadow-2xl z-30 cursor-pointer hover:scale-105 transition-transform origin-bottom select-none"
+  >
+    <defs>
+      <linearGradient id="rose-blue-front" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#0284c7" />
+        <stop offset="35%" stopColor="#e0f2fe" />
+        <stop offset="70%" stopColor="#38bdf8" />
+        <stop offset="100%" stopColor="#0369a1" />
+      </linearGradient>
+      <linearGradient id="rose-blue-side" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#1e293b" />
+        <stop offset="100%" stopColor="#082f49" />
+      </linearGradient>
+    </defs>
+
+    {/* Isometric Plinth */}
+    <polygon points="16,330 84,331.1 90,318.1 22,317" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="0.8" />
+    <polygon points="20,329 80,330 84,319 24,318" fill="#f8fafc" />
+
+    {/* 3D Blue Curtain Wall Tower */}
+    <g>
+      <polygon points="26,318 38,319.5 38,62.5 26,61" fill="url(#rose-blue-side)" />
+      <polygon points="38,319.5 74,320 74,63 38,62.5" fill="url(#rose-blue-front)" stroke="#bae6fd" strokeWidth="0.5" />
+      {/* Central Blue Glazing Strip */}
+      <polygon points="46,320 66,320 66,63 46,63" fill="#0284c7" opacity="0.6" />
+      {Array.from({ length: 20 }).map((_, i) => (
+        <line key={`rr-fl-${i}`} x1="38" y1={74 + i * 12} x2="74" y2={74.5 + i * 12} stroke="#ffffff" strokeWidth="0.5" opacity="0.5" />
+      ))}
+    </g>
+
+    {/* Iconic Rose Petal Crown Dome & Spire Needle */}
+    <g>
+      <path d="M 38 62.5 Q 56 32 74 63 Z" fill="url(#rose-blue-front)" stroke="#ffffff" strokeWidth="0.6" />
+      <circle cx="56" cy="46" r="6" fill="#f0f9ff" stroke="#38bdf8" strokeWidth="0.8" />
+      <line x1="56" y1="40" x2="56" y2="12" stroke="#ffffff" strokeWidth="1.2" />
+      <circle cx="56" cy="11" r="1.5" fill="#ef4444" className="animate-pulse" />
+    </g>
   </svg>
 );
 
-export const DWTCIcon = () => (
-  <svg viewBox="0 0 150 300" className="w-[90px] h-[180px] drop-shadow-2xl">
-    <rect x="15" y="250" width="120" height="50" fill="#f8fafc" />
-    <rect x="25" y="200" width="100" height="50" fill="#e2e8f0" />
-    <rect x="35" y="150" width="80" height="50" fill="#f8fafc" />
-    <rect x="45" y="100" width="60" height="50" fill="#e2e8f0" />
-    <rect x="55" y="50" width="40" height="50" fill="#f8fafc" />
-    <rect x="25" y="260" width="100" height="20" fill="#1e293b" opacity="0.1" />
-    <rect x="35" y="210" width="80" height="20" fill="#1e293b" opacity="0.1" />
-    <rect x="45" y="160" width="60" height="20" fill="#1e293b" opacity="0.1" />
-    <rect x="55" y="110" width="40" height="20" fill="#1e293b" opacity="0.1" />
-    <rect x="65" y="60" width="20" height="20" fill="#1e293b" opacity="0.1" />
+export const DWTCIcon = ({ width = 110, height = 200 }: { width?: number, height?: number }) => (
+  <svg 
+    viewBox="0 0 140 240" 
+    preserveAspectRatio="none"
+    style={{ width: `${width}px`, height: `${height}px` }} 
+    className="drop-shadow-2xl z-30 cursor-pointer hover:scale-105 transition-transform origin-bottom select-none"
+  >
+    {/* Isometric Podium Base */}
+    <polygon points="12,230 128,232 134,216 18,214" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="0.8" />
+    <polygon points="16,229 124,231 128,217 20,215" fill="#f8fafc" />
+
+    {/* Sheikh Rashid Tower (39-story brutalist white precast concrete tower) */}
+    <g>
+      {/* Shaded Depth Facade */}
+      <polygon points="28,215 42,216.5 42,35.5 28,34" fill="#64748b" />
+      {/* Front Facade */}
+      <polygon points="42,216.5 110,217.5 110,36.5 42,35.5" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.6" />
+      {/* Modular Brise-Soleil Window Grids */}
+      {Array.from({ length: 12 }).map((_, row) => (
+        <g key={`dwtc-row-${row}`}>
+          {[48, 62, 76, 90, 102].map(col => (
+            <rect 
+              key={`dwtc-w-${row}-${col}`} 
+              x={col} 
+              y={46 + row * 13.5} 
+              width="8" 
+              height="8" 
+              rx="1" 
+              fill="#0f172a" 
+              stroke="#cbd5e1" 
+              strokeWidth="0.5" 
+            />
+          ))}
+        </g>
+      ))}
+      {/* Rooftop Plant Mechanical Penthouse */}
+      <polygon points="48,35.5 104,36.5 102,24.5 46,23.5" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="0.6" />
+      <line x1="75" y1="24" x2="75" y2="8" stroke="#cbd5e1" strokeWidth="1.2" />
+      <circle cx="75" cy="7" r="1.5" fill="#ef4444" className="animate-pulse" />
+    </g>
   </svg>
 );
 
-export const SalikGate = ({ width = 100, height = 40 }: { width?: number, height?: number }) => (
-  <svg viewBox="0 0 100 40" style={{ width: `${width}px`, height: `${height}px` }} className="drop-shadow-xl z-20 relative pointer-events-none">
-    <rect x="0" y="0" width="8" height="40" fill="#94a3b8" />
-    <rect x="92" y="0" width="8" height="40" fill="#94a3b8" />
-    <rect x="0" y="10" width="100" height="10" fill="#e2e8f0" />
-    <rect x="25" y="5" width="50" height="20" fill="#ef4444" rx="4" />
-    <text x="50" y="19" fill="#ffffff" fontSize="12" fontWeight="bold" textAnchor="middle">SALIK</text>
+export const SalikGate = ({ width = 130, height = 120, name = "Salik Toll Gate" }: { width?: number, height?: number, name?: string }) => (
+  <svg 
+    viewBox="0 0 140 130" 
+    preserveAspectRatio="none"
+    style={{ width: `${width}px`, height: `${height}px` }} 
+    className="drop-shadow-2xl z-30 pointer-events-none select-none"
+  >
+    <defs>
+      <linearGradient id="salikPylonSteel" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#94a3b8" />
+        <stop offset="35%" stopColor="#f1f5f9" />
+        <stop offset="70%" stopColor="#cbd5e1" />
+        <stop offset="100%" stopColor="#64748b" />
+      </linearGradient>
+      <linearGradient id="salikShadedSteel" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#475569" />
+        <stop offset="100%" stopColor="#1e293b" />
+      </linearGradient>
+      <linearGradient id="salikRedSign" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#f87171" />
+        <stop offset="30%" stopColor="#ef4444" />
+        <stop offset="100%" stopColor="#b91c1c" />
+      </linearGradient>
+      <linearGradient id="salikSolarCell" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#38bdf8" />
+        <stop offset="50%" stopColor="#0284c7" />
+        <stop offset="100%" stopColor="#0f172a" />
+      </linearGradient>
+    </defs>
+
+    {/* ==================================================================== */}
+    {/* 1. NORTH ROADSIDE PYLON (Back / North shoulder of E11 Highway)       */}
+    {/* ==================================================================== */}
+    <g>
+      {/* Heavy Concrete Jersey Crash Barrier Base */}
+      <polygon points="69,43 83,43.2 87,37 73,36.8" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="0.8" />
+      <polygon points="69,43 83,43.2 83,46 69,45.8" fill="#334155" />
+      <polygon points="69,43 73,36.8 73,39.8 69,45.8" fill="#1e293b" />
+
+      {/* Vertical Galvanized Steel Mast */}
+      <polygon points="75,38 80,38.1 80,12.1 75,12" fill="url(#salikPylonSteel)" stroke="#475569" strokeWidth="0.5" />
+      <polygon points="72,36.5 75,38 75,12 72,10.5" fill="url(#salikShadedSteel)" />
+    </g>
+
+    {/* ==================================================================== */}
+    {/* 2. 3D OVERHEAD GANTRY SPACE TRUSS (Spanning across E11 lanes)        */}
+    {/* Slant: dx = 21px over dy = 76px (matching FloorTile dx = 0.2355*dy) */}
+    {/* ==================================================================== */}
+    <g>
+      {/* Lower Main Crossbeam Girder */}
+      <line x1="54" y1="88" x2="75" y2="12" stroke="#1e293b" strokeWidth="3" />
+      <line x1="54" y1="88" x2="75" y2="12" stroke="#cbd5e1" strokeWidth="1" strokeDasharray="4 2" />
+
+      {/* Upper Main Crossbeam Girder */}
+      <line x1="54" y1="78" x2="75" y2="2" stroke="#334155" strokeWidth="2.5" />
+
+      {/* Top Photovoltaic Solar Power Canopy */}
+      <polygon points="53,78 74,2 78,0 57,76" fill="url(#salikSolarCell)" stroke="#38bdf8" strokeWidth="0.6" opacity="0.95" />
+
+      {/* Diagonal Tubular Space Truss Bracing */}
+      {[0, 1, 2, 3, 4, 5, 6].map(idx => {
+        const t1 = idx / 7;
+        const t2 = (idx + 1) / 7;
+        const x1 = 54 + t1 * 21;
+        const y1 = 88 - t1 * 76;
+        const x2 = 54 + t2 * 21;
+        const y2 = 78 - t2 * 76;
+        return (
+          <line key={`gtruss-${idx}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#64748b" strokeWidth="1.1" />
+        );
+      })}
+
+      {/* Official Red SALIK Brand Emblem (Facing approaching traffic) */}
+      <g>
+        <polygon points="61,64 68,39 68,29 61,54" fill="url(#salikRedSign)" stroke="#ffffff" strokeWidth="0.8" />
+        <text 
+          x="64.5" 
+          y="48" 
+          fill="#ffffff" 
+          fontSize="5.2" 
+          fontWeight="black" 
+          textAnchor="middle" 
+          letterSpacing="0.8" 
+          transform="rotate(-74 64.5 48)"
+          className="drop-shadow"
+        >
+          SALIK
+        </text>
+      </g>
+
+      {/* 6 Automated RFID Multi-Lane Gantry Transceivers with Pulsing Status LEDs */}
+      {[0.12, 0.26, 0.40, 0.58, 0.72, 0.86].map((ratio, idx) => {
+        const rx = 54 + ratio * 21;
+        const ry = 88 - ratio * 76;
+        return (
+          <g key={`salik-rfid-${idx}`}>
+            {/* Dropper suspension strut */}
+            <line x1={rx} y1={ry} x2={rx - 1.5} y2={ry + 4} stroke="#334155" strokeWidth="1" />
+            {/* Sensor unit box */}
+            <rect x={rx - 3} y={ry + 4} width="3.5" height="2.5" rx="0.4" fill="#0f172a" stroke="#cbd5e1" strokeWidth="0.4" />
+            {/* Pulsing Active Toll Capture LED */}
+            <circle cx={rx - 1.2} cy={ry + 7} r="1" fill="#22c55e" className="animate-pulse" />
+          </g>
+        );
+      })}
+    </g>
+
+    {/* ==================================================================== */}
+    {/* 3. SOUTH ROADSIDE PYLON (Front / South shoulder of E11 Highway)      */}
+    {/* Foreground element, rendered last to overlap gantry and highway     */}
+    {/* ==================================================================== */}
+    <g>
+      {/* Heavy Concrete Jersey Crash Barrier Base */}
+      <polygon points="48,119 62,119.2 66,113 52,112.8" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="0.8" />
+      <polygon points="48,119 62,119.2 62,122 48,121.8" fill="#334155" />
+      <polygon points="48,119 52,112.8 52,115.8 48,121.8" fill="#1e293b" />
+
+      {/* Vertical Galvanized Steel Mast */}
+      <polygon points="54,114 59,114.1 59,88.1 54,88" fill="url(#salikPylonSteel)" stroke="#475569" strokeWidth="0.5" />
+      <polygon points="51,112.5 54,114 54,88 51,86.5" fill="url(#salikShadedSteel)" />
+    </g>
   </svg>
 );
 
@@ -2141,42 +2753,174 @@ export const BusinessBayBlock = () => <TycoonBlock name="Business Bay" type="apa
 export const DeiraBlock = () => <TycoonBlock name="Deira" type="apartment" cols={11} rows={7} w={340} h={240} />;
 export const MotorCityBlock = () => <TycoonBlock name="Motor City" type="apartment" cols={10} rows={6} w={310} h={210} />;
 
-export const PalmCommunityBlock = ({ width = 350, height = 350 }: { width?: number, height?: number }) => (
-  <svg viewBox="0 0 500 500" style={{ width: `${width}px`, height: `${height}px` }} className="drop-shadow-2xl z-20 relative cursor-pointer group">
-     <path d="M 110 95 A 220 220 0 0 1 390 95" fill="none" stroke="#d6bc8a" strokeWidth="35" strokeLinecap="round" />
-     <path d="M 90 110 A 220 220 0 0 0 70 400" fill="none" stroke="#d6bc8a" strokeWidth="30" strokeLinecap="round" />
-     <path d="M 410 110 A 220 220 0 0 1 430 400" fill="none" stroke="#d6bc8a" strokeWidth="30" strokeLinecap="round" />
-     
-     <line x1="250" y1="50" x2="250" y2="150" stroke="#94a3b8" strokeWidth="6" strokeDasharray="5,5" />
-     
-     <rect x="210" y="140" width="8" height="280" fill="#d6bc8a" />
-     <rect x="170" y="370" width="160" height="30" rx="10" fill="#d6bc8a" />
-     <rect x="190" y="410" width="120" height="20" rx="6" fill="#d6bc8a" />
-     
-     {Array.from({length: 8}).map((_, i) => {
-        const y = 160 + i * 27;
-        return (
-           <g key={i}>
-              <path d={`M 230 ${y} Q 110 ${y+10} 70 ${y - 30}`} fill="none" stroke="#d6bc8a" strokeWidth="24" strokeLinecap="round" />
-              <path d={`M 270 ${y} Q 390 ${y+10} 430 ${y - 30}`} fill="none" stroke="#d6bc8a" strokeWidth="24" strokeLinecap="round" />
-           </g>
-        )
-     })}
+export const PalmCommunityBlock = ({ width = 420, height = 380 }: { width?: number, height?: number }) => (
+  <svg 
+    viewBox="0 0 520 440" 
+    preserveAspectRatio="none"
+    style={{ width: `${width}px`, height: `${height}px` }} 
+    className="drop-shadow-2xl z-20 relative cursor-pointer group select-none hover:scale-[1.02] transition-transform origin-bottom"
+  >
+    <defs>
+      {/* Palm Sand Gradient */}
+      <linearGradient id="palmSandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#fef08a" />
+        <stop offset="40%" stopColor="#fde047" />
+        <stop offset="80%" stopColor="#d6bc8a" />
+        <stop offset="100%" stopColor="#ca8a04" />
+      </linearGradient>
 
-     <rect x="246" y="140" width="8" height="310" fill="#94a3b8" />
-     
-     <g transform="translate(210, 15)">
-        <rect x="10" y="15" width="60" height="35" fill="#f43f5e" rx="4" />
-        <rect x="30" y="25" width="20" height="25" fill="#d6bc8a" /> 
-        <rect x="0" y="15" width="15" height="45" fill="#e11d48" rx="2" />
-        <rect x="65" y="15" width="15" height="45" fill="#e11d48" rx="2" />
-        <polygon points="0,15 7.5,-5 15,15" fill="#9f1239" />
-        <polygon points="65,15 72.5,-5 80,15" fill="#9f1239" />
-        <polygon points="25,15 40,0 55,15" fill="#9f1239" />
-        <text x="40" y="65" fill="#9f1239" fontSize="12" fontWeight="black" textAnchor="middle" className="drop-shadow-md">ATLANTIS</text>
-     </g>
+      {/* Lagoon Turquoise Water Gradient */}
+      <linearGradient id="palmLagoonWater" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#0284c7" stopOpacity="0.4" />
+        <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.5" />
+        <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.6" />
+      </linearGradient>
 
-     <text x="250" y="340" fill="#16a34a" fontSize="20" fontWeight="black" textAnchor="middle" transform="rotate(-90 250 340)" className="tracking-widest drop-shadow-md">PALM JUMEIRAH</text>
+      {/* Atlantis Royal Pink Gradient */}
+      <linearGradient id="atlantisPinkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#fda4af" />
+        <stop offset="50%" stopColor="#f43f5e" />
+        <stop offset="100%" stopColor="#be123c" />
+      </linearGradient>
+
+      {/* Atlantis Gold Turret Spire */}
+      <linearGradient id="atlantisGold" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#fef08a" />
+        <stop offset="50%" stopColor="#facc15" />
+        <stop offset="100%" stopColor="#ca8a04" />
+      </linearGradient>
+    </defs>
+
+    {/* 1. Deep Ocean Floor Cutout & Shadow */}
+    <ellipse cx="260" cy="235" rx="245" ry="175" fill="#0284c7" opacity="0.35" />
+
+    {/* 2. Outer Protective Crescent Breakwater (2.5D Isometric Arc) */}
+    <g>
+      {/* Crescent Base Rock Foundation */}
+      <path 
+        d="M 40,240 C 35,110 130,35 260,35 C 390,35 485,110 480,240 C 476,220 400,60 260,60 C 120,60 44,220 40,240 Z" 
+        fill="#94a3b8" 
+        stroke="#64748b" 
+        strokeWidth="1.5" 
+      />
+      {/* Sandy Outer Beach Ribbon */}
+      <path 
+        d="M 52,230 C 48,118 138,50 260,50 C 382,50 472,118 468,230 C 464,212 392,70 260,70 C 128,70 56,212 52,230 Z" 
+        fill="url(#palmSandGrad)" 
+      />
+      {/* West and East Crescent Water Entrances (Breaks in barrier) */}
+      <ellipse cx="140" cy="58" rx="8" ry="4" fill="#0284c7" opacity="0.6" />
+      <ellipse cx="380" cy="58" rx="8" ry="4" fill="#0284c7" opacity="0.6" />
+    </g>
+
+    {/* 3. 3D Atlantis The Palm Resort (at the Crescent Apex X=260, Y=45) */}
+    <g transform="translate(225, 22)">
+      {/* Resort Plinth Base */}
+      <polygon points="10,48 60,49 66,40 16,39" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="0.5" />
+      {/* Main East & West Wings (Arabian Royal Pink Terraces) */}
+      <rect x="12" y="24" width="18" height="24" rx="2" fill="url(#atlantisPinkGrad)" />
+      <rect x="40" y="24" width="18" height="24" rx="2" fill="url(#atlantisPinkGrad)" />
+      {/* Stepped Terraces */}
+      <rect x="15" y="16" width="12" height="10" rx="1" fill="#fb7185" />
+      <rect x="43" y="16" width="12" height="10" rx="1" fill="#fb7185" />
+      {/* Grand Central Horseshoe Bridge Arch */}
+      <path d="M 28,26 Q 35,14 42,26 L 42,48 L 28,48 Z" fill="#0f172a" opacity="0.75" />
+      <path d="M 28,24 L 42,24 L 42,20 L 28,20 Z" fill="url(#atlantisPinkGrad)" />
+      {/* Arabian Spires & Golden Domes */}
+      <polygon points="15,16 21,4 27,16" fill="url(#atlantisGold)" />
+      <polygon points="43,16 49,4 55,16" fill="url(#atlantisGold)" />
+      <polygon points="32,20 35,12 38,20" fill="url(#atlantisGold)" />
+      {/* Private Aquaventure Lagoon */}
+      <ellipse cx="35" cy="52" rx="18" ry="5" fill="#38bdf8" opacity="0.8" />
+    </g>
+
+    {/* 4. Turquoise Inner Protected Lagoon */}
+    <ellipse cx="260" cy="225" rx="195" ry="135" fill="url(#palmLagoonWater)" />
+
+    {/* 5. 16 Symmetrical Curved Fronds (8 Pairs in 2.5D Isometric Aspect) */}
+    {Array.from({ length: 8 }).map((_, i) => {
+      // Slanted vertical distribution from apex towards trunk base
+      const cy = 115 + i * 26;
+      const span = 135 - i * 5; // Fronds get gently shorter towards base
+      const leftEndX = 260 - span - (8 - i) * 5;
+      const rightEndX = 260 + span + (8 - i) * 5;
+      const endY = cy - 22; // Sweep up towards the crescent in 3D perspective
+
+      return (
+        <g key={`frond-pair-${i}`}>
+          {/* Left Frond Sand Spine */}
+          <path 
+            d={`M 252,${cy + 2} Q ${260 - span * 0.6},${cy + 12} ${leftEndX},${endY}`} 
+            fill="none" 
+            stroke="url(#palmSandGrad)" 
+            strokeWidth="11" 
+            strokeLinecap="round" 
+          />
+          {/* Left Frond Luxury Beach Villas (Small white roofs) */}
+          {[0.3, 0.55, 0.8].map((ratio, vIdx) => {
+            const vx = 252 - (252 - leftEndX) * ratio;
+            const vy = (cy + 2) - ((cy + 2) - endY) * ratio + 3;
+            return (
+              <g key={`lv-${vIdx}`}>
+                <polygon points={`${vx-2},${vy} ${vx+2},${vy} ${vx+3},${vy-3} ${vx-1},${vy-3}`} fill="#ffffff" stroke="#cbd5e1" strokeWidth="0.4" />
+                <circle cx={vx} cy={vy + 2} r="1" fill="#38bdf8" />
+              </g>
+            );
+          })}
+
+          {/* Right Frond Sand Spine */}
+          <path 
+            d={`M 268,${cy + 2} Q ${260 + span * 0.6},${cy + 12} ${rightEndX},${endY}`} 
+            fill="none" 
+            stroke="url(#palmSandGrad)" 
+            strokeWidth="11" 
+            strokeLinecap="round" 
+          />
+          {/* Right Frond Luxury Beach Villas */}
+          {[0.3, 0.55, 0.8].map((ratio, vIdx) => {
+            const vx = 268 + (rightEndX - 268) * ratio;
+            const vy = (cy + 2) - ((cy + 2) - endY) * ratio + 3;
+            return (
+              <g key={`rv-${vIdx}`}>
+                <polygon points={`${vx-2},${vy} ${vx+2},${vy} ${vx+3},${vy-3} ${vx-1},${vy-3}`} fill="#ffffff" stroke="#cbd5e1" strokeWidth="0.4" />
+                <circle cx={vx} cy={vy + 2} r="1" fill="#38bdf8" />
+              </g>
+            );
+          })}
+        </g>
+      );
+    })}
+
+    {/* 6. Central Trunk Spine (2.5D Isometric Boulevard) */}
+    <g>
+      {/* Trunk Sand Base */}
+      <polygon points="244,105 276,105 284,360 236,360" fill="url(#palmSandGrad)" stroke="#ca8a04" strokeWidth="0.8" />
+      {/* Golden Mile & Shoreline Apartments (3D Blocks on sides of trunk) */}
+      <polygon points="238,150 246,150 248,340 238,340" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.5" />
+      <polygon points="274,150 282,150 282,340 272,340" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.5" />
+      {/* Central Palm Highway */}
+      <line x1="256" y1="110" x2="256" y2="355" stroke="#334155" strokeWidth="4" />
+      <line x1="264" y1="110" x2="264" y2="355" stroke="#334155" strokeWidth="4" />
+      {/* Elevated Palm Monorail Viaduct along center */}
+      <line x1="260" y1="100" x2="260" y2="365" stroke="#0284c7" strokeWidth="1.5" />
+      <circle cx="260" cy="180" r="2" fill="#38bdf8" />
+      <circle cx="260" cy="270" r="2" fill="#38bdf8" />
+      {/* Nakheel Mall Base Complex */}
+      <polygon points="248,220 272,220 274,250 246,250" fill="#0284c7" stroke="#38bdf8" strokeWidth="0.8" />
+      <polygon points="252,225 268,225 266,245 254,245" fill="#fde047" opacity="0.8" />
+    </g>
+
+    {/* 7. Gateway Entry Bridge connecting to Jumeirah Coast Road */}
+    <g>
+      <polygon points="240,360 280,360 284,400 236,400" fill="#475569" stroke="#334155" strokeWidth="1" />
+      <line x1="260" y1="360" x2="260" y2="400" stroke="#facc15" strokeWidth="1.5" strokeDasharray="4 4" />
+    </g>
+
+    {/* 8. Crisp Island Badge */}
+    <g transform="translate(260, 415)">
+      <rect x="-85" y="-12" width="170" height="24" rx="12" fill="#0f172a" opacity="0.85" stroke="#38bdf8" strokeWidth="1" />
+      <text x="0" y="4" fill="#ffffff" fontSize="11" fontWeight="black" textAnchor="middle" letterSpacing="2">PALM JUMEIRAH</text>
+    </g>
   </svg>
 );
 
@@ -2985,6 +3729,128 @@ export interface IsometricBillboardProps {
   className?: string;
 }
 
+export interface BillboardCampaignItem {
+  id: string;
+  brand: string;
+  tagline: string;
+  badge: string;
+  badgeBg: string;
+  color1: string;
+  color2: string;
+  accent: string;
+  category: string;
+  location: string;
+  iconType: 'airplane' | 'building' | 'crown' | 'palm' | 'sparkle' | 'future' | 'hypercar' | 'cocktail' | 'custom';
+  imageHref?: string;
+}
+
+export const DEFAULT_BILLBOARD_CAMPAIGNS: BillboardCampaignItem[] = [
+  {
+    id: 'emirates',
+    brand: 'EMIRATES',
+    tagline: 'FLY BETTER • FIRST CLASS SUITES',
+    badge: 'OFFICIAL AIRLINE',
+    badgeBg: '#dc2626',
+    color1: '#991b1b',
+    color2: '#450a0a',
+    accent: '#fbbf24',
+    category: 'LUXURY AVIATION',
+    location: 'DXB • TERMINAL 3',
+    iconType: 'airplane'
+  },
+  {
+    id: 'emaar',
+    brand: 'EMAAR DOWNTOWN',
+    tagline: 'OWN THE DUBAI SKYLINE • BURJ CROWN',
+    badge: 'DOWNTOWN DUBAI',
+    badgeBg: '#0284c7',
+    color1: '#0f172a',
+    color2: '#020617',
+    accent: '#38bdf8',
+    category: 'PREMIER REAL ESTATE',
+    location: 'HANDOVER 2026',
+    iconType: 'building'
+  },
+  {
+    id: 'rolex',
+    brand: 'ROLEX OYSTER',
+    tagline: 'THE CROWN OF PERPETUAL EXCELLENCE',
+    badge: 'SEDDIQI & SONS',
+    badgeBg: '#15803d',
+    color1: '#064e3b',
+    color2: '#022c22',
+    accent: '#fbbf24',
+    category: 'HAUTE HORLOGERIE',
+    location: 'THE DUBAI MALL',
+    iconType: 'crown'
+  },
+  {
+    id: 'visitdubai',
+    brand: 'VISIT DUBAI',
+    tagline: 'EXPERIENCE THE EXTRAORDINARY',
+    badge: 'DUBAI TOURISM',
+    badgeBg: '#0ea5e9',
+    color1: '#0284c7',
+    color2: '#0f766e',
+    accent: '#fde047',
+    category: 'GLOBAL DESTINATION',
+    location: 'TOP DESTINATION 2026',
+    iconType: 'palm'
+  },
+  {
+    id: 'atlantis',
+    brand: 'ATLANTIS THE ROYAL',
+    tagline: 'CLOUD 22 SKY POOL & ROYAL MANSIONS',
+    badge: 'PALM JUMEIRAH',
+    badgeBg: '#9333ea',
+    color1: '#581c87',
+    color2: '#1e1b4b',
+    accent: '#f472b6',
+    category: 'ULTRA-LUXURY RESORT',
+    location: 'MICHELIN DINING',
+    iconType: 'sparkle'
+  },
+  {
+    id: 'motf',
+    brand: 'MUSEUM OF FUTURE',
+    tagline: 'JOURNEY TO 2071 • WHERE FUTURE LIVES',
+    badge: 'DUBAI INNOVATION',
+    badgeBg: '#06b6d4',
+    color1: '#18181b',
+    color2: '#09090b',
+    accent: '#22d3ee',
+    category: 'FUTURISTIC LANDMARK',
+    location: 'SHEIKH ZAYED RD',
+    iconType: 'future'
+  },
+  {
+    id: 'bugatti',
+    brand: 'BUGATTI RESIDENCES',
+    tagline: 'RIVIERA LIVING • PRIVATE CAR LIFTS',
+    badge: 'BINGHATTI X BUGATTI',
+    badgeBg: '#2563eb',
+    color1: '#1e3a8a',
+    color2: '#020617',
+    accent: '#60a5fa',
+    category: 'HYPER-LUXURY LIVING',
+    location: 'BUSINESS BAY',
+    iconType: 'hypercar'
+  },
+  {
+    id: 'tingirie',
+    brand: 'TING IRIE DUBAI',
+    tagline: 'CARIBBEAN LOUNGE & AFROBEAT NIGHTS',
+    badge: 'MBR BOULEVARD',
+    badgeBg: '#d97706',
+    color1: '#78350f',
+    color2: '#14532d',
+    accent: '#4ade80',
+    category: 'DOWNTOWN NIGHTLIFE',
+    location: 'SOUK AL MANZIL',
+    iconType: 'cocktail'
+  }
+];
+
 export const IsometricBillboard: React.FC<IsometricBillboardProps> = ({
   id = 'bb',
   width = 280,
@@ -3010,7 +3876,60 @@ export const IsometricBillboard: React.FC<IsometricBillboardProps> = ({
   const activeImage = imageUrl || image || img;
   const title = adTitle || text1 || (isRented ? (rentedBy || "LUXURY DUBAI") : "RENT THIS SPACE");
   const subtitle = adSubtitle || text2 || (isRented ? "Exclusive Campaign" : "Place Your Brand Here");
-  const clipId = `bb-screen-clip-${id || Math.floor(seed * 1000)}`;
+  const safeId = id ? id.replace(/[^a-zA-Z0-9_-]/g, '') : Math.random().toString(36).slice(2, 7);
+  const clipId = `bb-screen-clip-${safeId}`;
+
+  // Assemble the slides for this billboard
+  const slides: BillboardCampaignItem[] = useMemo(() => {
+    const list = [...DEFAULT_BILLBOARD_CAMPAIGNS];
+    // If the billboard is rented or has custom ad creative, include it in the rotation
+    if (activeImage || isRented || adTitle || text1) {
+      const customSlide: BillboardCampaignItem = {
+        id: `custom-${safeId}`,
+        brand: (rentedBy || adTitle || text1 || 'YOUR BRAND').toUpperCase(),
+        tagline: (adSubtitle || text2 || (activeImage ? 'EXCLUSIVE CAMPAIGN' : 'TAP TO RESERVE')).toUpperCase(),
+        badge: isRented ? '● VERIFIED SPONSOR' : '★ FEATURED CAMPAIGN',
+        badgeBg: isRented ? '#059669' : '#2563eb',
+        color1: color1 || '#0284c7',
+        color2: color2 || '#0f172a',
+        accent: brandColor || '#38bdf8',
+        category: 'EXCLUSIVE PARTNER',
+        location: 'DUBAI DIGITAL NETWORK',
+        iconType: 'custom',
+        imageHref: activeImage
+      };
+      list.unshift(customSlide);
+    }
+    return list;
+  }, [activeImage, isRented, adTitle, text1, rentedBy, adSubtitle, text2, color1, color2, brandColor, safeId]);
+
+  // Deterministic starting index so billboards don't all show the exact same ad
+  const initialIndex = useMemo(() => {
+    const seedNum = typeof seed === 'number' ? seed : 1;
+    const idHash = (id || 'bb').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return Math.abs(idHash + seedNum) % slides.length;
+  }, [id, seed, slides.length]);
+
+  const [slideIndex, setSlideIndex] = useState(initialIndex);
+  const [isFading, setIsFading] = useState(false);
+
+  useEffect(() => {
+    const idHash = (id || 'bb').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    // Periodically transition ads every 4.5s to 6.5s, slightly staggered per billboard
+    const cycleTime = 4500 + (idHash % 5) * 500;
+
+    const interval = setInterval(() => {
+      setIsFading(true);
+      setTimeout(() => {
+        setSlideIndex((prev) => (prev + 1) % slides.length);
+        setIsFading(false);
+      }, 400); // 400ms smooth crossfade
+    }, cycleTime);
+
+    return () => clearInterval(interval);
+  }, [slides.length, id]);
+
+  const currentSlide = slides[slideIndex] || slides[0];
 
   // ===========================================================================
   // ISOMETRIC GEOMETRY STRICTLY MATCHING FloorTile (320 x 240 coordinate space):
@@ -3032,7 +3951,6 @@ export const IsometricBillboard: React.FC<IsometricBillboardProps> = ({
 
             {/* Left Lattice Steel Tower */}
             <rect x="99" y="130" width="14" height="82" fill="url(#pylonMetalGrad)" stroke="#334155" strokeWidth="1" />
-            {/* Cross diagonal bracing */}
             {[0, 1, 2, 3].map(i => (
               <g key={`l-brace-${i}`}>
                 <line x1="99" y1={134 + i * 19} x2="113" y2={153 + i * 19} stroke="#475569" strokeWidth="1.2" />
@@ -3062,13 +3980,9 @@ export const IsometricBillboard: React.FC<IsometricBillboardProps> = ({
               const fy = 25 + (fx - 30) * 0.0166;
               return (
                 <g key={`flood-${idx}`}>
-                  {/* Curved light boom arm reaching out and down */}
                   <path d={`M ${fx},${fy} C ${fx},${fy - 14} ${fx - 4},${fy - 14} ${fx - 4},${fy - 6}`} fill="none" stroke="#64748b" strokeWidth="2.2" />
-                  {/* Luminaire Lamp Head */}
                   <polygon points={`${fx - 8},${fy - 6} ${fx},${fy - 6} ${fx + 2},${fy - 2} ${fx - 10},${fy - 2}`} fill="#1e293b" stroke="#facc15" strokeWidth="0.8" />
-                  {/* Illuminated Bulb */}
                   <circle cx={fx - 4} cy={fy - 2} r="2.5" fill="#fef08a" />
-                  {/* Radiant Light Cone casting downward */}
                   <polygon points={`${fx - 4},${fy - 1} ${fx - 24},${fy + 65} ${fx + 16},${fy + 66}`} fill="#fef08a" opacity="0.16" />
                 </g>
               );
@@ -3111,7 +4025,6 @@ export const IsometricBillboard: React.FC<IsometricBillboardProps> = ({
           <g>
             {/* Heavy-Gauge Brushed Steel Unipole Column */}
             <rect x="144" y="128" width="32" height="85" fill="url(#pylonMetalGrad)" stroke="#1e293b" strokeWidth="1" />
-            {/* Vertical Highlights & Shadow Bevels on Cylinder */}
             <line x1="149" y1="128" x2="149" y2="213" stroke="#94a3b8" strokeWidth="1.5" opacity="0.7" />
             <line x1="171" y1="128" x2="171" y2="213" stroke="#0f172a" strokeWidth="2" opacity="0.9" />
 
@@ -3130,10 +4043,10 @@ export const IsometricBillboard: React.FC<IsometricBillboardProps> = ({
             {/* Modern Top Digital Ticker Strip on LED Screen */}
             <polygon points="30,25 290,29.3 290,38.3 30,34" fill="#020617" />
             <text x="36" y="32" fill="#38bdf8" fontSize="6" fontWeight="bold" fontFamily="monospace">
-              ● LIVE DIGITAL 8K • DUBAI 28°C
+              ● 8K LED • AD {slideIndex + 1}/{slides.length} • LIVE
             </text>
             <text x="284" y="32" fill="#22c55e" fontSize="6" fontWeight="bold" textAnchor="end" fontFamily="monospace">
-              99.8% VIEWABILITY
+              {currentSlide.brand.slice(0, 18)}
             </text>
           </g>
         );
@@ -3165,6 +4078,19 @@ export const IsometricBillboard: React.FC<IsometricBillboardProps> = ({
           <stop offset="100%" stopColor="#b45309" />
         </linearGradient>
 
+        {/* Dynamic Gradient for Active Carousel Slide */}
+        <linearGradient id={`bb-slide-grad-${safeId}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={currentSlide.color1} />
+          <stop offset="100%" stopColor={currentSlide.color2} />
+        </linearGradient>
+
+        {/* Sweep Glow Gradient for High-Tech Transition */}
+        <linearGradient id={`bb-sweep-glow-${safeId}`} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+        </linearGradient>
+
         {/* Screen Clip Path (Strictly slanted to match FloorTile's 0.01667 incline) */}
         <clipPath id={clipId}>
           <polygon points="32,27 288,31.3 288,143.3 32,139" />
@@ -3172,18 +4098,11 @@ export const IsometricBillboard: React.FC<IsometricBillboardProps> = ({
 
         {/* Glass Screen Reflection Gradient */}
         <linearGradient id="screenGlassReflect" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.32" />
-          <stop offset="35%" stopColor="#ffffff" stopOpacity="0.12" />
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.25" />
+          <stop offset="35%" stopColor="#ffffff" stopOpacity="0.08" />
           <stop offset="55%" stopColor="#ffffff" stopOpacity="0" />
-          <stop offset="85%" stopColor="#38bdf8" stopOpacity="0.15" />
+          <stop offset="85%" stopColor="#38bdf8" stopOpacity="0.12" />
           <stop offset="100%" stopColor="#000000" stopOpacity="0.2" />
-        </linearGradient>
-
-        {/* Cyber Neon Pulse Gradient for Unrented State */}
-        <linearGradient id="cyberScreenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#030712" />
-          <stop offset="50%" stopColor="#0f172a" />
-          <stop offset="100%" stopColor="#1e1b4b" />
         </linearGradient>
       </defs>
 
@@ -3191,14 +4110,12 @@ export const IsometricBillboard: React.FC<IsometricBillboardProps> = ({
       {/* 1. GROUND FOUNDATION PLINTH (Matches FloorTile's exact geometry)     */}
       {/* ==================================================================== */}
       <g>
-        {/* Ground Foundation Top Surface */}
         <polygon 
           points="90,217 230,219.3 225,203.3 85,201" 
           fill="#cbd5e1" 
           stroke="#94a3b8" 
           strokeWidth="1" 
         />
-        {/* Foundation Lower Side Lip (Matches FloorTile's subtle emboss lip) */}
         <polygon 
           points="90,217 230,219.3 230,224.3 90,222" 
           fill="#64748b" 
@@ -3226,7 +4143,6 @@ export const IsometricBillboard: React.FC<IsometricBillboardProps> = ({
           stroke="#0f172a" 
           strokeWidth="1" 
         />
-        {/* Anti-glare roof baffles / louvers */}
         {[0.2, 0.4, 0.6, 0.8].map((t, idx) => {
           const x1 = 30 + t * 260;
           const y1 = 25 + t * 4.3;
@@ -3253,102 +4169,183 @@ export const IsometricBillboard: React.FC<IsometricBillboardProps> = ({
       </g>
 
       {/* ==================================================================== */}
-      {/* 4. BILLBOARD DISPLAY SCREEN (RENTED IMAGE OR CALL-TO-ACTION)         */}
+      {/* 4. BILLBOARD DISPLAY SCREEN (PERIODICALLY ROTATING CAROUSEL OF ADS) */}
       {/* ==================================================================== */}
       <g>
         {/* Screen Background Surface */}
         <polygon 
           points="32,27 288,31.3 288,143.3 32,139" 
-          fill={isRented && activeImage ? '#000000' : 'url(#cyberScreenGrad)'} 
+          fill="#000000" 
         />
 
-        {/* A. RENTED STATE: ACTIVE IMAGE CREATIVE */}
-        {isRented && activeImage ? (
-          <g clipPath={`url(#${clipId})`}>
-            {/* Embedded Image Ad Creative */}
-            <image 
-              href={activeImage} 
-              x="30" 
-              y="25" 
-              width="260" 
-              height="120" 
-              preserveAspectRatio="xMidYMid slice" 
-            />
-
-            {/* High-Resolution Outdoor Glass Reflection Sheen */}
+        <g clipPath={`url(#${clipId})`}>
+          {/* Active Carousel Slide with Smooth Dissolve Transition */}
+          <g 
+            className="transition-all duration-400 ease-in-out" 
+            style={{ 
+              opacity: isFading ? 0.08 : 1, 
+              transform: isFading ? 'scale(0.98)' : 'scale(1)', 
+              transformOrigin: '160px 85px' 
+            }}
+          >
+            {/* Slide Background Gradient */}
             <polygon 
               points="32,27 288,31.3 288,143.3 32,139" 
-              fill="url(#screenGlassReflect)" 
+              fill={`url(#bb-slide-grad-${safeId})`} 
             />
 
-            {/* Campaign Advertiser Overlay Bar */}
-            <g transform="translate(36, 116)">
-              <rect x="0" y="0" width="248" height="22" fill="#000000" opacity="0.65" rx="3" />
-              <text x="10" y="14" fill="#ffffff" fontSize="10" fontWeight="900" fontFamily="system-ui, sans-serif" letterSpacing="1">
-                {title.toUpperCase()}
-              </text>
-              <text x="240" y="14" fill="#38bdf8" fontSize="8" fontWeight="bold" textAnchor="end" fontFamily="monospace">
-                {subtitle}
-              </text>
-            </g>
-
-            {/* Top-Right Verified Sponsor Pill */}
-            <g transform="translate(222, 33)">
-              <rect x="0" y="0" width="60" height="13" fill="#0284c7" opacity="0.9" rx="3" />
-              <text x="30" y="9.5" fill="#ffffff" fontSize="7" fontWeight="black" textAnchor="middle" letterSpacing="0.5">
-                ● VERIFIED AD
-              </text>
-            </g>
-          </g>
-        ) : (
-          /* B. UNRENTED / AVAILABLE STATE: HIGH-IMPACT CALL-TO-ACTION */
-          <g clipPath={`url(#${clipId})`}>
-            {/* Ambient Tech Grid Mesh */}
-            <g stroke="#1e293b" strokeWidth="0.5" opacity="0.4">
-              {[50, 70, 90, 110, 130].map(gy => (
+            {/* Ambient High-Tech Matrix Grid */}
+            <g stroke="#ffffff" strokeWidth="0.5" opacity="0.08">
+              {[45, 65, 85, 105, 125].map(gy => (
                 <line key={`grid-h-${gy}`} x1="32" y1={gy} x2="288" y2={gy + 4.3} />
               ))}
-              {[70, 110, 150, 190, 230, 270].map(gx => (
+              {[60, 100, 140, 180, 220, 260].map(gx => (
                 <line key={`grid-v-${gx}`} x1={gx} y1="27" x2={gx} y2="143" />
               ))}
             </g>
 
-            {/* Neon Border Pulse */}
+            {/* If custom image exists on this slide, render image */}
+            {currentSlide.imageHref ? (
+              <image 
+                href={currentSlide.imageHref} 
+                x="30" 
+                y="25" 
+                width="260" 
+                height="120" 
+                preserveAspectRatio="xMidYMid slice" 
+              />
+            ) : (
+              /* Vector Graphic Elements for Brand */
+              <g>
+                {currentSlide.iconType === 'airplane' && (
+                  <g opacity="0.22">
+                    <path d="M 45,95 L 90,65 L 140,65 L 105,95 Z" fill="#fbbf24" />
+                    <path d="M 60,80 L 155,42 L 175,42 L 80,80 Z" fill="#f59e0b" />
+                    <circle cx="160" cy="50" r="1.5" fill="#ffffff" />
+                  </g>
+                )}
+                {currentSlide.iconType === 'crown' && (
+                  <g opacity="0.25">
+                    <path d="M 148,46 L 152,53 L 160,44 L 168,53 L 172,46 L 168,62 L 152,62 Z" fill="#fbbf24" />
+                    <circle cx="148" cy="45" r="1.8" fill="#fef08a" />
+                    <circle cx="160" cy="43" r="2.2" fill="#fef08a" />
+                    <circle cx="172" cy="45" r="1.8" fill="#fef08a" />
+                  </g>
+                )}
+                {currentSlide.iconType === 'building' && (
+                  <g opacity="0.2">
+                    <rect x="70" y="55" width="20" height="75" fill="#38bdf8" />
+                    <rect x="95" y="40" width="22" height="90" fill="#38bdf8" />
+                    <polygon points="120,30 126,18 132,30 132,130 120,130" fill="#38bdf8" />
+                    <line x1="126" y1="18" x2="126" y2="10" stroke="#38bdf8" strokeWidth="1.5" />
+                  </g>
+                )}
+                {currentSlide.iconType === 'palm' && (
+                  <g opacity="0.25">
+                    <path d="M 60,110 Q 75,70 95,65 Q 115,70 130,110" fill="none" stroke="#fde047" strokeWidth="1.5" />
+                    <path d="M 95,65 L 80,50 M 95,65 L 110,50 M 95,65 L 70,65 M 95,65 L 120,65" stroke="#fde047" strokeWidth="1.2" />
+                  </g>
+                )}
+                {currentSlide.iconType === 'future' && (
+                  <g opacity="0.22">
+                    <ellipse cx="160" cy="80" rx="55" ry="32" fill="none" stroke="#22d3ee" strokeWidth="2" strokeDasharray="8 4" />
+                    <ellipse cx="160" cy="80" rx="35" ry="20" fill="none" stroke="#22d3ee" strokeWidth="1.5" />
+                  </g>
+                )}
+                {currentSlide.iconType === 'hypercar' && (
+                  <g opacity="0.22">
+                    <path d="M 50,95 Q 90,60 160,60 Q 230,60 270,95" fill="none" stroke="#60a5fa" strokeWidth="2" />
+                    <path d="M 75,95 Q 110,72 160,72 Q 210,72 245,95" fill="none" stroke="#60a5fa" strokeWidth="1" strokeDasharray="4 2" />
+                  </g>
+                )}
+                {currentSlide.iconType === 'sparkle' && (
+                  <g opacity="0.25">
+                    <polygon points="160,35 163,48 176,51 163,54 160,67 157,54 144,51 157,48" fill="#f472b6" />
+                    <polygon points="75,60 77,68 85,70 77,72 75,80 73,72 65,70 73,68" fill="#f472b6" />
+                  </g>
+                )}
+                {currentSlide.iconType === 'cocktail' && (
+                  <g opacity="0.25">
+                    <path d="M 65,55 L 85,55 L 75,72 L 75,90 M 70,90 L 80,90" fill="none" stroke="#4ade80" strokeWidth="1.5" />
+                    <circle cx="85" cy="52" r="4" fill="#fde047" />
+                  </g>
+                )}
+                {currentSlide.iconType === 'custom' && (
+                  <g opacity="0.25">
+                    <polygon points="160,35 163,48 176,51 163,54 160,67 157,54 144,51 157,48" fill="#38bdf8" />
+                    <circle cx="160" cy="80" r="30" fill="none" stroke="#38bdf8" strokeWidth="1" strokeDasharray="4 4" />
+                  </g>
+                )}
+              </g>
+            )}
+
+            {/* Top Bar: Sponsor Badge & Location */}
+            <g transform="translate(40, 36)">
+              <rect x="0" y="0" width={Math.max(68, currentSlide.badge.length * 6.2)} height="13" fill={currentSlide.badgeBg} rx="3" />
+              <text x="6" y="9.5" fill="#ffffff" fontSize="7" fontWeight="900" fontFamily="system-ui, sans-serif" letterSpacing="0.5">
+                {currentSlide.badge}
+              </text>
+              <text x="238" y="9.5" fill={currentSlide.accent} fontSize="7" fontWeight="bold" textAnchor="end" fontFamily="monospace">
+                {currentSlide.location}
+              </text>
+            </g>
+
+            {/* Central Headline Typography */}
+            <g transform="translate(160, 72)">
+              <text textAnchor="middle" fill="#ffffff" fontSize="15" fontWeight="900" fontFamily="system-ui, sans-serif" letterSpacing="1.8">
+                {currentSlide.brand}
+              </text>
+              <text textAnchor="middle" y="16" fill={currentSlide.accent} fontSize="8.5" fontWeight="800" letterSpacing="0.8">
+                {currentSlide.tagline}
+              </text>
+            </g>
+
+            {/* Bottom Bar: Category & Live Carousel Dots */}
+            <g transform="translate(40, 116)">
+              <rect x="0" y="0" width="240" height="18" fill="#000000" opacity="0.55" rx="3" />
+              <text x="10" y="12" fill="#cbd5e1" fontSize="7.5" fontWeight="bold" fontFamily="monospace">
+                ● {currentSlide.category}
+              </text>
+
+              {/* Carousel Position Dots */}
+              <g transform="translate(170, 9)">
+                {slides.map((_, dotIdx) => (
+                  <circle 
+                    key={`dot-${dotIdx}`} 
+                    cx={dotIdx * 8} 
+                    cy="0" 
+                    r={dotIdx === slideIndex ? 2.5 : 1.3} 
+                    fill={dotIdx === slideIndex ? currentSlide.accent : '#64748b'} 
+                  />
+                ))}
+              </g>
+            </g>
+
+            {/* Neon Border Sheen */}
             <polygon 
               points="34,29 286,33.2 286,141.2 34,137" 
               fill="none" 
-              stroke="#38bdf8" 
-              strokeWidth="1.5" 
-              opacity="0.8" 
+              stroke={currentSlide.accent} 
+              strokeWidth="1" 
+              opacity="0.65" 
             />
-
-            {/* Main Call to Action Headline */}
-            <g transform="translate(160, 64)">
-              <text textAnchor="middle" fill="#ffffff" fontSize="15" fontWeight="900" fontFamily="system-ui, sans-serif" letterSpacing="2">
-                ✨ {title.toUpperCase()}
-              </text>
-              <text textAnchor="middle" y="17" fill="#94a3b8" fontSize="9" fontWeight="600">
-                {subtitle}
-              </text>
-            </g>
-
-            {/* Live Rental Price Tag Badge */}
-            <g transform="translate(160, 97)">
-              <rect x="-65" y="0" width="130" height="18" fill="#1e293b" rx="9" stroke="#38bdf8" strokeWidth="1" />
-              <text textAnchor="middle" y="12.5" fill="#facc15" fontSize="9" fontWeight="900" fontFamily="system-ui, sans-serif">
-                🏷️ {rentalPrice}
-              </text>
-            </g>
-
-            {/* Action Prompt Pill */}
-            <g transform="translate(160, 126)">
-              <rect x="-55" y="0" width="110" height="13" fill="#2563eb" rx="6" />
-              <text textAnchor="middle" y="9.5" fill="#ffffff" fontSize="7.5" fontWeight="black" letterSpacing="1">
-                ⚡ TAP TO PLACE AD
-              </text>
-            </g>
           </g>
-        )}
+
+          {/* Sweeping High-Tech Scanline Wipe During Fade */}
+          <polygon 
+            points="32,27 288,31.3 288,143.3 32,139" 
+            fill={`url(#bb-sweep-glow-${safeId})`} 
+            opacity={isFading ? 0.4 : 0} 
+            className="transition-opacity duration-300 pointer-events-none" 
+          />
+
+          {/* High-Resolution Outdoor Glass Reflection Sheen */}
+          <polygon 
+            points="32,27 288,31.3 288,143.3 32,139" 
+            fill="url(#screenGlassReflect)" 
+            className="pointer-events-none"
+          />
+        </g>
 
         {/* Screen Edge Bevel Highlight */}
         <polygon 
@@ -3406,6 +4403,22 @@ export const BillboardSpace = ({ seed }: { seed: number }) => {
 
 export { TallBuilding, type TallBuildingProps, type TallBuildingShape, type RoofFeature };
 export { Plot, type PlotProps, type PlotTheme };
+export { 
+  DubaiOpera, 
+  SoukAlBahar, 
+  BurjPark, 
+  AddressDowntown, 
+  AddressSkyView, 
+  PalaceDowntown,
+  DubaiFountain,
+  TimeOutMarket,
+  TheGuild,
+  ArmaniPrive,
+  DubaiAquarium,
+  BluDubaiClub,
+  OneOakClub,
+  TingIrie
+};
 
 export const getBuildingSprite = (id: string, type: string, seed?: number, title?: string, loc?: any, onUnitClick?: any) => {
   if (type === 'plot' || type === 'building-plot' || type === 'base-plot') return (
@@ -3462,6 +4475,7 @@ export const getBuildingSprite = (id: string, type: string, seed?: number, title
       color2={loc?.color2} 
       brandColor={loc?.brandColor}
       seed={seed || 1}
+      onClick={loc?.onClick}
     />
   );
   if (type === 'marina' || type === 'marina-harbour') return <MarinaBlock name={title || loc?.name} width={loc?.width} height={loc?.height} />;
@@ -3569,9 +4583,25 @@ export const getBuildingSprite = (id: string, type: string, seed?: number, title
   if (type === 'casino') return <CasinoIcon />;
   if (type === 'park') return <ParkIcon />;
 
+  if (type === 'burj-al-arab') return <BurjAlArabIcon width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'dubai-opera' || id === 'dubai-opera') return <DubaiOpera width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'souk-al-bahar' || id === 'souk-al-bahar') return <SoukAlBahar width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'burj-park' || id === 'burj-park') return <BurjPark width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'address-downtown' || id === 'address-downtown') return <AddressDowntown width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'address-skyview' || id === 'address-skyview') return <AddressSkyView width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'palace-downtown' || id === 'palace-downtown') return <PalaceDowntown width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'dubai-fountain' || id === 'dubai-fountain') return <DubaiFountain width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'timeout-market' || id === 'timeout-market') return <TimeOutMarket width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'the-guild' || id === 'the-guild') return <TheGuild width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'armani-prive' || id === 'armani-prive') return <ArmaniPrive width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'blu-dubai' || id === 'blu-dubai') return <BluDubaiClub width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'one-oak' || id === 'one-oak') return <OneOakClub width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'dubai-aquarium' || id === 'dubai-aquarium') return <DubaiAquarium width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'ting-irie' || id === 'ting-irie') return <TingIrie width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+
   switch(id) {
     case 'burj-khalifa': return <BurjKhalifaIcon />;
-    case 'burj-al-arab': return <BurjAlArabIcon />;
+    case 'burj-al-arab': return <BurjAlArabIcon width={loc?.width} height={loc?.height} name={title || loc?.name} />;
     case 'jbh': return <JumeirahBeachHotelIcon />;
     case 'beach-club': return <BeachClubIconNew />;
     case 'bulgari': return <BulgariIslandIcon />;
@@ -3579,10 +4609,10 @@ export const getBuildingSprite = (id: string, type: string, seed?: number, title
     case 'motf': return <MuseumOfFutureIcon width={loc?.width} height={loc?.height} />;
     case 'dubai-frame': return <DubaiFrameIcon width={loc?.width} height={loc?.height} />;
     case 'atlantis': return <AtlantisIcon />;
-    case 'emirates-towers': return <EmiratesTowersIcon />;
-    case 'gevora': return <GevoraIcon />;
-    case 'rose-rayhaan': return <RoseRayhaanIcon />;
-    case 'dwtc': return <DWTCIcon />;
+    case 'emirates-towers': return <EmiratesTowersIcon width={loc?.width} height={loc?.height} />;
+    case 'gevora': return <GevoraIcon width={loc?.width} height={loc?.height} />;
+    case 'rose-rayhaan': return <RoseRayhaanIcon width={loc?.width} height={loc?.height} />;
+    case 'dwtc': return <DWTCIcon width={loc?.width} height={loc?.height} />;
   }
   return <GenericNeighborhood name={title || "District"} seed={seed || 0} />;
 };

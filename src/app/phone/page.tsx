@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,6 +9,19 @@ import { MessageSquare, Users, Bell, PhoneCall, ChevronRight, MapPin } from "luc
 import { Input } from "@/components/ui/input";
 
 export default function PhonePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    try {
+      const logged = localStorage.getItem("dubai_logged_in") === "true";
+      const citizen = localStorage.getItem("dubai_citizen");
+      if (!logged || !citizen) {
+        router.replace("/?signup=true");
+      }
+    } catch {
+      router.replace("/?signup=true");
+    }
+  }, [router]);
   return (
     <main className="relative min-h-screen bg-black overflow-hidden flex flex-col pb-24">
       {/* Background */}

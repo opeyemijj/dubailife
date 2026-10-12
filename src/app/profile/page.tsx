@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { TopBar } from "@/components/layout/TopBar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -8,6 +10,27 @@ import { Star, MapPin, Briefcase, Home, Shield, Award, Map, Car, Settings } from
 import { Button } from "@/components/ui/button";
 
 export default function ProfilePage() {
+  const router = useRouter();
+  const [citizen, setCitizen] = useState<any>(null);
+
+  useEffect(() => {
+    try {
+      const logged = localStorage.getItem("dubai_logged_in") === "true";
+      const stored = localStorage.getItem("dubai_citizen");
+      if (!logged || !stored) {
+        router.replace("/?signup=true");
+        return;
+      }
+      setCitizen(JSON.parse(stored));
+    } catch {
+      router.replace("/?signup=true");
+    }
+  }, [router]);
+
+  const displayName = citizen?.name || "Rashid";
+  const displayUsername = citizen?.username ? `@${citizen.username}` : "@rashid_dxb";
+  const displayHome = citizen?.home || "Downtown Studio";
+
   return (
     <main className="relative min-h-screen bg-black overflow-hidden flex flex-col pb-32">
       {/* Background Gradient */}
@@ -22,7 +45,7 @@ export default function ProfilePage() {
           <div className="relative mb-4">
             <Avatar className="w-32 h-32 border-4 border-black ring-2 ring-white/20">
               <AvatarImage src="https://i.pravatar.cc/300?u=james" />
-              <AvatarFallback>JD</AvatarFallback>
+              <AvatarFallback>{displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
             <div className="absolute -bottom-2 -right-2 bg-blue-600 border-2 border-black rounded-full w-10 h-10 flex items-center justify-center text-white">
               <Star className="w-5 h-5 fill-white" />
@@ -30,10 +53,10 @@ export default function ProfilePage() {
           </div>
           
           <h1 className="text-3xl font-black text-white flex items-center justify-center gap-2">
-            James
+            {displayName}
             <Shield className="w-5 h-5 text-blue-400" />
           </h1>
-          <p className="text-gray-400 font-medium tracking-wide">Dubai Resident</p>
+          <p className="text-gray-400 font-medium tracking-wide">{displayUsername} · Dubai Citizen</p>
 
           {/* Level Progress */}
           <div className="w-full max-w-xs mt-6 space-y-2">

@@ -17,7 +17,7 @@ export const MuseumOfFutureIcon: React.FC<MuseumOfFutureProps> = ({
 }) => {
   return (
     <svg 
-      viewBox="0 0 220 160" 
+      viewBox="0 0 230 168" 
       style={{ width: `${width}px`, height: `${height}px`, ...style }} 
       className={className}
       onClick={onClick}
@@ -55,11 +55,101 @@ export const MuseumOfFutureIcon: React.FC<MuseumOfFutureProps> = ({
         </radialGradient>
       </defs>
 
-      {/* Ground Soft Oval Shadow */}
-      <ellipse cx="112" cy="150" rx="85" ry="8" fill="url(#motf-soft-shadow)" />
+      {/* Soft Ground Contact Shadow */}
+      <polygon 
+        points="14,158 208,161.2 216,145.2 22,142" 
+        fill="#0f172a" 
+        opacity="0.25" 
+      />
 
-      {/* Ground Base Mound / Plinth */}
-      <ellipse cx="112" cy="144" rx="55" ry="5" fill="#94a3b8" opacity="0.6" />
+      {/* ==================================================================== */}
+      {/* 3D ISOMETRIC GREEN HILL PODIUM PLINTH (Matches FloorTile Isometry)    */}
+      {/* Baseline tilt: +0.01667, Depth slant: +0.2355                       */}
+      {/* ==================================================================== */}
+      <g>
+        {/* 1. Lower Plinth Curb Emboss (FloorTile style) */}
+        <polygon 
+          points="18,155 204,158.1 204,161.5 18,158.4" 
+          fill="#1e293b" 
+        />
+        <polygon 
+          points="18,155 204,158.1 204,159.8 18,156.7" 
+          fill="#475569" 
+        />
+
+        {/* 2. Retaining Wall Front Elevation Bevel (Architectural Limestone) */}
+        <polygon 
+          points="18,155 204,158.1 204,150 18,146.9" 
+          fill="#cbd5e1" 
+          stroke="#94a3b8" 
+          strokeWidth="0.5" 
+        />
+
+        {/* 3. Main Landscaped Green Hill Podium Surface */}
+        <polygon 
+          points="26,146 212,149.1 221,123.1 35,120" 
+          fill="#22c55e" 
+          stroke="#16a34a" 
+          strokeWidth="0.8" 
+        />
+        {/* Grassy Mound Volume Gradient Overlay */}
+        <path 
+          d="
+            M 26 146 
+            Q 112 136 212 149.1 
+            L 221 123.1 
+            Q 125 115 35 120 Z
+          " 
+          fill="#15803d" 
+          opacity="0.35" 
+        />
+
+        {/* 4. Manicured Pedestrian Walkways & Arrival Promenade */}
+        <polygon 
+          points="90,147 134,147.7 137,133.7 93,133" 
+          fill="#f8fafc" 
+          stroke="#e2e8f0" 
+          strokeWidth="0.6" 
+        />
+        <line x1="112" y1="147.4" x2="115" y2="133.4" stroke="#cbd5e1" strokeWidth="0.8" strokeDasharray="2 2" />
+
+        {/* 5. Reflecting Pool at the Base of the Torus */}
+        <polygon 
+          points="72,144 152,145.3 155,137.3 75,136" 
+          fill="#38bdf8" 
+          stroke="#ffffff" 
+          strokeWidth="0.6" 
+          opacity="0.9" 
+        />
+        <polygon 
+          points="75,143 149,144.2 151,139 77,137.8" 
+          fill="#0284c7" 
+          opacity="0.4" 
+        />
+
+        {/* 6. Embedded Glass Entrance Pavilion at Ring Base */}
+        <polygon 
+          points="96,140 128,140.5 128,134.5 96,134" 
+          fill="#0f172a" 
+          opacity="0.8" 
+        />
+        <polygon 
+          points="98,139.5 126,140 126,135 98,134.5" 
+          fill="#38bdf8" 
+          opacity="0.85" 
+        />
+        <line x1="112" y1="134.7" x2="112" y2="139.7" stroke="#ffffff" strokeWidth="0.6" />
+
+        {/* 7. Organic Tree & Shrub Landscaping Accents on the Hill */}
+        <circle cx="48" cy="136" r="3" fill="#166534" />
+        <circle cx="47" cy="135" r="2.2" fill="#22c55e" />
+        <circle cx="58" cy="140" r="3.5" fill="#166534" />
+        <circle cx="57" cy="139" r="2.6" fill="#22c55e" />
+        <circle cx="172" cy="139" r="3.2" fill="#166534" />
+        <circle cx="171" cy="138" r="2.4" fill="#22c55e" />
+        <circle cx="184" cy="143" r="3.8" fill="#166534" />
+        <circle cx="183" cy="142" r="2.8" fill="#22c55e" />
+      </g>
 
       {/* Inner Void Ceiling (visible through the aperture) */}
       <path 

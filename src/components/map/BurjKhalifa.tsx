@@ -112,10 +112,10 @@ export const BurjKhalifa: React.FC<BurjKhalifaProps> = ({
       />
 
       {/* ==================================================================== */}
-      {/* 2. THE DUBAI FOUNTAIN OF WATER ONLY (Covering the plot around tower) */}
+      {/* 2. GRAND TRAVERTINE ARRIVAL PLAZA & PROMENADE (Tower Base Grounds)  */}
       {/* ==================================================================== */}
       <g>
-        {/* Fountain Pool White Marble Coping */}
+        {/* Plaza Paving Border */}
         <polygon 
           points="28,414 252,417.7 274,319.7 50,316" 
           fill="#f1f5f9" 
@@ -123,86 +123,31 @@ export const BurjKhalifa: React.FC<BurjKhalifaProps> = ({
           strokeWidth="1.2" 
         />
 
-        {/* Sunken Crystal Turquoise Lagoon Basin */}
+        {/* Plaza Marble Inlay Platform */}
         <polygon 
-          points="32,412 248,415.6 270,322.6 54,319" 
-          fill="url(#bk-fountain-lake)" 
-          stroke="#38bdf8" 
-          strokeWidth="1.2" 
+          points="34,410 246,413.5 266,323.5 54,320" 
+          fill="#e2e8f0" 
+          stroke="#cbd5e1" 
+          strokeWidth="0.8" 
         />
 
-        {/* Water Edge Shadow */}
-        <polygon points="54,319 270,322.6 270,328.6 54,325" fill="#0369a1" opacity="0.6" />
+        {/* VIP Porte-Cochere Drop-off Circle */}
+        <ellipse cx="150" cy="370" rx="55" ry="22" fill="none" stroke="#cbd5e1" strokeWidth="1.2" strokeDasharray="5 3" />
+        <ellipse cx="150" cy="370" rx="32" ry="13" fill="#cbd5e1" opacity="0.4" stroke="#94a3b8" strokeWidth="1" />
 
-        {/* Shimmering Fountain Water Caustics */}
-        <line x1="44" y1="395" x2="120" y2="396" stroke="#ffffff" strokeWidth="0.9" opacity="0.65">
-          <animate attributeName="opacity" values="0.3;0.8;0.3" dur="2.4s" repeatCount="indefinite" />
-        </line>
-        <line x1="150" y1="398" x2="236" y2="399" stroke="#ffffff" strokeWidth="0.9" opacity="0.65">
-          <animate attributeName="opacity" values="0.3;0.8;0.3" dur="2.4s" begin="1.2s" repeatCount="indefinite" />
-        </line>
-        <line x1="70" y1="345" x2="160" y2="346" stroke="#ffffff" strokeWidth="0.8" opacity="0.5" />
-        <line x1="180" y1="347" x2="250" y2="348" stroke="#ffffff" strokeWidth="0.8" opacity="0.5" />
-
-        {/* --- CHOREOGRAPHED DANCING FOUNTAIN NOZZLE ARRAYS --- */}
-
-        {/* LEFT FOUNTAIN SHOOTER RING (X=85, Y=372) */}
-        <g>
-          <ellipse cx="85" cy="372" rx="22" ry="9" fill="none" stroke="#ffffff" strokeWidth="1" strokeDasharray="3 2" opacity="0.9" />
-          <ellipse cx="85" cy="372" rx="11" ry="4.5" fill="none" stroke="#ffffff" strokeWidth="0.8" opacity="0.8" />
-          <line x1="85" y1="372" x2="85" y2="328" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" opacity="0.95">
-            <animate attributeName="y2" values="328;314;328" dur="2s" repeatCount="indefinite" />
-          </line>
-          <circle cx="85" cy="326" r="2.2" fill="#ffffff" />
-          <path d="M 68,375 Q 85,340 102,375" fill="none" stroke="#ffffff" strokeWidth="1.4" strokeLinecap="round" opacity="0.9" />
-          <path d="M 75,372 Q 85,350 95,372" fill="none" stroke="#e0f2fe" strokeWidth="1.2" strokeLinecap="round" opacity="0.85" />
-        </g>
-
-        {/* CENTER GRAND FOUNTAIN SHOOTER RING (X=150, Y=388) */}
-        <g>
-          <ellipse cx="150" cy="388" rx="30" ry="12" fill="none" stroke="#ffffff" strokeWidth="1.2" strokeDasharray="4 2" opacity="0.95" />
-          <ellipse cx="150" cy="388" rx="18" ry="7" fill="none" stroke="#ffffff" strokeWidth="1" opacity="0.85" />
-          <ellipse cx="150" cy="388" rx="8" ry="3.5" fill="none" stroke="#ffffff" strokeWidth="0.8" opacity="0.8" />
-          <line x1="150" y1="388" x2="150" y2="320" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" opacity="0.95">
-            <animate attributeName="y2" values="320;305;320" dur="1.8s" repeatCount="indefinite" />
-          </line>
-          <circle cx="150" cy="318" r="3" fill="#ffffff">
-            <animate attributeName="r" values="3;4.5;3" dur="1.8s" repeatCount="indefinite" />
-          </circle>
-          <path d="M 125,392 Q 150,335 175,392" fill="none" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" opacity="0.95" />
-          <path d="M 135,390 Q 150,350 165,390" fill="none" stroke="#e0f2fe" strokeWidth="1.4" strokeLinecap="round" opacity="0.9" />
-        </g>
-
-        {/* RIGHT FOUNTAIN SHOOTER RING (X=215, Y=374) */}
-        <g>
-          <ellipse cx="215" cy="374" rx="22" ry="9" fill="none" stroke="#ffffff" strokeWidth="1" strokeDasharray="3 2" opacity="0.9" />
-          <ellipse cx="215" cy="374" rx="11" ry="4.5" fill="none" stroke="#ffffff" strokeWidth="0.8" opacity="0.8" />
-          <line x1="215" y1="374" x2="215" y2="328" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" opacity="0.95">
-            <animate attributeName="y2" values="328;314;328" dur="2s" begin="0.9s" repeatCount="indefinite" />
-          </line>
-          <circle cx="215" cy="326" r="2.2" fill="#ffffff" />
-          <path d="M 198,377 Q 215,340 232,377" fill="none" stroke="#ffffff" strokeWidth="1.4" strokeLinecap="round" opacity="0.9" />
-          <path d="M 205,374 Q 215,350 225,374" fill="none" stroke="#e0f2fe" strokeWidth="1.2" strokeLinecap="round" opacity="0.85" />
-        </g>
-
-        {/* Interconnecting Choreographed S-Curve Leaping Water Arcs */}
-        <path d="M 95,370 Q 120,338 145,385" fill="none" stroke="#e0f2fe" strokeWidth="1.4" strokeLinecap="round" opacity="0.85" />
-        <path d="M 155,385 Q 180,338 205,372" fill="none" stroke="#e0f2fe" strokeWidth="1.4" strokeLinecap="round" opacity="0.85" />
-
-        {/* Flanking Back Fountain Shooters */}
-        <g>
-          <ellipse cx="78" cy="336" rx="12" ry="5" fill="none" stroke="#ffffff" strokeWidth="0.8" opacity="0.75" />
-          <line x1="78" y1="336" x2="78" y2="308" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" opacity="0.9">
-            <animate attributeName="y2" values="308;298;308" dur="2.2s" repeatCount="indefinite" />
-          </line>
-          <circle cx="78" cy="307" r="1.5" fill="#ffffff" />
-
-          <ellipse cx="222" cy="338" rx="12" ry="5" fill="none" stroke="#ffffff" strokeWidth="0.8" opacity="0.75" />
-          <line x1="222" y1="338" x2="222" y2="310" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" opacity="0.9">
-            <animate attributeName="y2" values="310;300;310" dur="2.2s" begin="1.1s" repeatCount="indefinite" />
-          </line>
-          <circle cx="222" cy="309" r="1.5" fill="#ffffff" />
-        </g>
+        {/* Landscaped Date Palms at Promenade Corners */}
+        {[
+          { x: 44, y: 398 },
+          { x: 68, y: 340 },
+          { x: 232, y: 402 },
+          { x: 252, y: 345 }
+        ].map((pt, i) => (
+          <g key={`bk-palm-${i}`}>
+            <line x1={pt.x} y1={pt.y} x2={pt.x} y2={pt.y - 12} stroke="#78350f" strokeWidth="1.6" />
+            <circle cx={pt.x} cy={pt.y - 14} r="5" fill="#15803d" />
+            <circle cx={pt.x} cy={pt.y - 14} r="2.5" fill="#22c55e" />
+          </g>
+        ))}
       </g>
 
       {/* ==================================================================== */}

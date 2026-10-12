@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, MessageSquare, Send, Gift, Wallet, Coffee, Waves, Utensils } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,8 +16,9 @@ const livePlayers = [
   { id: 4, name: "Ahmed_Boss", avatar: "https://i.pravatar.cc/150?u=4", x: 80, y: 30 },
 ];
 
-export default function VenueRoom({ params }: { params: { id: string } }) {
+export default function VenueRoom({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const { id } = use(params);
   const [chatMessage, setChatMessage] = useState("");
   const [messages, setMessages] = useState<{user: string, text: string}[]>([
     { user: "System", text: "Welcome to the room." },
@@ -25,19 +26,19 @@ export default function VenueRoom({ params }: { params: { id: string } }) {
   ]);
   const [selectedPlayer, setSelectedPlayer] = useState<typeof livePlayers[0] | null>(null);
 
-  const venueName = params.id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  const venueName = id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
   // Determine venue background and audio based on ID/category
   let bgImage = "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?auto=format&fit=crop&q=80&w=1920"; // default hotel
   let audioSrc = null;
 
-  if (params.id.includes("club")) {
+  if (id.includes("club")) {
     bgImage = "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?auto=format&fit=crop&q=80&w=1920"; // neon club
     audioSrc = "https://cdn.pixabay.com/download/audio/2022/03/15/audio_24a2f8c5b0.mp3?filename=electronic-future-beats-117997.mp3"; // club beat
-  } else if (params.id.includes("mall")) {
+  } else if (id.includes("mall")) {
     bgImage = "https://images.unsplash.com/photo-1519567281027-1c04262489e3?auto=format&fit=crop&q=80&w=1920"; // mall
     audioSrc = "https://cdn.pixabay.com/download/audio/2022/01/18/audio_8b248a39d8.mp3?filename=mall-ambience-14631.mp3"; // mall ambience
-  } else if (params.id.includes("beach")) {
+  } else if (id.includes("beach")) {
     bgImage = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1920"; // beach
     audioSrc = "https://cdn.pixabay.com/download/audio/2022/02/07/audio_4a6f2360eb.mp3?filename=ocean-waves-112906.mp3"; // ocean waves
   }
