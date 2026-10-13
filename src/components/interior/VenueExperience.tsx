@@ -20,6 +20,8 @@ import { PeerPanel, type SocialContext } from "@/components/social/PeerPanel";
 import { SocialFeed } from "@/components/social/SocialFeed";
 import { serveKindOf, type ServeKind, type ServedDef } from "./served";
 import { SceneLoadingOverlay } from "@/components/GameLoadingScreen";
+import { useLocalsInRoom } from "./localsInRoom";
+import { claimGift, elsewhere, GIFT_AMOUNT, giftStatus, greeting, chatLine, inviteLine, rememberHop, takeHop, type Gathering, type GiftStatus, type Local } from "@/lib/locals";
 import { approachPoint, buildPlan, seatsAt, servingSpot, toRoom, type StationDef } from "./layouts";
 
 const SHIFT_COOLDOWN_MS = 10 * 60 * 1000;
@@ -35,7 +37,11 @@ type Panel =
   | { kind: "shift"; step: number; correct: number }
   | { kind: "bag" }
   | { kind: "peer"; userId: string; startIn?: "menu" | "chat" }
+  | { kind: "local"; id: string }
   | null;
+
+/** Something a Local offers without being asked: a gift, or to come along to another venue. */
+type Offer = { local: Local; kind: "welcome" | "daily" } | { local: Local; kind: "invite"; to: Gathering; here: boolean };
 
 const ANCHORS: StationKind[] = ["till", "reception", "menu", "counter", "bar", "tickets"];
 /** Bottle-service hosts: the roster's two party looks. */
@@ -346,8 +352,11 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   };
   const room = useRoom(`venue:${place.id}/${venue.id}`, me, onRoomEvent);
   const { peers, events, emit, myId } = room;
+  // Locals: Dubai Life's hosts, shown with a "Local" tag. They take seats too, so count them when finding one.
+  const localsHere = useLocalsInRoom(place.id, venue, plan, [...peers, me]);
+  const localPeers = localsHere.peers;
   const peersRef = useRef(peers);
-  useEffect(() => { peersRef.current = peers; });
+  useEffect(() => { peersRef.current = [...peers, ...localPeers]; });
   // Lets earlier handlers (bottle service) broadcast once the room exists.
   const emitRef = useRef(emit);
   useEffect(() => { emitRef.current = emit; });
@@ -380,6 +389,107 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     approach(e.from, () => boostNeed("social", 8));
   };
 
+  // ---------------------------------------------------------------- Locals
+
+  const [gifts, setGifts] = useState<GiftStatus | null>(null);
+  const [offer, setOffer] = useState<Offer | null>(null);
+  const [localChat, setLocalChat] = useState<Record<string, Array<{ mine: boolean; text: string }>>>({});
+  const localTalk = (id: string, ...lines: Array<{ mine: boolean; text: string }>) =>
+    setLocalChat((c) => ({ ...c, [id]: [...(c[id] ?? []), ...lines].slice(-20) }));
+  const hasLocals = localsHere.locals.length > 0;
+
+  // Followed a Local here: they pay you for coming. Then see which gifts are still to be had.
+  useEffect(() => {
+    let live = true;
+    const hop = takeHop(key);
+    (async () => {
+      if (hop) {
+        const error = await claimGift(hop, "hop", key);
+        if (live && !error) {
+          gameAudio.playCoinSound();
+          setToast(`🎉 You made it! @${hop.username} sent you AED ${GIFT_AMOUNT.hop.toLocaleString()}`);
+          setTimeout(() => setToast((t) => (t?.startsWith("🎉 You made it") ? null : t)), 4500);
+        }
+      }
+      const status = await giftStatus();
+      if (live) setGifts(status);
+    })();
+    return () => { live = false; };
+  }, [key]);
+
+  // Latest values for the timers below.
+  const live = useRef({ locals: localsHere.locals, gifts, offer, panel, now: localsHere.now, username: citizen?.username ?? "" });
+  useEffect(() => { live.current = { locals: localsHere.locals, gifts, offer, panel, now: localsHere.now, username: citizen?.username ?? "" }; });
+
+  // On arrival a Local says hello and offers a gift; with nobody here, point to where they are.
+  const greetReady = !!gifts && localsHere.now > 0;
+  useEffect(() => {
+    if (!greetReady) return;
+    const t = setTimeout(() => {
+      const { locals, gifts: g, now, username } = live.current;
+      const first = locals[0];
+      if (first) {
+        bubble(first.id, greeting(first, username, venue.name));
+        if (!g?.welcome || !g?.daily) setOffer({ local: first, kind: !g?.welcome ? "welcome" : "daily" });
+      } else {
+        const to = elsewhere(place.id, venue.id, now);
+        if (to) setOffer({ local: to.locals[0], kind: "invite", to, here: false });
+      }
+    }, 4000);
+    return () => clearTimeout(t);
+  }, [greetReady, bubble, place.id, venue.id, venue.name]);
+
+  // Locals chat among themselves, and now and then invite you somewhere else.
+  useEffect(() => {
+    if (!hasLocals) return;
+    let n = 0;
+    const t = setInterval(() => {
+      const { locals, gifts: g, offer: o, panel: p, now } = live.current;
+      if (!locals.length) return;
+      n++;
+      const who = locals[n % locals.length];
+      if (n % 4 === 0 && !o && !p && g && g.hops < 5) {
+        const to = elsewhere(place.id, venue.id, now, who.id);
+        if (to) {
+          bubble(who.id, inviteLine(who, to.venue.name, n));
+          setOffer({ local: who, kind: "invite", to, here: true });
+          return;
+        }
+      }
+      bubble(who.id, chatLine(who, n));
+    }, 18000);
+    return () => clearInterval(t);
+  }, [hasLocals, bubble, place.id, venue.id]);
+
+  const openLocal = (p: Peer) => {
+    gameAudio.playClickSound();
+    setActiveStation(null);
+    setOffer(null);
+    setPanel({ kind: "local", id: p.userId });
+  };
+
+  const takeGift = async (local: Local, kind: "welcome" | "daily") => {
+    const error = await claimGift(local, kind);
+    setOffer(null);
+    if (!error) {
+      gameAudio.playCoinSound();
+      bubble(local.id, "Enjoy! 🥂");
+      localTalk(local.id, { mine: false, text: `Here's AED ${GIFT_AMOUNT[kind].toLocaleString()} for you 🎁` });
+      say(`💸 @${local.username} sent you AED ${GIFT_AMOUNT[kind].toLocaleString()}`);
+      setGifts((g) => (g ? { ...g, [kind]: true } : g));
+    } else if (error === "already") {
+      setGifts(await giftStatus());
+    } else {
+      say(error);
+    }
+  };
+
+  /** Goes with a Local to another venue (rewarded on arrival). */
+  const goWith = (local: Local, to: Gathering) => {
+    rememberHop(to.key, local.id);
+    router.push(`/place/${to.place.id}/${to.venue.id}`);
+  };
+
   const peerPanel = panel?.kind === "peer" ? peers.find((p) => p.userId === panel.userId) : undefined;
   const unreadHere = Object.values(room.unread).reduce((a, b) => a + b, 0);
   const [peopleOpen, setPeopleOpen] = useState(false);
@@ -391,7 +501,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     const [w, d] = plan.size;
     let x = Math.min(w / 2 - 0.5, Math.max(-w / 2 + 0.5, pt[0]));
     let z = Math.min(d / 2 - 0.4, Math.max(-d / 2 + 0.6, pt[1]));
-    for (const p of peers) {
+    for (const p of [...peers, ...localPeers]) {
       const dx = x - p.x, dz = z - p.z, dist = Math.hypot(dx, dz);
       if (dist < 0.65) {
         const push = (0.7 - dist) / (dist || 1);
@@ -663,6 +773,50 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         ))}
       </Sheet>
     );
+  } else if (panel?.kind === "local") {
+    const lp = localPeers.find((p) => p.userId === panel.id);
+    const local = localsHere.locals.find((l) => l.id === panel.id);
+    if (lp && local) {
+      const lines = localChat[local.id] ?? [];
+      const to = elsewhere(place.id, venue.id, localsHere.now, local.id);
+      const canHop = !!gifts && gifts.hops < 5;
+      const reply = (mine: string, theirs: string) => { bubble("me", mine); bubble(local.id, theirs); localTalk(local.id, { mine: true, text: mine }, { mine: false, text: theirs }); };
+      const chip = "p-3 rounded-2xl bg-slate-50 border border-slate-100 text-left text-sm font-black";
+      sheet = (
+        <Sheet onClose={closeAll} title={`@${local.username}`} subtitle="✨ Local · Dubai Life host">
+          <p className="text-[11px] text-slate-500 bg-amber-50 border border-amber-100 rounded-xl p-2">Locals are Dubai Life&apos;s hosts, not real players. They show you around and hand out gifts.</p>
+          {lines.length > 0 && (
+            <div className="space-y-1.5">
+              {lines.map((m, i) => (
+                <div key={i} className={`max-w-[85%] rounded-2xl px-3 py-1.5 text-sm ${m.mine ? "ml-auto bg-sky-500 text-white" : "bg-amber-100 text-slate-900"}`}>{m.text}</div>
+              ))}
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => reply("Hey! 👋", greeting(local, citizen?.username ?? "", venue.name))} className={chip}>👋 Say hi</button>
+            <button onClick={() => reply("What's good here?", chatLine(local, lines.length + 1))} className={chip}>💬 Chat</button>
+            {to && <button onClick={() => reply("Where's everyone?", inviteLine(local, to.venue.name, lines.length))} className={chip}>🎉 Where&apos;s the party?</button>}
+            {social === "club" && (
+              <button onClick={() => { setPanel(null); approach(lp, () => { setPlayerAnimation("dance"); boostNeed("fun", 8); }); bubble(local.id, "Let's go! 💃"); }} className={chip}>💃 Dance together</button>
+            )}
+          </div>
+          {gifts && !gifts.welcome && <button onClick={() => takeGift(local, "welcome")} className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-900 font-black">🎁 Welcome gift · AED {GIFT_AMOUNT.welcome.toLocaleString()}</button>}
+          {gifts && gifts.welcome && !gifts.daily && <button onClick={() => takeGift(local, "daily")} className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-900 font-black">🎁 Today&apos;s gift · AED {GIFT_AMOUNT.daily.toLocaleString()}</button>}
+          {gifts && gifts.welcome && gifts.daily && <p className="text-[11px] text-slate-500 text-center">You&apos;ve had today&apos;s gift. Come back tomorrow for another!</p>}
+          {to && (
+            <button onClick={() => goWith(local, to)} className="w-full py-3 rounded-2xl bg-slate-900 text-white font-black">
+              Go to {to.venue.name}{canHop ? ` · +AED ${GIFT_AMOUNT.hop.toLocaleString()}` : ""}
+            </button>
+          )}
+        </Sheet>
+      );
+    } else {
+      sheet = (
+        <Sheet onClose={closeAll} title="They've moved on" subtitle="✨ Local">
+          <p className="text-sm text-slate-500">This Local has gone somewhere else. Tap another one to say hi.</p>
+        </Sheet>
+      );
+    }
   } else if (panel?.kind === "bag") {
     const wornIds = new Set(citizen?.worn ?? []);
     sheet = (
@@ -708,6 +862,8 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         peerBadges={room.unread}
         bubbles={bubbles}
         onPeer={openPeer}
+        locals={localPeers}
+        onLocal={openLocal}
         onFloor={onFloor}
       />
 
@@ -756,7 +912,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       {/* Who's here: open a chat with anyone in the venue */}
       {peopleOpen && (
         <Sheet onClose={() => setPeopleOpen(false)} title="People here" subtitle={peers.length ? `${peers.length} in ${venue.name}` : venue.name}>
-          {peers.length === 0 && <p className="text-sm text-slate-500">Nobody else is here right now. Invite a friend from your phone!</p>}
+          {peers.length === 0 && <p className="text-sm text-slate-500">No other players here right now. Invite a friend from your phone!</p>}
           {peers.map((p) => (
             <button key={p.userId} onClick={() => { setPeopleOpen(false); setPanel({ kind: "peer", userId: p.userId, startIn: "chat" }); }}
               className="w-full flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100 text-left">
@@ -765,7 +921,38 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
               {room.unread[p.userId] ? <span className="min-w-6 h-6 px-1.5 rounded-full bg-rose-500 text-white text-xs font-black flex items-center justify-center">{room.unread[p.userId]}</span> : <MessagesSquare className="w-4 h-4 text-slate-400" />}
             </button>
           ))}
+          {localPeers.length > 0 && <p className="pt-2 text-[11px] font-black uppercase tracking-wide text-amber-600">Locals · Dubai Life hosts</p>}
+          {localPeers.map((p) => (
+            <button key={p.userId} onClick={() => { setPeopleOpen(false); openLocal(p); }}
+              className="w-full flex items-center gap-3 p-3 rounded-2xl bg-amber-50 border border-amber-100 text-left">
+              <span className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-300 to-orange-400 text-slate-900 font-black flex items-center justify-center">✨</span>
+              <span className="flex-1 min-w-0"><span className="block font-black text-sm truncate">{p.name}</span><span className="block text-[11px] text-amber-700 font-bold">@{p.username} · Local</span></span>
+            </button>
+          ))}
         </Sheet>
+      )}
+
+      {/* A Local's offer: a gift, or come along somewhere else */}
+      {offer && !panel && (
+        <div className="absolute bottom-[calc(max(1rem,env(safe-area-inset-bottom))+6.5rem)] sm:bottom-[calc(max(1rem,env(safe-area-inset-bottom))+3.75rem)] left-1/2 -translate-x-1/2 z-30 w-[min(92vw,400px)] pointer-events-auto">
+          <div className="rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 shadow-2xl p-3 flex items-center gap-3 animate-in slide-in-from-bottom-4 fade-in duration-300">
+            <span className="text-2xl">{offer.kind === "invite" ? "🎉" : "🎁"}</span>
+            <div className="flex-1 min-w-0 text-xs">
+              <div className="font-black text-sm leading-tight">
+                {offer.kind === "invite"
+                  ? offer.here ? `@${offer.local.username}: come to ${offer.to.venue.name}!` : `✨ ${offer.to.locals.length} Locals are at ${offer.to.venue.name}`
+                  : `@${offer.local.username} wants to send you AED ${GIFT_AMOUNT[offer.kind].toLocaleString()}`}
+              </div>
+              <div className="opacity-80 font-bold">
+                {offer.kind === "invite" ? (gifts && gifts.hops < 5 ? `Go now and get AED ${GIFT_AMOUNT.hop.toLocaleString()} when you arrive` : "Join them there") : offer.kind === "welcome" ? "A welcome gift from a Local" : "Your gift for today"}
+              </div>
+            </div>
+            <button onClick={() => (offer.kind === "invite" ? goWith(offer.local, offer.to) : takeGift(offer.local, offer.kind))} className="px-3 py-2 rounded-xl bg-slate-950 text-white text-xs font-black shrink-0">
+              {offer.kind === "invite" ? "Go" : "Accept"}
+            </button>
+            <button onClick={() => setOffer(null)} className="w-7 h-7 rounded-full bg-black/10 flex items-center justify-center shrink-0" aria-label="Dismiss"><X className="w-3.5 h-3.5" /></button>
+          </div>
+        </div>
       )}
 
       {/* Bottle service: everyone sees who's spending */}
@@ -834,8 +1021,13 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         onAccept={acceptInvite}
         onFriend={async (e) => { if (myId) { const r = await befriend(myId, e.from); say(r === "friends" ? `🤝 You and @${e.from.username} are now friends` : "Couldn't add them — try again."); } }}
       />
+      {peers.length === 0 && localPeers.length > 0 && !panel && (
+        <div className="absolute left-3 top-[124px] sm:top-20 z-30 bg-amber-400/95 text-slate-900 rounded-full px-3 py-1 text-[11px] font-black shadow-lg pointer-events-none">
+          ✨ {localPeers.length} Locals here · tap one to say hi
+        </div>
+      )}
       {peers.length > 0 && !panel && (
-        <div className="absolute left-3 top-[68px] sm:top-20 z-30 bg-sky-500/90 text-white rounded-full px-3 py-1 text-[11px] font-black shadow-lg pointer-events-none">
+        <div className="absolute left-3 top-[124px] sm:top-20 z-30 bg-sky-500/90 text-white rounded-full px-3 py-1 text-[11px] font-black shadow-lg pointer-events-none">
           👥 {peers.length} {peers.length === 1 ? "person" : "people"} here · tap them to say hi
         </div>
       )}

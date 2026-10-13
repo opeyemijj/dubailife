@@ -21,7 +21,7 @@ export function KnockListener() {
       .then(({ data }) => data && setKnocks(data as Knock[]));
     // Row-level security only delivers knocks on homes this citizen lives in.
     const channel = supabase()
-      .channel(`knocks-${citizen.id}`)
+      .channel(`knocks-${citizen.id}-${Math.random().toString(36).slice(2, 7)}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "entry_requests" }, (payload) => {
         const k = payload.new as Knock & { status: string; visitor_id: string };
         if (k.status === "pending" && k.visitor_id !== citizen.id) setKnocks((list) => [...list.filter((x) => x.id !== k.id), k]);

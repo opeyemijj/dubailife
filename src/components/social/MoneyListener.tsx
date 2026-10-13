@@ -35,7 +35,7 @@ export function MoneyListener() {
     };
     window.addEventListener(MONEY_EVENT, onLive);
     const channel = supabase()
-      .channel(`transfers-${me}`)
+      .channel(`transfers-${me}-${Math.random().toString(36).slice(2, 7)}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "transfers", filter: `to_id=eq.${me}` }, async (payload) => {
         const t = payload.new as { id: number; from_id: string; amount: number; place: string | null };
         refreshCitizen();

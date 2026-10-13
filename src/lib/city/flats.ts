@@ -125,7 +125,7 @@ export const removeGuest = (flatId: string, userId: string) => supabase().from("
 /** Watches one knock until the resident answers. Returns an unsubscribe function. */
 export function watchRequest(requestId: string, onChange: (status: string) => void) {
   const channel = supabase()
-    .channel(`entry-${requestId}`)
+    .channel(`entry-${requestId}-${Math.random().toString(36).slice(2, 7)}`)
     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "entry_requests", filter: `id=eq.${requestId}` }, (payload) => onChange((payload.new as { status: string }).status))
     .subscribe();
   return () => { supabase().removeChannel(channel); };

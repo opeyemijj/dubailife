@@ -9,6 +9,7 @@ import { entranceOf } from "@/lib/city/geo";
 import { updateCitizen, useRequireCitizen } from "@/lib/citizenStore";
 import { VenueExperience } from "./VenueExperience";
 import { SmallLoader } from "@/components/GameLoadingScreen";
+import { hopPending } from "@/lib/locals";
 
 /** Resolves a place/venue URL, checks the citizen has actually travelled there, then opens the interior. */
 export function VenueRoute({ placeId, venueId }: { placeId: string; venueId?: string }) {
@@ -21,6 +22,14 @@ export function VenueRoute({ placeId, venueId }: { placeId: string; venueId?: st
   useEffect(() => {
     if (place && !venueId && place.venues.length > 1) router.replace(`/explore?open=${place.id}`);
   }, [place, venueId, router]);
+
+  // Going along with a Local: no need to travel there first.
+  const away = !!place && !!citizen && citizen.location?.placeId !== place.id;
+  useEffect(() => {
+    if (!away || !place || !hopPending(`${place.id}/${venueId ?? place.venues[0]?.id}`)) return;
+    const at = entranceOf(place.id);
+    updateCitizen((c) => ({ ...c, location: { ...(at ?? c.location ?? { x: 0, y: 0 }), placeId: place.id } }));
+  }, [away, place, venueId]);
 
   if (!hydrated || !citizen) return <SmallLoader label="Getting you there…" />;
 
@@ -64,7 +73,7 @@ export function VenueRoute({ placeId, venueId }: { placeId: string; venueId?: st
     );
   }
 
-  return <VenueExperience place={place} venue={venue} />;
+  return <VenueExperience key={`${place.id}/${venue.id}`} place={place} venue={venue} />;
 }
 
 function Shell({ children }: { children: React.ReactNode }) {

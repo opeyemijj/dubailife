@@ -64,6 +64,10 @@ export interface ChatMessage {
 }
 
 const TYPING_MS = 3000;
+/** Someone whose connection blips stays on screen this long before they count as gone. */
+const GRACE_MS = 15000;
+/** How often to check I'm still announced in the room (and tidy up people who've left). */
+const HEAL_MS = 10000;
 /** Window event announcing money from someone in the same room. */
 export const MONEY_EVENT = "cometodubai:money";
 const HISTORY_DAYS = 7;
@@ -74,6 +78,15 @@ function merge(list: ChatMessage[], more: ChatMessage[]) {
   const added = more.filter((m) => !seen.has(m.id));
   if (!added.length) return list;
   return [...list, ...added].sort((a, b) => a.at - b.at).slice(-300);
+}
+
+/** Channels on their way out, by topic: a room isn't rejoined until its old channel is gone. */
+const leaving = new Map<string, Promise<unknown>>();
+function leave(topic: string, ch: RealtimeChannel) {
+  // Never wait on it forever: a stuck unsubscribe mustn't keep someone out of the room.
+  const removed = supabase().removeChannel(ch).catch(() => {});
+  const done = Promise.race([removed, new Promise((r) => setTimeout(r, 3000))]).finally(() => { if (leaving.get(topic) === done) leaving.delete(topic); });
+  leaving.set(topic, done);
 }
 
 const newId = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
@@ -122,51 +135,110 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.userId, profile?.username, profile?.name, citizen?.look, me.x, me.z, me.face, me.animation, me.lift]);
 
+  // A fresh channel when the old one can't recover by itself.
+  const [attempt, setAttempt] = useState(0);
+
+  // Everyone seen in this room, and when they dropped out of presence (0 = here now). Kept across
+  // rejoins so a reconnect doesn't blank the room.
+  const known = useRef({ room: "", people: new Map<string, { peer: Peer; goneAt: number }>() });
+
   useEffect(() => {
     if (!roomId || !myId) return;
-    const ch = supabase().channel(`room:${roomId}`, { config: { presence: { key: myId }, broadcast: { self: false } } });
-    channel.current = ch;
-    ch.on("presence", { event: "sync" }, () => {
-      const state = ch.presenceState<Peer>();
-      // One entry per citizen (a second tab of the same person shows once).
-      const list = Object.entries(state)
-        .filter(([key]) => key !== myId)
-        .map(([, metas]) => metas[metas.length - 1])
-        .filter((p): p is Peer & { presence_ref: string } => !!p && !!p.userId);
-      setPeers(list.map((p) => ({ userId: p.userId, username: p.username, name: p.name, look: p.look, x: p.x, z: p.z, face: p.face, animation: p.animation, lift: p.lift })));
-    });
-    ch.on("broadcast", { event: "evt" }, ({ payload }) => {
-      const e = { ...(payload as Received), at: Date.now() };
-      if (e.to && e.to !== myId) return;
-      const from = e.from.userId;
-      if (e.type === "typing") {
-        setTyping((t) => ({ ...t, [from]: e.at }));
-        return;
-      }
-      if (e.type === "chat") {
-        setTyping((t) => ({ ...t, [from]: 0 }));
-        setMessages((m) => merge(m, [{ id: e.id, with: from, mine: false, text: e.text, at: e.at }]));
-        if (reading.current !== from) setUnread((u) => ({ ...u, [from]: (u[from] ?? 0) + 1 }));
-      }
-      setEvents((list) => [...list.slice(-39), e]);
-      if (e.type === "money") {
-        refreshCitizen();
-        // The app-wide notice shows it now, rather than waiting for the database event.
-        window.dispatchEvent(new CustomEvent(MONEY_EVENT, { detail: { from: e.from.username, amount: e.amount } }));
-      }
-      handler.current?.(e);
-    });
-    ch.subscribe((status) => {
-      ready.current = status === "SUBSCRIBED";
-      if (ready.current && self.current) ch.track(self.current).catch(() => {});
-    });
-    return () => {
-      ready.current = false;
-      channel.current = null;
-      setPeers([]);
-      supabase().removeChannel(ch);
+    const topic = `room:${roomId}`;
+    let cancelled = false;
+    let stop: (() => void) | undefined;
+    if (known.current.room !== roomId) known.current = { room: roomId, people: new Map() };
+    const people = known.current.people;
+    const publish = () => {
+      const now = Date.now();
+      for (const [id, k] of people) if (k.goneAt && now - k.goneAt > GRACE_MS) people.delete(id);
+      setPeers([...people.values()].map((k) => k.peer));
     };
-  }, [roomId, myId]);
+
+    const join = () => {
+      // The client hands back an existing channel with the same name, even one being torn down,
+      // so the previous one must be fully gone first (see `leaving`).
+      const ch = supabase().channel(topic, { config: { presence: { key: myId }, broadcast: { self: false } } });
+      channel.current = ch;
+      ch.on("presence", { event: "sync" }, () => {
+        const state = ch.presenceState<Peer>();
+        // One entry per citizen (a second tab of the same person shows once).
+        const here = new Set<string>();
+        for (const [key, metas] of Object.entries(state)) {
+          const p = metas[metas.length - 1];
+          if (key === myId || !p?.userId) continue;
+          here.add(p.userId);
+          people.set(p.userId, { peer: { userId: p.userId, username: p.username, name: p.name, look: p.look, x: p.x, z: p.z, face: p.face, animation: p.animation, lift: p.lift }, goneAt: 0 });
+        }
+        // A connection blip shouldn't make someone vanish: keep them a little while.
+        const now = Date.now();
+        for (const [id, k] of people) if (!here.has(id) && !k.goneAt) k.goneAt = now;
+        publish();
+      });
+      ch.on("broadcast", { event: "evt" }, ({ payload }) => {
+        const e = { ...(payload as Received), at: Date.now() };
+        if (e.to && e.to !== myId) return;
+        const from = e.from.userId;
+        if (e.type === "typing") {
+          setTyping((t) => ({ ...t, [from]: e.at }));
+          return;
+        }
+        if (e.type === "chat") {
+          setTyping((t) => ({ ...t, [from]: 0 }));
+          setMessages((m) => merge(m, [{ id: e.id, with: from, mine: false, text: e.text, at: e.at }]));
+          if (reading.current !== from) setUnread((u) => ({ ...u, [from]: (u[from] ?? 0) + 1 }));
+        }
+        setEvents((list) => [...list.slice(-39), e]);
+        if (e.type === "money") {
+          refreshCitizen();
+          // The app-wide notice shows it now, rather than waiting for the database event.
+          window.dispatchEvent(new CustomEvent(MONEY_EVENT, { detail: { from: e.from.username, amount: e.amount } }));
+        }
+        handler.current?.(e);
+      });
+      let rebuild: ReturnType<typeof setTimeout> | undefined;
+      ch.subscribe((status) => {
+        if (channel.current !== ch) return;
+        ready.current = status === "SUBSCRIBED";
+        if (ready.current) {
+          clearTimeout(rebuild);
+          // (Re)announce myself on every join, including automatic rejoins after a reconnect.
+          if (self.current) ch.track(self.current).catch(() => {});
+          return;
+        }
+        // The client rejoins by itself after most drops; if it hasn't within a few seconds, start over.
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          clearTimeout(rebuild);
+          rebuild = setTimeout(() => { if (!ready.current && channel.current === ch) setAttempt((n) => n + 1); }, 5000);
+        }
+      });
+      // Self-heal: if the room has lost me (e.g. a rejoin without my details), announce again.
+      const heal = () => {
+        publish();
+        if (!ready.current || !self.current || channel.current !== ch) return;
+        if (!ch.presenceState()[myId]) ch.track(self.current).catch(() => {});
+      };
+      const timer = setInterval(heal, HEAL_MS);
+      const onVisible = () => { if (document.visibilityState === "visible") heal(); };
+      document.addEventListener("visibilitychange", onVisible);
+      stop = () => {
+        clearInterval(timer);
+        clearTimeout(rebuild);
+        document.removeEventListener("visibilitychange", onVisible);
+        if (channel.current === ch) { channel.current = null; ready.current = false; }
+        leave(topic, ch);
+      };
+    };
+
+    // Wait for any earlier copy of this room to finish leaving, then join.
+    const stale = supabase().getChannels().find((c) => c.topic === `realtime:${topic}`);
+    if (stale) leave(topic, stale);
+    void (leaving.get(topic) ?? Promise.resolve()).then(() => { if (!cancelled) { publish(); join(); } });
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
+  }, [roomId, myId, attempt]);
 
   /** Sends an event to one citizen (`to`) or the whole room. */
   const emit = (event: RoomEvent, to?: string, id = newId()) => {

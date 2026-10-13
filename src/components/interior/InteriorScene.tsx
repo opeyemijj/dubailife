@@ -64,6 +64,9 @@ interface Props {
   /** Unread message counts by user id, shown on their name tag. */
   peerBadges?: Record<string, number>;
   onPeer?: (peer: Peer) => void;
+  /** Dubai Life's hosts in this venue (labelled "Local", never passed off as players). */
+  locals?: Peer[];
+  onLocal?: (local: Peer) => void;
   /** Tapped a free spot on the floor (or the dance floor). */
   onFloor?: (point: [number, number]) => void;
 }
@@ -327,7 +330,7 @@ function useFollowable(follow: Follow, key: string, group: React.RefObject<THREE
   }, [follow, key, group]);
 }
 
-function RemotePeer({ peer, follow, followKey, onClick }: { peer: Peer; follow: Follow; followKey: string; onClick: () => void }) {
+function RemotePeer({ peer, follow, followKey, onClick, ring = "#38bdf8" }: { peer: Peer; follow: Follow; followKey: string; onClick: () => void; ring?: string }) {
   const group = useRef<THREE.Group>(null);
   const [walking, setWalking] = useState(false);
   const moving = useRef(false);
@@ -353,7 +356,7 @@ function RemotePeer({ peer, follow, followKey, onClick }: { peer: Peer; follow: 
       {/* A soft ring so other players stand out from staff and shoppers. */}
       <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
         <ringGeometry args={[0.36, 0.44, 32]} />
-        <meshBasicMaterial color="#38bdf8" transparent opacity={0.7} />
+        <meshBasicMaterial color={ring} transparent opacity={0.7} />
       </mesh>
     </group>
   );
@@ -404,7 +407,7 @@ function Player({ look, worn, start, walkTo, onArrive, animation, lift, follow, 
   );
 }
 
-export function InteriorScene({ venue, plan, look, worn, playerAnimation, playerLift = 0, start, walkTo, onArrive, onStation, onStaff, staffAnimation, highlight, served, deliveries, onPlaced, onDeliveryDone, peers = [], bubbles = {}, peerBadges = {}, onPeer, onFloor }: Props) {
+export function InteriorScene({ venue, plan, look, worn, playerAnimation, playerLift = 0, start, walkTo, onArrive, onStation, onStaff, staffAnimation, highlight, served, deliveries, onPlaced, onDeliveryDone, peers = [], bubbles = {}, peerBadges = {}, onPeer, locals = [], onLocal, onFloor }: Props) {
   const quality = useMemo(() => canvasQuality(), []);
   const [w, d] = plan.size;
   const shoppers = useMemo(() => {
@@ -427,6 +430,7 @@ export function InteriorScene({ venue, plan, look, worn, playerAnimation, player
     })),
     { id: "staff", text: `💬 ${venue.staff.role}`, at: [plan.staff.position[0], 2.15, plan.staff.position[1]], className: "bg-slate-900/85 text-white" },
     ...peers.map((p) => ({ id: `peer:${p.userId}`, text: `@${p.username}${peerBadges[p.userId] ? ` · 💬${peerBadges[p.userId]}` : ""}`, at: [0, p.animation === "sit" ? 1.6 : 2.05, 0] as [number, number, number], follow: p.userId, className: "bg-sky-500 text-white" })),
+    ...locals.map((p) => ({ id: `peer:${p.userId}`, text: `✨ @${p.username} · Local`, at: [0, p.animation === "sit" ? 1.6 : 2.05, 0] as [number, number, number], follow: p.userId, className: "bg-amber-400 text-slate-900" })),
     ...Object.entries(bubbles).map(([who, text]) => ({
       id: `bubble:${who}`, text: `💬 ${text}`, at: [0, 2.5, 0] as [number, number, number], follow: who, className: "bg-white text-slate-900 max-w-[220px] whitespace-normal",
     })),
@@ -472,6 +476,7 @@ export function InteriorScene({ venue, plan, look, worn, playerAnimation, player
       {served.map((s) => <ServedItem key={s.id} def={s} />)}
       {deliveries.map((d) => <Delivery key={d.id} d={d} onPlaced={onPlaced} onDone={onDeliveryDone} />)}
       {peers.map((p) => <RemotePeer key={p.userId} peer={p} follow={followNodes} followKey={p.userId} onClick={() => onPeer?.(p)} />)}
+      {locals.map((p) => <RemotePeer key={p.userId} peer={p} follow={followNodes} followKey={p.userId} ring="#f59e0b" onClick={() => onLocal?.(p)} />)}
       <Suspense fallback={null}>
         <Player look={look} worn={worn} start={start ?? plan.entrance} walkTo={walkTo} onArrive={onArrive} animation={playerAnimation} lift={playerLift} follow={followNodes} followKey="me" />
       </Suspense>
