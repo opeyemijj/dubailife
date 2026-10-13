@@ -1,0 +1,256 @@
+"use client";
+
+// Realistic 3D citizen. Two sources:
+//  - roster: ready-made Rocketbox humans (MIT) that play our animation clips directly;
+//  - custom: an avatar the citizen made from selfies or photos in Avaturn, animated by
+//    retargeting the same clips from an invisible Rocketbox skeleton.
+
+import { Suspense, useEffect, useMemo, useRef } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useAnimations, useGLTF } from "@react-three/drei";
+import * as THREE from "three";
+import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { applyBodyShape, buildBodyFrame, defaultBodyType, prepareForShaping } from "./bodyShape";
+import { presetFor, rosterAnimations, rosterModel, type AvatarLookProps, type Gender } from "./roster";
+import { createRetargeter } from "./retarget";
+import { useAvatarUrl } from "./customAvatarStore";
+import { attachAccessories, buildAccessoryRig } from "./accessories";
+import type { Accessory } from "@/lib/city/types";
+
+export type { AvatarLookProps } from "./roster";
+export type AvatarAnimation = "idle" | "sit" | "wave" | "clap" | "walk" | "dance" | "talk";
+
+export const DEFAULT_LOOK: AvatarLookProps = { gender: "woman", bodyType: "Hourglass" };
+
+const HEIGHT: Record<Gender, number> = { woman: 1.68, man: 1.8 };
+const CLIPS: AvatarAnimation[] = ["idle", "sit", "wave", "clap", "walk", "dance", "talk"];
+
+/** Soft studio lighting for realistic skin, generated in code (no HDR download). */
+export function StudioEnvironment({ intensity = 0.6 }: { intensity?: number }) {
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
+  // Setting scene.environment is how three.js takes an environment map, so the scene is mutated here.
+  /* eslint-disable react-hooks/immutability */
+  useEffect(() => {
+    const pmrem = new THREE.PMREMGenerator(gl);
+    const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    const previous = scene.environment;
+    const previousIntensity = scene.environmentIntensity;
+    scene.environment = env;
+    scene.environmentIntensity = intensity;
+    return () => {
+      scene.environment = previous;
+      scene.environmentIntensity = previousIntensity;
+      env.dispose();
+      pmrem.dispose();
+    };
+  }, [gl, scene, intensity]);
+  /* eslint-enable react-hooks/immutability */
+  return null;
+}
+
+/** Clips from the roster animation files, renamed, and trimmed so they fit any body size. */
+function useRosterClips(gender: Gender) {
+  const urls = rosterAnimations(gender);
+  const files = useGLTF(CLIPS.map((c) => urls[c]));
+  return useMemo(
+    () =>
+      files.map((f, i) => {
+        const clip = f.animations[0].clone();
+        clip.name = CLIPS[i];
+        // Rotations drive every bone, but only the root/pelvis may move: per-bone offsets
+        // would force the animation actor's proportions onto every body.
+        // The walk is played in place: the scene moves the avatar, so the root must not drift.
+        const rootMotion = CLIPS[i] === "walk" ? /^Bip01_Pelvis\.position$/ : /^Bip01(_Pelvis)?\.position$/;
+        clip.tracks = clip.tracks.filter((t) => t.name.endsWith(".quaternion") || rootMotion.test(t.name));
+        return clip;
+      }),
+    [files],
+  );
+}
+
+/** Clones a loaded model and measures it at rest: height, floor offset and facing. */
+function usePreparedModel(source: THREE.Object3D, shape: boolean) {
+  return useMemo(() => {
+    const scene = cloneSkinned(source) as THREE.Group;
+    const meshes: THREE.Mesh[] = [];
+    scene.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (!m.isMesh) return;
+      m.castShadow = true;
+      m.receiveShadow = true;
+      m.frustumCulled = false; // skinned bounds don't follow the animation
+      meshes.push(m);
+    });
+    if (shape) prepareForShaping(meshes);
+    scene.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(scene);
+
+    // Facing: perpendicular to the hips (right thigh -> left thigh), so turned-out feet don't skew it.
+    const named = (...names: string[]) => names.map((n) => scene.getObjectByName(n)).find(Boolean);
+    const leftThigh = named("Bip01_L_Thigh", "LeftUpLeg");
+    const rightThigh = named("Bip01_R_Thigh", "RightUpLeg");
+    let yaw = 0;
+    if (leftThigh && rightThigh) {
+      const left = leftThigh.getWorldPosition(new THREE.Vector3()).sub(rightThigh.getWorldPosition(new THREE.Vector3()));
+      const forward = new THREE.Vector3().crossVectors(left, new THREE.Vector3(0, 1, 0));
+      yaw = Math.atan2(forward.x, forward.z);
+    }
+    const height = box.max.y - box.min.y;
+    return { scene, meshes, frame: shape ? buildBodyFrame(meshes) : null, height, minY: box.min.y, yaw, rig: buildAccessoryRig(scene, height, yaw) };
+  }, [source, shape]);
+}
+
+interface Placement {
+  position?: [number, number, number];
+  rotation?: [number, number, number];
+}
+
+/** Keeps the worn accessories attached to the model's skeleton. */
+function useAccessories(model: { rig: ReturnType<typeof buildAccessoryRig> }, accessories: Accessory[] | undefined) {
+  const key = (accessories ?? []).slice().sort().join(",");
+  useEffect(() => {
+    if (!key) return;
+    return attachAccessories(model.rig, key.split(",") as Accessory[]);
+  }, [model, key]);
+}
+
+/** Places a model: real-world height, feet on the floor, facing +z, then the caller's position. */
+function Framed({ model, gender, placement, children }: { model: { height: number; minY: number; yaw: number }; gender: Gender; placement: Placement; children: React.ReactNode }) {
+  const s = HEIGHT[gender] / model.height;
+  return (
+    <group position={placement.position} rotation={placement.rotation}>
+      <group rotation={[0, -model.yaw, 0]}>
+        <group scale={s} position={[0, -model.minY * s, 0]}>{children}</group>
+      </group>
+    </group>
+  );
+}
+
+function usePlay(actions: Record<string, THREE.AnimationAction | null>, animation: AvatarAnimation) {
+  useEffect(() => {
+    const action = actions[animation] ?? actions.idle;
+    if (!action) return;
+    action.reset().fadeIn(0.35).play();
+    return () => {
+      action.fadeOut(0.35);
+    };
+  }, [actions, animation]);
+}
+
+/**
+ * Something carried in the right hand (a bottle, a tray…), kept upright whatever the arm does.
+ * With `raise`, the arm is lifted overhead on top of the current animation.
+ * Call after useAnimations so it runs once the clip has posed the skeleton for the frame.
+ */
+function useCarry(model: { scene: THREE.Object3D }, raise: boolean, held: React.RefObject<THREE.Group | null>) {
+  const bones = useMemo(() => {
+    const named = (...names: string[]) => names.map((n) => model.scene.getObjectByName(n)).find(Boolean);
+    return { upper: named("Bip01_R_UpperArm", "RightArm"), hand: named("Bip01_R_Hand", "RightHand"), neck: named("Bip01_Neck", "Neck") };
+  }, [model]);
+  const tmp = useMemo(() => ({ a: new THREE.Vector3(), b: new THREE.Vector3(), c: new THREE.Vector3(), q: new THREE.Quaternion(), q2: new THREE.Quaternion() }), []);
+  useFrame(() => {
+    const { upper, hand, neck } = bones;
+    if (!upper || !hand) return;
+    const { a, b, c, q, q2 } = tmp;
+    if (raise && upper.parent && neck) {
+      // Swing the whole arm so shoulder→hand points up and a little out to the side.
+      const shoulder = upper.getWorldPosition(a);
+      const current = hand.getWorldPosition(b).sub(shoulder).normalize();
+      const out = neck.getWorldPosition(c).negate().add(shoulder).setY(0).normalize();
+      const target = out.multiplyScalar(0.3).add(new THREE.Vector3(0, 1, 0)).normalize();
+      q.setFromUnitVectors(current, target);
+      upper.getWorldQuaternion(q2).premultiply(q);
+      upper.quaternion.copy(upper.parent.getWorldQuaternion(q).invert().multiply(q2));
+      upper.updateWorldMatrix(false, true);
+    }
+    const g = held.current;
+    if (g?.parent) {
+      g.parent.updateWorldMatrix(true, false);
+      g.position.copy(g.parent.worldToLocal(hand.getWorldPosition(a)));
+      g.quaternion.copy(g.parent.getWorldQuaternion(q).invert());
+    }
+  });
+}
+
+function RosterAvatar({ look, animation, placement, accessories, holding, raiseHand = false }: { look: AvatarLookProps; animation: AvatarAnimation; placement: Placement; accessories?: Accessory[]; holding?: React.ReactNode; raiseHand?: boolean }) {
+  const gltf = useGLTF(rosterModel(presetFor(look)));
+  const model = usePreparedModel(gltf.scene, true);
+  useAccessories(model, accessories);
+  const clips = useRosterClips(look.gender);
+  const root = useRef<THREE.Group>(null);
+  const { actions } = useAnimations(clips, root);
+  usePlay(actions, animation);
+  const held = useRef<THREE.Group>(null);
+  useCarry(model, raiseHand && !!holding, held);
+
+  const bodyType = look.bodyType ?? defaultBodyType(look.gender);
+  useEffect(() => {
+    if (model.frame) applyBodyShape(model.meshes, model.frame, look.gender, bodyType);
+  }, [model, look.gender, bodyType]);
+
+  return (
+    <>
+      <Framed model={model} gender={look.gender} placement={placement}>
+        <group ref={root}>
+          <primitive object={model.scene} />
+        </group>
+      </Framed>
+      {holding && <group ref={held}>{holding}</group>}
+    </>
+  );
+}
+
+function CustomAvatar({ look, url, animation, placement, accessories }: { look: AvatarLookProps; url: string; animation: AvatarAnimation; placement: Placement; accessories?: Accessory[] }) {
+  const gltf = useGLTF(url);
+  const model = usePreparedModel(gltf.scene, false);
+  useAccessories(model, accessories);
+
+  // Invisible Rocketbox skeleton that plays the clip we copy from.
+  const sourceGltf = useGLTF(rosterModel(presetFor({ gender: look.gender })));
+  const source = useMemo(() => cloneSkinned(sourceGltf.scene), [sourceGltf.scene]);
+  const retargeter = useMemo(() => createRetargeter(source, model.scene), [source, model.scene]);
+  const sourceRef = useRef<THREE.Object3D>(source);
+  useEffect(() => {
+    sourceRef.current = source;
+  }, [source]);
+  const clips = useRosterClips(look.gender);
+  const { actions } = useAnimations(clips, sourceRef);
+  usePlay(actions, animation);
+
+  // Registered after useAnimations, so it runs once the source has been posed for this frame.
+  useFrame(() => retargeter?.update());
+
+  return (
+    <Framed model={model} gender={look.gender} placement={placement}>
+      <primitive object={model.scene} />
+    </Framed>
+  );
+}
+
+interface CitizenAvatarProps {
+  look?: AvatarLookProps;
+  /** Accessories worn (or being tried on). */
+  accessories?: Accessory[];
+  animation?: AvatarAnimation;
+  position?: [number, number, number];
+  rotation?: [number, number, number];
+  /** Carried in the right hand, upright, with its origin at the grip (roster citizens only). */
+  holding?: React.ReactNode;
+  /** Hold it up high, as bottle-service hosts do. */
+  raiseHand?: boolean;
+}
+
+export function CitizenAvatar({ look = DEFAULT_LOOK, animation = "idle", position, rotation, accessories, holding, raiseHand }: CitizenAvatarProps) {
+  const customUrl = useAvatarUrl(look.custom?.url);
+  const placement = { position, rotation };
+  // Keyed by model: the animation mixer binds to one skeleton, so a new model needs a fresh mixer.
+  const roster = <RosterAvatar key={presetFor(look)} look={look} animation={animation} placement={placement} accessories={accessories} holding={holding} raiseHand={raiseHand} />;
+  if (!look.custom || !customUrl) return roster;
+  return (
+    <Suspense fallback={roster}>
+      <CustomAvatar key={customUrl} look={look} url={customUrl} animation={animation} placement={placement} accessories={accessories} />
+    </Suspense>
+  );
+}

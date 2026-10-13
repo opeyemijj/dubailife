@@ -2,8 +2,12 @@
 
 import fs from 'fs';
 import path from 'path';
+import { getAdmin } from '@/lib/admin/dal';
 
-export async function saveMapSeed(venues: any[], mapConfig: any) {
+export async function saveMapSeed(venues: unknown[], mapConfig: unknown) {
+  // Only admins may rewrite the map.
+  const admin = await getAdmin();
+  if (!admin) return { success: false, error: 'Admins only. Log in at /admin/login.' };
   try {
     const filePath = path.join(process.cwd(), 'src', 'data', 'mapSeed.ts');
     
@@ -16,8 +20,8 @@ export const mapSeed = ${JSON.stringify(venues, null, 2)};
 
     fs.writeFileSync(filePath, content, 'utf8');
     return { success: true };
-  } catch (err: any) {
+  } catch (err) {
     console.error(err);
-    return { success: false, error: err.message };
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
 }

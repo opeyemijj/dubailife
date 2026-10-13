@@ -1,134 +1,123 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+// The citizen's profile: who they are, their wallet, home, job and what they own — all from their
+// saved game and the database.
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRequireCitizen, signOut, updateCitizen } from "@/lib/citizenStore";
+import { supabase } from "@/lib/supabase/client";
 import { TopBar } from "@/components/layout/TopBar";
 import { BottomNav } from "@/components/layout/BottomNav";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
-import { Star, MapPin, Briefcase, Home, Shield, Award, Map, Car, Settings } from "lucide-react";
+import { Briefcase, Home, LogOut, MapPin, ShoppingBag, Users, Wallet, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ROSTER, presetFor, rosterThumb } from "@/components/avatar/roster";
+import { flatRoute, flatTitle } from "@/lib/city/flats";
+
+interface MyFlat { id: string; building_id: string; unit: string; property_type: string; owner_id: string | null; tenant_id: string | null; rent_price: number | null; residentName?: string | null }
 
 export default function ProfilePage() {
-  const router = useRouter();
-  const [citizen, setCitizen] = useState<any>(null);
+  const { citizen } = useRequireCitizen();
+  const [flats, setFlats] = useState<MyFlat[] | null>(null);
+  const [friends, setFriends] = useState<number | null>(null);
+  const [picking, setPicking] = useState(false);
+  const [now] = useState(() => Date.now());
+  const me = citizen?.id;
 
   useEffect(() => {
-    try {
-      const logged = localStorage.getItem("dubai_logged_in") === "true";
-      const stored = localStorage.getItem("dubai_citizen");
-      if (!logged || !stored) {
-        router.replace("/?signup=true");
-        return;
-      }
-      setCitizen(JSON.parse(stored));
-    } catch {
-      router.replace("/?signup=true");
-    }
-  }, [router]);
+    if (!me) return;
+    const db = supabase();
+    // Results arrive asynchronously; state is only set when they do.
+    db.from("flats").select("id, building_id, unit, property_type, owner_id, tenant_id, rent_price").or(`owner_id.eq.${me},tenant_id.eq.${me}`)
+      .then(({ data }) => setFlats((data as MyFlat[]) ?? []));
+    db.from("friendships").select("user_id", { count: "exact", head: true }).eq("status", "accepted").or(`user_id.eq.${me},friend_id.eq.${me}`)
+      .then(({ count }) => setFriends(count ?? 0));
+  }, [me]);
 
-  const displayName = citizen?.name || "Rashid";
-  const displayUsername = citizen?.username ? `@${citizen.username}` : "@rashid_dxb";
-  const displayHome = citizen?.home || "Downtown Studio";
+  if (!citizen) return <main className="min-h-screen bg-black" />;
+
+  const preset = presetFor(citizen.look ?? { gender: "woman" });
+  const days = Math.max(1, Math.ceil((now - Date.parse(citizen.createdAt)) / 86400000));
+  const items = (citizen.inventory ?? []).length + (citizen.furniture ?? []).length;
+  const visited = citizen.visited?.length ?? 0;
+  const recent = (citizen.inventory ?? []).slice(-6).reverse();
 
   return (
     <main className="relative min-h-screen bg-black overflow-hidden flex flex-col pb-32">
-      {/* Background Gradient */}
       <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-blue-900/40 to-black pointer-events-none" />
-      <div className="absolute -top-40 -right-40 w-96 h-96 bg-violet-600/20 blur-[120px] rounded-full pointer-events-none" />
-
       <TopBar />
 
       <div className="relative z-10 flex-1 overflow-y-auto pt-24 px-4 w-full max-w-2xl mx-auto space-y-6">
-        {/* Header / Avatar Section */}
         <div className="flex flex-col items-center text-center">
-          <div className="relative mb-4">
-            <Avatar className="w-32 h-32 border-4 border-black ring-2 ring-white/20">
-              <AvatarImage src="https://i.pravatar.cc/300?u=james" />
-              <AvatarFallback>{displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <div className="absolute -bottom-2 -right-2 bg-blue-600 border-2 border-black rounded-full w-10 h-10 flex items-center justify-center text-white">
-              <Star className="w-5 h-5 fill-white" />
+          <button onClick={() => setPicking(!picking)} className="relative mb-4" aria-label="Change your look">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={rosterThumb(preset)} alt="" className="w-32 h-32 rounded-full object-cover object-top border-4 border-black ring-2 ring-white/20 bg-slate-800" />
+            <span className="absolute -bottom-1 -right-1 bg-white text-black text-[10px] font-black rounded-full px-2 py-1">Change</span>
+          </button>
+          <h1 className="text-3xl font-black text-white">{citizen.name}</h1>
+          <p className="text-gray-400 font-medium">@{citizen.username} · Dubai citizen for {days} {days === 1 ? "day" : "days"}</p>
+          {citizen.look?.custom && <p className="text-[11px] text-amber-300 mt-1">Your selfie avatar is shown in 3D; pick a look below to switch back to the roster.</p>}
+        </div>
+
+        {picking && (
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-4">
+            <h2 className="text-sm font-bold text-white mb-3">Choose your look</h2>
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+              {ROSTER.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => { updateCitizen((c) => ({ ...c, look: { ...(c.look ?? {}), gender: r.gender, preset: r.id, custom: undefined } })); setPicking(false); }}
+                  className={`rounded-2xl overflow-hidden border-2 ${r.id === preset ? "border-emerald-400" : "border-transparent"}`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={rosterThumb(r.id)} alt={r.label} className="w-full aspect-square object-cover object-top bg-slate-800" />
+                  <div className="text-[9px] text-white/80 py-1 truncate">{r.label}</div>
+                </button>
+              ))}
             </div>
           </div>
-          
-          <h1 className="text-3xl font-black text-white flex items-center justify-center gap-2">
-            {displayName}
-            <Shield className="w-5 h-5 text-blue-400" />
-          </h1>
-          <p className="text-gray-400 font-medium tracking-wide">{displayUsername} · Dubai Citizen</p>
+        )}
 
-          {/* Level Progress */}
-          <div className="w-full max-w-xs mt-6 space-y-2">
-            <div className="flex justify-between text-xs font-bold">
-              <span className="text-yellow-400">Level 17</span>
-              <span className="text-gray-400">8,450 / 10,000 XP</span>
-            </div>
-            <Progress value={84.5} className="h-2 bg-white/10" />
-          </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Stat icon={<Wallet className="w-5 h-5 text-emerald-400" />} label="Wallet" value={`${citizen.balance.toLocaleString()} D-Coins`} />
+          <Stat icon={<Users className="w-5 h-5 text-sky-400" />} label="Friends" value={friends === null ? "…" : String(friends)} />
+          <Stat icon={<ShoppingBag className="w-5 h-5 text-violet-400" />} label="Items owned" value={String(items)} />
+          <Stat icon={<MapPin className="w-5 h-5 text-rose-400" />} label="Places visited" value={String(visited)} />
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <Button className="flex-1 bg-white text-black hover:bg-gray-200 font-bold rounded-xl h-12">
-            Edit Avatar
-          </Button>
-          <Button variant="outline" className="w-12 h-12 rounded-xl border-white/10 text-white bg-white/5 hover:bg-white/10">
-            <Settings className="w-5 h-5" />
-          </Button>
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-5 space-y-5">
+          <h2 className="text-lg font-bold text-white">Right now</h2>
+          {flats === null ? <Row icon={<Home className="w-6 h-6 text-cyan-400" />} title="Home" value="…" /> : flats.length === 0 ? (
+            <Row icon={<Home className="w-6 h-6 text-cyan-400" />} title="Home" value={citizen.home ? `Starter home: ${citizen.home}` : "No home yet"} sub={<Link href="/explore" className="underline">Find a flat to rent or buy on the map</Link>} />
+          ) : flats.map((f) => (
+            <Row key={f.id} icon={<Home className="w-6 h-6 text-cyan-400" />} title={f.owner_id === me ? "Home (owned)" : "Home (renting)"}
+              value={flatTitle({ ...f, residentName: citizen.name } as Parameters<typeof flatTitle>[0])}
+              sub={<Link href={flatRoute(f as Parameters<typeof flatRoute>[0])} className="underline">{f.property_type}{f.tenant_id === me && f.rent_price ? ` · ${f.rent_price.toLocaleString()} D-Coins/month` : ""} · go there</Link>} />
+          ))}
+          <Row icon={<Briefcase className="w-6 h-6 text-blue-400" />} title="Job"
+            value={citizen.job ? `${citizen.job.role} at ${citizen.job.storeName}` : "Not working"}
+            sub={citizen.job ? `${citizen.job.wage} D-Coins per shift` : "Shops, cafés and clubs are hiring — talk to their staff."} />
+          <Row icon={<CalendarDays className="w-6 h-6 text-amber-400" />} title="Joined" value={new Date(citizen.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })} />
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <StatCard icon={<Star className="w-5 h-5 text-yellow-400" />} label="Reputation" value="86" />
-          <StatCard icon={<Award className="w-5 h-5 text-violet-400" />} label="Achievements" value="24" />
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-5">
+          <h2 className="text-lg font-bold text-white mb-3">Recent purchases</h2>
+          {recent.length === 0 ? <p className="text-sm text-gray-400">Nothing yet — visit The Dubai Mall to go shopping.</p> : (
+            <ul className="space-y-2">
+              {recent.map((i) => (
+                <li key={i.uid} className="flex items-center gap-3 text-white">
+                  <span className="text-2xl">{i.icon ?? "🛍️"}</span>
+                  <span className="flex-1 min-w-0 text-sm font-bold truncate">{i.name}</span>
+                  <span className="text-xs text-emerald-400 font-mono">{i.price.toLocaleString()} D-Coins</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
-        {/* Life Status */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6">
-          <h2 className="text-lg font-bold text-white mb-4">Current Status</h2>
-          
-          <StatusRow 
-            icon={<Home className="w-6 h-6 text-cyan-400" />} 
-            title="Property" 
-            value="Downtown Studio" 
-            sub="Rent paid until Oct 15"
-          />
-          
-          <StatusRow 
-            icon={<Briefcase className="w-6 h-6 text-blue-400" />} 
-            title="Job" 
-            value="Software Engineer" 
-            sub="Next salary in 3 days"
-          />
-          
-          <StatusRow 
-            icon={<Car className="w-6 h-6 text-gray-300" />} 
-            title="Vehicle" 
-            value="BMW M4" 
-            sub="Parked at Downtown"
-          />
-        </div>
-
-        {/* Passport & Inventory Teasers */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-5 hover:bg-white/10 transition-colors cursor-pointer flex flex-col items-center text-center">
-            <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center mb-3">
-              <Map className="w-6 h-6 text-blue-400" />
-            </div>
-            <span className="text-white font-bold block mb-1">Dubai Passport</span>
-            <span className="text-xs text-gray-400">12 stamps collected</span>
-          </div>
-
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-5 hover:bg-white/10 transition-colors cursor-pointer flex flex-col items-center text-center">
-            <div className="w-12 h-12 rounded-full bg-violet-500/20 flex items-center justify-center mb-3">
-              <Briefcase className="w-6 h-6 text-violet-400" />
-            </div>
-            <span className="text-white font-bold block mb-1">Inventory</span>
-            <span className="text-xs text-gray-400">45 items owned</span>
-          </div>
-        </div>
-
+        <Button variant="outline" onClick={signOut} className="w-full h-12 rounded-xl border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 hover:text-rose-200 font-bold">
+          <LogOut className="w-4 h-4 mr-2" /> Log out
+        </Button>
       </div>
 
       <BottomNav />
@@ -136,30 +125,26 @@ export default function ProfilePage() {
   );
 }
 
-function StatCard({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) {
+function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
-      <div className="bg-black/50 p-3 rounded-full">
-        {icon}
-      </div>
-      <div>
-        <div className="text-2xl font-black text-white leading-none mb-1">{value}</div>
-        <div className="text-xs font-medium text-gray-400 uppercase tracking-wider">{label}</div>
+    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3 min-w-0">
+      <div className="bg-black/50 p-2.5 rounded-full shrink-0">{icon}</div>
+      <div className="min-w-0">
+        <div className="text-lg font-black text-white leading-none mb-1 truncate">{value}</div>
+        <div className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{label}</div>
       </div>
     </div>
   );
 }
 
-function StatusRow({ icon, title, value, sub }: { icon: React.ReactNode, title: string, value: string, sub: string }) {
+function Row({ icon, title, value, sub }: { icon: React.ReactNode; title: string; value: string; sub?: React.ReactNode }) {
   return (
     <div className="flex items-center gap-4">
-      <div className="w-12 h-12 rounded-xl bg-black/50 border border-white/5 flex items-center justify-center shrink-0">
-        {icon}
-      </div>
-      <div>
+      <div className="w-12 h-12 rounded-xl bg-black/50 border border-white/5 flex items-center justify-center shrink-0">{icon}</div>
+      <div className="min-w-0">
         <div className="text-xs text-gray-400 mb-0.5 font-medium uppercase tracking-wider">{title}</div>
-        <div className="text-base font-bold text-white leading-tight">{value}</div>
-        <div className="text-xs text-blue-400/80 mt-0.5">{sub}</div>
+        <div className="text-base font-bold text-white leading-tight truncate">{value}</div>
+        {sub && <div className="text-xs text-blue-400/80 mt-0.5">{sub}</div>}
       </div>
     </div>
   );

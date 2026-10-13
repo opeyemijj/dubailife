@@ -1,9 +1,0 @@
-import BuilderClient from '@/components/admin/BuilderClient';
-
-export default function AdminPage() {
-    return (
-        <div className="w-full h-screen">
-            <BuilderClient />
-        </div>
-    );
-}

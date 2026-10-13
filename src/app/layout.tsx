@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Fredoka } from "next/font/google";
 import "./globals.css";
+import { PresenceTracker } from "@/components/PresenceTracker";
+import { KnockListener } from "@/components/property/KnockListener";
+import { MoneyListener } from "@/components/social/MoneyListener";
 
 const fredoka = Fredoka({ subsets: ["latin"], display: 'swap' });
 
@@ -26,6 +29,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`antialiased min-h-screen bg-background text-foreground ${fredoka.className}`}>
+        <PresenceTracker />
+        <KnockListener />
+        <MoneyListener />
         {children}
       </body>
     </html>

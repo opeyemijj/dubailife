@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { TransformWrapper, TransformComponent, type ReactZoomPanPinchRef } from "react-zoom-pan-pinch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { getVenues } from "@/app/actions/venue";
 import { saveMapSeed } from "@/app/actions/saveSeed";
 import { MapBackground } from './MapBackground';
 import { mapSeed, mapConfig } from '@/data/mapSeed';
@@ -15,8 +14,55 @@ import {
   Volume2, VolumeX
 } from 'lucide-react';
 import { gameAudio } from '@/utils/gameAudio';
+import { CityNavigator, type TravelMode } from '@/components/city/CityNavigator';
+import { getPlace, placeForEntity } from '@/lib/city/places';
+import { entranceOf, HOME_SPOT } from '@/lib/city/geo';
+import type { Place } from '@/lib/city/types';
+import { useCitizen, adjustBalance, updateCitizen } from '@/lib/citizenStore';
+import { useIsAdmin } from '@/lib/admin/client';
+import { BillboardAds, useLiveAds } from '@/components/commerce/BillboardAds';
 
 import { WORLD_WIDTH, WORLD_HEIGHT, EstateBase, ClickableHouseNew, ApartmentBuildingIconNew, RooftopIconNew, NightclubIconNew, RestaurantIconNew, EstateCommunityBlock, SmallHouseIcon, StadiumIcon, HospitalIcon, SchoolIcon, CasinoIcon, ParkIcon, BurjKhalifaIcon, BulgariIslandIcon, AtlantisTheRoyalIcon, BeachClubIconNew, JumeirahBeachHotelIcon, BurjAlArabIcon, MuseumOfTheFutureIcon, DubaiFrameIcon, AtlantisIcon, EmiratesTowersIcon, GevoraIcon, RoseRayhaanIcon, DWTCIcon, SalikGate, RoadSign, SkylineTower, AirportBlock, VillaHouse, ApartmentHouse, TycoonBlock, BluewatersBlock, ArabianRanchesBlock, JBRBlock, EmiratesHillsBlock, BusinessBayBlock, DeiraBlock, MotorCityBlock, PalmCommunityBlock, GenericNeighborhood, BillboardSpace, IsometricBillboard, DubaiMetroStation, MetroStationBlock, categoryColors, BridgeBlock, AdPlacement, initialAds, getBuildingSprite, ActionDef, venueActions } from './Icons';
+
+// Ground-level tiles: drawn beneath everything and never clickable
+const isFloorTileType = (type?: string) =>
+  !!type && (type === 'island-plain' || type === 'two-plains-tile' || type.includes('floor-tile') || type.includes('plot'));
+
+const OVERLAY_TYPES = new Set([
+  'bridge',
+  'generic-district',
+  'salik',
+  'road-sign',
+  'airport',
+  'ad-land',
+  'hotel',
+  'mall',
+  'museum-future',
+  'apartment-complex',
+  'giant-billboard',
+  'billboard',
+  'ad-billboard',
+  'metro-station',
+  'metro',
+  'dubai-metro',
+  'marina',
+  'marina-harbour',
+  'configurable-apartment',
+  'small-house',
+  'house',
+  'dubai-villa',
+  'villa',
+  'hospital',
+  'medical',
+  'isometric-hospital',
+  'beach',
+  'beach-club',
+  'isometric-beach',
+]);
+
+// Overlays are centred on their position; other sprites are anchored at their base
+const isOverlayType = (type?: string) =>
+  !!type && (isFloorTileType(type) || type.startsWith('community') || OVERLAY_TYPES.has(type));
 
 export const getEntityCategoryInfo = (entity: any) => {
   const type = (entity?.type || '').toLowerCase();
@@ -92,7 +138,7 @@ export const getEntityCategoryInfo = (entity: any) => {
 };
 
 export const isSpecialPlaceVenue = (loc: any, catInfo: any) => {
-  const isFloorTile = loc.type === 'floor-tile' || loc.type === 'island-plain' || loc.type === 'two-plains-tile' || loc.type === 'plot' || loc.type === 'building-plot' || loc.type === 'base-plot' || loc.type?.includes('floor-tile') || loc.type?.includes('plot');
+  const isFloorTile = isFloorTileType(loc.type);
   if (isFloorTile) return false;
 
   const isCategoryMatch = (
@@ -129,6 +175,12 @@ export interface InteractiveMapProps {
   searchQuery?: string;
   interactionDisabled?: boolean;
   onAttemptInteract?: () => void;
+  /** Open this place's directory on load (e.g. back from an interior). */
+  openPlaceId?: string;
+  /** Start a journey to this place (and venue) on load. */
+  journeyTo?: { placeId: string; venueId?: string };
+  /** Put the citizen outside this place and centre the camera there. */
+  atPlaceId?: string;
 }
 
 export function InteractiveMap({
@@ -136,14 +188,24 @@ export function InteractiveMap({
   activeFilter,
   searchQuery,
   interactionDisabled = false,
-  onAttemptInteract
+  onAttemptInteract,
+  openPlaceId,
+  journeyTo,
+  atPlaceId,
 }: InteractiveMapProps = {}) {
   const router = useRouter();
+  const { citizen } = useCitizen();
+  // Destination picking and travel (see components/city/CityNavigator).
+  const [navPlace, setNavPlace] = useState<Place | null>(null);
+  const [navVenueId, setNavVenueId] = useState<string | undefined>(undefined);
+  const [travel, setTravel] = useState<{ mode: TravelMode; ms: number } | null>(null);
   const [venues, setVenues] = useState<any[]>(mapSeed);
   const [selectedVenue, setSelectedVenue] = useState<any | null>(null);
   const [hoveredVenueId, setHoveredVenueId] = useState<string | null>(null);
   
   const [isEditMode, setIsEditMode] = useState(false);
+  // Map editing is for admins only (saving is also checked on the server).
+  const isAdmin = useIsAdmin();
   const [selectedEditIds, setSelectedEditIds] = useState<string[]>([]);
   const selectedEditId = selectedEditIds.length > 0 ? selectedEditIds[selectedEditIds.length - 1] : null;
   const setSelectedEditId = (id: string | null) => {
@@ -174,9 +236,9 @@ export function InteractiveMap({
     clickedId: null
   });
 
-  const [playerPos, setPlayerPos] = useState({ x: 1500, y: 750 });
+  const [playerPos, setPlayerPos] = useState(() => (atPlaceId && entranceOf(atPlaceId)) || citizen?.location || HOME_SPOT);
   const [isTraveling, setIsTraveling] = useState(false);
-  const [walletBalance, setWalletBalance] = useState(50000);
+  const walletBalance = useCitizen().citizen?.balance ?? 0;
   const [toastMsg, setToastMsg] = useState<{ text: string, type: 'credit' | 'debit' } | null>(null);
 
   const [ads, setAds] = useState<any[]>(initialAds);
@@ -252,10 +314,6 @@ export function InteractiveMap({
   const purchaseAdSpace = () => {
      if (!adTargetCell || !adForm.imgBase64) return;
      const cost = adForm.w * adForm.h * 500;
-     if (walletBalance < cost) {
-        showToast('Not enough D-Coins!', 'debit');
-        return;
-     }
      
      const isOverlap = ads.some(a => {
         return adTargetCell.x < a.gridX + a.w && adTargetCell.x + adForm.w > a.gridX &&
@@ -271,7 +329,10 @@ export function InteractiveMap({
         return;
      }
      
-     setWalletBalance(prev => prev - cost);
+     if (!adjustBalance(-cost)) {
+        showToast('Not enough D-Coins!', 'debit');
+        return;
+     }
      setAds(prev => [...prev, {
         id: 'ad-' + Date.now(),
         gridX: adTargetCell.x,
@@ -288,75 +349,9 @@ export function InteractiveMap({
 
   const [billboardModalOpen, setBillboardModalOpen] = useState(false);
   const [selectedBillboard, setSelectedBillboard] = useState<any>(null);
-  const [billboardForm, setBillboardForm] = useState({
-    imageUrl: '',
-    rentedBy: '',
-    adTitle: '',
-    adSubtitle: '',
-    cost: 500,
-    durationWeeks: 1
-  });
+  // Paid ads currently running, by billboard.
+  const liveAds = useLiveAds();
 
-  const handleBillboardImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setBillboardForm(prev => ({ ...prev, imageUrl: ev.target?.result as string }));
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleRentBillboard = () => {
-    if (!selectedBillboard) return;
-    if (!billboardForm.imageUrl && !billboardForm.adTitle) {
-      showToast('Please upload an image or provide a campaign title!', 'debit');
-      return;
-    }
-    const cost = billboardForm.cost || 500;
-    if (walletBalance < cost) {
-      showToast('Not enough D-Coins!', 'debit');
-      return;
-    }
-
-    setWalletBalance(prev => prev - cost);
-    setVenues(prev => prev.map(v => {
-      if (v.id === selectedBillboard.id) {
-        return {
-          ...v,
-          isRented: true,
-          imageUrl: billboardForm.imageUrl,
-          rentedBy: billboardForm.rentedBy || 'Your Brand',
-          adTitle: billboardForm.adTitle || 'PREMIUM CAMPAIGN',
-          adSubtitle: billboardForm.adSubtitle || 'Verified Ad',
-          rentalPrice: `${cost} D-Coins / wk`,
-        };
-      }
-      return v;
-    }));
-
-    showToast('🎉 Billboard Rented & Ad Live on Map!', 'credit');
-    setBillboardModalOpen(false);
-  };
-
-  const handleClearBillboard = () => {
-    if (!selectedBillboard) return;
-    setVenues(prev => prev.map(v => {
-      if (v.id === selectedBillboard.id) {
-        return {
-          ...v,
-          isRented: false,
-          imageUrl: '',
-          rentedBy: '',
-          adTitle: '',
-          adSubtitle: '',
-        };
-      }
-      return v;
-    }));
-    showToast('Billboard cleared & available for rent!', 'debit');
-    setBillboardModalOpen(false);
-  };
 
   // Dubai Metro Red Line Station & Transit States
   const [metroModalOpen, setMetroModalOpen] = useState(false);
@@ -401,15 +396,14 @@ export function InteractiveMap({
     if (!selectedMetroStation) return;
     const dest = metroStationsList.find(s => s.id === selectedDestination) || metroStationsList[0];
     const fare = selectedCabinClass === 'gold' ? 10 : 5;
-    if (walletBalance < fare) {
+    if (!adjustBalance(-fare)) {
       showToast('Insufficient Nol Card balance! Please recharge.', 'debit');
       return;
     }
 
-    setWalletBalance(prev => prev - fare);
     setMetroModalOpen(false);
 
-    showToast(`🚆 Boarded Dubai Metro Red Line! Fare: ${fare} AED (${selectedCabinClass.toUpperCase()} Class). Doors closing...`, 'credit');
+    showToast(`🚆 Boarded Dubai Metro Red Line! Fare: ${fare} D-Coins (${selectedCabinClass.toUpperCase()} Class). Doors closing...`, 'credit');
 
     // Smooth transit animation along the metro viaduct
     setIsTraveling(true);
@@ -421,38 +415,10 @@ export function InteractiveMap({
     }, 1800);
   };
 
-  const handleTopUpNol = (amount: number) => {
-    setWalletBalance(prev => prev + amount);
-    showToast(`💳 Nol Card topped up with ${amount} AED!`, 'credit');
-  };
-
-  useEffect(() => {
-    loadVenues();
-  }, []);
-  const loadVenues = async () => {
-    setVenues(mapSeed);
-  };
 
   const showToast = (text: string, type: 'credit' | 'debit') => {
     setToastMsg({ text, type });
     setTimeout(() => setToastMsg(null), 3000);
-  };
-
-  const handleSubUnitClick = (unitId: string, unitName: string) => {
-    if (interactionDisabled) {
-      onAttemptInteract?.();
-      return;
-    }
-    setSelectedVenue({
-      id: unitId,
-      name: unitName,
-      type: 'sub-unit',
-      description: 'A privately owned unit within the complex.',
-      interactive: true,
-      options: [
-        { label: "Purchase Unit (500k AED)", amount: -500000, color: "bg-blue-600" }
-      ]
-    });
   };
 
   const handleVenueClick = (loc: any) => {
@@ -461,7 +427,7 @@ export function InteractiveMap({
       return;
     }
 
-    const isFloor = loc.type === 'floor-tile' || loc.type === 'island-plain' || loc.type === 'two-plains-tile' || loc.type === 'plot' || loc.type === 'building-plot' || loc.type === 'base-plot' || loc.type?.includes('floor-tile') || loc.type?.includes('plot');
+    const isFloor = isFloorTileType(loc.type);
     if (isFloor) return;
 
     gameAudio.playClickSound();
@@ -476,24 +442,23 @@ export function InteractiveMap({
     }
     if (loc.type === 'giant-billboard' || loc.type === 'billboard' || loc.type === 'ad-billboard') {
       setSelectedBillboard(loc);
-      setBillboardForm({
-        imageUrl: loc.imageUrl || loc.image || loc.img || '',
-        rentedBy: loc.rentedBy || '',
-        adTitle: loc.adTitle || loc.text1 || '',
-        adSubtitle: loc.adSubtitle || loc.text2 || '',
-        cost: 500,
-        durationWeeks: 1
-      });
+
       setBillboardModalOpen(true);
       return;
     }
-    if (isTraveling) return;
-    setIsTraveling(true);
-    setPlayerPos({ x: loc.virtualX, y: WORLD_HEIGHT - loc.virtualY });
-    setTimeout(() => {
-      setIsTraveling(false);
-      if(loc.interactive !== false) setSelectedVenue(loc);
-    }, 450);
+    // Buildings you can go into open their own destination picker and journey planner.
+    const place = placeForEntity(loc);
+    if (place) {
+      setNavVenueId(undefined);
+      setNavPlace(place);
+      return;
+    }
+    // Everything else on the map is scenery: say what it is rather than offering made-up actions.
+    if (loc.type === 'salik') {
+      showToast(`🚦 ${loc.name ?? 'Salik gate'}: 4 D-Coin toll, charged automatically on taxi trips through it.`, 'debit');
+      return;
+    }
+    if (loc.interactive !== false) showToast(`📍 ${loc.name ?? 'This area'} isn't open to visit yet — Downtown Dubai is open now.`, 'debit');
   };
 
   const jumpToDistrict = (virtualX: number, virtualY: number, districtName?: string) => {
@@ -512,14 +477,55 @@ export function InteractiveMap({
     if (districtName) showToast(`📍 Arrived at ${districtName}!`, 'credit');
   };
 
+  /** Centres the camera on a rendered map point. */
+  const centreOn = (pt: { x: number; y: number }, ms = 650) => {
+    const scale = Math.max(0.42, transformRef.current?.state.scale ?? 0.42);
+    const w = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    const h = typeof window !== 'undefined' ? window.innerHeight : 800;
+    transformRef.current?.setTransform(w / 2 - pt.x * scale, Math.min(h / 2 - pt.y * scale, 0), scale, ms);
+  };
+
+  /** Moves the citizen across the map; resolves on arrival. */
+  const travelTo = (to: { x: number; y: number }, mode: TravelMode, ms: number) =>
+    new Promise<void>((resolve) => {
+      if (ms <= 0) { setPlayerPos(to); resolve(); return; }
+      setTravel({ mode, ms });
+      centreOn({ x: (playerPos.x + to.x) / 2, y: (playerPos.y + to.y) / 2 }, 500);
+      // Let the transition style apply before moving.
+      requestAnimationFrame(() => requestAnimationFrame(() => setPlayerPos(to)));
+      setTimeout(() => { setTravel(null); resolve(); }, ms + 150);
+    });
+
+  // Links into the map: ?open=<place> reopens a directory, ?to=<place> plans a journey, ?at=<place> puts you outside.
+  useEffect(() => {
+    if (interactionDisabled) return;
+    const id = journeyTo?.placeId ?? openPlaceId;
+    const place = id ? getPlace(id) ?? (id ? placeForEntity(venues.find((v) => v.id === id) ?? { id, type: '' }) : null) : null;
+    if (place) {
+      setNavVenueId(journeyTo?.venueId);
+      setNavPlace(place);
+    }
+    const at = atPlaceId ? entranceOf(atPlaceId) : null;
+    if (at) {
+      setPlayerPos(at);
+      updateCitizen((c) => ({ ...c, location: { ...at, placeId: undefined } }));
+    }
+    const focus = at ?? (citizen?.location ? { x: citizen.location.x, y: citizen.location.y } : null);
+    if (focus) setTimeout(() => centreOn(focus, 0), 50);
+    // Only on arrival at the map.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openPlaceId, journeyTo?.placeId, journeyTo?.venueId, atPlaceId, interactionDisabled]);
+
   const executeAction = (loc: any, action: ActionDef) => {
+    if (!adjustBalance(action.amount)) {
+      showToast('Not enough D-Coins!', 'debit');
+      return;
+    }
     gameAudio.playCoinSound();
-    setWalletBalance(prev => prev + action.amount);
-    if (action.amount > 0) showToast(`Earned ${action.amount} AED!`, 'credit');
-    else if (action.amount < 0) showToast(`Paid ${Math.abs(action.amount).toLocaleString()} AED.`, 'debit');
+    if (action.amount > 0) showToast(`Earned ${action.amount} D-Coins!`, 'credit');
+    else if (action.amount < 0) showToast(`Paid ${Math.abs(action.amount).toLocaleString()} D-Coins.`, 'debit');
     
     setSelectedVenue(null);
-    setTimeout(() => router.push(`/venue/${loc.id}`), 1000);
   };
 
   const handlePointerDown = (e: React.PointerEvent, id: string) => {
@@ -803,16 +809,17 @@ export function InteractiveMap({
   const allRenderedEntities = useMemo(() => {
     return venues.map(loc => ({
       ...loc,
+      campaigns: liveAds[loc.id],
       renderedX: loc.virtualX,
       renderedY: WORLD_HEIGHT - loc.virtualY
     })).sort((a, b) => a.renderedY - b.renderedY);
-  }, [venues]);
+  }, [venues, liveAds]);
 
   return (
     <div className="absolute inset-0 w-screen h-[100dvh] z-0 bg-[#d6bc8a] overflow-hidden touch-none select-none overscroll-none">
       
-      {/* Top Left: Edit Mode Controls (Safe position below TopBar) */}
-      <div className="absolute top-20 sm:top-24 left-3 sm:left-6 z-30 flex items-center gap-2 pointer-events-auto">
+      {/* Top Left: Edit Mode Controls (admins only; safe position below TopBar) */}
+      {isAdmin && <div className="absolute top-20 sm:top-24 left-3 sm:left-6 z-30 flex items-center gap-2 pointer-events-auto">
         <button
           onClick={() => {
             setIsEditMode(!isEditMode);
@@ -871,7 +878,7 @@ export function InteractiveMap({
             </div>
 
             <a
-              href="/admin"
+              href="/admin/studio"
               target="_blank"
               rel="noreferrer"
               className="hidden sm:flex items-center gap-1 px-3 py-2 rounded-2xl text-xs font-bold text-zinc-300 bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 transition-colors"
@@ -881,7 +888,7 @@ export function InteractiveMap({
             </a>
           </>
         )}
-      </div>
+      </div>}
 
       {isEditMode && (
         <div className="absolute top-32 sm:top-36 left-3 sm:left-6 z-30 bg-black/75 backdrop-blur-md border border-white/10 text-zinc-300 text-[11px] sm:text-xs px-3 py-1.5 rounded-full pointer-events-none flex items-center gap-1.5 font-medium shadow-lg">
@@ -990,7 +997,7 @@ export function InteractiveMap({
       {!hideTopHUD && (
         <div className="hidden sm:block absolute top-6 right-6 z-50 bg-white border border-gray-200 p-4 rounded-2xl shadow-xl pointer-events-auto">
           <p className="text-xs text-gray-500 font-extrabold uppercase tracking-widest mb-1">D-Coins</p>
-          <p className="text-2xl font-black text-green-600">{walletBalance.toLocaleString()} AED</p>
+          <p className="text-2xl font-black text-green-600">{walletBalance.toLocaleString()} D-Coins</p>
         </div>
       )}
 
@@ -1108,6 +1115,17 @@ export function InteractiveMap({
         </div>
       )}
 
+      {navPlace && (
+        <CityNavigator
+          key={`${navPlace.id}:${navVenueId ?? ''}`}
+          place={navPlace}
+          journeyVenueId={navVenueId}
+          playerPos={playerPos}
+          onTravel={travelTo}
+          onClose={() => { setNavPlace(null); setNavVenueId(undefined); }}
+        />
+      )}
+
       <TransformWrapper 
         ref={transformRef}
         initialScale={mapConfig?.startScale || 0.35} 
@@ -1154,16 +1172,20 @@ export function InteractiveMap({
 
             <div 
               className="absolute z-50 -translate-x-1/2 -translate-y-1/2 transition-all ease-in-out pointer-events-none"
-              style={{ left: playerPos.x, top: playerPos.y, transitionDuration: '1500ms' }}
+              style={{ left: playerPos.x, top: playerPos.y, transitionDuration: travel ? `${travel.ms}ms` : '1500ms', transitionTimingFunction: travel ? 'linear' : undefined }}
             >
-              <div className="w-8 h-8 bg-blue-500 rounded-full border-4 border-white flex items-center justify-center shadow-2xl">
-                 <div className="w-3 h-3 bg-white rounded-full" />
+              {/* The citizen on the map: a pin with their initial, a taxi while riding one. */}
+              <div className="flex flex-col items-center">
+                <div className={`w-10 h-10 rounded-full border-4 border-white flex items-center justify-center shadow-2xl text-white font-black text-sm ${travel?.mode === "taxi" ? "bg-amber-400 text-2xl" : "bg-blue-600"}`}>
+                  {travel?.mode === "taxi" ? "🚕" : travel?.mode === "walk" ? "🚶" : (citizen?.name?.[0] ?? "•")}
+                </div>
+                {citizen && <div className="mt-1 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[11px] font-black shadow whitespace-nowrap">{citizen.name.split(" ")[0]}</div>}
               </div>
             </div>
 
             {allRenderedEntities.map((loc) => {
-              const isFloorTile = loc.type === 'floor-tile' || loc.type === 'island-plain' || loc.type === 'two-plains-tile' || loc.type === 'plot' || loc.type === 'building-plot' || loc.type === 'base-plot' || loc.type?.includes('floor-tile') || loc.type?.includes('plot');
-              const isOverlay = isFloorTile || loc.type === 'bridge' || loc.type.startsWith('community') || loc.type === 'generic-district' || loc.type === 'salik' || loc.type === 'road-sign' || loc.type === 'airport' || loc.type === "ad-land" || loc.type === "hotel" || loc.type === "mall" || loc.type === "museum-future" || loc.type === "apartment-complex" || loc.type === "giant-billboard" || loc.type === "billboard" || loc.type === "ad-billboard" || loc.type === "metro-station" || loc.type === "metro" || loc.type === "dubai-metro" || loc.type === "marina" || loc.type === "marina-harbour" || loc.type === "configurable-apartment" || loc.type === "small-house" || loc.type === "house" || loc.type === "dubai-villa" || loc.type === "villa" || loc.type === "hospital" || loc.type === "medical" || loc.type === "isometric-hospital" || loc.type === "beach" || loc.type === "beach-club" || loc.type === "isometric-beach";
+              const isFloorTile = isFloorTileType(loc.type);
+              const isOverlay = isOverlayType(loc.type);
               const baseTransform = isOverlay ? 'translate(-50%, -50%)' : 'translate(-50%, -90%)';
               const rotationTransform = (loc.rotate !== undefined && loc.rotate !== 0) ? `rotate(${loc.rotate}deg)` : '';
               const scaleTransform = loc.scale !== undefined ? `scale(${loc.scale})` : '';
@@ -1324,7 +1346,7 @@ export function InteractiveMap({
                   ) : (
                      <>
                         <div className={`${loc.size || ''} transition-transform ${loc.interactive !== false && !isOverlay ? '' : ''} flex justify-center items-end`}>
-                           {getBuildingSprite(loc.id, loc.type, loc.seed, loc.name, loc, handleSubUnitClick)}
+                           {getBuildingSprite(loc.id, loc.type, loc.seed, loc.name, loc)}
                         </div>
 
                         {/* 2. HOUSES & RESIDENTIAL (Not special places) */}
@@ -1354,7 +1376,7 @@ export function InteractiveMap({
                     return isSpecialPlaceVenue(loc, cat);
                   })
                   .map((loc) => {
-                    const isOverlay = loc.type === 'bridge' || loc.type.startsWith('community') || loc.type === 'generic-district' || loc.type === 'salik' || loc.type === 'road-sign' || loc.type === 'airport' || loc.type === "ad-land" || loc.type === "hotel" || loc.type === "mall" || loc.type === "museum-future" || loc.type === "apartment-complex" || loc.type === "giant-billboard" || loc.type === "billboard" || loc.type === "ad-billboard" || loc.type === "metro-station" || loc.type === "metro" || loc.type === "dubai-metro" || loc.type === "marina" || loc.type === "marina-harbour" || loc.type === "configurable-apartment" || loc.type === "small-house" || loc.type === "house" || loc.type === "dubai-villa" || loc.type === "villa" || loc.type === "hospital" || loc.type === "medical" || loc.type === "isometric-hospital" || loc.type === "beach" || loc.type === "beach-club" || loc.type === "isometric-beach";
+                    const isOverlay = isOverlayType(loc.type);
                     const baseTransform = isOverlay ? 'translate(-50%, -50%)' : 'translate(-50%, -90%)';
                     const rotationTransform = (loc.rotate !== undefined && loc.rotate !== 0) ? `rotate(${loc.rotate}deg)` : '';
                     const scaleTransform = loc.scale !== undefined ? `scale(${loc.scale})` : '';
@@ -1374,7 +1396,7 @@ export function InteractiveMap({
                       >
                         {/* Invisible sizing ghost: perfectly matches height & rooftop crest of the sprite */}
                         <div className={`${loc.size || ''} flex justify-center items-end opacity-0 pointer-events-none select-none invisible`} aria-hidden="true">
-                          {getBuildingSprite(loc.id, loc.type, loc.seed, loc.name, loc, handleSubUnitClick)}
+                          {getBuildingSprite(loc.id, loc.type, loc.seed, loc.name, loc)}
                         </div>
 
                         {/* Topmost Interactive Badge Pin */}
@@ -1461,7 +1483,7 @@ export function InteractiveMap({
               <div className="mt-4 pt-4 border-t">
                  <div className="flex justify-between items-center mb-4">
                     <span className="font-bold text-gray-600">Total Cost:</span>
-                    <span className="text-xl font-black text-green-600">{(adForm.w * adForm.h * 500).toLocaleString()} AED</span>
+                    <span className="text-xl font-black text-green-600">{(adForm.w * adForm.h * 500).toLocaleString()} D-Coins</span>
                  </div>
                  <Button onClick={purchaseAdSpace} className="w-full h-12 rounded-xl text-lg font-black bg-blue-600 hover:bg-blue-700 text-white">
                     Purchase Space
@@ -1471,184 +1493,13 @@ export function InteractiveMap({
         </DialogContent>
       </Dialog>
 
-      {/* ==================================================================== */}
-      {/* BILLBOARD AD RENTAL & MANAGEMENT MODAL                               */}
-      {/* ==================================================================== */}
-      <Dialog open={billboardModalOpen} onOpenChange={setBillboardModalOpen}>
-        <DialogContent className="bg-slate-900 text-white border border-slate-700/80 shadow-2xl w-[94vw] max-w-xl z-[100] rounded-3xl max-h-[88dvh] overflow-y-auto p-4 sm:p-6 pb-6">
-          <div className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto -mt-1 mb-2 sm:hidden shrink-0" />
-          {selectedBillboard && (
-            <>
-              <DialogHeader>
-                <div className="flex items-center justify-between pr-6">
-                  <div>
-                    <DialogTitle className="text-xl font-black tracking-tight text-white flex items-center gap-2">
-                      <span>🪧</span>
-                      <span>{selectedBillboard.name || 'Dubai Highway Billboard'}</span>
-                    </DialogTitle>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      Style: <span className="text-amber-400 font-bold uppercase">{selectedBillboard.billboardStyle || 'mega-led'}</span> • Direction: <span className="text-sky-400 font-semibold">Isometric Floor Tile Aligned</span>
-                    </p>
-                  </div>
-                  <span className={`text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wider ${
-                    selectedBillboard.isRented 
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' 
-                      : 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
-                  }`}>
-                    {selectedBillboard.isRented ? '● RENTED' : '○ FOR RENT'}
-                  </span>
-                </div>
-              </DialogHeader>
-
-              {/* LIVE ISOMETRIC PREVIEW */}
-              <div className="bg-gradient-to-b from-slate-950 to-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
-                <div className="absolute top-2 left-3 text-[10px] font-mono text-slate-400 uppercase tracking-widest">
-                  Live Screen Preview
-                </div>
-                <div className="w-[280px] h-[210px] flex items-center justify-center">
-                  <IsometricBillboard 
-                    id={`preview-${selectedBillboard.id}`}
-                    width={280}
-                    height={210}
-                    billboardStyle={selectedBillboard.billboardStyle || 'mega-led'}
-                    imageUrl={billboardForm.imageUrl}
-                    isRented={!!(billboardForm.imageUrl || billboardForm.adTitle || selectedBillboard.isRented)}
-                    rentedBy={billboardForm.rentedBy || selectedBillboard.rentedBy || 'Your Brand'}
-                    rentalPrice={selectedBillboard.rentalPrice || `${billboardForm.cost} D-Coins / wk`}
-                    adTitle={billboardForm.adTitle || selectedBillboard.adTitle}
-                    adSubtitle={billboardForm.adSubtitle || selectedBillboard.adSubtitle}
-                  />
-                </div>
-              </div>
-
-              {/* AD CREATIVE IMAGE CONFIGURATION */}
-              <div className="space-y-4 pt-1">
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                    1. Upload Ad Creative Image
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-[11px] text-slate-400 block mb-1">Upload File (PNG / JPG / WebP)</label>
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handleBillboardImageUpload} 
-                        className="w-full text-xs text-slate-300 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-sky-600 file:text-white hover:file:bg-sky-500 cursor-pointer border border-slate-700 bg-slate-800/80 rounded-xl p-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] text-slate-400 block mb-1">Or Paste Image URL</label>
-                      <input 
-                        type="text" 
-                        placeholder="https://..." 
-                        value={billboardForm.imageUrl} 
-                        onChange={e => setBillboardForm({ ...billboardForm, imageUrl: e.target.value })} 
-                        className="w-full text-xs bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Sample Creative Presets */}
-                  <div className="mt-2">
-                    <span className="text-[10px] font-bold text-slate-400 block mb-1">Quick Sample Ad Creatives:</span>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                      {[
-                        { label: '🏙️ Luxury Penthouse', url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80', title: 'EMAAR RESIDENCES', sub: 'Starting 4.2M AED' },
-                        { label: '🏎️ Exotic Supercar', url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&auto=format&fit=crop&q=80', title: 'FERRARI DUBAI', sub: 'Drive The Legend' },
-                        { label: '⌚ Luxury Watch', url: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800&auto=format&fit=crop&q=80', title: 'ROLEX BOUTIQUE', sub: 'Dubai Mall Flagship' },
-                        { label: '✈️ Emirates Airlines', url: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&auto=format&fit=crop&q=80', title: 'FLY EMIRATES', sub: 'Fly Better to 140+ Cities' },
-                      ].map(sample => (
-                        <button
-                          key={sample.label}
-                          type="button"
-                          onClick={() => {
-                            setBillboardForm({
-                              ...billboardForm,
-                              imageUrl: sample.url,
-                              adTitle: sample.title,
-                              adSubtitle: sample.sub,
-                              rentedBy: sample.title.split(' ')[0]
-                            });
-                          }}
-                          className="text-[10px] font-bold px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-left truncate transition-colors"
-                        >
-                          {sample.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* CAMPAIGN METADATA */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1">Advertiser / Brand</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. Emaar Properties" 
-                      value={billboardForm.rentedBy} 
-                      onChange={e => setBillboardForm({ ...billboardForm, rentedBy: e.target.value })} 
-                      className="w-full text-xs bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1">Campaign Headline</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. PALM VILLA SALE" 
-                      value={billboardForm.adTitle} 
-                      onChange={e => setBillboardForm({ ...billboardForm, adTitle: e.target.value })} 
-                      className="w-full text-xs bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1">Tagline / Subtitle</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. Starting from 3.5M AED" 
-                      value={billboardForm.adSubtitle} 
-                      onChange={e => setBillboardForm({ ...billboardForm, adSubtitle: e.target.value })} 
-                      className="w-full text-xs bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
-                    />
-                  </div>
-                </div>
-
-                {/* PRICING & PAYMENT */}
-                <div className="pt-3 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-xl">
-                      🪙
-                    </div>
-                    <div>
-                      <p className="text-[11px] text-slate-400 font-bold">Rental Fee (1 Week)</p>
-                      <p className="text-base font-black text-amber-400">{billboardForm.cost} D-Coins</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    {selectedBillboard.isRented && (
-                      <Button 
-                        variant="destructive" 
-                        onClick={handleClearBillboard}
-                        className="font-bold text-xs rounded-xl h-11 px-4"
-                      >
-                        Clear / Relinquish
-                      </Button>
-                    )}
-                    <Button 
-                      onClick={handleRentBillboard}
-                      className="flex-1 sm:flex-initial h-11 px-6 rounded-xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-600/30 text-sm"
-                    >
-                      {selectedBillboard.isRented ? '💾 Save & Update Creative' : '🚀 Rent & Launch Ad Campaign'}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      {billboardModalOpen && selectedBillboard && (
+        <BillboardAds
+          billboard={{ id: selectedBillboard.id, name: selectedBillboard.name, style: selectedBillboard.billboardStyle }}
+          live={liveAds[selectedBillboard.id] ?? []}
+          onClose={() => setBillboardModalOpen(false)}
+        />
+      )}
 
       {/* ==================================================================== */}
       {/* DUBAI METRO RED LINE BOARDING & TRANSIT MODAL                        */}
@@ -1779,7 +1630,7 @@ export function InteractiveMap({
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-black">🥈 Silver Class</span>
-                      <span className="text-xs font-bold text-sky-400 font-mono">5 AED</span>
+                      <span className="text-xs font-bold text-sky-400 font-mono">5 D-Coins</span>
                     </div>
                     <p className="text-[10px] text-slate-400 mt-1">Standard modern air-conditioned carriage with Wi-Fi</p>
                   </button>
@@ -1794,7 +1645,7 @@ export function InteractiveMap({
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-black text-amber-300">🥇 Gold Class VIP</span>
-                      <span className="text-xs font-bold text-amber-400 font-mono">10 AED</span>
+                      <span className="text-xs font-bold text-amber-400 font-mono">10 D-Coins</span>
                     </div>
                     <p className="text-[10px] text-amber-200/70 mt-1">Panoramic front cabin, wide leather seats & skyline views</p>
                   </button>
@@ -1809,26 +1660,12 @@ export function InteractiveMap({
                   </div>
                   <div>
                     <p className="text-[10px] text-slate-400 font-bold uppercase">Nol Card Balance</p>
-                    <p className="text-sm font-black text-white">{walletBalance.toLocaleString()} AED / D-Coins</p>
+                    <p className="text-sm font-black text-white">{walletBalance.toLocaleString()} D-Coins</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] text-slate-400 mr-1">Recharge:</span>
-                  <button
-                    type="button"
-                    onClick={() => handleTopUpNol(50)}
-                    className="text-[10px] font-black px-2 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-white border border-slate-600 transition-colors"
-                  >
-                    +50
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleTopUpNol(100)}
-                    className="text-[10px] font-black px-2 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-white border border-slate-600 transition-colors"
-                  >
-                    +100
-                  </button>
-                </div>
+                <a href="/wallet" className="text-[10px] font-black px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors">
+                  Get D-Coins
+                </a>
               </div>
 
               {/* BOARDING BUTTON */}
@@ -1839,7 +1676,7 @@ export function InteractiveMap({
                 >
                   <Train className="w-4 h-4 animate-bounce" />
                   <span>
-                    Tap Nol Card & Board Metro ({selectedCabinClass === 'gold' ? '10' : '5'} AED)
+                    Tap Nol Card & Board Metro ({selectedCabinClass === 'gold' ? '10' : '5'} D-Coins)
                   </span>
                 </Button>
               </div>
@@ -1849,156 +1686,12 @@ export function InteractiveMap({
       </Dialog>
 
 
-      <Dialog open={!!selectedVenue} onOpenChange={(open) => !open && setSelectedVenue(null)}>
-        <DialogContent className="bg-white text-gray-900 border-none shadow-2xl w-[94vw] max-w-md max-h-[85dvh] overflow-y-auto z-[100] rounded-3xl p-5 sm:p-6 pb-6">
-          <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto -mt-1 mb-2 sm:hidden shrink-0" />
-          {selectedVenue && (
-            <>
-              <DialogHeader>
-                {(() => {
-                  const sCat = getEntityCategoryInfo(selectedVenue);
-                  return (
-                    <div className="flex flex-col items-center">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-slate-100 text-slate-700 mb-2 border border-slate-200">
-                        <span>{sCat.icon}</span>
-                        <span>{sCat.category}</span>
-                      </div>
-                      <DialogTitle className="text-3xl font-black text-center">{selectedVenue.name}</DialogTitle>
-                    </div>
-                  );
-                })()}
-              </DialogHeader>
-              
-              <div className="py-6 flex flex-col items-center text-center">
-                <div className="mb-6 flex justify-center w-full scale-125">
-                   {getBuildingSprite(selectedVenue.id, selectedVenue.type, selectedVenue.seed, selectedVenue.name)}
-                </div>
-                <p className="text-gray-500 font-medium mb-6 px-4">
-                  {selectedVenue.description || `You have arrived at ${selectedVenue.name}.`} What would you like to do?
-                </p>
 
-                {(selectedVenue.type === 'small-house' || selectedVenue.type === 'house' || selectedVenue.type === 'dubai-villa' || selectedVenue.type === 'villa') && (
-                  <div className="w-full mb-6 p-4 bg-slate-50 rounded-2xl border-2 border-slate-200">
-                    <h4 className="font-black text-slate-800 mb-3 text-lg">
-                      {selectedVenue.type.includes('villa') ? '🏰 Luxury Estate Real Estate' : '🏡 Residential Real Estate Options'}
-                    </h4>
-                    <div className="flex gap-3">
-                      <button 
-                        onClick={() => showToast((selectedVenue.type.includes('villa') ? 'Dubai Luxury Villa' : 'House') + ' purchased for AED ' + (selectedVenue.price || (selectedVenue.type.includes('villa') ? 8500000 : 1500000)).toLocaleString(), 'debit')} 
-                        className="flex-1 bg-green-500 hover:bg-green-600 text-white font-black py-3 px-4 rounded-xl flex items-center justify-center gap-2"
-                      >
-                        <span>BUY</span>
-                        <span className="text-xs bg-green-700 px-2 py-1 rounded">{(selectedVenue.price || (selectedVenue.type.includes('villa') ? 8500000 : 1500000)).toLocaleString()} AED</span>
-                      </button>
-                      <button 
-                        onClick={() => showToast((selectedVenue.type.includes('villa') ? 'Dubai Luxury Villa' : 'House') + ' rented for AED ' + (selectedVenue.rent || (selectedVenue.type.includes('villa') ? 45000 : 10000)).toLocaleString(), 'debit')} 
-                        className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-black py-3 px-4 rounded-xl flex items-center justify-center gap-2"
-                      >
-                        <span>RENT</span>
-                        <span className="text-xs bg-blue-700 px-2 py-1 rounded">{(selectedVenue.rent || (selectedVenue.type.includes('villa') ? 45000 : 10000)).toLocaleString()}/mo</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {(selectedVenue.type === 'hospital' || selectedVenue.type === 'medical' || selectedVenue.type === 'isometric-hospital') && (
-                  <div className="w-full mb-6 p-4 bg-red-50/80 rounded-2xl border-2 border-red-200 text-left">
-                    <h4 className="font-black text-red-950 mb-2 text-lg flex items-center gap-2">
-                      <span>🏥 Healthcare & Emergency Medical</span>
-                    </h4>
-                    <p className="text-xs text-red-800 font-medium mb-3">
-                      International hospital facility featuring 24/7 Trauma Emergency Unit, Rooftop Medevac Helipad, and VIP concierge wellness screening.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-2.5">
-                      <button 
-                        onClick={() => showToast('Executive Health Screening booked at ' + (selectedVenue.name || 'Dubai Hospital'), 'credit')} 
-                        className="flex-1 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-black py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 text-xs shadow-md"
-                      >
-                        <span>🩺 Book Screening</span>
-                        <span className="text-[10px] bg-red-800/80 px-2 py-0.5 rounded">2,500 AED</span>
-                      </button>
-                      <button 
-                        onClick={() => showToast('Emergency Medical Dispatch alerted to ' + (selectedVenue.name || 'Dubai Hospital'), 'debit')} 
-                        className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-black py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 text-xs shadow-md"
-                      >
-                        <span>🚑 24/7 Ambulance</span>
-                        <span className="text-[10px] bg-red-600 px-2 py-0.5 rounded">Dispatch</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {(selectedVenue.type === 'beach' || selectedVenue.type === 'beach-club' || selectedVenue.type === 'isometric-beach') && (
-                  <div className="w-full mb-6 p-4 bg-amber-50/80 rounded-2xl border-2 border-amber-200 text-left">
-                    <h4 className="font-black text-amber-950 mb-2 text-lg flex items-center gap-2">
-                      <span>🏖️ Coastal Beach & Beach Club Experience</span>
-                    </h4>
-                    <p className="text-xs text-amber-800 font-medium mb-3">
-                      Pristine Arabian Gulf shoreline featuring thatched tiki cabana bar, sand volleyball court, water sports jet skis, and luxury shaded daybeds.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-2.5">
-                      <button 
-                        onClick={() => showToast('Full Day Beach & Pool Pass booked at ' + (selectedVenue.name || 'Jumeirah Beach Club'), 'credit')} 
-                        className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 text-xs shadow-md"
-                      >
-                        <span>🍹 Beach Day Pass</span>
-                        <span className="text-[10px] bg-amber-800/80 px-2 py-0.5 rounded">350 AED</span>
-                      </button>
-                      <button 
-                        onClick={() => showToast('VIP Luxury Beach Cabana reserved at ' + (selectedVenue.name || 'Jumeirah Beach Club'), 'credit')} 
-                        className="flex-1 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-black py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 text-xs shadow-md"
-                      >
-                        <span>🛖 VIP Cabana</span>
-                        <span className="text-[10px] bg-cyan-900/80 px-2 py-0.5 rounded">1,800 AED</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-                
-                {selectedVenue.type === 'apartment-building' && (
-                  <div className="w-full mb-6 text-left">
-                    <h4 className="font-black text-slate-800 mb-3 ml-1 text-lg">Available Units</h4>
-                    <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-2 rounded-xl">
-                      {Array.from({length: selectedVenue.floors || 5}).map((_, i) => (
-                        <div key={i} className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-200">
-                          <div>
-                            <span className="font-bold text-slate-700 block">Unit {(i+1)*101}</span>
-                            <span className="text-xs text-slate-500">{i%2===0 ? '2 Bed, 1 Bath' : 'Studio'}</span>
-                          </div>
-                          <div className="flex gap-2">
-                            <button onClick={() => showToast('Bought unit for AED 800,000', 'debit')} className="bg-green-500 font-bold text-white px-3 py-2 text-xs rounded-lg hover:bg-green-600">BUY</button>
-                            <button onClick={() => showToast('Rented unit for AED 4,500/mo', 'debit')} className="bg-blue-500 font-bold text-white px-3 py-2 text-xs rounded-lg hover:bg-blue-600">RENT</button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex flex-col gap-3 w-full">
-                  {venueActions[selectedVenue.type]?.map((action, idx) => (
-                    <Button 
-                      key={idx}
-                      onClick={() => executeAction(selectedVenue, action)}
-                      className={`w-full h-14 rounded-2xl text-lg font-black shadow-lg hover:opacity-90 ${action.color} text-white`}
-                    >
-                      {action.label} 
-                      {action.amount !== 0 && 
-                        ` (${action.amount > 0 ? '+' : ''}${action.amount.toLocaleString()} AED)`
-                      }
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
 
       
       {/* Floating Multi-Selection Action Bar */}
       {isEditMode && selectedEditIds.length > 1 && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[100] bg-zinc-950/95 backdrop-blur-2xl border border-blue-500/60 rounded-2xl shadow-2xl p-3 px-5 text-white flex items-center gap-4 animate-in slide-in-from-bottom-5 duration-200 pointer-events-auto">
+        <div className="absolute bottom-24 sm:bottom-8 left-1/2 -translate-x-1/2 z-[100] bg-zinc-950/95 backdrop-blur-2xl border border-blue-500/60 rounded-2xl shadow-2xl p-3 px-5 text-white flex items-center gap-4 animate-in slide-in-from-bottom-5 duration-200 pointer-events-auto">
           <div className="flex items-center gap-2.5">
             <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping" />
             <span className="font-black text-sm text-blue-300">{selectedEditIds.length} Selected</span>
@@ -2072,7 +1765,7 @@ export function InteractiveMap({
         if (!sel) return null;
 
         return (
-          <div className="absolute bottom-8 right-8 z-[100] w-96 max-h-[82vh] overflow-y-auto bg-zinc-950/95 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-5 text-white animate-in slide-in-from-bottom-5 duration-200 pointer-events-auto">
+          <div className="absolute bottom-24 inset-x-2 sm:inset-x-auto sm:bottom-8 sm:right-8 z-[100] sm:w-96 max-h-[calc(100dvh-170px)] sm:max-h-[82vh] overflow-y-auto bg-zinc-950/95 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl p-5 text-white animate-in slide-in-from-bottom-5 duration-200 pointer-events-auto">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
               <div className="flex items-center gap-2.5">

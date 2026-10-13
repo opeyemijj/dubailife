@@ -6,59 +6,98 @@ import { useRouter } from "next/navigation";
 import { 
   Volume2, VolumeX, Plus, Eye, Check, ChevronUp, ChevronDown,
   Home, ShoppingBag, Map, Smartphone, Sparkles, X, Megaphone,
-  RotateCw, Keyboard
+  RotateCw, RotateCcw, Keyboard, Move, Package, LogOut
 } from "lucide-react";
-import { ApartmentRoom } from "@/components/home/ApartmentRoom";
+import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { gameAudio } from "@/utils/gameAudio";
+import { useRequireCitizen, adjustBalance, buyFurniture, setFurniturePlacement, signOut, updateCitizen, DEFAULT_NEEDS, type Needs } from "@/lib/citizenStore";
+import { CATALOG, getCatalogItem, type CatalogItem, type Placement, type Rotation } from "@/lib/furniture";
+import { useOnlineCount, formatOnline } from "@/lib/presence";
 
 export default function HomePage() {
   const router = useRouter();
 
-  // Citizen data loaded from storage
-  const [citizen, setCitizen] = useState<any>(null);
+  const { citizen } = useRequireCitizen();
+  const walletBalance = citizen?.balance ?? 0;
+  const onlineCount = useOnlineCount();
   const [cleanScreen, setCleanScreen] = useState(false);
   const [welcomeModalOpen, setWelcomeModalOpen] = useState(true);
   const [buyModalOpen, setBuyModalOpen] = useState(false);
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [shopTab, setShopTab] = useState<"shop" | "storage">("shop");
+  const [placing, setPlacing] = useState<PlacingState | null>(null);
+  const [decorating, setDecorating] = useState(false);
+  const [turns, setTurns] = useState(0);
 
-  // In-game dynamic needs
-  const [needs, setNeeds] = useState({
-    hunger: 92,
-    energy: 85,
-    fun: 80,
-    social: 65,
-    hygiene: 90,
-    bladder: 88,
-  });
+  const furniture = citizen?.furniture ?? [];
+  const stored = furniture.filter((f) => !f.placement);
+  const placingItem = placing ? getCatalogItem(placing.itemId) : undefined;
+  const placingIsPlaced = !!(placing && furniture.find((f) => f.uid === placing.uid)?.placement);
 
-  // Wallet
-  const [walletBalance, setWalletBalance] = useState(50000);
+  // Wellbeing meters live on the citizen, so food bought around the city counts here too.
+  const needs = { ...DEFAULT_NEEDS, ...citizen?.needs };
+  const setNeeds = (fn: (n: Needs) => Needs) => updateCitizen((c) => ({ ...c, needs: fn({ ...DEFAULT_NEEDS, ...c.needs }) }));
+
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("dubai_citizen");
-      const logged = localStorage.getItem("dubai_logged_in") === "true";
-      if (!stored || !logged) {
-        router.replace("/?signup=true");
-        return;
-      }
-      const parsed = JSON.parse(stored);
-      setCitizen(parsed);
-      if (parsed.balance) setWalletBalance(parsed.balance);
-    } catch {
-      router.replace("/?signup=true");
-      return;
-    }
-
     setIsAudioMuted(gameAudio.getIsMuted());
-  }, [router]);
+  }, []);
 
   const showToast = (text: string) => {
     setToastMsg(text);
     setTimeout(() => setToastMsg(null), 3000);
   };
+
+  const startPlacing = (uid: string, itemId: string, rot: Rotation = 0) => {
+    setBuyModalOpen(false);
+    setPlacing({ uid, itemId, rot });
+  };
+
+  const handleBuy = (item: CatalogItem) => {
+    const uid = buyFurniture(item.id, item.price);
+    if (!uid) {
+      showToast("⚠️ Not enough D-Coins in your wallet!");
+      return;
+    }
+    gameAudio.playCoinSound();
+    startPlacing(uid, item.id);
+    showToast(`🎉 Bought ${item.name}! ${item.kind === "wall" ? "Tap a wall" : "Tap the floor"} to place it.`);
+  };
+
+  const handlePlace = (uid: string, placement: Placement) => {
+    setFurniturePlacement(uid, placement);
+    setPlacing(null);
+    gameAudio.playClickSound();
+  };
+
+  const handlePickUp = (uid: string) => {
+    const f = furniture.find((x) => x.uid === uid);
+    if (!f) return;
+    gameAudio.playClickSound();
+    setPlacing({ uid, itemId: f.itemId, rot: f.placement?.kind === "floor" ? f.placement.rot : 0 });
+  };
+
+  const rotatePlacing = () => setPlacing((p) => (p ? { ...p, rot: (((p.rot + 1) % 4) as Rotation) } : p));
+
+  const storePlacing = () => {
+    if (!placing) return;
+    setFurniturePlacement(placing.uid, null);
+    setPlacing(null);
+    showToast("📦 Moved to storage. Open Buy → Storage to place it again.");
+  };
+
+  // Keyboard shortcuts while placing: R rotates, Esc cancels.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!placing) return;
+      if (e.key === "r" || e.key === "R") rotatePlacing();
+      if (e.key === "Escape") setPlacing(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [placing]);
 
   const handleInteractObject = (type: "cooler" | "bed" | "chair" | "door") => {
     gameAudio.playClickSound();
@@ -81,10 +120,78 @@ export default function HomePage() {
     <main className="relative w-screen h-[100dvh] bg-[#788e6e] overflow-hidden select-none font-sans touch-none">
       
       {/* 3D Isometric Apartment Interior */}
-      <ApartmentRoom 
-        look={citizen?.look} 
-        onInteractObject={handleInteractObject} 
+      <ApartmentRoom
+        look={citizen?.look}
+        furniture={furniture}
+        placing={placing}
+        decorating={decorating}
+        turns={turns}
+        onPlace={handlePlace}
+        onPickUp={handlePickUp}
+        onPlaceBlocked={() => showToast("🚫 It doesn't fit there. Try a green spot.")}
+        onInteractObject={handleInteractObject}
       />
+
+      {/* Camera controls */}
+      <div className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-2 pointer-events-auto">
+        <button
+          onClick={() => setTurns((t) => t - 1)}
+          className="w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 active:scale-90 transition-all"
+          title="Rotate room left"
+          aria-label="Rotate room left"
+        >
+          <RotateCcw className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => setTurns((t) => t + 1)}
+          className="w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 active:scale-90 transition-all"
+          title="Rotate room right"
+          aria-label="Rotate room right"
+        >
+          <RotateCw className="w-4 h-4" />
+        </button>
+        <span className="hidden sm:block text-[10px] font-bold text-white/90 bg-black/30 px-2 py-0.5 rounded-full text-center leading-tight">Drag to<br />look around</span>
+      </div>
+
+      {/* Decorate mode banner */}
+      {decorating && !placing && (
+        <div className="absolute top-16 sm:top-20 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 bg-slate-950/90 backdrop-blur-md text-white text-xs sm:text-sm font-bold pl-4 pr-1.5 py-1.5 rounded-full shadow-2xl">
+          <Move className="w-4 h-4 text-emerald-400" />
+          <span>{furniture.some((f) => f.placement) ? "Tap any furniture you bought to move it" : "Buy furniture first, then tap it here to move it"}</span>
+          <button onClick={() => setDecorating(false)} className="px-3 py-1 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-black">Done</button>
+        </div>
+      )}
+
+      {/* Placement toolbar */}
+      {placing && placingItem && (
+        <div className="fixed bottom-3 sm:bottom-5 left-0 w-full z-50 px-3 pointer-events-none">
+          <div className="max-w-md mx-auto bg-white/95 backdrop-blur-2xl border border-white shadow-[0_16px_48px_rgba(0,0,0,0.25)] rounded-3xl p-3 pointer-events-auto space-y-2.5">
+            <div className="flex items-center gap-2.5">
+              <span className="text-2xl">{placingItem.icon}</span>
+              <div className="min-w-0">
+                <div className="font-black text-sm text-slate-900 truncate">{placingItem.name}</div>
+                <div className="text-[11px] font-semibold text-slate-500">
+                  {placingItem.kind === "wall" ? "Tap a wall to hang it." : "Tap the floor to place it."} Green means it fits.
+                  <span className="hidden sm:inline"> R rotates · Esc cancels.</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {placingItem.kind !== "wall" && (
+                <button onClick={rotatePlacing} className="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs flex items-center justify-center gap-1.5 active:scale-95">
+                  <RotateCw className="w-3.5 h-3.5" /> Rotate
+                </button>
+              )}
+              <button onClick={storePlacing} className="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95">
+                <Package className="w-3.5 h-3.5" /> Store
+              </button>
+              <button onClick={() => setPlacing(null)} className="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95">
+                <X className="w-3.5 h-3.5" /> {placingIsPlaced ? "Cancel move" : "Later"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* TOP BAR (Image 2) */}
       {!cleanScreen && (
@@ -109,7 +216,7 @@ export default function HomePage() {
                 <span>35.5m</span>
               </div>
               <span className="text-emerald-500">•</span>
-              <span className="text-emerald-600 font-extrabold">10k online</span>
+              <span className="text-emerald-600 font-extrabold">{formatOnline(onlineCount)} online</span>
             </div>
 
             {/* Audio Toggle & Wallet Pill (Right) */}
@@ -125,18 +232,19 @@ export default function HomePage() {
                 {isAudioMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-500" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-600" />}
               </button>
 
-              <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200/60 px-3 py-1 rounded-full text-xs sm:text-sm font-black font-mono shadow-sm">
-                <span>AED {walletBalance.toLocaleString()}</span>
-                <button
-                  onClick={() => {
-                    setWalletBalance(prev => prev + 10000);
-                    showToast("💳 Topped up 10,000 AED into your wallet!");
-                  }}
-                  className="w-4 h-4 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center text-xs ml-0.5 active:scale-90"
-                >
-                  <Plus className="w-3 h-3 stroke-[3]" />
-                </button>
-              </div>
+              <Link href="/wallet" className="flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200/60 px-3 py-1 rounded-full text-xs sm:text-sm font-black font-mono shadow-sm" aria-label="Wallet">
+                <span>{walletBalance.toLocaleString()} D-Coins</span>
+                <span className="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center ml-0.5"><Plus className="w-3 h-3 stroke-[3]" /></span>
+              </Link>
+
+              <button
+                onClick={signOut}
+                className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 transition-colors"
+                title="Log out"
+                aria-label="Log out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
             </div>
 
           </div>
@@ -158,7 +266,7 @@ export default function HomePage() {
             <span className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs shrink-0">💎</span>
             <div className="truncate">
               <div className="leading-tight">Daily gem hunt</div>
-              <div className="text-[10px] text-slate-400 font-semibold">7758 found · next prize AED 3,000</div>
+              <div className="text-[10px] text-slate-400 font-semibold">7758 found · next prize 3,000 D-Coins</div>
             </div>
           </div>
 
@@ -235,11 +343,11 @@ export default function HomePage() {
       )}
 
       {/* BOTTOM NAVIGATION BAR (Image 2) */}
-      {!cleanScreen && (
+      {!cleanScreen && !placing && (
         <div className="fixed bottom-3 sm:bottom-5 left-0 w-full z-40 pointer-events-none px-4">
-          <div className="max-w-xs sm:max-w-sm mx-auto bg-white/95 backdrop-blur-2xl border border-white shadow-[0_16px_48px_rgba(0,0,0,0.25)] rounded-full p-1.5 flex items-center justify-between pointer-events-auto">
+          <div className="max-w-sm sm:max-w-md mx-auto bg-white/95 backdrop-blur-2xl border border-white shadow-[0_16px_48px_rgba(0,0,0,0.25)] rounded-full p-1.5 flex items-center justify-between pointer-events-auto">
             {/* Home (Active) */}
-            <button className="flex-1 py-2 px-3 rounded-full bg-slate-900 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-md">
+            <button className="flex-1 py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full bg-slate-900 text-white font-black text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 shadow-md">
               <Home className="w-3.5 h-3.5" />
               <span>Home</span>
             </button>
@@ -247,16 +355,25 @@ export default function HomePage() {
             {/* Buy Furniture */}
             <button 
               onClick={() => setBuyModalOpen(true)}
-              className="flex-1 py-2 px-3 rounded-full hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+              className="flex-1 py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full hover:bg-slate-100 text-slate-700 font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors"
             >
               <ShoppingBag className="w-3.5 h-3.5" />
               <span>Buy</span>
             </button>
 
+            {/* Decorate: move furniture */}
+            <button
+              onClick={() => setDecorating((d) => !d)}
+              className={`flex-1 py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors ${decorating ? "bg-emerald-500 text-white" : "hover:bg-slate-100 text-slate-700"}`}
+            >
+              <Move className="w-3.5 h-3.5" />
+              <span>Decorate</span>
+            </button>
+
             {/* Map (Routes to /explore) */}
             <button 
               onClick={() => router.push("/explore")}
-              className="flex-1 py-2 px-3 rounded-full hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+              className="flex-1 py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full hover:bg-slate-100 text-slate-700 font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors"
             >
               <Map className="w-3.5 h-3.5" />
               <span>Map</span>
@@ -265,7 +382,7 @@ export default function HomePage() {
             {/* Phone */}
             <button 
               onClick={() => router.push("/phone")}
-              className="flex-1 py-2 px-3 rounded-full hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+              className="flex-1 py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full hover:bg-slate-100 text-slate-700 font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors"
             >
               <Smartphone className="w-3.5 h-3.5" />
               <span>Phone</span>
@@ -297,7 +414,7 @@ export default function HomePage() {
           </div>
 
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-            Your starter residence in <strong>{citizen?.home || "Dubai"}</strong> is ready and your initial starter grant of <strong>AED {walletBalance.toLocaleString()}</strong> has been credited to your account!
+            Your starter residence in <strong>{citizen?.home || "Dubai"}</strong> is ready and your initial starter grant of <strong>{walletBalance.toLocaleString()} D-Coins</strong> has been credited to your account!
           </p>
 
           <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-xs font-semibold text-slate-700 leading-relaxed">
@@ -334,43 +451,63 @@ export default function HomePage() {
         <DialogContent className="bg-white text-slate-900 border-none shadow-2xl w-[92vw] max-w-md max-h-[85dvh] overflow-y-auto z-50 rounded-3xl p-6">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <h3 className="text-lg font-black text-slate-900">Apartment Furniture Shop</h3>
-            <span className="text-xs font-mono font-bold text-emerald-600">AED {walletBalance.toLocaleString()}</span>
+            <span className="text-xs font-mono font-bold text-emerald-600">{walletBalance.toLocaleString()} D-Coins</span>
           </div>
 
-          <div className="space-y-3 pt-3">
-            {[
-              { id: "sofa", name: "Modern Velvet Sofa", price: 3500, icon: "🛋️", desc: "Super comfortable for guests." },
-              { id: "tv", name: "65-Inch Smart 4K TV", price: 4200, icon: "📺", desc: "Watch live Dubai City broadcasts." },
-              { id: "carpet", name: "Silk Persian Carpet", price: 2800, icon: "🧶", desc: "Luxurious handcrafted weave." },
-              { id: "artwork", name: "Burj Khalifa Sunset Painting", price: 1500, icon: "🖼️", desc: "Original high-rise acrylic artwork." },
-            ].map(item => (
-              <div key={item.id} className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{item.icon}</span>
-                  <div>
-                    <h4 className="font-black text-xs sm:text-sm text-slate-900">{item.name}</h4>
-                    <p className="text-[11px] text-slate-500">{item.desc}</p>
-                    <span className="text-xs font-mono font-extrabold text-emerald-600 mt-0.5 block">AED {item.price.toLocaleString()}</span>
+          <div className="flex gap-1 p-1 mt-3 bg-slate-100 rounded-xl text-xs font-black">
+            <button onClick={() => setShopTab("shop")} className={`flex-1 py-1.5 rounded-lg ${shopTab === "shop" ? "bg-white shadow text-slate-900" : "text-slate-500"}`}>Shop</button>
+            <button onClick={() => setShopTab("storage")} className={`flex-1 py-1.5 rounded-lg ${shopTab === "storage" ? "bg-white shadow text-slate-900" : "text-slate-500"}`}>Storage{stored.length ? ` (${stored.length})` : ""}</button>
+          </div>
+
+          {shopTab === "shop" ? (
+            <div className="space-y-2.5 pt-3">
+              {CATALOG.map(item => {
+                const owned = furniture.filter((f) => f.itemId === item.id).length;
+                return (
+                  <div key={item.id} className="p-3 rounded-2xl border border-slate-100 bg-slate-50 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-2xl">{item.icon}</span>
+                      <div className="min-w-0">
+                        <h4 className="font-black text-xs sm:text-sm text-slate-900">{item.name}</h4>
+                        <p className="text-[11px] text-slate-500">{item.desc}{owned ? ` · ${owned} owned` : ""}</p>
+                        <span className="text-xs font-mono font-extrabold text-emerald-600 mt-0.5 block">{item.price.toLocaleString()} D-Coins</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleBuy(item)}
+                      className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs transition-all active:scale-95"
+                    >
+                      Buy
+                    </button>
                   </div>
-                </div>
-
-                <button
-                  onClick={() => {
-                    if (walletBalance >= item.price) {
-                      setWalletBalance(prev => prev - item.price);
-                      showToast(`🎉 Purchased ${item.name}! Added to your apartment.`);
-                      setBuyModalOpen(false);
-                    } else {
-                      showToast("⚠️ Not enough AED in your wallet!");
-                    }
-                  }}
-                  className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs transition-all active:scale-95"
-                >
-                  Buy
-                </button>
-              </div>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="space-y-2.5 pt-3">
+              {stored.length === 0 && (
+                <p className="text-xs text-slate-500 text-center py-6">Nothing in storage. Items you buy or store from the room appear here.</p>
+              )}
+              {stored.map((f) => {
+                const item = getCatalogItem(f.itemId);
+                if (!item) return null;
+                return (
+                  <div key={f.uid} className="p-3 rounded-2xl border border-slate-100 bg-slate-50 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{item.icon}</span>
+                      <h4 className="font-black text-xs sm:text-sm text-slate-900">{item.name}</h4>
+                    </div>
+                    <button
+                      onClick={() => startPlacing(f.uid, f.itemId)}
+                      className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs transition-all active:scale-95"
+                    >
+                      Place
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

@@ -1,85 +1,81 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { 
   ArrowLeft, Shuffle, Check, Sparkles, Building, Briefcase, 
   Utensils, PartyPopper, Dumbbell, Smile, Moon, Sparkle, Trophy,
-  Star, Heart, Shield, CheckCircle2, Home, Landmark
+  Star, Heart, Shield, CheckCircle2, Home, Landmark, Camera, X
 } from "lucide-react";
 import { AvatarCanvas, type AvatarLookProps } from "./AvatarCanvas";
+import { BODY_TYPES, defaultBodyType } from "@/components/avatar/bodyShape";
+import { ROSTER, defaultPreset, presetFor, rosterFor, rosterThumb } from "@/components/avatar/roster";
+import { AvaturnCreator, type CreatedAvatar } from "@/components/avatar/AvaturnCreator";
+import { createProfile, useCitizen } from "@/lib/citizenStore";
+import { clearSignupDraft, updateSignupDraft, useSignupDraft } from "@/lib/signupDraft";
+import { ONBOARDING_STEPS, type OnboardingStep } from "@/lib/onboardingSteps";
 
-interface OnboardingFlowProps {
-  initialUserData?: {
-    name: string;
-    username: string;
-    email?: string;
-    dob?: { day: string; month: string; year: string };
-  };
-  onComplete?: () => void;
-}
 
-export const SKIN_TONES = [
-  "#fcd5b5", "#f1c27d", "#e0ac69", "#c68642", "#8d5524", "#5c3317", "#3b2219"
-];
+const DEFAULT_LOOK: AvatarLookProps = { gender: "woman", preset: defaultPreset("woman"), bodyType: "Hourglass" };
+const DEFAULT_TRAITS = ["Hustler"];
+const DEFAULT_DREAM = "Corporate Titan";
+const DEFAULT_HOME = "Business Bay Studio";
 
-export const HAIR_COLORS = [
-  "#18181b", "#3f2b1d", "#5c4033", "#8b5a2b", "#b08d57", "#d97706", "#7c3aed"
-];
+type Updater<T> = T | ((prev: T) => T);
+const resolve = <T,>(u: Updater<T>, prev: T): T => (typeof u === "function" ? (u as (p: T) => T)(prev) : u);
 
-export const OUTFIT_COLORS = [
-  "#2563eb", "#10b981", "#ef4444", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6",
-  "#0f172a", "#fef3c7", "#ca8a04", "#ffffff"
-];
-
-export const BOTTOMS_COLORS = [
-  "#2563eb", "#10b981", "#ef4444", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6",
-  "#0f172a", "#fef3c7", "#ca8a04", "#ffffff"
-];
-
-export function OnboardingFlow({ initialUserData, onComplete }: OnboardingFlowProps) {
+export function OnboardingFlow({ step }: { step: OnboardingStep }) {
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState<number>(1); // 1: Look, 2: Personality, 3: Dream, 4: Birth Lottery, 5: Home
-  const username = initialUserData?.username || "rashid_dxb";
+  const searchParams = useSearchParams();
+  const draft = useSignupDraft();
+  const { isLoggedIn, hydrated, session } = useCitizen();
+  const [finishing, setFinishing] = useState(false);
+  const [finishError, setFinishError] = useState<string | null>(null);
+  const currentStep = ONBOARDING_STEPS.indexOf(step) + 1; // 1: Look, 2: Personality, 3: Dream, 4: Birth Lottery, 5: Home
+  const setCurrentStep = (n: number) => router.push(`/onboarding/${ONBOARDING_STEPS[n - 1]}`);
+  // From the draft, or — if the confirmation link opened elsewhere — from the account itself.
+  const meta = session?.meta as { username?: string; display_name?: string } | undefined;
+  // The draft only counts if it belongs to the account that's actually signed in.
+  const draftMatches = !!draft?.account?.email && draft.account.email.toLowerCase() === session?.email?.toLowerCase();
+  const account = (draftMatches ? draft?.account : undefined) ?? (meta?.username ? { name: meta.display_name ?? meta.username, username: meta.username, email: session?.email } : undefined);
+  const username = account?.username || "citizen";
 
-  // Step 1: Look state
-  const [look, setLook] = useState<AvatarLookProps>({
-    gender: "woman",
-    hairstyle: "Braids",
-    outfit: "Owambe / Traditional",
-    fabric: "Ankara / Silk",
-    skinTone: "#8d5524",
-    hairColor: "#18181b",
-    outfitColor: "#f59e0b",
-    bottomsColor: "#0f172a",
-  });
+  // Every choice is saved to the sign-up draft, so a refresh on any step keeps it.
+  const look = draft?.look ?? DEFAULT_LOOK;
+  const setLook = (u: Updater<AvatarLookProps>) => updateSignupDraft((d) => ({ look: resolve(u, d.look ?? DEFAULT_LOOK) }));
+  const selectedTraits = draft?.traits ?? DEFAULT_TRAITS;
+  const setSelectedTraits = (u: Updater<string[]>) => updateSignupDraft((d) => ({ traits: resolve(u, d.traits ?? DEFAULT_TRAITS) }));
+  const selectedDream = draft?.dream ?? DEFAULT_DREAM;
+  const setSelectedDream = (dream: string) => updateSignupDraft({ dream });
+  const selectedHome = draft?.home ?? DEFAULT_HOME;
+  const setSelectedHome = (home: string) => updateSignupDraft({ home });
 
-  // Step 2: Personality Traits (pick 2)
-  const [selectedTraits, setSelectedTraits] = useState<string[]>(["Hustler"]);
+  // The selfie creator has its own URL too (/onboarding/look?selfie=open).
+  const selfieOpen = step === "look" && searchParams.get("selfie") === "open";
+  const setSelfieOpen = (open: boolean) => router.replace(open ? "/onboarding/look?selfie=open" : "/onboarding/look", { scroll: false });
 
-  // Step 3: Dream (pick 1)
-  const [selectedDream, setSelectedDream] = useState<string>("Corporate Titan");
+  // Onboarding needs a signed-in account without a profile yet. Finished citizens go home;
+  // unconfirmed sign-ups wait for their email; skipping past an unfinished personality step goes back.
+  useEffect(() => {
+    if (!draft || !hydrated || finishing) return;
+    if (isLoggedIn) router.replace("/home");
+    else if (!session) router.replace(draft.account ? "/?signup=true&confirm=email" : "/?signup=true");
+    else if (currentStep > 2 && (draft.traits ?? DEFAULT_TRAITS).length !== 2) router.replace("/onboarding/personality");
+  }, [draft, hydrated, session, isLoggedIn, finishing, currentStep, router]);
 
-  // Step 5: Home Selection
-  const [selectedHome, setSelectedHome] = useState<string>("Business Bay Studio");
+  const handleSelfieCreated = useCallback((created: CreatedAvatar) => {
+    updateSignupDraft((d) => ({ look: { ...(d.look ?? DEFAULT_LOOK), gender: created.gender, custom: { avatarId: created.avatarId, url: created.url } } }));
+    router.replace("/onboarding/look", { scroll: false });
+  }, [router]);
 
-  // Randomize look
+  const chooseGender = (gender: "woman" | "man") =>
+    setLook((prev) => prev.gender === gender ? prev : { gender, preset: defaultPreset(gender), bodyType: defaultBodyType(gender) });
+
+  // Randomize look: a random citizen and body type
   const handleRandomize = () => {
-    const genders: Array<"woman" | "man"> = ["woman", "man"];
-    const hairstyles = ["Braids", "Afro", "Bun", "Ponytail", "Long", "Locs", "Low cut", "Kandura & Ghutra", "Classic"];
-    const outfits = ["Casual", "Office", "Owambe / Traditional", "Traditional / Kandura", "Site work", "Luxury"];
-    const fabrics = ["Plain", "Ankara / Silk", "Linen", "Gold Thread"];
-
-    setLook({
-      gender: genders[Math.floor(Math.random() * genders.length)],
-      hairstyle: hairstyles[Math.floor(Math.random() * hairstyles.length)],
-      outfit: outfits[Math.floor(Math.random() * outfits.length)],
-      fabric: fabrics[Math.floor(Math.random() * fabrics.length)],
-      skinTone: SKIN_TONES[Math.floor(Math.random() * SKIN_TONES.length)],
-      hairColor: HAIR_COLORS[Math.floor(Math.random() * HAIR_COLORS.length)],
-      outfitColor: OUTFIT_COLORS[Math.floor(Math.random() * OUTFIT_COLORS.length)],
-      bottomsColor: BOTTOMS_COLORS[Math.floor(Math.random() * BOTTOMS_COLORS.length)],
-    });
+    const pick = ROSTER[Math.floor(Math.random() * ROSTER.length)];
+    const types = BODY_TYPES[pick.gender];
+    setLook({ gender: pick.gender, preset: pick.id, bodyType: types[Math.floor(Math.random() * types.length)] });
   };
 
   const handleTraitToggle = (trait: string) => {
@@ -94,28 +90,23 @@ export function OnboardingFlow({ initialUserData, onComplete }: OnboardingFlowPr
     }
   };
 
-  const handleFinishOnboarding = () => {
-    const citizenProfile = {
-      name: initialUserData?.name || "Rashid Al Mansoori",
-      username,
-      look,
-      traits: selectedTraits,
-      dream: selectedDream,
-      home: selectedHome,
+  const handleFinishOnboarding = async () => {
+    if (!account) return;
+    setFinishing(true);
+    setFinishError(null);
+    const result = await createProfile({
+      username: account.username,
+      name: account.name,
       balance: selectedHome.includes("Marina") ? 100000 : selectedHome.includes("Business Bay") ? 50000 : 30000,
-      createdAt: new Date().toISOString(),
-    };
-
-    try {
-      localStorage.setItem("dubai_citizen", JSON.stringify(citizenProfile));
-      localStorage.setItem("dubai_logged_in", "true");
-    } catch {}
-
-    if (onComplete) {
-      onComplete();
-    } else {
-      router.push("/home");
+      game: { look, traits: selectedTraits, dream: selectedDream, home: selectedHome },
+    });
+    if (!result.ok) {
+      setFinishing(false);
+      setFinishError(result.error);
+      return;
     }
+    clearSignupDraft();
+    router.push("/home");
   };
 
   const stepTitles = ["Look", "Personality", "Dream", "Birth lottery", "Home"];
@@ -126,8 +117,8 @@ export function OnboardingFlow({ initialUserData, onComplete }: OnboardingFlowPr
       <div className="h-14 sm:h-16 px-4 sm:px-8 flex items-center justify-between border-b border-slate-200 bg-white/90 backdrop-blur-md shrink-0">
         <button
           onClick={() => {
-            if (currentStep > 1) setCurrentStep(prev => prev - 1);
-            else router.push("/");
+            if (currentStep > 1) setCurrentStep(currentStep - 1);
+            else router.push("/?signup=true");
           }}
           className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 transition-colors text-slate-700 active:scale-95"
           aria-label="Back"
@@ -170,8 +161,8 @@ export function OnboardingFlow({ initialUserData, onComplete }: OnboardingFlowPr
 
           <button
             onClick={() => {
-              if (currentStep < 5) setCurrentStep(prev => prev + 1);
-              else handleFinishOnboarding();
+              if (currentStep < 5) setCurrentStep(currentStep + 1);
+              else void handleFinishOnboarding();
             }}
             disabled={currentStep === 2 && selectedTraits.length !== 2}
             className="px-4 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-bold text-xs sm:text-sm transition-all shadow-sm active:scale-95"
@@ -199,166 +190,116 @@ export function OnboardingFlow({ initialUserData, onComplete }: OnboardingFlowPr
                   <div className="flex items-center gap-2">
                     <span className="font-mono font-black text-sm text-slate-900">@{username}</span>
                   </div>
-                  <span className="text-[11px] font-semibold text-slate-400">your Citizen's name</span>
+                  <span className="text-[11px] font-semibold text-slate-400">your Citizen&apos;s name</span>
                 </div>
 
                 {/* Body Gender */}
                 <div>
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Body</label>
                   <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-2xl">
+                    {(["woman", "man"] as const).map((g) => (
+                      <button
+                        key={g}
+                        onClick={() => chooseGender(g)}
+                        className={`py-2 text-xs font-black rounded-xl transition-all ${
+                          look.gender === g ? "bg-slate-900 text-white shadow-md" : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        {g === "woman" ? "Woman" : "Man"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Selfie avatar */}
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Look like you</label>
+                  {look.custom ? (
+                    <div className="flex items-center justify-between gap-3 p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-50/60">
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-9 h-9 rounded-full bg-emerald-500 text-white flex items-center justify-center"><Camera className="w-4 h-4" /></span>
+                        <div>
+                          <div className="font-black text-sm text-slate-900">Your selfie avatar</div>
+                          <div className="text-[11px] text-slate-500">Made from your photos. Tap Redo to change your outfit.</div>
+                        </div>
+                      </div>
+                      <div className="flex gap-1.5">
+                        <button onClick={() => setSelfieOpen(true)} className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50">Redo</button>
+                        <button onClick={() => setLook((prev) => ({ ...prev, custom: undefined }))} className="w-8 h-8 rounded-xl bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 flex items-center justify-center" aria-label="Remove selfie avatar"><X className="w-3.5 h-3.5" /></button>
+                      </div>
+                    </div>
+                  ) : (
                     <button
-                      onClick={() => setLook(prev => ({ ...prev, gender: "woman" }))}
-                      className={`py-2 text-xs font-black rounded-xl transition-all ${
-                        look.gender === "woman" ? "bg-slate-900 text-white shadow-md" : "text-slate-600 hover:text-slate-900"
-                      }`}
+                      onClick={() => setSelfieOpen(true)}
+                      className="w-full flex items-center gap-3 p-3 rounded-2xl border-2 border-dashed border-slate-300 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-colors"
                     >
-                      Woman
+                      <span className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center shrink-0"><Camera className="w-4 h-4" /></span>
+                      <div>
+                        <div className="font-black text-sm text-slate-900">Create from a selfie or photo</div>
+                        <div className="text-[11px] text-slate-500">Take a selfie or upload pictures for a realistic avatar that looks like you. Free.</div>
+                        <div className="mt-1.5 inline-flex items-center gap-1 rounded-lg bg-amber-50 border border-amber-200 px-2 py-1 text-[11px] font-semibold text-amber-800">
+                          👗 Choose your outfit, hair, shoes and glasses inside the creator. That&apos;s the only place you can customise them.
+                        </div>
+                      </div>
                     </button>
-                    <button
-                      onClick={() => setLook(prev => ({ ...prev, gender: "man" }))}
-                      className={`py-2 text-xs font-black rounded-xl transition-all ${
-                        look.gender === "man" ? "bg-slate-900 text-white shadow-md" : "text-slate-600 hover:text-slate-900"
-                      }`}
-                    >
-                      Man
-                    </button>
+                  )}
+                </div>
+
+                {/* Ready-made citizens */}
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                    {look.custom ? "Or pick a ready-made citizen" : "Or pick a citizen"}
+                  </label>
+                  <p className="text-[11px] text-slate-400 mb-2">Ready-made citizens come dressed as shown; their outfits can&apos;t be changed.</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {rosterFor(look.gender).map((r) => {
+                      const active = !look.custom && presetFor(look) === r.id;
+                      return (
+                        <button
+                          key={r.id}
+                          onClick={() => setLook((prev) => ({ ...prev, preset: r.id, custom: undefined }))}
+                          className={`relative rounded-2xl overflow-hidden border-2 bg-slate-800 transition-all ${active ? "border-emerald-500 ring-2 ring-emerald-500/30" : "border-transparent hover:border-slate-300"}`}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={rosterThumb(r.id)} alt={r.label} className="w-full aspect-[3/4] object-cover object-[50%_20%] scale-[1.6] origin-top" loading="lazy" />
+                          <span className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent text-white text-[10px] font-bold px-1.5 pt-4 pb-1 leading-tight">{r.label}</span>
+                          {active && <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center"><Check className="w-3 h-3" /></span>}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Hairstyle */}
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Hairstyle</label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {["Braids", "Afro", "Bun", "Ponytail", "Long", "Locs", "Low cut", "Kandura & Ghutra", "Classic"].map(style => (
-                      <button
-                        key={style}
-                        onClick={() => setLook(prev => ({ ...prev, hairstyle: style }))}
-                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                          look.hairstyle === style
-                            ? "bg-slate-900 text-white shadow-sm"
-                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                        }`}
-                      >
-                        {style}
-                      </button>
-                    ))}
+                {/* Body type (ready-made citizens only; selfie avatars keep the body from your photos) */}
+                {!look.custom && (
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Body type</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {BODY_TYPES[look.gender].map(type => (
+                        <button
+                          key={type}
+                          onClick={() => setLook(prev => ({ ...prev, bodyType: type }))}
+                          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                            (look.bodyType ?? defaultBodyType(look.gender)) === type
+                              ? "bg-slate-900 text-white shadow-sm"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                          }`}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-
-                {/* Outfit */}
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Outfit</label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {["Casual", "Office", "Owambe / Traditional", "Traditional / Kandura", "Site work", "Luxury"].map(o => (
-                      <button
-                        key={o}
-                        onClick={() => setLook(prev => ({ ...prev, outfit: o }))}
-                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                          look.outfit === o
-                            ? "bg-slate-900 text-white shadow-sm"
-                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                        }`}
-                      >
-                        {o}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Fabric */}
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Fabric</label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {["Plain", "Ankara / Silk", "Linen", "Gold Thread"].map(fab => (
-                      <button
-                        key={fab}
-                        onClick={() => setLook(prev => ({ ...prev, fabric: fab }))}
-                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                          look.fabric === fab
-                            ? "bg-slate-900 text-white shadow-sm"
-                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                        }`}
-                      >
-                        {fab}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Skin Tone */}
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Skin tone</label>
-                  <div className="flex items-center gap-2">
-                    {SKIN_TONES.map(color => (
-                      <button
-                        key={color}
-                        onClick={() => setLook(prev => ({ ...prev, skinTone: color }))}
-                        style={{ backgroundColor: color }}
-                        className={`w-7 h-7 rounded-full transition-transform ${
-                          look.skinTone === color ? "ring-2 ring-blue-500 ring-offset-2 scale-110" : "hover:scale-105"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Hair Color */}
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Hair colour</label>
-                  <div className="flex items-center gap-2">
-                    {HAIR_COLORS.map(color => (
-                      <button
-                        key={color}
-                        onClick={() => setLook(prev => ({ ...prev, hairColor: color }))}
-                        style={{ backgroundColor: color }}
-                        className={`w-7 h-7 rounded-full transition-transform ${
-                          look.hairColor === color ? "ring-2 ring-blue-500 ring-offset-2 scale-110" : "hover:scale-105"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Outfit Color */}
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Outfit colour</label>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {OUTFIT_COLORS.map(color => (
-                      <button
-                        key={color}
-                        onClick={() => setLook(prev => ({ ...prev, outfitColor: color }))}
-                        style={{ backgroundColor: color }}
-                        className={`w-7 h-7 rounded-full border border-black/10 transition-transform ${
-                          look.outfitColor === color ? "ring-2 ring-blue-500 ring-offset-2 scale-110" : "hover:scale-105"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Bottoms Color */}
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Bottoms</label>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {BOTTOMS_COLORS.map(color => (
-                      <button
-                        key={color}
-                        onClick={() => setLook(prev => ({ ...prev, bottomsColor: color }))}
-                        style={{ backgroundColor: color }}
-                        className={`w-7 h-7 rounded-full border border-black/10 transition-transform ${
-                          look.bottomsColor === color ? "ring-2 ring-blue-500 ring-offset-2 scale-110" : "hover:scale-105"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
+                )}
 
                 <button
                   onClick={() => setCurrentStep(2)}
-                  className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 active:scale-98 text-white font-black text-sm rounded-2xl shadow-lg transition-all"
+                  className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm shadow-md transition-all active:scale-98"
                 >
                   Continue
                 </button>
+
+                {selfieOpen && <AvaturnCreator onCreated={handleSelfieCreated} onClose={() => setSelfieOpen(false)} />}
               </>
             )}
 
@@ -436,7 +377,7 @@ export function OnboardingFlow({ initialUserData, onComplete }: OnboardingFlowPr
                 <div className="space-y-2.5">
                   {[
                     { id: "Corporate Titan", icon: "👔", title: "Corporate Titan", desc: "Reach the top level of any executive career." },
-                    { id: "Palm Landlord", icon: "🏰", title: "Palm Landlord", desc: "Build a net worth of 5,000,000 AED in luxury real estate." },
+                    { id: "Palm Landlord", icon: "🏰", title: "Palm Landlord", desc: "Build a net worth of 5,000,000 D-Coins in luxury real estate." },
                     { id: "Global Superstar", icon: "🎤", title: "Global Superstar", desc: "Max out Fame and Social skills (Level 10)." },
                     { id: "City Connector", icon: "🤝", title: "City Connector", desc: "Become best friends with 10 influential citizens." },
                     { id: "Tech Unicorn", icon: "🦄", title: "Tech Unicorn Founder", desc: "Get your startup funded at DIFC / Future District." },
@@ -508,7 +449,7 @@ export function OnboardingFlow({ initialUserData, onComplete }: OnboardingFlowPr
                   <div className="space-y-2 text-left bg-white/80 backdrop-blur-md rounded-2xl p-4 border border-amber-200/60 shadow-sm text-xs font-bold text-slate-800">
                     <div className="flex items-center gap-2.5">
                       <span className="text-base">💼</span>
-                      <span>50,000 AED starter capital grant to invest</span>
+                      <span>50,000 D-Coins starter capital grant to invest</span>
                     </div>
                     <div className="flex items-center gap-2.5">
                       <span className="text-base">💪</span>
@@ -559,8 +500,8 @@ export function OnboardingFlow({ initialUserData, onComplete }: OnboardingFlowPr
                       badgeColor: "bg-blue-100 text-blue-700",
                       title: "Academic City Dorm",
                       desc: "Shared room, campus study perks, very cheap rent.",
-                      startCapital: "15,000 AED",
-                      rent: "1,200 AED/wk",
+                      startCapital: "15,000 D-Coins",
+                      rent: "1,200 D-Coins/wk",
                     },
                     {
                       id: "Deira Studio",
@@ -569,8 +510,8 @@ export function OnboardingFlow({ initialUserData, onComplete }: OnboardingFlowPr
                       badgeColor: "bg-slate-100 text-slate-700",
                       title: "Deira Old Town Studio",
                       desc: "Lively street souks, classic vibes, budget living with big dreams.",
-                      startCapital: "30,000 AED",
-                      rent: "2,500 AED/wk",
+                      startCapital: "30,000 D-Coins",
+                      rent: "2,500 D-Coins/wk",
                     },
                     {
                       id: "Business Bay Studio",
@@ -579,8 +520,8 @@ export function OnboardingFlow({ initialUserData, onComplete }: OnboardingFlowPr
                       badgeColor: "bg-emerald-100 text-emerald-800 font-black",
                       title: "Business Bay Modern Studio",
                       desc: "Your own balcony near the canal, pool, gym, minutes from Downtown.",
-                      startCapital: "50,000 AED",
-                      rent: "4,500 AED/wk",
+                      startCapital: "50,000 D-Coins",
+                      rent: "4,500 D-Coins/wk",
                     },
                     {
                       id: "Dubai Marina 1-Bed",
@@ -589,8 +530,8 @@ export function OnboardingFlow({ initialUserData, onComplete }: OnboardingFlowPr
                       badgeColor: "bg-purple-100 text-purple-700",
                       title: "Dubai Marina 1-Bedroom",
                       desc: "High-floor marina view, infinity pool, vibrant waterfront luxury.",
-                      startCapital: "100,000 AED",
-                      rent: "8,000 AED/wk",
+                      startCapital: "100,000 D-Coins",
+                      rent: "8,000 D-Coins/wk",
                     },
                   ].map(res => {
                     const isSelected = selectedHome === res.id;
@@ -627,12 +568,14 @@ export function OnboardingFlow({ initialUserData, onComplete }: OnboardingFlowPr
                   })}
                 </div>
 
+                {finishError && <p role="alert" className="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">{finishError}</p>}
                 <button
                   onClick={handleFinishOnboarding}
-                  className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 active:scale-98 text-white font-black text-base rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2"
+                  disabled={finishing}
+                  className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 active:scale-98 text-white font-black text-base rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2"
                 >
                   <Sparkles className="w-4 h-4" />
-                  <span>Move in</span>
+                  <span>{finishing ? "Moving in…" : "Move in"}</span>
                 </button>
               </>
             )}

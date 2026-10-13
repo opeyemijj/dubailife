@@ -1,95 +1,47 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import React, { Suspense } from "react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import { SmallLoader } from "@/components/GameLoadingScreen";
 import { LandingOverlay } from "@/components/landing/LandingOverlay";
-import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
+import { useCitizen, signOut } from "@/lib/citizenStore";
 
 const InteractiveMap = dynamic(
   () => import("@/components/map/InteractiveMap").then((mod) => mod.InteractiveMap),
-  { ssr: false }
+  { ssr: false, loading: () => <SmallLoader label="Loading Downtown Dubai" /> }
 );
 
 function HomeContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [isOnboarding, setIsOnboarding] = useState(false);
-  const [pendingUserData, setPendingUserData] = useState<any>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [citizen, setCitizen] = useState<any>(null);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-
-  useEffect(() => {
-    try {
-      const logged = localStorage.getItem("dubai_logged_in") === "true";
-      const citizenRaw = localStorage.getItem("dubai_citizen");
-      if (logged && citizenRaw) {
-        setIsLoggedIn(true);
-        setCitizen(JSON.parse(citizenRaw));
-      } else {
-        setIsLoggedIn(false);
-      }
-    } catch {}
-
-    // Auto-open signup modal if requested by query param (?signup=true or ?auth=true)
-    if (searchParams.get("signup") === "true" || searchParams.get("auth") === "true") {
-      setAuthModalOpen(true);
-    }
-  }, [searchParams]);
-
-  const handleStartOnboarding = (userData: any) => {
-    setPendingUserData(userData);
-    setIsOnboarding(true);
-  };
+  const { isLoggedIn, citizen } = useCitizen();
 
   const handleAttemptInteract = () => {
-    if (!isLoggedIn) {
-      setAuthModalOpen(true);
-    }
-  };
-
-  const handleLogout = () => {
-    try {
-      localStorage.removeItem("dubai_logged_in");
-    } catch {}
-    setIsLoggedIn(false);
-    setCitizen(null);
+    if (!isLoggedIn) router.push("/?signup=true", { scroll: false });
   };
 
   return (
     <main className="relative h-screen w-screen bg-[#d6bc8a] overflow-hidden select-none touch-none overscroll-none font-sans">
       {/* 2D Isometric City Map in Background: Interaction locked until user signs in */}
-      <InteractiveMap 
+      <InteractiveMap
         hideTopHUD={true}
         interactionDisabled={!isLoggedIn}
         onAttemptInteract={handleAttemptInteract}
       />
 
-      {/* Onboarding Wizard (Look, Personality, Dream, Birth Lottery, Home) */}
-      {isOnboarding ? (
-        <OnboardingFlow 
-          initialUserData={pendingUserData} 
-          onComplete={() => router.push("/home")} 
-        />
-      ) : (
-        /* First Visit Landing Overlay: Top bar, pills, bottom floating box, sign up & age confirmation modals */
-        <LandingOverlay 
-          isLoggedIn={isLoggedIn}
-          citizen={citizen}
-          onLogout={handleLogout}
-          forceOpenAuth={authModalOpen}
-          onCloseAuth={() => setAuthModalOpen(false)}
-          onStartOnboarding={handleStartOnboarding} 
-        />
-      )}
+      {/* Top bar, pills, bottom card, and the sign-up / log-in / age modals (opened via the URL) */}
+      <LandingOverlay
+        isLoggedIn={isLoggedIn}
+        citizen={citizen}
+        onLogout={signOut}
+      />
     </main>
   );
 }
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="h-screen w-screen bg-[#d6bc8a]" />}>
+    <Suspense fallback={<SmallLoader label="Loading Downtown Dubai" />}>
       <HomeContent />
     </Suspense>
   );

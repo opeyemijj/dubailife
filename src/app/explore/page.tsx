@@ -1,34 +1,35 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useRequireCitizen } from "@/lib/citizenStore";
 import dynamic from "next/dynamic";
+import { SmallLoader } from "@/components/GameLoadingScreen";
 import { TopBar } from "@/components/layout/TopBar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Search, Coffee, Music, ShoppingBag, Trophy, Navigation, Home, X, SlidersHorizontal, Building2, Building, Sparkles } from "lucide-react";
 
 const InteractiveMap = dynamic(
   () => import("@/components/map/InteractiveMap").then((mod) => mod.InteractiveMap),
-  { ssr: false }
+  { ssr: false, loading: () => <SmallLoader label="Loading Downtown Dubai" /> }
 );
 
 export default function ExplorePage() {
-  const router = useRouter();
+  return (
+    <Suspense fallback={<SmallLoader label="Loading Downtown Dubai" />}>
+      <Explore />
+    </Suspense>
+  );
+}
+
+function Explore() {
+  const params = useSearchParams();
+  const to = params.get("to");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
-  useEffect(() => {
-    try {
-      const logged = localStorage.getItem("dubai_logged_in") === "true";
-      const citizen = localStorage.getItem("dubai_citizen");
-      if (!logged || !citizen) {
-        router.replace("/?signup=true");
-      }
-    } catch {
-      router.replace("/?signup=true");
-    }
-  }, [router]);
+  useRequireCitizen();
 
   const filters = [
     { id: "all", label: "All Venues", icon: <Navigation className="w-3.5 h-3.5" /> },
@@ -49,6 +50,9 @@ export default function ExplorePage() {
         hideTopHUD={true} 
         activeFilter={activeFilter} 
         searchQuery={searchQuery} 
+        openPlaceId={params.get("open") ?? undefined}
+        journeyTo={to ? { placeId: to, venueId: params.get("venue") ?? undefined } : undefined}
+        atPlaceId={params.get("at") ?? undefined}
       />
 
       {/* Top Navigation HUD with Safe Area Padding */}
