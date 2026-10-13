@@ -717,7 +717,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       <VenueRadio venue={venue} compact={!!panel} />
 
       {/* Header */}
-      <header className="absolute top-3 inset-x-3 z-30 flex items-center gap-2 pointer-events-none">
+      <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2 pointer-events-none">
         <button onClick={() => router.push(place.venues.length > 1 ? `/explore?open=${place.id}` : `/explore?at=${place.id}`)} className="pointer-events-auto w-10 h-10 rounded-full bg-white/95 shadow-lg flex items-center justify-center" aria-label={place.venues.length > 1 ? `Back to ${place.name} directory` : "Leave"}>
           <ArrowLeft className="w-4 h-4" />
         </button>

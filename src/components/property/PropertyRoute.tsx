@@ -252,7 +252,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
     : `👋 You're visiting ${flat.residentName ?? "someone"}'s home. Look around — you can't change anything.`;
 
   return (
-    <main className="relative w-screen h-[100dvh] overflow-hidden bg-[#788e6e] text-slate-900 select-none">
+    <main className="fixed inset-0 w-screen h-[100dvh] overflow-hidden overscroll-none bg-[#788e6e] text-slate-900 select-none">
       <ApartmentRoom
         loadingLabel={`Opening ${flatTitle(flat)}`}
         look={look}
@@ -266,7 +266,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         onPlaceBlocked={() => say("🚫 It doesn't fit there.")}
       />
 
-      <header className="absolute top-3 inset-x-3 z-30 flex items-center gap-2">
+      <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2">
         <button onClick={onExit} className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center" aria-label="Leave"><ArrowLeft className="w-4 h-4" /></button>
         <div className="bg-white rounded-2xl shadow-lg px-3 py-1.5 min-w-0">
           <div className="font-black text-sm truncate">{flatTitle(flat)}</div>
@@ -285,14 +285,14 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
       </div>
 
       {canEdit && !placing && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+        <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-30 flex gap-2">
           <button onClick={() => setShopOpen(true)} className="h-11 px-4 rounded-full bg-white shadow-xl text-xs font-black flex items-center gap-1.5"><ShoppingBag className="w-4 h-4" /> Buy furniture</button>
           <button onClick={() => setDecorating((d) => !d)} className={`h-11 px-4 rounded-full shadow-xl text-xs font-black ${decorating ? "bg-emerald-500 text-white" : "bg-white"}`}>{decorating ? "Done decorating" : "Decorate"}</button>
         </div>
       )}
 
       {placing && placingItem && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white rounded-2xl shadow-2xl p-3 flex items-center gap-2">
+        <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-40 bg-white rounded-2xl shadow-2xl p-3 flex items-center gap-2">
           <span className="text-2xl">{placingItem.icon}</span>
           <span className="text-xs font-bold">{placingItem.kind === "wall" ? "Tap a wall" : "Tap the floor"} to place</span>
           {placingItem.kind !== "wall" && <button onClick={() => setPlacing({ ...placing, rot: (((placing.rot + 1) % 4) as Rotation) })} className="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-black">Rotate</button>}

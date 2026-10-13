@@ -1,5 +1,6 @@
 "use client";
 
+import { ModalPortal } from "@/components/ui/modal-portal";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { compact, useSiteStats } from "@/lib/siteStats";
 import React, { useState, useEffect } from "react";
@@ -142,7 +143,8 @@ export default function HomePage() {
   };
 
   return (
-    <main className="relative w-screen h-[100dvh] bg-[#788e6e] overflow-hidden select-none font-sans touch-none">
+    // Pinned to the screen so Safari never scrolls the page (which turns taps into scrolls).
+    <main className="fixed inset-0 w-screen h-[100dvh] bg-[#788e6e] overflow-hidden overscroll-none select-none font-sans touch-none">
       
       {/* 3D Isometric Apartment Interior */}
       <ApartmentRoom
@@ -220,7 +222,7 @@ export default function HomePage() {
 
       {/* TOP BAR (Image 2) */}
       {!cleanScreen && (
-        <header className="absolute top-3 sm:top-5 left-0 w-full z-40 pointer-events-none px-3 sm:px-6">
+        <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] sm:top-5 left-0 w-full z-40 pointer-events-none px-3 sm:px-6">
           <div className="max-w-4xl mx-auto flex items-center justify-between pointer-events-auto bg-white/95 hover:bg-white backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] px-3 sm:px-4 py-2 rounded-full transition-all">
             
             {/* Clock & Mood */}
@@ -372,10 +374,10 @@ export default function HomePage() {
 
       {/* BOTTOM NAVIGATION BAR (Image 2) */}
       {!cleanScreen && !placing && (
-        <div className="fixed bottom-3 sm:bottom-5 left-0 w-full z-40 pointer-events-none px-4">
+        <div className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] sm:bottom-5 left-0 w-full z-40 pointer-events-none px-4">
           <div className="max-w-sm sm:max-w-md mx-auto bg-white/95 backdrop-blur-2xl border border-white shadow-[0_16px_48px_rgba(0,0,0,0.25)] rounded-full p-1.5 flex items-center justify-between pointer-events-auto">
             {/* Home (Active) */}
-            <button className="flex-1 py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full bg-slate-900 text-white font-black text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 shadow-md">
+            <button className="flex-1 min-h-[48px] py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full bg-slate-900 text-white font-black text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 shadow-md">
               <Home className="w-3.5 h-3.5" />
               <span>Home</span>
             </button>
@@ -383,7 +385,7 @@ export default function HomePage() {
             {/* Buy Furniture */}
             <button 
               onClick={() => setBuyModalOpen(true)}
-              className="flex-1 py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full hover:bg-slate-100 text-slate-700 font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors"
+              className="flex-1 min-h-[48px] py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full hover:bg-slate-100 text-slate-700 font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors"
             >
               <ShoppingBag className="w-3.5 h-3.5" />
               <span>Buy</span>
@@ -392,7 +394,7 @@ export default function HomePage() {
             {/* Decorate: move furniture */}
             <button
               onClick={() => setDecorating((d) => !d)}
-              className={`flex-1 py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors ${decorating ? "bg-emerald-500 text-white" : "hover:bg-slate-100 text-slate-700"}`}
+              className={`flex-1 min-h-[48px] py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors ${decorating ? "bg-emerald-500 text-white" : "hover:bg-slate-100 text-slate-700"}`}
             >
               <Move className="w-3.5 h-3.5" />
               <span>Decorate</span>
@@ -401,7 +403,7 @@ export default function HomePage() {
             {/* Map (Routes to /explore) */}
             <button 
               onClick={() => router.push("/explore")}
-              className="flex-1 py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full hover:bg-slate-100 text-slate-700 font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors"
+              className="flex-1 min-h-[48px] py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full hover:bg-slate-100 text-slate-700 font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors"
             >
               <Map className="w-3.5 h-3.5" />
               <span>Map</span>
@@ -410,7 +412,7 @@ export default function HomePage() {
             {/* Phone */}
             <button 
               onClick={() => router.push("/phone")}
-              className="flex-1 py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full hover:bg-slate-100 text-slate-700 font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors"
+              className="flex-1 min-h-[48px] py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full hover:bg-slate-100 text-slate-700 font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors"
             >
               <Smartphone className="w-3.5 h-3.5" />
               <span>Phone</span>
@@ -427,8 +429,13 @@ export default function HomePage() {
       )}
 
       {/* 1. FIRST ARRIVAL / REGULATIONS POPUP (Image 1) */}
-      <Dialog open={welcomeModalOpen} onOpenChange={setWelcomeModalOpen}>
-        <DialogContent className="bg-white text-slate-900 border-none shadow-2xl w-[92vw] max-w-md z-50 rounded-3xl p-6 sm:p-7 text-left space-y-4">
+      {/* First visit only. A plain card (not a dialog) so nothing is left covering the screen once it's closed. */}
+      {welcomeModalOpen && (
+        <ModalPortal>
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Welcome to Dubai Life">
+            <div className="absolute inset-0 bg-black/30" onClick={() => setWelcomeModalOpen(false)} aria-hidden />
+            <div className="relative bg-white text-slate-900 shadow-2xl w-[92vw] max-w-md rounded-3xl p-6 sm:p-7 text-left space-y-4">
+              <button onClick={() => setWelcomeModalOpen(false)} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600" aria-label="Close">✕</button>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl bg-amber-50 text-2xl flex items-center justify-center shadow-sm border border-amber-100">
               📣
@@ -471,8 +478,10 @@ export default function HomePage() {
               Got it
             </button>
           </div>
-        </DialogContent>
-      </Dialog>
+                    </div>
+          </div>
+        </ModalPortal>
+      )}
 
       {/* 2. BUY FURNITURE MODAL */}
       <Dialog open={buyModalOpen} onOpenChange={setBuyModalOpen}>
