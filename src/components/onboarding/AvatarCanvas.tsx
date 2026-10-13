@@ -1,6 +1,8 @@
 "use client";
 
-import React, { Suspense, useRef, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { canvasQuality } from "@/lib/device";
+import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { Canvas } from "@react-three/fiber";
 import { ContactShadows } from "@react-three/drei";
 import { SceneLoadingOverlay } from "@/components/GameLoadingScreen";
@@ -28,6 +30,15 @@ function Pedestal() {
 
 export function AvatarCanvas({ look }: { look: AvatarLookProps }) {
   const [rotation, setRotation] = useState(0);
+  // Start the 3D a moment after the page is up, so the first taps on the page respond at once.
+  const [ready, setReady] = useState(false);
+  const quality = useMemo(() => canvasQuality(), []);
+  useEffect(() => {
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+    if (w.requestIdleCallback) { const id = w.requestIdleCallback(() => setReady(true), { timeout: 1200 }); return () => (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(id); }
+    const t = setTimeout(() => setReady(true), 500);
+    return () => clearTimeout(t);
+  }, []);
   const isDragging = useRef(false);
   const previousX = useRef(0);
 
@@ -53,16 +64,23 @@ export function AvatarCanvas({ look }: { look: AvatarLookProps }) {
 
   return (
     <div
-      className="relative w-full h-full min-h-[420px] flex items-center justify-center cursor-grab active:cursor-grabbing select-none"
+      className="relative w-full h-full md:min-h-[420px] flex items-center justify-center cursor-grab active:cursor-grabbing select-none"
+      // Up/down swipes scroll the page; sideways drags spin the avatar.
+      style={{ touchAction: "pan-y" }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
     >
-      <Canvas
+      {!ready && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={rosterThumb(presetFor(look))} alt="" className="absolute inset-0 m-auto h-[80%] object-contain opacity-80" />
+      )}
+      {ready && <Canvas
         camera={{ position: [0, -0.55, 3.4], fov: 40 }}
         onCreated={({ camera }) => camera.lookAt(0, -0.85, 0)}
-        style={{ width: "100%", height: "100%" }}
-        shadows
+        style={{ width: "100%", height: "100%", touchAction: "pan-y" }}
+        shadows={quality.shadows}
+        dpr={quality.dpr}
       >
         <StudioEnvironment intensity={0.7} />
         <hemisphereLight args={["#fff7ed", "#94a3b8", 0.6]} />
@@ -76,7 +94,7 @@ export function AvatarCanvas({ look }: { look: AvatarLookProps }) {
           </Suspense>
           <ContactShadows position={[0, -1.69, 0]} scale={3} blur={2.4} opacity={0.45} far={2} />
         </group>
-      </Canvas>
+      </Canvas>}
 
       <SceneLoadingOverlay label="Preparing your citizen" />
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { presetFor, rosterThumb } from "@/components/avatar/roster";
+import { compact, useSiteStats } from "@/lib/siteStats";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -21,8 +23,31 @@ export default function HomePage() {
   const { citizen } = useRequireCitizen();
   const walletBalance = citizen?.balance ?? 0;
   const onlineCount = useOnlineCount();
+  const { visits } = useSiteStats();
   const [cleanScreen, setCleanScreen] = useState(false);
-  const [welcomeModalOpen, setWelcomeModalOpen] = useState(true);
+  // The welcome only appears the first time this citizen opens their home.
+  const [welcomeModalOpen, setWelcomeModalOpenState] = useState(false);
+  const welcomeKey = `welcome-seen:${citizen?.id ?? ""}`;
+  useEffect(() => {
+    if (!citizen?.id) return;
+    let seen = false;
+    try { seen = localStorage.getItem(welcomeKey) === "1"; } catch { /* storage blocked */ }
+    // Reads browser storage once the citizen is known.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!seen) setWelcomeModalOpenState(true);
+  }, [citizen?.id, welcomeKey]);
+  const setWelcomeModalOpen = (open: boolean) => {
+    setWelcomeModalOpenState(open);
+    if (!open) { try { localStorage.setItem(welcomeKey, "1"); } catch { /* storage blocked */ } }
+  };
+  // Dubai time, ticking every minute.
+  const [clock, setClock] = useState<string>("");
+  useEffect(() => {
+    const fmt = () => setClock(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Dubai", weekday: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true }).format(new Date()));
+    fmt();
+    const t = setInterval(fmt, 30000);
+    return () => clearInterval(t);
+  }, []);
   const [buyModalOpen, setBuyModalOpen] = useState(false);
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -201,19 +226,21 @@ export default function HomePage() {
             {/* Clock & Mood */}
             <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-slate-800">
               <span className="flex items-center gap-1 font-mono">
-                🌙 Mon 12 · 5:40 AM
+                {(() => { const h = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Dubai", hour: "numeric", hour12: false }).format(new Date())); return h >= 6 && h < 19 ? "☀️" : "🌙"; })()} {clock}
               </span>
               <div className="w-[1px] h-3.5 bg-slate-200" />
-              <span className="flex items-center gap-1 text-emerald-600 font-extrabold text-xs">
-                🙂 Happy
-              </span>
+              {(() => {
+                const avg = (needs.hunger + needs.energy + needs.fun + needs.social + needs.hygiene + needs.bladder) / 6;
+                const [label, tone] = avg >= 70 ? ["🙂 Happy", "text-emerald-600"] : avg >= 40 ? ["😐 Okay", "text-amber-600"] : ["😟 Low", "text-rose-600"];
+                return <span className={`flex items-center gap-1 font-extrabold text-xs ${tone}`}>{label}</span>;
+              })()}
             </div>
 
             {/* Online stats (Center) */}
             <div className="hidden xs:flex sm:flex items-center gap-2 text-xs font-bold text-slate-500">
               <div className="flex items-center gap-1">
                 <Eye className="w-3.5 h-3.5 text-slate-400" />
-                <span>35.5m</span>
+                <span>{compact(visits)}</span>
               </div>
               <span className="text-emerald-500">•</span>
               <span className="text-emerald-600 font-extrabold">{formatOnline(onlineCount)} online</span>
@@ -253,7 +280,7 @@ export default function HomePage() {
 
       {/* TOP LEFT QUESTS & OBJECTIVES (Image 2) */}
       {!cleanScreen && (
-        <div className="absolute top-16 sm:top-20 left-3 sm:left-6 z-30 pointer-events-auto space-y-1.5">
+        <div className="absolute top-[4.75rem] sm:top-24 left-3 sm:left-6 z-30 pointer-events-auto space-y-1.5">
           <div className="flex items-center gap-2 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg border border-slate-100 text-xs font-bold text-slate-800 max-w-[280px]">
             <span className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-xs shrink-0">🍎</span>
             <div className="truncate">
@@ -295,9 +322,10 @@ export default function HomePage() {
         <div className="absolute bottom-20 sm:bottom-24 left-3 sm:left-6 z-30 pointer-events-auto">
           <div className="flex items-center gap-2 bg-white/95 backdrop-blur-xl border border-white p-2 pr-3.5 rounded-full shadow-2xl">
             {/* Avatar Head Circle */}
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-emerald-500 overflow-hidden bg-slate-100 flex items-center justify-center text-lg shadow-sm">
-              {citizen?.look?.gender === "man" ? "🧔🏾" : "👩🏾"}
-            </div>
+            <Link href="/profile" aria-label="Your profile" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-emerald-500 overflow-hidden bg-slate-100 shrink-0 shadow-sm">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={rosterThumb(presetFor(citizen?.look ?? { gender: "woman" }))} alt="" className="w-full h-full object-cover object-top" />
+            </Link>
 
             {/* 6 Mini Needs Meters */}
             <div className="grid grid-cols-3 gap-x-2.5 gap-y-1 text-[9px] font-bold text-slate-600">

@@ -4,6 +4,8 @@ import "./globals.css";
 import { PresenceTracker } from "@/components/PresenceTracker";
 import { KnockListener } from "@/components/property/KnockListener";
 import { MoneyListener } from "@/components/social/MoneyListener";
+import { MessageAlerts } from "@/components/social/MessageAlerts";
+import { Suspense } from "react";
 
 const fredoka = Fredoka({ subsets: ["latin"], display: 'swap' });
 
@@ -17,7 +19,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "COME TO DUBAI",
+  title: "Dubai Life",
   description: "Virtual City × Social Network × Life Simulation",
 };
 
@@ -32,6 +34,7 @@ export default function RootLayout({
         <PresenceTracker />
         <KnockListener />
         <MoneyListener />
+        <Suspense fallback={null}><MessageAlerts /></Suspense>
         {children}
       </body>
     </html>

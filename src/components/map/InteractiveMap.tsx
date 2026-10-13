@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useCallback, useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { TransformWrapper, TransformComponent, type ReactZoomPanPinchRef } from "react-zoom-pan-pinch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -23,6 +23,11 @@ import { useIsAdmin } from '@/lib/admin/client';
 import { BillboardAds, useLiveAds } from '@/components/commerce/BillboardAds';
 
 import { WORLD_WIDTH, WORLD_HEIGHT, EstateBase, ClickableHouseNew, ApartmentBuildingIconNew, RooftopIconNew, NightclubIconNew, RestaurantIconNew, EstateCommunityBlock, SmallHouseIcon, StadiumIcon, HospitalIcon, SchoolIcon, CasinoIcon, ParkIcon, BurjKhalifaIcon, BulgariIslandIcon, AtlantisTheRoyalIcon, BeachClubIconNew, JumeirahBeachHotelIcon, BurjAlArabIcon, MuseumOfTheFutureIcon, DubaiFrameIcon, AtlantisIcon, EmiratesTowersIcon, GevoraIcon, RoseRayhaanIcon, DWTCIcon, SalikGate, RoadSign, SkylineTower, AirportBlock, VillaHouse, ApartmentHouse, TycoonBlock, BluewatersBlock, ArabianRanchesBlock, JBRBlock, EmiratesHillsBlock, BusinessBayBlock, DeiraBlock, MotorCityBlock, PalmCommunityBlock, GenericNeighborhood, BillboardSpace, IsometricBillboard, DubaiMetroStation, MetroStationBlock, categoryColors, BridgeBlock, AdPlacement, initialAds, getBuildingSprite, ActionDef, venueActions } from './Icons';
+
+// Default zoom: close enough that billboards and building names read well on phones too.
+const DEFAULT_SCALE = 0.6;
+// The default view: Burj Khalifa in the middle of the screen (the middle of the tower, not its base).
+const BURJ_VIEW = { x: 1871, y: WORLD_HEIGHT - 743 - 140 };
 
 // Ground-level tiles: drawn beneath everything and never clickable
 const isFloorTileType = (type?: string) =>
@@ -174,7 +179,8 @@ export interface InteractiveMapProps {
   activeFilter?: string;
   searchQuery?: string;
   interactionDisabled?: boolean;
-  onAttemptInteract?: () => void;
+  /** Guests (not signed in) can look around; tapping a place calls this with it. */
+  onAttemptInteract?: (loc?: { id: string; type: string; name?: string }) => void;
   /** Open this place's directory on load (e.g. back from an interior). */
   openPlaceId?: string;
   /** Start a journey to this place (and venue) on load. */
@@ -215,6 +221,15 @@ export function InteractiveMap({
   const [isSaving, setIsSaving] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const transformRef = useRef<ReactZoomPanPinchRef | null>(null);
+  // The part of the world on screen (world px). Only buildings near it are drawn, which keeps the
+  // page light enough to stay responsive on phones. Updated when the view moves a fair way.
+  const [view, setView] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const updateView = useCallback((st: { positionX: number; positionY: number; scale: number }) => {
+    if (typeof window === 'undefined') return;
+    const x = -st.positionX / st.scale, y = -st.positionY / st.scale;
+    const w = window.innerWidth / st.scale, h = window.innerHeight / st.scale;
+    setView((v) => (v && Math.abs(v.x - x) < v.w * 0.2 && Math.abs(v.y - y) < v.h * 0.2 && Math.abs(v.w - w) < v.w * 0.1 ? v : { x, y, w, h }));
+  }, []);
 
   const dragRef = useRef<{
     activeIds: string[];
@@ -257,9 +272,11 @@ export function InteractiveMap({
   const [isAudioMuted, setIsAudioMuted] = useState(false);
 
   useEffect(() => {
-    // Start ambient game sound when arriving at the map
-    gameAudio.start();
+    // Start ambient sound on the first tap, not on load: creating the audio engine blocks the page
+    // for a moment, and browsers only allow sound after a tap anyway.
     setIsAudioMuted(gameAudio.getIsMuted());
+    const startOnce = () => gameAudio.start();
+    window.addEventListener('pointerdown', startOnce, { once: true });
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
@@ -274,6 +291,7 @@ export function InteractiveMap({
     // Stop game sound as soon as the user leaves the map screen
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pointerdown', startOnce);
       gameAudio.stop();
     };
   }, []);
@@ -411,7 +429,7 @@ export function InteractiveMap({
 
     setTimeout(() => {
       setIsTraveling(false);
-      showToast(`📍 Arrived at ${dest.name}! Welcome to Dubai.`, 'credit');
+      showToast(`📍 Arrived at ${dest.name}! Welcome to Dubai!`, 'credit');
     }, 1800);
   };
 
@@ -423,7 +441,7 @@ export function InteractiveMap({
 
   const handleVenueClick = (loc: any) => {
     if (interactionDisabled) {
-      onAttemptInteract?.();
+      onAttemptInteract?.(loc);
       return;
     }
 
@@ -465,7 +483,7 @@ export function InteractiveMap({
     gameAudio.playClickSound();
     const renderedX = virtualX;
     const renderedY = WORLD_HEIGHT - virtualY;
-    const scale = 0.42;
+    const scale = DEFAULT_SCALE;
     const screenW = typeof window !== 'undefined' ? window.innerWidth : 1200;
     const screenH = typeof window !== 'undefined' ? window.innerHeight : 800;
 
@@ -479,7 +497,7 @@ export function InteractiveMap({
 
   /** Centres the camera on a rendered map point. */
   const centreOn = (pt: { x: number; y: number }, ms = 650) => {
-    const scale = Math.max(0.42, transformRef.current?.state.scale ?? 0.42);
+    const scale = Math.max(DEFAULT_SCALE, transformRef.current?.state.scale ?? DEFAULT_SCALE);
     const w = typeof window !== 'undefined' ? window.innerWidth : 1200;
     const h = typeof window !== 'undefined' ? window.innerHeight : 800;
     transformRef.current?.setTransform(w / 2 - pt.x * scale, Math.min(h / 2 - pt.y * scale, 0), scale, ms);
@@ -498,7 +516,8 @@ export function InteractiveMap({
 
   // Links into the map: ?open=<place> reopens a directory, ?to=<place> plans a journey, ?at=<place> puts you outside.
   useEffect(() => {
-    if (interactionDisabled) return;
+    // Guests start over Downtown, where the venues are.
+    if (interactionDisabled) { setTimeout(() => centreOn(BURJ_VIEW, 0), 50); return; }
     const id = journeyTo?.placeId ?? openPlaceId;
     const place = id ? getPlace(id) ?? (id ? placeForEntity(venues.find((v) => v.id === id) ?? { id, type: '' }) : null) : null;
     if (place) {
@@ -510,8 +529,9 @@ export function InteractiveMap({
       setPlayerPos(at);
       updateCitizen((c) => ({ ...c, location: { ...at, placeId: undefined } }));
     }
-    const focus = at ?? (citizen?.location ? { x: citizen.location.x, y: citizen.location.y } : null);
-    if (focus) setTimeout(() => centreOn(focus, 0), 50);
+    // Arriving from a venue shows that place; otherwise the city opens on Burj Khalifa.
+    const focus = at ?? BURJ_VIEW;
+    setTimeout(() => centreOn(focus, 0), 50);
     // Only on arrival at the map.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openPlaceId, journeyTo?.placeId, journeyTo?.venueId, atPlaceId, interactionDisabled]);
@@ -741,10 +761,8 @@ export function InteractiveMap({
   };
 
   const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (interactionDisabled) {
-      onAttemptInteract?.();
-      return;
-    }
+    // Guests can look around freely; empty ground does nothing.
+    if (interactionDisabled) return;
     if (isEditMode) {
       setSelectedEditIds([]);
       return;
@@ -814,6 +832,16 @@ export function InteractiveMap({
       renderedY: WORLD_HEIGHT - loc.virtualY
     })).sort((a, b) => a.renderedY - b.renderedY);
   }, [venues, liveAds]);
+
+  // Buildings within (or near) the visible area; everything while editing the map.
+  const visibleEntities = useMemo(() => {
+    if (!view || isEditMode) return allRenderedEntities;
+    return allRenderedEntities.filter((loc) => {
+      const r = Math.max(Number(loc.width) || 400, Number(loc.height) || 400);
+      return loc.renderedX > view.x - view.w * 0.5 - r && loc.renderedX < view.x + view.w * 1.5 + r
+        && loc.renderedY > view.y - view.h * 0.5 - r && loc.renderedY < view.y + view.h * 1.5 + r * 1.5;
+    });
+  }, [allRenderedEntities, view, isEditMode]);
 
   return (
     <div className="absolute inset-0 w-screen h-[100dvh] z-0 bg-[#d6bc8a] overflow-hidden touch-none select-none overscroll-none">
@@ -897,8 +925,8 @@ export function InteractiveMap({
         </div>
       )}
 
-      {/* Top Right: Dubai Live Traffic HUD (Safe position below TopBar) */}
-      <div className="absolute top-20 sm:top-24 right-3 sm:right-6 z-30 pointer-events-auto">
+      {/* Top Right: Dubai Live Traffic HUD (larger screens; phones keep that corner for search) */}
+      <div className="hidden sm:block absolute top-20 sm:top-24 right-3 sm:right-6 z-30 pointer-events-auto">
         <div className="relative">
           <button
             onClick={() => setTrafficMenuOpen(!trafficMenuOpen)}
@@ -1015,7 +1043,7 @@ export function InteractiveMap({
 
       {/* Mobile-Friendly District Quick-Jumper Bar (Safely above BottomNav) */}
       {!interactionDisabled && (
-        <div className="absolute bottom-24 sm:bottom-28 left-3 sm:left-6 z-30 flex items-center gap-1.5 pointer-events-auto overflow-x-auto max-w-[calc(100vw-130px)] sm:max-w-none scrollbar-hide py-1">
+        <div className="hidden sm:flex absolute bottom-24 sm:bottom-28 left-3 sm:left-6 z-30 items-center gap-1.5 pointer-events-auto overflow-x-auto max-w-[calc(100vw-130px)] sm:max-w-none scrollbar-hide py-1">
           <div className="flex items-center gap-1.5 bg-slate-950/80 backdrop-blur-xl border border-white/20 p-1 rounded-2xl shadow-2xl">
             <button
               onClick={() => jumpToDistrict(1871, 743, 'Downtown Dubai')}
@@ -1056,25 +1084,9 @@ export function InteractiveMap({
         </div>
       )}
 
-      {/* Lock Interaction Click & Touch Interceptor Overlay */}
-      {interactionDisabled && (
-        <div 
-          className="absolute inset-0 z-20 cursor-pointer pointer-events-auto"
-          title="Sign up to unlock map interactions"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAttemptInteract?.();
-          }}
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            onAttemptInteract?.();
-          }}
-        />
-      )}
-
       {/* Floating Zoom Navigation & Ambient Audio Controls (Safely above BottomNav on right side) */}
       {!interactionDisabled && (
-        <div className="absolute z-30 flex items-center gap-1 bg-slate-950/85 hover:bg-slate-950/95 backdrop-blur-xl border border-white/20 p-1 sm:p-1.5 rounded-2xl shadow-2xl transition-all pointer-events-auto bottom-24 sm:bottom-28 right-3 sm:right-6">
+        <div className="absolute z-30 hidden sm:flex items-center gap-1 bg-slate-950/85 hover:bg-slate-950/95 backdrop-blur-xl border border-white/20 p-1 sm:p-1.5 rounded-2xl shadow-2xl transition-all pointer-events-auto bottom-24 sm:bottom-28 right-3 sm:right-6">
           <button
             onClick={() => {
               const nextMuted = gameAudio.toggleMute();
@@ -1128,19 +1140,19 @@ export function InteractiveMap({
 
       <TransformWrapper 
         ref={transformRef}
-        initialScale={mapConfig?.startScale || 0.35} 
+        initialScale={DEFAULT_SCALE} 
         initialPositionX={mapConfig?.startX ?? -120} 
         initialPositionY={mapConfig?.startY ?? -140}
         minScale={0.28} 
         maxScale={0.75}
         maxPositionY={0}
         smooth={true}
-        wheel={{ disabled: interactionDisabled, step: 0.02 }}
+        wheel={{ step: 0.02 }}
         doubleClick={{ disabled: true }}
-        pinch={{ disabled: interactionDisabled }}
+        pinch={{ disabled: false }}
         limitToBounds={false}
         centerZoomedOut={false}
-        panning={{ velocityDisabled: false, disabled: interactionDisabled || isDraggingItem }}
+        panning={{ velocityDisabled: false, disabled: isDraggingItem }}
         onPanning={(ref) => {
           if (ref.state.positionY > 0) {
             ref.setTransform(ref.state.positionX, 0, ref.state.scale, 0);
@@ -1156,6 +1168,8 @@ export function InteractiveMap({
             ref.setTransform(ref.state.positionX, 0, ref.state.scale, 0);
           }
         }}
+        onInit={(ref) => updateView(ref.state)}
+        onTransform={(_ref, st) => updateView(st)}
       >
         <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }}>
           <div 
@@ -1183,7 +1197,7 @@ export function InteractiveMap({
               </div>
             </div>
 
-            {allRenderedEntities.map((loc) => {
+            {visibleEntities.map((loc) => {
               const isFloorTile = isFloorTileType(loc.type);
               const isOverlay = isOverlayType(loc.type);
               const baseTransform = isOverlay ? 'translate(-50%, -50%)' : 'translate(-50%, -90%)';
@@ -1288,7 +1302,7 @@ export function InteractiveMap({
                   onClick={(e) => {
                     if (interactionDisabled) {
                       e.stopPropagation();
-                      onAttemptInteract?.();
+                      onAttemptInteract?.(loc);
                       return;
                     }
                     if (isEditMode) {
@@ -1370,7 +1384,7 @@ export function InteractiveMap({
             {/* Rendered physically after all building sprites with z-[400] to guarantee badges NEVER render under any building, billboard, or villa */}
             {!isEditMode && (
               <div className="absolute inset-0 pointer-events-none z-[400]">
-                {allRenderedEntities
+                {visibleEntities
                   .filter((loc) => {
                     const cat = getEntityCategoryInfo(loc);
                     return isSpecialPlaceVenue(loc, cat);
@@ -1411,7 +1425,7 @@ export function InteractiveMap({
                           onClick={(e) => {
                             e.stopPropagation();
                             if (interactionDisabled) {
-                              onAttemptInteract?.();
+                              onAttemptInteract?.(loc);
                               return;
                             }
                             handleVenueClick(loc);

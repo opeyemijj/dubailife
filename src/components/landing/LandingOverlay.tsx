@@ -1,5 +1,7 @@
 "use client";
 
+import { compact, useSiteStats } from "@/lib/siteStats";
+import { PLACES } from "@/lib/city/places";
 import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
@@ -17,6 +19,9 @@ interface LandingOverlayProps {
   onLogout?: () => void;
 }
 
+/** Social accounts shown under the sign-up / log-in buttons. Add each account's link as `href` when ready. */
+const SOCIALS: Array<{ label: string; href?: string }> = [{ label: "𝕏" }, { label: "TikTok" }, { label: "Instagram" }, { label: "LinkedIn" }];
+
 export function LandingOverlay({
   isLoggedIn = false,
   citizen,
@@ -25,6 +30,8 @@ export function LandingOverlay({
   const router = useRouter();
   const searchParams = useSearchParams();
   const onlineCount = useOnlineCount();
+  const { visits, homes } = useSiteStats();
+  const placeCount = PLACES.reduce((n, p) => n + p.venues.filter((v) => !v.comingSoon).length, 0);
   const draft = useSignupDraft();
 
   // Modals follow the URL so a refresh keeps the user where they were:
@@ -165,7 +172,7 @@ export function LandingOverlay({
 
               <div className="hidden xs:flex sm:flex items-center gap-1 text-[11px] sm:text-xs font-bold text-slate-500">
                 <Eye className="w-3.5 h-3.5 text-slate-400" />
-                <span>35.5k visits</span>
+                <span>{compact(visits)} visits</span>
               </div>
             </div>
 
@@ -173,15 +180,11 @@ export function LandingOverlay({
             <div className="hidden md:flex items-center gap-2">
               <div className="flex items-center gap-1 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-slate-700 shadow-sm border border-slate-100">
                 <span>🏛️</span>
-                <span>Gov @CrownPrince</span>
-              </div>
-              <div className="flex items-center gap-1 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-slate-700 shadow-sm border border-slate-100">
-                <span>🏝️</span>
-                <span>Palm Plots</span>
+                <span>{placeCount} places to visit</span>
               </div>
               <div className="flex items-center gap-1 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-slate-700 shadow-sm border border-slate-100">
                 <span>🏘️</span>
-                <span>450 homes</span>
+                <span>{homes === null ? "…" : homes.toLocaleString()} homes</span>
               </div>
             </div>
 
@@ -222,7 +225,7 @@ export function LandingOverlay({
           {/* Governor Ticker Banner (As shown in Screenshot 1) */}
           <div className="hidden sm:inline-flex items-center gap-2 bg-emerald-800/90 hover:bg-emerald-800 backdrop-blur-md text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg border border-emerald-600/50 pointer-events-auto transition-transform">
             <span>🏛️</span>
-            <span>Gov @CrownPrince: Welcome to Dubai Life! Claim your apartment in Downtown & Marina 🌴</span>
+            <span>Welcome to Dubai Life! Claim your apartment in Downtown and meet people in the city 🌴</span>
           </div>
 
         </div>
@@ -248,7 +251,7 @@ export function LandingOverlay({
 
           {/* Action Buttons */}
           {isLoggedIn ? (
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-row gap-2">
               <button
                 onClick={() => router.push("/home")}
                 className="flex-1 py-3 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-98 text-white font-black text-sm sm:text-base shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2"
@@ -257,13 +260,13 @@ export function LandingOverlay({
               </button>
               <button
                 onClick={() => router.push("/explore")}
-                className="py-3 px-6 rounded-2xl bg-slate-900 hover:bg-slate-800 active:scale-98 text-white font-bold text-sm sm:text-base transition-all flex items-center justify-center gap-2"
+                className="flex-1 py-3 px-6 rounded-2xl bg-slate-900 hover:bg-slate-800 active:scale-98 text-white font-bold text-sm sm:text-base transition-all flex items-center justify-center gap-2"
               >
                 <span>🗺️ Explore Map</span>
               </button>
             </div>
           ) : (
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-row gap-2">
               <button
                 onClick={handleOpenSignUp}
                 className="flex-1 py-3 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-98 text-white font-black text-sm sm:text-base shadow-lg shadow-emerald-500/25 transition-all"
@@ -272,26 +275,18 @@ export function LandingOverlay({
               </button>
               <button
                 onClick={handleOpenLogIn}
-                className="py-3 px-6 rounded-2xl bg-slate-50 hover:bg-slate-100 active:scale-98 text-slate-800 border border-slate-200 font-bold text-sm sm:text-base transition-all"
+                className="flex-1 py-3 px-6 rounded-2xl bg-slate-50 hover:bg-slate-100 active:scale-98 text-slate-800 border border-slate-200 font-bold text-sm sm:text-base transition-all"
               >
                 Log in
               </button>
             </div>
           )}
 
-          {/* Social Badges Footer */}
-          <div className="flex items-center justify-center gap-3 pt-1 text-[11px] font-bold text-slate-400">
-            <div className="flex items-center gap-1 text-emerald-600">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Official</span>
-            </div>
-            <span>•</span>
-            <div className="flex items-center gap-2.5 text-slate-500">
-              <span className="hover:text-slate-800 cursor-pointer transition-colors">𝕏</span>
-              <span className="hover:text-slate-800 cursor-pointer transition-colors">TikTok</span>
-              <span className="hover:text-slate-800 cursor-pointer transition-colors">Instagram</span>
-              <span className="hover:text-slate-800 cursor-pointer transition-colors">LinkedIn</span>
-            </div>
+          {/* Social accounts */}
+          <div className="flex items-center justify-center gap-3 pt-1 text-[11px] font-bold text-slate-500">
+            {SOCIALS.map((n) => n.href
+              ? <a key={n.label} href={n.href} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 transition-colors">{n.label}</a>
+              : <span key={n.label} className="hover:text-slate-800 cursor-pointer transition-colors">{n.label}</span>)}
           </div>
 
         </div>
@@ -485,12 +480,14 @@ export function LandingOverlay({
             /* LOG IN FORM */
             <form onSubmit={handleLoginSubmit} className="space-y-4 text-left">
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1.5">Email</label>
+                <label className="text-xs font-bold text-slate-700 block mb-1.5">Email or @username</label>
                 <input
-                  type="email"
+                  type="text"
                   required
-                  autoComplete="email"
-                  placeholder="you@email.com"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  autoComplete="username"
+                  placeholder="you@email.com or @username"
                   value={loginIdentifier}
                   onChange={(e) => setLoginIdentifier(e.target.value)}
                   className="w-full h-11 px-4 bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-2xl text-sm font-bold text-slate-900 outline-none transition-all"

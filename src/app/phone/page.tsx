@@ -3,6 +3,10 @@
 // The citizen's phone: real conversations (kept 7 days), friends and people to find, and alerts
 // for money, knocks and friend requests — all live from the database.
 
+import { useCitizen } from "@/lib/citizenStore";
+import { getPlace } from "@/lib/city/places";
+import { sendMoney } from "@/lib/room";
+import { markRead, useUnreadCounts } from "@/lib/unread";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Bell, Lightbulb, MessageSquare, Search, Send, UserPlus, Users } from "lucide-react";
@@ -91,6 +95,7 @@ function Phone() {
 
 function Chats({ me, online, open }: { me: string; online: ReadonlySet<string>; open: (id: string) => void }) {
   const [list, setList] = useState<Conversation[] | null>(null);
+  const unread = useUnreadCounts(me);
   const [q, setQ] = useState("");
   const refresh = useCallback(() => { listConversations(me).then(setList); }, [me]);
   useEffect(() => {
@@ -122,7 +127,10 @@ function Chats({ me, online, open }: { me: string; online: ReadonlySet<string>; 
               <span className="text-[11px] text-sky-300 truncate">@{c.with.username}</span>
               <span className="ml-auto text-[11px] text-white/40 shrink-0">{when(c.last.created_at)}</span>
             </span>
-            <span className="block text-sm text-white/60 truncate">{c.last.from_id === me ? "You: " : ""}{c.last.body}</span>
+            <span className="flex items-center gap-2">
+              <span className={`flex-1 min-w-0 text-sm truncate ${unread[c.with.id] ? "text-white font-bold" : "text-white/60"}`}>{c.last.from_id === me ? "You: " : ""}{c.last.body}</span>
+              {unread[c.with.id] ? <span className="min-w-5 h-5 px-1.5 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center">{unread[c.with.id]}</span> : null}
+            </span>
           </span>
         </button>
       ))}
@@ -130,33 +138,55 @@ function Chats({ me, online, open }: { me: string; online: ReadonlySet<string>; 
   );
 }
 
+/** "📍 … · /explore?open=dubai-mall" → the invite text and where it goes. */
+function parseInvite(body: string): { text: string; href: string } | null {
+  const m = body.match(/^(.*?)\s*·\s*(\/(?:explore|place|property)\S*)$/);
+  return m ? { text: m[1], href: m[2] } : null;
+}
+
 function Thread({ me, other, online, onBack }: { me: string; other: string; online: ReadonlySet<string>; onBack: () => void }) {
+  const { citizen } = useCitizen();
+  const router = useRouter();
   const [who, setWho] = useState<Contact | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [failed, setFailed] = useState(false);
+  const [paying, setPaying] = useState(false);
   const end = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     contacts([other]).then((m) => setWho(m.get(other) ?? null));
     loadConversation(me, other).then(setMessages);
-    return onIncoming(me, (m) => { if (m.from_id === other) setMessages((list) => (list.some((x) => x.id === m.id) ? list : [...list, m])); });
+    void markRead(other);
+    return onIncoming(me, (m) => {
+      if (m.from_id !== other) return;
+      setMessages((list) => (list.some((x) => x.id === m.id) ? list : [...list, m]));
+      void markRead(other);
+    });
   }, [me, other]);
   useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth" }); }, [messages.length]);
 
+  const post = async (body: string) => {
+    const m = await sendMessage(me, other, body);
+    if (m) { setFailed(false); setMessages((list) => [...list, m]); }
+    else setFailed(true);
+    return !!m;
+  };
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
     const body = text.trim();
     if (!body) return;
     setText("");
-    const m = await sendMessage(me, other, body);
-    if (m) { setFailed(false); setMessages((list) => [...list, m]); }
-    else { setFailed(true); setText(body); }
+    if (!(await post(body))) setText(body);
   };
+  // Where I am, as an invite they can tap.
+  const here = citizen?.location?.placeId ? getPlace(citizen.location.placeId) : null;
+  const invite = () => here && post(`📍 Come and join me at ${here.name} · /explore?open=${here.id}`);
 
   return (
-    <main className="min-h-[100dvh] bg-zinc-950 text-white flex flex-col">
-      <header className="sticky top-0 z-10 bg-zinc-950/90 backdrop-blur-xl border-b border-white/10 px-3 py-3 flex items-center gap-3">
+    // Fixed to the screen: the header stays at the top, the input at the very bottom.
+    <main className="fixed inset-0 h-[100dvh] bg-zinc-950 text-white flex flex-col">
+      <header className="shrink-0 bg-zinc-950/95 border-b border-white/10 px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] flex items-center gap-3">
         <button onClick={onBack} className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center" aria-label="Back"><ArrowLeft className="w-4 h-4" /></button>
         {who && <Face c={who} online={online.has(who.username)} size={40} />}
         <div className="min-w-0">
@@ -164,14 +194,16 @@ function Thread({ me, other, online, onBack }: { me: string; other: string; onli
           <div className="text-[11px] text-sky-300">{who ? `@${who.username}` : ""}{who && online.has(who.username) ? " · online" : ""}</div>
         </div>
       </header>
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1.5 max-w-md w-full mx-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-4 space-y-1.5 max-w-md w-full mx-auto">
         {messages.length === 0 && <p className="text-center text-sm text-white/40 py-10">Say hello 👋</p>}
         {messages.map((m) => {
           const mine = m.from_id === me;
+          const inv = parseInvite(m.body);
           return (
             <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[78%] px-3 py-2 rounded-2xl text-sm break-words ${mine ? "bg-sky-500 rounded-br-md" : "bg-white/10 rounded-bl-md"}`}>
-                {m.body}
+                {inv ? inv.text : m.body}
+                {inv && !mine && <button onClick={() => router.push(inv.href)} className="mt-1.5 block w-full h-8 rounded-lg bg-white text-sky-600 text-xs font-black">Go there</button>}
                 <div className="text-[10px] mt-0.5 text-white/60">{when(m.created_at)}{m.place ? ` · ${m.place}` : ""}</div>
               </div>
             </div>
@@ -179,12 +211,52 @@ function Thread({ me, other, online, onBack }: { me: string; other: string; onli
         })}
         <div ref={end} />
       </div>
-      <form onSubmit={send} className="sticky bottom-0 bg-zinc-950/95 border-t border-white/10 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex gap-2 max-w-md w-full mx-auto">
-        <input value={text} onChange={(e) => setText(e.target.value)} maxLength={500} placeholder={who ? `Message @${who.username}` : "Message"} className="flex-1 h-12 rounded-xl bg-white/5 border border-white/10 px-3 text-sm outline-none" />
-        <button className="w-12 h-12 rounded-xl bg-sky-500 flex items-center justify-center" aria-label="Send"><Send className="w-4 h-4" /></button>
-      </form>
-      {failed && <p className="text-center text-xs text-rose-300 pb-2">Couldn&apos;t send — check your connection and try again.</p>}
+      <div className="shrink-0 border-t border-white/10 bg-zinc-950 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="max-w-md mx-auto px-3 pt-2 flex gap-2 overflow-x-auto scrollbar-hide">
+          <button onClick={() => setPaying(true)} className="shrink-0 h-8 px-3 rounded-full bg-emerald-500/15 text-emerald-300 text-xs font-bold">💸 Send money</button>
+          <button onClick={() => post("👋")} className="shrink-0 h-8 px-3 rounded-full bg-white/10 text-xs font-bold">👋 Wave</button>
+          {here && <button onClick={invite} className="shrink-0 h-8 px-3 rounded-full bg-sky-500/15 text-sky-300 text-xs font-bold">📍 Invite to {here.name}</button>}
+          <button onClick={() => router.push("/explore")} className="shrink-0 h-8 px-3 rounded-full bg-white/10 text-xs font-bold">🗺️ Find a place to meet</button>
+        </div>
+        <form onSubmit={send} className="max-w-md mx-auto px-3 pt-2 flex gap-2">
+          <input value={text} onChange={(e) => setText(e.target.value)} maxLength={500} placeholder={who ? `Message @${who.username}` : "Message"} className="flex-1 h-12 rounded-xl bg-white/5 border border-white/10 px-3 text-base outline-none" />
+          <button className="w-12 h-12 rounded-xl bg-sky-500 flex items-center justify-center" aria-label="Send"><Send className="w-4 h-4" /></button>
+        </form>
+        {failed && <p className="text-center text-xs text-rose-300 pt-1">Couldn&apos;t send — check your connection and try again.</p>}
+      </div>
+      {paying && who && <PayFriend to={who} balance={citizen?.balance ?? 0} onDone={(amount) => { setPaying(false); if (amount) void post(`💸 Sent you AED ${amount.toLocaleString()}`); }} />}
     </main>
+  );
+}
+
+/** Send money to someone from a conversation. */
+function PayFriend({ to, balance, onDone }: { to: Contact; balance: number; onDone: (amount: number | null) => void }) {
+  const [amount, setAmount] = useState(100);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const pay = async () => {
+    setBusy(true);
+    const e = await sendMoney({ userId: to.id, username: to.username, name: to.name, x: 0, z: 0, animation: "idle" }, amount, "Phone");
+    setBusy(false);
+    if (e) setError(e);
+    else onDone(amount);
+  };
+  return (
+    <div className="fixed inset-0 z-[150] bg-black/60 flex items-end sm:items-center justify-center p-2" onClick={() => onDone(null)}>
+      <div className="w-full max-w-sm bg-white text-slate-900 rounded-3xl p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
+        <h3 className="font-black text-lg">Send money to @{to.username}</h3>
+        <div className="grid grid-cols-4 gap-2">
+          {[50, 100, 500, 1000].map((a) => <button key={a} onClick={() => setAmount(a)} className={`h-10 rounded-xl text-sm font-black ${amount === a ? "bg-emerald-500 text-white" : "bg-slate-100"}`}>{a}</button>)}
+        </div>
+        <label className="flex items-center gap-2 h-11 rounded-xl border border-slate-200 px-3">
+          <span className="text-xs font-black text-slate-400">AED</span>
+          <input type="number" min={1} value={amount} onChange={(e) => setAmount(Math.max(0, Math.floor(Number(e.target.value) || 0)))} className="flex-1 text-base font-black outline-none bg-transparent" />
+        </label>
+        <p className="text-xs text-slate-500">You have AED {balance.toLocaleString()} (virtual)</p>
+        {error && <p className="text-sm font-bold text-rose-600">{error}</p>}
+        <button disabled={busy || amount < 1 || amount > balance} onClick={pay} className="w-full h-12 rounded-xl bg-emerald-500 disabled:opacity-50 text-white font-black">{busy ? "Sending…" : `Send AED ${amount.toLocaleString()}`}</button>
+      </div>
+    </div>
   );
 }
 

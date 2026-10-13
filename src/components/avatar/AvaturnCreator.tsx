@@ -5,8 +5,9 @@
 // Uses Avaturn's free embed. Set NEXT_PUBLIC_AVATURN_SUBDOMAIN to your project's subdomain
 // from developer.avaturn.me; it falls back to Avaturn's public "demo" project.
 
+import { ModalPortal } from "@/components/ui/modal-portal";
 import { useEffect, useRef, useState } from "react";
-import { X, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { IDB_PREFIX, saveAvatarBlob } from "./customAvatarStore";
 import type { Gender } from "./roster";
 
@@ -63,15 +64,19 @@ export function AvaturnCreator({ onCreated, onClose }: { onCreated: (a: CreatedA
   }, [onCreated]);
 
   return (
-    <div className="fixed inset-0 z-[80] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-0 sm:p-6">
-      <div className="relative w-full h-full sm:max-w-5xl sm:h-[90vh] bg-white sm:rounded-3xl overflow-hidden shadow-2xl">
-        <div ref={container} className="absolute inset-x-0 bottom-0 top-10" />
-        <div className="absolute inset-x-0 top-0 h-10 flex items-center justify-center gap-1.5 bg-amber-50 border-b border-amber-200 text-[11px] sm:text-xs font-bold text-amber-800 px-12 text-center">
-          👗 Pick your outfit, hair, shoes and glasses here before tapping Next. You can&apos;t change them anywhere else.
+    <ModalPortal>
+    <div className="fixed inset-0 z-[200] bg-slate-950/80 flex items-center justify-center p-0 sm:p-6">
+      <div className="relative w-full h-[100dvh] sm:max-w-5xl sm:h-[90vh] bg-white sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col">
+        <div className="shrink-0 flex items-center gap-2 px-2 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] bg-white border-b border-slate-200">
+          <button onClick={onClose} className="h-9 px-3 rounded-full bg-slate-100 text-slate-800 text-sm font-black flex items-center gap-1" aria-label="Back to the roster">← Back</button>
+          <div className="flex-1 min-w-0 text-[11px] sm:text-xs font-bold text-slate-600 leading-tight">
+            Takes about a minute. You&apos;ll be asked to sign in to Avaturn (free). Pick your outfit, hair and glasses here — they can&apos;t be changed anywhere else.
+          </div>
         </div>
+        <div ref={container} className="relative flex-1 min-h-0" />
 
         {status !== "ready" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white text-slate-700 text-sm font-bold text-center px-6">
+          <div className="absolute inset-x-0 bottom-0 top-14 flex flex-col items-center justify-center gap-3 bg-white text-slate-700 text-sm font-bold text-center px-6">
             {status === "error" ? (
               <>
                 <span>Couldn&apos;t open the selfie creator. Check your connection and try again.</span>
@@ -86,14 +91,8 @@ export function AvaturnCreator({ onCreated, onClose }: { onCreated: (a: CreatedA
           </div>
         )}
 
-        <button
-          onClick={onClose}
-          className="absolute top-0.5 right-1 z-10 w-9 h-9 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center text-slate-700"
-          aria-label="Close selfie creator"
-        >
-          <X className="w-4 h-4" />
-        </button>
       </div>
     </div>
+    </ModalPortal>
   );
 }

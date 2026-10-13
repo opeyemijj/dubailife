@@ -42,7 +42,7 @@ export function AdminShell({ email, role, children }: { email: string; role: str
     </nav>
   );
   return (
-    <div className="min-h-[100dvh] bg-slate-50 lg:flex">
+    <div className="min-h-[100dvh] bg-slate-50 text-slate-900 lg:flex">
       <aside className={`fixed lg:sticky top-0 z-40 h-[100dvh] w-64 shrink-0 bg-slate-950 p-4 flex flex-col transition-transform ${open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
         <div className="flex items-center gap-2 px-2 mb-6">
           <span className="w-9 h-9 rounded-xl bg-emerald-500 text-white font-black flex items-center justify-center">D</span>

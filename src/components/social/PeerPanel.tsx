@@ -119,6 +119,15 @@ export function PeerPanel({
             </div>
           )}
           {mode === "chat" && (
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+              <button onClick={() => setMode("money")} className="shrink-0 h-8 px-3 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold">💸 Send money</button>
+              <button onClick={onWave} className="shrink-0 h-8 px-3 rounded-full bg-slate-100 text-xs font-bold">👋 Wave</button>
+              {treat && onTreat && context !== "home" && <button onClick={onTreat} className="shrink-0 h-8 px-3 rounded-full bg-amber-50 text-amber-700 text-xs font-bold">{treat.icon} Treat them</button>}
+              {context !== "home" && <button onClick={() => onInvite("join")} className="shrink-0 h-8 px-3 rounded-full bg-sky-50 text-sky-700 text-xs font-bold">🙌 Come join me</button>}
+              {context === "club" && <button onClick={() => onInvite("dance")} className="shrink-0 h-8 px-3 rounded-full bg-fuchsia-50 text-fuchsia-700 text-xs font-bold">💃 Dance</button>}
+            </div>
+          )}
+          {mode === "chat" && (
             <form
               onSubmit={(e) => { e.preventDefault(); const t = text.trim(); if (!t) return; onChat(t); setText(""); }}
               className="flex gap-2"
@@ -129,7 +138,7 @@ export function PeerPanel({
                 maxLength={160}
                 onChange={(e) => { setText(e.target.value); if (e.target.value) onTyping(); }}
                 placeholder={`Message @${peer.username}`}
-                className="flex-1 h-11 rounded-xl border border-slate-200 px-3 text-sm"
+                className="flex-1 h-11 rounded-xl border border-slate-200 px-3 text-base"
               />
               <button className="h-11 w-11 rounded-xl bg-sky-500 text-white flex items-center justify-center" aria-label="Send"><Send className="w-4 h-4" /></button>
             </form>
@@ -145,7 +154,7 @@ export function PeerPanel({
               </div>
               <label className="flex items-center gap-2 h-11 rounded-xl border border-slate-200 px-3">
                 <span className="text-xs font-black text-slate-400">AED</span>
-                <input type="number" min={1} max={10000000} value={amount} onChange={(e) => setAmount(Math.max(0, Math.floor(Number(e.target.value) || 0)))} className="flex-1 text-sm font-black outline-none bg-transparent" />
+                <input type="number" min={1} max={10000000} value={amount} onChange={(e) => setAmount(Math.max(0, Math.floor(Number(e.target.value) || 0)))} className="flex-1 text-base font-black outline-none bg-transparent" />
               </label>
               <p className="text-[11px] text-slate-500">You have AED {balance.toLocaleString()} · after: AED {(balance - amount).toLocaleString()}</p>
               <button disabled={busy || amount < 1 || amount > balance} onClick={pay} className="w-full h-12 rounded-xl bg-emerald-500 disabled:opacity-50 text-white font-black flex items-center justify-center gap-2">

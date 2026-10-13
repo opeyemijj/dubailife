@@ -20,6 +20,7 @@ function describe(e: Received): { icon: string; text: string } {
     case "accept": return { icon: "✅", text: `${who} accepted — ${e.kind === "dance" ? "time to dance!" : "they're on their way"}` };
     case "friend": return { icon: "🤝", text: `${who} sent you a friend request` };
     case "typing": return { icon: "✍️", text: `${who} is typing…` };
+    case "bottle": return { icon: "🍾", text: `${who} ordered bottle service!` };
   }
 }
 
@@ -38,7 +39,7 @@ export function SocialFeed({ events, onAccept, onFriend, onReply, readingWith }:
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-  const visible = events.filter((e) => !done.has(e.id) && !(e.type === "chat" && e.from.userId === readingWith) && e.type !== "money" && now - e.at < (e.type === "invite" || e.type === "friend" ? INVITE_MS : LIFE_MS)).slice(-3);
+  const visible = events.filter((e) => !done.has(e.id) && !(e.type === "chat" && e.from.userId === readingWith) && e.type !== "money" && e.type !== "bottle" && now - e.at < (e.type === "invite" || e.type === "friend" ? INVITE_MS : LIFE_MS)).slice(-3);
   const dismiss = (id: string) => setDone((d) => new Set(d).add(id));
   if (visible.length === 0) return null;
 
@@ -47,7 +48,7 @@ export function SocialFeed({ events, onAccept, onFriend, onReply, readingWith }:
       {visible.map((e) => {
         const { icon, text } = describe(e);
         return (
-          <div key={e.id} className="pointer-events-auto flex items-center gap-2 bg-slate-950/90 backdrop-blur-md text-white rounded-2xl px-3 py-2 shadow-2xl border border-white/10">
+          <div key={e.id} className={`pointer-events-auto flex items-center gap-2 bg-slate-950/90 backdrop-blur-md text-white rounded-2xl px-3 py-2 shadow-2xl border ${e.type === "chat" ? "border-sky-400 ring-2 ring-sky-400/60 animate-[pulse_1s_ease-in-out_3]" : "border-white/10"}`}>
             <span className="text-lg">{icon}</span>
             <span className="flex-1 min-w-0 text-xs font-bold break-words">{text}</span>
             {e.type === "invite" && (

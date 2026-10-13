@@ -64,7 +64,7 @@ export function Button({ tone = "primary", ...props }: React.ButtonHTMLAttribute
 export function Table({ head, children, empty }: { head: string[]; children: React.ReactNode; empty?: boolean }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-      <table className="w-full text-sm">
+      <table className="w-full text-sm text-slate-800">
         <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500">
           <tr>{head.map((h) => <th key={h} className="text-left font-bold px-3 py-2.5 whitespace-nowrap">{h}</th>)}</tr>
         </thead>

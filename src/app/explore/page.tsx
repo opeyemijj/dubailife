@@ -1,5 +1,6 @@
 "use client";
 
+import { FirstTimeTour } from "@/components/onboarding/FirstTimeTour";
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRequireCitizen } from "@/lib/citizenStore";
@@ -11,12 +12,12 @@ import { Search, Coffee, Music, ShoppingBag, Trophy, Navigation, Home, X, Slider
 
 const InteractiveMap = dynamic(
   () => import("@/components/map/InteractiveMap").then((mod) => mod.InteractiveMap),
-  { ssr: false, loading: () => <SmallLoader label="Loading Downtown Dubai" /> }
+  { ssr: false, loading: () => <SmallLoader label="Loading Dubai" /> }
 );
 
 export default function ExplorePage() {
   return (
-    <Suspense fallback={<SmallLoader label="Loading Downtown Dubai" />}>
+    <Suspense fallback={<SmallLoader label="Loading Dubai" />}>
       <Explore />
     </Suspense>
   );
@@ -26,6 +27,8 @@ function Explore() {
   const params = useSearchParams();
   const to = params.get("to");
   const [searchQuery, setSearchQuery] = useState("");
+  // Phones: search is an icon until tapped, then the full search slides in.
+  const [searchOpen, setSearchOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
@@ -58,15 +61,28 @@ function Explore() {
       {/* Top Navigation HUD with Safe Area Padding */}
       <TopBar />
 
-      {/* Floating Search & Discovery Bar (Mobile First & Non-Intrusive) */}
-      <div className="absolute top-[max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))] left-0 w-full z-20 pointer-events-none px-3 sm:px-6">
-        <div className="max-w-md mx-auto w-full pointer-events-auto space-y-2">
+      {/* Phones: a search icon that slides the full search in */}
+      {!searchOpen && (
+        <button
+          onClick={() => { setSearchOpen(true); setIsFilterExpanded(true); }}
+          className="sm:hidden absolute top-[max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))] right-3 z-20 w-11 h-11 rounded-full bg-slate-950/90 border border-white/15 shadow-xl flex items-center justify-center"
+          aria-label="Search places"
+        >
+          <Search className="w-5 h-5 text-cyan-300" />
+          {(searchQuery || activeFilter !== "all") && <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 ring-2 ring-slate-950" />}
+        </button>
+      )}
+
+      {/* Search & discovery: always shown on larger screens; slides in on phones */}
+      <div className={`absolute top-[max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))] left-0 w-full z-20 pointer-events-none px-3 sm:px-6 transition-all duration-300 ${searchOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 sm:translate-x-0 sm:opacity-100"}`}>
+        <div className={`max-w-md mx-auto w-full space-y-2 ${searchOpen ? "pointer-events-auto" : "pointer-events-none sm:pointer-events-auto"}`}>
           
           {/* Glass Search Input */}
           <div className="relative shadow-2xl flex items-center">
             <Search className="absolute left-4 w-4 h-4 text-cyan-400 pointer-events-none" />
             <input 
               type="text"
+              autoFocus={searchOpen}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search Burj Khalifa, Ting Irie, villas..." 
@@ -83,6 +99,13 @@ function Explore() {
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
+              <button
+                onClick={() => setSearchOpen(false)}
+                className="w-7 h-7 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-white/80 transition-all sm:hidden"
+                aria-label="Close search"
+              >
+                <X className="w-4 h-4" />
+              </button>
               <button
                 onClick={() => setIsFilterExpanded(!isFilterExpanded)}
                 className={`w-7 h-7 flex items-center justify-center rounded-xl transition-all sm:hidden ${
@@ -126,6 +149,7 @@ function Explore() {
 
       {/* Persistent Bottom Bar with Safe Area Insets */}
       <BottomNav />
+      <FirstTimeTour />
     </main>
   );
 }

@@ -50,12 +50,13 @@ export function toRoom(s: StationDef, [x, y, z]: [number, number, number]): [num
 }
 
 /** Where a citizen sits at a table or booth, in the station's frame, and which way they face. */
-export function seatAt(venue: Venue, s: StationDef): { local: [number, number]; facing: number; lift: number } | null {
+export function seatAt(venue: Venue, s: StationDef, opposite = false): { local: [number, number]; facing: number; lift: number } | null {
   if (s.kind !== "booth") return null;
   // Dining sets: the chair nearest the aisle, facing the table. Sofas and benches: the seat, facing out.
   // The sit clip puts the hips ~0.2 m behind where the feet stand, so the stand point is that far ahead.
   // `lift` raises the sitter for seats higher than a dining chair (the clip's seat height).
-  if (venue.layout === "dining") return { local: [0, 0.86], facing: s.rotation + Math.PI, lift: 0 };
+  // `opposite`: the chair across the table, for a second person joining.
+  if (venue.layout === "dining") return opposite ? { local: [0, -0.86], facing: s.rotation, lift: 0 } : { local: [0, 0.86], facing: s.rotation + Math.PI, lift: 0 };
   if (venue.layout === "outdoor") return { local: [0, 0.2], facing: s.rotation, lift: 0 };
   return { local: [0, -0.05], facing: s.rotation, lift: 0.11 };
 }

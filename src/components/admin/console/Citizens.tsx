@@ -3,16 +3,12 @@
 import { Fragment, useState } from "react";
 import { Page, Table, Button, coins, when, act, db, useRows } from "./ui";
 
-interface Citizen { id: string; username: string; display_name: string; balance: number; created_at: string }
+interface Citizen { id: string; username: string; display_name: string; email: string; balance: number; created_at: string; last_sign_in_at: string | null }
 interface Line { id: number; delta: number; balance_after: number; kind: string; reason: string | null; created_at: string }
 
 export function Citizens() {
   const [q, setQ] = useState("");
-  const { rows, reload } = useRows<Citizen>(() => {
-    let query = db().from("profiles").select("id, username, display_name, balance, created_at").order("created_at", { ascending: false }).limit(100);
-    if (q.trim()) query = query.or(`username.ilike.%${q.trim().replace(/[%,]/g, "")}%,display_name.ilike.%${q.trim().replace(/[%,]/g, "")}%`);
-    return query;
-  }, [q]);
+  const { rows, reload } = useRows<Citizen>(() => db().rpc("admin_list_citizens", { p_query: q.trim().replace(/[%,]/g, ""), p_limit: 200 }), [q]);
   const [open, setOpen] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -25,23 +21,33 @@ export function Citizens() {
     reload();
   };
 
+  const remove = async (c: Citizen) => {
+    const typed = prompt(`Delete @${c.username} (${c.email}) and ALL their data — wallet, homes, messages, purchases? This can't be undone.\nType the username to confirm:`);
+    if (typed?.trim().replace(/^@/, "") !== c.username) return;
+    setMsg(await act(() => db().rpc("admin_delete_citizen", { p_user: c.id })) ?? `Deleted @${c.username}. Their homes are back on the market.`);
+    reload();
+  };
+
   return (
     <Page title="Citizens" subtitle="Players, their wallets and every coin movement.">
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by username or name" className="w-full sm:w-80 h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm" />
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by username, name or email" className="w-full sm:w-80 h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm" />
       {msg && <p className="text-sm font-bold text-emerald-700">{msg}</p>}
-      <Table head={["Citizen", "Joined", "Wallet", ""]} empty={rows?.length === 0}>
+      <Table head={["Citizen", "Email", "Joined", "Last login", "Wallet", ""]} empty={rows?.length === 0}>
         {(rows ?? []).map((c) => (
           <Fragment key={c.id}>
             <tr>
               <td className="px-3 py-2.5"><div className="font-bold">{c.display_name}</div><div className="text-xs text-sky-600">@{c.username}</div></td>
+              <td className="px-3 py-2.5 text-slate-600">{c.email}</td>
               <td className="px-3 py-2.5 text-slate-500 whitespace-nowrap">{when(c.created_at)}</td>
+              <td className="px-3 py-2.5 text-slate-500 whitespace-nowrap">{when(c.last_sign_in_at)}</td>
               <td className="px-3 py-2.5 font-bold whitespace-nowrap">{coins(c.balance)}</td>
               <td className="px-3 py-2.5 text-right whitespace-nowrap space-x-1">
                 <Button tone="secondary" onClick={() => setOpen(open === c.id ? null : c.id)}>{open === c.id ? "Hide" : "Ledger"}</Button>
                 <Button onClick={() => adjust(c)}>Adjust</Button>
+                <Button tone="danger" onClick={() => remove(c)}>Delete</Button>
               </td>
             </tr>
-            {open === c.id && <tr><td colSpan={4} className="bg-slate-50 px-3 py-3"><Ledger user={c.id} /></td></tr>}
+            {open === c.id && <tr><td colSpan={6} className="bg-slate-50 px-3 py-3"><Ledger user={c.id} /></td></tr>}
           </Fragment>
         ))}
       </Table>

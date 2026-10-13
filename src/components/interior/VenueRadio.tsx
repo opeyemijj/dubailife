@@ -1,60 +1,30 @@
 "use client";
 
-// Music inside venues. Clubs play club-banger playlists in YouTube's embedded player (kept visible
-// at YouTube's minimum player size, as its terms require). Restaurants and cafés play chilled DJ
-// sets from Mixcloud's embed player. Both stay mounted while panels are open, so the music keeps
-// going as the citizen moves around.
+// Music inside venues, streamed from Mixcloud (licensed DJ shows played in Mixcloud's own player):
+// clubs get this week's club and house shows, pools get sunny house, restaurants get lounge sets.
+// The player is a small bar that can be folded away while the music keeps playing. It tries to
+// start on its own; where the browser blocks that (iPhones), the first tap in the venue starts it.
+// Clubs also offer a YouTube video mode on larger screens (YouTube needs its player visible).
 
-import { useEffect, useState } from "react";
-import { ChevronDown, ChevronUp, Music2, SkipForward, VolumeX } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ChevronDown, ChevronUp, Music2, Pause, Play, SkipForward, Tv, VolumeX } from "lucide-react";
 import type { Venue } from "@/lib/city/types";
 
 type Mood = "club" | "pool" | "lounge";
 
-/** Mixcloud channels whose weekly shows make each mood's playlist. */
-type MixMood = "lounge" | "club";
-const CHANNELS: Record<MixMood, string[]> = {
-  club: ["Defectedrecords", "ClubKillers", "Anjunadeep", "hedkandi"],
+/** Mixcloud channels whose newest shows make each playlist. */
+const CHANNELS: Record<Mood, string[]> = {
+  club: ["ClubKillers", "Defectedrecords", "hedkandi", "Anjunadeep"],
+  pool: ["hedkandi", "cafedelmarmusic", "Defectedrecords"],
   lounge: ["Jazzmo", "cafedelmarmusic", "maxvibes"],
 };
-const TITLE: Record<MixMood, string> = { club: "Club radio · this week's DJ mixes", lounge: "Lounge radio · chilled sets" };
+const TITLE: Record<Mood, string> = { club: "DJ Booth", pool: "Poolside DJ", lounge: "Lounge radio" };
 const STORAGE_KEY = "venue_radio_on";
 
-export interface Mix {
-  key: string;
-  name: string;
-  user: string;
-  minutes: number;
-  uploaded: string;
-  url: string;
-}
+/** Club playlist on YouTube for the optional video mode (checked embeddable). */
+const VIDEO_PLAYLIST = "PLO7-VO1D0_6MRJ9Js0_HzHymB8jL2JSyd";
 
-/** Club playlists on YouTube (checked embeddable). The first is the default. */
-export const CLUB_PLAYLISTS = [
-  { id: "PLO7-VO1D0_6MRJ9Js0_HzHymB8jL2JSyd", label: "Club hits 2026" },
-  { id: "PLRZlMhcYkA2GJCuab9iNizKn6tf7uPv6q", label: "House & EDM" },
-  { id: "PL3-sRm8xAzY-556lOpSGH6wVzyofoGpzU", label: "Hip-hop" },
-  { id: "PLGXS-mZTPY4SLjIToqPiHEJFnM7qC44hC", label: "Afro house" },
-  { id: "PL9KH0fJrAwWIqmU1iF-7D9Wz3I1_XlDAs", label: "Afrobeats & Amapiano" },
-  { id: "PLqotH_u6C1LLujWLfOskrOIfWucEXkl0O", label: "New club music" },
-];
-
-/** Poolside playlists on YouTube (checked embeddable). */
-export const POOL_PLAYLISTS = [
-  { id: "PLGXbBW1RbSb4tQGY6R72kLYINcBfYg_vy", label: "Pool party" },
-  { id: "PLNffmVxCj2bMjaTh5xFUmfa39cTTuPRVe", label: "Ibiza deep house" },
-  { id: "PLg0cM5zrKwwIQ-sRz0Jq47yUBih_rEG9t", label: "Sunset sessions" },
-  { id: "PLKsiRyayPqRL1EzG7OYVusPH7GQAWUG2S", label: "Tropical house" },
-  { id: "PLy_wKxVmWb4ZibQ-hzYfTaGwRWPA_W3Z5", label: "Pool party EDM" },
-];
-
-/** The playlist that suits a club's nights. */
-function defaultPlaylist(venue: Venue) {
-  const about = `${venue.category} ${venue.blurb}`;
-  if (/hip-hop|r&b|rap/i.test(about)) return 2;
-  if (/afro|reggae|dancehall|jamaican/i.test(about)) return 4;
-  return 0;
-}
+export interface Mix { key: string; name: string; user: string; minutes: number; uploaded: string; url: string }
 
 export function moodFor(venue: Venue): Mood | null {
   if (venue.layout === "club") return "club";
@@ -63,186 +33,187 @@ export function moodFor(venue: Venue): Mood | null {
   return null;
 }
 
-// One fetch per mood per session, shared by every venue.
-const playlists = new Map<MixMood, Promise<Mix[]>>();
+/** Hip-hop and Afro nights start on the club-bangers show. */
+function preferredChannel(venue: Venue) {
+  return /hip-hop|r&b|rap|afro|reggae|dancehall/i.test(`${venue.category} ${venue.blurb}`) ? "clubkillers" : null;
+}
 
-function loadPlaylist(mood: MixMood): Promise<Mix[]> {
+const playlists = new Map<Mood, Promise<Mix[]>>();
+function loadPlaylist(mood: Mood): Promise<Mix[]> {
   let p = playlists.get(mood);
   if (!p) {
     p = Promise.all(
       CHANNELS[mood].map((u) =>
         fetch(`https://api.mixcloud.com/${u}/cloudcasts/?limit=3`)
           .then((r) => (r.ok ? r.json() : { data: [] }))
-          .then((j: { data?: Array<{ key: string; name: string; url: string; audio_length: number; created_time: string; user: { name: string } }> }) =>
-            (j.data ?? []).map((c) => ({ key: c.key, name: c.name, url: c.url, user: c.user.name, minutes: Math.round(c.audio_length / 60), uploaded: c.created_time })),
+          .then((j: { data?: Array<{ key: string; name: string; url: string; audio_length: number; created_time: string; user: { username: string } }> }) =>
+            (j.data ?? []).map((c) => ({ key: c.key, name: c.name, url: c.url, user: c.user.username, minutes: Math.round(c.audio_length / 60), uploaded: c.created_time })),
           )
           .catch(() => [] as Mix[]),
       ),
     ).then((lists) => {
-      // Newest first, but start with each channel's latest so the top of the list is varied.
       const latest = lists.map((l) => l[0]).filter(Boolean);
       const rest = lists.flatMap((l) => l.slice(1));
       const byDate = (a: Mix, b: Mix) => b.uploaded.localeCompare(a.uploaded);
       return [...latest.sort(byDate), ...rest.sort(byDate)];
     });
-    // A failed load shouldn't stick for the whole session.
-    p.then((mixes) => { if (mixes.length === 0) playlists.delete(mood); });
+    p.then((m) => { if (!m.length) playlists.delete(mood); });
     playlists.set(mood, p);
   }
   return p;
 }
 
+// ---------------------------------------------------------------- Mixcloud widget API
+
+interface MixcloudWidget {
+  ready: Promise<void>;
+  play: () => void;
+  pause: () => void;
+  events: { play: { on: (f: () => void) => void }; pause: { on: (f: () => void) => void } };
+}
+declare global { interface Window { Mixcloud?: { PlayerWidget: (iframe: HTMLIFrameElement) => MixcloudWidget } } }
+
+let apiLoading: Promise<void> | null = null;
+function loadWidgetApi(): Promise<void> {
+  if (typeof window === "undefined" || window.Mixcloud) return Promise.resolve();
+  apiLoading ??= new Promise((resolve) => {
+    const s = document.createElement("script");
+    s.src = "https://widget.mixcloud.com/media/js/widgetApi.js";
+    s.async = true;
+    s.onload = () => resolve();
+    s.onerror = () => resolve();
+    document.head.appendChild(s);
+  });
+  return apiLoading;
+}
+
 function readOn() {
-  try {
-    return localStorage.getItem(STORAGE_KEY) !== "false";
-  } catch {
-    return true;
-  }
+  try { return localStorage.getItem(STORAGE_KEY) !== "false"; } catch { return true; }
 }
 
-const ago = (iso: string) => {
-  const days = Math.floor((Date.parse(new Date().toISOString().slice(0, 10)) - Date.parse(iso.slice(0, 10))) / 86400000);
-  return days <= 0 ? "today" : days === 1 ? "yesterday" : days < 14 ? `${days} days ago` : new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
-};
-
-export function VenueRadio({ venue, compact = false }: { venue: Venue; compact?: boolean }) {
+export function VenueRadio({ venue }: { venue: Venue; compact?: boolean }) {
   const mood = moodFor(venue);
-  if (mood === "club") return <ClubPlayer venue={venue} playlists={CLUB_PLAYLISTS} first={defaultPlaylist(venue)} title="DJ Booth" />;
-  if (mood === "pool") return <ClubPlayer venue={venue} playlists={POOL_PLAYLISTS} first={0} title="Poolside DJ" />;
-  if (mood === "lounge") return <MixcloudRadio mood={mood} compact={compact} />;
-  return null;
+  if (!mood) return null;
+  return <MixPlayer key={mood} venue={venue} mood={mood} />;
 }
 
-/**
- * The DJ Booth: club bangers from YouTube, docked out of the way (top-right on phones, bottom-left
- * on larger screens). YouTube's terms need its player visible and at least 200×200, so that's the
- * size, and minimising it to a pill pauses the music.
- */
-function ClubPlayer({ playlists, first, title }: { venue: Venue; playlists: typeof CLUB_PLAYLISTS; first: number; title: string }) {
-  const [list, setList] = useState(first);
+function MixPlayer({ venue, mood }: { venue: Venue; mood: Mood }) {
+  const [mixes, setMixes] = useState<Mix[] | null>(null);
+  const [index, setIndex] = useState(0);
   const [on, setOn] = useState(readOn);
-  // Start somewhere different each visit so it doesn't always open on the same track.
-  const [start] = useState(() => 1 + Math.floor(Math.random() * 12));
-  const setPlaying = (next: boolean) => {
+  // Folded away (music keeps going). Phones start folded so the player never gets in the way.
+  const [folded, setFolded] = useState(() => typeof window !== "undefined" && window.innerWidth < 640);
+  const [showList, setShowList] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [video, setVideo] = useState(false);
+  const frame = useRef<HTMLIFrameElement>(null);
+  const widget = useRef<MixcloudWidget | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    loadPlaylist(mood).then((m) => {
+      if (!alive) return;
+      const first = preferredChannel(venue);
+      const i = first ? Math.max(0, m.findIndex((x) => x.user.toLowerCase() === first)) : 0;
+      setMixes(m);
+      setIndex(i);
+    });
+    return () => { alive = false; };
+  }, [mood, venue]);
+
+  const mix = mixes?.[index % Math.max(1, mixes.length)];
+
+  // Hook the player's play/pause so we know whether the browser let it start.
+  const onFrameLoad = useCallback(async () => {
+    await loadWidgetApi();
+    if (!frame.current || !window.Mixcloud) return;
+    const w = window.Mixcloud.PlayerWidget(frame.current);
+    widget.current = w;
+    await w.ready;
+    w.events.play.on(() => setPlaying(true));
+    w.events.pause.on(() => setPlaying(false));
+    w.play();
+  }, []);
+
+  // If autoplay was blocked, the first tap anywhere in the venue starts the music.
+  useEffect(() => {
+    if (!on || playing || video) return;
+    const start = () => widget.current?.play();
+    window.addEventListener("pointerdown", start);
+    return () => window.removeEventListener("pointerdown", start);
+  }, [on, playing, video]);
+
+  const toggle = () => {
+    const next = !on;
     setOn(next);
-    try { localStorage.setItem(STORAGE_KEY, String(next)); } catch { /* private mode */ }
+    setPlaying(false);
+    try { localStorage.setItem(STORAGE_KEY, String(next)); } catch { /* storage blocked */ }
   };
-  const playlist = playlists[list];
-  const src = `https://www.youtube.com/embed/videoseries?list=${playlist.id}&index=${start}&autoplay=1&rel=0&playsinline=1&modestbranding=1`;
+
+  const src = mix ? `https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&light=0&hide_artwork=1&autoplay=1&feed=${encodeURIComponent(mix.key)}` : null;
   const dock = "absolute z-30 pointer-events-auto right-3 top-[68px] sm:right-auto sm:top-auto sm:left-3 sm:bottom-20";
 
   if (!on) {
     return (
-      <button onClick={() => setPlaying(true)} className={`${dock} h-9 pl-2 pr-3 rounded-full bg-slate-950/90 backdrop-blur-md text-white shadow-xl border border-white/10 flex items-center gap-1.5 text-[11px] font-black`}>
-        <span className="w-6 h-6 rounded-full bg-fuchsia-500 flex items-center justify-center"><Music2 className="w-3 h-3" /></span>
-        {title} · Play
+      <button onClick={toggle} className={`${dock} h-9 pl-1.5 pr-3 rounded-full bg-slate-950/90 text-white shadow-xl border border-white/10 flex items-center gap-1.5 text-[11px] font-black`}>
+        <span className="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center"><VolumeX className="w-3 h-3" /></span>
+        {TITLE[mood]} · off
       </button>
     );
   }
 
   return (
-    <div className={`${dock} w-[216px]`}>
-      <div className="rounded-2xl bg-slate-950/90 backdrop-blur-md text-white shadow-2xl overflow-hidden border border-white/10 p-2 space-y-1.5">
-        <div className="flex items-center gap-1.5">
-          <span className="w-6 h-6 shrink-0 rounded-full bg-fuchsia-500 animate-pulse flex items-center justify-center"><Music2 className="w-3 h-3" /></span>
-          <span className="flex-1 min-w-0 text-[11px] font-black truncate">{title}</span>
-          <button onClick={() => setPlaying(false)} className="h-6 px-2 rounded-full bg-white/10 text-[10px] font-black flex items-center gap-1" aria-label={`Minimise and pause the ${title}`}>
-            <ChevronDown className="w-3 h-3" /> Hide
+    <div className={`${dock} ${folded ? "w-auto" : "w-[min(300px,calc(100vw-24px))]"}`}>
+      <div className="rounded-2xl bg-slate-950/90 text-white shadow-2xl border border-white/10 overflow-hidden">
+        <div className="flex items-center gap-1.5 p-1.5">
+          <button onClick={() => (playing ? widget.current?.pause() : widget.current?.play())} aria-label={playing ? "Pause" : "Play"}
+            className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center ${playing ? "bg-fuchsia-500" : "bg-white/15 animate-pulse"}`}>
+            {playing ? <Music2 className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          </button>
+          <div className={`${folded ? "max-w-[120px]" : "flex-1"} min-w-0`}>
+            <div className="text-[10px] font-black uppercase tracking-wider text-white/50 truncate">{TITLE[mood]}</div>
+            <div className="text-[11px] font-bold truncate">{!mix ? "Finding this week's mixes…" : playing ? mix.name : "Tap to start the music"}</div>
+          </div>
+          {!folded && mixes && mixes.length > 1 && (
+            <button onClick={() => { setIndex((i) => (i + 1) % mixes.length); setPlaying(false); }} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center" aria-label="Next mix"><SkipForward className="w-3.5 h-3.5" /></button>
+          )}
+          {!folded && mood === "club" && (
+            <button onClick={() => setVideo(!video)} className={`hidden sm:flex w-8 h-8 rounded-full items-center justify-center ${video ? "bg-fuchsia-500" : "bg-white/10"}`} aria-label="Video mode"><Tv className="w-3.5 h-3.5" /></button>
+          )}
+          {!folded && <button onClick={toggle} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center" aria-label="Turn music off"><Pause className="w-3.5 h-3.5" /></button>}
+          <button onClick={() => { setFolded(!folded); setShowList(false); }} className="h-8 px-2 rounded-full bg-white/10 text-[10px] font-black flex items-center gap-0.5" aria-label={folded ? "Show player" : "Hide player (music keeps playing)"}>
+            {folded ? <ChevronDown className="w-3.5 h-3.5" /> : <><ChevronUp className="w-3.5 h-3.5" /> Hide</>}
           </button>
         </div>
-        <select
-          value={list}
-          onChange={(e) => setList(Number(e.target.value))}
-          aria-label="Choose the music"
-          className="w-full h-7 rounded-lg bg-white/10 text-[11px] font-bold px-1.5 text-white [&>option]:text-slate-900"
-        >
-          {playlists.map((p, i) => <option key={p.id} value={i}>{p.label}</option>)}
-        </select>
-        <iframe
-          key={playlist.id}
-          title={`${title} — ${playlist.label} (YouTube)`}
-          src={src}
-          width={200}
-          height={200}
-          allow="autoplay; encrypted-media; picture-in-picture"
-          referrerPolicy="strict-origin-when-cross-origin"
-          className="block rounded-lg"
-          style={{ border: 0 }}
-        />
-      </div>
-    </div>
-  );
-}
 
-/** Chilled DJ sets from Mixcloud for restaurants and cafés. */
-function MixcloudRadio({ mood, compact }: { mood: MixMood; compact: boolean }) {
-  const [mixes, setMixes] = useState<Mix[] | null>(null);
-  const [index, setIndex] = useState(0);
-  const [on, setOn] = useState(readOn);
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    let alive = true;
-    loadPlaylist(mood).then((m) => { if (alive) setMixes(m); });
-    return () => { alive = false; };
-  }, [mood]);
-
-  const toggle = () => {
-    const next = !on;
-    setOn(next);
-    try { localStorage.setItem(STORAGE_KEY, String(next)); } catch { /* private mode */ }
-  };
-
-  const mix = mixes?.[index % Math.max(1, mixes.length)];
-  const src = mix ? `https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&light=0&autoplay=1&feed=${encodeURIComponent(mix.key)}` : null;
-  const hideBody = compact || !on;
-
-  return (
-    <div className="absolute z-30 pointer-events-auto right-3 top-[68px] w-[min(300px,calc(100vw-24px))] sm:right-auto sm:top-auto sm:left-3 sm:bottom-20 sm:w-[340px]">
-      <div className="rounded-2xl bg-slate-950/90 backdrop-blur-md text-white shadow-2xl overflow-hidden border border-white/10">
-        <div className="flex items-center gap-2 px-3 py-2">
-          <span className={`w-7 h-7 rounded-full flex items-center justify-center ${on ? "bg-fuchsia-500 animate-pulse" : "bg-white/15"}`}>
-            {on ? <Music2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
-          </span>
-          <div className="flex-1 min-w-0">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-white/50 truncate">{TITLE[mood]}</div>
-            <div className="text-xs font-black truncate">{!on ? "Music off" : mix ? mix.name : mixes ? "No mixes available right now" : "Finding this week's mixes…"}</div>
+        {/* The audio player stays mounted while folded, so the music never stops. */}
+        {src && !video && (
+          <div className={folded ? "h-0 overflow-hidden" : "px-1.5 pb-1.5"}>
+            <iframe ref={frame} key={mix!.key} onLoad={onFrameLoad} title={`${TITLE[mood]}: ${mix!.name}`} src={src} width="100%" height="60" allow="autoplay; encrypted-media" className="rounded-xl block" style={{ border: 0 }} />
           </div>
-          {on && mixes && mixes.length > 1 && (
-            <button onClick={() => setIndex((i) => (i + 1) % mixes.length)} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center" aria-label="Next mix"><SkipForward className="w-3.5 h-3.5" /></button>
-          )}
-          <button onClick={toggle} className={`h-8 px-2.5 rounded-full text-[11px] font-black ${on ? "bg-white/10" : "bg-fuchsia-500"}`}>{on ? "Off" : "Play"}</button>
-          {on && !compact && mixes && mixes.length > 0 && (
-            <button onClick={() => setOpen(!open)} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center" aria-label={open ? "Hide mixes" : "Show mixes"}>
-              {open ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
-            </button>
-          )}
-        </div>
-
-        {/* Kept mounted while playing (just folded away) so panels don't stop the music. */}
-        {on && src && (
-          <div className={hideBody ? "h-0 overflow-hidden" : "px-2 pb-2"}>
-            <iframe key={mix!.key} title={`Mixcloud: ${mix!.name}`} src={src} width="100%" height="60" allow="autoplay; encrypted-media" className="rounded-xl block" style={{ border: 0 }} />
+        )}
+        {video && !folded && (
+          <div className="px-1.5 pb-1.5">
+            <iframe title="DJ Booth video (YouTube)" src={`https://www.youtube.com/embed/videoseries?list=${VIDEO_PLAYLIST}&autoplay=1&rel=0&playsinline=1&modestbranding=1`} width="100%" height="200" allow="autoplay; encrypted-media; picture-in-picture" className="rounded-xl block min-w-[200px]" style={{ border: 0 }} />
           </div>
         )}
 
-        {on && open && !compact && mixes && (
-          <ul className="max-h-56 overflow-y-auto border-t border-white/10">
-            {mixes.map((m, i) => (
+        {!folded && mixes && mixes.length > 1 && (
+          <button onClick={() => setShowList(!showList)} className="w-full text-[10px] font-bold text-white/50 py-1 border-t border-white/10">{showList ? "Hide shows" : `${mixes.length} shows this week`}</button>
+        )}
+        {showList && !folded && (
+          <ul className="max-h-48 overflow-y-auto border-t border-white/10">
+            {(mixes ?? []).map((m, i) => (
               <li key={m.key}>
-                <button onClick={() => { setIndex(i); setOpen(false); }} className={`w-full text-left px-3 py-2 flex gap-2 items-center hover:bg-white/5 ${i === index ? "bg-fuchsia-500/20" : ""}`}>
-                  <span className="text-[10px] font-mono text-white/40 w-4">{i + 1}</span>
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-xs font-bold truncate">{m.name}</span>
-                    <span className="block text-[10px] text-white/50 truncate">{m.user} · {m.minutes} min · {ago(m.uploaded)}</span>
-                  </span>
+                <button onClick={() => { setIndex(i); setShowList(false); setPlaying(false); }} className={`w-full text-left px-3 py-2 hover:bg-white/5 ${i === index ? "bg-fuchsia-500/20" : ""}`}>
+                  <span className="block text-xs font-bold truncate">{m.name}</span>
+                  <span className="block text-[10px] text-white/50">{m.user} · {m.minutes} min</span>
                 </button>
               </li>
             ))}
           </ul>
         )}
-
-        {!hideBody && <a href={mix?.url ?? "https://www.mixcloud.com"} target="_blank" rel="noreferrer" className="block px-3 pb-2 text-[10px] text-white/40 hover:text-white/70">Streaming via Mixcloud · support the artists</a>}
+        {!folded && <a href={mix?.url ?? "https://www.mixcloud.com"} target="_blank" rel="noreferrer" className="block px-3 pb-1.5 text-[9px] text-white/40">Streaming via Mixcloud · support the artists</a>}
       </div>
     </div>
   );

@@ -7,6 +7,7 @@
 // Chat is also saved (public.messages, kept for 7 days): the broadcast is the instant copy and
 // shares the saved message's id, so history and live lines never double up.
 
+import { markRead } from "@/lib/unread";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
@@ -40,7 +41,8 @@ export type RoomEvent =
   | { type: "wave" }
   | { type: "money"; amount: number }
   | { type: "gift"; gift: Gift }
-  | { type: "invite"; kind: "join" | "dance" }
+  | { type: "invite"; kind: "join" | "dance"; table?: string }
+  | { type: "bottle"; station: string }
   | { type: "accept"; kind: "join" | "dance" }
   | { type: "friend" };
 
@@ -208,6 +210,7 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
     reading.current = userId;
     if (!userId) return;
     setUnread((u) => (u[userId] ? { ...u, [userId]: 0 } : u));
+    void markRead(userId);
     void loadThread(userId);
   }, [loadThread]);
 

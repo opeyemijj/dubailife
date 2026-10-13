@@ -225,7 +225,16 @@ export async function resendConfirmation(email: string): Promise<AuthResult> {
   return error ? { ok: false, error: friendly(error.message) } : { ok: true };
 }
 
-export async function logIn(email: string, password: string): Promise<AuthResult> {
+/** Signs in with an email address or a @username. */
+export async function logIn(identifier: string, password: string): Promise<AuthResult> {
+  let email = identifier.trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    // A username: the server swaps it for the account email only if the password is right.
+    const { data, error: lookupError } = await supabase().rpc("email_for_login", { p_username: email, p_password: password });
+    if (lookupError) return { ok: false, error: /too_many/.test(lookupError.message) ? "Too many attempts. Please wait 15 minutes and try again." : "Couldn't log in. Please try again." };
+    if (!data) return { ok: false, error: "Username or password is incorrect." };
+    email = data as string;
+  }
   const { error } = await supabase().auth.signInWithPassword({ email, password });
   if (error) return { ok: false, error: friendly(error.message) };
   await loadSession();

@@ -6,7 +6,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Briefcase, Check, LogOut, MessageCircle, Search, ShoppingBag, Sparkles, X } from "lucide-react";
+import { ArrowLeft, Briefcase, Check, LogOut, MessageCircle, MessagesSquare, Search, ShoppingBag, Sparkles, X } from "lucide-react";
 import type { Place, Product, StationKind, Venue } from "@/lib/city/types";
 import { adjustBalance, boostNeed, updateCitizen, useCitizen, type InventoryItem } from "@/lib/citizenStore";
 import type { AvatarAnimation } from "@/components/avatar/CitizenAvatar";
@@ -126,12 +126,41 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   // ---------------------------------------------------------------- serving
 
   /** Walks the citizen to their seat at a table or booth and sits them down. */
-  const sitAt = (table: StationDef) => {
-    const seat = seatAt(venue, table);
+  const sitAt = (table: StationDef, opts: { opposite?: boolean; then?: () => void } = {}) => {
+    const seat = seatAt(venue, table, opts.opposite);
     if (!seat) return;
     setMyTable(table.id);
     const [x, , z] = toRoom(table, [seat.local[0], 0, seat.local[1]]);
-    walkThen([x, z], () => { setSeatLift(seat.lift); setPlayerAnimation("sit"); }, seat.facing);
+    walkThen([x, z], () => { setSeatLift(seat.lift); setPlayerAnimation("sit"); opts.then?.(); }, seat.facing);
+  };
+
+  /** Opens the menu where food and drink are ordered (for someone already seated). */
+  const openMenu = () => {
+    const menu = plan.stations.find((s) => s.kind === "menu") ?? plan.stations.find((s) => s.id === anchorId);
+    if (menu) { setActiveStation(menu.id); setPanel({ kind: "station", station: menu }); }
+  };
+
+  // ---------------------------------------------------------------- bottle service (seen by everyone)
+
+  const [baller, setBaller] = useState<{ name: string; mine: boolean } | null>(null);
+  const ownDeliveries = useRef(new Set<string>());
+
+  /** Hosts carry sparkling bottles from the bar to a booth, with a banner naming who ordered. */
+  const startBottleService = (station: StationDef, id: string, buyer: { username: string; mine: boolean }) => {
+    const bar = plan.stations.find((s) => s.kind === "bar");
+    const from = bar ? approachPoint(bar, 1.1) : plan.entrance;
+    bottleSpots.current.set(id, HOSTS.map(() => nextSpot(station)));
+    if (buyer.mine) ownDeliveries.current.add(id);
+    setDeliveries((d) => [...d, {
+      id,
+      from,
+      hosts: HOSTS.map((preset, i) => {
+        const [x, , z] = toRoom(station, [i === 0 ? -0.42 : 0.42, 0, 1.75]);
+        return { preset, stand: [x, z], face: station.rotation + Math.PI };
+      }),
+    }]);
+    setBaller({ name: buyer.username, mine: buyer.mine });
+    setTimeout(() => setBaller((b) => (b?.name === buyer.username ? null : b)), 9000);
   };
 
   /** The next free spot on a station's surface, in room coordinates. */
@@ -155,17 +184,9 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     if (toTable) sitAt(station);
 
     if (kind === "bottle") {
-      const bar = plan.stations.find((s) => s.kind === "bar");
-      const from = bar ? approachPoint(bar, 1.1) : plan.entrance;
-      bottleSpots.current.set(id, HOSTS.map(() => nextSpot(station)));
-      setDeliveries((d) => [...d, {
-        id,
-        from,
-        hosts: HOSTS.map((preset, i) => {
-          const [x, , z] = toRoom(station, [i === 0 ? -0.42 : 0.42, 0, 1.75]);
-          return { preset, stand: [x, z], face: station.rotation + Math.PI };
-        }),
-      }]);
+      startBottleService(station, id, { username: citizen?.username ?? "you", mine: true });
+      // Everyone in the club sees it arrive.
+      emitRef.current?.({ type: "bottle", station: station.id });
       return;
     }
     const base = product.id.split(":").pop() ?? "";
@@ -176,7 +197,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     const spot = bottleSpots.current.get(deliveryId)?.[host];
     if (!spot) return;
     setServed((list) => [...list, { id: `${deliveryId}-${host}`, kind: "bottle" as const, position: spot, rotation: 0, sparkle: SPARKLE_SECONDS }].slice(-14));
-    if (host === 0) {
+    if (host === 0 && ownDeliveries.current.has(deliveryId)) {
       gameAudio.playCoinSound();
       boostNeed("social", 25);
       boostNeed("fun", 15);
@@ -187,6 +208,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
 
   const onDeliveryDone = useCallback((deliveryId: string) => {
     bottleSpots.current.delete(deliveryId);
+    ownDeliveries.current.delete(deliveryId);
     setDeliveries((d) => d.filter((x) => x.id !== deliveryId));
   }, []);
 
@@ -262,7 +284,19 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
 
   // React to what others send me, as it arrives.
   const onRoomEvent = (e: Received) => {
-    if (e.type === "chat") bubble(e.from.userId, e.text);
+    if (e.type === "chat") {
+      bubble(e.from.userId, e.text);
+      // A buzz on phones so a message isn't missed.
+      try { navigator.vibrate?.(80); } catch { /* not supported */ }
+    }
+    if (e.type === "bottle") {
+      const station = plan.stations.find((s) => s.id === e.station);
+      if (station) startBottleService(station, e.id, { username: e.from.username, mine: false });
+    }
+    if (e.type === "accept" && e.kind === "join" && venue.layout === "dining" && myTable) {
+      say(`🍽️ @${e.from.username} is joining you — here's the menu.`);
+      openMenu();
+    }
     if (e.type === "wave") bubble(e.from.userId, "👋");
     if (e.type === "money") gameAudio.playCoinSound();
     if (e.type === "gift" && e.gift.position && e.gift.serve) {
@@ -274,6 +308,9 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   };
   const room = useRoom(`venue:${place.id}/${venue.id}`, me, onRoomEvent);
   const { peers, events, emit, myId } = room;
+  // Lets earlier handlers (bottle service) broadcast once the room exists.
+  const emitRef = useRef(emit);
+  useEffect(() => { emitRef.current = emit; });
   const [clock, setClock] = useState(0);
   // Re-check "typing…" each second while a conversation is open.
   useEffect(() => {
@@ -284,6 +321,12 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
 
   const acceptInvite = (e: Received & { type: "invite" }) => {
     emit({ type: "accept", kind: e.kind }, e.from.userId);
+    // Restaurants: sit across the table from them, then order.
+    const table = e.table ? plan.stations.find((s) => s.id === e.table) : undefined;
+    if (e.kind === "join" && table && venue.layout === "dining") {
+      sitAt(table, { opposite: true, then: () => { boostNeed("social", 8); openMenu(); } });
+      return;
+    }
     approach(e.from, () => {
       if (e.kind === "dance") { setPlayerAnimation("dance"); boostNeed("fun", 10); }
       boostNeed("social", 8);
@@ -291,6 +334,38 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   };
 
   const peerPanel = panel?.kind === "peer" ? peers.find((p) => p.userId === panel.userId) : undefined;
+  const unreadHere = Object.values(room.unread).reduce((a, b) => a + b, 0);
+  const [peopleOpen, setPeopleOpen] = useState(false);
+
+  // ---------------------------------------------------------------- moving around
+
+  /** Tapped a free spot on the floor: walk there (never on top of someone). */
+  const onFloor = (pt: [number, number]) => {
+    const [w, d] = plan.size;
+    let x = Math.min(w / 2 - 0.5, Math.max(-w / 2 + 0.5, pt[0]));
+    let z = Math.min(d / 2 - 0.4, Math.max(-d / 2 + 0.6, pt[1]));
+    for (const p of peers) {
+      const dx = x - p.x, dz = z - p.z, dist = Math.hypot(dx, dz);
+      if (dist < 0.65) {
+        const push = (0.7 - dist) / (dist || 1);
+        x += dist ? dx * push : 0.7;
+        z += dist ? dz * push : 0;
+      }
+    }
+    setPanel(null);
+    setActiveStation(null);
+    walkThen([x, z], () => {});
+  };
+  // Standing on the dance floor?
+  const danceFloor = plan.stations.find((s) => s.kind === "dancefloor");
+  const onDanceFloor = !!danceFloor && Math.abs(me.x - danceFloor.position[0]) < 2.6 && Math.abs(me.z - danceFloor.position[1]) < 2.6;
+
+  // Phones: after the keyboard closes the page can be left scrolled; put it back.
+  useEffect(() => {
+    const reset = () => setTimeout(() => window.scrollTo(0, 0), 60);
+    document.addEventListener("focusout", reset);
+    return () => document.removeEventListener("focusout", reset);
+  }, []);
 
   // ---------------------------------------------------------------- buying
 
@@ -563,7 +638,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   }
 
   return (
-    <main className="relative w-screen h-[100dvh] overflow-hidden select-none font-sans bg-black text-slate-900">
+    <main className="fixed inset-0 w-screen h-[100dvh] overflow-hidden select-none font-sans bg-black text-slate-900 overscroll-none">
       <InteriorScene
         venue={venue}
         plan={plan}
@@ -586,6 +661,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         peerBadges={room.unread}
         bubbles={bubbles}
         onPeer={openPeer}
+        onFloor={onFloor}
       />
 
       <SceneLoadingOverlay label={`Entering ${venue.name}`} />
@@ -615,13 +691,47 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
 
       {/* Quick actions */}
       {!panel && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-2 pointer-events-auto">
+        <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-30 flex flex-wrap justify-center gap-2 w-[min(96vw,560px)] pointer-events-auto">
           <button onClick={openStaff} className="h-11 px-4 rounded-full bg-white/95 shadow-xl text-xs font-black flex items-center gap-1.5"><MessageCircle className="w-4 h-4" /> Talk to {venue.staff.role.toLowerCase()}</button>
           {job && <button onClick={openStaff} className="h-11 px-4 rounded-full bg-white/95 shadow-xl text-xs font-black flex items-center gap-1.5"><Briefcase className="w-4 h-4" /> {worksHere ? "Work a shift" : "Jobs"}</button>}
+          {onDanceFloor && playerAnimation !== "dance" && (
+            <button onClick={() => { setPlayerAnimation("dance"); boostNeed("fun", 6); }} className="h-11 px-4 rounded-full bg-fuchsia-500 text-white shadow-xl text-xs font-black flex items-center gap-1.5">💃 Dance</button>
+          )}
           {playerAnimation !== "idle" && <button onClick={() => setPlayerAnimation("idle")} className="h-11 px-4 rounded-full bg-amber-400 shadow-xl text-xs font-black flex items-center gap-1.5"><Sparkles className="w-4 h-4" /> Stop</button>}
+          <button onClick={() => setPeopleOpen(true)} aria-label={`Chat${unreadHere ? `, ${unreadHere} unread` : ""}`}
+            className={`relative h-11 w-11 shrink-0 rounded-full shadow-xl flex items-center justify-center ${unreadHere ? "bg-sky-500 text-white animate-pulse" : "bg-white/95"}`}>
+            <MessagesSquare className="w-5 h-5" />
+            {unreadHere > 0 && <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center ring-2 ring-white">{unreadHere}</span>}
+          </button>
         </div>
       )}
-      {!panel && <p className="absolute bottom-[4.5rem] left-1/2 -translate-x-1/2 z-20 text-[11px] font-bold text-white/90 bg-black/40 rounded-full px-3 py-1 pointer-events-none">Tap a display, counter or person to interact · drag to look around</p>}
+
+      {/* Who's here: open a chat with anyone in the venue */}
+      {peopleOpen && (
+        <Sheet onClose={() => setPeopleOpen(false)} title="People here" subtitle={peers.length ? `${peers.length} in ${venue.name}` : venue.name}>
+          {peers.length === 0 && <p className="text-sm text-slate-500">Nobody else is here right now. Invite a friend from your phone!</p>}
+          {peers.map((p) => (
+            <button key={p.userId} onClick={() => { setPeopleOpen(false); setPanel({ kind: "peer", userId: p.userId, startIn: "chat" }); }}
+              className="w-full flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100 text-left">
+              <span className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-fuchsia-500 text-white font-black flex items-center justify-center">{p.name.slice(0, 1).toUpperCase()}</span>
+              <span className="flex-1 min-w-0"><span className="block font-black text-sm truncate">{p.name}</span><span className="block text-[11px] text-sky-600 font-bold">@{p.username}</span></span>
+              {room.unread[p.userId] ? <span className="min-w-6 h-6 px-1.5 rounded-full bg-rose-500 text-white text-xs font-black flex items-center justify-center">{room.unread[p.userId]}</span> : <MessagesSquare className="w-4 h-4 text-slate-400" />}
+            </button>
+          ))}
+        </Sheet>
+      )}
+
+      {/* Bottle service: everyone sees who's spending */}
+      {baller && (
+        <div className="absolute top-28 left-1/2 -translate-x-1/2 z-40 pointer-events-none w-[min(92vw,420px)]">
+          <div className="rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-slate-950 text-center px-4 py-3 shadow-2xl ring-4 ring-amber-300/50 animate-in zoom-in-95 fade-in duration-300">
+            <div className="text-2xl">🍾🎆🍾</div>
+            <div className="font-black text-lg leading-tight">{baller.mine ? "You're the baller tonight!" : `@${baller.name} ordered bottle service!`}</div>
+            <div className="text-xs font-bold opacity-80">{baller.mine ? "Bottles and sparklers are on their way to your booth" : "Big spender in the house 💸"}</div>
+          </div>
+        </div>
+      )}
+      {!panel && <p className="hidden sm:block absolute bottom-[4.5rem] left-1/2 -translate-x-1/2 z-20 text-[11px] font-bold text-white/90 bg-black/40 rounded-full px-3 py-1 pointer-events-none whitespace-nowrap">Tap the floor to walk · tap a counter or person to interact · drag to look around</p>}
 
       {sheet}
       {peerPanel && (
@@ -656,7 +766,15 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
             setPanel(null);
           }}
           onInvite={(kind) => {
-            emit({ type: "invite", kind }, peerPanel.userId);
+            let table: string | undefined;
+            if (kind === "join" && venue.layout === "dining") {
+              // Take a table (or keep yours) so they have somewhere to join you.
+              const current = plan.stations.find((s) => s.id === myTable);
+              const free = current ?? plan.stations.filter((s) => s.kind === "booth")
+                .sort((a, b) => Math.hypot(a.position[0] - me.x, a.position[1] - me.z) - Math.hypot(b.position[0] - me.x, b.position[1] - me.z))[0];
+              if (free) { table = free.id; if (!current) sitAt(free); }
+            }
+            emit({ type: "invite", kind, table }, peerPanel.userId);
             say(kind === "dance" ? `💃 Asked @${peerPanel.username} to dance` : `🙌 Invited @${peerPanel.username} over`);
             setPanel(null);
           }}

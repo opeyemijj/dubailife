@@ -3,6 +3,7 @@
 // A venue interior in 3D: the room, its fixtures and stations, staff, shoppers and the citizen.
 // Clicking a station walks the citizen there; on arrival the page opens that station's panel.
 
+import { canvasQuality } from "@/lib/device";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
@@ -63,16 +64,23 @@ interface Props {
   /** Unread message counts by user id, shown on their name tag. */
   peerBadges?: Record<string, number>;
   onPeer?: (peer: Peer) => void;
+  /** Tapped a free spot on the floor (or the dance floor). */
+  onFloor?: (point: [number, number]) => void;
 }
 
-function Room({ venue, plan }: { venue: Venue; plan: Plan }) {
+function Room({ venue, plan, onFloor }: { venue: Venue; plan: Plan; onFloor?: (point: [number, number]) => void }) {
   const [w, d] = plan.size;
   const floor = useMemo(() => floorTexture(plan.floor, venue.palette.floor, [w / 4, d / 4]), [plan.floor, venue.palette.floor, w, d]);
   const dark = venue.layout === "club" || venue.palette.wall === "#2a2420" || venue.palette.wall === "#0f172a" || venue.palette.wall === "#5a3e2b";
   const sign = useMemo(() => signTexture(venue.name, dark ? "#f8fafc" : venue.palette.accent, null), [venue.name, venue.palette.accent, dark]);
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow name="floor">
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        receiveShadow
+        name="floor"
+        onClick={onFloor ? (e) => { if (e.delta > DRAG) return; e.stopPropagation(); onFloor([e.point.x, e.point.z]); } : undefined}
+      >
         <planeGeometry args={[w, d]} />
         <meshStandardMaterial map={floor} roughness={plan.floor === "marble" ? 0.25 : plan.floor === "concrete" ? 0.6 : 0.75} metalness={plan.floor === "marble" ? 0.1 : 0} />
       </mesh>
@@ -99,18 +107,21 @@ function Lights({ venue, plan }: { venue: Venue; plan: Plan }) {
   const club = venue.layout === "club";
   return (
     <>
-      <hemisphereLight args={[club ? "#4c1d95" : "#fffaf0", club ? "#020617" : "#d6d3d1", club ? 0.35 : 0.9]} />
+      {/* Clubs stay moody but bright enough to see yourself and others. */}
+      <hemisphereLight args={[club ? "#ddd6fe" : "#fffaf0", club ? "#312e81" : "#d6d3d1", club ? 1.25 : 0.9]} />
       <directionalLight
         position={[4, 9, 6]}
-        intensity={club ? 0.5 : 1.6}
+        intensity={club ? 1.4 : 1.6}
         castShadow
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={[1024, 1024]}
         shadow-camera-left={-w / 2 - 1}
         shadow-camera-right={w / 2 + 1}
         shadow-camera-top={d / 2 + 1}
         shadow-camera-bottom={-d / 2 - 1}
         shadow-bias={-0.0004}
       />
+      {club && <pointLight position={[-2, WALL_H - 0.4, -0.6]} intensity={6} distance={10} color="#e879f9" />}
+      {club && <pointLight position={[2, WALL_H - 0.4, -0.6]} intensity={6} distance={10} color="#22d3ee" />}
       {/* Ceiling spots over the floor area */}
       {!club && [-w / 4, w / 4].flatMap((x) => [-d / 4, d / 6].map((z) => (
         <pointLight key={`${x},${z}`} position={[x, WALL_H - 0.3, z]} intensity={4} distance={9} color="#fff4e0" />
@@ -393,7 +404,8 @@ function Player({ look, worn, start, walkTo, onArrive, animation, lift, follow, 
   );
 }
 
-export function InteriorScene({ venue, plan, look, worn, playerAnimation, playerLift = 0, start, walkTo, onArrive, onStation, onStaff, staffAnimation, highlight, served, deliveries, onPlaced, onDeliveryDone, peers = [], bubbles = {}, peerBadges = {}, onPeer }: Props) {
+export function InteriorScene({ venue, plan, look, worn, playerAnimation, playerLift = 0, start, walkTo, onArrive, onStation, onStaff, staffAnimation, highlight, served, deliveries, onPlaced, onDeliveryDone, peers = [], bubbles = {}, peerBadges = {}, onPeer, onFloor }: Props) {
+  const quality = useMemo(() => canvasQuality(), []);
   const [w, d] = plan.size;
   const shoppers = useMemo(() => {
     const spots: Array<[number, number, number]> = [[-w / 4, 0.3, 0.6], [w / 5, d / 5, -2.2]];
@@ -423,17 +435,19 @@ export function InteriorScene({ venue, plan, look, worn, playerAnimation, player
   const clickStation = (s: StationDef) => (e: ThreeEvent<MouseEvent>) => {
     if (e.delta > DRAG) return;
     e.stopPropagation();
+    // The dance floor is somewhere to stand: go to the exact spot tapped.
+    if (s.kind === "dancefloor" && onFloor) { onFloor([e.point.x, e.point.z]); return; }
     onStation(s);
   };
 
   return (
     <div className="relative w-full h-full">
-    <Canvas shadows={{ type: THREE.PCFShadowMap }} camera={{ position: [0, 7.5, d / 2 + 6], fov: 42 }} dpr={[1, 2]}>
-      <color attach="background" args={[venue.layout === "club" ? "#05050a" : venue.layout === "outdoor" ? "#bae6fd" : "#e7e5e4"]} />
-      <StudioEnvironment intensity={venue.layout === "club" ? 0.15 : 0.45} />
+    <Canvas shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false} camera={{ position: [0, 7.5, d / 2 + 6], fov: 42 }} dpr={quality.dpr}>
+      <color attach="background" args={[venue.layout === "club" ? "#120a24" : venue.layout === "outdoor" ? "#bae6fd" : "#e7e5e4"]} />
+      <StudioEnvironment intensity={venue.layout === "club" ? 0.35 : 0.45} />
       <Lights venue={venue} plan={plan} />
       {/* The room appears at once; everything with a model streams in on its own as it arrives. */}
-      <Room venue={venue} plan={plan} />
+      <Room venue={venue} plan={plan} onFloor={onFloor} />
       <Suspense fallback={null}>{plan.decor}</Suspense>
       {plan.stations.map((s) => (
         <Station key={s.id} s={s} active={highlight === s.id} hover={hovered === s.id} onHover={(on) => setHovered((h) => (on ? s.id : h === s.id ? null : h))} onClick={clickStation(s)} />

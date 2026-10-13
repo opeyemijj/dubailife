@@ -173,14 +173,15 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-        {/* Left: 3D Avatar Preview with pedestal */}
-        <div className="w-full md:w-1/2 h-[42vh] md:h-full relative bg-gradient-to-b from-blue-50/50 via-slate-100 to-slate-200 flex items-center justify-center">
+      {/* Phones: one scrolling column (preview, then the step). Larger screens: side by side. */}
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden overscroll-contain relative">
+        {/* Left: 3D Avatar Preview with pedestal (phones: only while choosing the look) */}
+        <div className={`w-full md:w-1/2 h-[38vh] shrink-0 md:h-full relative bg-gradient-to-b from-blue-50/50 via-slate-100 to-slate-200 items-center justify-center overflow-hidden ${currentStep === 1 ? "flex" : "hidden md:flex"}`}>
           <AvatarCanvas look={look} />
         </div>
 
         {/* Right: Step Customization Panel */}
-        <div className="w-full md:w-1/2 flex-1 md:h-full bg-white p-4 sm:p-6 overflow-y-auto shadow-2xl md:shadow-none border-t md:border-t-0 md:border-l border-slate-200">
+        <div className="w-full md:w-1/2 flex-none md:flex-1 md:h-full bg-white p-4 sm:p-6 md:overflow-y-auto shadow-2xl md:shadow-none border-t md:border-t-0 md:border-l border-slate-200">
           <div className="max-w-md mx-auto space-y-6 pb-24 md:pb-8">
 
             {/* STEP 1: LOOK */}

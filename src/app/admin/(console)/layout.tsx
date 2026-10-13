@@ -1,7 +1,7 @@
 import { verifyAdmin } from "@/lib/admin/dal";
 import { AdminShell } from "@/components/admin/console/AdminShell";
 
-export const metadata = { title: "Admin · Come to Dubai", robots: { index: false } };
+export const metadata = { title: "Admin · Dubai Life", robots: { index: false } };
 
 export default async function ConsoleLayout({ children }: { children: React.ReactNode }) {
   const admin = await verifyAdmin();

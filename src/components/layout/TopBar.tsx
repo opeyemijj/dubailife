@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { Coins, Bell, Users, LogOut, User } from "lucide-react";
+import { Coins, Bell, Users } from "lucide-react";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useCitizen, signOut } from "@/lib/citizenStore";
+import { useCitizen } from "@/lib/citizenStore";
 import { useOnlineCount, formatOnline } from "@/lib/presence";
 
 export interface TopBarProps {
@@ -24,42 +23,26 @@ export function TopBar({
   const userName = userNameOverride ?? citizen?.name ?? "Citizen";
   const avatarUrl = avatarOverride ?? rosterThumb(presetFor(citizen?.look ?? { gender: "woman" }));
   const onlineCount = useOnlineCount();
-  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div className="fixed top-0 left-0 w-full z-50 px-3 sm:px-6 pt-[max(0.6rem,env(safe-area-inset-top))] pb-1.5 pointer-events-none select-none">
       <div className="max-w-7xl mx-auto flex items-center justify-between pointer-events-auto">
         
-        {/* Left: User Profile & Level */}
-        <div className="relative">
-        {menuOpen && <div className="fixed inset-0" onClick={() => setMenuOpen(false)} />}
-        <button
-          onClick={() => setMenuOpen((o) => !o)}
-          aria-haspopup="menu"
-          aria-expanded={menuOpen}
+        {/* Left: the citizen; tapping it opens their profile */}
+        <Link
+          href="/profile"
+          aria-label="Your profile"
           className="relative flex items-center gap-2 sm:gap-2.5 bg-zinc-950/80 hover:bg-zinc-900 backdrop-blur-xl border border-white/15 p-1 pr-3 sm:pr-4 rounded-full shadow-lg text-left transition-colors"
         >
           <Avatar className="w-8 h-8 sm:w-9 sm:h-9 border border-white/20">
-            <AvatarImage src={avatarUrl} />
+            <AvatarImage src={avatarUrl} className="object-cover object-top" />
             <AvatarFallback>{userName.slice(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
             <span className="text-xs sm:text-sm font-black text-white leading-none">{userName}</span>
             {citizen?.username && <span className="text-[10px] sm:text-xs text-sky-300 font-bold leading-none mt-0.5">@{citizen.username}</span>}
           </div>
-        </button>
-
-        {menuOpen && (
-          <div role="menu" className="absolute top-full left-0 mt-2 w-44 bg-zinc-950/95 backdrop-blur-xl border border-white/15 rounded-2xl shadow-2xl p-1.5 text-sm font-bold text-white">
-            <Link href="/profile" role="menuitem" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/10">
-              <User className="w-4 h-4 text-zinc-400" /> My profile
-            </Link>
-            <button role="menuitem" onClick={() => { setMenuOpen(false); signOut(); }} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-rose-500/15 text-rose-400">
-              <LogOut className="w-4 h-4" /> Log out
-            </button>
-          </div>
-        )}
-        </div>
+        </Link>
 
         {/* Center: Live Online Players Pill */}
         <div className="flex items-center gap-1.5 bg-zinc-950/80 backdrop-blur-xl border border-white/15 px-2.5 sm:px-3.5 py-1.5 rounded-full shadow-lg">
