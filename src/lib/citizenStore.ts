@@ -205,20 +205,24 @@ export async function signUpWithEmail(email: string, password: string, meta: { u
     if (!res.ok) return { ok: false, error: body.error ?? "Sign-up failed. Please try again." };
     return logIn(email, password);
   }
-  return signUpViaEmailLink(email, password, meta);
+  // Instant sign-up: the account is created already confirmed, then signed in — no email step.
+  const { error } = await supabase().rpc("register_account", { p_email: email, p_password: password, p_username: meta.username, p_display_name: meta.display_name });
+  if (error) {
+    const m = error.message;
+    return {
+      ok: false,
+      error: /already_registered/.test(m) ? "An account with this email already exists. Log in instead."
+        : /username_taken/.test(m) ? `@${meta.username} is taken — pick another username.`
+        : /invalid_email/.test(m) ? "That email address doesn't look right — please check it."
+        : /weak_password/.test(m) ? "Password must be at least 8 characters."
+        : /invalid_username/.test(m) ? "Usernames are 3–24 letters, numbers, dots or underscores."
+        : /too_many/.test(m) ? "Lots of people are joining right now — please try again in a minute."
+        : "Sign-up failed. Please try again.",
+    };
+  }
+  return logIn(email, password);
 }
 
-async function signUpViaEmailLink(email: string, password: string, meta: { username: string; display_name: string }): Promise<AuthResult> {
-  const { data, error } = await supabase().auth.signUp({
-    email,
-    password,
-    options: { data: meta, emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding/look` },
-  });
-  if (error) return { ok: false, error: friendly(error.message) };
-  // Supabase returns a user with no identities when the email is already registered.
-  if (data.user && data.user.identities?.length === 0) return { ok: false, error: friendly("already registered") };
-  return { ok: true, needsConfirmation: !data.session };
-}
 
 export async function resendConfirmation(email: string): Promise<AuthResult> {
   const { error } = await supabase().auth.resend({ type: "signup", email, options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding/look` } });
