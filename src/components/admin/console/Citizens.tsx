@@ -3,7 +3,7 @@
 import { Fragment, useState } from "react";
 import { Page, Table, Button, coins, when, act, db, useRows } from "./ui";
 
-interface Citizen { id: string; username: string; display_name: string; email: string; balance: number; created_at: string; last_sign_in_at: string | null }
+interface Citizen { id: string; username: string | null; display_name: string | null; email: string; balance: number; created_at: string; last_sign_in_at: string | null; finished: boolean; is_admin: boolean }
 interface Line { id: number; delta: number; balance_after: number; kind: string; reason: string | null; created_at: string }
 
 export function Citizens() {
@@ -22,9 +22,10 @@ export function Citizens() {
   };
 
   const remove = async (c: Citizen) => {
-    const typed = prompt(`Delete @${c.username} (${c.email}) and ALL their data — wallet, homes, messages, purchases? This can't be undone.\nType the username to confirm:`);
-    if (typed?.trim().replace(/^@/, "") !== c.username) return;
-    setMsg(await act(() => db().rpc("admin_delete_citizen", { p_user: c.id })) ?? `Deleted @${c.username}. Their homes are back on the market.`);
+    const who = c.username ? `@${c.username}` : c.email;
+    const typed = prompt(`Delete ${who} (${c.email}) and ALL their data — wallet, homes, messages, purchases? This can't be undone.\nType ${c.username ? "the username" : "the email"} to confirm:`);
+    if (typed?.trim().replace(/^@/, "") !== (c.username ?? c.email)) return;
+    setMsg(await act(() => db().rpc("admin_delete_citizen", { p_user: c.id })) ?? `Deleted ${who}.`);
     reload();
   };
 
@@ -36,15 +37,20 @@ export function Citizens() {
         {(rows ?? []).map((c) => (
           <Fragment key={c.id}>
             <tr>
-              <td className="px-3 py-2.5"><div className="font-bold">{c.display_name}</div><div className="text-xs text-sky-600">@{c.username}</div></td>
+              <td className="px-3 py-2.5">
+                <div className="font-bold">{c.display_name ?? "—"}</div>
+                {c.username ? <div className="text-xs text-sky-600">@{c.username}</div> : null}
+                {!c.finished && !c.is_admin && <span className="inline-block mt-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 ring-1 ring-amber-200">Didn&apos;t finish signing up</span>}
+                {c.is_admin && <span className="inline-block mt-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 ring-1 ring-slate-200">Admin</span>}
+              </td>
               <td className="px-3 py-2.5 text-slate-600">{c.email}</td>
               <td className="px-3 py-2.5 text-slate-500 whitespace-nowrap">{when(c.created_at)}</td>
               <td className="px-3 py-2.5 text-slate-500 whitespace-nowrap">{when(c.last_sign_in_at)}</td>
-              <td className="px-3 py-2.5 font-bold whitespace-nowrap">{coins(c.balance)}</td>
+              <td className="px-3 py-2.5 font-bold whitespace-nowrap">{c.finished ? coins(c.balance) : "—"}</td>
               <td className="px-3 py-2.5 text-right whitespace-nowrap space-x-1">
-                <Button tone="secondary" onClick={() => setOpen(open === c.id ? null : c.id)}>{open === c.id ? "Hide" : "Ledger"}</Button>
-                <Button onClick={() => adjust(c)}>Adjust</Button>
-                <Button tone="danger" onClick={() => remove(c)}>Delete</Button>
+                {c.finished && <Button tone="secondary" onClick={() => setOpen(open === c.id ? null : c.id)}>{open === c.id ? "Hide" : "Ledger"}</Button>}
+                {c.finished && <Button onClick={() => adjust(c)}>Adjust</Button>}
+                {!c.is_admin && <Button tone="danger" onClick={() => remove(c)}>Delete</Button>}
               </td>
             </tr>
             {open === c.id && <tr><td colSpan={6} className="bg-slate-50 px-3 py-3"><Ledger user={c.id} /></td></tr>}
