@@ -1,11 +1,12 @@
 "use client";
 
+import { InstallApp } from "@/components/pwa/InstallApp";
 import { compact, useSiteStats } from "@/lib/siteStats";
 import { PLACES } from "@/lib/city/places";
 import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
-  Crown, Users, Eye, EyeOff, X, Calendar as CalendarIcon, 
+  Users, Eye, EyeOff, X, Calendar as CalendarIcon, 
   Check, ShieldCheck, ChevronDown
 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -159,18 +160,19 @@ export function LandingOverlay({
             {/* Left Brand & Online Stats Pill */}
             <div className="flex items-center gap-2.5 sm:gap-3 bg-white/95 hover:bg-white backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] px-3 sm:px-4 py-2 rounded-full transition-all">
               <div className="flex items-center gap-1.5 font-black text-slate-900 text-xs sm:text-sm">
-                <Crown className="w-4 h-4 text-amber-500 fill-amber-400" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/brand/icon-192.png" alt="" width={22} height={22} className="w-[22px] h-[22px] rounded-md" />
                 <span>Dubai Life</span>
               </div>
 
               <div className="w-[1px] h-3.5 bg-slate-200" />
 
-              <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-emerald-600">
+              <div className="flex items-center gap-1.5 text-xs sm:text-xs font-bold text-emerald-600">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span>{formatOnline(onlineCount)} online</span>
               </div>
 
-              <div className="hidden xs:flex sm:flex items-center gap-1 text-[11px] sm:text-xs font-bold text-slate-500">
+              <div className="hidden xs:flex sm:flex items-center gap-1 text-xs sm:text-xs font-bold text-slate-500">
                 <Eye className="w-3.5 h-3.5 text-slate-400" />
                 <span>{compact(visits)} visits</span>
               </div>
@@ -193,7 +195,7 @@ export function LandingOverlay({
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <button
                   onClick={() => router.push("/home")}
-                  className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-emerald-500/20 flex items-center gap-1.5"
+                  className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-emerald-500/20 flex items-center gap-1.5"
                 >
                   <span>🏠 My Home</span>
                 </button>
@@ -208,7 +210,7 @@ export function LandingOverlay({
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <button
                   onClick={handleOpenSignUp}
-                  className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-emerald-500/20"
+                  className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-emerald-500/20"
                 >
                   Sign up
                 </button>
@@ -232,7 +234,7 @@ export function LandingOverlay({
       </header>
 
       {/* 2. BOTTOM FLOATING CARD (As shown in Screenshot 1) */}
-      <div className="absolute bottom-6 sm:bottom-8 left-0 w-full z-40 pointer-events-none px-4">
+      <div className="absolute bottom-[max(1rem,calc(env(safe-area-inset-bottom)+0.5rem))] sm:bottom-8 left-0 w-full z-40 pointer-events-none px-4">
         <div className="max-w-md mx-auto bg-white/95 backdrop-blur-2xl border border-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] rounded-3xl p-4 sm:p-5 pointer-events-auto text-center space-y-3.5">
           
           {/* Citizens Playing Header */}
@@ -254,7 +256,7 @@ export function LandingOverlay({
             <div className="flex flex-row gap-2">
               <button
                 onClick={() => router.push("/home")}
-                className="flex-1 py-3 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-98 text-white font-black text-sm sm:text-base shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2"
+                className="flex-1 py-3 px-6 rounded-2xl bg-emerald-700 hover:bg-emerald-800 active:scale-98 text-white font-black text-sm sm:text-base shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2"
               >
                 <span>🏠 My Apartment</span>
               </button>
@@ -269,7 +271,7 @@ export function LandingOverlay({
             <div className="flex flex-row gap-2">
               <button
                 onClick={handleOpenSignUp}
-                className="flex-1 py-3 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-98 text-white font-black text-sm sm:text-base shadow-lg shadow-emerald-500/25 transition-all"
+                className="flex-1 py-3 px-6 rounded-2xl bg-emerald-700 hover:bg-emerald-800 active:scale-98 text-white font-black text-sm sm:text-base shadow-lg shadow-emerald-500/25 transition-all"
               >
                 Sign up free
               </button>
@@ -282,8 +284,10 @@ export function LandingOverlay({
             </div>
           )}
 
+          <div className="flex justify-center"><InstallApp /></div>
+
           {/* Social accounts */}
-          <div className="flex items-center justify-center gap-3 pt-1 text-[11px] font-bold text-slate-500">
+          <div className="flex items-center justify-center gap-3 pt-1 text-xs font-bold text-slate-500">
             {SOCIALS.map((n) => n.href
               ? <a key={n.label} href={n.href} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 transition-colors">{n.label}</a>
               : <span key={n.label} className="hover:text-slate-800 cursor-pointer transition-colors">{n.label}</span>)}
@@ -378,7 +382,7 @@ export function LandingOverlay({
                   onChange={(e) => setUsername(e.target.value.startsWith("@") ? e.target.value : "@" + e.target.value)}
                   className="w-full h-11 px-4 bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-2xl text-sm font-bold text-slate-900 outline-none transition-all font-mono"
                 />
-                <p className="text-[11px] text-slate-400 mt-1">This is your Citizen's name in Dubai Life.</p>
+                <p className="text-xs text-slate-400 mt-1">This is your Citizen's name in Dubai Life.</p>
               </div>
 
               {/* Password */}
@@ -402,7 +406,7 @@ export function LandingOverlay({
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1">At least 8 characters. Not 123456 😅</p>
+                <p className="text-xs text-slate-400 mt-1">At least 8 characters. Not 123456 😅</p>
               </div>
 
               {/* Email (optional) */}
@@ -416,7 +420,7 @@ export function LandingOverlay({
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full h-11 px-4 bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-2xl text-sm font-bold text-slate-900 outline-none transition-all"
                 />
-                <p className="text-[11px] text-slate-400 mt-1">You&apos;ll log in with it. We&apos;ll email you a link to confirm your account.</p>
+                <p className="text-xs text-slate-400 mt-1">You&apos;ll log in with it. We&apos;ll email you a link to confirm your account.</p>
               </div>
 
               {/* Date of birth */}
@@ -467,12 +471,12 @@ export function LandingOverlay({
               <button
                 type="submit"
                 disabled={!agree18 || busy}
-                className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-black text-sm sm:text-base rounded-2xl shadow-lg shadow-emerald-500/25 transition-all mt-2 active:scale-98"
+                className="w-full py-3.5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white font-black text-sm sm:text-base rounded-2xl shadow-lg shadow-emerald-500/25 transition-all mt-2 active:scale-98"
               >
                 Sign up · it's free
               </button>
 
-              <p className="text-[11px] text-center text-slate-400 pt-1">
+              <p className="text-xs text-center text-slate-400 pt-1">
                 Your Citizen will live in the same Dubai as everyone else who signs up.
               </p>
             </form>
@@ -510,7 +514,7 @@ export function LandingOverlay({
               <button
                 type="submit"
                 disabled={busy}
-                className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white font-black text-sm sm:text-base rounded-2xl shadow-lg shadow-emerald-500/25 transition-all mt-4 active:scale-98"
+                className="w-full py-3.5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-60 text-white font-black text-sm sm:text-base rounded-2xl shadow-lg shadow-emerald-500/25 transition-all mt-4 active:scale-98"
               >
                 {busy ? "Logging in…" : "Log in"}
               </button>
@@ -538,7 +542,7 @@ export function LandingOverlay({
             <button
               onClick={handleConfirmAge}
               disabled={busy}
-              className="w-full py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm shadow-md shadow-emerald-500/25 transition-all active:scale-98"
+              className="w-full py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm shadow-md shadow-emerald-500/25 transition-all active:scale-98"
             >
               {busy ? "Creating your account…" : "Yes, that's right"}
             </button>

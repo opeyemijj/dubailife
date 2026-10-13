@@ -47,7 +47,7 @@ function Explore() {
   ];
 
   return (
-    <main className="relative h-screen w-screen bg-[#d6bc8a] overflow-hidden flex flex-col font-sans select-none touch-none overscroll-none">
+    <main className="fixed inset-0 h-[100dvh] w-screen bg-[#d6bc8a] overflow-hidden flex flex-col font-sans select-none touch-none overscroll-none">
       {/* 2D Isometric Interactive Map Background */}
       <InteractiveMap 
         hideTopHUD={true} 

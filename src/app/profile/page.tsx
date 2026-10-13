@@ -3,6 +3,7 @@
 // The citizen's profile: who they are, their wallet, home, job and what they own — all from their
 // saved game and the database.
 
+import { InstallApp } from "@/components/pwa/InstallApp";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRequireCitizen, signOut, updateCitizen } from "@/lib/citizenStore";
@@ -114,6 +115,8 @@ export default function ProfilePage() {
             </ul>
           )}
         </div>
+
+        <InstallApp variant="row" />
 
         <Button variant="outline" onClick={signOut} className="w-full h-12 rounded-xl border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 hover:text-rose-200 font-bold">
           <LogOut className="w-4 h-4 mr-2" /> Log out

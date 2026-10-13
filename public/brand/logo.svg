@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Dubai Life">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1e1b4b"/>
+      <stop offset="0.45" stop-color="#7c3aed"/>
+      <stop offset="0.75" stop-color="#ec4899"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fef3c7"/>
+      <stop offset="0.55" stop-color="#fbbf24"/>
+      <stop offset="1" stop-color="#f97316"/>
+    </radialGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0e7490"/>
+      <stop offset="1" stop-color="#082f49"/>
+    </linearGradient>
+    <linearGradient id="tower" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.5" stop-color="#f1f5f9"/>
+      <stop offset="0.5" stop-color="#cbd5e1"/>
+      <stop offset="1" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <clipPath id="round"><rect width="512" height="512" rx="112"/></clipPath>
+  </defs>
+  <g clip-path="url(#round)">
+  <rect width="512" height="512" fill="url(#sky)"/>
+  <!-- stars -->
+  <g fill="#fff" opacity="0.8">
+    <circle cx="96" cy="92" r="4"/><circle cx="402" cy="70" r="3"/><circle cx="430" cy="150" r="2.5"/><circle cx="70" cy="170" r="2.5"/><circle cx="150" cy="56" r="2"/>
+  </g>
+  <!-- setting sun -->
+  <circle cx="256" cy="330" r="132" fill="url(#sun)"/>
+  <!-- Burj Khalifa -->
+  <path fill="url(#tower)" d="M196 404 V372 H208 V326 H218 V280 H228 V234 H236 V188 H243 V140 H249 L252 82 L254 50 L256 30 L258 50 L260 82 L263 140 H269 V188 H276 V234 H284 V280 H294 V326 H304 V372 H316 V404 Z"/>
+  <!-- sea with the tower's reflection -->
+  <rect x="0" y="404" width="512" height="108" fill="url(#sea)"/>
+  <g fill="#fde68a" opacity="0.55">
+    <rect x="214" y="420" width="84" height="7" rx="3.5"/>
+    <rect x="226" y="440" width="60" height="6" rx="3"/>
+    <rect x="238" y="458" width="36" height="5" rx="2.5"/>
+  </g>
+  </g>
+  <rect x="3" y="3" width="506" height="506" rx="110" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="6"/>
+</svg>

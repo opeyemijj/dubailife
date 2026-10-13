@@ -33,7 +33,7 @@ function HomeContent() {
   };
 
   return (
-    <main className="relative h-screen w-screen bg-[#d6bc8a] overflow-hidden select-none touch-none overscroll-none font-sans">
+    <main className="fixed inset-0 h-[100dvh] w-screen bg-[#d6bc8a] overflow-hidden select-none touch-none overscroll-none font-sans">
       {/* 2D Isometric City Map in Background: Interaction locked until user signs in */}
       <InteractiveMap
         hideTopHUD={true}

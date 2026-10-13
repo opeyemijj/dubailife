@@ -55,7 +55,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     <div className="min-h-[100dvh] bg-slate-50 text-slate-900">
       <header className="bg-white border-b border-slate-200">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center gap-3">
-          <Link href="/business" className="flex items-center gap-2 font-black"><span className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-sm">D</span> Dubai Life <span className="text-slate-400 font-bold">for Business</span></Link>
+          <Link href="/business" className="flex items-center gap-2 font-black">{/* eslint-disable-next-line @next/next/no-img-element */}<img src="/brand/icon-192.png" alt="" className="w-8 h-8 rounded-xl" /> Dubai Life <span className="text-slate-400 font-bold">for Business</span></Link>
           <Link href="/explore" className="ml-auto text-sm font-bold text-slate-500 hover:text-slate-900">Back to the city →</Link>
         </div>
       </header>
