@@ -13,7 +13,7 @@ export type SocialContext = "club" | "dining" | "home" | "venue";
 const AMOUNTS = [20, 50, 100, 500];
 
 export function PeerPanel({
-  peer, context, balance, treat, onClose, onChat, onSendMoney, onWave, onInvite, onTreat, onFriend,
+  peer, context, balance, treat, onClose, onChat, onSendMoney, onWave, onInvite, onTreat, onFriend, canInviteToTable = false,
   messages, typing, onTyping, onThread, startIn = "menu", unread = 0,
 }: {
   /** This conversation, oldest first. */
@@ -34,7 +34,9 @@ export function PeerPanel({
   onChat: (text: string) => void;
   onSendMoney: (amount: number) => Promise<string | null>;
   onWave: () => void;
-  onInvite: (kind: "join" | "dance") => void;
+  onInvite: (kind: "join" | "dance" | "table") => void;
+  /** I'm seated at a table or booth, so I can invite them to it. */
+  canInviteToTable?: boolean;
   onTreat?: () => void;
   onFriend: () => Promise<string>;
 }) {
@@ -92,8 +94,9 @@ export function PeerPanel({
               {action("💸", "Send money", () => setMode("money"), "Straight from your wallet")}
               {context === "club" && treat && onTreat && action("🍸", `Buy them a ${treat.name.toLowerCase()}`, onTreat, `AED ${treat.price} · served at the bar`)}
               {context === "dining" && treat && onTreat && action(treat.icon, `Treat them to ${treat.name.toLowerCase()}`, onTreat, `AED ${treat.price}`)}
-              {context === "club" && action("💃", "Dance together", () => onInvite("dance"), "Invite them to the dance floor")}
-              {context !== "home" && action("🙌", "Come join me", () => onInvite("join"), "They'll walk over if they accept")}
+              {canInviteToTable && action("🪑", "Invite to my table", () => onInvite("table"), "They'll take a free seat with you if they accept")}
+              {context === "club" && action("💃", "Dance together", () => onInvite("dance"), "You'll dance facing each other")}
+              {context !== "home" && !canInviteToTable && action("🙌", "Come join me", () => onInvite("join"), "They'll walk over if they accept")}
               {action("👋", "Wave", onWave)}
               {action("🤝", "Add friend", async () => setNote(await onFriend()), "Friends can visit each other's homes")}
               {note && <p className="text-xs font-bold text-emerald-700 text-center">{note}</p>}
@@ -123,7 +126,8 @@ export function PeerPanel({
               <button onClick={() => setMode("money")} className="shrink-0 h-8 px-3 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold">💸 Send money</button>
               <button onClick={onWave} className="shrink-0 h-8 px-3 rounded-full bg-slate-100 text-xs font-bold">👋 Wave</button>
               {treat && onTreat && context !== "home" && <button onClick={onTreat} className="shrink-0 h-8 px-3 rounded-full bg-amber-50 text-amber-700 text-xs font-bold">{treat.icon} Treat them</button>}
-              {context !== "home" && <button onClick={() => onInvite("join")} className="shrink-0 h-8 px-3 rounded-full bg-sky-50 text-sky-700 text-xs font-bold">🙌 Come join me</button>}
+              {canInviteToTable && <button onClick={() => onInvite("table")} className="shrink-0 h-8 px-3 rounded-full bg-sky-50 text-sky-700 text-xs font-bold">🪑 Join my table</button>}
+              {context !== "home" && !canInviteToTable && <button onClick={() => onInvite("join")} className="shrink-0 h-8 px-3 rounded-full bg-sky-50 text-sky-700 text-xs font-bold">🙌 Come join me</button>}
               {context === "club" && <button onClick={() => onInvite("dance")} className="shrink-0 h-8 px-3 rounded-full bg-fuchsia-50 text-fuchsia-700 text-xs font-bold">💃 Dance</button>}
             </div>
           )}

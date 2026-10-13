@@ -12,7 +12,8 @@ import { TopBar } from "@/components/layout/TopBar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Briefcase, Home, LogOut, MapPin, ShoppingBag, Users, Wallet, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ROSTER, presetFor, rosterThumb } from "@/components/avatar/roster";
+import { presetFor, rosterThumb } from "@/components/avatar/roster";
+import { LookPicker } from "@/components/avatar/LookPicker";
 import { flatRoute, flatTitle } from "@/lib/city/flats";
 
 interface MyFlat { id: string; building_id: string; unit: string; property_type: string; owner_id: string | null; tenant_id: string | null; rent_price: number | null; residentName?: string | null }
@@ -62,20 +63,11 @@ export default function ProfilePage() {
 
         {picking && (
           <div className="bg-white/5 border border-white/10 rounded-3xl p-4">
-            <h2 className="text-sm font-bold text-white mb-3">Choose your look</h2>
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-              {ROSTER.map((r) => (
-                <button
-                  key={r.id}
-                  onClick={() => { updateCitizen((c) => ({ ...c, look: { ...(c.look ?? {}), gender: r.gender, preset: r.id, custom: undefined } })); setPicking(false); }}
-                  className={`rounded-2xl overflow-hidden border-2 ${r.id === preset ? "border-emerald-400" : "border-transparent"}`}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={rosterThumb(r.id)} alt={r.label} className="w-full aspect-square object-cover object-top bg-slate-800" />
-                  <div className="text-[9px] text-white/80 py-1 truncate">{r.label}</div>
-                </button>
-              ))}
+            <div className="flex items-center mb-3">
+              <h2 className="flex-1 text-sm font-bold text-white">Your look</h2>
+              <button onClick={() => setPicking(false)} className="text-xs font-bold text-emerald-300">Done</button>
             </div>
+            <LookPicker dark look={citizen.look ?? { gender: "woman" }} onChange={(look) => updateCitizen((c) => ({ ...c, look }))} />
           </div>
         )}
 

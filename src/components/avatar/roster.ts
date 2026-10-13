@@ -9,6 +9,8 @@ export interface AvatarLookProps {
   bodyType?: string;
   /** Roster citizen id, e.g. "Female_Party_02". */
   preset?: string;
+  /** Outfit: another roster citizen's clothes worn with this face (same gender). */
+  wear?: string;
   /** Realistic avatar the citizen made from a selfie in Avaturn. */
   custom?: { avatarId: string; url: string };
   // Fields from the earlier stylised avatar; kept so old saved citizens still load.

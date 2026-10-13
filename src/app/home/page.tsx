@@ -14,7 +14,7 @@ import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoo
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { gameAudio } from "@/utils/gameAudio";
 import { useRequireCitizen, adjustBalance, buyFurniture, setFurniturePlacement, signOut, updateCitizen, DEFAULT_NEEDS, type Needs } from "@/lib/citizenStore";
-import { CATALOG, getCatalogItem, type CatalogItem, type Placement, type Rotation } from "@/lib/furniture";
+import { CATALOG, getCatalogItem, withHomeItems, type CatalogItem, type Placement, type Rotation } from "@/lib/furniture";
 import { useOnlineCount, formatOnline } from "@/lib/presence";
 
 export default function HomePage() {
@@ -57,7 +57,7 @@ export default function HomePage() {
   const [turns, setTurns] = useState(0);
 
   const furniture = citizen?.furniture ?? [];
-  const stored = furniture.filter((f) => !f.placement);
+  const stored = withHomeItems(furniture).filter((f) => !f.placement);
   const placingItem = placing ? getCatalogItem(placing.itemId) : undefined;
   const placingIsPlaced = !!(placing && furniture.find((f) => f.uid === placing.uid)?.placement);
 
@@ -98,7 +98,7 @@ export default function HomePage() {
   };
 
   const handlePickUp = (uid: string) => {
-    const f = furniture.find((x) => x.uid === uid);
+    const f = withHomeItems(furniture).find((x) => x.uid === uid);
     if (!f) return;
     gameAudio.playClickSound();
     setPlacing({ uid, itemId: f.itemId, rot: f.placement?.kind === "floor" ? f.placement.rot : 0 });

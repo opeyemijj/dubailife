@@ -49,30 +49,49 @@ export function toRoom(s: StationDef, [x, y, z]: [number, number, number]): [num
   return [s.position[0] + x * c + z * n, y, s.position[1] - x * n + z * c];
 }
 
-/** Where a citizen sits at a table or booth, in the station's frame, and which way they face. */
-export function seatAt(venue: Venue, s: StationDef, opposite = false): { local: [number, number]; facing: number; lift: number } | null {
-  if (s.kind !== "booth") return null;
-  // Dining sets: the chair nearest the aisle, facing the table. Sofas and benches: the seat, facing out.
-  // The sit clip puts the hips ~0.2 m behind where the feet stand, so the stand point is that far ahead.
-  // `lift` raises the sitter for seats higher than a dining chair (the clip's seat height).
-  // `opposite`: the chair across the table, for a second person joining.
-  if (venue.layout === "dining") return opposite ? { local: [0, -0.86], facing: s.rotation, lift: 0 } : { local: [0, 0.86], facing: s.rotation + Math.PI, lift: 0 };
-  if (venue.layout === "outdoor") return { local: [0, 0.2], facing: s.rotation, lift: 0 };
-  return { local: [0, -0.05], facing: s.rotation, lift: 0.11 };
+export interface Seat {
+  /** Where the citizen stands to sit (station frame); the sit clip puts the hips ~0.2 m behind. */
+  local: [number, number];
+  facing: number;
+  /** Raises the sitter for seats higher than a dining chair (the clip's seat height). */
+  lift: number;
+}
+
+/**
+ * The seats at a table or booth: dining sets have a chair each side; sofas seat three; benches two.
+ * Each person takes a free one, so nobody sits on anyone.
+ */
+export function seatsAt(venue: Venue, s: StationDef): Seat[] {
+  if (s.kind !== "booth") return [];
+  if (venue.layout === "dining") return [{ local: [0, 0.86], facing: s.rotation + Math.PI, lift: 0 }, { local: [0, -0.86], facing: s.rotation, lift: 0 }];
+  if (venue.layout === "outdoor") return [-0.45, 0.45].map((x) => ({ local: [x, 0.2] as [number, number], facing: s.rotation, lift: 0 }));
+  return [0, -0.6, 0.6].map((x) => ({ local: [x, -0.05] as [number, number], facing: s.rotation, lift: 0.11 }));
+}
+
+/** The first seat (kept for callers that only need one). */
+export function seatAt(venue: Venue, s: StationDef, opposite = false): Seat | null {
+  const seats = seatsAt(venue, s);
+  return seats[opposite && seats.length > 1 ? 1 : 0] ?? null;
 }
 
 /**
  * The spot on a station's top where the n-th thing served there is put down, in its own frame.
  * Counters get a row along the front edge; tables a small cluster on the citizen's side.
  */
-export function servingSpot(venue: Venue, s: StationDef, n: number): [number, number, number] {
+export function servingSpot(venue: Venue, s: StationDef, n: number, seatIndex = 0, seats?: Seat[]): [number, number, number] {
   // Centre first (where the citizen stands), then alternating either side.
   const row = (top: number, z: number, step = 0.22): [number, number, number] => [[0, 1, -1, 2, -2][n % 5] * step, top, z - Math.floor(n / 5) * 0.16];
   switch (s.kind) {
-    case "booth":
-      if (venue.layout === "dining") return [[0, -0.16, 0.16][n % 3], 0.775, 0.2 - Math.floor(n / 3) * 0.17];
-      if (venue.layout === "outdoor") return [0.55 + (n % 2) * 0.18, 0.45, 0];
-      return [[-0.3, 0.3, 0, -0.12, 0.15][n % 5], 0.42, 1.0 + (n >= 5 ? -0.12 : 0.06)];
+    case "booth": {
+      // In front of the person's own seat (seat 0 when not given).
+      const seat = seats?.[seatIndex] ?? seatsAt(venue, s)[seatIndex] ?? seatsAt(venue, s)[0];
+      if (venue.layout === "dining") {
+        const side = seat && seat.local[1] < 0 ? -1 : 1;
+        return [[0, -0.16, 0.16][n % 3], 0.775, side * (0.2 - Math.floor(n / 3) * 0.12)];
+      }
+      if (venue.layout === "outdoor") return [(seat?.local[0] ?? 0) + (n % 2 ? 0.18 : -0.18), 0.45, 0.25];
+      return [(seat?.local[0] ?? 0) + [0, -0.14, 0.14][n % 3], 0.42, 0.95 + (n >= 3 ? 0.12 : 0)];
+    }
     case "bar": return venue.layout === "outdoor" ? row(1.155, 0.25) : row(1.145, 0.22);
     case "menu": return row(1.045, 0.24);
     case "counter": return venue.layout === "dining" ? row(1.295, 0.05, 0.2) : row(1.045, 0.22);

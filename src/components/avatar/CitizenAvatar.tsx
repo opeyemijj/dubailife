@@ -12,7 +12,8 @@ import * as THREE from "three";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { applyBodyShape, buildBodyFrame, defaultBodyType, prepareForShaping } from "./bodyShape";
-import { presetFor, rosterAnimations, rosterModel, type AvatarLookProps, type Gender } from "./roster";
+import { ROSTER, presetFor, rosterAnimations, rosterModel, type AvatarLookProps, type Gender } from "./roster";
+import { composeOutfit } from "./outfit";
 import { createRetargeter } from "./retarget";
 import { useAvatarUrl } from "./customAvatarStore";
 import { attachAccessories, buildAccessoryRig } from "./accessories";
@@ -81,7 +82,8 @@ function usePreparedModel(source: THREE.Object3D, shape: boolean) {
       m.castShadow = true;
       m.receiveShadow = true;
       m.frustumCulled = false; // skinned bounds don't follow the animation
-      meshes.push(m);
+      // Sculpting works on the model's own body; a face borrowed for an outfit is left as made.
+      if (!m.userData.borrowedFace) meshes.push(m);
     });
     if (shape) prepareForShaping(meshes);
     scene.updateMatrixWorld(true);
@@ -176,7 +178,11 @@ function useCarry(model: { scene: THREE.Object3D }, raise: boolean, held: React.
 
 function RosterAvatar({ look, animation, placement, accessories, holding, raiseHand = false }: { look: AvatarLookProps; animation: AvatarAnimation; placement: Placement; accessories?: Accessory[]; holding?: React.ReactNode; raiseHand?: boolean }) {
   const gltf = useGLTF(rosterModel(presetFor(look)));
-  const model = usePreparedModel(gltf.scene, true);
+  // The chosen outfit: this face on another roster citizen's clothes.
+  const wearId = look.wear && look.wear !== presetFor(look) && ROSTER.some((r) => r.id === look.wear && r.gender === look.gender) ? look.wear : null;
+  const wearGltf = useGLTF(rosterModel(wearId ?? presetFor(look)));
+  const source = useMemo(() => (wearId ? composeOutfit(gltf.scene, wearGltf.scene) : gltf.scene), [wearId, gltf.scene, wearGltf.scene]);
+  const model = usePreparedModel(source, true);
   useAccessories(model, accessories);
   const clips = useRosterClips(look.gender);
   const root = useRef<THREE.Group>(null);
@@ -246,7 +252,7 @@ export function CitizenAvatar({ look = DEFAULT_LOOK, animation = "idle", positio
   const customUrl = useAvatarUrl(look.custom?.url);
   const placement = { position, rotation };
   // Keyed by model: the animation mixer binds to one skeleton, so a new model needs a fresh mixer.
-  const roster = <RosterAvatar key={presetFor(look)} look={look} animation={animation} placement={placement} accessories={accessories} holding={holding} raiseHand={raiseHand} />;
+  const roster = <RosterAvatar key={`${presetFor(look)}:${look.wear ?? ""}`} look={look} animation={animation} placement={placement} accessories={accessories} holding={holding} raiseHand={raiseHand} />;
   if (!look.custom || !customUrl) return roster;
   return (
     <Suspense fallback={roster}>

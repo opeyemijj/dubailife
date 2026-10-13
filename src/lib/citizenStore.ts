@@ -8,7 +8,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import type { AvatarLookProps } from "@/components/avatar/roster";
-import type { OwnedFurniture, Placement } from "@/lib/furniture";
+import { withHomeItems, type OwnedFurniture, type Placement } from "@/lib/furniture";
 import type { Accessory } from "@/lib/city/types";
 import { supabase } from "@/lib/supabase/client";
 
@@ -313,7 +313,8 @@ export function buyFurniture(itemId: string, price: number): string | null {
 export function setFurniturePlacement(uid: string, placement: Placement | null) {
   updateCitizen((c) => ({
     ...c,
-    furniture: (c.furniture ?? []).map((f) => (f.uid === uid ? { ...f, placement } : f)),
+    // Includes what came with the home, so those can be moved and stored too.
+    furniture: withHomeItems(c.furniture ?? []).map((f) => (f.uid === uid ? { ...f, placement } : f)),
   }));
 }
 

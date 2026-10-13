@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, DoorClosed, KeyRound, Loader2, LogOut, MapPin, Navigation, Settings2, ShoppingBag, UserPlus, X, Zap } from "lucide-react";
 import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoom";
-import { CATALOG, getCatalogItem, type CatalogItem, type OwnedFurniture, type Placement, type Rotation } from "@/lib/furniture";
+import { CATALOG, getCatalogItem, withHomeItems, type CatalogItem, type OwnedFurniture, type Placement, type Rotation } from "@/lib/furniture";
 import { adjustBalance, updateCitizen, useCitizen, useRequireCitizen } from "@/lib/citizenStore";
 import { entranceOf, getEntity } from "@/lib/city/geo";
 import {
@@ -191,7 +191,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   };
 
   const place = (uid: string, placement: Placement | null) => {
-    commit(furniture.map((f) => (f.uid === uid ? { ...f, placement } : f)));
+    commit(withHomeItems(furniture).map((f) => (f.uid === uid ? { ...f, placement } : f)));
     setPlacing(null);
   };
 
@@ -262,7 +262,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         turns={turns}
         people={people}
         onPlace={(uid, p) => place(uid, p)}
-        onPickUp={(uid) => { const f = furniture.find((x) => x.uid === uid); if (f) setPlacing({ uid, itemId: f.itemId, rot: f.placement?.kind === "floor" ? f.placement.rot : 0 }); }}
+        onPickUp={(uid) => { const f = withHomeItems(furniture).find((x) => x.uid === uid); if (f) setPlacing({ uid, itemId: f.itemId, rot: f.placement?.kind === "floor" ? f.placement.rot : 0 }); }}
         onPlaceBlocked={() => say("🚫 It doesn't fit there.")}
       />
 
@@ -303,7 +303,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
 
       {shopOpen && (
         <Modal title="Furniture for this home" onClose={() => setShopOpen(false)}>
-          {furniture.filter((f) => !f.placement).map((f) => {
+          {withHomeItems(furniture).filter((f) => !f.placement).map((f) => {
             const item = getCatalogItem(f.itemId);
             return item ? (
               <div key={f.uid} className="flex items-center gap-3 p-2.5 rounded-2xl bg-amber-50 border border-amber-100">

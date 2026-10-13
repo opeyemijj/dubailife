@@ -46,6 +46,10 @@ export interface CatalogItem {
   model?: string;
   /** Extra yaw (radians) so the model's front faces +z. */
   yaw?: number;
+  /** Comes with every apartment (not sold in the shop). */
+  builtIn?: boolean;
+  /** Tapping it does something (sit, sleep, open the fridge). */
+  interaction?: Interaction;
 }
 
 export const CATALOG: CatalogItem[] = [
@@ -65,11 +69,11 @@ export const CATALOG: CatalogItem[] = [
   { id: "artwork", name: "Burj Khalifa Sunset Painting", desc: "Original high-rise acrylic artwork.", icon: "🖼️", price: 1500, kind: "wall", size: [3, 2] },
 ];
 
-export const getCatalogItem = (id: string) => CATALOG.find((c) => c.id === id);
+export const getCatalogItem = (id: string) => CATALOG.find((c) => c.id === id) ?? HOME_ITEMS.find((c) => c.id === id);
 
 export type Interaction = "cooler" | "bed" | "chair" | "door";
 
-/** Furniture that comes with every apartment. It can't be moved, but blocks placement. */
+/** Furniture that comes with every apartment, in its starting place. It can be moved like anything else. */
 export interface BuiltIn {
   id: string;
   model: string;
@@ -85,6 +89,32 @@ export const BUILT_INS: BuiltIn[] = [
   { id: "fridge", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 12, row: 0, rot: 0 }, interaction: "cooler" },
   { id: "chair", model: "/models/furniture/chair.glb", size: [2, 2], placement: { kind: "floor", col: 9, row: 5, rot: 2 }, interaction: "chair" },
 ];
+
+const HOME_NAMES: Record<string, [string, string]> = {
+  bed: ["Bed", "🛏️"], bedside: ["Bedside table", "🟫"], fridge: ["Fridge", "🧊"], chair: ["Armchair", "🪑"],
+};
+
+/** The built-ins as furniture items (so they can be moved, rotated and stored). */
+export const HOME_ITEMS: CatalogItem[] = BUILT_INS.map((b) => ({
+  id: `home-${b.id}`,
+  name: HOME_NAMES[b.id]?.[0] ?? b.id,
+  icon: HOME_NAMES[b.id]?.[1] ?? "📦",
+  desc: "Came with your home.",
+  price: 0,
+  kind: "floor",
+  size: b.size,
+  model: b.model,
+  yaw: b.yaw,
+  builtIn: true,
+  interaction: b.interaction,
+}));
+
+/** A home's furniture including the built-ins (in their starting place until they're moved). */
+export function withHomeItems(furniture: OwnedFurniture[]): OwnedFurniture[] {
+  const missing = BUILT_INS.filter((b) => !furniture.some((f) => f.uid === `builtin:${b.id}`))
+    .map((b) => ({ uid: `builtin:${b.id}`, itemId: `home-${b.id}`, placement: b.placement as Placement }));
+  return missing.length ? [...furniture, ...missing] : furniture;
+}
 
 /** Door and window spans on the walls, in cells. */
 export const DOOR = { wall: "west" as Wall, offset: 9, width: 2, height: 4.4 };
@@ -185,7 +215,6 @@ export function isPlacementValid(item: CatalogItem, placement: Placement, others
   // Rugs only clash with rugs; everything else clashes with solid furniture and reserved cells.
   if (!isRug) {
     for (const [c, r] of RESERVED_CELLS) if (mine.has(`${c},${r}`)) return false;
-    for (const b of BUILT_INS) if (floorCells(b.size, b.placement).some((k) => mine.has(k))) return false;
   }
   return !placed.some((o) => {
     const p = o.placement!;

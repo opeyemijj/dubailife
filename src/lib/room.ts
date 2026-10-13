@@ -25,6 +25,8 @@ export interface Peer {
   z: number;
   face?: number;
   animation: AvatarAnimation;
+  /** Raised off the floor while sitting on a sofa. */
+  lift?: number;
 }
 
 export interface Gift {
@@ -41,9 +43,10 @@ export type RoomEvent =
   | { type: "wave" }
   | { type: "money"; amount: number }
   | { type: "gift"; gift: Gift }
-  | { type: "invite"; kind: "join" | "dance"; table?: string }
+  | { type: "invite"; kind: "join" | "dance" | "table"; table?: string }
+  | { type: "served"; item: { id: string; kind: string; position: [number, number, number]; rotation: number; tint?: string } }
   | { type: "bottle"; station: string }
-  | { type: "accept"; kind: "join" | "dance" }
+  | { type: "accept"; kind: "join" | "dance" | "table"; spot?: [number, number] }
   | { type: "friend" };
 
 export type Received = RoomEvent & { id: string; from: Peer; to?: string; at: number };
@@ -80,6 +83,7 @@ export interface Me {
   z: number;
   face?: number;
   animation: AvatarAnimation;
+  lift?: number;
 }
 
 const send = (channel: RealtimeChannel | null, payload: unknown) =>
@@ -112,11 +116,11 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
   // What others see of me.
   useEffect(() => {
     if (!profile) return;
-    self.current = { ...profile, x: me.x, z: me.z, face: me.face, animation: me.animation };
+    self.current = { ...profile, x: me.x, z: me.z, face: me.face, animation: me.animation, lift: me.lift };
     if (ready.current) channel.current?.track(self.current).catch(() => {});
     // profile is rebuilt every render; its fields are what matter.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.userId, profile?.username, profile?.name, citizen?.look, me.x, me.z, me.face, me.animation]);
+  }, [profile?.userId, profile?.username, profile?.name, citizen?.look, me.x, me.z, me.face, me.animation, me.lift]);
 
   useEffect(() => {
     if (!roomId || !myId) return;
@@ -129,7 +133,7 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
         .filter(([key]) => key !== myId)
         .map(([, metas]) => metas[metas.length - 1])
         .filter((p): p is Peer & { presence_ref: string } => !!p && !!p.userId);
-      setPeers(list.map((p) => ({ userId: p.userId, username: p.username, name: p.name, look: p.look, x: p.x, z: p.z, face: p.face, animation: p.animation })));
+      setPeers(list.map((p) => ({ userId: p.userId, username: p.username, name: p.name, look: p.look, x: p.x, z: p.z, face: p.face, animation: p.animation, lift: p.lift })));
     });
     ch.on("broadcast", { event: "evt" }, ({ payload }) => {
       const e = { ...(payload as Received), at: Date.now() };

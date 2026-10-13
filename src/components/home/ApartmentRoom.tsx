@@ -10,12 +10,13 @@ import type { AvatarLookProps } from "../onboarding/AvatarCanvas";
 import { CitizenAvatar, StudioEnvironment, type AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 import { SceneLoadingOverlay } from "@/components/GameLoadingScreen";
 import {
-  AVATAR_SPOT, BUILT_INS, CATALOG, CELL, DOOR, GRID, ROOM_SIZE, WALL_HEIGHT, WINDOW,
-  findFreePlacement, floorCenter, floorPlacementAt, getCatalogItem, isPlacementValid, rotatedSize, wallOffsetAt, wallTransform,
+  AVATAR_SPOT, BUILT_INS, CELL, DOOR, GRID, ROOM_SIZE, WALL_HEIGHT, WINDOW,
+  findFreePlacement, floorCenter, floorPlacementAt, getCatalogItem, isPlacementValid, rotatedSize, wallOffsetAt, wallTransform, withHomeItems,
   type CatalogItem, type FloorPlacement, type Interaction, type OwnedFurniture, type Placement, type Rotation, type Wall,
 } from "@/lib/furniture";
 
-[...new Set([...CATALOG.map((c) => c.model), ...BUILT_INS.map((b) => b.model)])].forEach((url) => url && useGLTF.preload(url));
+// Only what every home has is fetched up front; shop items load when bought or shown.
+[...new Set(BUILT_INS.map((b) => b.model))].forEach((url) => url && useGLTF.preload(url));
 
 const HALF = ROOM_SIZE / 2;
 
@@ -32,6 +33,20 @@ const SEATS: Partial<Record<Interaction, Pose>> = {
   chair: seatFor("chair", Math.PI, [0, -0.05]),
   bed: { position: [-0.75, 0, -2.2], yaw: Math.PI / 2 },
 };
+const HOME_ID: Partial<Record<Interaction, string>> = { chair: "chair", bed: "bed" };
+
+/** Where to sit on a chair or bed wherever it has been moved to (the starting pose, carried along). */
+function seatPose(type: Interaction, placement: Placement | null | undefined): Pose | undefined {
+  const base = SEATS[type];
+  const b = BUILT_INS.find((x) => x.id === HOME_ID[type]);
+  if (!base || !b || !placement || placement.kind !== "floor") return base;
+  const c0 = floorCenter(b.size, b.placement);
+  const c = floorCenter(b.size, placement);
+  const turn = -(placement.rot - b.placement.rot) * (Math.PI / 2);
+  const dx = base.position[0] - c0.x, dz = base.position[2] - c0.z;
+  const cos = Math.cos(turn), sin = Math.sin(turn);
+  return { position: [c.x + dx * cos + dz * sin, 0, c.z - dx * sin + dz * cos], yaw: base.yaw + turn };
+}
 const WALL_THICKNESS = 0.16;
 const DRAG_THRESHOLD = 6; // px; anything more is a camera drag, not a tap
 
@@ -477,8 +492,10 @@ function CameraRig({ turns, onHiddenWallsChange }: { turns: number; onHiddenWall
 
 // ---------- scene ----------
 
-function RoomScene({ look, furniture = [], placing, decorating, turns = 0, onPlace, onPickUp, onPlaceBlocked, onInteractObject, people = [], labels }: ApartmentRoomProps & { labels: LabelNodes }) {
+function RoomScene({ look, furniture: ownFurniture = [], placing, decorating, turns = 0, onPlace, onPickUp, onPlaceBlocked, onInteractObject, people = [], labels }: ApartmentRoomProps & { labels: LabelNodes }) {
   const floorTexture = useFloorTexture();
+  // Everything in the room, including what came with it, can be moved.
+  const furniture = useMemo(() => withHomeItems(ownFurniture), [ownFurniture]);
   const [hiddenWalls, setHiddenWalls] = useState<Set<Wall>>(new Set(["south", "east"]));
   // Where the user last pointed the item being placed (cleared by switching items).
   const [moved, setMoved] = useState<{ uid: string; placement: Placement } | null>(null);
@@ -528,12 +545,12 @@ function RoomScene({ look, furniture = [], placing, decorating, turns = 0, onPla
     }
   };
 
-  const interact = (type: Interaction) => {
+  const interact = (type: Interaction, placement?: Placement | null) => {
     onInteractObject?.(type);
     const anim: AvatarAnimation | null = type === "bed" || type === "chair" ? "sit" : type === "cooler" ? "wave" : null;
     if (!anim) return;
     setAnimation(anim);
-    setPose(SEATS[type] ?? STAND);
+    setPose(seatPose(type, placement) ?? STAND);
     if (animTimer.current) clearTimeout(animTimer.current);
     animTimer.current = setTimeout(() => {
       setAnimation("idle");
@@ -573,21 +590,6 @@ function RoomScene({ look, furniture = [], placing, decorating, turns = 0, onPla
         onDoor={() => interact("door")}
       />
 
-      {/* Built-in furniture */}
-      {BUILT_INS.map((b) => (
-        <PlacedTransform key={b.id} item={b} placement={b.placement}>
-<Suspense fallback={null}>
-          <group
-            onClick={(e) => { if (busy || !b.interaction || e.delta > DRAG_THRESHOLD) return; e.stopPropagation(); interact(b.interaction); }}
-            onPointerOver={b.interaction && !busy ? hoverCursor(true) : undefined}
-            onPointerOut={hoverCursor(false)}
-          >
-            <FurnitureModel url={b.model} size={rotatedSize(b.size, 0)} yaw={b.yaw} />
-          </group>
-          </Suspense>
-        </PlacedTransform>
-      ))}
-
       {/* Owned furniture (the one being moved is shown as a ghost instead) */}
       {furniture.map((f) => {
         const item = getCatalogItem(f.itemId);
@@ -598,8 +600,13 @@ function RoomScene({ look, furniture = [], placing, decorating, turns = 0, onPla
           <PlacedTransform key={f.uid} item={item} placement={f.placement}>
 <Suspense fallback={null}>
             <group
-              onClick={(e) => { if (!decorating || placing || e.delta > DRAG_THRESHOLD) return; e.stopPropagation(); onPickUp?.(f.uid); }}
-              onPointerOver={decorating && !placing ? hoverCursor(true) : undefined}
+              onClick={(e) => {
+                if (placing || e.delta > DRAG_THRESHOLD) return;
+                // Decorating: pick it up to move. Otherwise: use it (sit, sleep, open the fridge).
+                if (decorating) { e.stopPropagation(); onPickUp?.(f.uid); return; }
+                if (item.interaction) { e.stopPropagation(); interact(item.interaction, f.placement); }
+              }}
+              onPointerOver={(decorating && !placing) || (item.interaction && !busy) ? hoverCursor(true) : undefined}
               onPointerOut={hoverCursor(false)}
             >
               <ItemVisual item={item} />

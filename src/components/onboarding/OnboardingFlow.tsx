@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import { AvatarCanvas, type AvatarLookProps } from "./AvatarCanvas";
 import { BODY_TYPES, defaultBodyType } from "@/components/avatar/bodyShape";
-import { ROSTER, defaultPreset, presetFor, rosterFor, rosterThumb } from "@/components/avatar/roster";
+import { ROSTER, defaultPreset } from "@/components/avatar/roster";
+import { LookPicker } from "@/components/avatar/LookPicker";
 import { AvaturnCreator, type CreatedAvatar } from "@/components/avatar/AvaturnCreator";
 import { createProfile, useCitizen } from "@/lib/citizenStore";
 import { clearSignupDraft, updateSignupDraft, useSignupDraft } from "@/lib/signupDraft";
@@ -246,29 +247,12 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
                   )}
                 </div>
 
-                {/* Ready-made citizens */}
+                {/* Ready-made citizens: a face, and any outfit */}
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
-                    {look.custom ? "Or pick a ready-made citizen" : "Or pick a citizen"}
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">
+                    {look.custom ? "Or use a ready-made citizen" : "Your citizen"}
                   </label>
-                  <p className="text-[11px] text-slate-400 mb-2">Ready-made citizens come dressed as shown; their outfits can&apos;t be changed.</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {rosterFor(look.gender).map((r) => {
-                      const active = !look.custom && presetFor(look) === r.id;
-                      return (
-                        <button
-                          key={r.id}
-                          onClick={() => setLook((prev) => ({ ...prev, preset: r.id, custom: undefined }))}
-                          className={`relative rounded-2xl overflow-hidden border-2 bg-slate-800 transition-all ${active ? "border-emerald-500 ring-2 ring-emerald-500/30" : "border-transparent hover:border-slate-300"}`}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={rosterThumb(r.id)} alt={r.label} className="w-full aspect-[3/4] object-cover object-[50%_20%] scale-[1.6] origin-top" loading="lazy" />
-                          <span className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent text-white text-[10px] font-bold px-1.5 pt-4 pb-1 leading-tight">{r.label}</span>
-                          {active && <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center"><Check className="w-3 h-3" /></span>}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <LookPicker look={look} onChange={setLook} />
                 </div>
 
                 {/* Body type (ready-made citizens only; selfie avatars keep the body from your photos) */}

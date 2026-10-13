@@ -16,8 +16,9 @@ function describe(e: Received): { icon: string; text: string } {
     case "wave": return { icon: "👋", text: `${who} waved at you` };
     case "money": return { icon: "💸", text: `${who} sent you AED ${e.amount.toLocaleString()}` };
     case "gift": return { icon: e.gift.icon, text: `${who} bought you a ${e.gift.name.toLowerCase()}` };
-    case "invite": return { icon: e.kind === "dance" ? "💃" : "🙌", text: e.kind === "dance" ? `${who} wants to dance with you` : `${who} invited you to join them` };
-    case "accept": return { icon: "✅", text: `${who} accepted — ${e.kind === "dance" ? "time to dance!" : "they're on their way"}` };
+    case "invite": return { icon: e.kind === "dance" ? "💃" : e.kind === "table" ? "🪑" : "🙌", text: e.kind === "dance" ? `${who} wants to dance with you` : e.kind === "table" ? `${who} invited you to their table` : `${who} invited you to join them` };
+    case "accept": return { icon: "✅", text: `${who} accepted — ${e.kind === "dance" ? "time to dance!" : e.kind === "table" ? "they're coming to your table" : "they're on their way"}` };
+    case "served": return { icon: "🍽️", text: `${who} ordered` };
     case "friend": return { icon: "🤝", text: `${who} sent you a friend request` };
     case "typing": return { icon: "✍️", text: `${who} is typing…` };
     case "bottle": return { icon: "🍾", text: `${who} ordered bottle service!` };
@@ -39,7 +40,7 @@ export function SocialFeed({ events, onAccept, onFriend, onReply, readingWith }:
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-  const visible = events.filter((e) => !done.has(e.id) && !(e.type === "chat" && e.from.userId === readingWith) && e.type !== "money" && e.type !== "bottle" && now - e.at < (e.type === "invite" || e.type === "friend" ? INVITE_MS : LIFE_MS)).slice(-3);
+  const visible = events.filter((e) => !done.has(e.id) && !(e.type === "chat" && e.from.userId === readingWith) && e.type !== "money" && e.type !== "bottle" && e.type !== "served" && e.type !== "accept" && now - e.at < (e.type === "invite" || e.type === "friend" ? INVITE_MS : LIFE_MS)).slice(-3);
   const dismiss = (id: string) => setDone((d) => new Set(d).add(id));
   if (visible.length === 0) return null;
 

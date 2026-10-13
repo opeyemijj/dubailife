@@ -20,7 +20,7 @@ import { PeerPanel, type SocialContext } from "@/components/social/PeerPanel";
 import { SocialFeed } from "@/components/social/SocialFeed";
 import { serveKindOf, type ServeKind, type ServedDef } from "./served";
 import { SceneLoadingOverlay } from "@/components/GameLoadingScreen";
-import { approachPoint, buildPlan, seatAt, servingSpot, toRoom, type StationDef } from "./layouts";
+import { approachPoint, buildPlan, seatsAt, servingSpot, toRoom, type StationDef } from "./layouts";
 
 const SHIFT_COOLDOWN_MS = 10 * 60 * 1000;
 const aed = (n: number) => (n === 0 ? "Free" : `AED ${n.toLocaleString()}`);
@@ -44,6 +44,8 @@ const HOSTS = ["Female_Party_01", "Female_Party_02"];
 const TINT: Record<string, string> = { "espresso-martini": "#3b2416", "mocktail-club": "#a3e635", cocktail: "#f472b6", soft: "#dc2626", mocktail: "#fb923c" };
 const SPARKLE_SECONDS = 14;
 const BUBBLE_MS = 6000;
+/** A fresh id for something bought or served. */
+const uniqueId = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
 export function VenueExperience({ place, venue: baseVenue }: { place: Place; venue: Venue }) {
   // The venue as its verified owner has set it up (their items, description), if they have.
@@ -68,7 +70,9 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   // What's been served this visit, and bottle service on its way.
   const [served, setServed] = useState<ServedDef[]>([]);
   const [deliveries, setDeliveries] = useState<DeliveryDef[]>([]);
-  const [myTable, setMyTable] = useState<string | null>(null);
+  // My seat, when sitting at a table or booth.
+  const [mySeat, setMySeat] = useState<{ table: string; index: number } | null>(null);
+  const myTable = mySeat?.table ?? null;
   const [seatLift, setSeatLift] = useState(0);
   const servedAt = useRef(new Map<string, number>());
   const bottleSpots = useRef(new Map<string, Array<[number, number, number]>>());
@@ -125,13 +129,27 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
 
   // ---------------------------------------------------------------- serving
 
-  /** Walks the citizen to their seat at a table or booth and sits them down. */
-  const sitAt = (table: StationDef, opts: { opposite?: boolean; then?: () => void } = {}) => {
-    const seat = seatAt(venue, table, opts.opposite);
-    if (!seat) return;
-    setMyTable(table.id);
+  /** A seat at this table nobody else is in (keeps mine if I'm already there). */
+  const freeSeat = (table: StationDef): number | null => {
+    if (mySeat?.table === table.id) return mySeat.index;
+    const seats = seatsAt(venue, table);
+    const taken = (i: number) => {
+      const [x, , z] = toRoom(table, [seats[i].local[0], 0, seats[i].local[1]]);
+      return peersRef.current.some((p) => Math.hypot(p.x - x, p.z - z) < 0.45);
+    };
+    const i = seats.findIndex((_, n) => !taken(n));
+    return i >= 0 ? i : null;
+  };
+
+  /** Walks to a free seat at a table or booth and sits. Returns the seat, or null if it's full. */
+  const sitAt = (table: StationDef, opts: { then?: () => void } = {}): number | null => {
+    const index = freeSeat(table);
+    if (index === null) { say("That table is full."); return null; }
+    const seat = seatsAt(venue, table)[index];
+    setMySeat({ table: table.id, index });
     const [x, , z] = toRoom(table, [seat.local[0], 0, seat.local[1]]);
     walkThen([x, z], () => { setSeatLift(seat.lift); setPlayerAnimation("sit"); opts.then?.(); }, seat.facing);
+    return index;
   };
 
   /** Opens the menu where food and drink are ordered (for someone already seated). */
@@ -163,11 +181,18 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     setTimeout(() => setBaller((b) => (b?.name === buyer.username ? null : b)), 9000);
   };
 
-  /** The next free spot on a station's surface, in room coordinates. */
-  const nextSpot = (s: StationDef) => {
-    const n = servedAt.current.get(s.id) ?? 0;
-    servedAt.current.set(s.id, n + 1);
-    return toRoom(s, servingSpot(venue, s, n));
+  /** The next free spot on a station's surface (at a table: in front of that seat), in room coordinates. */
+  const nextSpot = (s: StationDef, seatIndex = 0) => {
+    const key = `${s.id}:${seatIndex}`;
+    const n = servedAt.current.get(key) ?? 0;
+    servedAt.current.set(key, n + 1);
+    return toRoom(s, servingSpot(venue, s, n, seatIndex));
+  };
+
+  /** Shows something served, here and for everyone else in the venue. */
+  const placeServed = (def: ServedDef) => {
+    setServed((list) => (list.some((x) => x.id === def.id) ? list : [...list, def].slice(-24)));
+    emitRef.current?.({ type: "served", item: def });
   };
 
   /**
@@ -179,9 +204,13 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     if (!here) return;
     const tables = plan.stations.filter((s) => s.kind === "booth");
     const toTable = here.kind === "booth" || (venue.layout === "dining" && here.kind !== "bar" && tables.length > 0);
-    const station = here.kind === "booth" ? here : toTable ? tables.find((t) => t.id === myTable) ?? tables[0] : here;
-    const id = `${product.id}-${Date.now().toString(36)}`;
-    if (toTable) sitAt(station);
+    // Food goes to my table (the one I'm at, or the nearest with a free seat).
+    const nearest = (list: StationDef[]) => list.slice().sort((a, b) => Math.hypot(a.position[0] - me.x, a.position[1] - me.z) - Math.hypot(b.position[0] - me.x, b.position[1] - me.z));
+    const station = here.kind === "booth" ? here
+      : toTable ? tables.find((t) => t.id === myTable) ?? nearest(tables).find((t) => freeSeat(t) !== null) ?? tables[0]
+      : here;
+    const id = uniqueId(product.id);
+    const seatIndex = toTable ? (mySeat?.table === station.id ? mySeat.index : sitAt(station) ?? 0) : 0;
 
     if (kind === "bottle") {
       startBottleService(station, id, { username: citizen?.username ?? "you", mine: true });
@@ -190,7 +219,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       return;
     }
     const base = product.id.split(":").pop() ?? "";
-    setServed((list) => [...list, { id, kind, position: nextSpot(station), rotation: station.rotation + Math.PI + (list.length % 3) * 0.5, tint: TINT[base] }].slice(-14));
+    placeServed({ id, kind, position: nextSpot(station, seatIndex), rotation: station.rotation + Math.PI, tint: TINT[base] });
   };
 
   const onPlaced = useCallback((deliveryId: string, host: number) => {
@@ -229,7 +258,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     return [plan.entrance[0] + (slot - 3) * 0.8, plan.entrance[1] - (slot % 2) * 0.6];
   }, [citizen?.id, plan.entrance]);
   // What others see of me: where I'm standing or heading, and what I'm doing.
-  const me = { x: walkTo?.point[0] ?? spawn[0], z: walkTo?.point[1] ?? spawn[1], face: walkTo?.face, animation: playerAnimation };
+  const me = { x: walkTo?.point[0] ?? spawn[0], z: walkTo?.point[1] ?? spawn[1], face: walkTo?.face, animation: playerAnimation, lift: playerAnimation === "sit" ? seatLift : 0 };
   const [bubbles, setBubbles] = useState<Record<string, string>>({});
   const bubble = useCallback((who: string, text: string) => {
     setBubbles((b) => ({ ...b, [who]: text }));
@@ -256,10 +285,11 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     walkThen(stop, then, Math.atan2(p.x - stop[0], p.z - stop[1]));
   };
 
+  // Tapping someone shows what you can do with them; you don't have to walk over.
   const openPeer = (p: Peer) => {
     gameAudio.playClickSound();
     setActiveStation(null);
-    approach(p, () => setPanel({ kind: "peer", userId: p.userId }));
+    setPanel({ kind: "peer", userId: p.userId });
   };
 
   /** The nearest bar, table or counter to someone: where a drink bought for them is put down. */
@@ -274,9 +304,16 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     if (!kind || !adjustBalance(-treat.price)) { say(`Not enough AED — you need ${aed(treat.price)}.`); return; }
     gameAudio.playCoinSound();
     const station = surfaceNear(p.x, p.z);
-    const position = station ? nextSpot(station) : ([p.x, 1.1, p.z] as [number, number, number]);
+    // At a table it goes in front of their seat.
+    let seatIndex = 0;
+    if (station?.kind === "booth") {
+      const seats = seatsAt(venue, station);
+      seatIndex = seats.map((st, i) => [i, Math.hypot(...((([x, , z]) => [x - p.x, z - p.z])(toRoom(station, [st.local[0], 0, st.local[1]])) as [number, number]))] as const).sort((a, b) => a[1] - b[1])[0]?.[0] ?? 0;
+    }
+    const position = station ? nextSpot(station, seatIndex) : ([p.x, 1.1, p.z] as [number, number, number]);
     const base = treat.id.split(":").pop() ?? "";
-    setServed((list) => [...list, { id: `gift-${Date.now().toString(36)}`, kind, position, rotation: 0, tint: TINT[base] }].slice(-14));
+    const id = uniqueId("gift");
+    placeServed({ id, kind, position, rotation: 0, tint: TINT[base] });
     emit({ type: "gift", gift: { name: treat.name, icon: treat.icon, serve: kind, position } }, p.userId);
     say(`${treat.icon} You bought @${p.username} a ${treat.name.toLowerCase()}`);
     setPanel(null);
@@ -293,21 +330,24 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       const station = plan.stations.find((s) => s.id === e.station);
       if (station) startBottleService(station, e.id, { username: e.from.username, mine: false });
     }
-    if (e.type === "accept" && e.kind === "join" && venue.layout === "dining" && myTable) {
-      say(`🍽️ @${e.from.username} is joining you — here's the menu.`);
-      openMenu();
+    if (e.type === "served") {
+      const item = e.item;
+      setServed((list) => (list.some((x) => x.id === item.id) ? list : [...list, { ...item, kind: item.kind as ServeKind }].slice(-24)));
+    }
+    if (e.type === "accept" && e.kind === "table") say(`🪑 @${e.from.username} is coming to sit with you.`);
+    if (e.type === "accept" && e.kind === "dance" && e.spot) {
+      // Turn to face them and dance.
+      const [sx, sz] = e.spot;
+      walkThen([me.x, me.z], () => { setPlayerAnimation("dance"); boostNeed("fun", 10); }, Math.atan2(sx - me.x, sz - me.z));
     }
     if (e.type === "wave") bubble(e.from.userId, "👋");
     if (e.type === "money") gameAudio.playCoinSound();
-    if (e.type === "gift" && e.gift.position && e.gift.serve) {
-      const gift = e.gift;
-      boostNeed("social", 10);
-      setServed((list) => [...list, { id: e.id, kind: gift.serve as ServeKind, position: gift.position!, rotation: 0 }].slice(-14));
-    }
-    if (e.type === "accept" && e.kind === "dance") { setPlayerAnimation("dance"); boostNeed("fun", 10); }
+    if (e.type === "gift") boostNeed("social", 10);
   };
   const room = useRoom(`venue:${place.id}/${venue.id}`, me, onRoomEvent);
   const { peers, events, emit, myId } = room;
+  const peersRef = useRef(peers);
+  useEffect(() => { peersRef.current = peers; });
   // Lets earlier handlers (bottle service) broadcast once the room exists.
   const emitRef = useRef(emit);
   useEffect(() => { emitRef.current = emit; });
@@ -320,17 +360,24 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   }, [panel?.kind]);
 
   const acceptInvite = (e: Received & { type: "invite" }) => {
-    emit({ type: "accept", kind: e.kind }, e.from.userId);
-    // Restaurants: sit across the table from them, then order.
+    // Their table: take a free seat with them (in a restaurant, then order).
     const table = e.table ? plan.stations.find((s) => s.id === e.table) : undefined;
-    if (e.kind === "join" && table && venue.layout === "dining") {
-      sitAt(table, { opposite: true, then: () => { boostNeed("social", 8); openMenu(); } });
+    if (e.kind === "table" && table) {
+      const seat = sitAt(table, { then: () => { boostNeed("social", 8); if (venue.layout === "dining") openMenu(); } });
+      if (seat !== null) emit({ type: "accept", kind: "table" }, e.from.userId);
       return;
     }
-    approach(e.from, () => {
-      if (e.kind === "dance") { setPlayerAnimation("dance"); boostNeed("fun", 10); }
-      boostNeed("social", 8);
-    });
+    // Dance: stand facing them, a step away, and both dance.
+    if (e.kind === "dance") {
+      const dx = me.x - e.from.x, dz = me.z - e.from.z;
+      const d = Math.hypot(dx, dz) || 1;
+      const spot: [number, number] = d < 0.01 ? [e.from.x, e.from.z + 0.9] : [e.from.x + (dx / d) * 0.9, e.from.z + (dz / d) * 0.9];
+      emit({ type: "accept", kind: "dance", spot }, e.from.userId);
+      walkThen(spot, () => { setPlayerAnimation("dance"); boostNeed("fun", 10); boostNeed("social", 6); }, Math.atan2(e.from.x - spot[0], e.from.z - spot[1]));
+      return;
+    }
+    emit({ type: "accept", kind: e.kind }, e.from.userId);
+    approach(e.from, () => boostNeed("social", 8));
   };
 
   const peerPanel = panel?.kind === "peer" ? peers.find((p) => p.userId === panel.userId) : undefined;
@@ -377,7 +424,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     }
     gameAudio.playCoinSound();
     const item: InventoryItem = {
-      uid: `${product.id}-${Date.now().toString(36)}`,
+      uid: uniqueId(product.id),
       productId: product.id,
       storeId: venue.id,
       name: product.name,
@@ -449,7 +496,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   const startActivity = (a: NonNullable<Venue["activities"]>[number], at?: StationDef) => {
     setPanel(null);
     // Sitting means going to the seat first, not sitting down on the spot.
-    if (a.animation === "sit" && at && seatAt(venue, at)) sitAt(at);
+    if (a.animation === "sit" && at && seatsAt(venue, at).length) sitAt(at);
     else setPlayerAnimation(a.animation ?? "idle");
     if (a.reward && !rewarded.has(a.id)) {
       adjustBalance(a.reward);
@@ -765,17 +812,10 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
             bubble("me", "👋");
             setPanel(null);
           }}
+          canInviteToTable={!!myTable && (venue.layout === "club" || venue.layout === "dining" || venue.layout === "lobby")}
           onInvite={(kind) => {
-            let table: string | undefined;
-            if (kind === "join" && venue.layout === "dining") {
-              // Take a table (or keep yours) so they have somewhere to join you.
-              const current = plan.stations.find((s) => s.id === myTable);
-              const free = current ?? plan.stations.filter((s) => s.kind === "booth")
-                .sort((a, b) => Math.hypot(a.position[0] - me.x, a.position[1] - me.z) - Math.hypot(b.position[0] - me.x, b.position[1] - me.z))[0];
-              if (free) { table = free.id; if (!current) sitAt(free); }
-            }
-            emit({ type: "invite", kind, table }, peerPanel.userId);
-            say(kind === "dance" ? `💃 Asked @${peerPanel.username} to dance` : `🙌 Invited @${peerPanel.username} over`);
+            emit({ type: "invite", kind, table: kind === "table" ? myTable ?? undefined : undefined }, peerPanel.userId);
+            say(kind === "dance" ? `💃 Asked @${peerPanel.username} to dance` : kind === "table" ? `🪑 Invited @${peerPanel.username} to your table` : `🙌 Invited @${peerPanel.username} over`);
             setPanel(null);
           }}
           onTreat={() => treatPeer(peerPanel)}

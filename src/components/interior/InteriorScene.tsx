@@ -348,7 +348,7 @@ function RemotePeer({ peer, follow, followKey, onClick }: { peer: Peer; follow: 
       onPointerOut={() => (document.body.style.cursor = "")}
     >
       <Suspense fallback={null}>
-        <CitizenAvatar look={peer.look} animation={walking ? "walk" : peer.animation} />
+        <CitizenAvatar look={peer.look} animation={walking ? "walk" : peer.animation} position={[0, !walking && peer.animation === "sit" ? peer.lift ?? 0 : 0, 0]} />
       </Suspense>
       {/* A soft ring so other players stand out from staff and shoppers. */}
       <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
@@ -426,7 +426,7 @@ export function InteriorScene({ venue, plan, look, worn, playerAnimation, player
       className: hovered === s.id || highlight === s.id ? "bg-emerald-500 text-white scale-110" : "bg-white/90 text-slate-800",
     })),
     { id: "staff", text: `💬 ${venue.staff.role}`, at: [plan.staff.position[0], 2.15, plan.staff.position[1]], className: "bg-slate-900/85 text-white" },
-    ...peers.map((p) => ({ id: `peer:${p.userId}`, text: `@${p.username}${peerBadges[p.userId] ? ` · 💬${peerBadges[p.userId]}` : ""}`, at: [0, 2.05, 0] as [number, number, number], follow: p.userId, className: "bg-sky-500 text-white" })),
+    ...peers.map((p) => ({ id: `peer:${p.userId}`, text: `@${p.username}${peerBadges[p.userId] ? ` · 💬${peerBadges[p.userId]}` : ""}`, at: [0, p.animation === "sit" ? 1.6 : 2.05, 0] as [number, number, number], follow: p.userId, className: "bg-sky-500 text-white" })),
     ...Object.entries(bubbles).map(([who, text]) => ({
       id: `bubble:${who}`, text: `💬 ${text}`, at: [0, 2.5, 0] as [number, number, number], follow: who, className: "bg-white text-slate-900 max-w-[220px] whitespace-normal",
     })),
