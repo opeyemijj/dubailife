@@ -330,7 +330,7 @@ export function InteractiveMap({
      }
      
      if (!adjustBalance(-cost)) {
-        showToast('Not enough D-Coins!', 'debit');
+        showToast('Not enough AED!', 'debit');
         return;
      }
      setAds(prev => [...prev, {
@@ -403,7 +403,7 @@ export function InteractiveMap({
 
     setMetroModalOpen(false);
 
-    showToast(`🚆 Boarded Dubai Metro Red Line! Fare: ${fare} D-Coins (${selectedCabinClass.toUpperCase()} Class). Doors closing...`, 'credit');
+    showToast(`🚆 Boarded Dubai Metro Red Line! Fare: AED ${fare} (${selectedCabinClass.toUpperCase()} Class). Doors closing...`, 'credit');
 
     // Smooth transit animation along the metro viaduct
     setIsTraveling(true);
@@ -455,7 +455,7 @@ export function InteractiveMap({
     }
     // Everything else on the map is scenery: say what it is rather than offering made-up actions.
     if (loc.type === 'salik') {
-      showToast(`🚦 ${loc.name ?? 'Salik gate'}: 4 D-Coin toll, charged automatically on taxi trips through it.`, 'debit');
+      showToast(`🚦 ${loc.name ?? 'Salik gate'}: AED 4 toll, charged automatically on taxi trips through it.`, 'debit');
       return;
     }
     if (loc.interactive !== false) showToast(`📍 ${loc.name ?? 'This area'} isn't open to visit yet — Downtown Dubai is open now.`, 'debit');
@@ -518,12 +518,12 @@ export function InteractiveMap({
 
   const executeAction = (loc: any, action: ActionDef) => {
     if (!adjustBalance(action.amount)) {
-      showToast('Not enough D-Coins!', 'debit');
+      showToast('Not enough AED!', 'debit');
       return;
     }
     gameAudio.playCoinSound();
-    if (action.amount > 0) showToast(`Earned ${action.amount} D-Coins!`, 'credit');
-    else if (action.amount < 0) showToast(`Paid ${Math.abs(action.amount).toLocaleString()} D-Coins.`, 'debit');
+    if (action.amount > 0) showToast(`Earned AED ${action.amount}!`, 'credit');
+    else if (action.amount < 0) showToast(`Paid AED ${Math.abs(action.amount).toLocaleString()}.`, 'debit');
     
     setSelectedVenue(null);
   };
@@ -993,11 +993,11 @@ export function InteractiveMap({
         </div>
       </div>
 
-      {/* Standalone D-Coins (Hidden when TopBar handles it) */}
+      {/* Standalone virtual AED (Hidden when TopBar handles it) */}
       {!hideTopHUD && (
         <div className="hidden sm:block absolute top-6 right-6 z-50 bg-white border border-gray-200 p-4 rounded-2xl shadow-xl pointer-events-auto">
-          <p className="text-xs text-gray-500 font-extrabold uppercase tracking-widest mb-1">D-Coins</p>
-          <p className="text-2xl font-black text-green-600">{walletBalance.toLocaleString()} D-Coins</p>
+          <p className="text-xs text-gray-500 font-extrabold uppercase tracking-widest mb-1">virtual AED</p>
+          <p className="text-2xl font-black text-green-600">AED {walletBalance.toLocaleString()}</p>
         </div>
       )}
 
@@ -1483,7 +1483,7 @@ export function InteractiveMap({
               <div className="mt-4 pt-4 border-t">
                  <div className="flex justify-between items-center mb-4">
                     <span className="font-bold text-gray-600">Total Cost:</span>
-                    <span className="text-xl font-black text-green-600">{(adForm.w * adForm.h * 500).toLocaleString()} D-Coins</span>
+                    <span className="text-xl font-black text-green-600">AED {(adForm.w * adForm.h * 500).toLocaleString()}</span>
                  </div>
                  <Button onClick={purchaseAdSpace} className="w-full h-12 rounded-xl text-lg font-black bg-blue-600 hover:bg-blue-700 text-white">
                     Purchase Space
@@ -1630,7 +1630,7 @@ export function InteractiveMap({
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-black">🥈 Silver Class</span>
-                      <span className="text-xs font-bold text-sky-400 font-mono">5 D-Coins</span>
+                      <span className="text-xs font-bold text-sky-400 font-mono">AED 5</span>
                     </div>
                     <p className="text-[10px] text-slate-400 mt-1">Standard modern air-conditioned carriage with Wi-Fi</p>
                   </button>
@@ -1645,7 +1645,7 @@ export function InteractiveMap({
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-black text-amber-300">🥇 Gold Class VIP</span>
-                      <span className="text-xs font-bold text-amber-400 font-mono">10 D-Coins</span>
+                      <span className="text-xs font-bold text-amber-400 font-mono">AED 10</span>
                     </div>
                     <p className="text-[10px] text-amber-200/70 mt-1">Panoramic front cabin, wide leather seats & skyline views</p>
                   </button>
@@ -1660,11 +1660,11 @@ export function InteractiveMap({
                   </div>
                   <div>
                     <p className="text-[10px] text-slate-400 font-bold uppercase">Nol Card Balance</p>
-                    <p className="text-sm font-black text-white">{walletBalance.toLocaleString()} D-Coins</p>
+                    <p className="text-sm font-black text-white">AED {walletBalance.toLocaleString()}</p>
                   </div>
                 </div>
                 <a href="/wallet" className="text-[10px] font-black px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors">
-                  Get D-Coins
+                  Get virtual AED
                 </a>
               </div>
 
@@ -1676,7 +1676,7 @@ export function InteractiveMap({
                 >
                   <Train className="w-4 h-4 animate-bounce" />
                   <span>
-                    Tap Nol Card & Board Metro ({selectedCabinClass === 'gold' ? '10' : '5'} D-Coins)
+                    Tap Nol Card & Board Metro (AED {selectedCabinClass === 'gold' ? '10' : '5'})
                   </span>
                 </Button>
               </div>

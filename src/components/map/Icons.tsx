@@ -3865,7 +3865,7 @@ export const IsometricBillboard: React.FC<IsometricBillboardProps> = ({
   img,
   isRented = false,
   rentedBy,
-  rentalPrice = '500 D-Coins / wk',
+  rentalPrice = 'AED 500 / wk',
   adTitle,
   adSubtitle,
   text1,

@@ -221,9 +221,9 @@ export async function sendMoney(to: Peer, amount: number, place: string): Promis
   const { error } = await supabase().rpc("send_money", { p_to: to.userId, p_amount: amount, p_place: place });
   refreshCitizen();
   if (!error) return null;
-  return /insufficient_funds/.test(error.message) ? "You don't have enough D-Coins for that."
+  return /insufficient_funds/.test(error.message) ? "You don't have enough AED for that."
     : /too_many/.test(error.message) ? "Slow down — try again in a minute."
-    : /amount_out_of_range/.test(error.message) ? "Send between 1 and 1,000,000 D-Coins."
+    : /amount_out_of_range/.test(error.message) ? "Send between 1 and AED 1,000,000."
     : "The transfer didn't go through. Please try again.";
 }
 

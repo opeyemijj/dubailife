@@ -83,7 +83,7 @@ export function TopBar({
             <span className="text-xs sm:text-sm font-black text-amber-300 tracking-wide font-mono">
               {walletBalance.toLocaleString()}
             </span>
-            <span className="hidden sm:inline text-[10px] font-bold text-amber-200/70">D-Coins</span>
+            <span className="hidden sm:inline text-[10px] font-bold text-amber-200/70">virtual AED</span>
           </Link>
           
           <Link

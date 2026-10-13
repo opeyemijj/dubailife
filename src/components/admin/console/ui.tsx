@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 
 export const aed = (n: number | string | null | undefined) => `AED ${Number(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-export const coins = (n: number | string | null | undefined) => `${Number(n ?? 0).toLocaleString()} D-Coins`;
+export const coins = (n: number | string | null | undefined) => `${Number(n ?? 0).toLocaleString()} virtual AED`;
 export const when = (iso?: string | null) => (iso ? new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "—");
 
 export function Page({ title, subtitle, actions, children }: { title: string; subtitle?: string; actions?: React.ReactNode; children: React.ReactNode }) {

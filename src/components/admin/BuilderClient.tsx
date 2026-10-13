@@ -1116,8 +1116,8 @@ export default function BuilderClient() {
                 <input 
                     type="text" 
                     className={inputClass} 
-                    value={sel.rentalPrice || '500 D-Coins / wk'} 
-                    placeholder="500 D-Coins / wk" 
+                    value={sel.rentalPrice || 'AED 500 / wk'} 
+                    placeholder="AED 500 / wk" 
                     onChange={e => updateSelected('rentalPrice', e.target.value)} 
                 />
             </div>

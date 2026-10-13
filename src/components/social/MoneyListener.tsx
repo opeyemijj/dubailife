@@ -55,7 +55,7 @@ export function MoneyListener() {
       {arrivals.map((a) => (
         <div key={a.id} className="flex items-center gap-2 bg-emerald-500 text-white rounded-2xl px-3 py-2 shadow-2xl">
           <span className="text-lg">💸</span>
-          <span className="text-xs font-black">@{a.from} sent you {a.amount.toLocaleString()} D-Coins{a.place ? ` · at ${a.place}` : ""}</span>
+          <span className="text-xs font-black">@{a.from} sent you AED {a.amount.toLocaleString()}{a.place ? ` · at ${a.place}` : ""}</span>
         </div>
       ))}
     </div>

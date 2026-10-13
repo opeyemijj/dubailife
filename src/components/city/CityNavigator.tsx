@@ -31,7 +31,7 @@ interface Props {
   onClose: () => void;
 }
 
-const aed = (n: number) => `${n.toLocaleString()} D-Coins`;
+const aed = (n: number) => `AED ${n.toLocaleString()}`;
 
 /** Dubai taxi: AED 5 flag-fall, ~AED 2.20/km, AED 12 minimum (RTA, 2025–26). */
 export const taxiFare = (metres: number) => Math.max(12, Math.round((5 + 2.2 * (metres / 1000)) * 2) / 2);
@@ -273,7 +273,7 @@ function FlatDetail({ flat, me, onBack, onVisit, onChanged }: { flat: FlatView; 
             </label>
           )}
           <div className="flex justify-between text-sm"><span className="text-slate-500">Total</span><span className="font-black">{aed(cost)}</span></div>
-          <div className="flex justify-between text-sm"><span className="text-slate-500">Paid with</span><span className="font-bold">D-Coins wallet</span></div>
+          <div className="flex justify-between text-sm"><span className="text-slate-500">Paid with</span><span className="font-bold">virtual AED wallet</span></div>
           <div className="flex justify-between text-sm"><span className="text-slate-500">Balance after</span><span className={`font-black ${balance - cost < 0 ? "text-rose-600" : ""}`}>{aed(balance - cost)}</span></div>
           <div className="flex gap-2">
             <button onClick={() => setConfirm(null)} className="flex-1 py-2.5 rounded-xl bg-slate-100 font-bold text-sm">Cancel</button>

@@ -17,7 +17,7 @@ export function Citizens() {
   const [msg, setMsg] = useState<string | null>(null);
 
   const adjust = async (c: Citizen) => {
-    const amount = prompt(`Adjust @${c.username}'s D-Coins (use a minus sign to remove):`);
+    const amount = prompt(`Adjust @${c.username}'s virtual AED (use a minus sign to remove):`);
     if (!amount || !Number(amount)) return;
     const reason = prompt("Reason (kept in the audit log):");
     if (!reason) return;

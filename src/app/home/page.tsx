@@ -58,7 +58,7 @@ export default function HomePage() {
   const handleBuy = (item: CatalogItem) => {
     const uid = buyFurniture(item.id, item.price);
     if (!uid) {
-      showToast("⚠️ Not enough D-Coins in your wallet!");
+      showToast("⚠️ Not enough AED in your wallet!");
       return;
     }
     gameAudio.playCoinSound();
@@ -233,7 +233,7 @@ export default function HomePage() {
               </button>
 
               <Link href="/wallet" className="flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200/60 px-3 py-1 rounded-full text-xs sm:text-sm font-black font-mono shadow-sm" aria-label="Wallet">
-                <span>{walletBalance.toLocaleString()} D-Coins</span>
+                <span>AED {walletBalance.toLocaleString()}</span>
                 <span className="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center ml-0.5"><Plus className="w-3 h-3 stroke-[3]" /></span>
               </Link>
 
@@ -266,7 +266,7 @@ export default function HomePage() {
             <span className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs shrink-0">💎</span>
             <div className="truncate">
               <div className="leading-tight">Daily gem hunt</div>
-              <div className="text-[10px] text-slate-400 font-semibold">7758 found · next prize 3,000 D-Coins</div>
+              <div className="text-[10px] text-slate-400 font-semibold">7758 found · next prize AED 3,000</div>
             </div>
           </div>
 
@@ -414,7 +414,7 @@ export default function HomePage() {
           </div>
 
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-            Your starter residence in <strong>{citizen?.home || "Dubai"}</strong> is ready and your initial starter grant of <strong>{walletBalance.toLocaleString()} D-Coins</strong> has been credited to your account!
+            Your starter residence in <strong>{citizen?.home || "Dubai"}</strong> is ready and your initial starter grant of <strong>AED {walletBalance.toLocaleString()}</strong> has been credited to your account!
           </p>
 
           <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-xs font-semibold text-slate-700 leading-relaxed">
@@ -451,7 +451,7 @@ export default function HomePage() {
         <DialogContent className="bg-white text-slate-900 border-none shadow-2xl w-[92vw] max-w-md max-h-[85dvh] overflow-y-auto z-50 rounded-3xl p-6">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <h3 className="text-lg font-black text-slate-900">Apartment Furniture Shop</h3>
-            <span className="text-xs font-mono font-bold text-emerald-600">{walletBalance.toLocaleString()} D-Coins</span>
+            <span className="text-xs font-mono font-bold text-emerald-600">AED {walletBalance.toLocaleString()}</span>
           </div>
 
           <div className="flex gap-1 p-1 mt-3 bg-slate-100 rounded-xl text-xs font-black">
@@ -470,7 +470,7 @@ export default function HomePage() {
                       <div className="min-w-0">
                         <h4 className="font-black text-xs sm:text-sm text-slate-900">{item.name}</h4>
                         <p className="text-[11px] text-slate-500">{item.desc}{owned ? ` · ${owned} owned` : ""}</p>
-                        <span className="text-xs font-mono font-extrabold text-emerald-600 mt-0.5 block">{item.price.toLocaleString()} D-Coins</span>
+                        <span className="text-xs font-mono font-extrabold text-emerald-600 mt-0.5 block">AED {item.price.toLocaleString()}</span>
                       </div>
                     </div>
                     <button

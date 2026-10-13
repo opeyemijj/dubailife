@@ -1,6 +1,6 @@
 "use client";
 
-// D-Coins: the in-world currency. Buy packs with real money (credited only once the payment is
+// Virtual AED: the in-world currency. Buy packs with real money (credited only once the payment is
 // confirmed on the server), see pending orders and every coin in or out.
 
 import { useEffect, useState } from "react";
@@ -48,25 +48,26 @@ export default function WalletPage() {
         </header>
 
         <section className="rounded-3xl bg-gradient-to-br from-amber-400 to-amber-600 text-zinc-950 p-5 shadow-xl">
-          <div className="text-xs font-black uppercase tracking-wider opacity-70">D-Coins</div>
+          <div className="text-xs font-black uppercase tracking-wider opacity-70">Virtual AED · in-game money</div>
           <div className="mt-1 text-4xl font-black flex items-center gap-2"><Coins className="w-8 h-8" /> {(citizen?.balance ?? 0).toLocaleString()}</div>
-          <p className="mt-2 text-xs font-bold opacity-75">Spend D-Coins on shopping, food, homes, furniture and gifts around Dubai. D-Coins can&apos;t be cashed out.</p>
+          <p className="mt-2 text-xs font-bold opacity-75">Spend it on shopping, food, homes, furniture and gifts around Dubai. Virtual AED can&apos;t be cashed out.</p>
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-sm font-black text-white/80">Get D-Coins</h2>
+          <h2 className="text-sm font-black text-white/80">Get virtual AED</h2>
           {!enabled && <p className="text-sm text-white/50">Coin packs are paused right now.</p>}
           <div className="grid grid-cols-2 gap-3">
             {packs.map((p) => (
               <button key={p.id} disabled={!enabled} onClick={() => setBuying(p)} className="relative text-left rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 p-4 disabled:opacity-50 transition-colors">
                 {p.tag && <span className="absolute -top-2 right-3 text-[10px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full">{p.tag}</span>}
+                <div className="text-[10px] font-bold uppercase tracking-wider text-white/40">Virtual AED</div>
                 <div className="text-xl font-black">{p.coins.toLocaleString()}</div>
                 {p.bonus > 0 && <div className="text-xs font-bold text-emerald-400">+{p.bonus.toLocaleString()} bonus</div>}
-                <div className="mt-2 text-sm font-black text-amber-300">{formatAED(p.price_aed)}</div>
+                <div className="mt-2 text-sm font-black text-amber-300">Pay {formatAED(p.price_aed)}</div>
               </button>
             ))}
           </div>
-          <p className="text-[11px] text-white/40">Real-money purchase. Coins arrive once payment is confirmed. Digital items are non-refundable once used; unused purchases can be refunded within 14 days by contacting billing@cometodubai.app.</p>
+          <p className="text-[11px] text-white/40">Paid with real money. Your virtual AED arrives once payment is confirmed. Digital items are non-refundable once used; unused purchases can be refunded within 14 days by contacting billing@cometodubai.app.</p>
         </section>
 
         {orders.length > 0 && (
@@ -107,14 +108,14 @@ export default function WalletPage() {
 
       {buying && (
         <Checkout
-          title="Buy D-Coins"
+          title="Buy virtual AED"
           amount={buying.price_aed}
           lines={[
-            { label: "Coins", value: buying.coins.toLocaleString() },
+            { label: "Virtual AED", value: buying.coins.toLocaleString() },
             ...(buying.bonus ? [{ label: "Bonus", value: `+${buying.bonus.toLocaleString()}` }] : []),
-            { label: "You'll receive", value: `${(buying.coins + buying.bonus).toLocaleString()} D-Coins` },
+            { label: "You'll receive", value: `${(buying.coins + buying.bonus).toLocaleString()} virtual AED` },
           ]}
-          note="D-Coins are a virtual currency for use inside Come to Dubai only. They have no cash value and can't be exchanged for money."
+          note="Virtual AED is game money for use inside Come to Dubai only. It has no cash value and can't be exchanged back for real money."
           onConfirm={async () => {
             const { error } = await supabase().rpc("create_coin_payment", { p_package: buying.id });
             return error ? commerceError(error.message) : null;

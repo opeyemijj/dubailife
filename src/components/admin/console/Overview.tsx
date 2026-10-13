@@ -12,7 +12,7 @@ interface Report {
   citizens: number; businesses: number;
 }
 
-const PURPOSE: Record<string, string> = { coins: "D-Coin sales", venue_subscription: "Venue subscriptions", ad_campaign: "Advertising" };
+const PURPOSE: Record<string, string> = { coins: "Virtual AED sales", venue_subscription: "Venue subscriptions", ad_campaign: "Advertising" };
 
 export function Overview() {
   const [r, setR] = useState<Report | null>(null);
@@ -25,7 +25,7 @@ export function Overview() {
   const total = Object.values(r.revenue_by_purpose).reduce((a, b) => a + Number(b), 0);
   const ctr = r.ad_impressions ? ((r.ad_clicks / r.ad_impressions) * 100).toFixed(2) : "0.00";
   return (
-    <Page title="Overview" subtitle="Real money is in AED (confirmed payments only). In-game money is D-Coins.">
+    <Page title="Overview" subtitle="Real money is in AED (confirmed payments only). In-game money is virtual AED.">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Stat label="Revenue, all time" value={aed(total)} tone="emerald" hint={`Refunded ${aed(r.refunds_total)}`} />
         <Stat label="Revenue, 30 days" value={aed(r.revenue_30d)} tone="emerald" />
@@ -49,7 +49,7 @@ export function Overview() {
           <Row k="Clicks (CTR)" v={`${r.ad_clicks.toLocaleString()} (${ctr}%)`} />
         </Card>
       </div>
-      <Card title="D-Coins economy">
+      <Card title="Virtual AED economy">
         <div className="grid sm:grid-cols-4 gap-3 text-sm">
           <Row k="In citizens' wallets" v={coins(r.coins_outstanding)} />
           <Row k="Bought with money (all time)" v={coins(r.coins_purchased)} />

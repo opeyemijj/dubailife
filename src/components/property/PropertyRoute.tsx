@@ -182,7 +182,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   };
 
   const buy = (item: CatalogItem) => {
-    if (!adjustBalance(-item.price)) return say("⚠️ Not enough D-Coins.");
+    if (!adjustBalance(-item.price)) return say("⚠️ Not enough AED.");
     gameAudio.playCoinSound();
     const uid = newUid(item.id);
     commit([...furniture, { uid, itemId: item.id, placement: null }]);
@@ -315,7 +315,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
           {CATALOG.map((item) => (
             <div key={item.id} className="flex items-center gap-3 p-2.5 rounded-2xl bg-slate-50 border border-slate-100">
               <span className="text-2xl">{item.icon}</span>
-              <div className="flex-1"><div className="text-sm font-black">{item.name}</div><div className="text-xs font-mono font-black text-emerald-600">{item.price.toLocaleString()} D-Coins</div></div>
+              <div className="flex-1"><div className="text-sm font-black">{item.name}</div><div className="text-xs font-mono font-black text-emerald-600">AED {item.price.toLocaleString()}</div></div>
               <button onClick={() => buy(item)} className="px-3 py-1.5 rounded-xl bg-emerald-500 text-white text-xs font-black">Buy</button>
             </div>
           ))}
@@ -340,7 +340,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
           onChat={(text) => room.say(peer.userId, text, flatTitle(flat))}
           onSendMoney={async (amount) => {
             const error = await sendMoney(peer, amount, flatTitle(flat));
-            if (!error) { room.emit({ type: "money", amount }, peer.userId); gameAudio.playCoinSound(); say(`💸 Sent ${amount.toLocaleString()} D-Coins to @${peer.username}`); }
+            if (!error) { room.emit({ type: "money", amount }, peer.userId); gameAudio.playCoinSound(); say(`💸 Sent AED ${amount.toLocaleString()} to @${peer.username}`); }
             return error;
           }}
           onWave={() => { room.emit({ type: "wave" }, peer.userId); say(`👋 You waved at @${peer.username}`); setPeerId(null); }}
@@ -439,8 +439,8 @@ function Manage({ flat, isOwner, onClose, onChanged, say }: { flat: FlatView; is
             <option value="sale">For sale</option>
             <option value="rent_or_sale">For rent or sale</option>
           </select>
-          {(listing === "rent" || listing === "rent_or_sale") && <input inputMode="numeric" value={rent} onChange={(e) => setRent(e.target.value.replace(/\D/g, ""))} placeholder="Monthly rent (D-Coins)" className="w-full h-9 px-3 rounded-xl bg-slate-100 text-sm font-bold outline-none" />}
-          {(listing === "sale" || listing === "rent_or_sale") && <input inputMode="numeric" value={sale} onChange={(e) => setSale(e.target.value.replace(/\D/g, ""))} placeholder="Sale price (D-Coins)" className="w-full h-9 px-3 rounded-xl bg-slate-100 text-sm font-bold outline-none" />}
+          {(listing === "rent" || listing === "rent_or_sale") && <input inputMode="numeric" value={rent} onChange={(e) => setRent(e.target.value.replace(/\D/g, ""))} placeholder="Monthly rent (virtual AED)" className="w-full h-9 px-3 rounded-xl bg-slate-100 text-sm font-bold outline-none" />}
+          {(listing === "sale" || listing === "rent_or_sale") && <input inputMode="numeric" value={sale} onChange={(e) => setSale(e.target.value.replace(/\D/g, ""))} placeholder="Sale price (virtual AED)" className="w-full h-9 px-3 rounded-xl bg-slate-100 text-sm font-bold outline-none" />}
           <button disabled={busy} onClick={() => run(() => listFlat(flat.id, listing, rent ? +rent : null, sale ? +sale : null), listing === "none" ? "Taken off the market." : "Listing updated.")} className="w-full py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-black disabled:opacity-50">Save listing</button>
         </section>
       )}

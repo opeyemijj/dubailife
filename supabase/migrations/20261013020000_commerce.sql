@@ -75,10 +75,10 @@ create policy "settings are public" on public.app_settings for select using (tru
 
 insert into public.app_settings (key, value) values
   ('venue_subscription', '{"price_aed": 1000, "interval": "month", "benefits": ["Verified owner badge and control of your venue", "Edit name, description, hours, contact and photos", "Manage menus, products, prices and offers", "Your promotion shown while the venue loads", "Reservation or enquiry link", "Basic visit analytics"], "terms": "Billed monthly in advance. Cancel any time; access continues to the end of the paid month. Advertising campaigns are sold separately."}'),
-  ('coin_packages', '[{"id": "starter", "coins": 1000, "bonus": 0, "price_aed": 9.99}, {"id": "popular", "coins": 5000, "bonus": 500, "price_aed": 44.99, "tag": "Most popular"}, {"id": "big", "coins": 12000, "bonus": 2000, "price_aed": 99.99}, {"id": "whale", "coins": 30000, "bonus": 7500, "price_aed": 229.99, "tag": "Best value"}]'),
+  ('coin_packages', '[{"id": "starter", "coins": 1000000, "bonus": 0, "price_aed": 9.99}, {"id": "popular", "coins": 5000000, "bonus": 500000, "price_aed": 44.99, "tag": "Most popular"}, {"id": "big", "coins": 12000000, "bonus": 2000000, "price_aed": 99.99}, {"id": "whale", "coins": 30000000, "bonus": 7500000, "price_aed": 229.99, "tag": "Best value"}]'),
   ('billboard', '{"slots": 10, "price_aed_per_week": 250, "max_weeks": 12, "rotation_seconds": 6}'),
   ('features', '{"coin_purchases": true, "venue_claims": true, "billboard_ads": true, "gifts": false, "creator_payouts": false}'),
-  ('limits', '{"max_credit_per_call": 5000, "max_daily_earn": 25000, "max_daily_send": 20000}')
+  ('limits', '{"max_credit_per_call": 5000, "max_daily_earn": 25000, "max_daily_send": 5000000}')
 on conflict (key) do nothing;
 
 create or replace function public.setting(p_key text) returns jsonb
@@ -190,7 +190,7 @@ declare
 begin
   if v_from is null then raise exception 'not_signed_in'; end if;
   if p_to is null or p_to = v_from then raise exception 'invalid_recipient'; end if;
-  if p_amount is null or p_amount < 1 or p_amount > 1000000 then raise exception 'amount_out_of_range'; end if;
+  if p_amount is null or p_amount < 1 or p_amount > 10000000 then raise exception 'amount_out_of_range'; end if;
   if (select count(*) from transfers where from_id = v_from and created_at > now() - interval '1 minute') >= 30 then raise exception 'too_many_transfers'; end if;
   select coalesce(sum(amount), 0) into sent from transfers where from_id = v_from and created_at > now() - interval '1 day';
   if sent + p_amount > coalesce((setting('limits') ->> 'max_daily_send')::bigint, 20000) then raise exception 'daily_send_limit'; end if;
@@ -412,7 +412,7 @@ alter table public.payments enable row level security;
 drop policy if exists "own payments" on public.payments;
 create policy "own payments" on public.payments for select using (user_id = auth.uid() or public.is_admin());
 
--- Buying D-Coins: the price comes from the package list, never from the client.
+-- Buying virtual AED: the price comes from the package list, never from the client.
 create or replace function public.create_coin_payment(p_package text) returns uuid
 language plpgsql security definer set search_path = public as $$
 declare pkg jsonb; p uuid;
@@ -423,7 +423,7 @@ begin
   if pkg is null then raise exception 'unknown_package'; end if;
   insert into payments (user_id, purpose, ref, description, amount_aed, meta)
     values (auth.uid(), 'coins', p_package,
-            format('%s D-Coins%s', (pkg ->> 'coins'), case when coalesce((pkg ->> 'bonus')::int, 0) > 0 then format(' + %s bonus', pkg ->> 'bonus') else '' end),
+            format('%s virtual AED%s', to_char((pkg ->> 'coins')::bigint, 'FM999,999,999,999'), case when coalesce((pkg ->> 'bonus')::bigint, 0) > 0 then format(' + %s bonus', to_char((pkg ->> 'bonus')::bigint, 'FM999,999,999,999')) else '' end),
             (pkg ->> 'price_aed')::numeric, jsonb_build_object('coins', (pkg ->> 'coins')::bigint, 'bonus', coalesce((pkg ->> 'bonus')::bigint, 0)))
     returning id into p;
   return p;

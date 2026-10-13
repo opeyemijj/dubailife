@@ -82,7 +82,7 @@ export function flatTitle(f: Pick<FlatView, "unit" | "property_type" | "resident
 }
 
 const ERRORS: Record<string, string> = {
-  insufficient_funds: "You don't have enough D-Coins for this.",
+  insufficient_funds: "You don't have enough AED for this.",
   not_for_sale: "Sorry — this home was just taken off the market (someone may have bought it first).",
   not_for_rent: "Sorry — this home is no longer available to rent (someone may have rented it first).",
   already_rented: "Someone is already renting this home.",

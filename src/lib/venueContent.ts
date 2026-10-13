@@ -19,7 +19,7 @@ export interface VenueContent {
   logo_url?: string;
   promo?: { image_url?: string; headline?: string; text?: string; cta_label?: string; cta_url?: string };
   offers?: Array<{ title: string; detail?: string }>;
-  /** The owner's own items, priced in D-Coins, sold at the venue's main counter. */
+  /** The owner's own items, priced in virtual AED, sold at the venue's main counter. */
   items?: Array<{ name: string; price: number; desc?: string; icon?: string }>;
 }
 

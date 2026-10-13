@@ -7,10 +7,10 @@ interface Setting { key: string; value: unknown; updated_at: string }
 
 const HELP: Record<string, string> = {
   venue_subscription: "Monthly price per venue (AED), what's included and the terms shown to businesses.",
-  coin_packages: "D-Coin packs sold for real money: coins, bonus coins, AED price and an optional tag.",
+  coin_packages: "Virtual AED packs sold for real money: coins, bonus coins, AED price and an optional tag.",
   billboard: "Billboard ads: ad slots per billboard (carousel), price per week (AED) and the longest campaign.",
   features: "Switch monetisation features on or off without a release.",
-  limits: "Anti-abuse limits on D-Coins: biggest single in-game credit, daily earning cap and daily sending cap.",
+  limits: "Anti-abuse limits on virtual AED: biggest single in-game credit, daily earning cap and daily sending cap.",
 };
 
 export function Settings() {

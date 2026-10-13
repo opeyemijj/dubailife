@@ -295,8 +295,8 @@ function Alerts({ me }: { me: string }) {
       const flatName = (id: string) => `${id.split(":")[0].replace(/-/g, " ")} · ${id.split(":")[1]}`;
       const list: Alert[] = [
         ...(transfers.data ?? []).map((t) => t.to_id === me
-          ? { id: `t${t.id}`, icon: "💸", title: `${name(t.from_id)} sent you ${Number(t.amount).toLocaleString()} D-Coins`, detail: t.place ?? undefined, at: t.created_at }
-          : { id: `t${t.id}`, icon: "📤", title: `You sent ${name(t.to_id)} ${Number(t.amount).toLocaleString()} D-Coins`, detail: t.place ?? undefined, at: t.created_at }),
+          ? { id: `t${t.id}`, icon: "💸", title: `${name(t.from_id)} sent you AED ${Number(t.amount).toLocaleString()}`, detail: t.place ?? undefined, at: t.created_at }
+          : { id: `t${t.id}`, icon: "📤", title: `You sent ${name(t.to_id)} AED ${Number(t.amount).toLocaleString()}`, detail: t.place ?? undefined, at: t.created_at }),
         ...(knocks.data ?? []).map((k) => k.visitor_id === me
           ? { id: `k${k.id}`, icon: k.status === "approved" ? "🚪" : k.status === "denied" ? "🙅" : "✊", title: `You knocked at ${flatName(k.flat_id)}`, detail: k.status === "pending" ? "Waiting for an answer" : k.status === "approved" ? "They let you in" : "Not this time", at: k.created_at }
           : { id: `k${k.id}`, icon: "✊", title: `${k.visitor_name} knocked at your home`, detail: `${flatName(k.flat_id)} · ${k.status}`, at: k.created_at }),

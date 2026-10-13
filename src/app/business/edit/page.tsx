@@ -156,7 +156,7 @@ function Editor() {
           {(draft.offers ?? []).length < 6 && <button onClick={() => set("offers", [...(draft.offers ?? []), { title: "" }])} className="h-9 px-3 rounded-xl bg-slate-100 text-xs font-bold flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Add offer</button>}
         </Section>
 
-        <Section title="Your menu & products in the game" hint="Sold to visitors for D-Coins at your venue's counter, alongside the standard range. Real-world orders go through your reservation link.">
+        <Section title="Your menu & products in the game" hint="Sold to visitors for virtual AED at your venue's counter, alongside the standard range. Real-world orders go through your reservation link.">
           {(draft.items ?? []).map((it, i) => (
             <div key={i} className="grid grid-cols-[56px_1fr_110px_40px] gap-2 items-start">
               <input value={it.icon ?? ""} maxLength={4} onChange={(e) => set("items", draft.items!.map((x, j) => (j === i ? { ...x, icon: e.target.value } : x)))} placeholder="🍰" className="h-10 rounded-xl border border-slate-200 px-2 text-center" />
@@ -164,7 +164,7 @@ function Editor() {
                 <input value={it.name} maxLength={60} onChange={(e) => set("items", draft.items!.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} placeholder="Item name" className="w-full h-10 rounded-xl border border-slate-200 px-3 text-sm" />
                 <input value={it.desc ?? ""} maxLength={160} onChange={(e) => set("items", draft.items!.map((x, j) => (j === i ? { ...x, desc: e.target.value } : x)))} placeholder="Short description" className="w-full h-9 rounded-xl border border-slate-200 px-3 text-xs" />
               </div>
-              <input inputMode="numeric" value={String(it.price ?? "")} onChange={(e) => set("items", draft.items!.map((x, j) => (j === i ? { ...x, price: Number(e.target.value.replace(/\D/g, "")) } : x)))} placeholder="D-Coins" className="h-10 rounded-xl border border-slate-200 px-3 text-sm" />
+              <input inputMode="numeric" value={String(it.price ?? "")} onChange={(e) => set("items", draft.items!.map((x, j) => (j === i ? { ...x, price: Number(e.target.value.replace(/\D/g, "")) } : x)))} placeholder="virtual AED" className="h-10 rounded-xl border border-slate-200 px-3 text-sm" />
               <button onClick={() => set("items", draft.items!.filter((_, j) => j !== i))} className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center" aria-label="Remove item"><Trash2 className="w-4 h-4" /></button>
             </div>
           ))}

@@ -14,7 +14,7 @@ function describe(e: Received): { icon: string; text: string } {
   switch (e.type) {
     case "chat": return { icon: "💬", text: `${who}: ${e.text}` };
     case "wave": return { icon: "👋", text: `${who} waved at you` };
-    case "money": return { icon: "💸", text: `${who} sent you ${e.amount.toLocaleString()} D-Coins` };
+    case "money": return { icon: "💸", text: `${who} sent you AED ${e.amount.toLocaleString()}` };
     case "gift": return { icon: e.gift.icon, text: `${who} bought you a ${e.gift.name.toLowerCase()}` };
     case "invite": return { icon: e.kind === "dance" ? "💃" : "🙌", text: e.kind === "dance" ? `${who} wants to dance with you` : `${who} invited you to join them` };
     case "accept": return { icon: "✅", text: `${who} accepted — ${e.kind === "dance" ? "time to dance!" : "they're on their way"}` };

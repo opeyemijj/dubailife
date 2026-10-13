@@ -5,6 +5,7 @@
 // blocks the room and can always be dismissed. Claimed venues also get an "About" sheet.
 
 import { useEffect, useState } from "react";
+import { useProgress } from "@react-three/drei";
 import Link from "next/link";
 import { BadgeCheck, ExternalLink, Phone, Clock, Globe, X, CalendarCheck } from "lucide-react";
 import type { VenuePublic } from "@/lib/venueContent";
@@ -17,11 +18,13 @@ export function VenueLoadingCard({ venueKey, venueName, pub }: { venueKey: strin
   const [hidden, setHidden] = useState(() => {
     try { return sessionStorage.getItem(dismissedKey(venueKey)) === "1"; } catch { return false; }
   });
-  // Shown with the room loading, then gets out of the way on its own.
+  // Shown while the room loads, then gets out of the way 10 seconds after it's ready.
+  const { active } = useProgress();
   useEffect(() => {
-    const t = setTimeout(() => setHidden(true), 15000);
+    if (active) return;
+    const t = setTimeout(() => setHidden(true), 10000);
     return () => clearTimeout(t);
-  }, []);
+  }, [active]);
   const dismiss = () => {
     setHidden(true);
     try { sessionStorage.setItem(dismissedKey(venueKey), "1"); } catch { /* storage blocked */ }

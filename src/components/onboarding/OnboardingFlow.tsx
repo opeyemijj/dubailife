@@ -377,7 +377,7 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
                 <div className="space-y-2.5">
                   {[
                     { id: "Corporate Titan", icon: "👔", title: "Corporate Titan", desc: "Reach the top level of any executive career." },
-                    { id: "Palm Landlord", icon: "🏰", title: "Palm Landlord", desc: "Build a net worth of 5,000,000 D-Coins in luxury real estate." },
+                    { id: "Palm Landlord", icon: "🏰", title: "Palm Landlord", desc: "Build a net worth of AED 5,000,000 in luxury real estate." },
                     { id: "Global Superstar", icon: "🎤", title: "Global Superstar", desc: "Max out Fame and Social skills (Level 10)." },
                     { id: "City Connector", icon: "🤝", title: "City Connector", desc: "Become best friends with 10 influential citizens." },
                     { id: "Tech Unicorn", icon: "🦄", title: "Tech Unicorn Founder", desc: "Get your startup funded at DIFC / Future District." },
@@ -449,7 +449,7 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
                   <div className="space-y-2 text-left bg-white/80 backdrop-blur-md rounded-2xl p-4 border border-amber-200/60 shadow-sm text-xs font-bold text-slate-800">
                     <div className="flex items-center gap-2.5">
                       <span className="text-base">💼</span>
-                      <span>50,000 D-Coins starter capital grant to invest</span>
+                      <span>AED 50,000 starter capital grant to invest</span>
                     </div>
                     <div className="flex items-center gap-2.5">
                       <span className="text-base">💪</span>
@@ -500,8 +500,8 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
                       badgeColor: "bg-blue-100 text-blue-700",
                       title: "Academic City Dorm",
                       desc: "Shared room, campus study perks, very cheap rent.",
-                      startCapital: "15,000 D-Coins",
-                      rent: "1,200 D-Coins/wk",
+                      startCapital: "AED 15,000",
+                      rent: "AED 1,200/wk",
                     },
                     {
                       id: "Deira Studio",
@@ -510,8 +510,8 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
                       badgeColor: "bg-slate-100 text-slate-700",
                       title: "Deira Old Town Studio",
                       desc: "Lively street souks, classic vibes, budget living with big dreams.",
-                      startCapital: "30,000 D-Coins",
-                      rent: "2,500 D-Coins/wk",
+                      startCapital: "AED 30,000",
+                      rent: "AED 2,500/wk",
                     },
                     {
                       id: "Business Bay Studio",
@@ -520,8 +520,8 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
                       badgeColor: "bg-emerald-100 text-emerald-800 font-black",
                       title: "Business Bay Modern Studio",
                       desc: "Your own balcony near the canal, pool, gym, minutes from Downtown.",
-                      startCapital: "50,000 D-Coins",
-                      rent: "4,500 D-Coins/wk",
+                      startCapital: "AED 50,000",
+                      rent: "AED 4,500/wk",
                     },
                     {
                       id: "Dubai Marina 1-Bed",
@@ -530,8 +530,8 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
                       badgeColor: "bg-purple-100 text-purple-700",
                       title: "Dubai Marina 1-Bedroom",
                       desc: "High-floor marina view, infinity pool, vibrant waterfront luxury.",
-                      startCapital: "100,000 D-Coins",
-                      rent: "8,000 D-Coins/wk",
+                      startCapital: "AED 100,000",
+                      rent: "AED 8,000/wk",
                     },
                   ].map(res => {
                     const isSelected = selectedHome === res.id;

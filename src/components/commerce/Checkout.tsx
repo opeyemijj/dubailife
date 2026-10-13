@@ -55,7 +55,7 @@ export function Checkout({ title, lines, amount, note, onConfirm, onClose }: {
             <button onClick={pay} disabled={stage === "saving"} className="w-full h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-black flex items-center justify-center gap-2">
               {stage === "saving" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />} Pay {formatAED(amount)}
             </button>
-            <p className="text-[11px] text-slate-400 text-center">Prices include VAT where applicable. Real money — not D-Coins.</p>
+            <p className="text-[11px] text-slate-400 text-center">Prices include VAT where applicable. Real money — not virtual AED.</p>
           </div>
         ) : (
           <div className="p-5 space-y-4 text-center">

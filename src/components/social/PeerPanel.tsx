@@ -90,8 +90,8 @@ export function PeerPanel({
             <>
               {action("💬", unread ? `Chat · ${unread} new` : "Chat", () => setMode("chat"), messages.length ? `“${messages[messages.length - 1].text}”` : `Say something to @${peer.username}`)}
               {action("💸", "Send money", () => setMode("money"), "Straight from your wallet")}
-              {context === "club" && treat && onTreat && action("🍸", `Buy them a ${treat.name.toLowerCase()}`, onTreat, `${treat.price} D-Coins · served at the bar`)}
-              {context === "dining" && treat && onTreat && action(treat.icon, `Treat them to ${treat.name.toLowerCase()}`, onTreat, `${treat.price} D-Coins`)}
+              {context === "club" && treat && onTreat && action("🍸", `Buy them a ${treat.name.toLowerCase()}`, onTreat, `AED ${treat.price} · served at the bar`)}
+              {context === "dining" && treat && onTreat && action(treat.icon, `Treat them to ${treat.name.toLowerCase()}`, onTreat, `AED ${treat.price}`)}
               {context === "club" && action("💃", "Dance together", () => onInvite("dance"), "Invite them to the dance floor")}
               {context !== "home" && action("🙌", "Come join me", () => onInvite("join"), "They'll walk over if they accept")}
               {action("👋", "Wave", onWave)}
@@ -144,12 +144,12 @@ export function PeerPanel({
                 ))}
               </div>
               <label className="flex items-center gap-2 h-11 rounded-xl border border-slate-200 px-3">
-                <span className="text-xs font-black text-slate-400">D-Coins</span>
-                <input type="number" min={1} max={1000000} value={amount} onChange={(e) => setAmount(Math.max(0, Math.floor(Number(e.target.value) || 0)))} className="flex-1 text-sm font-black outline-none bg-transparent" />
+                <span className="text-xs font-black text-slate-400">AED</span>
+                <input type="number" min={1} max={10000000} value={amount} onChange={(e) => setAmount(Math.max(0, Math.floor(Number(e.target.value) || 0)))} className="flex-1 text-sm font-black outline-none bg-transparent" />
               </label>
-              <p className="text-[11px] text-slate-500">You have {balance.toLocaleString()} D-Coins · after: {(balance - amount).toLocaleString()} D-Coins</p>
+              <p className="text-[11px] text-slate-500">You have AED {balance.toLocaleString()} · after: AED {(balance - amount).toLocaleString()}</p>
               <button disabled={busy || amount < 1 || amount > balance} onClick={pay} className="w-full h-12 rounded-xl bg-emerald-500 disabled:opacity-50 text-white font-black flex items-center justify-center gap-2">
-                <HandCoins className="w-4 h-4" /> {busy ? "Sending…" : `Send ${amount.toLocaleString()} D-Coins to @${peer.username}`}
+                <HandCoins className="w-4 h-4" /> {busy ? "Sending…" : `Send AED ${amount.toLocaleString()} to @${peer.username}`}
               </button>
               {note && <p className="text-xs font-bold text-rose-600 text-center">{note}</p>}
             </>

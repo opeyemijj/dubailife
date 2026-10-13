@@ -79,7 +79,7 @@ export default function ProfilePage() {
         )}
 
         <div className="grid grid-cols-2 gap-3">
-          <Stat icon={<Wallet className="w-5 h-5 text-emerald-400" />} label="Wallet" value={`${citizen.balance.toLocaleString()} D-Coins`} />
+          <Stat icon={<Wallet className="w-5 h-5 text-emerald-400" />} label="Wallet" value={`AED ${citizen.balance.toLocaleString()}`} />
           <Stat icon={<Users className="w-5 h-5 text-sky-400" />} label="Friends" value={friends === null ? "…" : String(friends)} />
           <Stat icon={<ShoppingBag className="w-5 h-5 text-violet-400" />} label="Items owned" value={String(items)} />
           <Stat icon={<MapPin className="w-5 h-5 text-rose-400" />} label="Places visited" value={String(visited)} />
@@ -92,11 +92,11 @@ export default function ProfilePage() {
           ) : flats.map((f) => (
             <Row key={f.id} icon={<Home className="w-6 h-6 text-cyan-400" />} title={f.owner_id === me ? "Home (owned)" : "Home (renting)"}
               value={flatTitle({ ...f, residentName: citizen.name } as Parameters<typeof flatTitle>[0])}
-              sub={<Link href={flatRoute(f as Parameters<typeof flatRoute>[0])} className="underline">{f.property_type}{f.tenant_id === me && f.rent_price ? ` · ${f.rent_price.toLocaleString()} D-Coins/month` : ""} · go there</Link>} />
+              sub={<Link href={flatRoute(f as Parameters<typeof flatRoute>[0])} className="underline">{f.property_type}{f.tenant_id === me && f.rent_price ? ` · AED ${f.rent_price.toLocaleString()}/month` : ""} · go there</Link>} />
           ))}
           <Row icon={<Briefcase className="w-6 h-6 text-blue-400" />} title="Job"
             value={citizen.job ? `${citizen.job.role} at ${citizen.job.storeName}` : "Not working"}
-            sub={citizen.job ? `${citizen.job.wage} D-Coins per shift` : "Shops, cafés and clubs are hiring — talk to their staff."} />
+            sub={citizen.job ? `AED ${citizen.job.wage} per shift` : "Shops, cafés and clubs are hiring — talk to their staff."} />
           <Row icon={<CalendarDays className="w-6 h-6 text-amber-400" />} title="Joined" value={new Date(citizen.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })} />
         </div>
 
@@ -108,7 +108,7 @@ export default function ProfilePage() {
                 <li key={i.uid} className="flex items-center gap-3 text-white">
                   <span className="text-2xl">{i.icon ?? "🛍️"}</span>
                   <span className="flex-1 min-w-0 text-sm font-bold truncate">{i.name}</span>
-                  <span className="text-xs text-emerald-400 font-mono">{i.price.toLocaleString()} D-Coins</span>
+                  <span className="text-xs text-emerald-400 font-mono">AED {i.price.toLocaleString()}</span>
                 </li>
               ))}
             </ul>

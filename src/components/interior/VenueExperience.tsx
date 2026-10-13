@@ -23,7 +23,7 @@ import { SceneLoadingOverlay } from "@/components/GameLoadingScreen";
 import { approachPoint, buildPlan, seatAt, servingSpot, toRoom, type StationDef } from "./layouts";
 
 const SHIFT_COOLDOWN_MS = 10 * 60 * 1000;
-const aed = (n: number) => (n === 0 ? "Free" : `${n.toLocaleString()} D-Coins`);
+const aed = (n: number) => (n === 0 ? "Free" : `AED ${n.toLocaleString()}`);
 
 type Panel =
   | { kind: "station"; station: StationDef }
@@ -249,7 +249,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   const treatPeer = (p: Peer) => {
     if (!treat) return;
     const kind = serveKindOf(treat);
-    if (!kind || !adjustBalance(-treat.price)) { say(`Not enough D-Coins — you need ${aed(treat.price)}.`); return; }
+    if (!kind || !adjustBalance(-treat.price)) { say(`Not enough AED — you need ${aed(treat.price)}.`); return; }
     gameAudio.playCoinSound();
     const station = surfaceNear(p.x, p.z);
     const position = station ? nextSpot(station) : ([p.x, 1.1, p.z] as [number, number, number]);
@@ -297,7 +297,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   const buy = (product: Product) => {
     if (!citizen) return;
     if (product.price > 0 && !adjustBalance(-product.price)) {
-      say(`Not enough D-Coins — you need ${aed(product.price)}.`);
+      say(`Not enough AED — you need ${aed(product.price)}.`);
       return;
     }
     gameAudio.playCoinSound();
@@ -351,7 +351,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     if (score >= 2) {
       updateCitizen((c) => ({ ...c, job: { storeId: venue.id, storeName: venue.name, role: job.role, wage: job.wage } }));
       gameAudio.playCoinSound();
-      say(`🎉 You're hired as ${job.role} at ${venue.name}! Wage ${job.wage} D-Coins per shift.`);
+      say(`🎉 You're hired as ${job.role} at ${venue.name}! Wage AED ${job.wage} per shift.`);
     } else {
       say("Thanks for coming in — not this time. You can apply again later.");
     }
@@ -365,7 +365,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     updateCitizen((c) => (c.job ? { ...c, job: { ...c.job, lastShiftAt: new Date().toISOString() } } : c));
     boostNeed("energy", -15);
     gameAudio.playCoinSound();
-    say(`Shift done: ${correct}/${job.shift.length} customers happy · earned ${pay} D-Coins.`);
+    say(`Shift done: ${correct}/${job.shift.length} customers happy · earned AED ${pay}.`);
     setPanel(null);
   };
 
@@ -379,7 +379,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     if (a.reward && !rewarded.has(a.id)) {
       adjustBalance(a.reward);
       setRewarded(new Set(rewarded).add(a.id));
-      say(`${a.icon} ${a.label} — challenge complete! +${a.reward} D-Coins`);
+      say(`${a.icon} ${a.label} — challenge complete! +AED ${a.reward}`);
     } else {
       say(`${a.icon} ${a.label}`);
     }
@@ -416,7 +416,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
           <button key={a.id} onClick={() => startActivity(a, s)} className="w-full flex items-center gap-3 p-3 rounded-2xl bg-indigo-50 border border-indigo-100 text-left">
             <span className="text-2xl">{a.icon}</span>
             <span className="flex-1 font-black text-sm text-slate-900">{a.label}</span>
-            {a.reward ? <span className="text-[11px] font-black text-emerald-600">+{a.reward} D-Coins</span> : null}
+            {a.reward ? <span className="text-[11px] font-black text-emerald-600">+AED {a.reward}</span> : null}
           </button>
         ))}
         {s.kind === "booth" && venue.layout === "dining" && (
@@ -466,10 +466,10 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         </div>
         <dl className="text-sm space-y-1">
           <div className="flex justify-between"><dt className="text-slate-500">Price</dt><dd className="font-black">{aed(p.price)}</dd></div>
-          <div className="flex justify-between"><dt className="text-slate-500">Paid with</dt><dd className="font-bold">D-Coins wallet</dd></div>
-          <div className="flex justify-between"><dt className="text-slate-500">Balance after</dt><dd className={`font-black ${after < 0 ? "text-rose-600" : "text-slate-900"}`}>{after.toLocaleString()} D-Coins</dd></div>
+          <div className="flex justify-between"><dt className="text-slate-500">Paid with</dt><dd className="font-bold">virtual AED wallet</dd></div>
+          <div className="flex justify-between"><dt className="text-slate-500">Balance after</dt><dd className={`font-black ${after < 0 ? "text-rose-600" : "text-slate-900"}`}>AED {after.toLocaleString()}</dd></div>
         </dl>
-        {after < 0 && <p className="text-xs font-bold text-rose-600">You don&apos;t have enough D-Coins for this.</p>}
+        {after < 0 && <p className="text-xs font-bold text-rose-600">You don&apos;t have enough AED for this.</p>}
         <button disabled={after < 0} onClick={() => buy(p)} className="w-full py-3 rounded-xl bg-emerald-500 disabled:opacity-50 text-white font-black">Confirm · {aed(p.price)}</button>
       </Sheet>
     );
@@ -482,12 +482,12 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         <button onClick={() => setPanel({ kind: "search" })} className="w-full text-left p-3 rounded-2xl border border-slate-200 text-sm font-bold">🔎 Can you help me find something?</button>
         {job && worksHere && (
           <button disabled={nextShiftIn > 0} onClick={() => setPanel({ kind: "shift", step: 0, correct: 0 })} className="w-full text-left p-3 rounded-2xl border border-emerald-200 bg-emerald-50 text-sm font-bold disabled:opacity-60">
-            🧑‍💼 Start my shift ({job.role}, {job.wage} D-Coins){nextShiftIn > 0 ? ` — next shift in ${Math.ceil(nextShiftIn / 60000)} min` : ""}
+            🧑‍💼 Start my shift ({job.role}, AED {job.wage}){nextShiftIn > 0 ? ` — next shift in ${Math.ceil(nextShiftIn / 60000)} min` : ""}
           </button>
         )}
         {job && !worksHere && (
           <button onClick={() => setPanel({ kind: "interview", step: 0, score: 0 })} className="w-full text-left p-3 rounded-2xl border border-slate-200 text-sm font-bold">
-            💼 Are you hiring? <span className="text-slate-500 font-normal">— {job.role}, {job.wage} D-Coins/shift{citizen?.job ? ` (you'd leave ${citizen.job.storeName})` : ""}</span>
+            💼 Are you hiring? <span className="text-slate-500 font-normal">— {job.role}, AED {job.wage}/shift{citizen?.job ? ` (you'd leave ${citizen.job.storeName})` : ""}</span>
           </button>
         )}
         {!job && <p className="text-xs text-slate-500 px-1">No vacancies here at the moment.</p>}
@@ -606,7 +606,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
           <div className="text-[11px] text-slate-500 truncate">{venue.category}{venue.zone ? ` · ${venue.zone}` : ""} · {place.name}</div>
         </div>
         <div className="flex-1" />
-        <div className="pointer-events-auto bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-full px-3 py-1.5 text-xs font-black font-mono shadow">{(citizen?.balance ?? 0).toLocaleString()} D-Coins</div>
+        <div className="pointer-events-auto bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-full px-3 py-1.5 text-xs font-black font-mono shadow">AED {(citizen?.balance ?? 0).toLocaleString()}</div>
         <button onClick={() => setPanel({ kind: "bag" })} className="pointer-events-auto w-10 h-10 rounded-full bg-white/95 shadow-lg flex items-center justify-center" aria-label="Your bag"><ShoppingBag className="w-4 h-4" /></button>
         <button onClick={() => router.push(`/explore?at=${place.id}`)} className="pointer-events-auto h-10 px-3 rounded-full bg-slate-900 text-white shadow-lg flex items-center gap-1.5 text-xs font-black" aria-label="Exit to the city">
           <LogOut className="w-3.5 h-3.5" /> Exit
@@ -644,7 +644,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
             if (!error) {
               emit({ type: "money", amount }, peerPanel.userId);
               gameAudio.playCoinSound();
-              say(`💸 Sent ${amount.toLocaleString()} D-Coins to @${peerPanel.username}`);
+              say(`💸 Sent AED ${amount.toLocaleString()} to @${peerPanel.username}`);
             }
             return error;
           }}
