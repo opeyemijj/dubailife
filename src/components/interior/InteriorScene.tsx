@@ -430,7 +430,7 @@ export function InteriorScene({ venue, plan, look, worn, playerAnimation, player
     })),
     { id: "staff", text: `💬 ${venue.staff.role}`, at: [plan.staff.position[0], 2.15, plan.staff.position[1]], className: "bg-slate-900/85 text-white" },
     ...peers.map((p) => ({ id: `peer:${p.userId}`, text: `@${p.username}${peerBadges[p.userId] ? ` · 💬${peerBadges[p.userId]}` : ""}`, at: [0, p.animation === "sit" ? 1.6 : 2.05, 0] as [number, number, number], follow: p.userId, className: "bg-sky-500 text-white" })),
-    ...locals.map((p) => ({ id: `peer:${p.userId}`, text: `✨ @${p.username} · Local`, at: [0, p.animation === "sit" ? 1.6 : 2.05, 0] as [number, number, number], follow: p.userId, className: "bg-amber-400 text-slate-900" })),
+    ...locals.map((p) => ({ id: `peer:${p.userId}`, text: `✨ ${p.username}`, at: [0, p.animation === "sit" ? 1.6 : 2.05, 0] as [number, number, number], follow: p.userId, className: "bg-amber-400 text-slate-900" })),
     ...Object.entries(bubbles).map(([who, text]) => ({
       id: `bubble:${who}`, text: `💬 ${text}`, at: [0, 2.5, 0] as [number, number, number], follow: who, className: "bg-white text-slate-900 max-w-[220px] whitespace-normal",
     })),

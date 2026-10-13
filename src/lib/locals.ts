@@ -22,17 +22,16 @@ export interface Local {
 }
 
 const WOMEN = [
-  "Layla", "Maya", "Sara", "Noor", "Aisha", "Hana", "Zara", "Lina", "Mira", "Yasmin", "Amira", "Dana", "Rania", "Salma", "Farah",
-  "Leen", "Reem", "Jana", "Nadia", "Sofia", "Elena", "Chloe", "Priya", "Ananya", "Meera", "Kavya", "Tala", "Mariam", "Huda", "Ines",
-  "Lara", "Nina", "Ava", "Mia", "Isla", "Emma", "Olivia", "Grace", "Jade", "Ruby", "Alya", "Dima", "Joud", "Lujain", "Ghala",
-  "Shamma", "Latifa", "Mahra", "Hessa", "Moza", "Fatima", "Amal", "Rasha", "Nour", "Malak", "Celine", "Camila", "Valentina", "Anya", "Daria",
-  "Kiki", "Ama", "Zainab", "Aaliyah", "Sana", "Ritu", "Tanvi", "Bella", "Luna", "Skye",
+  "Layla", "Maya", "Sara", "Noor", "Aisha", "Hana", "Zara", "Lina", "Mira", "Yara", "Amira", "Dana", "Rania", "Salma", "Farah",
+  "Leen", "Reem", "Jana", "Nadia", "Sofia", "Elena", "Chloe", "Priya", "Asha", "Meera", "Kavya", "Tala", "Maram", "Huda", "Ines",
+  "Lara", "Nina", "Ava", "Mia", "Isla", "Emma", "Lily", "Grace", "Jade", "Ruby", "Alya", "Dima", "Joud", "Rima", "Ghala",
+  "Hessa", "Mahra", "Moza", "Amal", "Rasha", "Nour", "Malak", "Cleo", "Lucia", "Anya", "Daria", "Kiki", "Ama", "Zaina", "Sana",
+  "Ritu", "Tanvi", "Bella", "Luna", "Skye", "Iris", "Eva", "Rosa", "Leila", "Nora",
 ];
 const MEN = [
-  "Omar", "Khalid", "Rashid", "Saeed", "Hamdan", "Zayed", "Faisal", "Yousef", "Karim", "Tariq", "Adam", "Ali", "Hassan", "Rayan", "Nabil",
-  "Arjun", "Rohan", "Dev", "Luca", "Marco", "James", "Leo", "Noah", "Ethan", "Daniel", "Kofi", "Tunde", "Ivan", "Sami", "Majid",
+  "Omar", "Zayed", "Rami", "Saeed", "Hamad", "Fahad", "Yusuf", "Karim", "Tariq", "Adam", "Ali", "Hasan", "Rayan", "Nabil", "Faris",
+  "Arjun", "Rohan", "Dev", "Luca", "Marco", "James", "Leo", "Noah", "Ethan", "Sam", "Kofi", "Tunde", "Ivan", "Sami", "Majid",
 ];
-const TAGS = ["dxb", "uae", "971", "jbr", "marina", "downtown", "palm", "ae", "nights", "vibes"];
 
 function hash(s: string) {
   let h = 2166136261;
@@ -42,6 +41,16 @@ function hash(s: string) {
 
 /** A repeatable pseudo-random number in [0, 1) for a key. */
 export const rand = (key: string) => hash(key) / 4294967296;
+
+/** Short handles (5 letters at most) so name tags don't crowd the room; a digit keeps them unique. */
+const taken = new Set<string>();
+function handle(name: string) {
+  const base = name.toLowerCase().replace(/[^a-z]/g, "").slice(0, 5);
+  let h = base;
+  for (let n = 2; taken.has(h); n++) h = base.slice(0, 4) + n;
+  taken.add(h);
+  return h;
+}
 
 function build(names: string[], gender: "woman" | "man", start: number): Local[] {
   const looks = rosterFor(gender).map((r) => r.id);
@@ -53,7 +62,7 @@ function build(names: string[], gender: "woman" | "man", start: number): Local[]
     const wear = looks[(i + Math.floor(i / looks.length) + 1) % looks.length];
     return {
       id: `local:l${n.toString().padStart(3, "0")}`,
-      username: `${name.toLowerCase()}.${TAGS[hash(name) % TAGS.length]}`,
+      username: handle(name),
       name,
       look: { gender, preset, wear: wear === preset ? undefined : wear, bodyType: bodies[hash(`${name}:${n}`) % bodies.length] },
     };
