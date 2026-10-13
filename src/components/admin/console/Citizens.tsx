@@ -21,16 +21,34 @@ export function Citizens() {
     reload();
   };
 
+  // Asks once, in a small modal, before deleting.
+  const [confirming, setConfirming] = useState<Citizen | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const remove = async (c: Citizen) => {
+    setDeleting(true);
     const who = c.username ? `@${c.username}` : c.email;
-    const typed = prompt(`Delete ${who} (${c.email}) and ALL their data — wallet, homes, messages, purchases? This can't be undone.\nType ${c.username ? "the username" : "the email"} to confirm:`);
-    if (typed?.trim().replace(/^@/, "") !== (c.username ?? c.email)) return;
     setMsg(await act(() => db().rpc("admin_delete_citizen", { p_user: c.id })) ?? `Deleted ${who}.`);
+    setDeleting(false);
+    setConfirming(null);
     reload();
   };
 
   return (
     <Page title="Citizens" subtitle="Players, their wallets and every coin movement.">
+      {confirming && (
+        <div className="fixed inset-0 z-[200] bg-slate-950/50 flex items-center justify-center p-4" role="dialog" aria-modal="true" onClick={() => !deleting && setConfirming(null)}>
+          <div className="w-full max-w-sm bg-white text-slate-900 rounded-2xl shadow-2xl p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-black">Are you sure?</h2>
+            <p className="text-sm text-slate-600">
+              Delete <b>{confirming.username ? `@${confirming.username}` : confirming.email}</b> and all their data — wallet, homes, messages and purchases. This can&apos;t be undone.
+            </p>
+            <div className="flex gap-2 pt-1">
+              <Button tone="secondary" className="flex-1 h-10" disabled={deleting} onClick={() => setConfirming(null)}>Cancel</Button>
+              <Button tone="danger" className="flex-1 h-10" disabled={deleting} onClick={() => remove(confirming)}>{deleting ? "Deleting…" : "Delete"}</Button>
+            </div>
+          </div>
+        </div>
+      )}
       <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by username, name or email" className="w-full sm:w-80 h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm" />
       {msg && <p className="text-sm font-bold text-emerald-700">{msg}</p>}
       <Table head={["Citizen", "Email", "Joined", "Last login", "Wallet", ""]} empty={rows?.length === 0}>
@@ -50,7 +68,7 @@ export function Citizens() {
               <td className="px-3 py-2.5 text-right whitespace-nowrap space-x-1">
                 {c.finished && <Button tone="secondary" onClick={() => setOpen(open === c.id ? null : c.id)}>{open === c.id ? "Hide" : "Ledger"}</Button>}
                 {c.finished && <Button onClick={() => adjust(c)}>Adjust</Button>}
-                {!c.is_admin && <Button tone="danger" onClick={() => remove(c)}>Delete</Button>}
+                {!c.is_admin && <Button tone="danger" onClick={() => setConfirming(c)}>Delete</Button>}
               </td>
             </tr>
             {open === c.id && <tr><td colSpan={6} className="bg-slate-50 px-3 py-3"><Ledger user={c.id} /></td></tr>}
