@@ -149,3 +149,9 @@ html, body { overscroll-behavior: none; }
 .map-lite [class*="drop-shadow"] {
   filter: none !important;
 }
+
+/* …and no looping pulse animations on the map there: each one keeps a layer busy every frame. */
+.map-lite .animate-pulse,
+.map-lite .animate-ping {
+  animation: none !important;
+}

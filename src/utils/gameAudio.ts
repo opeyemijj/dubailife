@@ -1,230 +1,171 @@
-// Ambient Dubai Game Sound Engine using Web Audio API
-// Generates a lush, relaxing desert city ambient soundtrack with zero external asset dependencies
+// Game sound: background music on the city map and sound effects for taps and money.
+// Music is a playlist of public-domain (CC0) lo-fi loops played through an <audio> element, so it
+// streams instead of being decoded into memory; effects are short recorded clips played through Web
+// Audio for instant response. Credits: public/audio/CREDITS.md.
+
+const MUSIC = ["/audio/music/lofi-hip-hop-loop.m4a", "/audio/music/chill-loopable.m4a"];
+const SFX = { click: "/audio/sfx/click.m4a", coin: "/audio/sfx/coin.m4a", confirm: "/audio/sfx/confirm.m4a" } as const;
+type Sfx = keyof typeof SFX;
+
+const MUSIC_VOLUME = 0.32;
+const SFX_VOLUME = 0.7;
+const MUTE_KEY = "dubai_map_muted";
 
 class GameAudioEngine {
+  private music: HTMLAudioElement | null = null;
+  private track = 0;
+  private wanted = false;
+  private isMuted = false;
+  private fade: ReturnType<typeof setInterval> | null = null;
   private ctx: AudioContext | null = null;
-  private isPlaying: boolean = false;
-  private isMuted: boolean = false;
-  private masterGain: GainNode | null = null;
-  private timerId: any = null;
-  private padGain: GainNode | null = null;
-  private activeNodes: (AudioNode | { stop?: () => void })[] = [];
-
-  private chords = [
-    [185.0, 233.08, 277.18, 369.99], // F# major 7 (warm sunset)
-    [220.0, 277.18, 329.63, 440.0],  // A major 9
-    [164.81, 207.65, 246.94, 329.63], // E major 7
-    [196.0, 246.94, 293.66, 392.0]   // G major 7
-  ];
-  private chordIndex = 0;
+  private gain: GainNode | null = null;
+  private buffers = new Map<Sfx, AudioBuffer>();
+  private loading: Promise<void> | null = null;
 
   constructor() {
-    if (typeof window !== 'undefined') {
-      const savedMute = localStorage.getItem('dubai_map_muted');
-      this.isMuted = savedMute === 'true';
+    if (typeof window !== "undefined") {
+      try { this.isMuted = localStorage.getItem(MUTE_KEY) === "true"; } catch { /* storage off */ }
     }
   }
 
-  private initCtx() {
-    if (!this.ctx && typeof window !== 'undefined') {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (AudioCtx) {
-        this.ctx = new AudioCtx();
-        this.masterGain = this.ctx.createGain();
-        this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : 0.22, this.ctx.currentTime);
-        this.masterGain.connect(this.ctx.destination);
+  // ---------------------------------------------------------------- music
+
+  private ensureMusic() {
+    if (this.music || typeof window === "undefined") return this.music;
+    const el = new Audio();
+    el.preload = "auto";
+    el.volume = 0;
+    el.src = MUSIC[this.track];
+    // One track after another, round and round.
+    el.addEventListener("ended", () => {
+      this.track = (this.track + 1) % MUSIC.length;
+      el.src = MUSIC[this.track];
+      if (this.wanted && !this.isMuted) el.play().catch(() => {});
+    });
+    this.music = el;
+    return el;
+  }
+
+  /** Fades the music to a volume, then pauses it if that's silence. */
+  private fadeTo(target: number, ms = 800) {
+    const el = this.music;
+    if (!el) return;
+    if (this.fade) clearInterval(this.fade);
+    const start = el.volume;
+    const steps = Math.max(1, Math.round(ms / 50));
+    let i = 0;
+    this.fade = setInterval(() => {
+      i++;
+      el.volume = Math.min(1, Math.max(0, start + ((target - start) * i) / steps));
+      if (i >= steps) {
+        if (this.fade) clearInterval(this.fade);
+        this.fade = null;
+        if (target === 0) el.pause();
       }
-    }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume().catch(() => {});
-    }
+    }, 50);
   }
 
+  /** Starts (or resumes) the background music. Browsers only allow it after a tap. */
   public start() {
-    if (this.isPlaying) return;
-    this.isPlaying = true;
-    this.initCtx();
-
-    if (!this.ctx || !this.masterGain) return;
-
-    // Start ambient synth chords
-    this.playNextChord();
-    this.timerId = setInterval(() => {
-      if (this.isPlaying && this.ctx && this.ctx.state === 'running') {
-        this.playNextChord();
-      }
-    }, 4500);
-
-    // Setup user interaction listener to resume if audio was blocked by browser policy
-    const resumeOnInteraction = () => {
-      if (this.ctx && this.ctx.state === 'suspended') {
-        this.ctx.resume();
-      }
-      window.removeEventListener('pointerdown', resumeOnInteraction);
-      window.removeEventListener('keydown', resumeOnInteraction);
-    };
-    window.addEventListener('pointerdown', resumeOnInteraction, { once: true });
-    window.addEventListener('keydown', resumeOnInteraction, { once: true });
+    this.wanted = true;
+    if (this.isMuted) return;
+    const el = this.ensureMusic();
+    if (!el) return;
+    // Get the effects ready too (this runs after a tap, when browsers allow audio).
+    el.play().then(() => { this.fadeTo(MUSIC_VOLUME, 1200); this.initCtx(); }).catch(() => {
+      // Blocked until the user interacts: try again on the next tap.
+      const retry = () => { if (this.wanted && !this.isMuted) this.start(); };
+      window.addEventListener("pointerdown", retry, { once: true });
+    });
   }
 
   public stop() {
-    this.isPlaying = false;
-    if (this.timerId) {
-      clearInterval(this.timerId);
-      this.timerId = null;
-    }
-
-    if (this.padGain && this.ctx) {
-      try {
-        this.padGain.gain.setValueAtTime(this.padGain.gain.value, this.ctx.currentTime);
-        this.padGain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.8);
-      } catch (e) {}
-    }
-
-    setTimeout(() => {
-      if (!this.isPlaying && this.ctx) {
-        try {
-          this.ctx.close();
-        } catch (e) {}
-        this.ctx = null;
-        this.masterGain = null;
-        this.padGain = null;
-      }
-    }, 900);
+    this.wanted = false;
+    this.fadeTo(0, 600);
   }
 
   public setMuted(muted: boolean) {
     this.isMuted = muted;
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('dubai_map_muted', String(muted));
-    }
-    if (this.masterGain && this.ctx) {
-      this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, this.ctx.currentTime);
-      this.masterGain.gain.linearRampToValueAtTime(muted ? 0 : 0.22, this.ctx.currentTime + 0.3);
-    }
+    try { localStorage.setItem(MUTE_KEY, String(muted)); } catch { /* storage off */ }
+    if (muted) this.fadeTo(0, 300);
+    else if (this.wanted) this.start();
   }
 
   public toggleMute(): boolean {
-    const next = !this.isMuted;
-    this.setMuted(next);
-    if (!next && this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
-    }
-    return next;
+    this.setMuted(!this.isMuted);
+    return this.isMuted;
   }
 
   public getIsMuted(): boolean {
     return this.isMuted;
   }
 
-  private playNextChord() {
-    if (!this.ctx || !this.masterGain || this.ctx.state !== 'running') return;
+  // ---------------------------------------------------------------- effects
 
-    const chord = this.chords[this.chordIndex % this.chords.length];
-    this.chordIndex++;
-
-    const now = this.ctx.currentTime;
-    const duration = 5.2;
-
-    // Filtered pad gain with slow attack & decay for a dreamy floating ambiance
-    const chordGain = this.ctx.createGain();
-    chordGain.gain.setValueAtTime(0.001, now);
-    chordGain.gain.linearRampToValueAtTime(0.08, now + 1.8);
-    chordGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-    chordGain.connect(this.masterGain);
-
-    // Warm lowpass filter to mimic warm desert evening air
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(750, now);
-    filter.frequency.linearRampToValueAtTime(1100, now + 2.5);
-    filter.frequency.linearRampToValueAtTime(650, now + duration);
-    filter.connect(chordGain);
-
-    // 4 Sine/Triangle oscillators creating a rich lush harmonic bed
-    chord.forEach((freq, idx) => {
-      if (!this.ctx) return;
-      const osc = this.ctx.createOscillator();
-      osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
-      // Slight detune for analog warmth
-      osc.frequency.setValueAtTime(freq, now);
-      osc.detune.setValueAtTime((idx - 1.5) * 4, now);
-      osc.connect(filter);
-      osc.start(now);
-      osc.stop(now + duration + 0.2);
-    });
-
-    // Occasional gentle sparkle chime
-    if (Math.random() > 0.4) {
-      this.playSparkleChime(now + 1.2 + Math.random() * 1.5, chord[Math.floor(Math.random() * chord.length)] * 2);
+  private initCtx() {
+    if (typeof window === "undefined") return;
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return;
+      this.ctx = new AudioCtx();
+      this.gain = this.ctx.createGain();
+      this.gain.gain.value = SFX_VOLUME;
+      this.gain.connect(this.ctx.destination);
+    }
+    if (this.ctx.state === "suspended") this.ctx.resume().catch(() => {});
+    // Fetch and decode the clips once (they're a few KB each).
+    if (!this.loading) {
+      const ctx = this.ctx;
+      this.loading = Promise.all((Object.keys(SFX) as Sfx[]).map(async (name) => {
+        try {
+          const res = await fetch(SFX[name]);
+          this.buffers.set(name, await ctx.decodeAudioData(await res.arrayBuffer()));
+        } catch { /* falls back to a synthesised blip */ }
+      })).then(() => {});
     }
   }
 
-  private playSparkleChime(time: number, freq: number) {
-    if (!this.ctx || !this.masterGain) return;
+  private play(name: Sfx, fallback: () => void) {
+    if (this.isMuted) return;
+    this.initCtx();
+    const buffer = this.buffers.get(name);
+    if (!this.ctx || !this.gain) return;
+    if (!buffer) { fallback(); return; }
+    const src = this.ctx.createBufferSource();
+    src.buffer = buffer;
+    src.connect(this.gain);
+    src.start();
+  }
+
+  /** A short tone, used only until the recorded clips have loaded. */
+  private blip(freq: number, to: number, ms: number) {
+    if (!this.ctx || !this.gain) return;
+    const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq, time);
-
-    gain.gain.setValueAtTime(0.001, time);
-    gain.gain.linearRampToValueAtTime(0.035, time + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.0001, time + 1.6);
-
-    osc.connect(gain);
-    gain.connect(this.masterGain);
-
-    osc.start(time);
-    osc.stop(time + 1.7);
+    const g = this.ctx.createGain();
+    osc.frequency.setValueAtTime(freq, now);
+    osc.frequency.exponentialRampToValueAtTime(to, now + ms / 1000);
+    g.gain.setValueAtTime(0.08, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + ms / 1000);
+    osc.connect(g);
+    g.connect(this.gain);
+    osc.start(now);
+    osc.stop(now + ms / 1000 + 0.02);
   }
 
-  // Interactive UI sound effects
+  /** Taps on buttons and places. */
   public playClickSound() {
-    this.initCtx();
-    if (!this.ctx || !this.masterGain || this.isMuted) return;
-    try {
-      const now = this.ctx.currentTime;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, now);
-      osc.frequency.exponentialRampToValueAtTime(1760, now + 0.08);
-      gain.gain.setValueAtTime(0.06, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
-      osc.connect(gain);
-      gain.connect(this.masterGain);
-      osc.start(now);
-      osc.stop(now + 0.1);
-    } catch (e) {}
+    this.play("click", () => this.blip(880, 1760, 90));
   }
 
+  /** Money: buying, earning, gifts and transfers. */
   public playCoinSound() {
-    this.initCtx();
-    if (!this.ctx || !this.masterGain || this.isMuted) return;
-    try {
-      const now = this.ctx.currentTime;
-      const osc1 = this.ctx.createOscillator();
-      const osc2 = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
+    this.play("coin", () => this.blip(988, 1319, 300));
+  }
 
-      osc1.type = 'sine';
-      osc2.type = 'triangle';
-      osc1.frequency.setValueAtTime(987.77, now); // B5
-      osc1.frequency.setValueAtTime(1318.51, now + 0.08); // E6
-      osc2.frequency.setValueAtTime(1318.51, now + 0.08);
-
-      gain.gain.setValueAtTime(0.08, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-
-      osc1.connect(gain);
-      osc2.connect(gain);
-      gain.connect(this.masterGain);
-
-      osc1.start(now);
-      osc2.start(now + 0.08);
-      osc1.stop(now + 0.36);
-      osc2.stop(now + 0.36);
-    } catch (e) {}
+  /** Something done: a booking, a purchase confirmed. */
+  public playConfirmSound() {
+    this.play("confirm", () => this.blip(660, 990, 200));
   }
 }
 

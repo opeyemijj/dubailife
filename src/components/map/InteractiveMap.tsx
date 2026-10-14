@@ -893,6 +893,7 @@ export function InteractiveMap({
   // Read on the client only (the server can't know the device), without a mismatch on hydration.
   const lite = useSyncExternalStore(noSubscribe, isLowPower, () => false);
   const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
+  const canHover = useSyncExternalStore(noSubscribe, () => window.matchMedia('(hover: hover) and (pointer: fine)').matches, () => false);
   const visibleEntities = useMemo(() => {
     if (isEditMode) return allRenderedEntities;
     // Before the map reports where it is, assume the opening view (and draw nothing on the server):
@@ -1211,10 +1212,14 @@ export function InteractiveMap({
         initialScale={DEFAULT_SCALE} 
         initialPositionX={mapConfig?.startX ?? -120} 
         initialPositionY={mapConfig?.startY ?? -140}
-        minScale={0.28} 
-        maxScale={0.75}
+        // Phones stop zooming out a little earlier (the whole world on screen at once is a lot of
+        // graphics memory); zoom in goes up to buildings at full size and beyond.
+        minScale={lite ? 0.36 : 0.28}
+        maxScale={1.8}
         smooth={true}
         wheel={{ step: 0.02 }}
+        // Zoom exactly as far as the gesture goes: no overshoot past the limits and spring back.
+        zoomAnimation={{ size: 0 }}
         doubleClick={{ disabled: true }}
         pinch={{ disabled: false }}
         limitToBounds={false}
@@ -1328,14 +1333,15 @@ export function InteractiveMap({
               return (
                 <div 
                   key={loc.id} 
-                  className={`absolute flex flex-col items-center preserve-3d select-none transition-[opacity,scale] duration-300
+                  className={`absolute flex flex-col items-center ${lite ? '' : 'preserve-3d'} select-none transition-[opacity,scale] duration-300
                     ${isDimmed ? 'opacity-30 grayscale-[50%]' : ''}
                     ${isHighlighted && !isFloorTile ? 'scale-105 z-40' : ''}
                     ${isEditMode 
                       ? `cursor-grab active:cursor-grabbing ${isSelectedInEdit ? 'ring-4 ring-blue-500 ring-offset-4 ring-offset-amber-900/30 rounded-xl shadow-[0_0_35px_rgba(59,130,246,0.8)]' : 'hover:ring-2 hover:ring-amber-400/80 rounded-xl'}` 
                       : (isFloorTile
                           ? 'cursor-default pointer-events-auto'
-                          : (loc.interactive !== false ? 'group cursor-pointer hover:scale-105' : 'pointer-events-none'))} 
+                          // Hovered: above every other building, so its label is never hidden behind one.
+                          : (loc.interactive !== false ? 'group cursor-pointer hover:scale-105 hover:!z-[350]' : 'pointer-events-none'))} 
                     ${zClass}`
                   }
                   style={{ 
@@ -1343,8 +1349,9 @@ export function InteractiveMap({
                     top: loc.renderedY,
                     transform: `${baseTransform} ${scaleTransform} ${rotationTransform}`.trim(), 
                     transformOrigin: isOverlay ? "center" : "bottom center",
-                    // Each building as its own 3D context: measured ~2× smoother panning than without.
-                    transformStyle: 'preserve-3d'
+                    // Desktop: each building as its own 3D context measured ~2× smoother panning. Phones: flat,
+                    // which needs about a quarter of the compositing layers (fewer memory crashes).
+                    transformStyle: lite ? undefined : 'preserve-3d'
                   }}
                   onMouseEnter={() => {
                     if (isSpecialPlace) setHoveredVenueId(loc.id);
@@ -1432,10 +1439,11 @@ export function InteractiveMap({
                         </div>
 
                         {/* 2. HOUSES & RESIDENTIAL (Not special places) */}
-                        {/* No icon on top; keeps residential grid clean. Subtle hover tooltip only */}
-                        {!isSpecialPlace && loc.interactive !== false && !isFloorTile && !loc.type.startsWith('community') && loc.type !== 'generic-district' && (
+                        {/* No icon on top; keeps residential grid clean. Subtle hover tooltip only, on devices with a
+                            mouse (touch screens can't hover, and each hidden tooltip cost a phone a compositing layer). */}
+                        {canHover && !isSpecialPlace && loc.interactive !== false && !isFloorTile && !loc.type.startsWith('community') && loc.type !== 'generic-district' && (
                           <div className="absolute -top-3 left-1/2 -translate-x-1/2 -translate-y-full opacity-0 group-hover:opacity-100 group-hover:-translate-y-[115%] transition-all duration-300 pointer-events-none z-[100]">
-                            <div className="flex items-center gap-1.5 bg-slate-950/90 backdrop-blur-md text-white border border-white/20 shadow-xl px-2.5 py-1 rounded-full whitespace-nowrap text-xs">
+                            <div className="flex items-center gap-1.5 bg-slate-950/95 text-white border border-white/20 shadow-xl px-2.5 py-1 rounded-full whitespace-nowrap text-xs">
                               <span>{catInfo.icon}</span>
                               <span className="font-bold text-[11px]">{loc.name}</span>
                             </div>

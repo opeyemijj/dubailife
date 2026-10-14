@@ -9,7 +9,9 @@ export function isLowPower(): boolean {
   if (cached !== null) return cached;
   if (typeof window === "undefined") return false;
   const coarse = window.matchMedia?.("(pointer: coarse)").matches ?? false;
-  const small = Math.min(window.innerWidth, window.innerHeight) < 700;
+  // A small window only counts on touch screens: a short laptop browser window isn't a phone.
+  const fine = window.matchMedia?.("(pointer: fine)").matches ?? false;
+  const small = Math.min(window.innerWidth, window.innerHeight) < 700 && !fine;
   const cores = navigator.hardwareConcurrency ?? 8;
   cached = coarse || small || cores <= 4;
   return cached;
