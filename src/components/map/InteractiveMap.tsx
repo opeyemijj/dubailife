@@ -16,9 +16,32 @@ const noSubscribe = () => () => {};
 
 /** A building's drawing. Memoised on the entity object, so moving the map doesn't redraw every building. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const EntitySprite = memo(function EntitySprite({ loc }: { loc: any }) {
+const EntitySprite = memo(function EntitySprite({ loc, lite = false }: { loc: any; lite?: boolean }) {
+  if (lite && (loc.type === 'dubai-villa' || loc.type === 'small-house')) return <LiteHome loc={loc} />;
   return getBuildingSprite(loc.id, loc.type, loc.seed, loc.name, loc);
 });
+
+/**
+ * A home drawn with a handful of shapes, same size and place as the full drawing. Used on phones when
+ * zoomed far out, where hundreds of detailed homes would use too much memory and look the same anyway.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function LiteHome({ loc }: { loc: any }) {
+  const villa = loc.type === 'dubai-villa';
+  const w = Number(loc.width) || (villa ? 120 : 80);
+  const h = Number(loc.height) || (villa ? 95 : 70);
+  const roof = loc.roofColor || loc.accentColor || loc.color || (villa ? '#d4b270' : '#b45309');
+  const wall = loc.wallColor || (villa ? '#fef3c7' : '#f5f5f4');
+  return (
+    <svg viewBox="0 0 100 80" preserveAspectRatio="none" style={{ width: w, height: h }}>
+      <polygon points="8,70 92,70 80,48 20,48" fill={loc.plotColor || '#86c96b'} />
+      <rect x="28" y="34" width="44" height="28" fill={wall} />
+      <polygon points="72,34 82,28 82,56 72,62" fill={wall} opacity="0.75" />
+      <polygon points="24,36 50,16 76,36" fill={roof} />
+      {villa && loc.hasPool !== false && <rect x="14" y="58" width="16" height="6" rx="2" fill="#38bdf8" />}
+    </svg>
+  );
+}
 
 /** The map's background animations (traffic, boats) pause while the map moves, and resume once it stops. */
 const setMapAnimations = (on: boolean) => {
@@ -866,8 +889,7 @@ export function InteractiveMap({
     })).sort((a, b) => (b.layer === 'ground' ? 1 : 0) - (a.layer === 'ground' ? 1 : 0) || a.renderedY - b.renderedY);
   }, [venues, liveAds]);
 
-  // Buildings within (or near) the visible area; everything while editing the map. On phones, zoomed
-  // far out, small homes are left out (landmarks, hotels and towers stay) to keep memory down.
+  // Buildings within (or near) the visible area; everything while editing the map.
   // Read on the client only (the server can't know the device), without a mismatch on hydration.
   const lite = useSyncExternalStore(noSubscribe, isLowPower, () => false);
   const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
@@ -880,14 +902,14 @@ export function InteractiveMap({
       x: -(mapConfig?.startX ?? -120) / DEFAULT_SCALE, y: -(mapConfig?.startY ?? -140) / DEFAULT_SCALE,
       w: window.innerWidth / DEFAULT_SCALE, h: window.innerHeight / DEFAULT_SCALE,
     };
-    const far = lite && window.innerWidth / v.w < 0.42;
     return allRenderedEntities.filter((loc) => {
-      if (far && (loc.type === 'dubai-villa' || loc.type === 'small-house')) return false;
       const r = Math.max(Number(loc.width) || 400, Number(loc.height) || 400);
       return loc.renderedX > v.x - v.w * 0.5 - r && loc.renderedX < v.x + v.w * 1.5 + r
         && loc.renderedY > v.y - v.h * 0.5 - r && loc.renderedY < v.y + v.h * 1.5 + r * 1.5;
     });
-  }, [allRenderedEntities, view, isEditMode, lite, hydrated]);
+  }, [allRenderedEntities, view, isEditMode, hydrated]);
+  // On phones, zoomed far out, homes switch to a simple drawing (same size and place).
+  const farLite = lite && !!view && typeof window !== 'undefined' && window.innerWidth / view.w < 0.42;
 
   return (
     <div className={`absolute inset-0 w-screen h-[100dvh] z-0 bg-[#d6bc8a] overflow-hidden touch-none select-none overscroll-none ${lite ? 'map-lite' : ''}`}>
@@ -1406,7 +1428,7 @@ export function InteractiveMap({
                   ) : (
                      <>
                         <div className={`${loc.size || ''} transition-transform ${loc.interactive !== false && !isOverlay ? '' : ''} flex justify-center items-end`}>
-                           <EntitySprite loc={loc} />
+                           <EntitySprite loc={loc} lite={farLite} />
                         </div>
 
                         {/* 2. HOUSES & RESIDENTIAL (Not special places) */}
