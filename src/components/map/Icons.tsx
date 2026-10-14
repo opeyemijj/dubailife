@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { MallBlock, type MallBlockProps } from './MallBlock';
 import { MuseumOfFutureIcon, type MuseumOfFutureProps } from './MuseumOfFuture';
 import { HotelBlock, type HotelBlockProps, HotelResortComponent } from './HotelBlock';
+import { AtlantisPalmSprite, AtlantisRoyalSprite, PalmBeachSprite, PalmParkSprite, PalmResortSprite, PalmTowerSprite, PointeSprite } from './PalmJumeirah';
 import { BurjKhalifa, type BurjKhalifaProps, BurjKhalifaIcon } from './BurjKhalifa';
 import { FloorTile, type FloorTileProps, IslandFloorTile } from './FloorTile';
 import { TallBuilding, type TallBuildingProps, type TallBuildingShape, type RoofFeature } from './TallBuilding';
@@ -22,6 +23,32 @@ import {
   OneOakClub,
   TingIrie
 } from './DowntownAmenities';
+import {
+  DIFCMosque,
+  ZabeelMosque,
+  OneZaabeel,
+  RitzCarltonDIFC,
+  ZumaDIFC,
+  AmazonicoDIFC,
+  LPMDIFC,
+  BabylonDIFC,
+  KizaClub,
+  SphereZaabeel,
+  IsometricNightclubVenue
+} from './DIFCZaabeelAmenities';
+export {
+  DIFCMosque,
+  ZabeelMosque,
+  OneZaabeel,
+  RitzCarltonDIFC,
+  ZumaDIFC,
+  AmazonicoDIFC,
+  LPMDIFC,
+  BabylonDIFC,
+  KizaClub,
+  SphereZaabeel,
+  IsometricNightclubVenue
+};
 
 export const isoToScreen = (gx: number, gy: number, originX = 150, originY = 80) => ({
   x: originX + (gx - gy) * 0.866,
@@ -886,15 +913,17 @@ export const RooftopIconNew = () => (
   </svg>
 );
 
-export const NightclubIconNew = () => (
-  <svg viewBox="0 0 80 80" className="w-[60px] h-[60px] drop-shadow-lg cursor-pointer hover:scale-110 transition-transform origin-bottom z-20">
-    <rect x="10" y="30" width="60" height="40" fill="#1e293b" rx="4" />
-    <rect x="15" y="35" width="50" height="30" fill="#0f172a" rx="2" />
-    <rect x="35" y="50" width="10" height="20" fill="#ef4444" opacity="0.8" />
-    <circle cx="40" cy="18" r="16" fill="#9333ea" />
-    <circle cx="40" cy="18" r="12" fill="none" stroke="#f472b6" strokeWidth="2" strokeDasharray="2 2" />
-    <path d="M 35 12 L 35 24 L 47 18 Z" fill="#ffffff" />
-  </svg>
+export const NightclubIconNew = (props: any) => (
+  <IsometricNightclubVenue
+    marqueeText="NIGHTCLUB"
+    marqueeColor="#f472b6"
+    accentGlow="#d946ef"
+    stripes={["#9333ea", "#ec4899", "#06b6d4"]}
+    ledColors={["#9333ea", "#ec4899", "#06b6d4", "#9333ea", "#ec4899", "#06b6d4"]}
+    wallColor="#0f172a"
+    name="VIP Nightclub & Lounge"
+    {...props}
+  />
 );
 
 export interface IsometricBeachProps {
@@ -1397,6 +1426,18 @@ export const venueActions: Record<string, ActionDef[]> = {
   'ting-irie': [
     { label: "Jerk Chicken & Rum Punch", amount: -180, color: "bg-amber-600" },
     { label: "Reggae Afrobeat VIP Night", amount: -350, color: "bg-yellow-500" }
+  ],
+  'kiza-difc': [
+    { label: "VIP Afrobeat & Amapiano Table", amount: -2800, color: "bg-amber-600" },
+    { label: "Suya Skewers & African Cocktails", amount: -240, color: "bg-emerald-600" }
+  ],
+  'babylon-difc': [
+    { label: "Cabaret Spectacular Dinner Table", amount: -3200, color: "bg-rose-700" },
+    { label: "Dom Pérignon Champagne & Show Entry", amount: -450, color: "bg-amber-500" }
+  ],
+  'sphere-zaabeel': [
+    { label: "Suspended Sky Cantilever VIP Table", amount: -3500, color: "bg-cyan-600" },
+    { label: "Zero-Gravity High-Altitude Cocktail", amount: -180, color: "bg-violet-600" }
   ],
 };
 
@@ -1974,6 +2015,145 @@ export const DWTCIcon = ({ width = 110, height = 200 }: { width?: number, height
       <polygon points="48,35.5 104,36.5 102,24.5 46,23.5" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="0.6" />
       <line x1="75" y1="24" x2="75" y2="8" stroke="#cbd5e1" strokeWidth="1.2" />
       <circle cx="75" cy="7" r="1.5" fill="#ef4444" className="animate-pulse" />
+    </g>
+  </svg>
+);
+
+export const IndexTowerIcon = ({ width = 95, height = 310 }: { width?: number, height?: number }) => (
+  <svg 
+    viewBox="0 0 110 350" 
+    preserveAspectRatio="none"
+    style={{ width: `${width}px`, height: `${height}px` }} 
+    className="drop-shadow-2xl z-30 cursor-pointer hover:scale-105 transition-transform origin-bottom select-none"
+  >
+    <defs>
+      <linearGradient id="index-glass-front" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#0284c7" />
+        <stop offset="30%" stopColor="#38bdf8" />
+        <stop offset="70%" stopColor="#0ea5e9" />
+        <stop offset="100%" stopColor="#0369a1" />
+      </linearGradient>
+      <linearGradient id="index-concrete-core" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#475569" />
+        <stop offset="50%" stopColor="#94a3b8" />
+        <stop offset="100%" stopColor="#334155" />
+      </linearGradient>
+      <linearGradient id="index-shaded-side" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#1e293b" />
+        <stop offset="100%" stopColor="#0f172a" />
+      </linearGradient>
+    </defs>
+
+    {/* Isometric Plinth & Reflecting Pool */}
+    <polygon points="12,342 98,343.5 104,329 18,327.5" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="0.8" />
+    <polygon points="16,341 94,342.3 98,330 22,328.7" fill="#0284c7" opacity="0.8" />
+
+    {/* Main Foster + Partners Supertall Structure (80 Storeys) */}
+    <g>
+      {/* West Shaded Depth Wall */}
+      <polygon points="24,328 38,329.5 38,42.5 24,41" fill="url(#index-shaded-side)" />
+
+      {/* Central Structural Concrete Core Buttresses */}
+      <polygon points="38,329.5 48,330 48,43 38,42.5" fill="url(#index-concrete-core)" stroke="#cbd5e1" strokeWidth="0.4" />
+      <polygon points="76,330 86,330.5 86,43.5 76,43" fill="url(#index-concrete-core)" stroke="#cbd5e1" strokeWidth="0.4" />
+
+      {/* Main East-West Orientated Glass Curtain Facade */}
+      <polygon points="48,330 76,330 76,43 48,43" fill="url(#index-glass-front)" stroke="#7dd3fc" strokeWidth="0.5" />
+
+      {/* Lower Commercial Office Floors */}
+      {Array.from({ length: 9 }).map((_, i) => (
+        <line key={`idx-off-${i}`} x1="48" y1={235 + i * 10} x2="76" y2={235 + i * 10} stroke="#e0f2fe" strokeWidth="0.7" opacity="0.8" />
+      ))}
+
+      {/* Signature Double-Height Sky Lobby at Level 30 */}
+      <rect x="48" y="222" width="28" height="11" fill="#0369a1" stroke="#38bdf8" strokeWidth="0.8" />
+      <rect x="52" y="225" width="20" height="5" fill="#facc15" opacity="0.8" />
+
+      {/* Upper Residential Penthouses Floors 31-75 */}
+      {Array.from({ length: 16 }).map((_, i) => (
+        <g key={`idx-res-${i}`}>
+          <line x1="48" y1={55 + i * 10} x2="76" y2={55 + i * 10} stroke="#bae6fd" strokeWidth="0.6" opacity="0.9" />
+          <line x1="62" y1={55 + i * 10} x2="62" y2={65 + i * 10} stroke="#0369a1" strokeWidth="0.5" />
+        </g>
+      ))}
+
+      {/* Upper VIP Penthouse Skydeck (Level 76-80) */}
+      <polygon points="46,43 78,43 74,28 50,28" fill="url(#index-glass-front)" stroke="#f8fafc" strokeWidth="0.7" />
+      <polygon points="38,42.5 46,43 50,28 42,27.5" fill="url(#index-shaded-side)" />
+
+      {/* Crown Spire */}
+      <line x1="62" y1="28" x2="62" y2="10" stroke="#f8fafc" strokeWidth="1.2" />
+      <circle cx="62" cy="9" r="1.5" fill="#ef4444" className="animate-pulse" />
+    </g>
+  </svg>
+);
+
+export const AlYaqoubTowerIcon = ({ width = 85, height = 300 }: { width?: number, height?: number }) => (
+  <svg 
+    viewBox="0 0 100 350" 
+    preserveAspectRatio="none"
+    style={{ width: `${width}px`, height: `${height}px` }} 
+    className="drop-shadow-2xl z-30 cursor-pointer hover:scale-105 transition-transform origin-bottom select-none"
+  >
+    <defs>
+      <linearGradient id="yaqoub-stone-front" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#d4d4d8" />
+        <stop offset="35%" stopColor="#f4f4f5" />
+        <stop offset="70%" stopColor="#e4e4e7" />
+        <stop offset="100%" stopColor="#a1a1aa" />
+      </linearGradient>
+      <linearGradient id="yaqoub-stone-side" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#52525b" />
+        <stop offset="100%" stopColor="#27272a" />
+      </linearGradient>
+      <radialGradient id="clock-glow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#fef08a" />
+        <stop offset="70%" stopColor="#eab308" />
+        <stop offset="100%" stopColor="#ca8a04" />
+      </radialGradient>
+    </defs>
+
+    {/* Podium Base */}
+    <polygon points="16,340 84,341.2 90,327 22,325.8" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="0.8" />
+    <polygon points="20,339 80,340 84,328 24,327" fill="#f8fafc" />
+
+    {/* Tower Shaft (328m, Big Ben of Dubai) */}
+    <g>
+      {/* Shaded Depth Corner */}
+      <polygon points="26,326 38,327.5 38,72.5 26,71" fill="url(#yaqoub-stone-side)" />
+
+      {/* Main Front Stone & Glass Facade */}
+      <polygon points="38,327.5 74,328 74,73 38,72.5" fill="url(#yaqoub-stone-front)" stroke="#a1a1aa" strokeWidth="0.5" />
+
+      {/* Vertical Classical Pilasters */}
+      <line x1="44" y1="73" x2="44" y2="327.5" stroke="#71717a" strokeWidth="1" />
+      <line x1="68" y1="73" x2="68" y2="328" stroke="#71717a" strokeWidth="1" />
+
+      {/* Central Recessed Blue Glass Window Strips */}
+      <rect x="47" y="76" width="18" height="248" fill="#0284c7" opacity="0.65" />
+      {Array.from({ length: 22 }).map((_, i) => (
+        <line key={`yq-fl-${i}`} x1="47" y1={86 + i * 11} x2="65" y2={86 + i * 11} stroke="#ffffff" strokeWidth="0.6" opacity="0.8" />
+      ))}
+    </g>
+
+    {/* Big Ben Clock Tower Crown */}
+    <g>
+      {/* Clock Chamber Stone Box */}
+      <polygon points="24,71 36,72.5 36,40.5 24,39" fill="url(#yaqoub-stone-side)" />
+      <polygon points="36,72.5 76,73 76,41 36,40.5" fill="url(#yaqoub-stone-front)" stroke="#a1a1aa" strokeWidth="0.6" />
+
+      {/* Illuminated 4-Sided Clock Face */}
+      <circle cx="56" cy="56" r="11" fill="url(#clock-glow)" stroke="#71717a" strokeWidth="1" />
+      <circle cx="56" cy="56" r="8.5" fill="#fefce8" stroke="#000000" strokeWidth="0.5" />
+      {/* Clock Hands */}
+      <line x1="56" y1="56" x2="56" y2="50" stroke="#000000" strokeWidth="1" strokeLinecap="round" />
+      <line x1="56" y1="56" x2="61" y2="56" stroke="#000000" strokeWidth="0.8" strokeLinecap="round" />
+
+      {/* Classical Spire */}
+      <polygon points="24,39 36,40.5 56,12 44,11" fill="url(#yaqoub-stone-side)" />
+      <polygon points="36,40.5 76,41 56,12" fill="url(#yaqoub-stone-front)" stroke="#a1a1aa" strokeWidth="0.6" />
+      <line x1="56" y1="12" x2="56" y2="3" stroke="#f4f4f5" strokeWidth="1.2" />
+      <circle cx="56" cy="2.5" r="1.5" fill="#ef4444" className="animate-pulse" />
     </g>
   </svg>
 );
@@ -2753,12 +2933,13 @@ export const BusinessBayBlock = () => <TycoonBlock name="Business Bay" type="apa
 export const DeiraBlock = () => <TycoonBlock name="Deira" type="apartment" cols={11} rows={7} w={340} h={240} />;
 export const MotorCityBlock = () => <TycoonBlock name="Motor City" type="apartment" cols={10} rows={6} w={310} h={210} />;
 
-export const PalmCommunityBlock = ({ width = 420, height = 380 }: { width?: number, height?: number }) => (
+/** The Palm Jumeirah island. `bare` leaves out the little built-in buildings when real ones are placed on it. */
+export const PalmCommunityBlock = ({ width = 420, height = 380, bare = false }: { width?: number, height?: number, bare?: boolean }) => (
   <svg 
     viewBox="0 0 520 440" 
     preserveAspectRatio="none"
     style={{ width: `${width}px`, height: `${height}px` }} 
-    className="drop-shadow-2xl z-20 relative cursor-pointer group select-none hover:scale-[1.02] transition-transform origin-bottom"
+    className={`drop-shadow-2xl z-20 relative select-none ${bare ? '' : 'cursor-pointer group hover:scale-[1.02] transition-transform origin-bottom'}`}
   >
     <defs>
       {/* Palm Sand Gradient */}
@@ -2814,7 +2995,7 @@ export const PalmCommunityBlock = ({ width = 420, height = 380 }: { width?: numb
     </g>
 
     {/* 3. 3D Atlantis The Palm Resort (at the Crescent Apex X=260, Y=45) */}
-    <g transform="translate(225, 22)">
+    {!bare && <g transform="translate(225, 22)">
       {/* Resort Plinth Base */}
       <polygon points="10,48 60,49 66,40 16,39" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="0.5" />
       {/* Main East & West Wings (Arabian Royal Pink Terraces) */}
@@ -2832,7 +3013,7 @@ export const PalmCommunityBlock = ({ width = 420, height = 380 }: { width?: numb
       <polygon points="32,20 35,12 38,20" fill="url(#atlantisGold)" />
       {/* Private Aquaventure Lagoon */}
       <ellipse cx="35" cy="52" rx="18" ry="5" fill="#38bdf8" opacity="0.8" />
-    </g>
+    </g>}
 
     {/* 4. Turquoise Inner Protected Lagoon */}
     <ellipse cx="260" cy="225" rx="195" ry="135" fill="url(#palmLagoonWater)" />
@@ -2856,8 +3037,8 @@ export const PalmCommunityBlock = ({ width = 420, height = 380 }: { width?: numb
             strokeWidth="11" 
             strokeLinecap="round" 
           />
-          {/* Left Frond Luxury Beach Villas (Small white roofs) */}
-          {[0.3, 0.55, 0.8].map((ratio, vIdx) => {
+          {/* Left Frond Luxury Beach Villas (Small white roofs) - 4 villas per wing */}
+          {!bare && [0.26, 0.48, 0.70, 0.88].map((ratio, vIdx) => {
             const vx = 252 - (252 - leftEndX) * ratio;
             const vy = (cy + 2) - ((cy + 2) - endY) * ratio + 3;
             return (
@@ -2876,8 +3057,8 @@ export const PalmCommunityBlock = ({ width = 420, height = 380 }: { width?: numb
             strokeWidth="11" 
             strokeLinecap="round" 
           />
-          {/* Right Frond Luxury Beach Villas */}
-          {[0.3, 0.55, 0.8].map((ratio, vIdx) => {
+          {/* Right Frond Luxury Beach Villas - 4 villas per wing */}
+          {!bare && [0.26, 0.48, 0.70, 0.88].map((ratio, vIdx) => {
             const vx = 268 + (rightEndX - 268) * ratio;
             const vy = (cy + 2) - ((cy + 2) - endY) * ratio + 3;
             return (
@@ -2896,8 +3077,8 @@ export const PalmCommunityBlock = ({ width = 420, height = 380 }: { width?: numb
       {/* Trunk Sand Base */}
       <polygon points="244,105 276,105 284,360 236,360" fill="url(#palmSandGrad)" stroke="#ca8a04" strokeWidth="0.8" />
       {/* Golden Mile & Shoreline Apartments (3D Blocks on sides of trunk) */}
-      <polygon points="238,150 246,150 248,340 238,340" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.5" />
-      <polygon points="274,150 282,150 282,340 272,340" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.5" />
+      {!bare && <polygon points="238,150 246,150 248,340 238,340" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.5" />}
+      {!bare && <polygon points="274,150 282,150 282,340 272,340" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.5" />}
       {/* Central Palm Highway */}
       <line x1="256" y1="110" x2="256" y2="355" stroke="#334155" strokeWidth="4" />
       <line x1="264" y1="110" x2="264" y2="355" stroke="#334155" strokeWidth="4" />
@@ -2906,8 +3087,8 @@ export const PalmCommunityBlock = ({ width = 420, height = 380 }: { width?: numb
       <circle cx="260" cy="180" r="2" fill="#38bdf8" />
       <circle cx="260" cy="270" r="2" fill="#38bdf8" />
       {/* Nakheel Mall Base Complex */}
-      <polygon points="248,220 272,220 274,250 246,250" fill="#0284c7" stroke="#38bdf8" strokeWidth="0.8" />
-      <polygon points="252,225 268,225 266,245 254,245" fill="#fde047" opacity="0.8" />
+      {!bare && <polygon points="248,220 272,220 274,250 246,250" fill="#0284c7" stroke="#38bdf8" strokeWidth="0.8" />}
+      {!bare && <polygon points="252,225 268,225 266,245 254,245" fill="#fde047" opacity="0.8" />}
     </g>
 
     {/* 7. Gateway Entry Bridge connecting to Jumeirah Coast Road */}
@@ -4437,6 +4618,14 @@ export {
 };
 
 export const getBuildingSprite = (id: string, type: string, seed?: number, title?: string, loc?: any, onUnitClick?: any) => {
+  // Palm Jumeirah landmarks
+  if (type === 'hotel-atlantis') return <AtlantisPalmSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'hotel-atlantis-royal') return <AtlantisRoyalSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'hotel-palm-resort') return <PalmResortSprite width={loc?.width} height={loc?.height} name={title || loc?.name} theme={loc?.theme} roof={loc?.roof} />;
+  if (type === 'palm-tower') return <PalmTowerSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'the-pointe') return <PointeSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'park-palm') return <PalmParkSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'palm-beach') return <PalmBeachSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
   if (type === 'plot' || type === 'building-plot' || type === 'base-plot') return (
     <Plot 
       width={loc?.width} 
@@ -4513,7 +4702,7 @@ export const getBuildingSprite = (id: string, type: string, seed?: number, title
   if (type === 'community-jbr') return <JBRBlock />;
   if (type === 'community-bluewaters') return <BluewatersBlock />;
   if (type === 'community-ranches') return <ArabianRanchesBlock />;
-  if (type === 'community-palm' || id === 'palm') return <PalmCommunityBlock width={loc?.width} height={loc?.height} />;
+  if (type === 'community-palm' || id === 'palm') return <PalmCommunityBlock width={loc?.width} height={loc?.height} bare={!!loc?.bare} />;
   if (type === 'community-motor-city') return <MotorCityBlock />;
   if (type === 'community-deira') return <DeiraBlock />;
   if (type === 'community-business-bay') return <BusinessBayBlock />;
@@ -4615,6 +4804,24 @@ export const getBuildingSprite = (id: string, type: string, seed?: number, title
   if (type === 'one-oak' || id === 'one-oak') return <OneOakClub width={loc?.width} height={loc?.height} name={title || loc?.name} />;
   if (type === 'dubai-aquarium' || id === 'dubai-aquarium') return <DubaiAquarium width={loc?.width} height={loc?.height} name={title || loc?.name} />;
   if (type === 'ting-irie' || id === 'ting-irie') return <TingIrie width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'emirates-towers' || id === 'emirates-towers') return <EmiratesTowersIcon width={loc?.width} height={loc?.height} />;
+  if (type === 'the-index' || id === 'the-index') return <IndexTowerIcon width={loc?.width} height={loc?.height} />;
+  if (type === 'al-yaqoub' || id === 'al-yaqoub') return <AlYaqoubTowerIcon width={loc?.width} height={loc?.height} />;
+  if (type === 'gevora' || id === 'gevora') return <GevoraIcon width={loc?.width} height={loc?.height} />;
+  if (type === 'rose-rayhaan' || id === 'rose-rayhaan') return <RoseRayhaanIcon width={loc?.width} height={loc?.height} />;
+  if (type === 'dwtc' || id === 'dwtc') return <DWTCIcon width={loc?.width} height={loc?.height} />;
+
+  // DIFC & Za'abeel Amenities & Mosques
+  if (type === 'difc-mosque' || id === 'difc-mosque') return <DIFCMosque width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'zabeel-mosque' || id === 'zabeel-mosque') return <ZabeelMosque width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'one-zaabeel' || id === 'one-zaabeel') return <OneZaabeel width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'ritz-carlton-difc' || id === 'ritz-carlton-difc') return <RitzCarltonDIFC width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'zuma-difc' || id === 'zuma-difc') return <ZumaDIFC width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'amazonico-difc' || id === 'amazonico-difc') return <AmazonicoDIFC width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'lpm-difc' || id === 'lpm-difc') return <LPMDIFC width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'babylon-difc' || id === 'babylon-difc') return <BabylonDIFC width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'kiza-difc' || id === 'kiza-difc' || type === 'kiza') return <KizaClub width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'sphere-zaabeel' || id === 'sphere-zaabeel') return <SphereZaabeel width={loc?.width} height={loc?.height} name={title || loc?.name} />;
 
   switch(id) {
     case 'burj-khalifa': return <BurjKhalifaIcon />;
@@ -4627,9 +4834,21 @@ export const getBuildingSprite = (id: string, type: string, seed?: number, title
     case 'dubai-frame': return <DubaiFrameIcon width={loc?.width} height={loc?.height} />;
     case 'atlantis': return <AtlantisIcon />;
     case 'emirates-towers': return <EmiratesTowersIcon width={loc?.width} height={loc?.height} />;
+    case 'the-index': return <IndexTowerIcon width={loc?.width} height={loc?.height} />;
+    case 'al-yaqoub': return <AlYaqoubTowerIcon width={loc?.width} height={loc?.height} />;
     case 'gevora': return <GevoraIcon width={loc?.width} height={loc?.height} />;
     case 'rose-rayhaan': return <RoseRayhaanIcon width={loc?.width} height={loc?.height} />;
     case 'dwtc': return <DWTCIcon width={loc?.width} height={loc?.height} />;
+    case 'difc-mosque': return <DIFCMosque width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+    case 'zabeel-mosque': return <ZabeelMosque width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+    case 'one-zaabeel': return <OneZaabeel width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+    case 'ritz-carlton-difc': return <RitzCarltonDIFC width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+    case 'zuma-difc': return <ZumaDIFC width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+    case 'amazonico-difc': return <AmazonicoDIFC width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+    case 'lpm-difc': return <LPMDIFC width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+    case 'babylon-difc': return <BabylonDIFC width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+    case 'kiza-difc': return <KizaClub width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+    case 'sphere-zaabeel': return <SphereZaabeel width={loc?.width} height={loc?.height} name={title || loc?.name} />;
   }
   return <GenericNeighborhood name={title || "District"} seed={seed || 0} />;
 };

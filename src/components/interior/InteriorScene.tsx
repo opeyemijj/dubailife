@@ -13,7 +13,8 @@ import { CitizenAvatar, StudioEnvironment, type AvatarAnimation } from "@/compon
 import type { AvatarLookProps } from "@/components/avatar/roster";
 import type { Accessory, Venue } from "@/lib/city/types";
 import { approachPoint, type Plan, type StationDef } from "./layouts";
-import { floorTexture, signTexture } from "./materials";
+import { floorTexture, signTexture, wallAdScreenTexture } from "./materials";
+import { getVenueWallAd } from "@/lib/venueAds";
 import { ChampagneBottle, ServedItem, type ServedDef } from "./served";
 import type { Peer } from "@/lib/room";
 
@@ -69,13 +70,29 @@ interface Props {
   onLocal?: (local: Peer) => void;
   /** Tapped a free spot on the floor (or the dance floor). */
   onFloor?: (point: [number, number]) => void;
+  /** Tapped the in-venue wall advertisement screen */
+  onWallAdClick?: () => void;
 }
 
-function Room({ venue, plan, onFloor }: { venue: Venue; plan: Plan; onFloor?: (point: [number, number]) => void }) {
+function Room({ venue, plan, onFloor, onWallAdClick }: { venue: Venue; plan: Plan; onFloor?: (point: [number, number]) => void; onWallAdClick?: () => void }) {
   const [w, d] = plan.size;
   const floor = useMemo(() => floorTexture(plan.floor, venue.palette.floor, [w / 4, d / 4]), [plan.floor, venue.palette.floor, w, d]);
   const dark = venue.layout === "club" || venue.palette.wall === "#2a2420" || venue.palette.wall === "#0f172a" || venue.palette.wall === "#5a3e2b";
   const sign = useMemo(() => signTexture(venue.name, dark ? "#f8fafc" : venue.palette.accent, null), [venue.name, venue.palette.accent, dark]);
+  
+  // Dynamic in-venue digital wall ad
+  const wallAd = useMemo(() => getVenueWallAd(venue.id), [venue.id]);
+
+  const adTexture = useMemo(() => {
+    if (!wallAd) return null;
+    return wallAdScreenTexture(wallAd.headline, wallAd.sponsorName, wallAd.badge);
+  }, [wallAd]);
+
+  const adW = Math.min(2.5, w * 0.35);
+  const adH = (adW * 9) / 16;
+  const adX = w > 8 ? w * 0.28 : 0;
+  const adY = w > 8 ? 2.3 : 1.9;
+
   return (
     <group>
       <mesh
@@ -99,6 +116,47 @@ function Room({ venue, plan, onFloor }: { venue: Venue; plan: Plan; onFloor?: (p
             <planeGeometry args={[Math.min(6, w * 0.5), 1.1]} />
             <meshStandardMaterial map={sign} transparent emissive={dark ? "#ffffff" : "#000000"} emissiveMap={dark ? sign : null} emissiveIntensity={dark ? 0.6 : 0} />
           </mesh>
+
+          {/* Interactive Wall Advertisement Screen */}
+          {adTexture && (
+            <group
+              position={[adX, adY, -d / 2 + 0.09]}
+              onClick={(e) => {
+                e.stopPropagation();
+                onWallAdClick?.();
+              }}
+              onPointerOver={(e) => {
+                e.stopPropagation();
+                document.body.style.cursor = "pointer";
+              }}
+              onPointerOut={() => {
+                document.body.style.cursor = "auto";
+              }}
+            >
+              {/* Bezel frame */}
+              <mesh position={[0, 0, -0.01]}>
+                <boxGeometry args={[adW + 0.12, adH + 0.12, 0.03]} />
+                <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.2} />
+              </mesh>
+              {/* Subtle back ambient glow */}
+              <mesh position={[0, 0, -0.015]}>
+                <boxGeometry args={[adW + 0.18, adH + 0.18, 0.01]} />
+                <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={0.8} />
+              </mesh>
+              {/* Screen display */}
+              <mesh position={[0, 0, 0.01]}>
+                <planeGeometry args={[adW, adH]} />
+                <meshStandardMaterial
+                  map={adTexture}
+                  roughness={0.2}
+                  metalness={0.1}
+                  emissive="#ffffff"
+                  emissiveMap={adTexture}
+                  emissiveIntensity={0.65}
+                />
+              </mesh>
+            </group>
+          )}
         </>
       )}
     </group>
@@ -407,7 +465,7 @@ function Player({ look, worn, start, walkTo, onArrive, animation, lift, follow, 
   );
 }
 
-export function InteriorScene({ venue, plan, look, worn, playerAnimation, playerLift = 0, start, walkTo, onArrive, onStation, onStaff, staffAnimation, highlight, served, deliveries, onPlaced, onDeliveryDone, peers = [], bubbles = {}, peerBadges = {}, onPeer, locals = [], onLocal, onFloor }: Props) {
+export function InteriorScene({ venue, plan, look, worn, playerAnimation, playerLift = 0, start, walkTo, onArrive, onStation, onStaff, staffAnimation, highlight, served, deliveries, onPlaced, onDeliveryDone, peers = [], bubbles = {}, peerBadges = {}, onPeer, locals = [], onLocal, onFloor, onWallAdClick }: Props) {
   const quality = useMemo(() => canvasQuality(), []);
   const [w, d] = plan.size;
   const shoppers = useMemo(() => {
@@ -451,7 +509,7 @@ export function InteriorScene({ venue, plan, look, worn, playerAnimation, player
       <StudioEnvironment intensity={venue.layout === "club" ? 0.35 : 0.45} />
       <Lights venue={venue} plan={plan} />
       {/* The room appears at once; everything with a model streams in on its own as it arrives. */}
-      <Room venue={venue} plan={plan} onFloor={onFloor} />
+      <Room venue={venue} plan={plan} onFloor={onFloor} onWallAdClick={onWallAdClick} />
       <Suspense fallback={null}>{plan.decor}</Suspense>
       {plan.stations.map((s) => (
         <Station key={s.id} s={s} active={highlight === s.id} hover={hovered === s.id} onHover={(on) => setHovered((h) => (on ? s.id : h === s.id ? null : h))} onClick={clickStation(s)} />

@@ -6,7 +6,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Briefcase, Check, LogOut, MessageCircle, MessagesSquare, Search, ShoppingBag, Sparkles, X } from "lucide-react";
+import { ArrowLeft, Briefcase, Check, LogOut, Megaphone, MessageCircle, MessagesSquare, Search, ShoppingBag, Sparkles, X } from "lucide-react";
 import type { Place, Product, StationKind, Venue } from "@/lib/city/types";
 import { adjustBalance, boostNeed, updateCitizen, useCitizen, type InventoryItem } from "@/lib/citizenStore";
 import type { AvatarAnimation } from "@/components/avatar/CitizenAvatar";
@@ -14,6 +14,7 @@ import { gameAudio } from "@/utils/gameAudio";
 import { InteriorScene, type DeliveryDef, type WalkTarget } from "./InteriorScene";
 import { VenueRadio } from "./VenueRadio";
 import { VenueAbout, VenueLoadingCard } from "./VenueOwnerLayer";
+import { VenueWallAdModal } from "./VenueWallAdModal";
 import { countVisit, useVenuePublic, venueKey, withOwnerContent } from "@/lib/venueContent";
 import { befriend, sendMoney, useRoom, type Peer, type Received } from "@/lib/room";
 import { PeerPanel, type SocialContext } from "@/components/social/PeerPanel";
@@ -59,6 +60,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   const pub = useVenuePublic(key);
   const venue = useMemo(() => withOwnerContent(baseVenue, pub?.content), [baseVenue, pub?.content]);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [wallAdOpen, setWallAdOpen] = useState(false);
   useEffect(() => { countVisit(key); }, [key]);
   const router = useRouter();
   const { citizen } = useCitizen();
@@ -865,11 +867,13 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         locals={localPeers}
         onLocal={openLocal}
         onFloor={onFloor}
+        onWallAdClick={() => setWallAdOpen(true)}
       />
 
       <SceneLoadingOverlay label={`Entering ${venue.name}`} />
       <VenueLoadingCard venueKey={key} venueName={venue.name} pub={pub} />
       {aboutOpen && pub && <VenueAbout venueName={venue.name} pub={pub} onClose={() => setAboutOpen(false)} />}
+      <VenueWallAdModal venueId={venue.id} venueName={venue.name} open={wallAdOpen} onOpenChange={setWallAdOpen} />
       <VenueRadio venue={venue} compact={!!panel} />
 
       {/* Header */}
@@ -896,6 +900,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       {!panel && (
         <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-30 flex flex-wrap justify-center gap-2 w-[min(96vw,560px)] pointer-events-auto">
           <button onClick={openStaff} className="h-11 px-4 rounded-full bg-white/95 shadow-xl text-xs font-black flex items-center gap-1.5"><MessageCircle className="w-4 h-4" /> Talk to {venue.staff.role.toLowerCase()}</button>
+          <button onClick={() => setWallAdOpen(true)} className="h-11 px-4 rounded-full bg-white/95 shadow-xl text-xs font-black flex items-center gap-1.5 text-slate-900 hover:bg-slate-50"><Megaphone className="w-4 h-4 text-amber-500" /> Wall Ad</button>
           {job && <button onClick={openStaff} className="h-11 px-4 rounded-full bg-white/95 shadow-xl text-xs font-black flex items-center gap-1.5"><Briefcase className="w-4 h-4" /> {worksHere ? "Work a shift" : "Jobs"}</button>}
           {onDanceFloor && playerAnimation !== "dance" && (
             <button onClick={() => { setPlayerAnimation("dance"); boostNeed("fun", 6); }} className="h-11 px-4 rounded-full bg-fuchsia-500 text-white shadow-xl text-xs font-black flex items-center gap-1.5">💃 Dance</button>

@@ -8,6 +8,7 @@ import { MessageAlerts } from "@/components/social/MessageAlerts";
 import { Suspense } from "react";
 import { SITE } from "@/lib/site";
 import { ServiceWorker } from "@/components/pwa/ServiceWorker";
+import { KeyboardShortcuts } from "@/components/common/KeyboardShortcuts";
 
 const fredoka = Fredoka({ subsets: ["latin"], display: 'swap' });
 
@@ -103,6 +104,7 @@ export default function RootLayout({
         <MoneyListener />
         <Suspense fallback={null}><MessageAlerts /></Suspense>
         {children}
+        <KeyboardShortcuts />
       </body>
     </html>
   );

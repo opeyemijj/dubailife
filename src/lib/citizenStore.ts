@@ -149,15 +149,14 @@ export function useCitizen(): CitizenState {
   return useSyncExternalStore(subscribe, getSnapshot, () => SERVER_STATE);
 }
 
-/** Like useCitizen, but sends signed-out visitors to sign up, and unfinished sign-ups to onboarding. */
+/** Like useCitizen, but sends signed-out visitors directly to the log-in popup. */
 export function useRequireCitizen(): CitizenState {
   const router = useRouter();
   const current = useCitizen();
   useEffect(() => {
     if (!current.hydrated || current.isLoggedIn) return;
-    if (current.needsOnboarding) router.replace("/onboarding/look");
-    else router.replace(signedOutOnPurpose ? "/" : "/?signup=true");
-  }, [current.hydrated, current.isLoggedIn, current.needsOnboarding, router]);
+    router.replace("/?login=true");
+  }, [current.hydrated, current.isLoggedIn, router]);
   return current;
 }
 

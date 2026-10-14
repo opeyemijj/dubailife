@@ -32,7 +32,11 @@ function Explore() {
   const [activeFilter, setActiveFilter] = useState("all");
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
-  useRequireCitizen();
+  const { isLoggedIn, hydrated } = useRequireCitizen();
+
+  if (!hydrated || !isLoggedIn) {
+    return <SmallLoader label="Loading Dubai" />;
+  }
 
   const filters = [
     { id: "all", label: "All Venues", icon: <Navigation className="w-3.5 h-3.5" /> },

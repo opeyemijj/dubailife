@@ -276,6 +276,16 @@ export default function BuilderClient() {
         if (type === 'blu-dubai') return <Icons.BluDubaiClub width={loc.width} height={loc.height} name={name || loc.name} />;
         if (type === 'one-oak') return <Icons.OneOakClub width={loc.width} height={loc.height} name={name || loc.name} />;
         if (type === 'ting-irie') return <Icons.TingIrie width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'kiza-difc' || type === 'kiza') return <Icons.KizaClub width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'babylon-difc') return <Icons.BabylonDIFC width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'sphere-zaabeel') return <Icons.SphereZaabeel width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'zuma-difc') return <Icons.ZumaDIFC width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'amazonico-difc') return <Icons.AmazonicoDIFC width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'lpm-difc') return <Icons.LPMDIFC width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'one-zaabeel') return <Icons.OneZaabeel width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'ritz-carlton-difc') return <Icons.RitzCarltonDIFC width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'difc-mosque') return <Icons.DIFCMosque width={loc.width} height={loc.height} name={name || loc.name} />;
+        if (type === 'zabeel-mosque') return <Icons.ZabeelMosque width={loc.width} height={loc.height} name={name || loc.name} />;
         if (type === 'beach-club') return <Icons.BeachClubIconNew />;
         if (type === 'community-palm') return <Icons.PalmCommunityBlock width={loc.width} height={loc.height} />;
         if (type === 'community-bluewaters') return <Icons.BluewatersBlock />;

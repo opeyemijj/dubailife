@@ -7,7 +7,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { saveMapSeed } from "@/app/actions/saveSeed";
 import { MapBackground } from './MapBackground';
-import { mapSeed, mapConfig } from '@/data/mapSeed';
+import { mapConfig } from '@/data/mapSeed';
+import { CITY_ENTITIES, savableEntities } from '@/lib/city/mapEntities';
+import { PALM_VIEW, WORLD_TOP } from '@/lib/city/palm';
 import { 
   Pencil, RotateCw, ZoomIn, ZoomOut, Save, Copy, Trash2, X, Move, Plus, 
   Check, Sliders, Eye, Sparkles, ChevronRight, Layers, ArrowUpRight, Train,
@@ -22,10 +24,13 @@ import { useCitizen, adjustBalance, updateCitizen } from '@/lib/citizenStore';
 import { useIsAdmin } from '@/lib/admin/client';
 import { BillboardAds, useLiveAds } from '@/components/commerce/BillboardAds';
 
-import { WORLD_WIDTH, WORLD_HEIGHT, EstateBase, ClickableHouseNew, ApartmentBuildingIconNew, RooftopIconNew, NightclubIconNew, RestaurantIconNew, EstateCommunityBlock, SmallHouseIcon, StadiumIcon, HospitalIcon, SchoolIcon, CasinoIcon, ParkIcon, BurjKhalifaIcon, BulgariIslandIcon, AtlantisTheRoyalIcon, BeachClubIconNew, JumeirahBeachHotelIcon, BurjAlArabIcon, MuseumOfTheFutureIcon, DubaiFrameIcon, AtlantisIcon, EmiratesTowersIcon, GevoraIcon, RoseRayhaanIcon, DWTCIcon, SalikGate, RoadSign, SkylineTower, AirportBlock, VillaHouse, ApartmentHouse, TycoonBlock, BluewatersBlock, ArabianRanchesBlock, JBRBlock, EmiratesHillsBlock, BusinessBayBlock, DeiraBlock, MotorCityBlock, PalmCommunityBlock, GenericNeighborhood, BillboardSpace, IsometricBillboard, DubaiMetroStation, MetroStationBlock, categoryColors, BridgeBlock, AdPlacement, initialAds, getBuildingSprite, ActionDef, venueActions } from './Icons';
+import { WORLD_WIDTH, WORLD_HEIGHT, EstateBase, ClickableHouseNew, ApartmentBuildingIconNew, RooftopIconNew, NightclubIconNew, RestaurantIconNew, EstateCommunityBlock, SmallHouseIcon, StadiumIcon, HospitalIcon, SchoolIcon, CasinoIcon, ParkIcon, BurjKhalifaIcon, BulgariIslandIcon, AtlantisTheRoyalIcon, BeachClubIconNew, JumeirahBeachHotelIcon, BurjAlArabIcon, MuseumOfTheFutureIcon, DubaiFrameIcon, AtlantisIcon, EmiratesTowersIcon, IndexTowerIcon, AlYaqoubTowerIcon, GevoraIcon, RoseRayhaanIcon, DWTCIcon, SalikGate, RoadSign, SkylineTower, AirportBlock, VillaHouse, ApartmentHouse, TycoonBlock, BluewatersBlock, ArabianRanchesBlock, JBRBlock, EmiratesHillsBlock, BusinessBayBlock, DeiraBlock, MotorCityBlock, PalmCommunityBlock, GenericNeighborhood, BillboardSpace, IsometricBillboard, DubaiMetroStation, MetroStationBlock, categoryColors, BridgeBlock, AdPlacement, initialAds, getBuildingSprite, ActionDef, venueActions } from './Icons';
 
 // Default zoom: close enough that billboards and building names read well on phones too.
 const DEFAULT_SCALE = 0.6;
+/** How far down the map can be dragged: the open sea above the Palm reaches up to WORLD_TOP. */
+const maxPanY = (scale: number) => -WORLD_TOP * scale;
+
 // The default view: Burj Khalifa in the middle of the screen (the middle of the tower, not its base).
 const BURJ_VIEW = { x: 1871, y: WORLD_HEIGHT - 743 - 140 };
 
@@ -85,7 +90,7 @@ export const getEntityCategoryInfo = (entity: any) => {
   }
 
   // 3. High-Rise Living & Skyscraper Towers
-  if (type === 'tall-building' || type === 'skyscraper' || id.includes('tower') || name.includes('residences') || name.includes('tower') || name.includes('heights') || name.includes('views') || name.includes('standpoint') || name.includes('boulevard point') || name.includes('act one') || name.includes('act two') || name.includes('crown')) {
+  if (type === 'tall-building' || type === 'skyscraper' || type === 'emirates-towers' || type === 'the-index' || type === 'al-yaqoub' || type === 'gevora' || type === 'dwtc' || id.includes('tower') || name.includes('residences') || name.includes('tower') || name.includes('heights') || name.includes('views') || name.includes('standpoint') || name.includes('boulevard point') || name.includes('act one') || name.includes('act two') || name.includes('crown')) {
     return { icon: '🏢', category: 'High-Rise Living', key: 'towers', color: 'from-sky-500 to-blue-600', badgeBg: 'bg-sky-900/60 border-sky-500/40 text-sky-200' };
   }
 
@@ -95,22 +100,22 @@ export const getEntityCategoryInfo = (entity: any) => {
   }
 
   // 5. Nightlife & Clubs
-  if (type === 'armani-prive' || id === 'armani-prive' || type === 'blu-dubai' || id === 'blu-dubai' || type === 'one-oak' || id === 'one-oak' || type === 'ting-irie' || id === 'ting-irie' || type === 'dubai-opera' || id === 'dubai-opera' || type === 'club' || name.includes('privé') || name.includes('prive') || name.includes('nightclub') || name.includes('ting irie') || name.includes('opera') || (name.includes('club') && !name.includes('beach club')) || name.includes('lounge')) {
+  if (type === 'kiza-difc' || id === 'kiza-difc' || name.includes('kiza') || type === 'armani-prive' || id === 'armani-prive' || type === 'blu-dubai' || id === 'blu-dubai' || type === 'one-oak' || id === 'one-oak' || type === 'ting-irie' || id === 'ting-irie' || type === 'dubai-opera' || id === 'dubai-opera' || type === 'babylon-difc' || id === 'babylon-difc' || type === 'sphere-zaabeel' || id === 'sphere-zaabeel' || type === 'club' || name.includes('privé') || name.includes('prive') || name.includes('nightclub') || name.includes('ting irie') || name.includes('opera') || (name.includes('club') && !name.includes('beach club')) || name.includes('lounge') || name.includes('babylon')) {
     return { icon: '🪩', category: 'Nightlife & Clubs', key: 'clubs', color: 'from-purple-600 to-pink-600', badgeBg: 'bg-purple-900/60 border-purple-500/40 text-purple-200' };
   }
 
   // 6. Restaurants & Dining
-  if (type === 'the-guild' || id === 'the-guild' || type === 'timeout-market' || id === 'timeout-market' || type === 'restaurant' || name.includes('dining') || name.includes('market') || name.includes('restaurant') || name.includes('cÉ la vi') || name.includes('ce la vi') || name.includes('at.mosphere') || name.includes('cafe')) {
+  if (type === 'the-guild' || id === 'the-guild' || type === 'timeout-market' || id === 'timeout-market' || type === 'zuma-difc' || id === 'zuma-difc' || type === 'amazonico-difc' || id === 'amazonico-difc' || type === 'lpm-difc' || id === 'lpm-difc' || type === 'restaurant' || name.includes('dining') || name.includes('market') || name.includes('restaurant') || name.includes('cÉ la vi') || name.includes('ce la vi') || name.includes('at.mosphere') || name.includes('cafe') || name.includes('zuma') || name.includes('amazónico') || name.includes('lpm')) {
     return { icon: '🍽️', category: 'Dining & Cafes', key: 'food', color: 'from-orange-500 to-amber-600', badgeBg: 'bg-amber-900/60 border-amber-500/40 text-amber-200' };
   }
 
-  // 7. Tourist Attractions & Landmarks
-  if (type === 'burj-khalifa' || id === 'burj-khalifa' || type === 'dubai-fountain' || id === 'dubai-fountain' || type === 'dubai-aquarium' || id === 'dubai-aquarium' || type === 'museum-future' || id === 'motf' || type === 'dubai-frame' || id === 'dubai-frame' || name.includes('burj khalifa') || name.includes('fountain') || name.includes('aquarium') || name.includes('museum') || name.includes('frame')) {
-    return { icon: '🗼', category: 'Tourist Attractions', key: 'attractions', color: 'from-blue-500 to-indigo-600', badgeBg: 'bg-blue-900/60 border-blue-500/40 text-blue-200' };
+  // 7. Tourist Attractions & Landmarks (Includes Mosques)
+  if (type === 'burj-khalifa' || id === 'burj-khalifa' || type === 'dubai-fountain' || id === 'dubai-fountain' || type === 'dubai-aquarium' || id === 'dubai-aquarium' || type === 'museum-future' || id === 'motf' || type === 'dubai-frame' || id === 'dubai-frame' || type === 'difc-mosque' || id === 'difc-mosque' || type === 'zabeel-mosque' || id === 'zabeel-mosque' || name.includes('burj khalifa') || name.includes('fountain') || name.includes('aquarium') || name.includes('museum') || name.includes('frame') || name.includes('mosque')) {
+    return { icon: '🕌', category: 'Attractions & Mosques', key: 'attractions', color: 'from-blue-500 to-indigo-600', badgeBg: 'bg-blue-900/60 border-blue-500/40 text-blue-200' };
   }
 
   // 8. Hotels & Luxury Resorts
-  if (type === 'hotel' || type.includes('hotel') || type === 'address-skyview' || type === 'palace-downtown' || type === 'address-downtown' || id.includes('address') || id.includes('palace') || name.includes('address') || name.includes('palace') || name.includes('hotel') || name.includes('resort')) {
+  if (type === 'hotel' || type.includes('hotel') || type === 'address-skyview' || type === 'palace-downtown' || type === 'address-downtown' || type === 'ritz-carlton-difc' || id === 'ritz-carlton-difc' || type === 'one-zaabeel' || id === 'one-zaabeel' || id.includes('address') || id.includes('palace') || name.includes('address') || name.includes('palace') || name.includes('hotel') || name.includes('resort') || name.includes('ritz') || name.includes('za\'abeel') || name.includes('zaabeel')) {
     return { icon: '🏨', category: 'Hotels & Resorts', key: 'hotels', color: 'from-amber-400 to-yellow-600', badgeBg: 'bg-yellow-900/60 border-yellow-500/40 text-yellow-200' };
   }
 
@@ -205,7 +210,7 @@ export function InteractiveMap({
   const [navPlace, setNavPlace] = useState<Place | null>(null);
   const [navVenueId, setNavVenueId] = useState<string | undefined>(undefined);
   const [travel, setTravel] = useState<{ mode: TravelMode; ms: number } | null>(null);
-  const [venues, setVenues] = useState<any[]>(mapSeed);
+  const [venues, setVenues] = useState<any[]>(CITY_ENTITIES);
   const [selectedVenue, setSelectedVenue] = useState<any | null>(null);
   const [hoveredVenueId, setHoveredVenueId] = useState<string | null>(null);
   
@@ -224,11 +229,16 @@ export function InteractiveMap({
   // The part of the world on screen (world px). Only buildings near it are drawn, which keeps the
   // page light enough to stay responsive on phones. Updated when the view moves a fair way.
   const [view, setView] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const settle = useRef<ReturnType<typeof setTimeout> | null>(null);
   const updateView = useCallback((st: { positionX: number; positionY: number; scale: number }) => {
     if (typeof window === 'undefined') return;
     const x = -st.positionX / st.scale, y = -st.positionY / st.scale;
     const w = window.innerWidth / st.scale, h = window.innerHeight / st.scale;
     setView((v) => (v && Math.abs(v.x - x) < v.w * 0.2 && Math.abs(v.y - y) < v.h * 0.2 && Math.abs(v.w - w) < v.w * 0.1 ? v : { x, y, w, h }));
+    // Once the map stops moving (e.g. at the end of a jump), measure exactly where it ended up, so
+    // buildings that end on screen aren't left out after small last steps of an animation.
+    if (settle.current) clearTimeout(settle.current);
+    settle.current = setTimeout(() => setView({ x, y, w, h }), 150);
   }, []);
 
   const dragRef = useRef<{
@@ -491,7 +501,7 @@ export function InteractiveMap({
     const targetY = screenH / 2 - renderedY * scale;
 
     setPlayerPos({ x: renderedX, y: renderedY });
-    transformRef.current?.setTransform(targetX, Math.min(targetY, 0), scale, 650);
+    transformRef.current?.setTransform(targetX, Math.min(targetY, maxPanY(scale)), scale, 650);
     if (districtName) showToast(`📍 Arrived at ${districtName}!`, 'credit');
   };
 
@@ -500,7 +510,7 @@ export function InteractiveMap({
     const scale = Math.max(DEFAULT_SCALE, transformRef.current?.state.scale ?? DEFAULT_SCALE);
     const w = typeof window !== 'undefined' ? window.innerWidth : 1200;
     const h = typeof window !== 'undefined' ? window.innerHeight : 800;
-    transformRef.current?.setTransform(w / 2 - pt.x * scale, Math.min(h / 2 - pt.y * scale, 0), scale, ms);
+    transformRef.current?.setTransform(w / 2 - pt.x * scale, Math.min(h / 2 - pt.y * scale, maxPanY(scale)), scale, ms);
   };
 
   /** Moves the citizen across the map; resolves on arrival. */
@@ -642,7 +652,7 @@ export function InteractiveMap({
   const handleSaveMap = async () => {
     setIsSaving(true);
     try {
-      const res = await saveMapSeed(venues, mapConfig);
+      const res = await saveMapSeed(savableEntities(venues), mapConfig);
       if (res.success) {
         showToast('Map changes saved successfully!', 'credit');
       } else {
@@ -830,7 +840,8 @@ export function InteractiveMap({
       campaigns: liveAds[loc.id],
       renderedX: loc.virtualX,
       renderedY: WORLD_HEIGHT - loc.virtualY
-    })).sort((a, b) => a.renderedY - b.renderedY);
+    // Ground layers (the Palm island) first, then back-to-front so nearer buildings overlap farther ones.
+    })).sort((a, b) => (b.layer === 'ground' ? 1 : 0) - (a.layer === 'ground' ? 1 : 0) || a.renderedY - b.renderedY);
   }, [venues, liveAds]);
 
   // Buildings within (or near) the visible area; everything while editing the map.
@@ -1053,7 +1064,7 @@ export function InteractiveMap({
               <span className="hidden xs:inline sm:inline">Downtown</span>
             </button>
             <button
-              onClick={() => jumpToDistrict(798, 1974, 'Palm Jumeirah')}
+              onClick={() => jumpToDistrict(PALM_VIEW.x, PALM_VIEW.y, 'Palm Jumeirah')}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 text-white font-bold text-xs whitespace-nowrap transition-all"
             >
               <span>🌴</span>
@@ -1145,7 +1156,6 @@ export function InteractiveMap({
         initialPositionY={mapConfig?.startY ?? -140}
         minScale={0.28} 
         maxScale={0.75}
-        maxPositionY={0}
         smooth={true}
         wheel={{ step: 0.02 }}
         doubleClick={{ disabled: true }}
@@ -1154,18 +1164,18 @@ export function InteractiveMap({
         centerZoomedOut={false}
         panning={{ velocityDisabled: false, disabled: isDraggingItem }}
         onPanning={(ref) => {
-          if (ref.state.positionY > 0) {
-            ref.setTransform(ref.state.positionX, 0, ref.state.scale, 0);
+          if (ref.state.positionY > maxPanY(ref.state.scale)) {
+            ref.setTransform(ref.state.positionX, maxPanY(ref.state.scale), ref.state.scale, 0);
           }
         }}
         onPanningStop={(ref) => {
-          if (ref.state.positionY > 0) {
-            ref.setTransform(ref.state.positionX, 0, ref.state.scale, 0);
+          if (ref.state.positionY > maxPanY(ref.state.scale)) {
+            ref.setTransform(ref.state.positionX, maxPanY(ref.state.scale), ref.state.scale, 0);
           }
         }}
         onZoom={(ref) => {
-          if (ref.state.positionY > 0) {
-            ref.setTransform(ref.state.positionX, 0, ref.state.scale, 0);
+          if (ref.state.positionY > maxPanY(ref.state.scale)) {
+            ref.setTransform(ref.state.positionX, maxPanY(ref.state.scale), ref.state.scale, 0);
           }
         }}
         onInit={(ref) => updateView(ref.state)}

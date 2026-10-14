@@ -1,6 +1,6 @@
 // Map geometry for travel: building entrances and real-world distances.
 
-import { mapSeed } from "@/data/mapSeed";
+import { CITY_ENTITIES } from "./mapEntities";
 
 /** Matches WORLD_HEIGHT in components/map/Icons (map y is flipped for rendering). */
 export const WORLD_HEIGHT = 2600;
@@ -8,7 +8,7 @@ export const WORLD_HEIGHT = 2600;
 export const METRES_PER_UNIT = 1.25;
 
 type Entity = { id: string; type: string; name?: string; virtualX: number; virtualY: number };
-const ENTITIES = new Map((mapSeed as Entity[]).map((e) => [e.id, e]));
+const ENTITIES = new Map((CITY_ENTITIES as Entity[]).map((e) => [e.id, e]));
 
 export const getEntity = (id: string) => ENTITIES.get(id) ?? null;
 

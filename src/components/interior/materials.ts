@@ -166,3 +166,79 @@ export const mat = {
   glass: () => new THREE.MeshPhysicalMaterial({ color: "#e0f2fe", metalness: 0, roughness: 0.05, transmission: 0.9, transparent: true, opacity: 0.35, thickness: 0.02 }),
   mirror: () => new THREE.MeshStandardMaterial({ color: "#ffffff", metalness: 1, roughness: 0.02 }),
 };
+
+/** In-venue digital LED wall advertisement screen */
+export function wallAdScreenTexture(headline: string, sponsor: string, badge?: string) {
+  return canvasTexture(`wallad:${headline}:${sponsor}:${badge}`, 1024, 576, (ctx) => {
+    const grad = ctx.createLinearGradient(0, 0, 1024, 576);
+    grad.addColorStop(0, "#090d16");
+    grad.addColorStop(0.5, "#0f172a");
+    grad.addColorStop(1, "#1e1b4b");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1024, 576);
+
+    ctx.strokeStyle = "rgba(245, 158, 11, 0.15)";
+    ctx.lineWidth = 1;
+    for (let x = 0; x <= 1024; x += 64) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 576); ctx.stroke();
+    }
+    for (let y = 0; y <= 576; y += 64) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1024, y); ctx.stroke();
+    }
+
+    // Top Header Badge
+    ctx.fillStyle = "#f59e0b";
+    ctx.beginPath();
+    ctx.roundRect(40, 36, 280, 44, 22);
+    ctx.fill();
+    ctx.fillStyle = "#000000";
+    ctx.font = "bold 20px 'Helvetica Neue', Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("⭐ " + (badge || "VENUE ADVERTISING"), 180, 58);
+
+    // Live LED Indicator
+    ctx.fillStyle = "#ef4444";
+    ctx.beginPath();
+    ctx.arc(960, 58, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 18px 'Helvetica Neue', Arial, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText("LIVE WALL AD", 938, 58);
+
+    // Sponsor Name
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "600 28px 'Helvetica Neue', Arial, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(sponsor.toUpperCase(), 44, 150);
+
+    // Headline (wrapped)
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 44px 'Helvetica Neue', Arial, sans-serif";
+    const words = headline.split(" ");
+    let line = "";
+    let y = 220;
+    for (let i = 0; i < words.length; i++) {
+      const testLine = line + words[i] + " ";
+      if (ctx.measureText(testLine).width > 920 && i > 0) {
+        ctx.fillText(line, 44, y);
+        line = words[i] + " ";
+        y += 56;
+      } else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line, 44, y);
+
+    // Bottom interactive button callout
+    ctx.fillStyle = "#eab308";
+    ctx.beginPath();
+    ctx.roundRect(44, 480, 400, 60, 16);
+    ctx.fill();
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 22px 'Helvetica Neue', Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("TAP SCREEN TO REDEEM ➜", 244, 510);
+  });
+}

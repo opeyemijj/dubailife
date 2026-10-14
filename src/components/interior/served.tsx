@@ -14,6 +14,11 @@ const BY_ICON: Record<string, ServeKind> = {
   "🍸": "cocktail", "🍹": "mocktail", "🥤": "soda", "☕": "coffee", "🥛": "coffee", "🍵": "tea", "🥭": "smoothie",
   "🫓": "plate", "🍽️": "plate", "🍖": "plate", "🍝": "plate", "🥪": "plate", "🍰": "dessert", "🍮": "dessert",
   "🥐": "pastry", "🫖": "teaset", "🍾": "bottle",
+  // Hotel menus on the Palm
+  "🍔": "plate", "🥗": "plate", "🍉": "plate", "🦞": "plate", "🍣": "plate", "🍟": "plate", "🫛": "plate", "🐟": "plate",
+  "🍤": "plate", "🌮": "plate", "🍗": "plate", "🍛": "plate", "🍊": "plate", "🥩": "plate", "🍜": "plate", "🦆": "plate",
+  "🍲": "plate", "🍕": "plate", "🦪": "plate", "🥟": "plate", "🥘": "plate", "🍆": "plate", "🍳": "plate", "🥧": "plate",
+  "🥣": "dessert", "🍨": "dessert", "🥂": "cocktail",
 };
 
 /** What a purchase looks like when it's served, or null for things that aren't brought to you. */

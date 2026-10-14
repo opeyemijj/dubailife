@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { WORLD_WIDTH, WORLD_HEIGHT } from './Icons';
+import { PALM_CAUSEWAY } from '@/lib/city/palm';
 
 export interface TrafficInfo {
   hour: number;
@@ -328,7 +329,7 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
                 
                 
                 {/* Original Ocean Color (with graceful curved wings closing slowly to the top) */}
-                <path d="M -1500,2600 C -1100,1950 -600,1481 -200,1485 Q 2000,1505 4200,1412 C 4600,1395 5100,1950 5500,2600 L -1500,2600 Z" fill="#60BAEB" />
+                <path d="M -1500,2600 C -1100,1950 -600,1481 -200,1485 Q 2000,1505 4200,1412 C 4600,1395 5100,1950 5500,2600 L 5500,3800 L -1500,3800 Z" fill="#60BAEB" />
 
                 {/* Thick Beach Sand Edge */}
                 <path d="M -1500,2600 C -1100,1950 -600,1481 -200,1485 Q 2000,1505 4200,1412 C 4600,1395 5100,1950 5500,2600" fill="none" stroke="#fde047" strokeWidth="25" strokeLinecap="round" strokeLinejoin="round" />
@@ -353,8 +354,22 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
                 
 
 
-                <path d="M 632 1249 L 750 1770" fill="none" stroke="#cbd5e1" strokeWidth="12" />
-                <path d="M 632 1249 L 750 1770" fill="none" stroke="#fff" strokeWidth="2" strokeDasharray="4 6" />
+                {/* Palm Jumeirah causeway: four lanes from the Jumeirah coast road out to the Palm's bridge, with the monorail beside it */}
+                <path d={`M ${PALM_CAUSEWAY.x} ${PALM_CAUSEWAY.fromVirtualY} L ${PALM_CAUSEWAY.x} ${PALM_CAUSEWAY.toVirtualY}`} fill="none" stroke="#e2e8f0" strokeWidth="58" />
+                <path d={`M ${PALM_CAUSEWAY.x} ${PALM_CAUSEWAY.fromVirtualY} L ${PALM_CAUSEWAY.x} ${PALM_CAUSEWAY.toVirtualY}`} fill="none" stroke="#334155" strokeWidth="50" />
+                <path d={`M ${PALM_CAUSEWAY.x} ${PALM_CAUSEWAY.fromVirtualY} L ${PALM_CAUSEWAY.x} ${PALM_CAUSEWAY.toVirtualY}`} fill="none" stroke="#facc15" strokeWidth="2" />
+                {[-12.5, 12.5].map((dx) => (
+                  <path key={dx} d={`M ${PALM_CAUSEWAY.x + dx} ${PALM_CAUSEWAY.fromVirtualY} L ${PALM_CAUSEWAY.x + dx} ${PALM_CAUSEWAY.toVirtualY}`} fill="none" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="8 10" />
+                ))}
+                <path d={`M ${PALM_CAUSEWAY.x + 40} ${PALM_CAUSEWAY.fromVirtualY + 60} L ${PALM_CAUSEWAY.x + 40} ${PALM_CAUSEWAY.toVirtualY}`} fill="none" stroke="#cbd5e1" strokeWidth="9" />
+                <path d={`M ${PALM_CAUSEWAY.x + 40} ${PALM_CAUSEWAY.fromVirtualY + 60} L ${PALM_CAUSEWAY.x + 40} ${PALM_CAUSEWAY.toVirtualY}`} fill="none" stroke="#475569" strokeWidth="1.5" strokeDasharray="4 6" />
+                {/* street lights */}
+                {Array.from({ length: Math.floor((PALM_CAUSEWAY.toVirtualY - PALM_CAUSEWAY.fromVirtualY) / 60) }, (_, i) => (
+                  <g key={i}>
+                    <circle cx={PALM_CAUSEWAY.x - 30} cy={PALM_CAUSEWAY.fromVirtualY + 30 + i * 60} r="2.5" fill="#fde68a" />
+                    <circle cx={PALM_CAUSEWAY.x + 30} cy={PALM_CAUSEWAY.fromVirtualY + 30 + i * 60} r="2.5" fill="#fde68a" />
+                  </g>
+                ))}
                 
                 {/* Jumeirah Coast Road - STRAIGHT, END-TO-END (-3000 to 6600) */}
                 <path d="M -3000 1312 L 6600 1152" fill="none" stroke="#64748b" strokeWidth="40" strokeLinecap="round" />

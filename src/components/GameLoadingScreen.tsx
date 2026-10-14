@@ -69,3 +69,77 @@ export function SceneLoadingOverlay({ label }: { label?: string }) {
   if (phase === "done") return null;
   return <LoadingPill fixed={false} label={label ?? "Loading"} detail={describe(item ?? "")} progress={active ? progress : 100} fading={phase === "fading"} />;
 }
+
+/**
+ * Fullscreen luxury splash loader shown until the entire 3D city / UI finishes rendering.
+ */
+export function FullGameLoadingScreen({ 
+  ready = false, 
+  title = "Dubai Life",
+  subtitle = "Entering the city..." 
+}: { 
+  ready?: boolean; 
+  title?: string;
+  subtitle?: string;
+}) {
+  const [visible, setVisible] = useState(true);
+  const [progress, setProgress] = useState(25);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 92) return prev;
+        return prev + Math.floor(Math.random() * 12) + 6;
+      });
+    }, 150);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (ready) {
+      setProgress(100);
+      const timer = setTimeout(() => setVisible(false), 550);
+      return () => clearTimeout(timer);
+    }
+  }, [ready]);
+
+  if (!visible) return null;
+
+  return (
+    <div
+      className={`fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[#d6bc8a] transition-opacity duration-500 ease-out ${
+        ready ? "opacity-0 pointer-events-none" : "opacity-100"
+      }`}
+    >
+      {/* Luxury gold & sand gradient backdrop */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#e7d2aa]/80 via-[#d6bc8a] to-[#c5a669] pointer-events-none" />
+
+      {/* Center Branded Loader Card */}
+      <div className="relative z-10 flex flex-col items-center max-w-sm px-6 text-center animate-in fade-in zoom-in-95 duration-300">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-white shadow-2xl border border-white/60 flex items-center justify-center mb-5 ring-8 ring-white/20 animate-pulse">
+          <span className="text-3xl sm:text-4xl">👑</span>
+        </div>
+
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mb-1">
+          {title}
+        </h1>
+        <p className="text-xs sm:text-sm font-bold text-slate-700 mb-6">
+          {subtitle}
+        </p>
+
+        {/* Luxury Progress Bar */}
+        <div className="w-64 sm:w-72 h-2 rounded-full bg-slate-900/15 overflow-hidden p-0.5 shadow-inner">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 transition-all duration-300 ease-out shadow-sm"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        <div className="flex items-center justify-between w-64 sm:w-72 mt-2 text-[10px] sm:text-[11px] font-bold text-slate-600 font-mono">
+          <span>Loading districts & skyline</span>
+          <span>{progress}%</span>
+        </div>
+      </div>
+    </div>
+  );
+}
