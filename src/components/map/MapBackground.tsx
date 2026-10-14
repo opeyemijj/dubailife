@@ -168,9 +168,10 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
     const yachtColors = ['#ffffff', '#f8fafc', '#e2e8f0'];
     const jetskiColors = ['#f43f5e', '#3b82f6', '#22c55e', '#eab308', '#a855f7'];
     
-    for (let i = 0; i < 40; i++) {
+    // Kept light: a few yachts and jet skis (each moving thing is redrawn every frame).
+    for (let i = 0; i < 14; i++) {
       const isMegaYacht = false;
-      const isYacht = i >= 2 && i < 15;
+      const isYacht = i >= 2 && i < 8;
       const isBoat = isMegaYacht || isYacht;
       
       const prng = ((i * 9301 + 49297) % 233280) / 233280;
@@ -203,7 +204,8 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
   // Dubai Real-Time Traffic Generation
   const cars = useMemo(() => {
     const arr = [];
-    const count = trafficInfo.carCount;
+    // About a third of the real-time count: enough to read as traffic, light enough for phones.
+    const count = Math.round(trafficInfo.carCount * 0.3);
     
     // Dubai Vehicle Types & Visual Ratios
     // Taxis: Signature cream body with 5 official RTA roof colors (Red DTC, Blue Cars, Green Arabia, Yellow Metro, Orange City)
@@ -324,7 +326,7 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
 
   return (
 
-  <svg width={WORLD_WIDTH} height={WORLD_HEIGHT} className="absolute inset-0 pointer-events-none overflow-visible">
+  <svg width={WORLD_WIDTH} height={WORLD_HEIGHT} className="map-animated absolute inset-0 pointer-events-none overflow-visible">
               <g transform={`translate(0, 2600) scale(1, -1)`}>
                 
                 
@@ -420,14 +422,14 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
                 <path id="metro-path-rev" d="M 6600 860 L -3000 1020" fill="none" stroke="transparent" />
 
                 {/* Animated Dubai Metro Trains (Forward and Reverse tracks) */}
-                <g className="shadow-lg">
+                <g>
                   <animateMotion dur="36s" repeatCount="indefinite" rotate="auto">
                     <mpath href="#metro-path" />
                   </animateMotion>
                   <rect x="-40" y="-3.5" width="80" height="7" rx="3.5" fill="#38bdf8" stroke="#0284c7" strokeWidth="0.5" />
                   <rect x="-30" y="-1.5" width="60" height="3" rx="1" fill="#f8fafc" opacity="0.85" />
                 </g>
-                <g className="shadow-lg">
+                <g>
                   <animateMotion dur="34s" repeatCount="indefinite" rotate="auto">
                     <mpath href="#metro-path-rev" />
                   </animateMotion>
@@ -445,8 +447,8 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
                   <animateMotion dur="120s" repeatCount="indefinite" rotate="auto">
                     <mpath href="#mega-cruise-1" />
                   </animateMotion>
-                  <g transform="scale(2)">
-                    <path d="M -30 -10 L 25 -10 L 45 0 L 25 10 L -30 10 Z" fill="#ffffff" stroke="#cbd5e1" strokeWidth="1" className="drop-shadow-2xl" />
+                  <g transform="scale(1.1)">
+                    <path d="M -30 -10 L 25 -10 L 45 0 L 25 10 L -30 10 Z" fill="#ffffff" stroke="#cbd5e1" strokeWidth="1" />
                     <rect x="-20" y="-7" width="35" height="14" fill="#f1f5f9" rx="2" />
                     <rect x="-10" y="-5" width="20" height="10" fill="#e2e8f0" rx="1" />
                     <rect x="0" y="-3" width="8" height="6" fill="#0284c7" opacity="0.6" />
@@ -461,8 +463,8 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
                   <animateMotion dur="180s" repeatCount="indefinite" rotate="auto">
                     <mpath href="#mega-cruise-2" />
                   </animateMotion>
-                  <g transform="scale(2.5)">
-                    <path d="M -30 -10 L 25 -10 L 45 0 L 25 10 L -30 10 Z" fill="#ffffff" stroke="#94a3b8" strokeWidth="1" className="drop-shadow-2xl" />
+                  <g transform="scale(1.3)">
+                    <path d="M -30 -10 L 25 -10 L 45 0 L 25 10 L -30 10 Z" fill="#ffffff" stroke="#94a3b8" strokeWidth="1" />
                     <rect x="-20" y="-7" width="35" height="14" fill="#f8fafc" rx="2" />
                     <rect x="-10" y="-5" width="20" height="10" fill="#cbd5e1" rx="1" />
                     <rect x="0" y="-3" width="8" height="6" fill="#0369a1" opacity="0.6" />
@@ -479,10 +481,10 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
                     <animateMotion dur={`${boat.duration}s`} begin={`${boat.delay}s`} repeatCount="indefinite" rotate="auto">
                       <mpath href={boat.path} />
                     </animateMotion>
-                    <g transform={`translate(0, ${boat.offset})`}>
+                    <g transform={`translate(0, ${boat.offset}) scale(0.6)`}>
                       {boat.type === 'yacht' ? (
                         <g>
-                          <path d="M -15 -6 L 10 -6 L 22 0 L 10 6 L -15 6 Z" fill={boat.color} className="drop-shadow-md" />
+                          <path d="M -15 -6 L 10 -6 L 22 0 L 10 6 L -15 6 Z" fill={boat.color} />
                           <rect x="-5" y="-3" width="12" height="6" fill="#cbd5e1" rx="1" />
                           <rect x="0" y="-2" width="5" height="4" fill="#0ea5e9" opacity="0.6" />
                           <path d="M -15 -6 L -35 -12 M -15 6 L -35 12" stroke="#bae6fd" strokeWidth="2" fill="none" opacity="0.5" />
@@ -490,7 +492,7 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
                         </g>
                       ) : (
                         <g>
-                          <ellipse cx="0" cy="0" rx="5" ry="2.5" fill={boat.color} className="drop-shadow-sm" />
+                          <ellipse cx="0" cy="0" rx="5" ry="2.5" fill={boat.color} />
                           <circle cx="1" cy="0" r="1.5" fill="#0f172a" opacity="0.7" />
                           <path d="M -5 -2 L -15 -5 M -5 2 L -15 5" stroke="#e0f2fe" strokeWidth="1" fill="none" opacity="0.6" />
                           <path d="M -5 0 L -20 0" stroke="#e0f2fe" strokeWidth="1.5" fill="none" opacity="0.4" />
@@ -506,7 +508,7 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
 
                   if (car.type === 'taxi') {
                     Vehicle = (
-                      <g className="drop-shadow-sm">
+                      <g>
                         {/* Camry Body */}
                         <rect x="-8" y="-3.5" width="16" height="7" rx="2.5" fill="#fef9c3" stroke="#fde047" strokeWidth="0.5" />
                         {/* Windows */}
@@ -529,7 +531,7 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
                     );
                   } else if (car.type === 'suv') {
                     Vehicle = (
-                      <g className="drop-shadow-md">
+                      <g>
                         {/* Chunky Luxury Patrol / Land Cruiser Body */}
                         <rect x="-9.5" y="-4.5" width="19" height="9" rx="3" fill={car.color} stroke="#64748b" strokeWidth="0.5" />
                         {/* Dark VIP Tint Panoramic Windows */}
@@ -551,7 +553,7 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
                     );
                   } else if (car.type === 'supercar') {
                     Vehicle = (
-                      <g className="drop-shadow-md">
+                      <g>
                         {/* Low-profile Aerodynamic Supercar */}
                         <path d="M -8 -3.5 L 4 -3.5 L 9 0 L 4 3.5 L -8 3.5 Z" fill={car.color} />
                         <rect x="-4" y="-2.5" width="6" height="5" rx="1" fill="#020617" opacity="0.9" />
@@ -570,7 +572,7 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
                     );
                   } else if (car.type === 'bus') {
                     Vehicle = (
-                      <g className="drop-shadow-lg">
+                      <g>
                         {/* RTA City Transit Bus */}
                         <rect x="-18" y="-5" width="36" height="10" rx="3" fill="#ef4444" stroke="#b91c1c" strokeWidth="0.5" />
                         <rect x="-18" y="-1.5" width="36" height="3" fill="#ffffff" />
@@ -607,7 +609,7 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
                     );
                   } else {
                     Vehicle = (
-                      <g className="drop-shadow-sm">
+                      <g>
                         {/* Executive Sedan */}
                         <rect x="-7.5" y="-3.5" width="15" height="7" rx="2.5" fill={car.color} stroke="#64748b" strokeWidth="0.5" />
                         <rect x="-3" y="-2.5" width="6" height="5" rx="1" fill="#0f172a" opacity="0.65" />
@@ -633,7 +635,7 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
                       >
                         <mpath href={car.path} />
                       </animateMotion>
-                      <g transform={`translate(0, ${car.laneOffset})`}>
+                      <g transform={`translate(0, ${car.laneOffset}) scale(0.65)`}>
                         {Vehicle}
                       </g>
                     </g>

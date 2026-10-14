@@ -357,6 +357,9 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   // Locals: Dubai Life's hosts, shown with a "Local" tag. They take seats too, so count them when finding one.
   const localsHere = useLocalsInRoom(place.id, venue, plan, [...peers, me]);
   const localPeers = localsHere.peers;
+  // Their avatars load once the room is up, so entering isn't slowed down by five extra characters.
+  const [localsShown, setLocalsShown] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setLocalsShown(true), 3000); return () => clearTimeout(t); }, []);
   const peersRef = useRef(peers);
   useEffect(() => { peersRef.current = [...peers, ...localPeers]; });
   // Lets earlier handlers (bottle service) broadcast once the room exists.
@@ -864,7 +867,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         peerBadges={room.unread}
         bubbles={bubbles}
         onPeer={openPeer}
-        locals={localPeers}
+        locals={localsShown ? localPeers : undefined}
         onLocal={openLocal}
         onFloor={onFloor}
         onWallAdClick={() => setWallAdOpen(true)}
