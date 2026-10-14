@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useEffect, useMemo, useRef } from "react";
+import { useCallback, useState, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { TransformWrapper, TransformComponent, type ReactZoomPanPinchRef } from "react-zoom-pan-pinch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -10,6 +10,9 @@ import { MapBackground } from './MapBackground';
 import { mapConfig } from '@/data/mapSeed';
 import { CITY_ENTITIES, savableEntities } from '@/lib/city/mapEntities';
 import { PALM_VIEW, WORLD_TOP } from '@/lib/city/palm';
+import { isLowPower } from '@/lib/device';
+
+const noSubscribe = () => () => {};
 import { 
   Pencil, RotateCw, ZoomIn, ZoomOut, Save, Copy, Trash2, X, Move, Plus, 
   Check, Sliders, Eye, Sparkles, ChevronRight, Layers, ArrowUpRight, Train,
@@ -234,9 +237,16 @@ export function InteractiveMap({
     if (typeof window === 'undefined') return;
     const x = -st.positionX / st.scale, y = -st.positionY / st.scale;
     const w = window.innerWidth / st.scale, h = window.innerHeight / st.scale;
-    setView((v) => (v && Math.abs(v.x - x) < v.w * 0.2 && Math.abs(v.y - y) < v.h * 0.2 && Math.abs(v.w - w) < v.w * 0.1 ? v : { x, y, w, h }));
-    // Once the map stops moving (e.g. at the end of a jump), measure exactly where it ended up, so
-    // buildings that end on screen aren't left out after small last steps of an animation.
+    // Panning updates as you go (the drawn area has a margin around the screen). Zooming waits until
+    // the pinch ends: adding hundreds of buildings mid-gesture can run a phone out of memory, and
+    // mobile browsers then reload the page.
+    setView((v) => {
+      if (!v) return { x, y, w, h };
+      const zooming = Math.abs(v.w - w) > v.w * 0.03;
+      if (zooming) return v;
+      return Math.abs(v.x - x) < v.w * 0.2 && Math.abs(v.y - y) < v.h * 0.2 ? v : { x, y, w, h };
+    });
+    // Once the map stops moving (a pinch, a jump), measure exactly where it ended up.
     if (settle.current) clearTimeout(settle.current);
     settle.current = setTimeout(() => setView({ x, y, w, h }), 150);
   }, []);
@@ -844,18 +854,31 @@ export function InteractiveMap({
     })).sort((a, b) => (b.layer === 'ground' ? 1 : 0) - (a.layer === 'ground' ? 1 : 0) || a.renderedY - b.renderedY);
   }, [venues, liveAds]);
 
-  // Buildings within (or near) the visible area; everything while editing the map.
+  // Buildings within (or near) the visible area; everything while editing the map. On phones, zoomed
+  // far out, small homes are left out (landmarks, hotels and towers stay) to keep memory down.
+  // Read on the client only (the server can't know the device), without a mismatch on hydration.
+  const lite = useSyncExternalStore(noSubscribe, isLowPower, () => false);
+  const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
   const visibleEntities = useMemo(() => {
-    if (!view || isEditMode) return allRenderedEntities;
+    if (isEditMode) return allRenderedEntities;
+    // Before the map reports where it is, assume the opening view (and draw nothing on the server):
+    // drawing the whole city on the first frame is a big memory spike on phones.
+    if (!view && !hydrated) return [];
+    const v = view ?? {
+      x: -(mapConfig?.startX ?? -120) / DEFAULT_SCALE, y: -(mapConfig?.startY ?? -140) / DEFAULT_SCALE,
+      w: window.innerWidth / DEFAULT_SCALE, h: window.innerHeight / DEFAULT_SCALE,
+    };
+    const far = lite && window.innerWidth / v.w < 0.42;
     return allRenderedEntities.filter((loc) => {
+      if (far && (loc.type === 'dubai-villa' || loc.type === 'small-house')) return false;
       const r = Math.max(Number(loc.width) || 400, Number(loc.height) || 400);
-      return loc.renderedX > view.x - view.w * 0.5 - r && loc.renderedX < view.x + view.w * 1.5 + r
-        && loc.renderedY > view.y - view.h * 0.5 - r && loc.renderedY < view.y + view.h * 1.5 + r * 1.5;
+      return loc.renderedX > v.x - v.w * 0.5 - r && loc.renderedX < v.x + v.w * 1.5 + r
+        && loc.renderedY > v.y - v.h * 0.5 - r && loc.renderedY < v.y + v.h * 1.5 + r * 1.5;
     });
-  }, [allRenderedEntities, view, isEditMode]);
+  }, [allRenderedEntities, view, isEditMode, lite, hydrated]);
 
   return (
-    <div className="absolute inset-0 w-screen h-[100dvh] z-0 bg-[#d6bc8a] overflow-hidden touch-none select-none overscroll-none">
+    <div className={`absolute inset-0 w-screen h-[100dvh] z-0 bg-[#d6bc8a] overflow-hidden touch-none select-none overscroll-none ${lite ? 'map-lite' : ''}`}>
       
       {/* Top Left: Edit Mode Controls (admins only; safe position below TopBar) */}
       {isAdmin && <div className="absolute top-20 sm:top-24 left-3 sm:left-6 z-30 flex items-center gap-2 pointer-events-auto">

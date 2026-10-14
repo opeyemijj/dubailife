@@ -141,3 +141,11 @@
 /* Taps act at once: no double-tap-to-zoom wait on buttons and links (iOS Safari). */
 a, button, [role="button"], label, summary { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 html, body { overscroll-behavior: none; }
+
+/* Phones and low-power devices: no drop shadows on map sprites. Each shadow needs its own image buffer
+   at the zoomed size, and hundreds of them can run a phone's graphics memory out (the browser then
+   reloads the page). */
+.map-lite svg,
+.map-lite [class*="drop-shadow"] {
+  filter: none !important;
+}
