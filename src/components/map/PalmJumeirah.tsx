@@ -170,8 +170,8 @@ export const PalmParkSprite = ({ width = 110, height = 80, name = 'Al Ittihad Pa
 );
 
 /** Palm West Beach: a long strip of sand down the trunk's west shore, with loungers and its beach clubs. */
-export const PalmBeachSprite = ({ width = 96, height = 250, name = 'Palm West Beach' }: { width?: number; height?: number; name?: string }) => (
-  <svg viewBox="0 0 96 250" width={width} height={height} className="drop-shadow-md overflow-visible">
+export const PalmBeachSprite = ({ width = 150, height = 320, name = 'Palm West Beach' }: { width?: number; height?: number; name?: string }) => (
+  <svg viewBox="0 0 96 250" width={width} height={height} preserveAspectRatio="none" className="drop-shadow-md overflow-visible">
     {/* shallow water, wet sand, dry sand */}
     <path d="M6,236 C2,170 10,90 30,10 L44,10 C30,90 24,170 26,236 Z" fill="#67e8f9" opacity="0.7" />
     <path d="M22,236 C20,170 28,90 42,10 L60,10 C50,90 46,170 48,236 Z" fill="#fde68a" />
@@ -201,5 +201,33 @@ export const PalmBeachSprite = ({ width = 96, height = 250, name = 'Palm West Be
       <g key={y}><rect x="84" y={y - 8} width="1.6" height="9" fill="#92400e" /><circle cx="84.8" cy={y - 9} r="4" fill="#16a34a" /></g>
     ))}
     {label(name, 96, 236)}
+  </svg>
+);
+
+/** FIVE Palm Jumeirah: bold glass-and-black block, purple neon, rooftop club and a big pool on the beach. */
+export const FivePalmSprite = ({ width = 210, height = 180, name = 'FIVE Palm Jumeirah' }: { width?: number; height?: number; name?: string }) => (
+  <svg viewBox="0 0 210 180" width={width} height={height} className="drop-shadow-xl overflow-visible">
+    {/* beach and the big pool */}
+    <polygon points="0,170 210,170 192,128 18,128" fill="#fde68a" />
+    <polygon points="0,170 210,170 208,176 -2,176" fill="#67e8f9" opacity="0.7" />
+    <ellipse cx="105" cy="146" rx="62" ry="11" fill="#22d3ee" stroke="#fff" strokeWidth="2" />
+    {[24, 40, 170, 186].map((x) => (<g key={x}><rect x={x - 5} y="158" width="10" height="3" rx="1" fill="#fff" /><ellipse cx={x} cy="154" rx="7" ry="3" fill="#a855f7" /></g>))}
+    {/* main block: front, side, roof */}
+    <rect x="40" y="38" width="118" height="92" fill="#18181b" />
+    <polygon points="158,38 178,26 178,118 158,130" fill="#27272a" />
+    <polygon points="40,38 60,26 178,26 158,38" fill="#3f3f46" />
+    {/* glass floors with purple light */}
+    {Array.from({ length: 9 }, (_, i) => <rect key={i} x="45" y={44 + i * 9.5} width="108" height="5" fill={i % 3 === 0 ? '#c084fc' : '#7dd3fc'} opacity={i % 3 === 0 ? 0.85 : 0.45} />)}
+    {Array.from({ length: 9 }, (_, i) => <polygon key={i} points={`160,${44 + i * 9.5} 176,${35 + i * 9.5} 176,${39 + i * 9.5} 160,${48 + i * 9.5}`} fill="#a855f7" opacity="0.5" />)}
+    {/* the neon FIVE sign */}
+    <rect x="70" y="12" width="58" height="18" rx="4" fill="#0f0f12" stroke="#d946ef" strokeWidth="2" />
+    <text x="99" y="26" fontSize="14" fontWeight="900" fill="#f5d0fe" textAnchor="middle" letterSpacing="3">FIVE</text>
+    {/* The Penthouse on the roof */}
+    <rect x="62" y="30" width="74" height="8" fill="#a855f7" opacity="0.9" />
+    {/* palms */}
+    {[[12, 140], [198, 140], [30, 126], [180, 126]].map(([x, y]) => (
+      <g key={`${x}-${y}`}><rect x={x - 1.2} y={y - 18} width="2.4" height="18" fill="#92400e" /><circle cx={x} cy={y - 20} r="8" fill="#16a34a" /></g>
+    ))}
+    {label(name, 210, 164)}
   </svg>
 );

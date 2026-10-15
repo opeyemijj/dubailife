@@ -100,7 +100,7 @@ const villa = (id: string, name: string, lx: number, ly: number, signature: bool
   hasPool: true, hasPalm: signature, plotColor: "#fde68a", generated: true, interactive: true,
 });
 
-export const PALM_ENTITIES: PalmEntity[] = [
+const PALM_LAYOUT: PalmEntity[] = [
   // The island itself, enlarged and further out to sea (drawn under everything; not clickable).
   { id: "palm", name: "Palm Jumeirah", type: "community-palm", ...at(260, 220), width: PALM_ISLAND.width, height: PALM_ISLAND.height, bare: true, layer: "ground", generated: true, interactive: false },
 
@@ -124,20 +124,21 @@ export const PALM_ENTITIES: PalmEntity[] = [
 
   // Trunk (below the fronds): FIVE and Golden Mile on the west, Oceana and Shoreline on the east,
   // Al Ittihad Park down the middle, Fairmont and Palm West Beach on the west shore.
-  { id: "five-palm-jumeirah", name: "FIVE Palm Jumeirah", type: "hotel-palm-resort", theme: "modern", roof: "#111827", ...at(240, 358), width: 110, height: 76, generated: true, interactive: true },
+  // FIVE: the Palm's party hotel, drawn big as a landmark at the base of the trunk.
+  { id: "five-palm-jumeirah", name: "FIVE Palm Jumeirah", type: "hotel-five", ...at(287, 368), width: 210, height: 180, generated: true, interactive: true },
   tower("golden-mile-1", "Golden Mile 1", 241, 340, 12, "#f5d0a9"),
   tower("golden-mile-2", "Golden Mile 2", 241, 323, 12, "#f5d0a9"),
-  tower("oceana-residences", "Oceana Residences", 280, 356, 11, "#bae6fd"),
-  tower("shoreline-al-das", "Al Das · Shoreline Apartments", 280, 339, 9, "#fde68a"),
-  tower("shoreline-al-hamri", "Al Hamri · Shoreline Apartments", 279, 322, 9, "#fde68a"),
+  tower("oceana-residences", "Oceana Residences", 281, 345, 11, "#bae6fd"),
+  tower("shoreline-al-das", "Al Das · Shoreline Apartments", 280, 330, 9, "#fde68a"),
+  tower("shoreline-al-hamri", "Al Hamri · Shoreline Apartments", 279, 315, 9, "#fde68a"),
   { id: "al-ittihad-park", name: "Al Ittihad Park", type: "park-palm", ...at(260, 346), width: 74, height: 54, generated: true, interactive: true },
-  { id: "fairmont-the-palm", name: "Fairmont The Palm", type: "hotel-palm-resort", theme: "palace", roof: "#7c2d12", ...at(226, 318), width: 110, height: 76, generated: true, interactive: true },
+  { id: "fairmont-the-palm", name: "Fairmont The Palm", type: "hotel-palm-resort", theme: "palace", roof: "#7c2d12", ...at(244, 306), width: 110, height: 76, generated: true, interactive: true },
   // Palm West Beach: the ~1.6 km public beach along the west shore of the trunk, with its beach clubs.
-  { id: "palm-west-beach", name: "Palm West Beach", type: "palm-beach", ...at(227, 364), width: 96, height: 250, generated: true, interactive: true },
+  { id: "palm-west-beach", name: "Palm West Beach", type: "palm-beach", ...at(225, 370), width: 150, height: 320, generated: true, interactive: true },
   // Golden Mile Galleria: Nakheel's community retail & dining centre under the Golden Mile towers, by the park.
   { id: "golden-mile-galleria", name: "Golden Mile Galleria", type: "mall", ...at(262, 322), width: 210, height: 150, scale: 0.38, generated: true, interactive: true },
   // Club Vista Mare: Nakheel's beachfront dining destination on the trunk.
-  { id: "club-vista-mare", name: "Club Vista Mare", type: "the-pointe", ...at(294, 326), width: 120, height: 64, generated: true, interactive: true },
+  { id: "club-vista-mare", name: "Club Vista Mare", type: "the-pointe", ...at(297, 318), width: 120, height: 64, generated: true, interactive: true },
 
   // Spine: Palm Jumeirah Mall with The Palm Tower, Tiara Residences, and The Pointe at the tip.
   { id: "palm-jumeirah-mall", name: "Palm Jumeirah Mall", type: "mall", ...at(262, 252), width: 210, height: 150, scale: 0.5, generated: true, interactive: true },
@@ -158,6 +159,18 @@ export const PALM_ENTITIES: PalmEntity[] = [
     });
   })),
 ];
+
+/** How big the Palm's buildings are drawn, relative to their base sizes above. */
+export const PALM_BUILDING_SIZE = 1.25;
+/** Not resized: the island itself and the West Beach strip, which are drawn to the island's scale. */
+const FIXED_SIZE = new Set(["palm", "palm-west-beach"]);
+
+export const PALM_ENTITIES: PalmEntity[] = PALM_LAYOUT.map((e) => {
+  if (FIXED_SIZE.has(e.id)) return e;
+  // Entities drawn with a scale grow by scale; the rest by their width and height.
+  if (e.scale !== undefined) return { ...e, scale: e.scale * PALM_BUILDING_SIZE };
+  return { ...e, width: e.width && Math.round(e.width * PALM_BUILDING_SIZE), height: e.height && Math.round(e.height * PALM_BUILDING_SIZE) };
+});
 
 /** Where the Palm button centres the map (virtual coordinates): the middle of the island. */
 export const PALM_VIEW = { x: PALM_ISLAND.cx, y: Math.round(WORLD_HEIGHT - islandXY(260, 290).y) };

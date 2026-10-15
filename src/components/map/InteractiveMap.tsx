@@ -523,7 +523,10 @@ export function InteractiveMap({
     const targetY = screenH / 2 - renderedY * scale;
 
     setPlayerPos({ x: renderedX, y: renderedY });
-    transformRef.current?.setTransform(targetX, Math.min(targetY, maxPanY(scale)), scale, 650);
+    const finalY = Math.min(targetY, maxPanY(scale));
+    transformRef.current?.setTransform(targetX, finalY, scale, 650);
+    // An animated jump doesn't always report where it lands: tell the culling the final view directly.
+    setTimeout(() => updateView({ positionX: targetX, positionY: finalY, scale }), 700);
     if (districtName) showToast(`📍 Arrived at ${districtName}!`, 'credit');
   };
 
@@ -532,7 +535,9 @@ export function InteractiveMap({
     const scale = Math.max(DEFAULT_SCALE, transformRef.current?.state.scale ?? DEFAULT_SCALE);
     const w = typeof window !== 'undefined' ? window.innerWidth : 1200;
     const h = typeof window !== 'undefined' ? window.innerHeight : 800;
-    transformRef.current?.setTransform(w / 2 - pt.x * scale, Math.min(h / 2 - pt.y * scale, maxPanY(scale)), scale, ms);
+    const tx = w / 2 - pt.x * scale, ty = Math.min(h / 2 - pt.y * scale, maxPanY(scale));
+    transformRef.current?.setTransform(tx, ty, scale, ms);
+    setTimeout(() => updateView({ positionX: tx, positionY: ty, scale }), ms + 50);
   };
 
   /** Moves the citizen across the map; resolves on arrival. */
@@ -1252,7 +1257,9 @@ export function InteractiveMap({
               const scaleTransform = loc.scale !== undefined ? `scale(${loc.scale})` : '';
               
               const isSelectedInEdit = isEditMode && selectedEditIds.includes(loc.id);
-              const zClass = isSelectedInEdit ? 'z-50' : (isFloorTile ? 'z-0' : ((loc.type === 'generic-district' || loc.type === 'ad-land') ? 'z-10' : (isOverlay ? 'z-20' : 'z-30')));
+              // Billboards sit above every building (their ads must never be hidden); pins and hover labels go above them.
+              const isBillboard = loc.type === 'giant-billboard' || loc.type === 'billboard' || loc.type === 'ad-billboard';
+              const zClass = isSelectedInEdit ? 'z-50' : (isFloorTile ? 'z-0' : isBillboard ? 'z-[45]' : ((loc.type === 'generic-district' || loc.type === 'ad-land') ? 'z-10' : (isOverlay ? 'z-20' : 'z-30')));
 
               // Category info and Search / Filter Highlighting
               const catInfo = getEntityCategoryInfo(loc);

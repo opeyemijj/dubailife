@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { MallBlock, type MallBlockProps } from './MallBlock';
 import { MuseumOfFutureIcon, type MuseumOfFutureProps } from './MuseumOfFuture';
 import { HotelBlock, type HotelBlockProps, HotelResortComponent } from './HotelBlock';
-import { AtlantisPalmSprite, AtlantisRoyalSprite, PalmBeachSprite, PalmParkSprite, PalmResortSprite, PalmTowerSprite, PointeSprite } from './PalmJumeirah';
+import { AtlantisPalmSprite, AtlantisRoyalSprite, FivePalmSprite, PalmBeachSprite, PalmParkSprite, PalmResortSprite, PalmTowerSprite, PointeSprite } from './PalmJumeirah';
 import { BurjKhalifa, type BurjKhalifaProps, BurjKhalifaIcon } from './BurjKhalifa';
 import { FloorTile, type FloorTileProps, IslandFloorTile } from './FloorTile';
 import { TallBuilding, type TallBuildingProps, type TallBuildingShape, type RoofFeature } from './TallBuilding';
@@ -4626,6 +4626,7 @@ export const getBuildingSprite = (id: string, type: string, seed?: number, title
   if (type === 'the-pointe') return <PointeSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
   if (type === 'park-palm') return <PalmParkSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
   if (type === 'palm-beach') return <PalmBeachSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'hotel-five') return <FivePalmSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
   if (type === 'plot' || type === 'building-plot' || type === 'base-plot') return (
     <Plot 
       width={loc?.width} 
