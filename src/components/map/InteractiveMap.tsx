@@ -46,7 +46,8 @@ const DEFAULT_SCALE = 0.6;
 const maxPanY = (scale: number) => -WORLD_TOP * scale;
 
 // The default view: Burj Khalifa in the middle of the screen (the middle of the tower, not its base).
-const BURJ_VIEW = { x: 1871, y: WORLD_HEIGHT - 743 - 140 };
+// Its centre is about 400 px above the base now that the tower is drawn at its true, record height.
+const BURJ_VIEW = { x: 1871, y: WORLD_HEIGHT - 743 - 400 };
 
 // Ground-level tiles: drawn beneath everything and never clickable
 const isFloorTileType = (type?: string) =>
@@ -554,7 +555,10 @@ export function InteractiveMap({
   // Links into the map: ?open=<place> reopens a directory, ?to=<place> plans a journey, ?at=<place> puts you outside.
   useEffect(() => {
     // Guests start over Downtown, where the venues are.
-    if (interactionDisabled) { setTimeout(() => centreOn(BURJ_VIEW, 0), 50); return; }
+    // Centre once the map is ready, and again a moment later: phones can still be laying out the page
+    // (address bar, safe areas) on the first try, which left the opening view off to one side.
+    const settleOn = (pt: { x: number; y: number }) => { setTimeout(() => centreOn(pt, 0), 50); setTimeout(() => centreOn(pt, 0), 450); };
+    if (interactionDisabled) { settleOn(BURJ_VIEW); return; }
     const id = journeyTo?.placeId ?? openPlaceId;
     const place = id ? getPlace(id) ?? (id ? placeForEntity(venues.find((v) => v.id === id) ?? { id, type: '' }) : null) : null;
     if (place) {
@@ -567,8 +571,7 @@ export function InteractiveMap({
       updateCitizen((c) => ({ ...c, location: { ...at, placeId: undefined } }));
     }
     // Arriving from a venue shows that place; otherwise the city opens on Burj Khalifa.
-    const focus = at ?? BURJ_VIEW;
-    setTimeout(() => centreOn(focus, 0), 50);
+    settleOn(at ?? BURJ_VIEW);
     // Only on arrival at the map.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openPlaceId, journeyTo?.placeId, journeyTo?.venueId, atPlaceId, interactionDisabled]);

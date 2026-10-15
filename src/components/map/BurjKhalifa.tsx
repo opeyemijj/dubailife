@@ -9,6 +9,9 @@ export interface BurjKhalifaProps {
   style?: React.CSSProperties;
 }
 
+/** How much taller the tower is drawn than in the base artwork. */
+export const TOWER_STRETCH = 2.6;
+
 export const BurjKhalifa: React.FC<BurjKhalifaProps> = ({
   width = 300,
   height = 380,
@@ -23,11 +26,13 @@ export const BurjKhalifa: React.FC<BurjKhalifaProps> = ({
     <svg 
       viewBox="0 0 340 440" 
       preserveAspectRatio="none"
-      style={{ width: width ? `${width}px` : '100%', height: height ? `${height}px` : '100%', ...style }} 
+      style={{ width: width ? `${width}px` : '100%', height: height ? `${height}px` : '100%', overflow: 'visible', ...style }} 
       className={className}
       onClick={onClick}
     >
       <defs>
+        {/* Keep outlines thin on the stretched tower. */}
+        <style>{`.bk-tower * { vector-effect: non-scaling-stroke; }`}</style>
         {/* Stainless Steel Sunlit Front Facade */}
         <linearGradient id="bk-front-facet" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="#94a3b8" />
@@ -187,6 +192,10 @@ export const BurjKhalifa: React.FC<BurjKhalifaProps> = ({
         <line x1="160" y1="322" x2="160" y2="332" stroke="#38bdf8" strokeWidth="0.8" />
       </g>
 
+      {/* The tower above the podium, stretched upward from where it stands (y=312) so it rises far
+          above every other tower, as the world's tallest building does (828 m vs ~300–356 m nearby).
+          It draws above the sprite's box; the plaza, podium and badge keep their size. */}
+      <g className="bk-tower" transform={`translate(0 312) scale(1 ${TOWER_STRETCH}) translate(0 -312)`}>
       {/* --- TIER 1: LOWER SPIRALING WINGS (y=262 to 312) --- */}
       <g>
         {/* LEFT WING (Left side slightly visible along FloorTile depth) */}
@@ -413,6 +422,7 @@ export const BurjKhalifa: React.FC<BurjKhalifaProps> = ({
           <animate attributeName="opacity" values="0.6;1;0.6" dur="1.2s" repeatCount="indefinite" />
         </circle>
         <circle cx="160" cy="16" r="1.5" fill="#ef4444" />
+      </g>
       </g>
 
       {/* ==================================================================== */}
