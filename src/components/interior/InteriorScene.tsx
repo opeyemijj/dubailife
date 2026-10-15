@@ -480,7 +480,8 @@ export function InteriorScene({ venue, plan, look, worn, playerAnimation, player
   const followNodes = useRef(new Map<string, THREE.Object3D>());
 
   const labels: Label[] = [
-    ...plan.stations.map((s) => ({
+    // Seats and VIP booths aren't labelled (still tappable): the room reads cleaner without them.
+    ...plan.stations.filter((s) => s.kind !== "booth").map((s) => ({
       id: s.id,
       text: s.label,
       at: [s.position[0], 2.6, s.position[1]] as [number, number, number],
