@@ -22,6 +22,7 @@ function describe(e: Received): { icon: string; text: string } {
     case "friend": return { icon: "🤝", text: `${who} sent you a friend request` };
     case "typing": return { icon: "✍️", text: `${who} is typing…` };
     case "bottle": return { icon: "🍾", text: `${who} ordered bottle service!` };
+    case "consumption": return { icon: e.action === "drink" ? "🍸" : "🍴", text: `${who} is having a ${e.action === "drink" ? "drink" : "bite"}` };
   }
 }
 
@@ -40,7 +41,7 @@ export function SocialFeed({ events, onAccept, onFriend, onReply, readingWith }:
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-  const visible = events.filter((e) => !done.has(e.id) && !(e.type === "chat" && e.from.userId === readingWith) && e.type !== "money" && e.type !== "bottle" && e.type !== "served" && e.type !== "accept" && now - e.at < (e.type === "invite" || e.type === "friend" ? INVITE_MS : LIFE_MS)).slice(-3);
+  const visible = events.filter((e) => !done.has(e.id) && !(e.type === "chat" && e.from.userId === readingWith) && e.type !== "money" && e.type !== "bottle" && e.type !== "served" && e.type !== "consumption" && e.type !== "accept" && now - e.at < (e.type === "invite" || e.type === "friend" ? INVITE_MS : LIFE_MS)).slice(-3);
   const dismiss = (id: string) => setDone((d) => new Set(d).add(id));
   if (visible.length === 0) return null;
 

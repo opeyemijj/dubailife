@@ -12,6 +12,7 @@ import { distanceMetres, entranceOf } from "@/lib/city/geo";
 import { buyFlat, flatRoute, flatTitle, listFlats, rentFlat, type FlatView } from "@/lib/city/flats";
 import { adjustBalance, refreshCitizen, updateCitizen, useCitizen } from "@/lib/citizenStore";
 import { gameAudio } from "@/utils/gameAudio";
+import { VenueDressCodeModal } from "./VenueDressCodeModal";
 
 export type TravelMode = "walk" | "taxi" | "direct";
 
@@ -45,6 +46,7 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
     initial ? { place, label: initial.name, route: `/place/${place.id}/${initial.id}` } : null,
   );
   const [travelling, setTravelling] = useState<TravelMode | null>(null);
+  const [dressCodeVenue, setDressCodeVenue] = useState<Venue | null>(null);
 
   const go = async (mode: TravelMode) => {
     if (!destination) return;
@@ -75,32 +77,47 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
   return (
     // Above everything (top bar, district bar, bottom nav), with the map dimmed behind.
     <ModalPortal>
-    <div className="fixed inset-0 z-[180] flex items-end sm:items-center justify-center p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:p-6">
-      <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]" onClick={travelling ? undefined : onClose} aria-hidden />
-      <div role="dialog" aria-modal="true" className="relative w-full sm:max-w-lg bg-white text-slate-900 rounded-3xl shadow-2xl max-h-[calc(100dvh-1rem)] sm:max-h-[85vh] flex flex-col">
-        <div className="flex items-start gap-2 p-4 pb-2 border-b border-slate-100">
-          {destination && !travelling && !journeyVenueId && (
-            <button onClick={() => setDestination(null)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center" aria-label="Back"><ArrowLeft className="w-4 h-4" /></button>
-          )}
-          <div className="flex-1 min-w-0">
-            <h2 className="font-black text-lg leading-tight">{destination ? destination.label : place.name}</h2>
-            <p className="text-xs text-slate-500">{destination ? `at ${place.name}` : place.blurb}</p>
+    {!dressCodeVenue && (
+      <div className="fixed inset-0 z-[180] flex items-end sm:items-center justify-center p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:p-6">
+        <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]" onClick={travelling ? undefined : onClose} aria-hidden />
+        <div role="dialog" aria-modal="true" className="relative w-full sm:max-w-lg bg-white text-slate-900 rounded-3xl shadow-2xl max-h-[calc(100dvh-1rem)] sm:max-h-[85vh] flex flex-col">
+          <div className="flex items-start gap-2 p-4 pb-2 border-b border-slate-100">
+            {destination && !travelling && !journeyVenueId && (
+              <button onClick={() => setDestination(null)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center" aria-label="Back"><ArrowLeft className="w-4 h-4" /></button>
+            )}
+            <div className="flex-1 min-w-0">
+              <h2 className="font-black text-lg leading-tight">{destination ? destination.label : place.name}</h2>
+              <p className="text-xs text-slate-500">{destination ? `at ${place.name}` : place.blurb}</p>
+            </div>
+            {!travelling && <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center" aria-label="Close"><X className="w-4 h-4" /></button>}
           </div>
-          {!travelling && <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center" aria-label="Close"><X className="w-4 h-4" /></button>}
-        </div>
-        <div className="overflow-y-auto p-4 space-y-2">
-          {destination ? (
-            <Journey destination={destination} playerPos={playerPos} travelling={travelling} onGo={go} />
-          ) : place.kind === "residential" || place.kind === "home" ? (
-            <FlatsDirectory place={place} onPick={(f) => setDestination({ place, label: flatTitle(f), route: flatRoute(f) })} />
-          ) : place.venues.length === 1 ? (
-            <SingleVenue venue={place.venues[0]} onGo={() => setDestination({ place, label: place.venues[0].name, route: `/place/${place.id}/${place.venues[0].id}` })} />
-          ) : (
-            <Directory place={place} onPick={(v) => setDestination({ place, label: v.name, route: `/place/${place.id}/${v.id}` })} />
-          )}
+          <div className="overflow-y-auto p-4 space-y-2">
+            {destination ? (
+              <Journey destination={destination} playerPos={playerPos} travelling={travelling} onGo={go} />
+            ) : place.kind === "residential" || place.kind === "home" ? (
+              <FlatsDirectory place={place} onPick={(f) => setDestination({ place, label: flatTitle(f), route: flatRoute(f) })} />
+            ) : place.venues.length === 1 ? (
+              <SingleVenue venue={place.venues[0]} onGo={() => setDressCodeVenue(place.venues[0])} />
+            ) : (
+              <Directory place={place} onPick={(v) => setDressCodeVenue(v)} />
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    )}
+    {dressCodeVenue && (
+      <VenueDressCodeModal
+        open={!!dressCodeVenue}
+        onOpenChange={(open) => !open && setDressCodeVenue(null)}
+        place={place}
+        venue={dressCodeVenue}
+        onContinueCurrent={() => {
+          const v = dressCodeVenue;
+          setDressCodeVenue(null);
+          setDestination({ place, label: v.name, route: `/place/${place.id}/${v.id}` });
+        }}
+      />
+    )}
     </ModalPortal>
   );
 }

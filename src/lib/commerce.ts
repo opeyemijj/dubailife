@@ -69,3 +69,23 @@ export async function uploadImage(bucket: "ad-creatives" | "venue-media", file: 
   if (error) return { error: "Upload failed. Please try again." };
   return { url: db.storage.from(bucket).getPublicUrl(path).data.publicUrl };
 }
+
+// ---------------------------------------------------------------- idempotency protection
+
+const activePurchaseTokens = new Set<string>();
+
+/**
+ * Generates and validates an idempotency lock for transactions (bottle service, fashion purchases, food/drink).
+ * Prevents duplicate orders from double-clicks or rapid submissions.
+ */
+export function acquirePurchaseLock(key: string, ttlMs = 4000): boolean {
+  if (activePurchaseTokens.has(key)) return false;
+  activePurchaseTokens.add(key);
+  setTimeout(() => activePurchaseTokens.delete(key), ttlMs);
+  return true;
+}
+
+export function releasePurchaseLock(key: string) {
+  activePurchaseTokens.delete(key);
+}
+

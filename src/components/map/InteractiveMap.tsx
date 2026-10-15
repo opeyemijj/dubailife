@@ -10,6 +10,7 @@ import { MapBackground } from './MapBackground';
 import { mapConfig } from '@/data/mapSeed';
 import { CITY_ENTITIES, savableEntities } from '@/lib/city/mapEntities';
 import { PALM_VIEW, WORLD_TOP } from '@/lib/city/palm';
+import { GAME_CITY } from '@/lib/city/gameCity';
 import { CELL, blockCells, mosaicBlocks, type SectionKey } from '@/lib/city/floorMosaic';
 import { isLowPower } from '@/lib/device';
 
@@ -55,6 +56,7 @@ const isFloorTileType = (type?: string) =>
   !!type && (type === 'island-plain' || type === 'two-plains-tile' || type.includes('floor-tile') || type.includes('plot'));
 
 const OVERLAY_TYPES = new Set([
+  'game-tile',
   'floor-ad',
   'floor-mosaic',
   'bridge',
@@ -94,6 +96,7 @@ const isOverlayType = (type?: string) =>
 
 export const getEntityCategoryInfo = (entity: any) => {
   const type = (entity?.type || '').toLowerCase();
+  if (type === 'game-tile') return { icon: '🎮', category: 'Game City', key: 'games', color: 'from-fuchsia-500 to-indigo-600', badgeBg: 'bg-indigo-900/60 border-indigo-500/40 text-indigo-200' };
   const id = (entity?.id || '').toLowerCase();
   const name = (entity?.name || '').toLowerCase();
 
@@ -507,6 +510,12 @@ export function InteractiveMap({
       setSelectedDestination(defaultDest);
       setSelectedCabinClass('silver');
       setMetroModalOpen(true);
+      return;
+    }
+    // Game City: each tile opens its game's room.
+    if (loc.type === 'game-tile') {
+      gameAudio.playClickSound();
+      router.push(`/games/${loc.game}`);
       return;
     }
     if (loc.type === 'giant-billboard' || loc.type === 'billboard' || loc.type === 'ad-billboard' || loc.type === 'floor-ad') {
@@ -1144,6 +1153,13 @@ export function InteractiveMap({
             >
               <span>🏢</span>
               <span className="hidden xs:inline sm:inline">Bay</span>
+            </button>
+            <button
+              onClick={() => jumpToDistrict(GAME_CITY.x, GAME_CITY.y, 'Game City')}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 text-white font-bold text-xs whitespace-nowrap transition-all"
+            >
+              <span>🎮</span>
+              <span className="hidden xs:inline sm:inline">Games</span>
             </button>
             <button
               onClick={() => jumpToDistrict(4638, 159, 'Dubai Int Airport (DXB)')}

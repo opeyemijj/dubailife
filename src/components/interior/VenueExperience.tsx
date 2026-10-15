@@ -6,24 +6,28 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Briefcase, Check, LogOut, Megaphone, MessageCircle, MessagesSquare, Search, ShoppingBag, Sparkles, X } from "lucide-react";
+import { ArrowLeft, Briefcase, Check, HelpCircle, LogOut, Megaphone, MessageCircle, MessagesSquare, Search, Shirt, ShoppingBag, Sparkles, X } from "lucide-react";
 import type { Place, Product, StationKind, Venue } from "@/lib/city/types";
 import { adjustBalance, boostNeed, updateCitizen, useCitizen, type InventoryItem } from "@/lib/citizenStore";
 import type { AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 import { gameAudio } from "@/utils/gameAudio";
-import { InteriorScene, type DeliveryDef, type WalkTarget } from "./InteriorScene";
+import { InteriorScene, type CarryingState, type DeliveryDef, type VipTableReservation, type WalkTarget } from "./InteriorScene";
 import { VenueRadio } from "./VenueRadio";
 import { VenueAbout, VenueLoadingCard } from "./VenueOwnerLayer";
 import { VenueWallAdModal } from "./VenueWallAdModal";
+import { VenueGuideModal } from "./VenueGuideModal";
+import { ClothingStoreModal } from "@/components/commerce/ClothingStoreModal";
 import { countVisit, useVenuePublic, venueKey, withOwnerContent } from "@/lib/venueContent";
 import { befriend, sendMoney, useRoom, type Peer, type Received } from "@/lib/room";
 import { PeerPanel, type SocialContext } from "@/components/social/PeerPanel";
 import { SocialFeed } from "@/components/social/SocialFeed";
-import { serveKindOf, type ServeKind, type ServedDef } from "./served";
+import { HandHeldProp, serveKindOf, type ServeKind, type ServedDef } from "./served";
 import { SceneLoadingOverlay } from "@/components/GameLoadingScreen";
 import { useLocalsInRoom } from "./localsInRoom";
 import { claimGift, elsewhere, GIFT_AMOUNT, giftStatus, greeting, chatLine, inviteLine, rememberHop, takeHop, type Gathering, type GiftStatus, type Local } from "@/lib/locals";
 import { approachPoint, buildPlan, seatsAt, servingSpot, toRoom, type StationDef } from "./layouts";
+import { acquirePurchaseLock, releasePurchaseLock } from "@/lib/commerce";
+import type { WallPanelId } from "@/lib/venueAds";
 
 const SHIFT_COOLDOWN_MS = 10 * 60 * 1000;
 const aed = (n: number) => (n === 0 ? "Free" : `AED ${n.toLocaleString()}`);
@@ -61,6 +65,27 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   const venue = useMemo(() => withOwnerContent(baseVenue, pub?.content), [baseVenue, pub?.content]);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [wallAdOpen, setWallAdOpen] = useState(false);
+  const [selectedAdPanel, setSelectedAdPanel] = useState<WallPanelId>("panel_main");
+  const [guideOpen, setGuideOpen] = useState(false);
+  const [clothingStoreOpen, setClothingStoreOpen] = useState(false);
+  const [activeConsumption, setActiveConsumption] = useState<{ kind: "drink" | "eat"; propKind: ServeKind; tint?: string } | null>(null);
+  const [vipReservations, setVipReservations] = useState<VipTableReservation[]>([]);
+  const [vipCelebration, setVipCelebration] = useState<{ username: string; mine: boolean } | null>(null);
+  const [peerConsumptions, setPeerConsumptions] = useState<Record<string, { action: "drink" | "eat"; prop: string; tint?: string }>>({});
+
+  // Automatically check if venue guide has been seen on first entry
+  useEffect(() => {
+    const guideSeenKey = `venue_guide_seen_${venue.layout}`;
+    let seen = false;
+    try {
+      seen = localStorage.getItem(guideSeenKey) === "true";
+    } catch {}
+    if (!seen) {
+      const timer = setTimeout(() => setGuideOpen(true), 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [venue.layout]);
+
   useEffect(() => { countVisit(key); }, [key]);
   const router = useRouter();
   const { citizen } = useCitizen();
@@ -125,6 +150,10 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     gameAudio.playClickSound();
     setActiveStation(s.id);
     setPanel(null);
+    if (s.kind === "fitting" || (venue.layout === "boutique" && s.kind === "rack")) {
+      walkThen(approachPoint(s, 0.85), () => setClothingStoreOpen(true));
+      return;
+    }
     walkThen(approachPoint(s, 0.85), () => setPanel({ kind: "station", station: s }));
   };
 
@@ -186,7 +215,14 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       }),
     }]);
     setBaller({ name: buyer.username, mine: buyer.mine });
+    setVipCelebration({ username: buyer.username, mine: buyer.mine });
+    setTimeout(() => setVipCelebration((b) => (b?.username === buyer.username ? null : b)), 10000);
     setTimeout(() => setBaller((b) => (b?.name === buyer.username ? null : b)), 9000);
+    // Transition to persistent VIP Table reservation marker (Item 7)
+    setVipReservations((prev) => [
+      ...prev.filter((r) => r.tableId !== station.id),
+      { tableId: station.id, username: buyer.username },
+    ]);
   };
 
   /** The next free spot on a station's surface (at a table: in front of that seat), in room coordinates. */
@@ -208,7 +244,10 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
    * counter in a restaurant or café goes to your table; bottle service is brought to your booth.
    */
   const serve = (product: Product, kind: ServeKind) => {
-    const here = plan.stations.find((s) => s.id === activeStation) ?? plan.stations.find((s) => s.id === anchorId);
+    const here = plan.stations.find((s) => s.id === activeStation) 
+      ?? plan.stations.find((s) => s.id === anchorId)
+      ?? plan.stations.find((s) => s.kind === "booth" || s.kind === "bar" || s.kind === "table")
+      ?? plan.stations[0];
     if (!here) return;
     const tables = plan.stations.filter((s) => s.kind === "booth");
     const toTable = here.kind === "booth" || (venue.layout === "dining" && here.kind !== "bar" && tables.length > 0);
@@ -351,6 +390,16 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     if (e.type === "wave") bubble(e.from.userId, "👋");
     if (e.type === "money") gameAudio.playCoinSound();
     if (e.type === "gift") boostNeed("social", 10);
+    if (e.type === "consumption") {
+      setPeerConsumptions((prev) => ({ ...prev, [e.from.userId]: { action: e.action, prop: e.prop, tint: e.tint } }));
+      setTimeout(() => {
+        setPeerConsumptions((prev) => {
+          const next = { ...prev };
+          delete next[e.from.userId];
+          return next;
+        });
+      }, 18000);
+    }
   };
   const room = useRoom(`venue:${place.id}/${venue.id}`, me, onRoomEvent);
   const { peers, events, emit, myId } = room;
@@ -533,7 +582,16 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
 
   const buy = (product: Product) => {
     if (!citizen) return;
+
+    // Item 8: Purchase idempotency lock to prevent double-spending
+    const lockKey = `buy-${product.id}-${citizen.id}`;
+    if (!acquirePurchaseLock(lockKey, 2500)) {
+      say("Processing order, please wait…");
+      return;
+    }
+
     if (product.price > 0 && !adjustBalance(-product.price)) {
+      releasePurchaseLock(lockKey);
       say(`Not enough AED — you need ${aed(product.price)}.`);
       return;
     }
@@ -550,17 +608,51 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       service: product.service,
     };
     const serveKind = serveKindOf(product);
-    if (serveKind) serve(product, serveKind);
-    if (serveKind === "bottle") {
+    const base = product.id.split(":").pop() ?? "";
+    const isBottle = serveKind === "bottle" || product.id.includes("bottle") || product.name.toLowerCase().includes("bottle service");
+    const isDrink = isBottle || ["cocktail", "mocktail", "soda", "coffee", "tea", "smoothie"].includes(serveKind ?? "") || product.consumable?.need === "energy" || product.consumable?.need === "social";
+    const isFood = !isDrink && (["plate", "dessert", "pastry"].includes(serveKind ?? "") || product.consumable?.need === "hunger");
+
+    if (serveKind || isBottle || isFood || isDrink) {
+      serve(product, serveKind ?? (isFood ? "plate" : "cocktail"));
+
+      if (isBottle) {
+        // Celebratory champagne drinking
+        setActiveConsumption({ kind: "drink", propKind: "cocktail", tint: "#facc15" });
+        emitRef.current?.({ type: "consumption", action: "drink", prop: "cocktail", tint: "#facc15" });
+        setTimeout(() => setActiveConsumption((c) => (c?.propKind === "cocktail" ? null : c)), 25000);
+      } else if (isDrink) {
+        const drinkProp: ServeKind = (serveKind && ["cocktail", "mocktail", "soda", "coffee", "tea", "smoothie"].includes(serveKind)) ? serveKind : "cocktail";
+        setActiveConsumption({ kind: "drink", propKind: drinkProp, tint: TINT[base] ?? "#f59e0b" });
+        emitRef.current?.({ type: "consumption", action: "drink", prop: drinkProp, tint: TINT[base] ?? "#f59e0b" });
+        setTimeout(() => setActiveConsumption((c) => (c?.propKind === drinkProp ? null : c)), 18000);
+      } else if (isFood) {
+        const foodProp: ServeKind = (serveKind && ["plate", "dessert", "pastry"].includes(serveKind)) ? serveKind : "plate";
+        setActiveConsumption({ kind: "eat", propKind: foodProp, tint: TINT[base] });
+        emitRef.current?.({ type: "consumption", action: "eat", prop: foodProp, tint: TINT[base] });
+        setTimeout(() => setActiveConsumption((c) => (c?.propKind === foodProp ? null : c)), 20000);
+
+        // In dining venues, walk/sit at table to eat if not seated
+        if (venue.layout === "dining" && playerAnimation !== "sit") {
+          const diningTables = plan.stations.filter((s) => s.kind === "booth" || s.kind === "table");
+          const targetTable = diningTables.find((t) => t.id === myTable) ?? diningTables.find((t) => freeSeat(t) !== null);
+          if (targetTable) sitAt(targetTable);
+        }
+      }
+    }
+
+    if (isBottle) {
       updateCitizen((c) => ({ ...c, inventory: [...(c.inventory ?? []), item] }));
-      say("🍾 Bottle service is on its way to your table…");
+      boostNeed("social", 30);
+      boostNeed("fun", 20);
+      say("🍾 Bottle service is on its way to your table — cheers!");
     } else if (product.consumable) {
       boostNeed(product.consumable.need, product.consumable.amount);
-      if (!serveKind) {
+      if (!serveKind && !isFood && !isDrink) {
         setPlayerAnimation(venue.layout === "dining" ? "sit" : "clap");
         setTimeout(() => setPlayerAnimation("idle"), 3500);
       }
-      say(`${product.icon} ${serveKind ? "Served" : "Enjoyed"}: ${product.name} · ${product.consumable.need} +${product.consumable.amount}`);
+      say(`${product.icon} ${serveKind || isFood || isDrink ? "Served" : "Enjoyed"}: ${product.name} · ${product.consumable.need} +${product.consumable.amount}`);
       if (product.service) updateCitizen((c) => ({ ...c, inventory: [...(c.inventory ?? []), item] }));
     } else {
       updateCitizen((c) => ({
@@ -843,6 +935,13 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     );
   }
 
+  const carryingState: CarryingState | undefined = activeConsumption
+    ? {
+        prop: <HandHeldProp kind={activeConsumption.propKind} tint={activeConsumption.tint} />,
+        mode: activeConsumption.kind === "drink" ? "drink" : "eat",
+      }
+    : undefined;
+
   return (
     <main className="fixed inset-0 w-screen h-[100dvh] overflow-hidden select-none font-sans bg-black text-slate-900 overscroll-none">
       <InteriorScene
@@ -870,14 +969,43 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         locals={localsShown ? localPeers : undefined}
         onLocal={openLocal}
         onFloor={onFloor}
-        onWallAdClick={() => setWallAdOpen(true)}
+        onWallAdClick={(panelId) => {
+          setSelectedAdPanel(panelId);
+          setWallAdOpen(true);
+        }}
+        carrying={carryingState}
+        peerConsumptions={peerConsumptions}
+        vipTables={vipReservations}
       />
 
       <SceneLoadingOverlay label={`Entering ${venue.name}`} />
       <VenueLoadingCard venueKey={key} venueName={venue.name} pub={pub} paused={!!offer || !!panel} />
       {aboutOpen && pub && <VenueAbout venueName={venue.name} pub={pub} onClose={() => setAboutOpen(false)} />}
-      <VenueWallAdModal venueId={venue.id} venueName={venue.name} open={wallAdOpen} onOpenChange={setWallAdOpen} />
+      <VenueWallAdModal venueId={venue.id} venueName={venue.name} open={wallAdOpen} onOpenChange={setWallAdOpen} initialPanelId={selectedAdPanel} />
+      <VenueGuideModal venue={venue} open={guideOpen} onOpenChange={setGuideOpen} />
+      <ClothingStoreModal open={clothingStoreOpen} onOpenChange={setClothingStoreOpen} storeName={venue.name} />
       <VenueRadio venue={venue} compact={!!panel} />
+
+      {/* Item 7: Celebratory Bottle Service Announcement Banner */}
+      {vipCelebration && (
+        <div className="fixed inset-x-3 top-20 z-50 max-w-lg mx-auto pointer-events-none animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 p-0.5 rounded-3xl shadow-2xl">
+            <div className="bg-slate-950 rounded-[22px] px-5 py-3.5 text-center space-y-1">
+              <div className="flex items-center justify-center gap-1.5 text-amber-400 text-[10px] font-black uppercase tracking-widest">
+                <span>✨</span>
+                <span>VIP BOTTLE SERVICE CELEBRATION</span>
+                <span>🍾</span>
+              </div>
+              <h2 className="text-base sm:text-lg font-black text-white leading-tight">
+                @{vipCelebration.username} just popped champagne at the VIP Booth!
+              </h2>
+              <p className="text-[11px] text-amber-200/80 font-medium">
+                Sparklers ignited · VIP Booth reserved · Table status updated
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2 pointer-events-none">
@@ -897,6 +1025,9 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
           <span className="sm:hidden">AED {new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(citizen?.balance ?? 0)}</span>
           <span className="hidden sm:inline">AED {(citizen?.balance ?? 0).toLocaleString()}</span>
         </div>
+        <button onClick={() => setGuideOpen(true)} className="pointer-events-auto w-10 h-10 shrink-0 rounded-full bg-white/95 shadow-lg flex items-center justify-center text-slate-700 hover:text-slate-950 transition-colors" title="Venue Guide" aria-label="Venue Guide">
+          <HelpCircle className="w-4 h-4" />
+        </button>
         <button onClick={() => setPanel({ kind: "bag" })} className="pointer-events-auto w-10 h-10 shrink-0 rounded-full bg-white/95 shadow-lg flex items-center justify-center" aria-label="Your bag"><ShoppingBag className="w-4 h-4" /></button>
         <button onClick={() => router.push(`/explore?at=${place.id}`)} className="pointer-events-auto h-10 w-10 sm:w-auto shrink-0 justify-center sm:px-3 rounded-full bg-slate-900 text-white shadow-lg flex items-center gap-1.5 text-xs font-black" aria-label="Exit to the city">
           <LogOut className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Exit</span>
@@ -906,6 +1037,11 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       {/* Quick actions */}
       {!panel && (
         <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-30 flex flex-wrap justify-center gap-2 w-[min(96vw,560px)] pointer-events-auto">
+          {(venue.layout === "boutique" || venue.category.toLowerCase().includes("fashion")) && (
+            <button onClick={() => setClothingStoreOpen(true)} className="h-11 px-4 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-xl text-xs flex items-center gap-1.5 active:scale-95 transition-all">
+              <Shirt className="w-4 h-4" /> 3D Fitting Room
+            </button>
+          )}
           <button onClick={openStaff} className="h-11 px-4 rounded-full bg-white/95 shadow-xl text-xs font-black flex items-center gap-1.5"><MessageCircle className="w-4 h-4" /> Talk to {venue.staff.role.toLowerCase()}</button>
           <button onClick={() => setWallAdOpen(true)} className="h-11 px-4 rounded-full bg-white/95 shadow-xl text-xs font-black flex items-center gap-1.5 text-slate-900 hover:bg-slate-50"><Megaphone className="w-4 h-4 text-amber-500" /> Wall Ad</button>
           {job && <button onClick={openStaff} className="h-11 px-4 rounded-full bg-white/95 shadow-xl text-xs font-black flex items-center gap-1.5"><Briefcase className="w-4 h-4" /> {worksHere ? "Work a shift" : "Jobs"}</button>}

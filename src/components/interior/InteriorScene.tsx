@@ -9,18 +9,28 @@ import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber"
 import { OrbitControls } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import * as THREE from "three";
-import { CitizenAvatar, StudioEnvironment, type AvatarAnimation } from "@/components/avatar/CitizenAvatar";
+import { CitizenAvatar, StudioEnvironment, type AvatarAnimation, type CarryMode } from "@/components/avatar/CitizenAvatar";
 import type { AvatarLookProps } from "@/components/avatar/roster";
 import type { Accessory, Venue } from "@/lib/city/types";
 import { approachPoint, type Plan, type StationDef } from "./layouts";
 import { floorTexture, signTexture, wallAdScreenTexture } from "./materials";
-import { getVenueWallAd } from "@/lib/venueAds";
-import { ChampagneBottle, ServedItem, type ServedDef } from "./served";
+import { getVenueWallAd, WALL_PANELS, type WallPanelId } from "@/lib/venueAds";
+import { ChampagneBottle, HandHeldProp, ServedItem, type ServeKind, type ServedDef } from "./served";
 import type { Peer } from "@/lib/room";
 
 const WALL_H = 4.4;
 const WALK_SPEED = 1.6; // m/s
 const DRAG = 6;
+
+export interface CarryingState {
+  prop?: React.ReactNode;
+  mode?: CarryMode;
+}
+
+export interface VipTableReservation {
+  tableId: string;
+  username: string;
+}
 
 export interface WalkTarget {
   point: [number, number];
@@ -70,8 +80,14 @@ interface Props {
   onLocal?: (local: Peer) => void;
   /** Tapped a free spot on the floor (or the dance floor). */
   onFloor?: (point: [number, number]) => void;
-  /** Tapped the in-venue wall advertisement screen */
-  onWallAdClick?: () => void;
+  /** Active food or drink being held / consumed */
+  carrying?: CarryingState;
+  /** Active food or drink consumption for peers in the room */
+  peerConsumptions?: Record<string, { action: "drink" | "eat"; prop: string; tint?: string }>;
+  /** VIP booths reserved by citizens */
+  vipTables?: VipTableReservation[];
+  /** Tapped an in-venue wall advertisement screen */
+  onWallAdClick?: (panelId: WallPanelId) => void;
 }
 
 const NATURAL_FLOOR: Partial<Record<string, string>> = { sand: "#f3dfae", deck: "#ece7df", ice: "#e0f2fe" };
@@ -79,26 +95,48 @@ const NATURAL_FLOOR: Partial<Record<string, string>> = { sand: "#f3dfae", deck: 
 /** Venues under the open sky (no walls or ceiling). */
 const OPEN_AIR = new Set(["outdoor", "beach", "pooldeck", "waterpark"]);
 
-function Room({ venue, plan, onFloor, onWallAdClick }: { venue: Venue; plan: Plan; onFloor?: (point: [number, number]) => void; onWallAdClick?: () => void }) {
+function Room({
+  venue,
+  plan,
+  onFloor,
+  onWallAdClick,
+}: {
+  venue: Venue;
+  plan: Plan;
+  onFloor?: (point: [number, number]) => void;
+  onWallAdClick?: (panelId: WallPanelId) => void;
+}) {
   const [w, d] = plan.size;
   // Sand, pool decks and ice have their own natural colour whatever the venue's palette.
   const floorBase = NATURAL_FLOOR[plan.floor] ?? venue.palette.floor;
   const floor = useMemo(() => floorTexture(plan.floor, floorBase, [w / 4, d / 4]), [plan.floor, floorBase, w, d]);
   const dark = venue.layout === "club" || venue.palette.wall === "#2a2420" || venue.palette.wall === "#0f172a" || venue.palette.wall === "#5a3e2b";
   const sign = useMemo(() => signTexture(venue.name, dark ? "#f8fafc" : venue.palette.accent, null), [venue.name, venue.palette.accent, dark]);
-  
-  // Dynamic in-venue digital wall ad
-  const wallAd = useMemo(() => getVenueWallAd(venue.id), [venue.id]);
 
-  const adTexture = useMemo(() => {
-    if (!wallAd) return null;
-    return wallAdScreenTexture(wallAd.headline, wallAd.sponsorName, wallAd.badge);
-  }, [wallAd]);
+  // Multi-panel digital screens placed strategically across the room
+  const panelsData = useMemo(() => {
+    return WALL_PANELS.map((p) => {
+      const ad = getVenueWallAd(venue.id, p.id);
+      const texture = wallAdScreenTexture(ad.headline, ad.sponsorName, ad.badge);
+      let pos: [number, number, number] = [0, 2.3, 0];
+      let rot: [number, number, number] = [0, 0, 0];
+      const adW = Math.min(2.4, w * 0.32);
+      const adH = (adW * 9) / 16;
 
-  const adW = Math.min(2.5, w * 0.35);
-  const adH = (adW * 9) / 16;
-  const adX = w > 8 ? w * 0.28 : 0;
-  const adY = w > 8 ? 2.3 : 1.9;
+      if (p.id === "panel_main") {
+        pos = [w > 8 ? w * 0.26 : 0, 2.3, -d / 2 + 0.09];
+        rot = [0, 0, 0];
+      } else if (p.id === "panel_west") {
+        pos = [-w / 2 + 0.09, 2.3, 0];
+        rot = [0, Math.PI / 2, 0];
+      } else if (p.id === "panel_east") {
+        pos = [w / 2 - 0.09, 2.3, 0];
+        rot = [0, -Math.PI / 2, 0];
+      }
+
+      return { def: p, ad, texture, pos, rot, adW, adH };
+    });
+  }, [venue.id, w, d]);
 
   return (
     <group>
@@ -124,13 +162,15 @@ function Room({ venue, plan, onFloor, onWallAdClick }: { venue: Venue; plan: Pla
             <meshStandardMaterial map={sign} transparent emissive={dark ? "#ffffff" : "#000000"} emissiveMap={dark ? sign : null} emissiveIntensity={dark ? 0.6 : 0} />
           </mesh>
 
-          {/* Interactive Wall Advertisement Screen */}
-          {adTexture && (
+          {/* Multi-Panel Interactive Advertising Wall Screens */}
+          {panelsData.map(({ def, texture, pos, rot, adW, adH }) => (
             <group
-              position={[adX, adY, -d / 2 + 0.09]}
+              key={def.id}
+              position={pos}
+              rotation={rot}
               onClick={(e) => {
                 e.stopPropagation();
-                onWallAdClick?.();
+                onWallAdClick?.(def.id);
               }}
               onPointerOver={(e) => {
                 e.stopPropagation();
@@ -154,18 +194,99 @@ function Room({ venue, plan, onFloor, onWallAdClick }: { venue: Venue; plan: Pla
               <mesh position={[0, 0, 0.01]}>
                 <planeGeometry args={[adW, adH]} />
                 <meshStandardMaterial
-                  map={adTexture}
+                  map={texture}
                   roughness={0.2}
                   metalness={0.1}
                   emissive="#ffffff"
-                  emissiveMap={adTexture}
+                  emissiveMap={texture}
                   emissiveIntensity={0.65}
                 />
               </mesh>
             </group>
-          )}
+          ))}
         </>
       )}
+    </group>
+  );
+}
+
+/** Dynamic Club Lighting: moving spotlights, beat pulse strobes, and color beams */
+function ClubLighting({ plan }: { plan: Plan }) {
+  const [w, d] = plan.size;
+  const spot1 = useRef<THREE.SpotLight>(null);
+  const spot2 = useRef<THREE.SpotLight>(null);
+  const strobe = useRef<THREE.PointLight>(null);
+  const floorGlow = useRef<THREE.Mesh>(null);
+  const target1 = useMemo(() => new THREE.Object3D(), []);
+  const target2 = useMemo(() => new THREE.Object3D(), []);
+
+  useEffect(() => {
+    if (spot1.current) spot1.current.target = target1;
+    if (spot2.current) spot2.current.target = target2;
+  }, [target1, target2]);
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    // Sweeping spotlight 1 (Magenta/Laser Rose)
+    target1.position.x = Math.sin(t * 1.5) * (w * 0.35);
+    target1.position.z = Math.cos(t * 1.2) * (d * 0.35);
+    target1.position.y = 0;
+    target1.updateMatrixWorld();
+
+    // Sweeping spotlight 2 (Cyan/Laser Aqua)
+    target2.position.x = Math.cos(t * 1.7) * (w * 0.35);
+    target2.position.z = Math.sin(t * 1.3) * (d * 0.35);
+    target2.position.y = 0;
+    target2.updateMatrixWorld();
+
+    // Dynamic strobe and dance floor beat pulse (128 BPM = ~2.13 Hz)
+    const beat = Math.pow(Math.max(0, Math.sin(t * 6.7)), 8);
+    if (strobe.current) {
+      strobe.current.intensity = 1.5 + beat * 8.0;
+    }
+    if (floorGlow.current) {
+      const mat = floorGlow.current.material as THREE.MeshBasicMaterial;
+      if (mat) mat.opacity = 0.25 + beat * 0.45;
+    }
+  });
+
+  return (
+    <group>
+      <primitive object={target1} />
+      <primitive object={target2} />
+      <spotLight
+        ref={spot1}
+        position={[-w * 0.25, WALL_H - 0.2, -d * 0.25]}
+        intensity={16}
+        distance={24}
+        angle={0.42}
+        penumbra={0.55}
+        color="#ec4899"
+      />
+      <spotLight
+        ref={spot2}
+        position={[w * 0.25, WALL_H - 0.2, d * 0.25]}
+        intensity={16}
+        distance={24}
+        angle={0.42}
+        penumbra={0.55}
+        color="#06b6d4"
+      />
+      <pointLight
+        ref={strobe}
+        position={[0, WALL_H - 0.35, 0]}
+        intensity={2.5}
+        distance={16}
+        color="#ffffff"
+      />
+      <pointLight position={[-w * 0.3, WALL_H - 0.5, 0]} intensity={6} distance={12} color="#a855f7" />
+      <pointLight position={[w * 0.3, WALL_H - 0.5, 0]} intensity={6} distance={12} color="#f59e0b" />
+
+      {/* Pulsing dance floor center ambient glow */}
+      <mesh ref={floorGlow} position={[0, 0.012, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[Math.min(w, d) * 0.28, 32]} />
+        <meshBasicMaterial color="#d946ef" transparent opacity={0.3} depthWrite={false} />
+      </mesh>
     </group>
   );
 }
@@ -176,10 +297,10 @@ function Lights({ venue, plan }: { venue: Venue; plan: Plan }) {
   return (
     <>
       {/* Clubs stay moody but bright enough to see yourself and others. */}
-      <hemisphereLight args={[club ? "#ddd6fe" : "#fffaf0", club ? "#312e81" : "#d6d3d1", club ? 1.25 : 0.9]} />
+      <hemisphereLight args={[club ? "#c084fc" : "#fffaf0", club ? "#1e1b4b" : "#d6d3d1", club ? 1.4 : 0.9]} />
       <directionalLight
         position={[4, 9, 6]}
-        intensity={club ? 1.4 : 1.6}
+        intensity={club ? 1.2 : 1.6}
         castShadow
         shadow-mapSize={[1024, 1024]}
         shadow-camera-left={-w / 2 - 1}
@@ -188,12 +309,13 @@ function Lights({ venue, plan }: { venue: Venue; plan: Plan }) {
         shadow-camera-bottom={-d / 2 - 1}
         shadow-bias={-0.0004}
       />
-      {club && <pointLight position={[-2, WALL_H - 0.4, -0.6]} intensity={6} distance={10} color="#e879f9" />}
-      {club && <pointLight position={[2, WALL_H - 0.4, -0.6]} intensity={6} distance={10} color="#22d3ee" />}
-      {/* Ceiling spots over the floor area */}
-      {!club && [-w / 4, w / 4].flatMap((x) => [-d / 4, d / 6].map((z) => (
-        <pointLight key={`${x},${z}`} position={[x, WALL_H - 0.3, z]} intensity={4} distance={9} color="#fff4e0" />
-      )))}
+      {club ? (
+        <ClubLighting plan={plan} />
+      ) : (
+        [-w / 4, w / 4].flatMap((x) => [-d / 4, d / 6].map((z) => (
+          <pointLight key={`${x},${z}`} position={[x, WALL_H - 0.3, z]} intensity={4} distance={9} color="#fff4e0" />
+        )))
+      )}
     </>
   );
 }
@@ -395,7 +517,7 @@ function useFollowable(follow: Follow, key: string, group: React.RefObject<THREE
   }, [follow, key, group]);
 }
 
-function RemotePeer({ peer, follow, followKey, onClick, ring = "#38bdf8" }: { peer: Peer; follow: Follow; followKey: string; onClick: () => void; ring?: string }) {
+function RemotePeer({ peer, follow, followKey, onClick, ring = "#38bdf8", carrying }: { peer: Peer; follow: Follow; followKey: string; onClick: () => void; ring?: string; carrying?: CarryingState }) {
   const group = useRef<THREE.Group>(null);
   const [walking, setWalking] = useState(false);
   const moving = useRef(false);
@@ -416,7 +538,13 @@ function RemotePeer({ peer, follow, followKey, onClick, ring = "#38bdf8" }: { pe
       onPointerOut={() => (document.body.style.cursor = "")}
     >
       <Suspense fallback={null}>
-        <CitizenAvatar look={peer.look} animation={walking ? "walk" : peer.animation} position={[0, !walking && peer.animation === "sit" ? peer.lift ?? 0 : 0, 0]} />
+        <CitizenAvatar
+          look={peer.look}
+          animation={walking ? "walk" : peer.animation}
+          position={[0, !walking && peer.animation === "sit" ? peer.lift ?? 0 : 0, 0]}
+          holding={carrying?.prop}
+          carryMode={carrying?.mode}
+        />
       </Suspense>
       {/* A soft ring so other players stand out from staff and shoppers. */}
       <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
@@ -428,7 +556,29 @@ function RemotePeer({ peer, follow, followKey, onClick, ring = "#38bdf8" }: { pe
 }
 
 /** Moves the citizen toward the walk target; reports arrival once. */
-function Player({ look, worn, start, walkTo, onArrive, animation, lift, follow, followKey }: { look?: AvatarLookProps; worn?: Accessory[]; start: [number, number]; walkTo: WalkTarget | null; onArrive: (key: number) => void; animation: AvatarAnimation; lift: number; follow: Follow; followKey: string }) {
+function Player({
+  look,
+  worn,
+  start,
+  walkTo,
+  onArrive,
+  animation,
+  lift,
+  carrying,
+  follow,
+  followKey,
+}: {
+  look?: AvatarLookProps;
+  worn?: Accessory[];
+  start: [number, number];
+  walkTo: WalkTarget | null;
+  onArrive: (key: number) => void;
+  animation: AvatarAnimation;
+  lift: number;
+  carrying?: CarryingState;
+  follow: Follow;
+  followKey: string;
+}) {
   const group = useRef<THREE.Group>(null);
   useFollowable(follow, followKey, group);
   // Walking until the latest target has been reached.
@@ -467,12 +617,48 @@ function Player({ look, worn, start, walkTo, onArrive, animation, lift, follow, 
 
   return (
     <group ref={group} position={[start[0], 0, start[1]]} rotation={[0, Math.PI, 0]}>
-      <CitizenAvatar look={look} animation={walking ? "walk" : animation} accessories={worn} position={[0, walking ? 0 : lift, 0]} />
+      <CitizenAvatar
+        look={look}
+        animation={walking ? "walk" : animation}
+        accessories={worn}
+        position={[0, walking ? 0 : lift, 0]}
+        holding={carrying?.prop}
+        carryMode={carrying?.mode}
+      />
     </group>
   );
 }
 
-export function InteriorScene({ venue, plan, look, worn, playerAnimation, playerLift = 0, start, walkTo, onArrive, onStation, onStaff, staffAnimation, highlight, served, deliveries, onPlaced, onDeliveryDone, peers = [], bubbles = {}, peerBadges = {}, onPeer, locals = [], onLocal, onFloor, onWallAdClick }: Props) {
+export function InteriorScene({
+  venue,
+  plan,
+  look,
+  worn,
+  playerAnimation,
+  playerLift = 0,
+  start,
+  walkTo,
+  onArrive,
+  onStation,
+  onStaff,
+  staffAnimation,
+  highlight,
+  served,
+  deliveries,
+  onPlaced,
+  onDeliveryDone,
+  peers = [],
+  bubbles = {},
+  peerBadges = {},
+  onPeer,
+  locals = [],
+  onLocal,
+  onFloor,
+  onWallAdClick,
+  carrying,
+  peerConsumptions,
+  vipTables = [],
+}: Props) {
   const quality = useMemo(() => canvasQuality(), []);
   const [w, d] = plan.size;
   const shoppers = useMemo(() => {
@@ -496,6 +682,17 @@ export function InteriorScene({ venue, plan, look, worn, playerAnimation, player
       at: [s.position[0], Math.hypot(s.position[0] - plan.staff.position[0], s.position[1] - plan.staff.position[1]) < 1.5 ? 3.6 : 2.95, s.position[1]] as [number, number, number],
       className: hovered === s.id || highlight === s.id ? "bg-emerald-500 text-white scale-110" : "bg-white/90 text-slate-800",
     })),
+    // VIP Booth reservations (Item 7 persistent table labels)
+    ...vipTables.map((vt) => {
+      const table = plan.stations.find((s) => s.id === vt.tableId);
+      const pos: [number, number, number] = table ? [table.position[0], 2.2, table.position[1]] : [0, 2, 0];
+      return {
+        id: `vip:${vt.tableId}`,
+        text: `👑 VIP Table · @${vt.username}`,
+        at: pos,
+        className: "bg-amber-400 text-slate-950 font-black ring-2 ring-amber-300 shadow-xl",
+      };
+    }),
     { id: "staff", text: `💬 ${venue.staff.role}`, at: [plan.staff.position[0], 1.95, plan.staff.position[1]], className: "bg-slate-900/85 text-white" },
     ...peers.map((p) => ({ id: `peer:${p.userId}`, text: `@${p.username}${peerBadges[p.userId] ? ` · 💬${peerBadges[p.userId]}` : ""}`, at: [0, p.animation === "sit" ? 1.6 : 2.05, 0] as [number, number, number], follow: p.userId, className: "bg-sky-500 text-white" })),
     ...locals.map((p) => ({ id: `peer:${p.userId}`, text: `✨ ${p.username}`, at: [0, p.animation === "sit" ? 1.6 : 2.05, 0] as [number, number, number], follow: p.userId, className: "bg-amber-400 text-slate-900" })),
@@ -525,6 +722,18 @@ export function InteriorScene({ venue, plan, look, worn, playerAnimation, player
         <Station key={s.id} s={s} active={highlight === s.id} hover={hovered === s.id} onHover={(on) => setHovered((h) => (on ? s.id : h === s.id ? null : h))} onClick={clickStation(s)} />
       ))}
 
+      {/* Reserved VIP Table golden floor glow */}
+      {vipTables.map((vt) => {
+        const table = plan.stations.find((s) => s.id === vt.tableId);
+        if (!table) return null;
+        return (
+          <mesh key={vt.tableId} position={[table.position[0], 0.02, table.position[1]]} rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[0.85, 1.05, 32]} />
+            <meshBasicMaterial color="#f59e0b" transparent opacity={0.85} depthWrite={false} />
+          </mesh>
+        );
+      })}
+
       <group
         position={[plan.staff.position[0], 0, plan.staff.position[1]]}
         rotation={[0, plan.staff.rotation, 0]}
@@ -543,10 +752,27 @@ export function InteriorScene({ venue, plan, look, worn, playerAnimation, player
       ))}
       {served.map((s) => <ServedItem key={s.id} def={s} />)}
       {deliveries.map((d) => <Delivery key={d.id} d={d} onPlaced={onPlaced} onDone={onDeliveryDone} />)}
-      {peers.map((p) => <RemotePeer key={p.userId} peer={p} follow={followNodes} followKey={p.userId} onClick={() => onPeer?.(p)} />)}
+      {peers.map((p) => {
+        const pc = peerConsumptions?.[p.userId];
+        const peerCarrying: CarryingState | undefined = pc
+          ? { prop: <HandHeldProp kind={pc.prop as ServeKind} tint={pc.tint} />, mode: pc.action }
+          : undefined;
+        return <RemotePeer key={p.userId} peer={p} follow={followNodes} followKey={p.userId} onClick={() => onPeer?.(p)} carrying={peerCarrying} />;
+      })}
       {locals.map((p) => <RemotePeer key={p.userId} peer={p} follow={followNodes} followKey={p.userId} ring="#f59e0b" onClick={() => onLocal?.(p)} />)}
       <Suspense fallback={null}>
-        <Player look={look} worn={worn} start={start ?? plan.entrance} walkTo={walkTo} onArrive={onArrive} animation={playerAnimation} lift={playerLift} follow={followNodes} followKey="me" />
+        <Player
+          look={look}
+          worn={worn}
+          start={start ?? plan.entrance}
+          walkTo={walkTo}
+          onArrive={onArrive}
+          animation={playerAnimation}
+          lift={playerLift}
+          carrying={carrying}
+          follow={followNodes}
+          followKey="me"
+        />
       </Suspense>
       <LabelTracker labels={labels} nodes={labelNodes} follow={followNodes} />
       <FitCamera width={w} depth={d} />

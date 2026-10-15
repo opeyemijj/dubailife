@@ -45,7 +45,8 @@ export type RoomEvent =
   | { type: "gift"; gift: Gift }
   | { type: "invite"; kind: "join" | "dance" | "table"; table?: string }
   | { type: "served"; item: { id: string; kind: string; position: [number, number, number]; rotation: number; tint?: string } }
-  | { type: "bottle"; station: string }
+  | { type: "bottle"; station: string; username?: string }
+  | { type: "consumption"; action: "drink" | "eat"; prop: string; tint?: string }
   | { type: "accept"; kind: "join" | "dance" | "table"; spot?: [number, number] }
   | { type: "friend" };
 

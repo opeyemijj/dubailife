@@ -141,42 +141,156 @@ function usePlay(actions: Record<string, THREE.AnimationAction | null>, animatio
   }, [actions, animation]);
 }
 
+export type CarryMode = "hold" | "raise" | "drink" | "eat";
+
 /**
- * Something carried in the right hand (a bottle, a tray…), kept upright whatever the arm does.
- * With `raise`, the arm is lifted overhead on top of the current animation.
+ * Something carried in the right hand (a bottle, a drink, food prop…), kept upright whatever the arm does.
+ * With `raise`, the arm is lifted overhead (bottle service).
+ * With `drink` or `eat`, the arm periodically lifts towards the mouth in a natural sip or dining gesture.
  * Call after useAnimations so it runs once the clip has posed the skeleton for the frame.
  */
-function useCarry(model: { scene: THREE.Object3D }, raise: boolean, held: React.RefObject<THREE.Group | null>) {
+function useCarry(model: { scene: THREE.Object3D }, mode: CarryMode | false, held: React.RefObject<THREE.Group | null>) {
   const bones = useMemo(() => {
     const named = (...names: string[]) => names.map((n) => model.scene.getObjectByName(n)).find(Boolean);
-    return { upper: named("Bip01_R_UpperArm", "RightArm"), hand: named("Bip01_R_Hand", "RightHand"), neck: named("Bip01_Neck", "Neck") };
+    return {
+      upper: named("Bip01_R_UpperArm", "RightArm"),
+      forearm: named("Bip01_R_Forearm", "RightForeArm", "Bip01_R_Elbow"),
+      hand: named("Bip01_R_Hand", "RightHand"),
+      neck: named("Bip01_Neck", "Neck"),
+      head: named("Bip01_Head", "Head"),
+    };
   }, [model]);
-  const tmp = useMemo(() => ({ a: new THREE.Vector3(), b: new THREE.Vector3(), c: new THREE.Vector3(), q: new THREE.Quaternion(), q2: new THREE.Quaternion() }), []);
-  useFrame(() => {
-    const { upper, hand, neck } = bones;
+  const tmp = useMemo(() => ({
+    a: new THREE.Vector3(),
+    b: new THREE.Vector3(),
+    c: new THREE.Vector3(),
+    q: new THREE.Quaternion(),
+    q2: new THREE.Quaternion(),
+    target: new THREE.Vector3(),
+  }), []);
+
+  useFrame(({ clock }) => {
+    const { upper, forearm, hand, neck, head } = bones;
     if (!upper || !hand) return;
-    const { a, b, c, q, q2 } = tmp;
-    if (raise && upper.parent && neck) {
+    const { a, b, c, q, q2, target } = tmp;
+
+    // Refresh matrices so bone world coordinates are accurate after animation update
+    model.scene.updateWorldMatrix(true, false);
+
+    let sipWeight = 0;
+    let eatWeight = 0;
+
+    if (mode === "raise" && upper.parent && neck) {
       // Swing the whole arm so shoulder→hand points up and a little out to the side.
       const shoulder = upper.getWorldPosition(a);
       const current = hand.getWorldPosition(b).sub(shoulder).normalize();
       const out = neck.getWorldPosition(c).negate().add(shoulder).setY(0).normalize();
-      const target = out.multiplyScalar(0.3).add(new THREE.Vector3(0, 1, 0)).normalize();
+      target.copy(out).multiplyScalar(0.3).add(new THREE.Vector3(0, 1, 0)).normalize();
       q.setFromUnitVectors(current, target);
       upper.getWorldQuaternion(q2).premultiply(q);
       upper.quaternion.copy(upper.parent.getWorldQuaternion(q).invert().multiply(q2));
       upper.updateWorldMatrix(false, true);
+    } else if (mode === "drink" && upper.parent && neck) {
+      // Natural drinking gesture: sips every 4 seconds
+      const t = clock.getElapsedTime() % 4.0;
+      if (t < 1.1) {
+        sipWeight = Math.sin((t / 1.1) * (Math.PI / 2));
+      } else if (t < 2.3) {
+        sipWeight = 1.0;
+      } else if (t < 3.2) {
+        sipWeight = Math.cos(((t - 2.3) / 0.9) * (Math.PI / 2));
+      } else {
+        sipWeight = 0;
+      }
+
+      const shoulder = upper.getWorldPosition(a);
+      const mouthTarget = (head ?? neck).getWorldPosition(c).add(new THREE.Vector3(0, -0.04, 0.12));
+      const restTarget = shoulder.clone().add(new THREE.Vector3(0.08, -0.16, 0.28));
+      const currentTarget = restTarget.lerp(mouthTarget, sipWeight);
+
+      const current = hand.getWorldPosition(b).sub(shoulder).normalize();
+      target.copy(currentTarget).sub(shoulder).normalize();
+      q.setFromUnitVectors(current, target);
+      const identity = new THREE.Quaternion();
+      const weight = 0.55 + sipWeight * 0.42;
+      const blended = identity.slerp(q, weight);
+      upper.getWorldQuaternion(q2).premultiply(blended);
+      upper.quaternion.copy(upper.parent.getWorldQuaternion(q).invert().multiply(q2));
+      upper.updateWorldMatrix(false, true);
+
+      if (forearm && forearm.parent) {
+        const bendQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.5 + sipWeight * 0.85);
+        forearm.quaternion.multiply(bendQ);
+        forearm.updateWorldMatrix(false, true);
+      }
+    } else if (mode === "eat" && upper.parent && neck) {
+      // Natural dining gesture: raises fork/food towards mouth every 4.2 seconds
+      const t = clock.getElapsedTime() % 4.2;
+      if (t < 1.0) {
+        eatWeight = Math.sin((t / 1.0) * (Math.PI / 2));
+      } else if (t < 2.2) {
+        eatWeight = 1.0;
+      } else if (t < 3.2) {
+        eatWeight = Math.cos(((t - 2.2) / 1.0) * (Math.PI / 2));
+      } else {
+        eatWeight = 0;
+      }
+
+      const shoulder = upper.getWorldPosition(a);
+      const mouthTarget = (head ?? neck).getWorldPosition(c).add(new THREE.Vector3(0, -0.06, 0.1));
+      const plateTarget = shoulder.clone().add(new THREE.Vector3(0.06, -0.25, 0.25));
+      const currentTarget = plateTarget.lerp(mouthTarget, eatWeight);
+
+      const current = hand.getWorldPosition(b).sub(shoulder).normalize();
+      target.copy(currentTarget).sub(shoulder).normalize();
+      q.setFromUnitVectors(current, target);
+      const identity = new THREE.Quaternion();
+      const weight = 0.5 + eatWeight * 0.45;
+      const blended = identity.slerp(q, weight);
+      upper.getWorldQuaternion(q2).premultiply(blended);
+      upper.quaternion.copy(upper.parent.getWorldQuaternion(q).invert().multiply(q2));
+      upper.updateWorldMatrix(false, true);
+
+      if (forearm && forearm.parent) {
+        const bendQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.45 + eatWeight * 0.75);
+        forearm.quaternion.multiply(bendQ);
+        forearm.updateWorldMatrix(false, true);
+      }
     }
+
     const g = held.current;
     if (g?.parent) {
+      model.scene.updateWorldMatrix(true, false);
+      const handPos = hand.getWorldPosition(a);
       g.parent.updateWorldMatrix(true, false);
-      g.position.copy(g.parent.worldToLocal(hand.getWorldPosition(a)));
-      g.quaternion.copy(g.parent.getWorldQuaternion(q).invert());
+      g.position.copy(g.parent.worldToLocal(handPos));
+      if (mode === "drink" && sipWeight > 0.2) {
+        const upright = g.parent.getWorldQuaternion(q2).invert();
+        g.quaternion.copy(upright).slerp(hand.getWorldQuaternion(q), sipWeight * 0.35);
+      } else {
+        g.quaternion.copy(g.parent.getWorldQuaternion(q).invert());
+      }
     }
   });
 }
 
-function RosterAvatar({ look, animation, placement, accessories, holding, raiseHand = false }: { look: AvatarLookProps; animation: AvatarAnimation; placement: Placement; accessories?: Accessory[]; holding?: React.ReactNode; raiseHand?: boolean }) {
+function RosterAvatar({
+  look,
+  animation,
+  placement,
+  accessories,
+  holding,
+  carryMode,
+  raiseHand = false,
+}: {
+  look: AvatarLookProps;
+  animation: AvatarAnimation;
+  placement: Placement;
+  accessories?: Accessory[];
+  holding?: React.ReactNode;
+  carryMode?: CarryMode;
+  raiseHand?: boolean;
+}) {
   const gltf = useGLTF(rosterModel(presetFor(look)));
   // The chosen outfit: this face on another roster citizen's clothes.
   const wearId = look.wear && look.wear !== presetFor(look) && ROSTER.some((r) => r.id === look.wear && r.gender === look.gender) ? look.wear : null;
@@ -189,7 +303,8 @@ function RosterAvatar({ look, animation, placement, accessories, holding, raiseH
   const { actions } = useAnimations(clips, root);
   usePlay(actions, animation);
   const held = useRef<THREE.Group>(null);
-  useCarry(model, raiseHand && !!holding, held);
+  const effectiveMode: CarryMode | false = carryMode ?? (raiseHand ? "raise" : !!holding ? "hold" : false);
+  useCarry(model, effectiveMode, held);
 
   const bodyType = look.bodyType ?? defaultBodyType(look.gender);
   useEffect(() => {
@@ -208,7 +323,25 @@ function RosterAvatar({ look, animation, placement, accessories, holding, raiseH
   );
 }
 
-function CustomAvatar({ look, url, animation, placement, accessories }: { look: AvatarLookProps; url: string; animation: AvatarAnimation; placement: Placement; accessories?: Accessory[] }) {
+function CustomAvatar({
+  look,
+  url,
+  animation,
+  placement,
+  accessories,
+  holding,
+  carryMode,
+  raiseHand = false,
+}: {
+  look: AvatarLookProps;
+  url: string;
+  animation: AvatarAnimation;
+  placement: Placement;
+  accessories?: Accessory[];
+  holding?: React.ReactNode;
+  carryMode?: CarryMode;
+  raiseHand?: boolean;
+}) {
   const gltf = useGLTF(url);
   const model = usePreparedModel(gltf.scene, false);
   useAccessories(model, accessories);
@@ -225,13 +358,20 @@ function CustomAvatar({ look, url, animation, placement, accessories }: { look: 
   const { actions } = useAnimations(clips, sourceRef);
   usePlay(actions, animation);
 
+  const held = useRef<THREE.Group>(null);
+  const effectiveMode: CarryMode | false = carryMode ?? (raiseHand ? "raise" : !!holding ? "hold" : false);
+  useCarry(model, effectiveMode, held);
+
   // Registered after useAnimations, so it runs once the source has been posed for this frame.
   useFrame(() => retargeter?.update());
 
   return (
-    <Framed model={model} gender={look.gender} placement={placement}>
-      <primitive object={model.scene} />
-    </Framed>
+    <>
+      <Framed model={model} gender={look.gender} placement={placement}>
+        <primitive object={model.scene} />
+      </Framed>
+      {holding && <group ref={held}>{holding}</group>}
+    </>
   );
 }
 
@@ -242,21 +382,53 @@ interface CitizenAvatarProps {
   animation?: AvatarAnimation;
   position?: [number, number, number];
   rotation?: [number, number, number];
-  /** Carried in the right hand, upright, with its origin at the grip (roster citizens only). */
+  /** Carried in the right hand, upright, with its origin at the grip. */
   holding?: React.ReactNode;
   /** Hold it up high, as bottle-service hosts do. */
   raiseHand?: boolean;
+  /** Active arm gesture mode for drinking, dining, or holding props */
+  carryMode?: CarryMode;
 }
 
-export function CitizenAvatar({ look = DEFAULT_LOOK, animation = "idle", position, rotation, accessories, holding, raiseHand }: CitizenAvatarProps) {
+export function CitizenAvatar({
+  look = DEFAULT_LOOK,
+  animation = "idle",
+  position,
+  rotation,
+  accessories,
+  holding,
+  raiseHand,
+  carryMode,
+}: CitizenAvatarProps) {
   const customUrl = useAvatarUrl(look.custom?.url);
   const placement = { position, rotation };
   // Keyed by model: the animation mixer binds to one skeleton, so a new model needs a fresh mixer.
-  const roster = <RosterAvatar key={`${presetFor(look)}:${look.wear ?? ""}`} look={look} animation={animation} placement={placement} accessories={accessories} holding={holding} raiseHand={raiseHand} />;
+  const roster = (
+    <RosterAvatar
+      key={`${presetFor(look)}:${look.wear ?? ""}`}
+      look={look}
+      animation={animation}
+      placement={placement}
+      accessories={accessories}
+      holding={holding}
+      raiseHand={raiseHand}
+      carryMode={carryMode}
+    />
+  );
   if (!look.custom || !customUrl) return roster;
   return (
     <Suspense fallback={roster}>
-      <CustomAvatar key={customUrl} look={look} url={customUrl} animation={animation} placement={placement} accessories={accessories} />
+      <CustomAvatar
+        key={customUrl}
+        look={look}
+        url={customUrl}
+        animation={animation}
+        placement={placement}
+        accessories={accessories}
+        holding={holding}
+        raiseHand={raiseHand}
+        carryMode={carryMode}
+      />
     </Suspense>
   );
 }

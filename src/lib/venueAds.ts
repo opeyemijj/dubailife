@@ -1,7 +1,23 @@
 "use client";
 
+export type WallPanelId = "panel_main" | "panel_west" | "panel_east";
+
+export interface WallPanelDef {
+  id: WallPanelId;
+  name: string;
+  wall: "north" | "west" | "east";
+  aspectRatio: string;
+}
+
+export const WALL_PANELS: WallPanelDef[] = [
+  { id: "panel_main", name: "Main Stage / North Wall", wall: "north", aspectRatio: "16:9" },
+  { id: "panel_west", name: "West Wall Lounge Screen", wall: "west", aspectRatio: "16:9" },
+  { id: "panel_east", name: "East Wall VIP Screen", wall: "east", aspectRatio: "16:9" },
+];
+
 export interface VenueWallAd {
   venueId: string;
+  panelId?: WallPanelId;
   headline: string;
   subtext: string;
   sponsorName: string;
@@ -21,6 +37,7 @@ const STORAGE_PREFIX = "dubai_venue_ad_";
 export const DEFAULT_VENUE_ADS: Record<string, VenueWallAd> = {
   "armani-prive": {
     venueId: "armani-prive",
+    panelId: "panel_main",
     headline: "VIP Dom Pérignon Weekend Showcase",
     subtext: "Experience high-octane luxury with international guest DJs on the Burj Khalifa terrace.",
     sponsorName: "Armani Privé Lounge",
@@ -33,6 +50,7 @@ export const DEFAULT_VENUE_ADS: Record<string, VenueWallAd> = {
   },
   "the-guild": {
     venueId: "the-guild",
+    panelId: "panel_main",
     headline: "The Chef's Tasting Menu & Raw Bar",
     subtext: "5-course European dining experience curated by Chef Tom Arnel in DIFC.",
     sponsorName: "The Guild DIFC",
@@ -45,6 +63,7 @@ export const DEFAULT_VENUE_ADS: Record<string, VenueWallAd> = {
   },
   "difc-trading": {
     venueId: "difc-trading",
+    panelId: "panel_main",
     headline: "DFM Tech & Clean Energy Fund IPO",
     subtext: "Invest in premier Dubai public equities directly from your virtual terminal.",
     sponsorName: "Dubai Financial Market",
@@ -57,6 +76,7 @@ export const DEFAULT_VENUE_ADS: Record<string, VenueWallAd> = {
   },
   "aud-academy": {
     venueId: "aud-academy",
+    panelId: "panel_main",
     headline: "Spring Career Accelerators & AI Bootcamps",
     subtext: "Fast-track your skills in Coding, Real Estate, and Wealth Management.",
     sponsorName: "American University in Dubai",
@@ -69,6 +89,7 @@ export const DEFAULT_VENUE_ADS: Record<string, VenueWallAd> = {
   },
   "dubai-mall": {
     venueId: "dubai-mall",
+    panelId: "panel_main",
     headline: "Fashion Avenue Private VIP Runway",
     subtext: "Exclusive haute couture showcase featuring Italian & French luxury houses.",
     sponsorName: "Fashion Avenue at Dubai Mall",
@@ -82,50 +103,73 @@ export const DEFAULT_VENUE_ADS: Record<string, VenueWallAd> = {
 };
 
 /**
- * Retrieves the active wall ad for a venue.
- * Checks localStorage first (for owner customization), then fallback defaults.
+ * Retrieves the active wall ad for a venue and specific panel.
  */
-export function getVenueWallAd(venueId: string): VenueWallAd {
+export function getVenueWallAd(venueId: string, panelId: WallPanelId = "panel_main"): VenueWallAd {
   if (typeof window !== "undefined") {
     try {
-      const stored = localStorage.getItem(`${STORAGE_PREFIX}${venueId}`);
-      if (stored) {
-        return JSON.parse(stored);
+      const stored = localStorage.getItem(`${STORAGE_PREFIX}${venueId}_${panelId}`);
+      if (stored) return JSON.parse(stored);
+
+      // Fallback to legacy single-panel key if panel_main
+      if (panelId === "panel_main") {
+        const legacy = localStorage.getItem(`${STORAGE_PREFIX}${venueId}`);
+        if (legacy) return JSON.parse(legacy);
       }
     } catch {}
   }
 
-  if (DEFAULT_VENUE_ADS[venueId]) {
+  if (DEFAULT_VENUE_ADS[venueId] && panelId === "panel_main") {
     return DEFAULT_VENUE_ADS[venueId];
   }
 
-  // Generic fallback if not explicitly defined
+  // Authentic panel defaults
+  const panelTitle =
+    panelId === "panel_west"
+      ? "Dubai Skyline Cocktails & Sunset Lounge"
+      : panelId === "panel_east"
+      ? "Exclusive VIP Table & Bottle Service Packages"
+      : "Exclusive Brand Showcase";
+
   return {
     venueId,
-    headline: "Exclusive Brand Showcase",
-    subtext: "Promote your brand or venue special directly to thousands of active Dubai citizens.",
+    panelId,
+    headline: panelTitle,
+    subtext: "Promote your brand or venue special directly to active Dubai citizens.",
     sponsorName: "Official Venue Partner",
-    imageUrl: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80",
+    imageUrl:
+      panelId === "panel_west"
+        ? "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80"
+        : panelId === "panel_east"
+        ? "https://images.unsplash.com/photo-1574096079513-d8259312b785?auto=format&fit=crop&w=800&q=80"
+        : "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80",
     ctaLabel: "Learn More",
     ctaUrl: "https://cometodubai.com",
-    badge: "Venue Sponsor",
+    badge: "Official Sponsor",
     isOwnerAd: true,
   };
 }
 
 /**
- * Saves a custom in-venue wall ad.
- * Venue owners with subscriptions publish for FREE.
+ * Saves a custom in-venue wall ad for a specific panel.
  */
 export function saveVenueWallAd(ad: VenueWallAd): void {
   if (typeof window === "undefined") return;
   try {
+    const panelId = ad.panelId || "panel_main";
     const updated = {
       ...ad,
+      panelId,
       updatedAt: new Date().toISOString(),
     };
-    localStorage.setItem(`${STORAGE_PREFIX}${ad.venueId}`, JSON.stringify(updated));
-    window.dispatchEvent(new CustomEvent("dubai:venue-ad-updated", { detail: { venueId: ad.venueId } }));
+    localStorage.setItem(`${STORAGE_PREFIX}${ad.venueId}_${panelId}`, JSON.stringify(updated));
+    // Also save as default if panel_main
+    if (panelId === "panel_main") {
+      localStorage.setItem(`${STORAGE_PREFIX}${ad.venueId}`, JSON.stringify(updated));
+    }
+    window.dispatchEvent(
+      new CustomEvent("dubai:venue-ad-updated", { detail: { venueId: ad.venueId, panelId } })
+    );
   } catch {}
 }
 
@@ -134,13 +178,11 @@ export function saveVenueWallAd(ad: VenueWallAd): void {
  */
 export function isUserVenueOwner(venueId: string, citizen: any): boolean {
   if (!citizen) return false;
-  // Admin or user has ownership record
   if (citizen.role === "admin" || citizen.isVenueOwner) return true;
   if (citizen.ownedVenues && Array.isArray(citizen.ownedVenues)) {
     return citizen.ownedVenues.includes(venueId);
   }
-  // Check if owner username matches
-  const storedAd = getVenueWallAd(venueId);
+  const storedAd = getVenueWallAd(venueId, "panel_main");
   if (storedAd.ownerUsername && storedAd.ownerUsername === citizen.username) {
     return true;
   }

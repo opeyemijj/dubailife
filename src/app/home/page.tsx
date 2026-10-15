@@ -5,11 +5,11 @@ import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { compact, useSiteStats } from "@/lib/siteStats";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { 
   Volume2, VolumeX, Plus, Eye, Check, ChevronUp, ChevronDown,
   Home, ShoppingBag, Map, Smartphone, Sparkles, X, Megaphone,
-  RotateCw, RotateCcw, Keyboard, Move, Package, LogOut
+  RotateCw, RotateCcw, Keyboard, Move, Package, LogOut, Shirt
 } from "lucide-react";
 import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -17,15 +17,25 @@ import { gameAudio } from "@/utils/gameAudio";
 import { useRequireCitizen, adjustBalance, buyFurniture, setFurniturePlacement, signOut, updateCitizen, DEFAULT_NEEDS, type Needs } from "@/lib/citizenStore";
 import { CATALOG, getCatalogItem, withHomeItems, type CatalogItem, type Placement, type Rotation } from "@/lib/furniture";
 import { useOnlineCount, formatOnline } from "@/lib/presence";
+import { WardrobeModal } from "@/components/avatar/WardrobeModal";
+import { getPendingVenue } from "@/components/city/VenueDressCodeModal";
 
 export default function HomePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const { citizen } = useRequireCitizen();
   const walletBalance = citizen?.balance ?? 0;
   const onlineCount = useOnlineCount();
   const { visits } = useSiteStats();
   const [cleanScreen, setCleanScreen] = useState(false);
+  const [wardrobeModalOpen, setWardrobeModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (searchParams?.get("wardrobe") === "open" || !!getPendingVenue()) {
+      setWardrobeModalOpen(true);
+    }
+  }, [searchParams]);
   // The welcome only appears the first time this citizen opens their home.
   const [welcomeModalOpen, setWelcomeModalOpenState] = useState(false);
   const welcomeKey = `welcome-seen:${citizen?.id ?? ""}`;
@@ -393,6 +403,15 @@ export default function HomePage() {
               <span>Buy</span>
             </button>
 
+            {/* Wardrobe: change clothes */}
+            <button
+              onClick={() => setWardrobeModalOpen(true)}
+              className="flex-1 min-h-[48px] py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full hover:bg-slate-100 text-slate-700 font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors"
+            >
+              <Shirt className="w-3.5 h-3.5" />
+              <span>Wardrobe</span>
+            </button>
+
             {/* Decorate: move furniture */}
             <button
               onClick={() => setDecorating((d) => !d)}
@@ -549,6 +568,9 @@ export default function HomePage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Wardrobe & Outfit Changes */}
+      <WardrobeModal open={wardrobeModalOpen} onOpenChange={setWardrobeModalOpen} />
 
     </main>
   );

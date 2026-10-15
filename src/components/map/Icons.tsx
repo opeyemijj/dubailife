@@ -3,6 +3,7 @@ import { MallBlock, type MallBlockProps } from './MallBlock';
 import { MuseumOfFutureIcon, type MuseumOfFutureProps } from './MuseumOfFuture';
 import { HotelBlock, type HotelBlockProps, HotelResortComponent } from './HotelBlock';
 import { FloorAdTile, FloorMosaic } from './FloorAds';
+import { GameTile } from './GameCityTiles';
 import { BurjAlArabSprite, CoastBeachSprite, JumeirahBeachHotelSprite, MadinatJumeirahSprite, WildWadiSprite } from './CoastSprites';
 import { AtlantisPalmSprite, AtlantisRoyalSprite, FivePalmSprite, PalmBeachSprite, PalmParkSprite, PalmResortSprite, PalmTowerSprite, PointeSprite } from './PalmJumeirah';
 import { BurjKhalifa, type BurjKhalifaProps, BurjKhalifaIcon } from './BurjKhalifa';
@@ -4299,6 +4300,7 @@ export const getBuildingSprite = (id: string, type: string, seed?: number, title
   if (type === 'the-pointe') return <PointeSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
   if (type === 'park-palm') return <PalmParkSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
   if (type === 'palm-beach') return <PalmBeachSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'game-tile') return <GameTile game={loc?.game} width={loc?.width} height={loc?.height} />;
   if (type === 'floor-mosaic') return <FloorMosaic section={loc?.section} ads={loc?.ads} />;
   if (type === 'floor-ad') return <FloorAdTile width={loc?.width} height={loc?.height} campaigns={loc?.campaigns} name={title || loc?.name} />;
   if (type === 'hotel-five') return <FivePalmSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;

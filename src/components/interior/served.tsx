@@ -24,9 +24,12 @@ const BY_ICON: Record<string, ServeKind> = {
 
 /** What a purchase looks like when it's served, or null for things that aren't brought to you. */
 export function serveKindOf(p: Product): ServeKind | null {
-  if (p.station === "booth" && p.icon === "🍾") return "bottle";
-  if (!p.consumable || p.service) return null;
-  return BY_ICON[p.icon] ?? null;
+  if (p.icon === "🍾" || p.id.includes("bottle") || p.name.toLowerCase().includes("bottle service")) return "bottle";
+  if (p.service) return null;
+  if (BY_ICON[p.icon]) return BY_ICON[p.icon];
+  if (p.consumable?.need === "hunger") return "plate";
+  if (p.consumable?.need === "energy" || p.consumable?.need === "social") return "cocktail";
+  return null;
 }
 
 export interface ServedDef {
@@ -145,7 +148,7 @@ export function Sparkler({ burning = true }: { burning?: boolean }) {
 
 // ---------------------------------------------------------------- everything else on the menu
 
-function Drink({ kind, tint }: { kind: Exclude<ServeKind, "bottle">; tint?: string }) {
+export function Drink({ kind, tint }: { kind: Exclude<ServeKind, "bottle">; tint?: string }) {
   const m = useMats();
   switch (kind) {
     case "cocktail":
@@ -256,3 +259,27 @@ export function ServedItem({ def }: { def: ServedDef }) {
     </group>
   );
 }
+
+/** Prop held in the avatar's right hand while drinking or dining */
+export function HandHeldProp({ kind, tint }: { kind: ServeKind; tint?: string }) {
+  if (kind === "bottle") {
+    return (
+      <group scale={0.65} position={[0, -0.06, 0]}>
+        <ChampagneBottle sparkler={false} />
+      </group>
+    );
+  }
+  if (kind === "plate" || kind === "dessert" || kind === "pastry") {
+    return (
+      <group scale={0.6} position={[0.02, -0.02, 0.05]} rotation={[0.2, 0.3, 0]}>
+        <Drink kind={kind} tint={tint} />
+      </group>
+    );
+  }
+  return (
+    <group scale={0.8} position={[0, -0.03, 0]}>
+      <Drink kind={kind} tint={tint} />
+    </group>
+  );
+}
+

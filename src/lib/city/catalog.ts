@@ -149,7 +149,7 @@ export const CATALOGS = {
     p("espresso-martini", "Espresso martini", 90, "🍸", "bar", "Vodka, coffee liqueur and a fresh espresso shot. 21+.", { consumable: { need: "energy", amount: 10 } }),
     p("mocktail-club", "Premium mocktail", 75, "🍸", "bar", "Smoked rosemary and pineapple.", { consumable: { need: "social", amount: 10 } }),
     p("soft", "Soft drink", 35, "🥤", "bar", "Chilled can.", { consumable: { need: "energy", amount: 5 } }),
-    p("bottle-service", "Bottle service (sparkling)", 3500, "🍾", "booth", "Sparklers included, serves 6."),
+    p("bottle-service", "Bottle service (sparkling)", 3500, "🍾", "booth", "Sparklers included, serves 6.", { consumable: { need: "fun", amount: 40 } }),
     p("vip-table", "VIP table reservation", 5000, "🛋️", "booth", "Minimum spend, best view of the DJ.", { service: true }),
     p("dj-gift", "Send the DJ a gift", 250, "🎁", "dj", "Shout-out and a song request.", { service: true }),
   ],
