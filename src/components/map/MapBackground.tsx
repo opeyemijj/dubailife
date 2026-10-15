@@ -481,7 +481,7 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
                     <animateMotion dur={`${boat.duration}s`} begin={`${boat.delay}s`} repeatCount="indefinite" rotate="auto">
                       <mpath href={boat.path} />
                     </animateMotion>
-                    <g transform={`translate(0, ${boat.offset}) scale(0.6)`}>
+                    <g transform={`translate(0, ${boat.offset}) scale(1.2)`}>{/* yachts and jet skis, drawn at 2x */}
                       {boat.type === 'yacht' ? (
                         <g>
                           <path d="M -15 -6 L 10 -6 L 22 0 L 10 6 L -15 6 Z" fill={boat.color} />

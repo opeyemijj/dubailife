@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { MallBlock, type MallBlockProps } from './MallBlock';
 import { MuseumOfFutureIcon, type MuseumOfFutureProps } from './MuseumOfFuture';
 import { HotelBlock, type HotelBlockProps, HotelResortComponent } from './HotelBlock';
+import { FloorAdTile, FloorMosaic } from './FloorAds';
+import { BurjAlArabSprite, CoastBeachSprite, JumeirahBeachHotelSprite, MadinatJumeirahSprite, WildWadiSprite } from './CoastSprites';
 import { AtlantisPalmSprite, AtlantisRoyalSprite, FivePalmSprite, PalmBeachSprite, PalmParkSprite, PalmResortSprite, PalmTowerSprite, PointeSprite } from './PalmJumeirah';
 import { BurjKhalifa, type BurjKhalifaProps, BurjKhalifaIcon } from './BurjKhalifa';
 import { FloorTile, type FloorTileProps, IslandFloorTile } from './FloorTile';
@@ -36,6 +38,8 @@ import {
   SphereZaabeel,
   IsometricNightclubVenue
 } from './DIFCZaabeelAmenities';
+import { DXBAirportBlock } from './DXBAirport';
+export { DXBAirportBlock };
 export {
   DIFCMosque,
   ZabeelMosque,
@@ -2565,338 +2569,7 @@ export const DubaiMetroStation: React.FC<DubaiMetroStationProps> = ({
 
 export const MetroStationBlock = DubaiMetroStation;
 
-export const AirportBlock = ({ width = 620, height = 330, name = "DXB International Airport" }: { width?: number, height?: number, name?: string }) => (
-  <svg 
-    viewBox="0 0 620 330" 
-    preserveAspectRatio="none"
-    style={{ width: width ? `${width}px` : '100%', height: height ? `${height}px` : '100%' }} 
-    className="drop-shadow-2xl z-20 hover:scale-[1.02] transition-transform select-none cursor-pointer"
-  >
-    <defs>
-      {/* Runway Asphalt Gradient */}
-      <linearGradient id="isoAsphaltGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stopColor="#090d16" />
-        <stop offset="50%" stopColor="#1e293b" />
-        <stop offset="100%" stopColor="#090d16" />
-      </linearGradient>
-
-      {/* Terminal Glass Roof Gradient */}
-      <linearGradient id="isoTerminalGlass" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.85" />
-        <stop offset="50%" stopColor="#0284c7" stopOpacity="0.9" />
-        <stop offset="100%" stopColor="#0369a1" stopOpacity="0.95" />
-      </linearGradient>
-
-      {/* Airplane Shadow Gradient */}
-      <radialGradient id="planeIsoShadow" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stopColor="#000000" stopOpacity="0.5" />
-        <stop offset="100%" stopColor="#000000" stopOpacity="0" />
-      </radialGradient>
-
-      {/* Isometric Airfield Surface Clip Path (Same 0.235 slant & 0.0166 tilt as FloorTile) */}
-      <clipPath id="airport-iso-base-clip">
-        <polygon points="84,38 596,47 536,297 24,288" />
-      </clipPath>
-
-      {/* Approach Glide & Runway Rollout Path (Following isometric runway centerline) */}
-      <path id="airplane-iso-glide-path" d="M -70 120 C 30 180, 110 230, 175 237 L 485 242 C 525 242, 575 205, 665 110" fill="none" />
-      <path id="airplane-iso-shadow-path" d="M -70 237 L 175 237 L 485 242 L 665 242" fill="none" />
-    </defs>
-
-    {/* ==================================================================== */}
-    {/* 1. LOWER SIDE EMBOSS (Exact same lower edge bevel as FloorTile)      */}
-    {/* ==================================================================== */}
-    <polygon points="24,288 536,297 536,302 24,293" fill="#0f172a" />
-    <polygon points="24,288 536,297 536,300 24,291" fill="#334155" />
-
-    {/* ==================================================================== */}
-    {/* 2. ISOMETRIC AIRFIELD BASE PLATFORM (Matching FloorTile geometry)    */}
-    {/* ==================================================================== */}
-    <polygon 
-      points="84,38 596,47 536,297 24,288" 
-      fill="#1e293b" 
-      stroke="#475569" 
-      strokeWidth="2.5" 
-      strokeLinejoin="round" 
-    />
-
-    {/* Elements Clipped Inside Isometric Airfield Plane */}
-    <g clipPath="url(#airport-iso-base-clip)">
-      {/* Airfield Infield Grass / Turf Grounds (Isometric Parcels) */}
-      <polygon points="90,44 590,53 570,120 74,111" fill="#2d3748" opacity="0.8" />
-      <polygon points="68,140 564,149 550,195 56,186" fill="#334155" opacity="0.6" />
-      <polygon points="54,272 522,280 520,294 30,286" fill="#2d3748" opacity="0.9" />
-
-      {/* ==================================================================== */}
-      {/* 3. 3D ISOMETRIC TERMINAL COMPLEX & CONCOURSE (TOP)                   */}
-      {/* ==================================================================== */}
-      <g>
-        {/* Terminal Apron Paving */}
-        <polygon points="120,60 550,68 536,128 106,120" fill="#1e293b" stroke="#334155" strokeWidth="1" />
-
-        {/* 3D Concourse Base Wall (Depth Drop) */}
-        <polygon points="135,78 525,85 525,89 135,82" fill="#0f172a" />
-
-        {/* 3D Curved Concourse Roof (Isometric Aerofoil Design) */}
-        <polygon points="140,54 530,61 520,85 130,78" fill="url(#isoTerminalGlass)" stroke="#bae6fd" strokeWidth="1.2" />
-
-        {/* Solar Panels & Skylight Glazing Rows on Concourse */}
-        {Array.from({ length: 16 }).map((_, i) => {
-          const t1 = (15 + i * 23) / 400;
-          const t2 = (32 + i * 23) / 400;
-          const x1 = 145 + t1 * 365;
-          const y1 = 57 + t1 * 6;
-          const x2 = 145 + t2 * 365;
-          const y2 = 57 + t2 * 6;
-          const x3 = 137 + t2 * 365;
-          const y3 = 76 + t2 * 6;
-          const x4 = 137 + t1 * 365;
-          const y4 = 76 + t1 * 6;
-          return (
-            <polygon key={`iso-sky-${i}`} points={`${x1},${y1} ${x2},${y2} ${x3},${y3} ${x4},${y4}`} fill="#0f172a" opacity="0.4" stroke="#38bdf8" strokeWidth="0.6" />
-          );
-        })}
-
-        {/* Terminal Gates / Telescoping Jet Bridges */}
-        {Array.from({ length: 8 }).map((_, i) => {
-          const t = (i + 0.5) / 8;
-          const gx = 145 + t * 350;
-          const gy = 80 + t * 6;
-          return (
-            <g key={`iso-gate-${i}`} transform={`translate(${gx}, ${gy})`}>
-              {/* Jet Bridge Arm */}
-              <polygon points="0,0 8,0.1 6,14 -2,13.9" fill="#64748b" />
-              <polygon points="-4,13.5 12,13.7 10,20 -6,19.8" fill="#94a3b8" stroke="#475569" strokeWidth="0.8" />
-              
-              {/* Parked Widebody Jet at Alternate Gates (Isometric 3D Airliner) */}
-              {i % 2 === 1 && (
-                <g transform="translate(3, 22) scale(0.65)">
-                  {/* Aircraft Shadow */}
-                  <ellipse cx="0" cy="18" rx="20" ry="6" fill="#000000" opacity="0.35" />
-                  {/* Fuselage */}
-                  <polygon points="0,-18 5,-12 4,20 0,26 -4,20 -5,-12" fill="#ffffff" stroke="#cbd5e1" strokeWidth="0.8" />
-                  {/* Swept Wings */}
-                  <polygon points="0,-2 26,12 22,14 0,6 -22,14 -26,12" fill="#f8fafc" stroke="#94a3b8" strokeWidth="0.8" />
-                  {/* Red Tailfin */}
-                  <polygon points="0,15 4,26 -4,26" fill="#ef4444" />
-                  {/* Turbofans */}
-                  <rect x="8" y="4" width="4" height="8" rx="1.5" fill="#d97706" />
-                  <rect x="-12" y="4" width="4" height="8" rx="1.5" fill="#d97706" />
-                </g>
-              )}
-            </g>
-          );
-        })}
-
-        {/* 3D Iconic DXB Air Traffic Control Tower (Back-Right) */}
-        <g transform="translate(528, 42)">
-          {/* Tower Shadow */}
-          <ellipse cx="10" cy="40" rx="12" ry="4" fill="#000000" opacity="0.3" />
-          {/* Front Tower Shaft Wall */}
-          <polygon points="4,10 16,10.2 14,40 2,39.8" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="0.8" />
-          {/* Right Tower Wall (3D Shading) */}
-          <polygon points="16,10.2 22,9 20,38 14,40" fill="#94a3b8" />
-          {/* 360° Glass Control Cab */}
-          <polygon points="1,10 19,10.3 25,6 7,5.7" fill="#38bdf8" opacity="0.9" stroke="#0284c7" strokeWidth="0.8" />
-          <polygon points="3,6 17,6.2 15,-2 1,-2.2" fill="#0284c7" opacity="0.9" />
-          {/* Pulsing Red Hazard Beacon */}
-          <circle cx="8" cy="-3" r="2.5" fill="#ef4444">
-            <animate attributeName="opacity" values="1;0.1;1" dur="1s" repeatCount="indefinite" />
-          </circle>
-          {/* Radar Antenna */}
-          <line x1="8" y1="-3" x2="8" y2="-9" stroke="#64748b" strokeWidth="1.2" />
-          <circle cx="8" cy="-9" r="1.5" fill="#94a3b8" />
-        </g>
-      </g>
-
-      {/* ==================================================================== */}
-      {/* 4. HIGH-SPEED ISOMETRIC TAXIWAYS & APRON ROADWAYS                    */}
-      {/* ==================================================================== */}
-      <path d="M 110,135 L 530,142" stroke="#facc15" strokeWidth="1.5" strokeDasharray="12 8" fill="none" opacity="0.85" />
-      <path d="M 160,136 Q 190,175 210,210" stroke="#facc15" strokeWidth="1.5" fill="none" opacity="0.85" />
-      <path d="M 320,139 Q 345,178 365,213" stroke="#facc15" strokeWidth="1.5" fill="none" opacity="0.85" />
-      <path d="M 460,141 Q 480,180 500,215" stroke="#facc15" strokeWidth="1.5" fill="none" opacity="0.85" />
-
-      {/* Taxiway Blue Edge Lights */}
-      {Array.from({ length: 14 }).map((_, i) => (
-        <circle key={`iso-tblue-${i}`} cx={120 + i * 30} cy={140 + i * 0.5} r="1.8" fill="#38bdf8" opacity="0.9">
-          <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite" />
-        </circle>
-      ))}
-
-      {/* ==================================================================== */}
-      {/* 5. 3D ISOMETRIC RUNWAY 12R / 30L                                     */}
-      {/* ==================================================================== */}
-      {/* Runway Asphalt Surface (Aligned with FloorTile's slant & tilt) */}
-      <polygon 
-        points="74,208 524,216 512,266 62,258" 
-        fill="url(#isoAsphaltGrad)" 
-        stroke="#475569" 
-        strokeWidth="1.8" 
-      />
-
-      {/* Touchdown Zone Skid Marks Texture */}
-      <polygon points="160,218 280,220 274,256 154,254" fill="#000000" opacity="0.38" />
-
-      {/* Threshold "Piano Key" Stripes (Left - 12R) */}
-      {Array.from({ length: 8 }).map((_, i) => {
-        const y = 214 + i * 5;
-        const x1 = 86 - (i * 0.8);
-        const x2 = 104 - (i * 0.8);
-        return <line key={`iso-pk-l-${i}`} x1={x1} y1={y} x2={x2} y2={y + 0.3} stroke="#ffffff" strokeWidth="3" />;
-      })}
-      {/* Runway Number 12R */}
-      <text x="114" y="240" fill="#ffffff" fontSize="13" fontWeight="900" fontFamily="monospace" letterSpacing="0.8">12R</text>
-
-      {/* Threshold "Piano Key" Stripes (Right - 30L) */}
-      {Array.from({ length: 8 }).map((_, i) => {
-        const y = 222 + i * 5;
-        const x1 = 485 - (i * 0.8);
-        const x2 = 503 - (i * 0.8);
-        return <line key={`iso-pk-r-${i}`} x1={x1} y1={y} x2={x2} y2={y + 0.3} stroke="#ffffff" strokeWidth="3" />;
-      })}
-      <text x="460" y="247" fill="#ffffff" fontSize="13" fontWeight="900" fontFamily="monospace" letterSpacing="0.8">30L</text>
-
-      {/* Aiming Point Touchdown Zone Markers */}
-      <polygon points="175,217 210,217.6 208,224 173,223.4" fill="#ffffff" />
-      <polygon points="171,248 206,248.6 204,255 169,254.4" fill="#ffffff" />
-
-      {/* Runway Centerline (Following 0.017 incline) */}
-      <line x1="145" y1="237" x2="450" y2="242" stroke="#ffffff" strokeWidth="2.5" strokeDasharray="18 12" />
-
-      {/* Runway Edge Lights (Top and Bottom along the Runway) */}
-      {Array.from({ length: 18 }).map((_, i) => {
-        const t = i / 17;
-        const tx = 76 + t * (522 - 76);
-        const ty = 210 + t * (216 - 210);
-        const bx = 64 + t * (510 - 64);
-        const by = 260 + t * (266 - 260);
-        return (
-          <g key={`iso-rwl-${i}`}>
-            <circle cx={tx} cy={ty} r="1.8" fill={i < 3 || i > 14 ? "#facc15" : "#ffffff"}>
-              <animate attributeName="opacity" values="0.8;1;0.8" dur="1.5s" repeatCount="indefinite" />
-            </circle>
-            <circle cx={bx} cy={by} r="1.8" fill={i < 3 || i > 14 ? "#facc15" : "#ffffff"}>
-              <animate attributeName="opacity" values="0.8;1;0.8" dur="1.5s" repeatCount="indefinite" />
-            </circle>
-          </g>
-        );
-      })}
-
-      {/* Threshold Green Lights (Arrival End) */}
-      {Array.from({ length: 6 }).map((_, i) => (
-        <circle key={`iso-thg-${i}`} cx={76 - i * 1.5} cy={215 + i * 8} r="2.2" fill="#22c55e" />
-      ))}
-      {/* Runway End Red Lights */}
-      {Array.from({ length: 6 }).map((_, i) => (
-        <circle key={`iso-thr-${i}`} cx={521 - i * 1.5} cy={223 + i * 8} r="2.2" fill="#ef4444" />
-      ))}
-
-      {/* ==================================================================== */}
-      {/* 6. APPROACH LIGHTING SYSTEM (ALS) WITH STROBE LIGHTS                 */}
-      {/* ==================================================================== */}
-      <g>
-        {[-35, -15, 5, 25].map((xOffset, i) => (
-          <g key={`iso-als-${i}`} transform={`translate(${45 + xOffset}, 235)`}>
-            <line x1="0" y1="-8" x2="0" y2="8" stroke="#cbd5e1" strokeWidth="1.2" />
-            <circle cx="0" cy="0" r="2.5" fill="#ffffff">
-              <animate attributeName="opacity" values="0.2;1;0.2" dur="1s" begin={`${i * 0.2}s`} repeatCount="indefinite" />
-            </circle>
-          </g>
-        ))}
-      </g>
-
-      {/* ==================================================================== */}
-      {/* 7. TOUCHDOWN SMOKE EFFECT                                            */}
-      {/* ==================================================================== */}
-      <g transform="translate(175, 237)">
-        <ellipse cx="0" cy="0" rx="4" ry="2" fill="#f8fafc" opacity="0">
-          <animate attributeName="rx" values="3;18;24;3" dur="10s" repeatCount="indefinite" keyTimes="0;0.34;0.42;1" />
-          <animate attributeName="ry" values="1.5;9;12;1.5" dur="10s" repeatCount="indefinite" keyTimes="0;0.34;0.42;1" />
-          <animate attributeName="opacity" values="0;0.8;0;0" dur="10s" repeatCount="indefinite" keyTimes="0;0.34;0.44;1" />
-        </ellipse>
-      </g>
-    </g>
-
-    {/* ==================================================================== */}
-    {/* 8. ANIMATED 3D ISOMETRIC LANDING AIRPLANE                            */}
-    {/* ==================================================================== */}
-    {/* Dynamic Ground Shadow Under Aircraft */}
-    <g>
-      <animateMotion dur="10s" repeatCount="indefinite" rotate="auto" keyTimes="0;0.33;0.75;1" keyPoints="0;0.33;0.75;1">
-        <mpath href="#airplane-iso-shadow-path" />
-      </animateMotion>
-      <ellipse cx="0" cy="0" rx="28" ry="7" fill="url(#planeIsoShadow)">
-        <animate attributeName="rx" values="14;28;26;14" dur="10s" repeatCount="indefinite" keyTimes="0;0.33;0.75;1" />
-        <animate attributeName="opacity" values="0.2;0.6;0.5;0.1" dur="10s" repeatCount="indefinite" keyTimes="0;0.33;0.75;1" />
-      </ellipse>
-    </g>
-
-    {/* The Aircraft Body (Emirates Widebody Airliner in 3D Isometric View) */}
-    <g className="filter drop-shadow-xl">
-      <animateMotion dur="10s" repeatCount="indefinite" rotate="auto" keyTimes="0;0.33;0.75;1" keyPoints="0;0.33;0.75;1">
-        <mpath href="#airplane-iso-glide-path" />
-      </animateMotion>
-      
-      <g transform="scale(1.15)">
-        {/* Main Fuselage */}
-        <path d="M 30 0 C 28 -5, 10 -6, -24 -5 C -34 -4, -38 -2, -40 0 C -38 2, -34 4, -24 5 C 10 6, 28 5, 30 0 Z" fill="#ffffff" stroke="#cbd5e1" strokeWidth="0.8" />
-        {/* Cockpit Windshield */}
-        <path d="M 25 -2 L 28 0 L 25 2 L 23 1.8 L 23 -1.8 Z" fill="#0f172a" />
-
-        {/* Swept Main Wings (Isometric Aspect) */}
-        <path d="M 6 -3 L -10 -32 L -16 -32 L -8 -3 Z" fill="#f8fafc" stroke="#94a3b8" strokeWidth="0.8" />
-        <path d="M 6 3 L -10 32 L -16 32 L -8 3 Z" fill="#f8fafc" stroke="#94a3b8" strokeWidth="0.8" />
-
-        {/* Winglets (Signature Red Emirates Accents) */}
-        <polygon points="-10,-32 -14,-35 -16,-32" fill="#ef4444" />
-        <polygon points="-10,32 -14,35 -16,32" fill="#ef4444" />
-
-        {/* Under-Wing High-Bypass Turbofans */}
-        <rect x="-3" y="-17" width="13" height="5.5" rx="1.8" fill="#e2e8f0" stroke="#64748b" strokeWidth="0.8" />
-        <ellipse cx="10" cy="-14" rx="1.5" ry="2.8" fill="#d97706" />
-        <rect x="-3" y="11.5" width="13" height="5.5" rx="1.8" fill="#e2e8f0" stroke="#64748b" strokeWidth="0.8" />
-        <ellipse cx="10" cy="14" rx="1.5" ry="2.8" fill="#d97706" />
-
-        {/* Horizontal Tail Stabilizers */}
-        <polygon points="-28,-2 -38,-14 -41,-14 -34,-2" fill="#e2e8f0" />
-        <polygon points="-28,2 -38,14 -41,14 -34,2" fill="#e2e8f0" />
-
-        {/* Vertical Tailfin with Signature Emirates Flag Livery */}
-        <path d="M -28 0 L -40 -2 L -42 0 L -40 2 Z" fill="#ef4444" />
-        <polygon points="-30,0 -40,-1 -40,1" fill="#f59e0b" />
-
-        {/* Port (Left) Red Navigation Light */}
-        <circle cx="-13" cy="-33" r="1.8" fill="#ef4444">
-          <animate attributeName="opacity" values="1;0.2;1" dur="0.8s" repeatCount="indefinite" />
-        </circle>
-        {/* Starboard (Right) Green Navigation Light */}
-        <circle cx="-13" cy="33" r="1.8" fill="#22c55e">
-          <animate attributeName="opacity" values="1;0.2;1" dur="0.8s" repeatCount="indefinite" />
-        </circle>
-
-        {/* Anti-Collision Flashing High-Intensity White Strobes */}
-        <circle cx="-14" cy="-33" r="2.8" fill="#ffffff" opacity="0">
-          <animate attributeName="opacity" values="0;1;0" dur="1s" repeatCount="indefinite" keyTimes="0;0.1;1" />
-        </circle>
-        <circle cx="-14" cy="33" r="2.8" fill="#ffffff" opacity="0">
-          <animate attributeName="opacity" values="0;1;0" dur="1s" repeatCount="indefinite" keyTimes="0;0.1;1" />
-        </circle>
-      </g>
-    </g>
-
-    {/* ==================================================================== */}
-    {/* 9. ISOMETRIC AIRPORT GLASS EMBOSSED BADGE                            */}
-    {/* ==================================================================== */}
-    <g transform="translate(30, 280)">
-      <polygon points="0,0 230,3.8 228,24 0,20.2" fill="#0f172a" opacity="0.85" stroke="#38bdf8" strokeWidth="1.2" />
-      <circle cx="16" cy="11" r="4.5" fill="#22c55e" />
-      <text x="28" y="15" fill="#ffffff" fontSize="11" fontWeight="900" letterSpacing="0.8">
-        ✈️ {name.toUpperCase()}
-      </text>
-    </g>
-  </svg>
-);
+export const AirportBlock = DXBAirportBlock;
 
 export const TycoonBlock = ({ name, type, cols, rows, w, h }: any) => {
   const cellW = (w - 20) / cols;
@@ -4626,7 +4299,15 @@ export const getBuildingSprite = (id: string, type: string, seed?: number, title
   if (type === 'the-pointe') return <PointeSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
   if (type === 'park-palm') return <PalmParkSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
   if (type === 'palm-beach') return <PalmBeachSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'floor-mosaic') return <FloorMosaic section={loc?.section} ads={loc?.ads} />;
+  if (type === 'floor-ad') return <FloorAdTile width={loc?.width} height={loc?.height} campaigns={loc?.campaigns} name={title || loc?.name} />;
   if (type === 'hotel-five') return <FivePalmSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  // The Jumeirah coastline
+  if (type === 'burj-al-arab-island') return <BurjAlArabSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'hotel-jumeirah-beach') return <JumeirahBeachHotelSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'madinat-jumeirah') return <MadinatJumeirahSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'wild-wadi') return <WildWadiSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'coast-beach') return <CoastBeachSprite width={loc?.width} height={loc?.height} name={title || loc?.name} variant={loc?.variant} />;
   if (type === 'plot' || type === 'building-plot' || type === 'base-plot') return (
     <Plot 
       width={loc?.width} 
@@ -4699,6 +4380,7 @@ export const getBuildingSprite = (id: string, type: string, seed?: number, title
     />
   );
   if (type === 'airport') return <AirportBlock name={title || loc?.name} width={loc?.width} height={loc?.height} />;
+  if (type === 'airport-terminal') return <div className="w-1 h-1 opacity-0 pointer-events-none" />;
   if (type === 'community-emirates-hills') return <EmiratesHillsBlock />;
   if (type === 'community-jbr') return <JBRBlock />;
   if (type === 'community-bluewaters') return <BluewatersBlock />;

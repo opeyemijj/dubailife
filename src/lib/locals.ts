@@ -79,7 +79,7 @@ export const getLocal = (id: string) => LOCALS.find((l) => l.id === id) ?? null;
 const PER_VENUE = 5;
 export const SLOT_MS = 15 * 60 * 1000;
 /** Where Locals like to be: nightlife and food first. */
-const WEIGHT: Record<string, number> = { club: 6, dining: 4, lobby: 3, outdoor: 3 };
+const WEIGHT: Record<string, number> = { club: 6, dining: 4, bar: 4, beach: 4, pooldeck: 3, lobby: 3, outdoor: 3, waterpark: 2 };
 
 const OPEN = PLACES.flatMap((place) => place.venues.filter((v) => !v.comingSoon).map((venue) => ({ place, venue })));
 

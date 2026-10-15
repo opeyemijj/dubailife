@@ -18,7 +18,8 @@ const BY_ICON: Record<string, ServeKind> = {
   "🍔": "plate", "🥗": "plate", "🍉": "plate", "🦞": "plate", "🍣": "plate", "🍟": "plate", "🫛": "plate", "🐟": "plate",
   "🍤": "plate", "🌮": "plate", "🍗": "plate", "🍛": "plate", "🍊": "plate", "🥩": "plate", "🍜": "plate", "🦆": "plate",
   "🍲": "plate", "🍕": "plate", "🦪": "plate", "🥟": "plate", "🥘": "plate", "🍆": "plate", "🍳": "plate", "🥧": "plate",
-  "🥣": "dessert", "🍨": "dessert", "🥂": "cocktail",
+  "🥣": "dessert", "🍨": "dessert", "🍦": "dessert", "🍪": "dessert", "🍬": "dessert", "🥂": "cocktail",
+  "🌯": "plate", "🧀": "plate",
 };
 
 /** What a purchase looks like when it's served, or null for things that aren't brought to you. */

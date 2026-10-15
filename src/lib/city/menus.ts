@@ -21,7 +21,7 @@ const book = (prefix: string, what: string): Product => ({ id: `${prefix}:table`
 
 export type Cuisine =
   | "cafe" | "pool" | "beach" | "lounge" | "japanese" | "nikkei" | "persian" | "british" | "thai" | "indian" | "french"
-  | "italian" | "lebanese" | "gastropub" | "seafood" | "steak" | "turkish" | "chinese" | "brazilian" | "spanish" | "greek" | "buffet" | "wellness";
+  | "italian" | "lebanese" | "gastropub" | "gelato" | "desserts" | "mexican" | "seafood" | "steak" | "turkish" | "chinese" | "brazilian" | "spanish" | "greek" | "buffet" | "wellness";
 
 const MENUS: Record<Cuisine, Item[]> = {
   cafe: [
@@ -95,6 +95,26 @@ const MENUS: Record<Cuisine, Item[]> = {
     ["shepherds-pie", "Shepherd's pie", 115, "🥧", "Braised lamb, mash crust.", "hunger", 40],
     ["sticky-toffee", "Sticky toffee pudding", 60, "🍮", "Clotted cream ice cream.", "fun", 12],
     ["lemonade", "Homemade lemonade", 35, "🥤", "", "energy", 8],
+  ],
+  gelato: [
+    ["two-scoops", "Gelato, two scoops", 35, "🍨", "Pistachio, salted caramel or mango.", "fun", 10],
+    ["flower", "Gelato flower cone", 45, "🍦", "Petals of several flavours.", "fun", 12],
+    ["affogato", "Affogato", 32, "☕", "Vanilla gelato under a hot espresso.", "energy", 10],
+    ["macaron", "Gelato macaron", 15, "🍪", "", "fun", 6],
+  ],
+  desserts: [
+    ["baklava", "Pistachio baklava (box of 6)", 65, "🍮", "Layered filo, Antep pistachios.", "fun", 12],
+    ["kunefe", "Künefe", 55, "🍮", "Hot, with cheese, syrup and pistachio.", "fun", 14],
+    ["lokum", "Turkish delight assortment", 45, "🍬", "Rose, pomegranate and pistachio.", "fun", 8],
+    ["coffee", "Turkish coffee", 25, "☕", "", "energy", 10],
+    ["cay", "Turkish tea", 15, "🍵", "", "energy", 6],
+  ],
+  mexican: [
+    ["tacos", "Tacos al pastor", 65, "🌮", "Three tacos, pineapple, salsa verde.", "hunger", 30],
+    ["burrito", "Chicken burrito", 70, "🌯", "Rice, beans, pico de gallo.", "hunger", 35],
+    ["nachos", "Nachos to share", 55, "🧀", "Guacamole, sour cream, jalapeños.", "hunger", 20],
+    ["churros", "Churros", 35, "🍰", "Cinnamon sugar, chocolate sauce.", "fun", 10],
+    ["agua-fresca", "Agua fresca", 25, "🥤", "Hibiscus or watermelon.", "energy", 8],
   ],
   thai: [
     ["pad-thai", "Pad thai goong", 115, "🍜", "Wok-fried rice noodles, tiger prawns.", "hunger", 40],

@@ -56,7 +56,7 @@ export const CATALOG: CatalogItem[] = [
   { id: "sofa", name: "Modern Velvet Sofa", desc: "Super comfortable for guests.", icon: "🛋️", price: 3500, kind: "floor", size: [4, 2], model: "/models/furniture/couch.glb" },
   { id: "l-sofa", name: "L-Shaped Lounge Sofa", desc: "Room for the whole crew.", icon: "🛋️", price: 6800, kind: "floor", size: [4, 4], model: "/models/furniture/l-couch.glb" },
   { id: "lounge-chair", name: "Designer Lounge Chair", desc: "Mid-century comfort.", icon: "💺", price: 1800, kind: "floor", size: [2, 2], model: "/models/furniture/lounge-chair.glb" },
-  { id: "tv", name: "65-Inch Smart 4K TV", desc: "Watch live Dubai City broadcasts.", icon: "📺", price: 4200, kind: "floor", size: [3, 1], model: "/models/furniture/tv.glb" },
+  { id: "tv", name: '65" Flat Screen TV with Table Stand', desc: "Ultra-thin 65-inch 4K OLED flat screen TV on a modern media table stand.", icon: "📺", price: 4200, kind: "floor", size: [4, 1] },
   { id: "coffee-table", name: "Glass Coffee Table", desc: "Tempered glass, brushed legs.", icon: "☕", price: 1600, kind: "floor", size: [3, 2], model: "/models/furniture/coffee-table.glb" },
   { id: "bookcase", name: "Oak Bookcase", desc: "For your growing library.", icon: "📚", price: 2100, kind: "floor", size: [2, 1], model: "/models/furniture/bookcase.glb" },
   { id: "desk", name: "Work Desk", desc: "Run your empire from home.", icon: "🖥️", price: 1900, kind: "floor", size: [3, 2], model: "/models/furniture/desk.glb" },

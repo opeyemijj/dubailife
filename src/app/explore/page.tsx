@@ -1,7 +1,7 @@
 "use client";
 
 import { FirstTimeTour } from "@/components/onboarding/FirstTimeTour";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRequireCitizen } from "@/lib/citizenStore";
 import dynamic from "next/dynamic";
@@ -29,6 +29,9 @@ function Explore() {
   const [searchQuery, setSearchQuery] = useState("");
   // Phones: search is an icon until tapped, then the full search slides in.
   const [searchOpen, setSearchOpen] = useState(false);
+  const searchInput = useRef<HTMLInputElement>(null);
+  // Put the cursor in the box as it slides in, so you can type straight away.
+  useEffect(() => { if (searchOpen) searchInput.current?.focus(); }, [searchOpen]);
   const [activeFilter, setActiveFilter] = useState("all");
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
@@ -65,11 +68,11 @@ function Explore() {
       {/* Top Navigation HUD with Safe Area Padding */}
       <TopBar />
 
-      {/* Phones: a search icon that slides the full search in */}
+      {/* A search icon that slides the full search in (all screen sizes) */}
       {!searchOpen && (
         <button
           onClick={() => { setSearchOpen(true); setIsFilterExpanded(true); }}
-          className="sm:hidden absolute top-[max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))] right-3 z-20 w-11 h-11 rounded-full bg-slate-950/90 border border-white/15 shadow-xl flex items-center justify-center"
+          className="absolute top-[max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))] sm:top-40 right-3 sm:right-6 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full hover:bg-slate-900 transition-colors bg-slate-950/90 border border-white/15 shadow-xl flex items-center justify-center"
           aria-label="Search places"
         >
           <Search className="w-5 h-5 text-cyan-300" />
@@ -77,18 +80,19 @@ function Explore() {
         </button>
       )}
 
-      {/* Search & discovery: always shown on larger screens; slides in on phones */}
-      <div className={`absolute top-[max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))] left-0 w-full z-20 pointer-events-none px-3 sm:px-6 transition-all duration-300 ${searchOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 sm:translate-x-0 sm:opacity-100"}`}>
-        <div className={`max-w-md mx-auto w-full space-y-2 ${searchOpen ? "pointer-events-auto" : "pointer-events-none sm:pointer-events-auto"}`}>
+      {/* Search & discovery: slides in when the search icon is tapped */}
+      <div className={`absolute top-[max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))] left-0 w-full z-20 pointer-events-none px-3 sm:px-6 transition-all duration-300 ${searchOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}`}>
+        <div className={`max-w-md mx-auto w-full space-y-2 ${searchOpen ? "pointer-events-auto" : "pointer-events-none"}`}>
           
           {/* Glass Search Input */}
           <div className="relative shadow-2xl flex items-center">
             <Search className="absolute left-4 w-4 h-4 text-cyan-400 pointer-events-none" />
             <input 
               type="text"
-              autoFocus={searchOpen}
+              ref={searchInput}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Escape") setSearchOpen(false); }}
               placeholder="Search Burj Khalifa, Ting Irie, villas..." 
               className="w-full h-11 sm:h-12 pl-11 pr-20 bg-slate-950/85 hover:bg-slate-950/95 focus:bg-slate-950 backdrop-blur-xl border border-white/20 text-white text-xs sm:text-sm rounded-2xl placeholder:text-slate-400 font-bold focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all shadow-xl"
             />
@@ -105,7 +109,7 @@ function Explore() {
               )}
               <button
                 onClick={() => setSearchOpen(false)}
-                className="w-7 h-7 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-white/80 transition-all sm:hidden"
+                className="w-7 h-7 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-white/80 transition-all"
                 aria-label="Close search"
               >
                 <X className="w-4 h-4" />

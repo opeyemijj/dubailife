@@ -1,13 +1,15 @@
 // Everything on the city map: the saved map (src/data/mapSeed.ts, edited in the admin map editor)
-// plus Palm Jumeirah, which is laid out in code (lib/city/palm.ts) and replaces any saved copy.
+// plus Palm Jumeirah and the Jumeirah coastline, laid out in code (lib/city/palm.ts, lib/city/coast.ts),
+// which replace any saved copies.
 
 import { mapSeed } from "@/data/mapSeed";
 import { PALM_ENTITIES } from "./palm";
+import { COAST_ENTITIES } from "./coast";
 
-const PALM_IDS = new Set(PALM_ENTITIES.map((e) => e.id));
+const PALM_IDS = new Set([...PALM_ENTITIES, ...COAST_ENTITIES].map((e) => e.id));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const CITY_ENTITIES: any[] = [...mapSeed.filter((e) => !PALM_IDS.has(e.id)), ...PALM_ENTITIES];
+export const CITY_ENTITIES: any[] = [...mapSeed.filter((e) => !PALM_IDS.has(e.id)), ...PALM_ENTITIES, ...COAST_ENTITIES];
 
 /** What the map editor saves: the Palm is generated, so it's left out. */
 export const savableEntities = <T extends { id: string; generated?: boolean }>(list: T[]) => list.filter((e) => !e.generated && !PALM_IDS.has(e.id));

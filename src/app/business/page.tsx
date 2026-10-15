@@ -133,7 +133,7 @@ function Dashboard({ me }: { me: string }) {
             <div className="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-100">
               {campaigns.map((c) => (
                 <div key={c.id} className="p-3 flex flex-wrap items-center gap-3 text-sm">
-                  <div className="flex-1 min-w-[160px]"><div className="font-bold">{c.title}</div><div className="text-xs text-slate-500">{c.placement.replace("billboard:", "Billboard ")}{c.ends_at ? ` · until ${new Date(c.ends_at).toLocaleDateString()}` : ""}</div></div>
+                  <div className="flex-1 min-w-[160px]"><div className="font-bold">{c.title}</div><div className="text-xs text-slate-500">{c.placement.replace("billboard:", "Billboard ").replace("floor:", "Floor ad ")}{c.ends_at ? ` · until ${new Date(c.ends_at).toLocaleDateString()}` : ""}</div></div>
                   <Pill s={c.status} />
                   <div className="text-xs text-slate-500 w-36 text-right">{c.impressions.toLocaleString()} views · {c.clicks.toLocaleString()} clicks{c.impressions ? ` (${((c.clicks / c.impressions) * 100).toFixed(1)}%)` : ""}</div>
                 </div>

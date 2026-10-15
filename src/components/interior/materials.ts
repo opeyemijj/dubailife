@@ -28,7 +28,7 @@ function rng(seed: number) {
   return () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 }
 
-export type FloorKind = "marble" | "wood" | "tiles" | "concrete" | "led" | "grass";
+export type FloorKind = "marble" | "wood" | "tiles" | "concrete" | "led" | "grass" | "sand" | "deck" | "carpet" | "ice";
 
 export function floorTexture(kind: FloorKind, base: string, size: [number, number]) {
   return canvasTexture(`floor:${kind}:${base}:${size}`, 512, 512, (ctx) => {
@@ -85,6 +85,56 @@ export function floorTexture(kind: FloorKind, base: string, size: [number, numbe
       for (let i = 0; i < 4000; i++) {
         ctx.fillStyle = `rgba(${20 + r() * 40},${90 + r() * 60},${20 + r() * 30},0.5)`;
         ctx.fillRect(r() * 512, r() * 512, 2, 4);
+      }
+    } else if (kind === "sand") {
+      // Fine grains and soft wind ripples.
+      for (let i = 0; i < 9000; i++) {
+        ctx.fillStyle = r() > 0.5 ? "rgba(255,255,255,0.25)" : "rgba(160,120,60,0.18)";
+        ctx.fillRect(r() * 512, r() * 512, 1.5, 1.5);
+      }
+      ctx.strokeStyle = "rgba(180,140,80,0.18)";
+      ctx.lineWidth = 3;
+      for (let y = 20; y < 512; y += 46) {
+        ctx.beginPath();
+        for (let x = 0; x <= 512; x += 16) ctx.lineTo(x, y + Math.sin(x / 40 + y) * 6);
+        ctx.stroke();
+      }
+    } else if (kind === "deck") {
+      // Pale stone pool-deck pavers.
+      ctx.strokeStyle = "rgba(0,0,0,0.10)";
+      ctx.lineWidth = 3;
+      for (let i = 0; i <= 512; i += 128) {
+        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 512); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(512, i); ctx.stroke();
+      }
+      for (let i = 0; i < 1500; i++) {
+        ctx.fillStyle = "rgba(255,255,255,0.18)";
+        ctx.fillRect(r() * 512, r() * 512, 2, 2);
+      }
+    } else if (kind === "carpet") {
+      // A prayer carpet: rows of arched panels.
+      ctx.strokeStyle = "rgba(255,255,255,0.18)";
+      ctx.lineWidth = 4;
+      for (let y = 0; y < 512; y += 128) {
+        for (let x = 0; x < 512; x += 64) {
+          ctx.beginPath();
+          ctx.moveTo(x + 6, y + 120);
+          ctx.lineTo(x + 6, y + 40);
+          ctx.quadraticCurveTo(x + 32, y + 4, x + 58, y + 40);
+          ctx.lineTo(x + 58, y + 120);
+          ctx.stroke();
+        }
+      }
+    } else if (kind === "ice") {
+      // Skate scratches on white-blue ice.
+      ctx.strokeStyle = "rgba(255,255,255,0.55)";
+      for (let i = 0; i < 160; i++) {
+        ctx.lineWidth = 0.5 + r();
+        ctx.beginPath();
+        const x = r() * 512, y = r() * 512;
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(x + (r() - 0.5) * 120, y + (r() - 0.5) * 60, x + (r() - 0.5) * 200, y + (r() - 0.5) * 80);
+        ctx.stroke();
       }
     }
   }, size);

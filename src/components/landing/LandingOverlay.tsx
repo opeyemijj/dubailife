@@ -210,13 +210,13 @@ export function LandingOverlay({
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <button
                   onClick={handleOpenSignUp}
-                  className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-emerald-500/20"
+                  className="px-4 py-2.5 sm:py-2 rounded-full bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-emerald-500/20"
                 >
                   Sign up
                 </button>
                 <button
                   onClick={handleOpenLogIn}
-                  className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white hover:bg-slate-50 active:scale-95 text-slate-800 border border-slate-200/80 font-bold text-xs sm:text-sm transition-all shadow-sm"
+                  className="px-4 py-2.5 sm:py-2 rounded-full bg-white hover:bg-slate-50 active:scale-95 text-slate-800 border border-slate-200/80 font-bold text-xs sm:text-sm transition-all shadow-sm"
                 >
                   Log in
                 </button>

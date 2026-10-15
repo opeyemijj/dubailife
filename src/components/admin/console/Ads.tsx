@@ -38,7 +38,7 @@ export function Ads() {
               {c.link_url && <a className="text-sky-600 break-all" href={c.link_url} target="_blank" rel="noreferrer">{c.link_url}</a>}
               <div className="text-slate-400 mt-1">by {names[c.owner_id] ?? c.owner_id.slice(0, 8)}</div>
             </td>
-            <td className="px-3 py-2.5 text-xs">{c.placement.replace("billboard:", "Billboard ")}</td>
+            <td className="px-3 py-2.5 text-xs">{c.placement.replace("billboard:", "Billboard ").replace("floor:", "Floor ad ")}</td>
             <td className="px-3 py-2.5 font-bold whitespace-nowrap">{aed(c.price_aed)}<div className="text-[11px] font-normal text-slate-400">{c.weeks} wk</div></td>
             <td className="px-3 py-2.5 text-xs whitespace-nowrap">{c.starts_at ? `${when(c.starts_at)} → ${when(c.ends_at)}` : "Not started"}</td>
             <td className="px-3 py-2.5 text-xs whitespace-nowrap">{c.impressions.toLocaleString()} views<br />{c.clicks.toLocaleString()} clicks</td>

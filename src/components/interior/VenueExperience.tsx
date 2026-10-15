@@ -874,14 +874,14 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       />
 
       <SceneLoadingOverlay label={`Entering ${venue.name}`} />
-      <VenueLoadingCard venueKey={key} venueName={venue.name} pub={pub} />
+      <VenueLoadingCard venueKey={key} venueName={venue.name} pub={pub} paused={!!offer || !!panel} />
       {aboutOpen && pub && <VenueAbout venueName={venue.name} pub={pub} onClose={() => setAboutOpen(false)} />}
       <VenueWallAdModal venueId={venue.id} venueName={venue.name} open={wallAdOpen} onOpenChange={setWallAdOpen} />
       <VenueRadio venue={venue} compact={!!panel} />
 
       {/* Header */}
       <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2 pointer-events-none">
-        <button onClick={() => router.push(place.venues.length > 1 ? `/explore?open=${place.id}` : `/explore?at=${place.id}`)} className="pointer-events-auto w-10 h-10 rounded-full bg-white/95 shadow-lg flex items-center justify-center" aria-label={place.venues.length > 1 ? `Back to ${place.name} directory` : "Leave"}>
+        <button onClick={() => router.push(place.venues.length > 1 ? `/explore?open=${place.id}` : `/explore?at=${place.id}`)} className="pointer-events-auto w-10 h-10 shrink-0 rounded-full bg-white/95 shadow-lg flex items-center justify-center" aria-label={place.venues.length > 1 ? `Back to ${place.name} directory` : "Leave"}>
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="pointer-events-auto bg-white/95 rounded-2xl shadow-lg px-3 py-1.5 min-w-0">
@@ -892,10 +892,14 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
           <div className="text-[11px] text-slate-500 truncate">{venue.category}{venue.zone ? ` · ${venue.zone}` : ""} · {place.name}</div>
         </div>
         <div className="flex-1" />
-        <div className="pointer-events-auto bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-full px-3 py-1.5 text-xs font-black font-mono shadow">AED {(citizen?.balance ?? 0).toLocaleString()}</div>
-        <button onClick={() => setPanel({ kind: "bag" })} className="pointer-events-auto w-10 h-10 rounded-full bg-white/95 shadow-lg flex items-center justify-center" aria-label="Your bag"><ShoppingBag className="w-4 h-4" /></button>
-        <button onClick={() => router.push(`/explore?at=${place.id}`)} className="pointer-events-auto h-10 px-3 rounded-full bg-slate-900 text-white shadow-lg flex items-center gap-1.5 text-xs font-black" aria-label="Exit to the city">
-          <LogOut className="w-3.5 h-3.5" /> Exit
+        {/* Phones show the balance short (2.2M) so the header fits on one line. */}
+        <div className="pointer-events-auto shrink-0 whitespace-nowrap bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-full px-2.5 sm:px-3 py-1.5 text-xs font-black font-mono shadow">
+          <span className="sm:hidden">AED {new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(citizen?.balance ?? 0)}</span>
+          <span className="hidden sm:inline">AED {(citizen?.balance ?? 0).toLocaleString()}</span>
+        </div>
+        <button onClick={() => setPanel({ kind: "bag" })} className="pointer-events-auto w-10 h-10 shrink-0 rounded-full bg-white/95 shadow-lg flex items-center justify-center" aria-label="Your bag"><ShoppingBag className="w-4 h-4" /></button>
+        <button onClick={() => router.push(`/explore?at=${place.id}`)} className="pointer-events-auto h-10 w-10 sm:w-auto shrink-0 justify-center sm:px-3 rounded-full bg-slate-900 text-white shadow-lg flex items-center gap-1.5 text-xs font-black" aria-label="Exit to the city">
+          <LogOut className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Exit</span>
         </button>
       </header>
 
@@ -958,7 +962,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
             <button onClick={() => (offer.kind === "invite" ? goWith(offer.local, offer.to) : takeGift(offer.local, offer.kind))} className="px-3 py-2 rounded-xl bg-slate-950 text-white text-xs font-black shrink-0">
               {offer.kind === "invite" ? "Go" : "Accept"}
             </button>
-            <button onClick={() => setOffer(null)} className="w-7 h-7 rounded-full bg-black/10 flex items-center justify-center shrink-0" aria-label="Dismiss"><X className="w-3.5 h-3.5" /></button>
+            <button onClick={() => setOffer(null)} className="w-9 h-9 rounded-full bg-black/10 flex items-center justify-center shrink-0" aria-label="Dismiss"><X className="w-3.5 h-3.5" /></button>
           </div>
         </div>
       )}

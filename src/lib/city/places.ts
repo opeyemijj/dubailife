@@ -78,19 +78,42 @@ interface VenueOpts {
   job?: JobDef;
 }
 
+/**
+ * What a venue really is, as a 3D space: a waterpark has slides and pools, a beach has sand and sea, a
+ * spa has treatment rooms… Worked out from its name, category and feature, so every place (including
+ * ones added elsewhere) gets the right scene without each one saying so.
+ */
+function sceneFor(name: string, category: string, layout: Layout, feature: Venue["feature"]): { layout: Layout; feature: Venue["feature"] } {
+  const text = `${name} ${category}`;
+  if (/waterpark|aquaventure|wild wadi/i.test(text)) return { layout: "waterpark", feature: "pool" };
+  // A beach by what it is (not by a name like "Jumeirah Beach Hotel").
+  if (/beach|truck/i.test(category) || /abra|kitesurf/i.test(name)) return { layout: "beach", feature: "pool" };
+  if (/^spa$/i.test(category) || /\bspa\b/i.test(category)) return { layout: "spa", feature: "spa" };
+  if (/kids club/i.test(name) || (/pool/i.test(text) && layout === "outdoor")) return { layout: "pooldeck", feature: /sky/i.test(text) ? "skyline" : "pool" };
+  if (feature === "stage" || /theatre|theater|cinema|opera/i.test(name)) return { layout: "theatre", feature: "stage" };
+  if (/mosque/i.test(name)) return { layout: "mosque", feature };
+  if (/ice rink/i.test(name)) return { layout: "rink", feature };
+  // Cocktail and sky bars are bars, not nightclubs.
+  if (layout === "club" && /\bbar\b|tiki/i.test(category) && !/nightclub|\bclub\b/i.test(category)) return { layout: "bar", feature: feature ?? "skyline" };
+  // Waterfront dining is a restaurant with a view, not a lawn.
+  if (layout === "outdoor" && /dining/i.test(category)) return { layout: "dining", feature: "skyline" };
+  return { layout, feature };
+}
+
 function venue(name: string, category: string, key: CatalogKey, opts: VenueOpts = {}): Venue {
   const id = slug(name);
+  const scene = sceneFor(name, category, opts.layout ?? LAYOUT[key], opts.feature);
   const greeting = key === "club" ? "Welcome! Ticket and table bookings are with me." : key === "hotel" ? "Welcome — how may I help you today?" : "Hi! Let me know if you need any help.";
   return {
     id,
     name,
     category,
-    layout: opts.layout ?? LAYOUT[key],
+    layout: scene.layout,
     blurb: opts.blurb ?? `${category} at ${name}.`,
     palette: opts.palette ?? PALETTE_FOR[key],
     zone: opts.zone,
     comingSoon: opts.comingSoon,
-    feature: opts.feature,
+    feature: scene.feature,
     products: [...(opts.products ?? catalog(key, id)), ...(opts.extraProducts ?? [])],
     staff: staffFor(opts.role ?? ROLE[key] ?? "Staff", opts.role ? "Welcome! Tickets and information are with me." : greeting),
     job: opts.comingSoon || opts.noJob ? undefined : opts.job ?? jobFor(key, id),
@@ -220,7 +243,7 @@ interface Brand { floor: string; wall: string; accent: string; light?: string }
 function outlet(name: string, category: string, cuisine: Cuisine, brand: Brand, opts: VenueOpts = {}): Venue {
   const id = slug(name);
   const products = menu(id, cuisine);
-  const key: CatalogKey = cuisine === "cafe" || cuisine === "wellness" ? "cafe" : "restaurant";
+  const key: CatalogKey = ["cafe", "wellness", "gelato", "desserts"].includes(cuisine) ? "cafe" : "restaurant";
   return venue(name, category, key, {
     palette: { floor: brand.floor, wall: brand.wall, accent: brand.accent, light: brand.light }, products,
     job: menuJob(key === "cafe" ? "Barista" : "Server", key === "cafe" ? 320 : 360, products), ...opts,
@@ -259,12 +282,12 @@ const beach = (name: string, brand: Brand, blurb = "Private beach on the Arabian
 const brandSpa = (name: string, brand: Brand, blurb = "Treatments, hammam and relaxation lounge.") => ({ ...spa(name), palette: { floor: brand.floor, wall: brand.wall, accent: brand.accent }, blurb });
 
 /** The lobby: check in, rooms and suites at this hotel's rates. */
-const lobby = (hotelName: string, brand: Brand, room: number, suite: string, suitePrice: number): Venue => {
+const lobby = (hotelName: string, brand: Brand, room: number, suite: string, suitePrice: number, roomName = "Sea-view room"): Venue => {
   const id = slug(`${hotelName} Lobby & Reception`);
   return venue(`${hotelName} Lobby & Reception`, "Reception · rooms & concierge", "hotel", {
     palette: { floor: brand.floor, wall: brand.wall, accent: brand.accent }, blurb: `Check in, book a room or ask the concierge at ${hotelName}.`,
     products: [
-      { id: `${id}:room`, name: "Sea-view room, 1 night", price: room, icon: "🛏️", station: "reception", desc: "King bed and a balcony over the Arabian Gulf.", service: true },
+      { id: `${id}:room`, name: `${roomName}, 1 night`, price: room, icon: "🛏️", station: "reception", desc: "King bed and a balcony over the Arabian Gulf.", service: true },
       { id: `${id}:suite`, name: `${suite}, 1 night`, price: suitePrice, icon: "🌅", station: "reception", desc: "Separate living room, butler service and beach views.", service: true },
       { id: `${id}:transfer`, name: "Airport limousine", price: 450, icon: "🚘", station: "reception", desc: "Chauffeur transfer to or from DXB.", service: true },
     ],
@@ -273,7 +296,7 @@ const lobby = (hotelName: string, brand: Brand, room: number, suite: string, sui
 
 interface HotelSpec {
   id: string; name: string; short: string; blurb: string; brand: Brand;
-  room: number; suite: string; suitePrice: number;
+  room: number; suite: string; suitePrice: number; roomName?: string;
   cafe?: Venue; outlets: Venue[]; spa: string; pool?: string; beach?: string; poolPrice?: number; extra?: Venue[];
 }
 
@@ -282,7 +305,7 @@ function palmHotel(h: HotelSpec): Place {
   return {
     id: h.id, name: h.name, kind: "hotel", blurb: h.blurb,
     venues: [
-      lobby(h.name, h.brand, h.room, h.suite, h.suitePrice),
+      lobby(h.name, h.brand, h.room, h.suite, h.suitePrice, h.roomName),
       h.cafe ?? outlet(`${h.short} · Lobby Café`, "Café · lobby lounge", "cafe", h.brand, { blurb: "Coffee, pastries and afternoon tea in the lobby." }),
       ...h.outlets,
       poolBar(h.pool ?? `${h.short} · Pool & Bar`, h.brand, h.poolPrice ?? 350),
@@ -511,6 +534,138 @@ const PALM_PLACES: Place[] = [
     products: [],
     activities: [{ id: "run", label: "Run the park loop", icon: "🏃", animation: "clap", reward: 30 }, { id: "picnic", label: "Have a picnic", icon: "🧺", animation: "sit" }],
   })),
+];
+
+
+// ---------------------------------------------------------------- the Jumeirah coastline
+// Burj Al Arab and its neighbours in Umm Suqeim, and the public beaches (see lib/city/coast.ts).
+
+/** A public beach: free to visit, with things to do on the sand. */
+const publicBeach = (id: string, name: string, blurb: string, extra: Venue[] = [], activities: Venue["activities"] = []): Place => ({
+  id, name, kind: "park", blurb,
+  venues: [
+    venue(name, "Public beach", "hotel", {
+      role: "Lifeguard", noJob: true, layout: "outdoor", feature: "pool", palette: PALETTES.park, products: [], blurb,
+      activities: [{ id: "swim", label: "Go for a swim", icon: "🏊", animation: "clap", reward: 20 }, { id: "sunbathe", label: "Sunbathe", icon: "🏖️", animation: "sit" }, ...(activities ?? [])],
+    }),
+    ...extra,
+  ],
+});
+
+/**
+ * Madinat Jumeirah: the resort town of four hotels around Souk Madinat Jumeirah. The souk's 21 places to
+ * eat and drink are its official dining list (soukmadinatjumeirah.ae, 2026); the hotels' outlets are the
+ * well-known ones. Menus are representative of each cuisine.
+ */
+function madinatJumeirah(): Place {
+  const brand: Brand = { floor: "#d6bc8a", wall: "#f5efe3", accent: "#b08d57" };
+  const souk = (name: string, category: string, cuisine: Cuisine, blurb?: string) => outlet(name, category, cuisine, brand, { zone: "Souk Madinat Jumeirah", ...(blurb ? { blurb } : {}) });
+  const hotel = (name: string, room: number, roomName: string, suite: string, suitePrice: number, blurb: string) => ({ ...lobby(name, brand, room, suite, suitePrice, roomName), blurb, zone: "Hotels" });
+  return {
+    id: "madinat-jumeirah", name: "Madinat Jumeirah", kind: "attraction",
+    blurb: "A walled Arabian resort town of wind towers, souk lanes and waterways by Burj Al Arab: four hotels, Souk Madinat Jumeirah, Talise Spa and the Madinat Theatre.",
+    venues: [
+      // Hotels
+      hotel("Jumeirah Al Qasr", 2200, "Ocean deluxe room", "Royal suite", 12000, "The palace hotel at the heart of Madinat, with its own private beach."),
+      hotel("Jumeirah Mina A'Salam", 1600, "Ocean deluxe room", "Ocean suite", 6500, "The 'harbour of peace' hotel on the waterways, facing Burj Al Arab."),
+      hotel("Jumeirah Dar Al Masyaf", 2400, "Arabian summer house room", "Malakiya villa", 25000, "Arabian summer houses set around shared courtyards and pools."),
+      hotel("Jumeirah Al Naseem", 1800, "Ocean deluxe room", "Ocean suite", 7000, "The light, contemporary beach hotel closest to Burj Al Arab."),
+      // Resort restaurants and bars
+      outlet("Pierchic", "Seafood restaurant on the pier", "seafood", brand, { zone: "Al Qasr", feature: "skyline", blurb: "At the end of a wooden pier, facing Burj Al Arab." }),
+      outlet("Pai Thai", "Thai restaurant", "thai", brand, { zone: "Dar Al Masyaf", blurb: "Thai dining by the canal: guests arrive by abra." }),
+      lounge("Bahri Bar", "Bar with Burj Al Arab views", brand, "Terrace bar at Mina A'Salam looking out to Burj Al Arab."),
+      outlet("Shimmers", "Greek beach restaurant", "greek", brand, { zone: "Mina A'Salam", blurb: "Greek dishes and seafood on the beach." }),
+      // Souk Madinat Jumeirah: restaurants, cafés and bars
+      souk("AMARU Restaurant & Lounge", "Latin American restaurant", "nikkei"),
+      souk("Al Makan", "Emirati & Arabic restaurant", "lebanese"),
+      souk("Anar", "Persian restaurant", "persian"),
+      souk("Ushna", "Indian restaurant", "indian"),
+      souk("The Meat Co.", "Steakhouse", "steak"),
+      souk("Trattoria", "Italian restaurant", "italian"),
+      souk("Taverna Greek Restaurant", "Greek restaurant", "greek"),
+      souk("Sushiyaki", "Sushi & yakitori", "japanese"),
+      souk("The Noodle House", "Pan-Asian noodles", "chinese"),
+      souk("Maria Bonita Taco Shop & Grill", "Mexican taco shop", "mexican"),
+      souk("McGettigan's", "Irish pub & restaurant", "gastropub"),
+      souk("Belgian Beer Café", "Belgian café", "gastropub"),
+      lounge("Trader Vic's", "Tiki bar & restaurant", brand, "The tiki classic in the souk: tropical drinks and island food."),
+      lounge("Mezzanine Bar & Kitchen", "Bar & kitchen", brand, "Bar and kitchen above the souk lanes."),
+      souk("Starbucks", "Café", "cafe"),
+      souk("Costa Coffee", "Café", "cafe"),
+      souk("AGK Refreshments", "Juices & refreshments", "wellness"),
+      souk("Amorino", "Gelato café", "gelato"),
+      souk("Gelato Divino", "Gelato", "gelato"),
+      souk("Hafiz Mustafa 1864", "Turkish desserts", "desserts", "Istanbul's dessert house since 1864: baklava, künefe and Turkish delight."),
+      souk("Velvet Sweets", "Desserts", "desserts"),
+      // Shopping
+      venue("Souk Madinat Jumeirah", "Souk · gifts & crafts", "home", { zone: "Souk Madinat Jumeirah", palette: { floor: brand.floor, wall: brand.wall, accent: brand.accent }, blurb: "Covered souk lanes with lanterns, textiles, art and gifts." }),
+      // Amenities
+      { ...brandSpa("Talise Spa", brand, "Award-winning spa of 26 treatment villas by the waterways, with steam rooms, saunas and plunge pools."), zone: "Al Qasr" },
+      poolBar("Al Qasr Pool & Bar", brand, 450, "The palace's long pool, loungers and cabanas."),
+      beach("Madinat Jumeirah Private Beach", brand, "A long private beach shared by the resort's hotels, facing Burj Al Arab."),
+      attraction("Madinat Theatre", "The resort's theatre: musicals, comedy and concerts.", "stage", [
+        ticket("madinat-theatre:show", "Show ticket", 250, "Tonight's performance.", "🎭"),
+      ], [{ id: "applaud", label: "Give a standing ovation", icon: "👏", animation: "clap" }]),
+      attraction("Abra waterway ride", "A traditional abra ride through Madinat's canals.", "pool", [
+        ticket("madinat:abra", "Abra ride", 85, "About 20 minutes on the waterways.", "🛶"),
+      ], [{ id: "wave", label: "Wave from the abra", icon: "🛶", animation: "wave" }]),
+      attraction("Sinbad's Kids Club", "Kids' club beside Al Qasr's pool: activities, crafts and a splash area.", "pool", [
+        ticket("madinat:kids-club", "Kids club half day", 150, "Supervised activities for ages 4–12.", "🧒"),
+      ], [{ id: "play", label: "Join the treasure hunt", icon: "🏴‍☠️", animation: "clap", reward: 20 }]),
+    ],
+    categories: ["Reception · rooms & concierge", "Seafood restaurant on the pier", "Thai restaurant", "Persian restaurant", "Indian restaurant", "Steakhouse", "Italian restaurant", "Greek restaurant", "Mexican taco shop", "Irish pub & restaurant", "Café", "Gelato café", "Turkish desserts", "Souk · gifts & crafts", "Spa", "Pool & pool bar", "Private beach", "Attraction"],
+  };
+}
+
+const COAST_PLACES: Place[] = [
+  palmHotel({
+    id: "burj-al-arab", name: "Burj Al Arab", short: "Burj Al Arab", brand: { floor: "#7f1d1d", wall: "#fef3c7", accent: "#d4af37" },
+    room: 8500, roomName: "Deluxe one-bedroom suite", suite: "Royal two-bedroom suite", suitePrice: 95000, spa: "Talise Spa", pool: "The Terrace", poolPrice: 1500,
+    beach: "Burj Al Arab Private Beach",
+    blurb: "The sail-shaped hotel on its own island off Umm Suqeim. A major restoration began in April 2026 and is expected to take about 18 months.",
+    cafe: outlet("Sahn Eddar", "Atrium lounge · afternoon tea", "cafe", { floor: "#7f1d1d", wall: "#fef3c7", accent: "#d4af37" }, { blurb: "Afternoon tea in the atrium, under the golden balconies." }),
+    outlets: [
+      outlet("Ristorante L'Olivo at Al Mahara", "Seafood fine dining", "seafood", { floor: "#0c1a3a", wall: "#0f172a", accent: "#d4af37" }, { feature: "aquarium", palette: PALETTES.night, blurb: "Fine dining around a 990,000-litre aquarium." }),
+      outlet("Al Muntaha", "French & Italian fine dining · Level 27", "french", { floor: "#1e1b4b", wall: "#f5f5f4", accent: "#d4af37" }, { feature: "skyline", blurb: "Michelin-starred dining 200 m above the Gulf." }),
+      lounge("Skyview Bar", "Sky bar · Level 27", { floor: "#0b0b12", wall: "#12121c", accent: "#d4af37" }, "Cocktails and afternoon tea on the 27th floor."),
+      lounge("Gilt", "Bar · Level 27", { floor: "#0b0b12", wall: "#12121c", accent: "#eab308" }, "Gold-lined bar at the top of the sail."),
+    ],
+  }),
+  palmHotel({
+    id: "jumeirah-beach-hotel", name: "Jumeirah Beach Hotel", short: "Jumeirah Beach Hotel", brand: { floor: "#e0f2fe", wall: "#f8fafc", accent: "#0369a1" },
+    room: 1400, suite: "Ocean suite", suitePrice: 5200, spa: "Jumeirah Beach Hotel Spa",
+    blurb: "The wave-shaped beach resort beside Burj Al Arab, next to Wild Wadi.",
+    outlets: [outlet("Rockfish", "Seafood restaurant", "seafood", { floor: "#e0f2fe", wall: "#f8fafc", accent: "#0369a1" }, { blurb: "Mediterranean seafood looking across to Burj Al Arab." })],
+  }),
+  madinatJumeirah(),
+  single("wild-wadi", "Wild Wadi Waterpark", "attraction", attraction("Wild Wadi Waterpark", "Waterpark beside Jumeirah Beach Hotel, famous for the Jumeirah Sceirah drop slide. Reported closed until further notice in 2026.", "pool", [
+    ticket("wild-wadi:day", "Wild Wadi day pass", 299, "All slides and pools for the day.", "🌊"),
+  ], [{ id: "sceirah", label: "Ride the Jumeirah Sceirah", icon: "🌊", animation: "clap", reward: 50 }])),
+  publicBeach("sunset-beach", "Sunset Beach, Umm Suqeim", "The free beach with the classic Burj Al Arab view, best at sunset.", [], [
+    { id: "photo", label: "Photograph Burj Al Arab at sunset", icon: "📸", animation: "wave", reward: 25 },
+  ]),
+  publicBeach("kite-beach", "Kite Beach", "Free beach for kitesurfing and beach sports, with a running track, skate park and food trucks.", [
+    attraction("Kite Beach Kitesurf School", "Kitesurf and paddleboard lessons off Kite Beach.", "pool", [
+      ticket("kite-beach:kitesurf", "Kitesurf lesson (1 hour)", 400, "With an instructor and all the gear.", "🪁"),
+      ticket("kite-beach:sup", "Paddleboard hire (1 hour)", 100, "Board, paddle and life vest.", "🏄"),
+    ], [{ id: "kite", label: "Kitesurf", icon: "🪁", animation: "clap", reward: 40 }]),
+    venue("SALT", "Burger truck", "restaurant", {
+      layout: "outdoor", palette: PALETTES.lobby, noJob: true, blurb: "The Kite Beach food truck famous for its sliders.",
+      products: [
+        { id: "salt:sliders", name: "Wagyu sliders", price: 55, icon: "🍔", station: "bar", desc: "Two sliders, the classic.", consumable: { need: "hunger", amount: 30 } },
+        { id: "salt:fries", name: "Cheese fries", price: 25, icon: "🍟", station: "bar", desc: "", consumable: { need: "hunger", amount: 12 } },
+        { id: "salt:ice-cream", name: "Soft-serve ice cream", price: 20, icon: "🍦", station: "bar", desc: "", consumable: { need: "fun", amount: 10 } },
+        { id: "salt:lemonade", name: "Fresh lemonade", price: 18, icon: "🥤", station: "bar", desc: "", consumable: { need: "energy", amount: 8 } },
+      ],
+    }),
+  ], [{ id: "run", label: "Run the beach track", icon: "🏃", animation: "clap", reward: 30 }]),
+  publicBeach("jumeirah-public-beach", "Jumeirah Public Beach", "Free, open beach on Jumeirah Road with lifeguards and Burj Al Arab views."),
+  publicBeach("jumeirah-beach-1", "Jumeirah Beach 1", "The 1.4 km stretch of Jumeirah 1 beach, redeveloped and reopened in 2026, with a boardwalk and cafés.", [
+    outlet("Jumeirah Beach 1 · Boardwalk Café", "Café", "cafe", { floor: "#d6a76c", wall: "#fdf6e3", accent: "#0f766e" }),
+  ]),
+  publicBeach("jbr-the-beach", "JBR · The Beach", "The 1.7 km beach in front of Jumeirah Beach Residence and The Walk.", [], [
+    { id: "volleyball", label: "Play beach volleyball", icon: "🏐", animation: "clap", reward: 25 },
+  ]),
 ];
 
 export const PLACES: Place[] = [
@@ -745,7 +900,102 @@ export const PLACES: Place[] = [
       { id: "workout", label: "Fitness challenge", icon: "🏋️", animation: "clap", reward: 40 },
     ],
   })),
+  single("dxb-terminal-1", "DXB Terminal 1 (Concourse D)", "attraction", venue("DXB Terminal 1 (Sheikh Rashid Concourse)", "Airport Terminal", "hotel", {
+    palette: PALETTES.tech,
+    blurb: "International gateway hosting 60+ global airlines including British Airways, Singapore Airlines, and Lufthansa.",
+    products: [
+      ticket("dxb:ba-heathrow", "British Airways Club World to London", 4800, "Direct international flight from Concourse D.", "🇬🇧"),
+      ticket("dxb:sq-singapore", "Singapore Airlines First Class to Singapore", 7900, "World-renowned private enclosed luxury cabin.", "🇸🇬"),
+      ticket("dxb:ahlan-lounge", "Ahlan Business Lounge Access", 280, "International buffet, barista coffee & shower suites.", "🛋️"),
+      ticket("dxb:limousine", "DXB Chauffeur Airport Limousine", 350, "Direct luxury transfer across Dubai.", "🚘"),
+    ],
+    activities: [
+      { id: "dxb:concourse-walk", label: "Stroll Concourse D Glass Walkway", icon: "🧳", animation: "clap", reward: 20 },
+      { id: "dxb:plane-spot", label: "Plane Spotting on Apron", icon: "🔭", animation: "sit", reward: 25 },
+    ],
+  })),
+  single("dxb-terminal-2", "DXB Terminal 2 (flydubai & Executive)", "attraction", venue("DXB Terminal 2 (flydubai & Executive)", "Airport Terminal", "hotel", {
+    palette: PALETTES.dining,
+    blurb: "Regional flight hub for flydubai and VIP executive business jets with apron tarmac boarding.",
+    products: [
+      ticket("dxb:fz-maldives", "flydubai Business Class to Maldives (MLE)", 2900, "Lie-flat seats on the Boeing 737 MAX 8.", "🏖️"),
+      ticket("dxb:fz-salalah", "flydubai Weekend Getaway to Salalah (SLL)", 650, "Direct flight to the Khareef mist mountains.", "🌴"),
+      ticket("dxb:exec-jet", "Private Charter Flight (Executive Stand)", 12500, "VIP Gulfstream G650 private terminal boarding.", "🛩️"),
+      ticket("dxb:marhaba", "Marhaba Bronze Meet & Greet", 160, "Fast-track security and baggage escort.", "🤝"),
+    ],
+    activities: [
+      { id: "dxb:t2-tarmac", label: "Board via Tarmac Airstairs", icon: "🚶", animation: "clap", reward: 15 },
+      { id: "dxb:exec-lounge", label: "Executive VIP Flight Lounge", icon: "🍸", animation: "sit", reward: 30 },
+    ],
+  })),
+  single("dxb-terminal-3", "DXB Terminal 3 (Emirates Megahub)", "attraction", venue("DXB Terminal 3 (Emirates Megahub)", "Airport Terminal", "hotel", {
+    palette: PALETTES.luxury,
+    blurb: "World's largest airport terminal, home of Emirates Airbus A380 superjumbos and luxury first-class lounges.",
+    products: [
+      ticket("dxb:a380-london", "Emirates First Class to London Heathrow (A380)", 8500, "Private suite with sliding doors, onboard shower spa & lounge bar.", "✈️"),
+      ticket("dxb:a380-jfk", "Emirates Business Class to New York JFK", 5200, "Lie-flat bed, multi-course dining & Dom Pérignon.", "🗽"),
+      ticket("dxb:lounge-t3", "Emirates First Class Lounge Day Pass", 650, "Full buffet, private quiet room, sommelier tasting & spa treatment.", "🥂"),
+      { id: "dxb:duty-free-gold", name: "Dubai Duty Free 24K Gold Bar (10g)", price: 3200, icon: "🪙", station: "reception", desc: "Certified 999.9 pure Swiss gold bullion.", service: false },
+      { id: "dxb:duty-free-oud", name: "Royal Arabian Oud & Amber Perfume", price: 420, icon: "✨", station: "reception", desc: "Signature DXB Duty Free luxury fragrance.", consumable: { need: "fun", amount: 40 } },
+    ],
+    activities: [
+      { id: "dxb:board-a380", label: "Board the A380 Upper Deck", icon: "🛫", animation: "clap", reward: 50 },
+      { id: "dxb:lounge-relax", label: "Relax in First Class Lounge", icon: "☕", animation: "sit", reward: 20 },
+    ],
+  })),
+  {
+    id: "dxb-international-airport",
+    name: "Dubai International Airport (DXB)",
+    kind: "attraction",
+    blurb: "World's busiest international airport hub connecting 250+ global destinations across Terminals 1, 2 and 3.",
+    venues: [
+      venue("DXB Terminal 3 (Emirates Megahub)", "Airport Terminal", "hotel", {
+        palette: PALETTES.luxury,
+        blurb: "World's largest airport terminal, home of Emirates Airbus A380 superjumbos and luxury first-class lounges.",
+        products: [
+          ticket("dxb:a380-london", "Emirates First Class to London Heathrow (A380)", 8500, "Private suite with sliding doors, onboard shower spa & lounge bar.", "✈️"),
+          ticket("dxb:a380-jfk", "Emirates Business Class to New York JFK", 5200, "Lie-flat bed, multi-course dining & Dom Pérignon.", "🗽"),
+          ticket("dxb:lounge-t3", "Emirates First Class Lounge Day Pass", 650, "Full buffet, private quiet room, sommelier tasting & spa treatment.", "🥂"),
+          { id: "dxb:duty-free-gold", name: "Dubai Duty Free 24K Gold Bar (10g)", price: 3200, icon: "🪙", station: "reception", desc: "Certified 999.9 pure Swiss gold bullion.", service: false },
+          { id: "dxb:duty-free-oud", name: "Royal Arabian Oud & Amber Perfume", price: 420, icon: "✨", station: "reception", desc: "Signature DXB Duty Free luxury fragrance.", consumable: { need: "fun", amount: 40 } },
+        ],
+        activities: [
+          { id: "dxb:board-a380", label: "Board the A380 Upper Deck", icon: "🛫", animation: "clap", reward: 50 },
+          { id: "dxb:lounge-relax", label: "Relax in First Class Lounge", icon: "☕", animation: "sit", reward: 20 },
+        ],
+      }),
+      venue("DXB Terminal 1 (Sheikh Rashid Concourse)", "Airport Terminal", "hotel", {
+        palette: PALETTES.tech,
+        blurb: "International gateway hosting 60+ global airlines including British Airways, Singapore Airlines, and Lufthansa.",
+        products: [
+          ticket("dxb:ba-heathrow", "British Airways Club World to London", 4800, "Direct international flight from Concourse D.", "🇬🇧"),
+          ticket("dxb:sq-singapore", "Singapore Airlines First Class to Singapore", 7900, "World-renowned private enclosed luxury cabin.", "🇸🇬"),
+          ticket("dxb:ahlan-lounge", "Ahlan Business Lounge Access", 280, "International buffet, barista coffee & shower suites.", "🛋️"),
+          ticket("dxb:limousine", "DXB Chauffeur Airport Limousine", 350, "Direct luxury transfer across Dubai.", "🚘"),
+        ],
+        activities: [
+          { id: "dxb:concourse-walk", label: "Stroll Concourse D Glass Walkway", icon: "🧳", animation: "clap", reward: 20 },
+          { id: "dxb:plane-spot", label: "Plane Spotting on Apron", icon: "🔭", animation: "sit", reward: 25 },
+        ],
+      }),
+      venue("DXB Terminal 2 (flydubai & Executive)", "Airport Terminal", "hotel", {
+        palette: PALETTES.dining,
+        blurb: "Regional flight hub for flydubai and VIP executive business jets with apron tarmac boarding.",
+        products: [
+          ticket("dxb:fz-maldives", "flydubai Business Class to Maldives (MLE)", 2900, "Lie-flat seats on the Boeing 737 MAX 8.", "🏖️"),
+          ticket("dxb:fz-salalah", "flydubai Weekend Getaway to Salalah (SLL)", 650, "Direct flight to the Khareef mist mountains.", "🌴"),
+          ticket("dxb:exec-jet", "Private Charter Flight (Executive Stand)", 12500, "VIP Gulfstream G650 private terminal boarding.", "🛩️"),
+          ticket("dxb:marhaba", "Marhaba Bronze Meet & Greet", 160, "Fast-track security and baggage escort.", "🤝"),
+        ],
+        activities: [
+          { id: "dxb:t2-tarmac", label: "Board via Tarmac Airstairs", icon: "🚶", animation: "clap", reward: 15 },
+          { id: "dxb:exec-lounge", label: "Executive VIP Flight Lounge", icon: "🍸", animation: "sit", reward: 30 },
+        ],
+      }),
+    ],
+  },
   ...PALM_PLACES,
+  ...COAST_PLACES,
 ];
 
 const BY_ID = new Map(PLACES.map((p) => [p.id, p]));

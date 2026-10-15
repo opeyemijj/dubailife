@@ -29,7 +29,7 @@ export interface Mix { key: string; name: string; user: string; minutes: number;
 export function moodFor(venue: Venue): Mood | null {
   if (venue.layout === "club") return "club";
   if (venue.feature === "pool") return "pool";
-  if (venue.layout === "dining") return "lounge";
+  if (venue.layout === "dining" || venue.layout === "bar" || venue.layout === "spa") return "lounge";
   return null;
 }
 

@@ -12,7 +12,7 @@ export interface CoinPackage { id: string; coins: number; bonus: number; price_a
 export interface VenuePlan { price_aed: number; interval: string; benefits: string[]; terms: string }
 export interface BillboardPlan { slots: number; price_aed_per_week: number; max_weeks: number; rotation_seconds: number }
 export interface Features { coin_purchases: boolean; venue_claims: boolean; billboard_ads: boolean; gifts: boolean; creator_payouts: boolean }
-export interface Settings { coin_packages: CoinPackage[]; venue_subscription: VenuePlan; billboard: BillboardPlan; features: Features }
+export interface Settings { coin_packages: CoinPackage[]; venue_subscription: VenuePlan; billboard: BillboardPlan; floor_ad?: BillboardPlan; features: Features }
 
 let cached: Promise<Settings> | null = null;
 function loadSettings(): Promise<Settings> {

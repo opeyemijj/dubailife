@@ -227,14 +227,14 @@ export default function HomePage() {
             
             {/* Clock & Mood */}
             <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-slate-800">
-              <span className="flex items-center gap-1 font-mono">
+              <span className="flex items-center gap-1 font-mono whitespace-nowrap">
                 {(() => { const h = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Dubai", hour: "numeric", hour12: false }).format(new Date())); return h >= 6 && h < 19 ? "☀️" : "🌙"; })()} {clock}
               </span>
               <div className="w-[1px] h-3.5 bg-slate-200" />
               {(() => {
                 const avg = (needs.hunger + needs.energy + needs.fun + needs.social + needs.hygiene + needs.bladder) / 6;
                 const [label, tone] = avg >= 70 ? ["🙂 Happy", "text-emerald-600"] : avg >= 40 ? ["😐 Okay", "text-amber-600"] : ["😟 Low", "text-rose-600"];
-                return <span className={`flex items-center gap-1 font-extrabold text-xs ${tone}`}>{label}</span>;
+                return <span className={`flex items-center gap-1 font-extrabold text-xs whitespace-nowrap ${tone}`}><span>{label.split(" ")[0]}</span><span className="hidden xs:inline sm:inline">{label.split(" ")[1]}</span></span>;
               })()}
             </div>
 
@@ -255,20 +255,22 @@ export default function HomePage() {
                   const nextMuted = gameAudio.toggleMute();
                   setIsAudioMuted(nextMuted);
                 }}
-                className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+                className="w-9 h-9 shrink-0 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
                 title={isAudioMuted ? "Unmute" : "Mute"}
+                aria-label={isAudioMuted ? "Unmute" : "Mute"}
               >
                 {isAudioMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-500" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-600" />}
               </button>
 
-              <Link href="/wallet" className="flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200/60 px-3 py-1 rounded-full text-xs sm:text-sm font-black font-mono shadow-sm" aria-label="Wallet">
-                <span>AED {walletBalance.toLocaleString()}</span>
+              <Link href="/wallet" className="flex items-center gap-1.5 whitespace-nowrap bg-amber-50 text-amber-800 border border-amber-200/60 px-2.5 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm font-black font-mono shadow-sm" aria-label="Wallet">
+                <span className="sm:hidden">AED {new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(walletBalance)}</span>
+                <span className="hidden sm:inline">AED {walletBalance.toLocaleString()}</span>
                 <span className="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center ml-0.5"><Plus className="w-3 h-3 stroke-[3]" /></span>
               </Link>
 
               <button
                 onClick={signOut}
-                className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 transition-colors"
+                className="w-9 h-9 shrink-0 flex items-center justify-center rounded-full bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 transition-colors"
                 title="Log out"
                 aria-label="Log out"
               >
@@ -301,7 +303,7 @@ export default function HomePage() {
 
           <button
             onClick={() => setCleanScreen(!cleanScreen)}
-            className="flex items-center gap-1 bg-white/90 hover:bg-white px-2.5 py-1 rounded-full text-[10px] font-bold text-slate-600 shadow-sm border border-slate-200 transition-colors"
+            className="flex items-center gap-1 bg-white/90 hover:bg-white px-3 py-2 rounded-full text-[11px] font-bold text-slate-600 shadow-sm border border-slate-200 transition-colors"
           >
             <ChevronUp className="w-3 h-3" />
             <span>Clean screen</span>

@@ -773,17 +773,51 @@ export const mapSeed = [
   },
   {
     "id": "tile-academic-city-al-khawaneej",
-    "name": "Al Khawaneej & Academic City Plain",
+    "name": "Dubai International Airport (DXB) Plain",
     "type": "floor-tile",
     "virtualX": 4638,
     "virtualY": 159,
     "width": 1400,
     "height": 450,
-    "color": "#b8cf9e",
-    "upperColor": "#b8cf9e",
-    "showGrid": true,
-    "showLabel": true,
+    "color": "#0f172a",
+    "upperColor": "#0f172a",
+    "showGrid": false,
+    "showLabel": false,
     "rotate": 0,
+    "interactive": false
+  },
+  {
+    "id": "dxb-international-airport",
+    "name": "Dubai International Airport (DXB)",
+    "type": "airport",
+    "virtualX": 4638,
+    "virtualY": 159,
+    "width": 1400,
+    "height": 450,
+    "interactive": true
+  },
+  {
+    "id": "dxb-terminal-1",
+    "name": "DXB Terminal 1 (Concourse D)",
+    "type": "airport-terminal",
+    "virtualX": 4318,
+    "virtualY": 104,
+    "interactive": true
+  },
+  {
+    "id": "dxb-terminal-2",
+    "name": "DXB Terminal 2 (flydubai & Executive)",
+    "type": "airport-terminal",
+    "virtualX": 4418,
+    "virtualY": 314,
+    "interactive": true
+  },
+  {
+    "id": "dxb-terminal-3",
+    "name": "DXB Terminal 3 (Emirates Megahub)",
+    "type": "airport-terminal",
+    "virtualX": 4878,
+    "virtualY": 104,
     "interactive": true
   },
   {

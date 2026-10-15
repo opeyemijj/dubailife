@@ -10,6 +10,7 @@ import { MapBackground } from './MapBackground';
 import { mapConfig } from '@/data/mapSeed';
 import { CITY_ENTITIES, savableEntities } from '@/lib/city/mapEntities';
 import { PALM_VIEW, WORLD_TOP } from '@/lib/city/palm';
+import { CELL, blockCells, mosaicBlocks, type SectionKey } from '@/lib/city/floorMosaic';
 import { isLowPower } from '@/lib/device';
 
 const noSubscribe = () => () => {};
@@ -54,6 +55,8 @@ const isFloorTileType = (type?: string) =>
   !!type && (type === 'island-plain' || type === 'two-plains-tile' || type.includes('floor-tile') || type.includes('plot'));
 
 const OVERLAY_TYPES = new Set([
+  'floor-ad',
+  'floor-mosaic',
   'bridge',
   'generic-district',
   'salik',
@@ -125,12 +128,12 @@ export const getEntityCategoryInfo = (entity: any) => {
   }
 
   // 7. Tourist Attractions & Landmarks (Includes Mosques)
-  if (type === 'burj-khalifa' || id === 'burj-khalifa' || type === 'dubai-fountain' || id === 'dubai-fountain' || type === 'dubai-aquarium' || id === 'dubai-aquarium' || type === 'museum-future' || id === 'motf' || type === 'dubai-frame' || id === 'dubai-frame' || type === 'difc-mosque' || id === 'difc-mosque' || type === 'zabeel-mosque' || id === 'zabeel-mosque' || name.includes('burj khalifa') || name.includes('fountain') || name.includes('aquarium') || name.includes('museum') || name.includes('frame') || name.includes('mosque')) {
+  if (type === 'burj-khalifa' || id === 'burj-khalifa' || type === 'madinat-jumeirah' || type === 'wild-wadi' || type === 'dubai-fountain' || id === 'dubai-fountain' || type === 'dubai-aquarium' || id === 'dubai-aquarium' || type === 'museum-future' || id === 'motf' || type === 'dubai-frame' || id === 'dubai-frame' || type === 'difc-mosque' || id === 'difc-mosque' || type === 'zabeel-mosque' || id === 'zabeel-mosque' || name.includes('burj khalifa') || name.includes('fountain') || name.includes('aquarium') || name.includes('museum') || name.includes('frame') || name.includes('mosque')) {
     return { icon: '🕌', category: 'Attractions & Mosques', key: 'attractions', color: 'from-blue-500 to-indigo-600', badgeBg: 'bg-blue-900/60 border-blue-500/40 text-blue-200' };
   }
 
   // 8. Hotels & Luxury Resorts
-  if (type === 'hotel' || type.includes('hotel') || type === 'address-skyview' || type === 'palace-downtown' || type === 'address-downtown' || type === 'ritz-carlton-difc' || id === 'ritz-carlton-difc' || type === 'one-zaabeel' || id === 'one-zaabeel' || id.includes('address') || id.includes('palace') || name.includes('address') || name.includes('palace') || name.includes('hotel') || name.includes('resort') || name.includes('ritz') || name.includes('za\'abeel') || name.includes('zaabeel')) {
+  if (type === 'hotel' || type.includes('hotel') || id === 'burj-al-arab' || type === 'address-skyview' || type === 'palace-downtown' || type === 'address-downtown' || type === 'ritz-carlton-difc' || id === 'ritz-carlton-difc' || type === 'one-zaabeel' || id === 'one-zaabeel' || id.includes('address') || id.includes('palace') || name.includes('address') || name.includes('palace') || name.includes('hotel') || name.includes('resort') || name.includes('ritz') || name.includes('za\'abeel') || name.includes('zaabeel')) {
     return { icon: '🏨', category: 'Hotels & Resorts', key: 'hotels', color: 'from-amber-400 to-yellow-600', badgeBg: 'bg-yellow-900/60 border-yellow-500/40 text-yellow-200' };
   }
 
@@ -155,8 +158,8 @@ export const getEntityCategoryInfo = (entity: any) => {
   }
 
   // 13. Infrastructure / Transit
-  if (type === 'salik' || type === 'marina' || type === 'airport' || type === 'metro-station' || type === 'dubai-metro') {
-    return { icon: type === 'airport' ? '✈️' : (type === 'marina' ? '⛵' : '🚧'), category: 'Transit & Infrastructure', key: 'infrastructure', color: 'from-slate-600 to-blue-700', badgeBg: 'bg-slate-900/60 border-slate-500/40 text-slate-200' };
+  if (type === 'salik' || type === 'marina' || type === 'airport' || type === 'airport-terminal' || type === 'metro-station' || type === 'dubai-metro' || id.startsWith('dxb-terminal')) {
+    return { icon: (type === 'airport' || type === 'airport-terminal' || id.startsWith('dxb-terminal')) ? '✈️' : (type === 'marina' ? '⛵' : '🚧'), category: (type === 'airport' || type === 'airport-terminal' || id.startsWith('dxb-terminal')) ? 'Airport & Aviation' : 'Transit & Infrastructure', key: 'infrastructure', color: 'from-blue-600 to-indigo-700', badgeBg: 'bg-blue-900/60 border-blue-500/40 text-blue-200' };
   }
 
   return { icon: '📍', category: 'Downtown Dubai', key: 'other', color: 'from-blue-500 to-slate-700', badgeBg: 'bg-slate-900/60 border-slate-500/40 text-slate-200' };
@@ -472,6 +475,21 @@ export function InteractiveMap({
     setTimeout(() => setToastMsg(null), 3000);
   };
 
+  /** A tap on the floor-ad mosaic: open booking for the block (or single grid cell) under it. */
+  const openMosaicBlock = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    const block = target.closest<HTMLElement>('[data-ad-block]');
+    let id = block?.dataset.adBlock;
+    const grid = target.closest<HTMLElement>('[data-ad-grid]');
+    if (!id && grid) {
+      const c = Math.floor(e.nativeEvent.offsetX / CELL), r = Math.floor(e.nativeEvent.offsetY / CELL);
+      id = mosaicBlocks(grid.dataset.adGrid as SectionKey).find((b) => b.c === c && b.r === r && b.w * b.h === 1)?.id;
+    }
+    if (!id) return;
+    const cells = blockCells(id);
+    handleVenueClick({ id, type: 'floor-ad', name: `Floor ad · ${cells} cell${cells > 1 ? 's' : ''}` });
+  };
+
   const handleVenueClick = (loc: any) => {
     if (interactionDisabled) {
       onAttemptInteract?.(loc);
@@ -491,7 +509,7 @@ export function InteractiveMap({
       setMetroModalOpen(true);
       return;
     }
-    if (loc.type === 'giant-billboard' || loc.type === 'billboard' || loc.type === 'ad-billboard') {
+    if (loc.type === 'giant-billboard' || loc.type === 'billboard' || loc.type === 'ad-billboard' || loc.type === 'floor-ad') {
       setSelectedBillboard(loc);
 
       setBillboardModalOpen(true);
@@ -868,6 +886,8 @@ export function InteractiveMap({
     return venues.map(loc => ({
       ...loc,
       campaigns: liveAds[loc.id],
+      // The floor-ad mosaic shows every block's ad, so it gets them all.
+      ...(loc.type === 'floor-mosaic' ? { ads: liveAds } : {}),
       renderedX: loc.virtualX,
       renderedY: WORLD_HEIGHT - loc.virtualY
     // Ground layers (the Palm island) first, then back-to-front so nearer buildings overlap farther ones.
@@ -1126,7 +1146,7 @@ export function InteractiveMap({
               <span className="hidden xs:inline sm:inline">Bay</span>
             </button>
             <button
-              onClick={() => jumpToDistrict(3200, 600, 'Dubai Int Airport (DXB)')}
+              onClick={() => jumpToDistrict(4638, 159, 'Dubai Int Airport (DXB)')}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 text-white font-bold text-xs whitespace-nowrap transition-all"
             >
               <span>✈️</span>
@@ -1262,7 +1282,7 @@ export function InteractiveMap({
               const isSelectedInEdit = isEditMode && selectedEditIds.includes(loc.id);
               // Billboards sit above every building (their ads must never be hidden); pins and hover labels go above them.
               const isBillboard = loc.type === 'giant-billboard' || loc.type === 'billboard' || loc.type === 'ad-billboard';
-              const zClass = isSelectedInEdit ? 'z-50' : (isFloorTile ? 'z-0' : isBillboard ? 'z-[45]' : ((loc.type === 'generic-district' || loc.type === 'ad-land') ? 'z-10' : (isOverlay ? 'z-20' : 'z-30')));
+              const zClass = isSelectedInEdit ? 'z-50' : (isFloorTile ? 'z-0' : (loc.type === 'floor-ad' || loc.type === 'floor-mosaic') ? 'z-[5]' : isBillboard ? 'z-[45]' : ((loc.type === 'generic-district' || loc.type === 'ad-land') ? 'z-10' : (isOverlay ? 'z-20' : 'z-30')));
 
               // Category info and Search / Filter Highlighting
               const catInfo = getEntityCategoryInfo(loc);
@@ -1326,6 +1346,7 @@ export function InteractiveMap({
                       : (isFloorTile
                           ? 'cursor-default pointer-events-auto'
                           // Hovered: above every other building, so its label is never hidden behind one.
+                          : loc.type === 'floor-mosaic' ? 'cursor-pointer'
                           : (loc.interactive !== false ? 'group cursor-pointer hover:scale-105 hover:!z-[350]' : 'pointer-events-none'))} 
                     ${zClass}`
                   }
@@ -1372,6 +1393,9 @@ export function InteractiveMap({
                       } else if (!selectedEditIds.includes(loc.id)) {
                         setSelectedEditIds([loc.id]);
                       }
+                    } else if (loc.type === 'floor-mosaic') {
+                      // Book the block that was tapped (or the grid cell, for single cells).
+                      openMosaicBlock(e);
                     } else if (!isFloorTile && loc.interactive !== false) {
                       handleVenueClick(loc);
                     }
@@ -1572,6 +1596,7 @@ export function InteractiveMap({
         <BillboardAds
           billboard={{ id: selectedBillboard.id, name: selectedBillboard.name, style: selectedBillboard.billboardStyle }}
           live={liveAds[selectedBillboard.id] ?? []}
+          floor={selectedBillboard.type === 'floor-ad'}
           onClose={() => setBillboardModalOpen(false)}
         />
       )}

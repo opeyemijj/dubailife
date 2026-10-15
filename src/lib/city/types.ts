@@ -1,7 +1,10 @@
 // Shared types for places on the city map and the venues inside them.
 
 /** How a venue's interior is laid out (see components/interior). */
-export type Layout = "boutique" | "tech" | "beauty" | "jewellery" | "market" | "dining" | "club" | "lobby" | "outdoor";
+export type Layout =
+  | "boutique" | "tech" | "beauty" | "jewellery" | "market" | "dining" | "club" | "lobby" | "outdoor"
+  // Places that aren't rooms: what the venue really is, built in 3D (see components/interior/layouts).
+  | "beach" | "pooldeck" | "waterpark" | "spa" | "theatre" | "bar" | "mosque" | "rink";
 
 /** Interactive spots inside an interior. Products and services are grouped by these. */
 export type StationKind =

@@ -74,9 +74,16 @@ interface Props {
   onWallAdClick?: () => void;
 }
 
+const NATURAL_FLOOR: Partial<Record<string, string>> = { sand: "#f3dfae", deck: "#ece7df", ice: "#e0f2fe" };
+
+/** Venues under the open sky (no walls or ceiling). */
+const OPEN_AIR = new Set(["outdoor", "beach", "pooldeck", "waterpark"]);
+
 function Room({ venue, plan, onFloor, onWallAdClick }: { venue: Venue; plan: Plan; onFloor?: (point: [number, number]) => void; onWallAdClick?: () => void }) {
   const [w, d] = plan.size;
-  const floor = useMemo(() => floorTexture(plan.floor, venue.palette.floor, [w / 4, d / 4]), [plan.floor, venue.palette.floor, w, d]);
+  // Sand, pool decks and ice have their own natural colour whatever the venue's palette.
+  const floorBase = NATURAL_FLOOR[plan.floor] ?? venue.palette.floor;
+  const floor = useMemo(() => floorTexture(plan.floor, floorBase, [w / 4, d / 4]), [plan.floor, floorBase, w, d]);
   const dark = venue.layout === "club" || venue.palette.wall === "#2a2420" || venue.palette.wall === "#0f172a" || venue.palette.wall === "#5a3e2b";
   const sign = useMemo(() => signTexture(venue.name, dark ? "#f8fafc" : venue.palette.accent, null), [venue.name, venue.palette.accent, dark]);
   
@@ -471,7 +478,8 @@ export function InteriorScene({ venue, plan, look, worn, playerAnimation, player
   const shoppers = useMemo(() => {
     const spots: Array<[number, number, number]> = [[-w / 4, 0.3, 0.6], [w / 5, d / 5, -2.2]];
     const people = [{ gender: "woman" as const, preset: "Female_Adult_01" }, { gender: "man" as const, preset: "Male_Adult_10" }];
-    return venue.layout === "outdoor" || venue.layout === "lobby" || venue.layout === "club" ? [] : spots.map((p, i) => ({ ...people[i], position: p }));
+    // Shoppers only browse shops and restaurants (not pools, beaches, theatres…).
+    return !["boutique", "tech", "beauty", "jewellery", "market", "dining"].includes(venue.layout) ? [] : spots.map((p, i) => ({ ...people[i], position: p }));
   }, [venue.layout, w, d]);
 
   const [hovered, setHovered] = useState<string | null>(null);
@@ -484,10 +492,11 @@ export function InteriorScene({ venue, plan, look, worn, playerAnimation, player
     ...plan.stations.filter((s) => s.kind !== "booth").map((s) => ({
       id: s.id,
       text: s.label,
-      at: [s.position[0], 2.6, s.position[1]] as [number, number, number],
+      // The counter the staff member stands behind gets its label higher, clear of theirs.
+      at: [s.position[0], Math.hypot(s.position[0] - plan.staff.position[0], s.position[1] - plan.staff.position[1]) < 1.5 ? 3.6 : 2.95, s.position[1]] as [number, number, number],
       className: hovered === s.id || highlight === s.id ? "bg-emerald-500 text-white scale-110" : "bg-white/90 text-slate-800",
     })),
-    { id: "staff", text: `💬 ${venue.staff.role}`, at: [plan.staff.position[0], 2.15, plan.staff.position[1]], className: "bg-slate-900/85 text-white" },
+    { id: "staff", text: `💬 ${venue.staff.role}`, at: [plan.staff.position[0], 1.95, plan.staff.position[1]], className: "bg-slate-900/85 text-white" },
     ...peers.map((p) => ({ id: `peer:${p.userId}`, text: `@${p.username}${peerBadges[p.userId] ? ` · 💬${peerBadges[p.userId]}` : ""}`, at: [0, p.animation === "sit" ? 1.6 : 2.05, 0] as [number, number, number], follow: p.userId, className: "bg-sky-500 text-white" })),
     ...locals.map((p) => ({ id: `peer:${p.userId}`, text: `✨ ${p.username}`, at: [0, p.animation === "sit" ? 1.6 : 2.05, 0] as [number, number, number], follow: p.userId, className: "bg-amber-400 text-slate-900" })),
     ...Object.entries(bubbles).map(([who, text]) => ({
@@ -506,7 +515,7 @@ export function InteriorScene({ venue, plan, look, worn, playerAnimation, player
   return (
     <div className="relative w-full h-full">
     <Canvas shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false} camera={{ position: [0, 7.5, d / 2 + 6], fov: 42 }} dpr={quality.dpr}>
-      <color attach="background" args={[venue.layout === "club" ? "#120a24" : venue.layout === "outdoor" ? "#bae6fd" : "#e7e5e4"]} />
+      <color attach="background" args={[venue.layout === "club" ? "#120a24" : OPEN_AIR.has(venue.layout) ? "#bae6fd" : "#e7e5e4"]} />
       <StudioEnvironment intensity={venue.layout === "club" ? 0.35 : 0.45} />
       <Lights venue={venue} plan={plan} />
       {/* The room appears at once; everything with a model streams in on its own as it arrives. */}

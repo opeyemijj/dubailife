@@ -241,10 +241,310 @@ function SunsetPainting({ size, ghost }: { size: [number, number]; ghost?: "vali
   );
 }
 
+/** One shared screen picture for every TV: drawn once, uploaded to the GPU once, never rebuilt on remount. */
+let tvScreen: THREE.CanvasTexture | null = null;
+function tvScreenTexture() {
+  if (tvScreen) return tvScreen;
+  const c = document.createElement("canvas");
+  c.width = 512;
+  c.height = 288;
+  const ctx = c.getContext("2d")!;
+
+  // 1. Cinematic Dubai Twilight Sky Gradient
+  const sky = ctx.createLinearGradient(0, 0, 0, 288);
+  sky.addColorStop(0, "#090d16");
+  sky.addColorStop(0.35, "#1e1b4b");
+  sky.addColorStop(0.65, "#b45309");
+  sky.addColorStop(0.85, "#f59e0b");
+  sky.addColorStop(1, "#fde68a");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, 512, 288);
+
+  // 2. Arabian Gulf Water Reflection
+  const water = ctx.createLinearGradient(0, 215, 0, 288);
+  water.addColorStop(0, "#0f172a");
+  water.addColorStop(0.5, "#1e293b");
+  water.addColorStop(1, "#0284c7");
+  ctx.fillStyle = water;
+  ctx.fillRect(0, 215, 512, 73);
+
+  // Golden Water Highlights
+  ctx.fillStyle = "rgba(251, 191, 36, 0.4)";
+  for (let i = 0; i < 18; i++) {
+    ctx.fillRect(160 + (i % 6) * 35, 220 + i * 3.5, 30 - i * 0.8, 1.5);
+  }
+
+  // 3. Iconic Dubai Skyline Silhouettes
+  ctx.fillStyle = "#0f172a";
+  [[30, 110, 36], [75, 85, 30], [115, 130, 28], [270, 95, 38], [320, 120, 42], [375, 75, 32], [420, 105, 35], [465, 135, 30]].forEach(([x, y, w]) => {
+    ctx.fillRect(x, y, w, 215 - y);
+    ctx.fillStyle = "#fef08a";
+    for (let r = y + 8; r < 210; r += 9) {
+      for (let col = x + 4; col < x + w - 4; col += 6) {
+        if ((r + col) % 3 !== 0) ctx.fillRect(col, r, 2.5, 3.5);
+      }
+    }
+    ctx.fillStyle = "#0f172a";
+  });
+
+  // Burj Khalifa Centrepiece
+  const bx = 205;
+  ctx.fillStyle = "#020617";
+  let by = 215;
+  [[44, 35], [36, 40], [28, 40], [20, 35], [14, 25], [8, 18]].forEach(([w, h]) => {
+    ctx.fillRect(bx - w / 2, by - h, w, h);
+    by -= h;
+  });
+  // Spire and beacon
+  ctx.fillRect(bx - 1.5, by - 22, 3, 22);
+  ctx.fillStyle = "#ef4444";
+  ctx.beginPath();
+  ctx.arc(bx, by - 22, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 4. Broadcast UI Overlay (DUBAI ONE • 65" 4K OLED LIVE)
+  ctx.fillStyle = "rgba(15, 23, 42, 0.8)";
+  ctx.fillRect(20, 20, 150, 24);
+  ctx.fillStyle = "#22c55e";
+  ctx.beginPath();
+  ctx.arc(32, 32, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 11px system-ui, sans-serif";
+  ctx.fillText("DUBAI ONE", 42, 36);
+  ctx.fillStyle = "#38bdf8";
+  ctx.font = "bold 9px monospace";
+  ctx.fillText("65\" 4K OLED", 110, 36);
+
+  // Bottom info ticker
+  ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+  ctx.fillRect(0, 266, 512, 22);
+  ctx.fillStyle = "#f8fafc";
+  ctx.font = "bold 10px system-ui, sans-serif";
+  ctx.fillText("LIVE  |  Downtown Dubai Fountain Show in 15 mins  •  DXB Airport Terminals 1, 2, 3 Open", 14, 281);
+
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  tvScreen = t;
+  return t;
+}
+
+/** A 65-inch flat screen TV on a table stand, standing on a media console against the wall. */
+function FlatScreenTVOnStand({ size, ghost }: { size: [number, number]; ghost?: "valid" | "invalid" }) {
+  // The placement ghost is a flat tint, so it never needs the screen picture.
+  const screenTexture = ghost ? null : tvScreenTexture();
+
+  // Standard 65-inch 16:9 flat screen display dimensions:
+  // 65" diagonal = 1.651m -> 1.44m width x 0.81m height x 0.022m thinness
+  const tvW = 1.44; 
+  const tvH = 0.81;
+  const tableW = Math.max(1.80, size[0] * CELL - 0.08); // e.g. 1.92m console for size: [4, 1]
+  const tableD = Math.max(0.38, size[1] * CELL - 0.08); // e.g. 0.42m
+  const tableH = 0.45; // standard modern console height
+  const standLift = 0.06; // table stand clearance above console top
+  const tvCenterY = tableH + standLift + tvH / 2; // 0.915m eye level
+  const ghostColor = ghost ? (ghost === "valid" ? "#34d399" : "#f87171") : undefined;
+
+  return (
+    <group raycast={ghost ? () => null : undefined}>
+      {/* ============================================================ */}
+      {/* 1. TV CONSOLE TABLE LEGS / BASE SKIDS                        */}
+      {/* ============================================================ */}
+      {[-tableW / 2 + 0.16, 0, tableW / 2 - 0.16].map((x, i) => (
+        <mesh key={`leg-${i}`} position={[x, 0.04, 0]} castShadow receiveShadow raycast={ghost ? () => null : undefined}>
+          <boxGeometry args={[0.06, 0.08, tableD - 0.06]} />
+          <meshStandardMaterial
+            color={ghostColor ?? "#27272a"}
+            metalness={0.8}
+            roughness={0.3}
+            transparent={!!ghost}
+            opacity={ghost ? 0.55 : 1}
+          />
+        </mesh>
+      ))}
+
+      {/* ============================================================ */}
+      {/* 2. TV CONSOLE TABLE CABINET (Luxury Smoked Oak / Walnut)     */}
+      {/* ============================================================ */}
+      <mesh position={[0, 0.08 + (tableH - 0.08) / 2, 0]} castShadow receiveShadow raycast={ghost ? () => null : undefined}>
+        <boxGeometry args={[tableW, tableH - 0.08, tableD]} />
+        <meshStandardMaterial
+          color={ghostColor ?? "#241e1b"}
+          roughness={0.65}
+          metalness={0.08}
+          transparent={!!ghost}
+          opacity={ghost ? 0.55 : 1}
+        />
+      </mesh>
+
+      {/* Top Marble / Polished Surface Slab */}
+      <mesh position={[0, tableH - 0.005, 0]} castShadow receiveShadow raycast={ghost ? () => null : undefined}>
+        <boxGeometry args={[tableW + 0.02, 0.015, tableD + 0.02]} />
+        <meshStandardMaterial
+          color={ghostColor ?? "#18181b"}
+          roughness={0.25}
+          metalness={0.3}
+          transparent={!!ghost}
+          opacity={ghost ? 0.55 : 1}
+        />
+      </mesh>
+
+      {/* Cabinet Drawer Seams / Brushed Brass Handles along Front */}
+      {!ghost && (
+        <>
+          {[-tableW * 0.32, -tableW * 0.11, tableW * 0.11, tableW * 0.32].map((x, i) => (
+            <mesh key={`handle-${i}`} position={[x, tableH - 0.07, tableD / 2 + 0.008]}>
+              <boxGeometry args={[0.12, 0.015, 0.01]} />
+              <meshStandardMaterial color="#d4af37" metalness={0.85} roughness={0.25} />
+            </mesh>
+          ))}
+          {/* Subtle vertical cabinet division grooves */}
+          {[-tableW * 0.22, 0, tableW * 0.22].map((x, i) => (
+            <mesh key={`seam-${i}`} position={[x, 0.08 + (tableH - 0.08) / 2, tableD / 2 + 0.002]}>
+              <boxGeometry args={[0.006, tableH - 0.10, 0.004]} />
+              <meshBasicMaterial color="#09090b" />
+            </mesh>
+          ))}
+        </>
+      )}
+
+      {/* ============================================================ */}
+      {/* 3. TABLE TOP ACCESSORIES (Compact Soundbar & Luxury Decor)   */}
+      {/* ============================================================ */}
+      {!ghost && (
+        <>
+          {/* Compact Soundbar directly under the TV */}
+          <mesh position={[0, tableH + 0.018, 0.10]} castShadow>
+            <boxGeometry args={[0.88, 0.036, 0.07]} />
+            <meshStandardMaterial color="#18181b" roughness={0.85} />
+          </mesh>
+          <mesh position={[0, tableH + 0.018, 0.136]}>
+            <boxGeometry args={[0.04, 0.008, 0.002]} />
+            <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.2} />
+          </mesh>
+
+          {/* Left Decor: Stacked Luxury Art Books & Ceramic Vase */}
+          <mesh position={[-tableW * 0.40, tableH + 0.015, -0.02]} castShadow>
+            <boxGeometry args={[0.24, 0.03, 0.18]} />
+            <meshStandardMaterial color="#334155" roughness={0.7} />
+          </mesh>
+          <mesh position={[-tableW * 0.40, tableH + 0.038, -0.02]} rotation={[0, 0.12, 0]} castShadow>
+            <boxGeometry args={[0.22, 0.025, 0.16]} />
+            <meshStandardMaterial color="#f8fafc" roughness={0.5} />
+          </mesh>
+          <mesh position={[-tableW * 0.40, tableH + 0.09, -0.02]} castShadow>
+            <cylinderGeometry args={[0.032, 0.042, 0.08, 16]} />
+            <meshStandardMaterial color="#f1f5f9" roughness={0.3} metalness={0.1} />
+          </mesh>
+
+          {/* Right Decor: Brass Tray & Modern Scent Diffuser */}
+          <mesh position={[tableW * 0.40, tableH + 0.008, 0]} castShadow>
+            <boxGeometry args={[0.26, 0.015, 0.18]} />
+            <meshStandardMaterial color="#d4af37" metalness={0.8} roughness={0.3} />
+          </mesh>
+          <mesh position={[tableW * 0.40, tableH + 0.045, 0]} castShadow>
+            <sphereGeometry args={[0.032, 16, 16]} />
+            <meshStandardMaterial color="#1e293b" roughness={0.4} />
+          </mesh>
+        </>
+      )}
+
+      {/* ============================================================ */}
+      {/* 4. DEDICATED TV TABLE STAND (Pedestal Base & Vertical Mount) */}
+      {/* ============================================================ */}
+      {/* Heavy-duty metallic table stand base plate resting on table */}
+      <mesh position={[0, tableH + 0.006, -0.01]} castShadow receiveShadow raycast={ghost ? () => null : undefined}>
+        <boxGeometry args={[0.52, 0.012, 0.24]} />
+        <meshStandardMaterial
+          color={ghostColor ?? "#18181b"}
+          metalness={0.85}
+          roughness={0.25}
+          transparent={!!ghost}
+          opacity={ghost ? 0.55 : 1}
+        />
+      </mesh>
+
+      {/* Central Stand Pedestal Neck rising from the base plate to TV */}
+      <mesh position={[0, tableH + standLift / 2 + 0.01, -0.03]} castShadow raycast={ghost ? () => null : undefined}>
+        <boxGeometry args={[0.16, standLift + 0.04, 0.06]} />
+        <meshStandardMaterial
+          color={ghostColor ?? "#09090b"}
+          metalness={0.9}
+          roughness={0.2}
+          transparent={!!ghost}
+          opacity={ghost ? 0.55 : 1}
+        />
+      </mesh>
+
+      {/* Rear VESA Column Mount connecting stand to screen back */}
+      <mesh position={[0, tvCenterY - 0.12, -0.024]} castShadow raycast={ghost ? () => null : undefined}>
+        <boxGeometry args={[0.22, 0.32, 0.026]} />
+        <meshStandardMaterial
+          color={ghostColor ?? "#0f172a"}
+          metalness={0.8}
+          roughness={0.3}
+          transparent={!!ghost}
+          opacity={ghost ? 0.55 : 1}
+        />
+      </mesh>
+
+      {/* ============================================================ */}
+      {/* 5. PROPER 65-INCH ULTRA-THIN OLED FLAT SCREEN TV             */}
+      {/* ============================================================ */}
+      {/* TV Casing & Slim Bezel */}
+      <mesh position={[0, tvCenterY, 0.0]} castShadow receiveShadow raycast={ghost ? () => null : undefined}>
+        <boxGeometry args={[tvW, tvH, 0.022]} />
+        <meshStandardMaterial
+          color={ghostColor ?? "#0a0a0c"}
+          metalness={0.7}
+          roughness={0.25}
+          transparent={!!ghost}
+          opacity={ghost ? 0.55 : 1}
+        />
+      </mesh>
+
+      {/* Front 65-Inch OLED Display Screen */}
+      <mesh position={[0, tvCenterY, 0.012]} raycast={ghost ? () => null : undefined}>
+        <planeGeometry args={[tvW - 0.02, tvH - 0.02]} />
+        {ghost ? (
+          <meshStandardMaterial color={ghostColor} transparent opacity={0.55} depthWrite={false} />
+        ) : (
+          <meshStandardMaterial
+            map={screenTexture}
+            roughness={0.08}
+            metalness={0.05}
+            emissive="#1e3a8a"
+            emissiveIntensity={0.22}
+          />
+        )}
+      </mesh>
+
+      {/* Power Standby LED in Lower-Right Corner */}
+      {!ghost && (
+        <mesh position={[tvW / 2 - 0.025, tvCenterY - tvH / 2 + 0.018, 0.013]}>
+          <sphereGeometry args={[0.003, 8, 8]} />
+          <meshBasicMaterial color="#22c55e" />
+        </mesh>
+      )}
+
+      {/* Ambient Rear Bias Light (Halo Glow on Wall Behind TV) */}
+      {!ghost && (
+        <mesh position={[0, tvCenterY, -0.018]} rotation={[0, Math.PI, 0]} raycast={() => null}>
+          <planeGeometry args={[tvW + 0.12, tvH + 0.12]} />
+          <meshBasicMaterial color="#38bdf8" transparent opacity={0.16} depthWrite={false} />
+        </mesh>
+      )}
+    </group>
+  );
+}
+
+
 function ItemVisual({ item, ghost }: { item: CatalogItem; ghost?: "valid" | "invalid" }) {
+  if (item.id === "tv") return <FlatScreenTVOnStand size={item.size} ghost={ghost} />;
   if (item.kind === "wall") return <SunsetPainting size={item.size} ghost={ghost} />;
   return <FurnitureModel url={item.model!} size={item.size} yaw={item.yaw} ghost={ghost} />;
 }
+
 
 function PlacedTransform({ item, placement, children }: { item: CatalogItem | { size: [number, number] }; placement: Placement; children: React.ReactNode }) {
   if (placement.kind === "wall") {

@@ -13,7 +13,7 @@ import { formatAED, useSettings } from "@/lib/commerce";
 
 const dismissedKey = (key: string) => `promo-dismissed:${key}`;
 
-export function VenueLoadingCard({ venueKey, venueName, pub }: { venueKey: string; venueName: string; pub: VenuePublic | null }) {
+export function VenueLoadingCard({ venueKey, venueName, pub, paused = false }: { venueKey: string; venueName: string; pub: VenuePublic | null; paused?: boolean }) {
   const settings = useSettings();
   const [hidden, setHidden] = useState(() => {
     try { return sessionStorage.getItem(dismissedKey(venueKey)) === "1"; } catch { return false; }
@@ -29,7 +29,8 @@ export function VenueLoadingCard({ venueKey, venueName, pub }: { venueKey: strin
     setHidden(true);
     try { sessionStorage.setItem(dismissedKey(venueKey), "1"); } catch { /* storage blocked */ }
   };
-  if (hidden || !pub || !settings) return null;
+  // Paused while another card (a Local's offer, an open panel) is showing, so they never stack.
+  if (hidden || paused || !pub || !settings) return null;
 
   const promo = pub.content?.promo;
   if (pub.claimed) {
@@ -54,11 +55,11 @@ export function VenueLoadingCard({ venueKey, venueName, pub }: { venueKey: strin
   return (
     <Card onClose={dismiss} label="For business owners">
       <h3 className="font-black text-slate-900 leading-tight">Is {venueName} your business?</h3>
-      <p className="text-xs text-slate-600 mt-0.5">Claim it to manage how it looks here: your details, menu and prices, offers, reservations and the promotion visitors see on arrival.</p>
-      <ul className="mt-2 space-y-0.5 text-[11px] text-slate-600">
+      <p className="hidden sm:block text-xs text-slate-600 mt-0.5">Claim it to manage how it looks here: your details, menu and prices, offers, reservations and the promotion visitors see on arrival.</p>
+      <ul className="hidden sm:block mt-2 space-y-0.5 text-[11px] text-slate-600">
         {plan.benefits.slice(0, 3).map((b) => <li key={b}>✓ {b}</li>)}
       </ul>
-      <div className="mt-3 flex items-center gap-2">
+      <div className="mt-2 sm:mt-3 flex items-center gap-2">
         <Link href={`/business?claim=${encodeURIComponent(venueKey)}`} className="h-9 px-3 rounded-xl bg-emerald-600 text-white text-xs font-black flex items-center">Claim this venue</Link>
         <span className="text-[11px] text-slate-500">{formatAED(plan.price_aed)} / {plan.interval}</span>
       </div>
@@ -68,11 +69,11 @@ export function VenueLoadingCard({ venueKey, venueName, pub }: { venueKey: strin
 
 function Card({ label, onClose, children }: { label: string; onClose: () => void; children: React.ReactNode }) {
   return (
-    <div className="absolute z-[35] left-3 right-3 bottom-20 sm:left-auto sm:right-4 sm:bottom-24 sm:w-[320px] pointer-events-auto animate-in slide-in-from-bottom-4 fade-in duration-300">
+    <div className="absolute z-[35] left-3 right-3 bottom-[calc(max(1rem,env(safe-area-inset-bottom))+6.5rem)] sm:left-auto sm:right-4 sm:bottom-24 sm:w-[320px] pointer-events-auto animate-in slide-in-from-bottom-4 fade-in duration-300">
       <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white p-3">
         <div className="flex items-center mb-1.5">
           <span className="flex-1 text-[10px] font-black uppercase tracking-wider text-slate-400">{label}</span>
-          <button onClick={onClose} className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center" aria-label="Dismiss"><X className="w-3.5 h-3.5" /></button>
+          <button onClick={onClose} className="w-8 h-8 -my-1 rounded-full bg-slate-100 flex items-center justify-center" aria-label="Dismiss"><X className="w-3.5 h-3.5" /></button>
         </div>
         {children}
       </div>
