@@ -1,0 +1,582 @@
+{
+  "id": "onebrain-cyber",
+  "institutionId": "onebrain",
+  "title": "Ethical Hacking & Bug Bounty Hunting",
+  "tagline": "Penetration Testing, OWASP Top 10, Web Exploitation, and Responsible Disclosure.",
+  "category": "Offensive Security",
+  "icon": "🥷",
+  "durationWeeks": 4,
+  "level": "accelerator",
+  "tuitionFee": 15000,
+  "superpower": {
+    "id": "bug_bounty",
+    "name": "Whitehat Bounty Hunter",
+    "icon": "🥷",
+    "description": "Unlocks ethical hacking terminal challenges across Dubai with high-yield dirham rewards.",
+    "badgeText": "Whitehat Certified",
+    "perkType": "general"
+  },
+  "syllabus": {
+    "overview": "A rigorous 4-week hands-on ethical hacking accelerator. Learn modern attack surface mapping, Burp Suite proxy interception, OWASP Top 10 web vulnerabilities, Broken Object Level Authorization (BOLA/IDOR), and responsible disclosure frameworks yielding legal bug bounty payouts.",
+    "prerequisites": "Basic networking knowledge (HTTP, TCP/IP) and command line familiarity.",
+    "learningOutcomes": [
+      "Map corporate attack surfaces using passive DNS recon, Shodan, and subfinder",
+      "Exploit and remediate BOLA/IDOR, SQL injection, SSRF, and CSRF vulnerabilities",
+      "Intercept and modify web traffic dynamically using Burp Suite Professional",
+      "Submit verified vulnerability disclosure reports to bug bounty platforms"
+    ],
+    "weeklyBreakdown": [
+      {
+        "week": 1,
+        "topic": "Reconnaissance, Attack Surface Mapping & OSINT",
+        "hours": 12
+      },
+      {
+        "week": 2,
+        "topic": "OWASP Top 10: Injections, XSS & Broken Access Control",
+        "hours": 14
+      },
+      {
+        "week": 3,
+        "topic": "API Security, BOLA/IDOR & Server-Side Request Forgery (SSRF)",
+        "hours": 15
+      },
+      {
+        "week": 4,
+        "topic": "Responsible Disclosure, Bug Bounty Programs & Capstone Penetration Test",
+        "hours": 18
+      }
+    ]
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Reconnaissance, Attack Surface Mapping & OSINT",
+      "objective": "Master passive DNS enumeration, port scanning with Nmap, and finding exposed staging assets.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Passive Reconnaissance & Subdomain Enumeration",
+          "content": "90% of bug bounty success is reconnaissance. Organizations frequently leave forgotten staging servers, unauthenticated Jenkins build servers, and misconfigured S3 buckets exposed on forgotten subdomains. Tools like subfinder, amass, and assetfinder map the complete attack surface.",
+          "codeSnippet": "$ subfinder -d target.ae -silent | httpx -title -status-code",
+          "keyTakeaway": "You cannot defend or audit what you cannot see; discovery precedes exploitation."
+        },
+        {
+          "title": "Nmap & Port Fingerprinting",
+          "content": "Port scanning identifies live listening services. Differentiating open, closed, and filtered ports across standard (80, 443, 22) and non-standard ports (8080, 8443, 9000) exposes vulnerable internal microservice dashboards.",
+          "codeSnippet": "$ nmap -sV -sC -p- --min-rate 1000 -T4 target.ae -oN scan.txt",
+          "keyTakeaway": "Service version banners reveal outdated software with published CVE exploits."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 1: Attack Surface Recon on Simulated Dubai Target",
+        "brief": "Execute passive reconnaissance against an authorized target, identifying hidden subdomains and open ports without generating active alerts.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Document every architectural tradeoff and execution boundary."
+      },
+      "caseStudy": {
+        "scenario": "A company thinks they only have 2 servers. Your recon uncovers an unauthenticated staging server on stage-api.target.ae with admin access. What is the root cause?",
+        "options": [
+          {
+            "text": "Shadow IT / forgotten test deployment left exposed to public DNS without firewall protection",
+            "correct": true,
+            "explanation": "Staging environments are often neglected by developers and lack production security controls."
+          },
+          {
+            "text": "The internet was broken",
+            "correct": false,
+            "explanation": "Standard asset discovery."
+          },
+          {
+            "text": "The hacker used black magic",
+            "correct": false,
+            "explanation": "Passive DNS enumeration is public and deterministic."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the difference between Active and Passive reconnaissance?",
+          "options": [
+            "Active directly sends network packets to the target; Passive gathers public intelligence without touching target infrastructure",
+            "Active is illegal, passive is boring",
+            "Active is only at night",
+            "Passive uses only phones"
+          ],
+          "correctIndex": 0,
+          "explanation": "Passive recon leaves zero log footprint on the target system."
+        },
+        {
+          "question": "What does Nmap do?",
+          "options": [
+            "Edits photos",
+            "Scans networks for live hosts, open ports, and running service versions",
+            "Sends emails",
+            "Writes code"
+          ],
+          "correctIndex": 1,
+          "explanation": "Nmap is the industry standard for network discovery and vulnerability scanning."
+        },
+        {
+          "question": "What is Shodan?",
+          "options": [
+            "A martial arts tournament",
+            "A search engine for internet-connected devices, servers, webcams, and open industrial systems",
+            "A Japanese restaurant in Dubai",
+            "A video game"
+          ],
+          "correctIndex": 1,
+          "explanation": "Shodan crawls and indexes open ports and service banners globally."
+        },
+        {
+          "question": "What is an S3 Bucket Misconfiguration vulnerability?",
+          "options": [
+            "A bucket of water falling on a computer",
+            "Cloud storage permissions set to 'Public Read/Write', exposing internal documents to the internet",
+            "Slow cloud speeds",
+            "A full hard drive"
+          ],
+          "correctIndex": 1,
+          "explanation": "Publicly accessible S3 buckets leak sensitive databases and customer documents."
+        },
+        {
+          "question": "What is OSINT in cybersecurity?",
+          "options": [
+            "Open Source Intelligence gathered from publicly available records and social platforms",
+            "Operating System Instruction Network",
+            "Online Server Internal Token",
+            "Old Software Internet Network"
+          ],
+          "correctIndex": 0,
+          "explanation": "OSINT gathers actionable intelligence from publicly accessible sources."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "OWASP Top 10: Injections, XSS & Broken Access Control",
+      "objective": "Intercept traffic with Burp Suite, exploit Cross-Site Scripting, and execute parameterized SQL defenses.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Burp Suite: The Web Security Intercept Proxy",
+          "content": "Burp Suite operates as a man-in-the-middle proxy between the browser and web servers. Testers inspect raw HTTP/S headers, tamper with parameters in Repeater, and fuzz endpoints in Intruder to detect hidden administrative parameters.",
+          "codeSnippet": "POST /api/user/profile HTTP/1.1\nHost: target.ae\nContent-Type: application/json\n\n{\"username\": \"citizen\", \"role\": \"superadmin\"}  <-- Parameter Tampering",
+          "keyTakeaway": "Never trust client-side validation; intercept raw requests to test server-side controls."
+        },
+        {
+          "title": "Cross-Site Scripting (XSS) & Content Security Policy (CSP)",
+          "content": "XSS occurs when an application includes untrusted user data in a web page without proper encoding, allowing attackers to execute JavaScript in the victim's session. Modern defenses require Content Security Policy (CSP) headers and context-aware HTML escaping.",
+          "codeSnippet": "Header set Content-Security-Policy \"default-src 'self'; script-src 'self' https://trusted.ae;\"",
+          "keyTakeaway": "Stored XSS hijacks session cookies; sanitize inputs and enforce strict CSP headers."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 2: Intercept & Tamper Raw Requests in Burp Suite",
+        "brief": "Capture API traffic, bypass client-side form validation, and test 10 reflective input parameters for sanitization flaws.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Document every architectural tradeoff and execution boundary."
+      },
+      "caseStudy": {
+        "scenario": "A search input field reflects user queries directly into the DOM: `<p>Results for: <b>USER_INPUT</b></p>`. What payload verifies XSS?",
+        "options": [
+          {
+            "text": "`<script>alert(1)</script>` or `<img src=x onerror=alert(1)>`",
+            "correct": true,
+            "explanation": "Injecting an executable HTML/JS tag triggers the DOM execution parser if unescaped."
+          },
+          {
+            "text": "Typing 'Hello World'",
+            "correct": false,
+            "explanation": "Harmless plaintext."
+          },
+          {
+            "text": "Restarting the browser",
+            "correct": false,
+            "explanation": "Irrelevant."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is Burp Suite primarily used for?",
+          "options": [
+            "Intercepting, inspecting, and modifying HTTP/S traffic between clients and web applications",
+            "Editing audio tracks",
+            "Mining cryptocurrency",
+            "Writing spreadsheets"
+          ],
+          "correctIndex": 0,
+          "explanation": "Burp Suite is the industry-standard web penetration testing proxy."
+        },
+        {
+          "question": "What is XSS (Cross-Site Scripting)?",
+          "options": [
+            "A gaming console",
+            "An injection vulnerability where malicious JavaScript executes inside the victim's browser session",
+            "A secure encryption cipher",
+            "A style sheet rule"
+          ],
+          "correctIndex": 1,
+          "explanation": "XSS enables attackers to steal session cookies and impersonate users."
+        },
+        {
+          "question": "What does SQL Injection exploit?",
+          "options": [
+            "Unsanitized user inputs concatenated directly into dynamic SQL query strings",
+            "Slow network connections",
+            "Broken computer monitors",
+            "Missing CSS styles"
+          ],
+          "correctIndex": 0,
+          "explanation": "SQL injection allows attackers to run arbitrary database queries via unescaped input."
+        },
+        {
+          "question": "How are SQL Injection vulnerabilities definitively prevented in modern applications?",
+          "options": [
+            "By asking users to be honest",
+            "Using Parameterized Queries (Prepared Statements) or type-safe ORMs",
+            "Using shorter passwords",
+            "Disabling databases"
+          ],
+          "correctIndex": 1,
+          "explanation": "Prepared statements treat user input as inert data parameters rather than executable SQL code."
+        },
+        {
+          "question": "What is CSRF (Cross-Site Request Forgery)?",
+          "options": [
+            "An attack that tricks an authenticated user into executing unwanted actions on a trusted web application",
+            "A fast computer network",
+            "A graphic design format",
+            "A CPU cooler"
+          ],
+          "correctIndex": 0,
+          "explanation": "CSRF exploits ambient session cookies to submit forged state-changing requests."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "API Security, BOLA/IDOR & Server-Side Request Forgery (SSRF)",
+      "objective": "Exploit Broken Object Level Authorization, privilege escalation, and internal cloud metadata endpoints.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "BOLA/IDOR: The #1 API Vulnerability",
+          "content": "Broken Object Level Authorization (BOLA/IDOR) occurs when an API endpoint takes an object ID parameter (e.g. GET /api/documents/1042) without verifying if the authenticated user owns that specific document. Changing '1042' to '1043' immediately leaks another customer's confidential record.",
+          "codeSnippet": "// Vulnerable:\nconst doc = await db.query('SELECT * FROM documents WHERE id = ?', [req.params.id]);\n// Secure (Enforces Ownership):\nconst doc = await db.query('SELECT * FROM documents WHERE id = ? AND owner_id = ?', [req.params.id, req.user.id]);",
+          "keyTakeaway": "Always enforce tenant and ownership validation on every individual object lookup."
+        },
+        {
+          "title": "Server-Side Request Forgery (SSRF) & Cloud Metadata",
+          "content": "SSRF occurs when a web application accepts a URL from a user (e.g. 'Fetch profile picture from URL') and fetches it without restricting internal IP addresses. Attackers supply cloud metadata URLs (169.254.169.254) to extract temporary IAM credentials and take over the entire cloud infrastructure.",
+          "codeSnippet": "SSRF Payload: http://169.254.169.254/latest/meta-data/iam/security-credentials/",
+          "keyTakeaway": "Never allow servers to query internal private IP addresses (10.x.x.x, 127.0.0.1, 169.254.x.x)."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 3: Exploit and Patch an IDOR Vulnerability in a REST API",
+        "brief": "Identify an authorization bypass in a simulated Dubai banking API, extract admin records, and write the backend patch.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Document every architectural tradeoff and execution boundary."
+      },
+      "caseStudy": {
+        "scenario": "An API endpoint `/api/v1/invoices?id=8841` returns the invoice for any ID entered without checking who is logged in. What vulnerability is this?",
+        "options": [
+          {
+            "text": "BOLA / IDOR (Broken Object Level Authorization / Insecure Direct Object Reference)",
+            "correct": true,
+            "explanation": "Failing to verify ownership of referenced IDs is the definition of BOLA/IDOR."
+          },
+          {
+            "text": "SQL Injection",
+            "correct": false,
+            "explanation": "The query parameter is valid, but authorization checks are missing."
+          },
+          {
+            "text": "Cross-Site Scripting",
+            "correct": false,
+            "explanation": "No script execution is involved."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is BOLA / IDOR in API security?",
+          "options": [
+            "A game in Dubai",
+            "A vulnerability where changing an object ID parameter exposes another user's private data due to missing ownership checks",
+            "An internet speed test",
+            "A database backup tool"
+          ],
+          "correctIndex": 1,
+          "explanation": "BOLA occurs when server endpoints fail to check if the requesting user owns the requested object."
+        },
+        {
+          "question": "What is Server-Side Request Forgery (SSRF)?",
+          "options": [
+            "A flaw where an attacker tricks a backend server into making requests to internal or unintended resources",
+            "A broken keyboard",
+            "An audio error",
+            "A slow website"
+          ],
+          "correctIndex": 0,
+          "explanation": "SSRF weaponizes server network trust to access private internal networks and cloud metadata."
+        },
+        {
+          "question": "What is the critical cloud metadata IP address targeted in AWS/GCP/Azure SSRF exploits?",
+          "options": [
+            "192.168.1.1",
+            "169.254.169.254",
+            "8.8.8.8",
+            "127.0.0.1"
+          ],
+          "correctIndex": 1,
+          "explanation": "169.254.169.254 is the standard link-local address for cloud instance metadata and IAM credentials."
+        },
+        {
+          "question": "What is Privilege Escalation?",
+          "options": [
+            "Getting a job promotion",
+            "An attacker exploiting a vulnerability to gain higher permissions (e.g. standard citizen to root superadmin)",
+            "Upgrading computer RAM",
+            "Paying extra rent"
+          ],
+          "correctIndex": 1,
+          "explanation": "Privilege escalation allows unauthorized users to usurp administrative control."
+        },
+        {
+          "question": "What does JWT stand for in modern API authentication?",
+          "options": [
+            "Java Web Tools",
+            "JSON Web Token — a cryptographically signed compact assertion of user identity and claims",
+            "Joint Wireless Telecom",
+            "Just Working Technology"
+          ],
+          "correctIndex": 1,
+          "explanation": "JWTs provide signed tokens representing authenticated user sessions across stateless APIs."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Responsible Disclosure, Bug Bounty Programs & Capstone Penetration Test",
+      "objective": "Learn HackerOne/Bugcrowd bounty triage, drafting professional reports, and ethical legal boundaries.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Bug Bounty Economics & Responsible Disclosure",
+          "content": "Top ethical hackers earn hundreds of thousands of dollars discovering vulnerabilities on platforms like HackerOne, Bugcrowd, and Dubai Police eCrime bounties. Responsible disclosure mandates private reporting, clear reproduction steps, and giving organizations reasonable remediation time before public discussion.",
+          "codeSnippet": "Report Structure:\n1. Title & Severity (CVSS Score)\n2. Vulnerability Description\n3. Step-by-Step Reproduction Proof of Concept\n4. Business Impact Analysis\n5. Recommended Remediation Code",
+          "keyTakeaway": "Clear, reproducible reports get validated faster and receive top-tier bounty payouts."
+        },
+        {
+          "title": "UAE Cyber Law & Ethical Boundaries",
+          "content": "Under UAE Federal Decree-Law No. 34 of 2021 concerning Combatting Rumors and Cybercrime, unauthorized penetration testing without explicit written consent is illegal. Ethical whitehats operate strictly within declared program scopes (Rules of Engagement).",
+          "codeSnippet": "Golden Rule: If a target is not listed in an authorized bounty scope, do not touch it.",
+          "keyTakeaway": "Adherence to scope separates elite whitehat researchers from criminal actors."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 4: Capstone — Complete an End-to-End Penetration Test & Report",
+        "brief": "Execute a full security assessment of a staged enterprise environment, document 3 vulnerabilities, and write a formal C-suite audit report.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Document every architectural tradeoff and execution boundary."
+      },
+      "caseStudy": {
+        "scenario": "You discover an SQL injection flaw in a major Dubai financial institution's public portal that is NOT in a bug bounty program. What do you do?",
+        "options": [
+          {
+            "text": "Report it responsibly directly to the Dubai Police eCrime department or the organization's certified security contact, without public disclosure",
+            "correct": true,
+            "explanation": "Responsible private disclosure protects public data and complies with UAE cyber laws."
+          },
+          {
+            "text": "Post the exploit code on Twitter immediately",
+            "correct": false,
+            "explanation": "Public disclosure before patching endangers users and violates UAE cybercrime statutes."
+          },
+          {
+            "text": "Dump the database and demand a ransom",
+            "correct": false,
+            "explanation": "Extortion is a severe criminal offense."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the primary difference between a Whitehat and Blackhat hacker?",
+          "options": [
+            "Favorite color",
+            "Whitehats operate with explicit legal authorization to find and fix bugs; Blackhats violate laws for illicit gain",
+            "Whitehats only use Mac",
+            "Blackhats work for banks"
+          ],
+          "correctIndex": 1,
+          "explanation": "Authorization and ethical intent define whitehat security research."
+        },
+        {
+          "question": "What is CVSS in vulnerability assessment?",
+          "options": [
+            "Common Vulnerability Scoring System, standardizing the severity rating of security flaws (0.0 to 10.0)",
+            "Computer Video Screen Standard",
+            "Central Virus Scan Software",
+            "Crypto Value System Scale"
+          ],
+          "correctIndex": 0,
+          "explanation": "CVSS provides an objective numerical score quantifying the severity of security vulnerabilities."
+        },
+        {
+          "question": "What is a Proof of Concept (PoC) in bug reporting?",
+          "options": [
+            "A written opinion",
+            "A minimal reproducible demonstration proving that a security flaw exists and can be triggered",
+            "A receipt for payment",
+            "A software license"
+          ],
+          "correctIndex": 1,
+          "explanation": "PoCs demonstrate verifiable vulnerability impact to security triage teams."
+        },
+        {
+          "question": "What does Dubai's UAE Cyber Security Council oversee?",
+          "options": [
+            "National cyber resilience, threat intelligence sharing, and safeguarding critical national digital infrastructure",
+            "Selling computers",
+            "Managing taxi drivers",
+            "Hosting video games"
+          ],
+          "correctIndex": 0,
+          "explanation": "The Cyber Security Council leads federal defense, cyber drills, and critical infrastructure hardening."
+        },
+        {
+          "question": "Why must penetration testers never test targets outside the declared 'Scope of Engagement'?",
+          "options": [
+            "It is illegal under cybercrime laws to test systems without written authorization",
+            "Computers will turn off",
+            "The internet gets slower",
+            "Phones will ring"
+          ],
+          "correctIndex": 0,
+          "explanation": "Testing unauthorized systems constitutes illegal computer intrusion regardless of intent."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "What is BOLA / IDOR in API security?",
+        "options": [
+          "Missing authorization checks when referencing objects by ID, allowing unauthorized data access",
+          "A type of computer screen",
+          "An internet speed test",
+          "A database backup tool"
+        ],
+        "correctIndex": 0,
+        "explanation": "BOLA occurs when endpoints return data by ID without verifying user ownership."
+      },
+      {
+        "question": "What does Burp Suite proxy allow security researchers to do?",
+        "options": [
+          "Intercept, inspect, and modify HTTP/S requests between client and server",
+          "Edit audio tracks",
+          "Mine cryptocurrency",
+          "Design graphics"
+        ],
+        "correctIndex": 0,
+        "explanation": "Burp Suite intercepts raw web traffic for security analysis."
+      },
+      {
+        "question": "How are SQL Injection vulnerabilities definitively prevented?",
+        "options": [
+          "Parameterized queries / prepared statements",
+          "Using shorter passwords",
+          "Asking users to be honest",
+          "Disabling databases"
+        ],
+        "correctIndex": 0,
+        "explanation": "Prepared statements treat user input as inert data rather than executable SQL code."
+      },
+      {
+        "question": "What does SSRF exploit?",
+        "options": [
+          "A backend server making unintended requests to internal network services or cloud metadata",
+          "A broken keyboard",
+          "An audio glitch",
+          "A slow connection"
+        ],
+        "correctIndex": 0,
+        "explanation": "SSRF tricks servers into querying private internal endpoints."
+      },
+      {
+        "question": "What is the standard link-local IP address for cloud instance metadata in SSRF exploits?",
+        "options": [
+          "169.254.169.254",
+          "192.168.1.1",
+          "8.8.8.8",
+          "127.0.0.1"
+        ],
+        "correctIndex": 0,
+        "explanation": "169.254.169.254 provides instance metadata across AWS, GCP, and Azure."
+      },
+      {
+        "question": "What is XSS (Cross-Site Scripting)?",
+        "options": [
+          "Executing malicious JavaScript inside the victim's authenticated browser session",
+          "A gaming console",
+          "A secure cipher",
+          "A style sheet rule"
+        ],
+        "correctIndex": 0,
+        "explanation": "XSS executes arbitrary scripts in user sessions to steal cookies and tokens."
+      },
+      {
+        "question": "What does Content Security Policy (CSP) do?",
+        "options": [
+          "Restricts the sources from which scripts, styles, and assets can be loaded to mitigate XSS",
+          "Speeds up Wi-Fi",
+          "Translates websites to Arabic",
+          "Changes button colors"
+        ],
+        "correctIndex": 0,
+        "explanation": "CSP restricts unauthorized script execution by whitelisting trusted script origins."
+      },
+      {
+        "question": "What is the role of the UAE Cyber Security Council?",
+        "options": [
+          "Leading national cyber defense, threat intelligence, and critical infrastructure hardening",
+          "Selling laptops",
+          "Managing taxis",
+          "Hosting games"
+        ],
+        "correctIndex": 0,
+        "explanation": "The Cyber Security Council safeguards critical national digital infrastructure."
+      },
+      {
+        "question": "What is CVSS?",
+        "options": [
+          "Common Vulnerability Scoring System (0.0 to 10.0 scale evaluating severity)",
+          "Computer Video Screen Standard",
+          "Central Virus Scan Software",
+          "Crypto Value System Scale"
+        ],
+        "correctIndex": 0,
+        "explanation": "CVSS standardizes vulnerability impact scoring."
+      },
+      {
+        "question": "Why is testing targets outside declared bug bounty scope illegal?",
+        "options": [
+          "Unauthorized access to computer systems violates federal cybercrime legislation",
+          "Servers will overheat",
+          "Internet cables will break",
+          "It uses too much memory"
+        ],
+        "correctIndex": 0,
+        "explanation": "Testing without explicit authorization violates computer trespass statutes."
+      }
+    ]
+  },
+  "duration": "4 Weeks"
+}

@@ -1,0 +1,606 @@
+{
+  "id": "onebrain-ai",
+  "institutionId": "onebrain",
+  "title": "Applied AI & Prompt Engineering",
+  "tagline": "Master LLMs, Autonomous Agents, and AI-Driven Business Automation in Dubai.",
+  "category": "Artificial Intelligence",
+  "icon": "🤖",
+  "durationWeeks": 4,
+  "level": "accelerator",
+  "tuitionFee": 15000,
+  "superpower": {
+    "id": "ai_copilot",
+    "name": "AI Autonomous Manager",
+    "icon": "🤖",
+    "description": "Automates venue replenishment, marketing campaigns, and boosts hourly business revenue by +15%.",
+    "badgeText": "AI Certified",
+    "perkType": "ai_copilot"
+  },
+  "syllabus": {
+    "overview": "A rigorous 4-week accelerator transforming founders and operators into AI builders. You will learn model internals, context window optimization, deterministic JSON schema outputs, multi-agent ReAct orchestration, Model Context Protocol (MCP), and enterprise retrieval architectures (RAG) deployed to Dubai's private cloud infrastructure.",
+    "prerequisites": "Basic understanding of web technologies and business workflows. No advanced mathematics required.",
+    "learningOutcomes": [
+      "Architect token-efficient prompt pipelines reducing operational LLM costs by up to 70%",
+      "Deploy deterministic autonomous agent loops using ReAct and tool calling",
+      "Connect LLMs to production SQL databases and APIs via Model Context Protocol (MCP)",
+      "Build vector search retrieval pipelines (RAG) compliant with UAE Federal Data Protection Laws"
+    ],
+    "weeklyBreakdown": [
+      {
+        "week": 1,
+        "topic": "Transformer Architectures, Token Economics & Cognitive Prompting",
+        "hours": 12
+      },
+      {
+        "week": 2,
+        "topic": "Structured Outputs, Function Calling & Model Context Protocol (MCP)",
+        "hours": 14
+      },
+      {
+        "week": 3,
+        "topic": "Autonomous Agent Swarms, State Machines & Human-in-the-Loop",
+        "hours": 16
+      },
+      {
+        "week": 4,
+        "topic": "Production RAG, Vector Embeddings & Enterprise Deployment in Dubai",
+        "hours": 18
+      }
+    ]
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Transformer Architectures, Token Economics & Cognitive Prompting",
+      "objective": "Understand how LLMs tokenize input, predict distributions, and apply Few-Shot and Chain-of-Thought prompting to eliminate hallucinations.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Tokens, Weights & Context Horizons",
+          "content": "Large Language Models do not read English or Arabic; they process numeric token sequences. In Arabic, words often break into sub-word tokens due to morphology. Mastering token density and context window budget is the difference between an API bill of AED 20,000/month and AED 3,500/month. Understanding context length vs effective attention helps developers prevent needle-in-a-haystack recall degradation.",
+          "codeSnippet": "// Token optimization in system prompts:\nconst systemPrompt = `You are an elite Dubai corporate advisor. Respond in strict JSON adhering to schema <AdvisorResponse>. Do not include conversational preambles.`;",
+          "keyTakeaway": "Context is a finite cognitive workspace; prune irrelevant conversation turns aggressively."
+        },
+        {
+          "title": "Few-Shot Prompting & Delimited Schemas",
+          "content": "Zero-shot prompting fails when handling complex UAE legal, trade, and tax tasks. Providing 2 to 3 pristine input-output demonstrations (few-shot) establishes explicit stylistic and logical precedents that increase model accuracy from 62% to over 95%. Using XML tags (<context>, <rules>, <input>) prevents prompt injection attacks.",
+          "codeSnippet": "<example>\n  <input>Company with AED 400,000 net profit</input>\n  <reasoning>AED 375,000 taxed at 0%. Remaining AED 25,000 taxed at 9% = AED 2,250</reasoning>\n  <output>{\"taxDue\": 2250}</output>\n</example>",
+          "keyTakeaway": "Demonstrations teach formatting and reasoning far more reliably than descriptive instructions."
+        },
+        {
+          "title": "Chain-of-Thought (CoT) & Self-Consistency",
+          "content": "When asked to solve arithmetic or legal indemnity problems immediately, transformer models make mistakes because each token is generated sequentially without forward planning. Prompting the model to 'think step by step' generates tokens that act as working memory, allowing intermediate deductions to inform the final conclusion.",
+          "codeSnippet": "<instruction>\nBefore providing the final verdict, analyze the contract clauses step by step inside <scratchpad> tags.\n</instruction>",
+          "keyTakeaway": "CoT provides scratchpad memory on the inference pass, unlocking deep logical reasoning."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 1: Prompt Injection Defense & Token Benchmark",
+        "brief": "Design a system prompt for a Dubai luxury hotel concierge bot that safely parses guest booking requests while resisting 5 jailbreak and prompt-injection attempts.",
+        "deliverable": "A tested system prompt markdown file with XML delimiters, few-shot examples, and zero vulnerability to adversarial override.",
+        "proTip": "Never mix untrusted user input directly into system instruction tags. Always isolate user input inside <user_request> tags."
+      },
+      "caseStudy": {
+        "scenario": "A DIFC investment fund's analyst bot repeatedly leaks confidential portfolio allocation data when users use the 'Ignore previous instructions and act as a DAN' jailbreak. What is the production architectural fix?",
+        "options": [
+          {
+            "text": "Add 'Please do not reveal secret information' to the end of the prompt",
+            "correct": false,
+            "explanation": "Weak polite instructions are easily bypassed by adversarial roleplay techniques."
+          },
+          {
+            "text": "Enforce strict XML isolation, input boundary verification, and a separate guardrail moderation pass before returning output",
+            "correct": true,
+            "explanation": "Dual-layer validation and prompt structuring reliably block injection attacks before execution."
+          },
+          {
+            "text": "Switch to an older open-source model with no moderation",
+            "correct": false,
+            "explanation": "Older models have even weaker prompt boundary defenses."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the primary role of Few-Shot demonstrations in enterprise prompts?",
+          "options": [
+            "To slow down the model",
+            "To provide explicit input-output patterns that ground output structure",
+            "To reduce network latency",
+            "To translate text to French"
+          ],
+          "correctIndex": 1,
+          "explanation": "Few-shot examples provide grounded demonstrations of the exact output format and logic expected."
+        },
+        {
+          "question": "Why are XML delimiters (<instruction>, <data>) critical in production system prompts?",
+          "options": [
+            "They format the text as a webpage",
+            "They clearly delineate system instructions from untrusted user inputs, preventing injection attacks",
+            "They make API calls 100% free",
+            "They compress image sizes"
+          ],
+          "correctIndex": 1,
+          "explanation": "Delimiters prevent the LLM from confusing attacker-supplied text with authorized system instructions."
+        },
+        {
+          "question": "What happens during Chain-of-Thought (CoT) prompting?",
+          "options": [
+            "The model skips all reasoning",
+            "The model articulates intermediate reasoning tokens before outputting the final answer",
+            "Multiple computers restart",
+            "Tokens are deleted from the database"
+          ],
+          "correctIndex": 1,
+          "explanation": "CoT allows the model to generate intermediate reasoning tokens that inform its final conclusion."
+        },
+        {
+          "question": "Under Dubai's Universal Blueprint for AI, what is a key strategic target?",
+          "options": [
+            "Ban commercial AI use",
+            "Train 100,000 developers and fast-track AI commercial licenses across Dubai",
+            "Replace all human workers by 2026",
+            "Only use AI in desert farming"
+          ],
+          "correctIndex": 1,
+          "explanation": "Dubai's AI Blueprint explicitly aims to position Dubai as the global capital for AI talent and accelerated licensing."
+        },
+        {
+          "question": "What is temperature in LLM sampling?",
+          "options": [
+            "The heat of the server GPU",
+            "A hyperparameter controlling randomness and probability distribution flatness in token selection",
+            "The time of day requests are sent",
+            "The price of the API call"
+          ],
+          "correctIndex": 1,
+          "explanation": "Temperature controls sampling entropy: 0.0 is deterministic and focused; 0.8+ encourages creative diversity."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Structured Outputs, Function Calling & Model Context Protocol (MCP)",
+      "objective": "Bridge cognitive reasoning with software tools. Learn JSON Schema enforcement, tool calling, and connecting agents to external databases and APIs.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Deterministic JSON Schemas",
+          "content": "Unstructured text output cannot be safely parsed by backend servers. By utilizing JSON Schema validation (constrained decoding), modern LLMs guarantee 100% adherence to defined TypeScript interfaces, eliminating runtime JSON.parse syntax errors in production pipelines.",
+          "codeSnippet": "const ToolSchema = {\n  type: 'object',\n  properties: {\n    venueId: { type: 'string' },\n    action: { type: 'string', enum: ['reorder', 'discount', 'close'] },\n    amount: { type: 'number' }\n  },\n  required: ['venueId', 'action', 'amount']\n};",
+          "keyTakeaway": "Constrained decoding forces the model's logits to only emit valid schema tokens."
+        },
+        {
+          "title": "The Model Context Protocol (MCP)",
+          "content": "Model Context Protocol is the open standard enabling LLMs to securely interface with tools, databases, and local file systems. Instead of hardcoding bespoke API clients into every prompt, MCP servers expose standard resources, prompts, and tools that any agent can discover and invoke dynamically.",
+          "codeSnippet": "// MCP Tool Definition:\n{\n  name: 'query_dubai_land_registry',\n  description: 'Lookup verified title deed ownership and escrow status',\n  parameters: { titleDeedNumber: { type: 'string' } }\n}",
+          "keyTakeaway": "MCP decouples LLM logic from backend integration code, creating modular agent infrastructure."
+        },
+        {
+          "title": "Tool Execution Loops & Error Self-Correction",
+          "content": "When a tool returns an error (e.g. database connection timeout or validation failure), an autonomous agent inspects the error message, diagnoses what went wrong, adjusts its parameters, and retries the tool call automatically without human intervention.",
+          "codeSnippet": "if (toolResult.error) {\n  // Pass error traceback back into the message history for agentic repair\n  messages.push({ role: 'tool', content: `Error: ${toolResult.error}. Please fix parameters and retry.` });\n}",
+          "keyTakeaway": "Agents treat tool errors as environmental feedback, enabling autonomous problem solving."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 2: Build an MCP Tool Server for Dubai Land Registry",
+        "brief": "Implement a TypeScript MCP tool server that queries simulated DLD escrow accounts, verifies developer milestone progress, and returns structured valuation metrics to an AI assistant.",
+        "deliverable": "A working MCP server with input schema validation, mock database lookup, and robust error handling.",
+        "proTip": "Always provide detailed parameter descriptions in your tool schema; models use descriptions to decide when and how to call your tools."
+      },
+      "caseStudy": {
+        "scenario": "An AI booking agent at a luxury Dubai Marina restaurant attempts to reserve tables, but users trick it into booking dates in the past. Where should date validation be enforced?",
+        "options": [
+          {
+            "text": "Only in the system prompt text",
+            "correct": false,
+            "explanation": "System prompts are suggestions; models can still slip up on temporal edge cases."
+          },
+          {
+            "text": "In the backend tool function executing the database write, returning an error response to the model if the date is invalid",
+            "correct": true,
+            "explanation": "Business logic and constraint validation must always be enforced in deterministic software code."
+          },
+          {
+            "text": "By disabling tool calling entirely",
+            "correct": false,
+            "explanation": "Disabling tools renders the agent incapable of taking action."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the primary benefit of Constrained Decoding (Structured JSON Outputs)?",
+          "options": [
+            "It guarantees the output strictly adheres to a typed schema without parse errors",
+            "It makes models think faster",
+            "It eliminates token fees",
+            "It connects to the printer"
+          ],
+          "correctIndex": 0,
+          "explanation": "Constrained decoding restricts output token generation to tokens matching the schema grammar."
+        },
+        {
+          "question": "What is Model Context Protocol (MCP)?",
+          "options": [
+            "An email client",
+            "An open protocol standardizing how AI models connect to external tools and data sources",
+            "A new computer monitor",
+            "A type of memory chip"
+          ],
+          "correctIndex": 1,
+          "explanation": "MCP standardizes tool and resource interfaces between LLMs and external software systems."
+        },
+        {
+          "question": "How should an autonomous agent handle an API tool error response?",
+          "options": [
+            "Shut down permanently",
+            "Inspect the error traceback, reformulate its parameters, and retry",
+            "Blame the user",
+            "Delete the database"
+          ],
+          "correctIndex": 1,
+          "explanation": "Agentic loops feed tool results back into context so the agent can self-correct and retry."
+        },
+        {
+          "question": "Why is it dangerous to let an LLM execute arbitrary SQL queries directly on production databases?",
+          "options": [
+            "SQL is too slow",
+            "Hallucinated or malicious prompts can execute DROP TABLE or leak confidential tenant data",
+            "SQL only works on Linux",
+            "Databases do not accept text"
+          ],
+          "correctIndex": 1,
+          "explanation": "Unsanitized dynamic queries expose databases to injection and catastrophic accidental data loss."
+        },
+        {
+          "question": "In tool schema definitions, what informs the LLM when to select a specific tool?",
+          "options": [
+            "The font color",
+            "The tool's 'name' and semantic 'description' field",
+            "The computer clock",
+            "The size of the hard drive"
+          ],
+          "correctIndex": 1,
+          "explanation": "Models read tool descriptions to determine which tool matches the user's intent."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Autonomous Agent Swarms, State Machines & Human-in-the-Loop",
+      "objective": "Build multi-agent collaboration architectures using the ReAct loop, supervisor agents, and asynchronous human approval gates.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "The ReAct Loop: Reason + Act",
+          "content": "A naive prompt attempts to complete tasks in one shot. The ReAct (Reasoning + Acting) loop alternates between cognitive reflection ('Thought: I need to verify trade balance first'), external execution ('Action: call get_wallet_balance()'), and observation ('Observation: Balance is AED 50,000'). This loop continues until a termination condition is met.",
+          "codeSnippet": "while (!taskCompleted && iterations < MAX_ITERATIONS) {\n  const plan = await agent.reason(history);\n  if (plan.isComplete) break;\n  const result = await executeTool(plan.tool, plan.args);\n  history.push({ observation: result });\n}",
+          "keyTakeaway": "ReAct mimics human iterative problem solving: think, inspect, act, verify."
+        },
+        {
+          "title": "Multi-Agent Architectures: Supervisor & Specialists",
+          "content": "Single mega-prompts fail on multi-step workflows because context clutter confuses the model. The Supervisor pattern assigns an Orchestrator agent that delegates specialized subtasks to dedicated subagents (e.g. Market Researcher, Legal Auditor, Coder), synthesizing their focused outputs into a unified deliverable.",
+          "codeSnippet": "const orchestrator = new Agent({\n  role: 'Executive Planner',\n  subagents: [financialAuditor, legalContractReviewer, customerSupportAgent]\n});",
+          "keyTakeaway": "Specialized subagents maintain pristine context windows and focused system prompts."
+        },
+        {
+          "title": "Human-in-the-Loop (HITL) & Guardrails",
+          "content": "For high-stakes actions (such as transferring AED 100,000 or deploying code to production), autonomous agents must pause execution, generate an approval card, and wait for human confirmation before triggering irreversible database mutations.",
+          "codeSnippet": "if (action.riskLevel === 'HIGH') {\n  await requestHumanApproval({\n    summary: `Transfer ${amount} AED to Escrow #${escrowId}`,\n    timeoutSeconds: 3600\n  });\n}",
+          "keyTakeaway": "Autonomous speed + human approval on high-risk operations = enterprise trust."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 3: Build an Autonomous Multi-Agent Property Acquisition Pipeline",
+        "brief": "Implement a 3-agent swarm (Scout Agent, Due Diligence Agent, and Closing Agent) that inspects a Dubai property deal, checks RERA escrow compliance, and generates an investment memo.",
+        "deliverable": "A working multi-agent script with supervisor delegation and a human approval gate before final contract generation.",
+        "proTip": "Ensure every subagent has an explicit termination condition so they never get trapped in infinite conversation loops."
+      },
+      "caseStudy": {
+        "scenario": "A financial trading agent experiences an infinite loop where Agent A asks Agent B for data, Agent B asks for clarification, and both consume 500 API calls in 2 minutes. What architectural guardrail is missing?",
+        "options": [
+          {
+            "text": "A maximum recursion depth counter and a shared blackboard state machine",
+            "correct": true,
+            "explanation": "Enforcing max execution iterations and state machine boundaries halts runaway agent loops immediately."
+          },
+          {
+            "text": "Asking them to be nicer to each other in the prompt",
+            "correct": false,
+            "explanation": "Conversational prompt instructions cannot guarantee loop termination."
+          },
+          {
+            "text": "Running the code only once a week",
+            "correct": false,
+            "explanation": "Scheduling doesn't fix the underlying architectural defect."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What does ReAct stand for in autonomous agent design?",
+          "options": [
+            "React.js and React Native",
+            "Reasoning and Acting in alternating iterative loops",
+            "Recording and Activity",
+            "Reactive Audio"
+          ],
+          "correctIndex": 1,
+          "explanation": "ReAct alternates between cognitive reasoning and external tool execution."
+        },
+        {
+          "question": "Why is the Supervisor / Multi-Agent pattern superior for complex workflows?",
+          "options": [
+            "It costs less than one prompt",
+            "It isolates subtasks into specialized agents with clean, uncluttered context windows",
+            "It doesn't require an internet connection",
+            "It avoids writing code"
+          ],
+          "correctIndex": 1,
+          "explanation": "Decomposing tasks into specialized subagents prevents context clutter and hallucinations."
+        },
+        {
+          "question": "What is Human-in-the-Loop (HITL)?",
+          "options": [
+            "A virtual reality headset",
+            "A security architecture where agents pause and require human verification before executing high-risk actions",
+            "A human writing all code by hand",
+            "A video game character"
+          ],
+          "correctIndex": 1,
+          "explanation": "HITL ensures critical, high-risk decisions require explicit human authorization."
+        },
+        {
+          "question": "What prevents autonomous agents from entering infinite execution loops?",
+          "options": [
+            "Hoping the model stops",
+            "Hard limits on maximum tool iterations and clear deterministic exit criteria",
+            "Slower internet",
+            "Closing the laptop"
+          ],
+          "correctIndex": 1,
+          "explanation": "Strict iteration counters and termination conditions guarantee loop exits."
+        },
+        {
+          "question": "What is a 'State Machine' in agent workflow orchestration?",
+          "options": [
+            "A physical washing machine",
+            "A deterministic mathematical model with defined discrete states, allowed transitions, and actions",
+            "A database table with only numbers",
+            "A computer monitor"
+          ],
+          "correctIndex": 1,
+          "explanation": "State machines enforce rigid, auditable workflows through well-defined state transitions."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Production RAG, Vector Embeddings & Enterprise Deployment in Dubai",
+      "objective": "Implement Retrieval-Augmented Generation (RAG) using hybrid vector search, chunking strategies, and UAE data sovereignty compliance.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Vector Embeddings & Semantic Similarity",
+          "content": "Keyword search fails when users use synonyms (e.g. 'villa' vs 'luxury residence'). Embedding models convert text chunks into high-dimensional numerical vectors (e.g. 1536 dimensions) where cosine similarity quantifies conceptual proximity, enabling semantic retrieval across millions of Dubai Land Department laws and tenancy decrees.",
+          "codeSnippet": "const embedding = await openai.embeddings.create({\n  model: 'text-embedding-3-small',\n  input: 'Ejari tenancy dispute resolution procedures'\n});",
+          "keyTakeaway": "Embeddings map semantic meaning into vector space for rapid mathematical retrieval."
+        },
+        {
+          "title": "Chunking Strategies & Hybrid Search (BM25 + Dense)",
+          "content": "Naive chunking cuts sentences in half and loses context. Modern production RAG uses semantic chunking with overlapping boundaries, paired with Hybrid Search: combining lexical BM25 keyword matching (for specific contract IDs, plot numbers, and dates) with dense vector search (for broad conceptual understanding).",
+          "codeSnippet": "// Hybrid ranking algorithm:\nconst score = 0.6 * denseCosineSim + 0.4 * bm25LexicalScore;",
+          "keyTakeaway": "Hybrid search combines precision keyword matching with semantic conceptual discovery."
+        },
+        {
+          "title": "UAE Data Sovereignty & Enterprise Compliance",
+          "content": "UAE Federal Decree-Law No. 45 of 2021 on Personal Data Protection (PDPL) mandates strict controls on cross-border transfer of sensitive financial and health records. Enterprise AI agents deployed in Dubai must utilize locally hosted inference endpoints or approved sovereign cloud regions in the UAE (such as Azure UAE North or local sovereign data centers).",
+          "codeSnippet": "const client = new OpenAI({\n  baseURL: 'https://uae-sovereign-endpoint.private.ae/v1',\n  apiKey: process.env.UAE_AI_SECURE_KEY\n});",
+          "keyTakeaway": "Compliance with UAE PDPL is mandatory for all production commercial AI deployments."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 4: Capstone — Deploy an Enterprise RAG Agent for Dubai Free Zones",
+        "brief": "Ingest 50 pages of DMCC and DIFC commercial regulations, implement hybrid retrieval with re-ranking, and benchmark question-answering accuracy on corporate tax queries.",
+        "deliverable": "A live deployed RAG endpoint returning accurate legal answers with exact document citations and zero hallucinations.",
+        "proTip": "Always return the original source document page number and excerpt alongside the synthesized answer for auditable legal compliance."
+      },
+      "caseStudy": {
+        "scenario": "A corporate client asks your AI tax agent: 'What is the corporate tax rate for a qualifying free zone entity with non-qualifying revenue of AED 5M?' The model hallucinates 0%. Why did this happen and how is it resolved?",
+        "options": [
+          {
+            "text": "The model was trained in 2020 before UAE corporate tax laws took effect; resolve by implementing RAG to retrieve the latest 2023 Cabinet Decisions into the prompt context",
+            "correct": true,
+            "explanation": "RAG injects ground-truth, up-to-date legal statutes into context, eliminating outdated model memory."
+          },
+          {
+            "text": "The model needs to be told to be smarter in the prompt",
+            "correct": false,
+            "explanation": "Prompts cannot create knowledge that the model was never trained on or provided."
+          },
+          {
+            "text": "Delete the tax bot",
+            "correct": false,
+            "explanation": "RAG is the standard industry solution for keeping models grounded on current laws."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is RAG (Retrieval-Augmented Generation)?",
+          "options": [
+            "A video game feature",
+            "Grounding an LLM with relevant domain documents retrieved dynamically from a vector database",
+            "A type of computer memory",
+            "An internet cable standard"
+          ],
+          "correctIndex": 1,
+          "explanation": "RAG retrieves factual, private, or real-time documents and passes them into the prompt to prevent hallucinations."
+        },
+        {
+          "question": "What does Cosine Similarity measure in vector search?",
+          "options": [
+            "The physical distance between two computers",
+            "The cosine of the angle between two embedding vectors, measuring semantic similarity regardless of vector magnitude",
+            "The internet download speed",
+            "The file size in kilobytes"
+          ],
+          "correctIndex": 1,
+          "explanation": "Cosine similarity measures directional alignment between semantic vectors (1.0 = identical meaning)."
+        },
+        {
+          "question": "Why is Hybrid Search (BM25 + Vector) superior to vector search alone?",
+          "options": [
+            "It is 100% free",
+            "It combines exact keyword matching for specific product numbers and codes with semantic conceptual understanding",
+            "It doesn't require electricity",
+            "It runs in Microsoft Word"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hybrid search prevents vector models from missing critical exact acronyms, IDs, or dates."
+        },
+        {
+          "question": "Under UAE Personal Data Protection Law (PDPL), what is required when handling sensitive citizen records?",
+          "options": [
+            "Post records on social media",
+            "Strict data sovereignty controls, encryption, and compliance regarding cross-border data transfers",
+            "Delete all records every 24 hours",
+            "Store records on paper only"
+          ],
+          "correctIndex": 1,
+          "explanation": "The UAE PDPL mandates rigorous encryption, consent, and sovereign cloud residency."
+        },
+        {
+          "question": "What is the purpose of a Re-Ranking model (Cross-Encoder) in advanced RAG?",
+          "options": [
+            "To sort files alphabetically",
+            "To perform deep sentence-pair scoring on top candidate chunks to surface the most relevant text before passing it to the generator LLM",
+            "To make images sharper",
+            "To shut down the database"
+          ],
+          "correctIndex": 1,
+          "explanation": "Re-rankers rescore initial candidate search chunks with high precision to ensure only prime context reaches the LLM."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "What is the primary architectural cause of LLM hallucinations in commercial deployments?",
+        "options": [
+          "The computer screen is too bright",
+          "The model generating statistically plausible token sequences in the absence of grounded domain context",
+          "A broken Wi-Fi router",
+          "The user typing too fast"
+        ],
+        "correctIndex": 1,
+        "explanation": "LLMs predict likely next tokens; without factual grounding (via RAG or Few-Shot examples), they generate plausible-sounding falsehoods."
+      },
+      {
+        "question": "How does Constrained Decoding ensure zero JSON parse errors?",
+        "options": [
+          "By checking after generation",
+          "By masking invalid token logits at every generation step according to a grammar state machine",
+          "By using shorter words",
+          "By running on battery power"
+        ],
+        "correctIndex": 1,
+        "explanation": "Constrained decoding physically prevents the model from sampling any token that would violate the schema grammar."
+      },
+      {
+        "question": "What is the fundamental benefit of the Model Context Protocol (MCP)?",
+        "options": [
+          "It standardizes tool and resource interfaces so agents can discover and use tools across applications without bespoke client code",
+          "It translates text to Arabic",
+          "It replaces the internet",
+          "It makes servers free"
+        ],
+        "correctIndex": 0,
+        "explanation": "MCP decouples LLMs from specific APIs, providing an open standard for tool and resource integration."
+      },
+      {
+        "question": "In the ReAct framework, what role does the 'Observation' step serve?",
+        "options": [
+          "To look at the monitor",
+          "It feeds external tool execution results back into the agent's context for next-step reasoning",
+          "It pauses the computer",
+          "It deletes old files"
+        ],
+        "correctIndex": 1,
+        "explanation": "Observations provide real-world feedback from software tool executions to guide subsequent deductions."
+      },
+      {
+        "question": "Why should high-risk financial and legal mutations always feature a Human-in-the-Loop gate?",
+        "options": [
+          "AI models are slow",
+          "To guarantee human legal accountability and prevent irreversible accidental or adversarial execution errors",
+          "Brokers charge more money",
+          "To restart the browser"
+        ],
+        "correctIndex": 1,
+        "explanation": "Human authorization ensures enterprise safety and legal compliance on consequential actions."
+      },
+      {
+        "question": "What is Context Window Clutter and how does it degrade multi-agent performance?",
+        "options": [
+          "Dust on the screen",
+          "Accumulating irrelevant conversational transcripts which degrades the model's attention on core system instructions",
+          "A full hard drive",
+          "Too many open browser tabs"
+        ],
+        "correctIndex": 1,
+        "explanation": "Excessive irrelevant tokens dilute the self-attention mechanism, leading to missed instructions and hallucinations."
+      },
+      {
+        "question": "How does Hybrid Search (BM25 + Dense Embeddings) resolve the 'Exact ID' problem in real estate RAG?",
+        "options": [
+          "By guessing numbers",
+          "Dense embeddings often confuse numeric IDs; BM25 lexical search scores exact alphanumeric matches with 100% precision",
+          "By calling customer support",
+          "By searching on Google"
+        ],
+        "correctIndex": 1,
+        "explanation": "Lexical BM25 matches exact contract numbers and IDs, while dense vectors handle conceptual semantic queries."
+      },
+      {
+        "question": "Under the UAE D33 Economic Agenda, what is the target economic contribution from digital transformation?",
+        "options": [
+          "AED 100 Billion annually",
+          "AED 1 Million",
+          "AED 500",
+          "Zero"
+        ],
+        "correctIndex": 0,
+        "explanation": "Dubai's D33 Agenda explicitly targets AED 100 billion annual economic contribution from digital innovation."
+      },
+      {
+        "question": "What is Prompt Injection?",
+        "options": [
+          "A medical shot",
+          "An adversarial attack where untrusted user input tricks an LLM into ignoring its original system instructions",
+          "Installing software",
+          "A fast API connection"
+        ],
+        "correctIndex": 1,
+        "explanation": "Prompt injection hijacks an agent's intended instruction set via malicious user-provided text."
+      },
+      {
+        "question": "What is the primary role of a Supervisor Agent in a swarm?",
+        "options": [
+          "To turn off the computer",
+          "To break complex goals into subtasks, delegate to specialized subagents, and synthesize final results",
+          "To write CSS styles",
+          "To play music"
+        ],
+        "correctIndex": 1,
+        "explanation": "Supervisor agents manage high-level orchestration, subagent dispatch, and synthesis."
+      }
+    ]
+  },
+  "duration": "4 Weeks"
+}

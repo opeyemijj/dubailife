@@ -1,0 +1,582 @@
+{
+  "id": "onebrain-content",
+  "institutionId": "onebrain",
+  "title": "High-Value Content Creation & Personal Branding",
+  "tagline": "Visual Storytelling, Short-Form Production, Dubai Lifestyle Monetization, and Media Syndication.",
+  "category": "Media & Brand Building",
+  "icon": "🎥",
+  "durationWeeks": 4,
+  "level": "accelerator",
+  "tuitionFee": 15000,
+  "superpower": {
+    "id": "creator_influence",
+    "name": "Creator Influence Aura",
+    "icon": "🎥",
+    "description": "Doubles reputation status gains across Dubai + unlocks the VIP Media City Creator Lounge.",
+    "badgeText": "Creator Certified",
+    "perkType": "general"
+  },
+  "syllabus": {
+    "overview": "A comprehensive 4-week media production accelerator. Master personal brand authority, three-point studio lighting, crisp directional audio, visual storytelling retention editing, multi-channel podcast syndication, and signing enterprise consulting retainers in Dubai.",
+    "prerequisites": "A smartphone with a camera and willingness to produce video.",
+    "learningOutcomes": [
+      "Define a unique Personal Monopoly combining differentiated skills with zero competition",
+      "Produce broadcast-quality audio and lighting setups using mobile and mirrorless gear",
+      "Deploy an automated content repurposing engine extracting 15 assets from 1 pillar recording",
+      "Monetize personal brand equity through high-ticket advisory and corporate sponsorships"
+    ],
+    "weeklyBreakdown": [
+      {
+        "week": 1,
+        "topic": "Personal Monopoly & Authority Positioning Architecture",
+        "hours": 12
+      },
+      {
+        "week": 2,
+        "topic": "Cinematic Lighting, Audio Engineering & Retention Editing",
+        "hours": 14
+      },
+      {
+        "week": 3,
+        "topic": "Omnichannel Syndication, Podcast Systems & Repurposing",
+        "hours": 15
+      },
+      {
+        "week": 4,
+        "topic": "Enterprise Brand Monetization, High-Ticket Retainers & Capstone Reel",
+        "hours": 18
+      }
+    ]
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Personal Monopoly & Authority Positioning Architecture",
+      "objective": "Find your unique intersection of expertise, audience positioning, and category creation.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Building a Personal Monopoly",
+          "content": "In an era of AI commoditization, people follow humans with distinct worldviews, not faceless corporate pages. A personal monopoly sits at the intersection of two or three disparate skills (e.g. Dubai real estate + AI automation + cinematic storytelling) where you have literally zero competition.",
+          "codeSnippet": "Formula: Skill A + Skill B + Unique Geographic Context = Category King",
+          "keyTakeaway": "Niche down until you are the undisputed singular authority in your specific category."
+        },
+        {
+          "title": "The Authority Flywheel",
+          "content": "Authority drives organic inbound leads. By sharing your working insights, deal analyses, and failures publicly, prospective high-ticket clients perceive you as an experienced operator before ever having a sales conversation.",
+          "codeSnippet": "Flywheel: High-Value Content -> Audience Trust -> Inbound Deal Flow -> Client Results -> Case Studies",
+          "keyTakeaway": "Content is asymmetric leverage: write once, broadcast to thousands perpetually."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 1: Define Your Personal Monopoly & Manifesto",
+        "brief": "Write a 1-page authority manifesto detailing your unique positioning, target high-net-worth client profile, and core contrarian beliefs.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Focus on actionable real-world execution."
+      },
+      "caseStudy": {
+        "scenario": "A creator tries to talk about crypto, cooking, fashion, real estate, and fitness on one profile and gets zero traction. What is the diagnosis?",
+        "options": [
+          {
+            "text": "Lack of positioning focus: an account about everything is an account for no one; isolate one core topic and dominate it first",
+            "correct": true,
+            "explanation": "Audience and algorithms require clear contextual identity to build authority and trust."
+          },
+          {
+            "text": "They need to buy fake followers",
+            "correct": false,
+            "explanation": "Fake followers destroy algorithmic engagement."
+          },
+          {
+            "text": "Social media is broken",
+            "correct": false,
+            "explanation": "Positioning clarity is the prerequisite for growth."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is a 'Personal Monopoly'?",
+          "options": [
+            "Buying all houses in a board game",
+            "The unique intersection of skills and perspective where you have zero direct competitors",
+            "A monopoly company in Dubai",
+            "A government department"
+          ],
+          "correctIndex": 1,
+          "explanation": "Personal monopolies differentiate creators so they are non-fungible in the marketplace."
+        },
+        {
+          "question": "Why is inbound deal flow superior to cold outreach in high-ticket consulting?",
+          "options": [
+            "It requires zero effort",
+            "Clients approach you already pre-sold on your expertise and authority, dismantling price resistance",
+            "It is free",
+            "You don't need a phone"
+          ],
+          "correctIndex": 1,
+          "explanation": "Pre-educated inbound leads have dramatically higher close rates and respect your pricing."
+        },
+        {
+          "question": "What is the primary role of a 'Call to Action' (CTA)?",
+          "options": [
+            "Calling emergency services",
+            "Instructing the engaged viewer on the exact next step to take (e.g. comment a keyword, join newsletter)",
+            "An alarm clock",
+            "A video title"
+          ],
+          "correctIndex": 1,
+          "explanation": "CTAs channel audience engagement into actionable business conversion funnels."
+        },
+        {
+          "question": "What is Social Proof in personal branding?",
+          "options": [
+            "A government ID card",
+            "Evidence that other clients trust and value your work (testimonials, case studies, media features)",
+            "A bank statement",
+            "A tax form"
+          ],
+          "correctIndex": 1,
+          "explanation": "Social proof dismantles skepticism by displaying real peer and client validation."
+        },
+        {
+          "question": "What is Dubai Media City (DMC) known for?",
+          "options": [
+            "Agriculture",
+            "The regional creative hub hosting global broadcasting networks and digital creator talent",
+            "A car repair center",
+            "A medical clinic"
+          ],
+          "correctIndex": 1,
+          "explanation": "Dubai Media City is the creative epicentre for over 2,000 regional media and tech enterprises."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Cinematic Lighting, Audio Engineering & Retention Editing",
+      "objective": "Master directional microphone setups, three-point lighting, and visual B-roll pacing.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Why Audio is 70% of Video Quality",
+          "content": "Viewers will tolerate 1080p or slightly grainy video, but they will click away within 2 seconds of hearing echo, background wind noise, or distorted audio. Investing in a quality wireless lavalier or broadcast dynamic microphone (e.g. Shure SM7B, DJI Mic 2) transforms perceived authority instantly.",
+          "codeSnippet": "Audio Setup: Gain staged at -12dB peak, noise floor below -55dB, directional polar pattern.",
+          "keyTakeaway": "Professional audio signals premium authority to human psychology."
+        },
+        {
+          "title": "Three-Point Lighting on a Budget",
+          "content": "Flat lighting makes creators look amateur. Three-point lighting (Key Light at 45 degrees, Fill Light for soft shadow fill, and Rim/Hair Light for separation from the background) creates cinematic three-dimensional depth.",
+          "codeSnippet": "Lighting Formula: 45° Key Light + Diffuser + Color-contrasting Background Rim Light",
+          "keyTakeaway": "Lighting creates mood and dimensional separation from the background."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 2: Record a High-Authority Talking Head Video",
+        "brief": "Set up audio staging, three-point lighting, and record a 60-second insight video with zero room reverb.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Focus on actionable real-world execution."
+      },
+      "caseStudy": {
+        "scenario": "A video recorded in an empty apartment has a hollow, echoey room reverb that distracts the audience. How do you solve it?",
+        "options": [
+          {
+            "text": "Add rugs, acoustic foam, curtains, and use a directional lavalier mic placed 6 inches from the mouth",
+            "correct": true,
+            "explanation": "Soft furnishings absorb acoustic reflections, while close mic placement maximizes signal-to-noise ratio."
+          },
+          {
+            "text": "Shout louder into the camera",
+            "correct": false,
+            "explanation": "Shouting increases acoustic reverb."
+          },
+          {
+            "text": "Turn up camera volume to maximum",
+            "correct": false,
+            "explanation": "This increases static noise floor and audio distortion."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Why is audio quality more critical than 4K resolution in video retention?",
+          "options": [
+            "Viewers immediately leave distorted or echo-filled audio, whereas modest video is tolerated",
+            "Audio uses less internet",
+            "Audio is louder",
+            "Cameras don't record video"
+          ],
+          "correctIndex": 0,
+          "explanation": "Human audio tolerance is extremely low; poor audio destroys subconscious authority."
+        },
+        {
+          "question": "What are the three components of Three-Point Lighting?",
+          "options": [
+            "Sun, Moon, and Stars",
+            "Key Light, Fill Light, and Rim / Back Light",
+            "Red, Green, and Blue lights",
+            "Three flashlights"
+          ],
+          "correctIndex": 1,
+          "explanation": "Key, Fill, and Rim lights provide depth, contour, and dimensional subject separation."
+        },
+        {
+          "question": "What is B-Roll in video editing?",
+          "options": [
+            "Secondary footage layered over the speaking track to illustrate points and sustain visual interest",
+            "Mistakes left in the video",
+            "Credits at the end",
+            "A video graded B in quality"
+          ],
+          "correctIndex": 0,
+          "explanation": "B-roll visually demonstrates narrative points and prevents visual fatigue."
+        },
+        {
+          "question": "What is Batch Recording?",
+          "options": [
+            "Filming 10 to 20 content assets in a single dedicated studio session rather than setting up daily",
+            "Cooking soup",
+            "Buying equipment in bulk",
+            "Sending mass emails"
+          ],
+          "correctIndex": 0,
+          "explanation": "Batch recording saves setup overhead and maintains peak creative momentum."
+        },
+        {
+          "question": "What does the Rule of Thirds provide in video composition?",
+          "options": [
+            "Dividing the frame into a 3x3 grid to place eyes and key elements along intersecting lines for natural visual balance",
+            "Having 3 actors in every video",
+            "Cutting 3 minutes of footage",
+            "Taking 3 photos"
+          ],
+          "correctIndex": 0,
+          "explanation": "The Rule of Thirds creates natural, visually aesthetic subject framing."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Omnichannel Syndication, Podcast Systems & Repurposing",
+      "objective": "Build automated content engines turning 1 hour of recording into 15 multi-platform assets.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "The Pillar Content Repurposing Engine",
+          "content": "Producing individual posts for 5 different platforms daily leads to creative burnout. Master creators record one 45-minute high-substance Pillar Asset (a podcast or deep-dive breakdown) each week, which is then sliced into 8 vertical Reels/Shorts, 3 Twitter threads, 2 LinkedIn articles, and 1 newsletter.",
+          "codeSnippet": "Pillar Asset (45m Video)\n  ├── 8x Vertical Reels (TikTok/Instagram/YouTube Shorts)\n  ├── 3x LinkedIn Long-Form Insight Posts\n  ├── 1x Executive Email Newsletter\n  └── 1x Full Spotify/Apple Podcast Episode",
+          "keyTakeaway": "Record once, syndicate everywhere: maximize ROI per minute of creative effort."
+        },
+        {
+          "title": "Platform Native Formatting",
+          "content": "Never paste identical text across all channels. LinkedIn demands structured professional problem-solving prose; Instagram Reels demand fast visual pacing and lifestyle aesthetics; X (Twitter) rewards punchy, provocative one-sentence hooks.",
+          "codeSnippet": "Adaptation: Adjust caption length, aspect ratio (9:16 vs 16:9), and tone to match native platform culture.",
+          "keyTakeaway": "Respect each platform's native culture while preserving your core thesis."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 3: Build a Content Repurposing Pipeline in Notion/Airtable",
+        "brief": "Create an operational Kanban board mapping 1 raw video file through clipping, captioning, thumbnail design, and multi-channel scheduling.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Focus on actionable real-world execution."
+      },
+      "caseStudy": {
+        "scenario": "A creator posts a horizontal 16:9 video onto TikTok with tiny text and wonders why it gets zero views. What is the fix?",
+        "options": [
+          {
+            "text": "Crop to vertical 9:16, add dynamic native animated captions, and ensure text doesn't overlap TikTok UI buttons",
+            "correct": true,
+            "explanation": "Vertical video optimized for mobile aspect ratios and safe zones is mandatory on modern feeds."
+          },
+          {
+            "text": "Tell users to turn their phones sideways",
+            "correct": false,
+            "explanation": "Users will not rotate phones on vertical feeds; they will swipe away."
+          },
+          {
+            "text": "Delete TikTok",
+            "correct": false,
+            "explanation": "Formatting correctly unlocks the platform's distribution."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is a 'Pillar Content' strategy?",
+          "options": [
+            "Building concrete columns",
+            "Creating one comprehensive long-form piece of content that is systematically repurposed into dozens of smaller micro-assets",
+            "Writing on marble stone",
+            "Posting once a year"
+          ],
+          "correctIndex": 1,
+          "explanation": "Pillar content maximizes production efficiency by generating multiple platform-specific assets."
+        },
+        {
+          "question": "What is the standard vertical video aspect ratio for Instagram Reels and TikTok?",
+          "options": [
+            "16:9",
+            "9:16 (1080x1920 pixels)",
+            "4:3",
+            "1:1"
+          ],
+          "correctIndex": 1,
+          "explanation": "9:16 fills entire mobile smartphone screens vertically."
+        },
+        {
+          "question": "Why must creators consider 'Safe Zones' when editing captions for Reels?",
+          "options": [
+            "To prevent phone explosions",
+            "To ensure text is not obscured by the platform's profile icon, caption text, or like/comment buttons",
+            "To save hard drive space",
+            "Safe zones are for cars"
+          ],
+          "correctIndex": 1,
+          "explanation": "UI overlays cover the bottom and right edges of mobile feeds."
+        },
+        {
+          "question": "What is Content Syndication?",
+          "options": [
+            "Distributing digital content across multiple platforms and third-party media outlets simultaneously",
+            "A television show only",
+            "A government department",
+            "A copyright violation"
+          ],
+          "correctIndex": 0,
+          "explanation": "Syndication expands distribution footprint without creating new content from scratch."
+        },
+        {
+          "question": "What does an Executive Email Newsletter provide that social media cannot?",
+          "options": [
+            "Direct, uncensored ownership of your audience relationship without reliance on third-party algorithmic whims",
+            "Free coffee",
+            "Faster internet",
+            "No reading required"
+          ],
+          "correctIndex": 0,
+          "explanation": "Email lists are owned first-party assets immune to algorithm changes and account bans."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Enterprise Brand Monetization, High-Ticket Retainers & Capstone Reel",
+      "objective": "Package authority into AED 25,000+ monthly consulting retainers, corporate sponsorships, and executive advisory.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Low-Ticket Ads vs High-Ticket Enterprise Monetization",
+          "content": "Amateurs monetize millions of views through AdSense checks of $200. Professionals monetize a focused audience of 5,000 corporate executives by signing two AED 25,000/month advisory retainers or securing real estate investment commissions of AED 150,000 per closed villa.",
+          "codeSnippet": "Revenue Model Comparison:\nAdSense: 100,000 views = $300\nEnterprise Retainer: 3 C-Suite Inbound Clients = AED 75,000/mo ($20,400 USD/mo)",
+          "keyTakeaway": "Audience quality and purchasing power vastly outweigh raw view count vanity metrics."
+        },
+        {
+          "title": "Structuring High-Value Corporate Retainers",
+          "content": "High-ticket clients pay for clarity, speed, and risk mitigation. Structure advisory retainers around specific outcomes: 'Quarterly AI Strategy Audit + Bi-Weekly Executive Coaching + Board Review', backed by verified case studies.",
+          "codeSnippet": "Proposal: AED 30,000/month | Scope: Architecture Review + Vendor Vetting + Monthly Strategy Intensive",
+          "keyTakeaway": "Position yourself as an indispensable strategic advisor, not a commodity freelancer."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 4: Capstone — Produce a Master Portfolio Reel & High-Ticket Offer",
+        "brief": "Deliver a polished 90-second authority video showcase paired with a high-ticket corporate advisory proposal deck.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Focus on actionable real-world execution."
+      },
+      "caseStudy": {
+        "scenario": "A client asks: 'Why should we pay you AED 30,000/month when an agency offered to do it for AED 3,000?' How do you respond?",
+        "options": [
+          {
+            "text": "Anchor against the cost of poor execution: 'Cheap agencies execute low-quality commodity work. We deliver strategic enterprise results that add AED 500,000 to your net margins while protecting your brand.'",
+            "correct": true,
+            "explanation": "High-ticket closing reframes price against value transformation and the catastrophic cost of low-quality failure."
+          },
+          {
+            "text": "Immediately lower your price to AED 2,500 to beat them",
+            "correct": false,
+            "explanation": "Price cutting destroys perceived value and authority."
+          },
+          {
+            "text": "Insult the competitor angrily",
+            "correct": false,
+            "explanation": "Unprofessional conduct."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Why is high-ticket advisory monetization superior to display ad views for business creators?",
+          "options": [
+            "It generates 10x to 100x more revenue from a smaller, highly targeted audience of decision makers",
+            "It is easier to do",
+            "Display ads don't exist in Dubai",
+            "Only children watch video"
+          ],
+          "correctIndex": 0,
+          "explanation": "B2B and high-ticket sales monetize trust and specialized expertise at premium margins."
+        },
+        {
+          "question": "What is an Advisory Retainer?",
+          "options": [
+            "A dental appliance",
+            "An ongoing monthly agreement where a client pays a recurring fee for continuous strategic guidance and access to expertise",
+            "A one-time penalty",
+            "An hourly wage job"
+          ],
+          "correctIndex": 1,
+          "explanation": "Retainers provide predictable recurring revenue for senior strategic advisors."
+        },
+        {
+          "question": "What does 'Value Anchoring' mean in pricing discussions?",
+          "options": [
+            "Dropping an anchor in the water",
+            "Anchoring your fee against the substantial financial gain (or avoided loss) your solution provides to the client",
+            "Setting prices based on cost of coffee",
+            "Asking the client what they want to pay"
+          ],
+          "correctIndex": 1,
+          "explanation": "Anchoring your fee to a multimillion-dirham commercial upside makes your fee appear minor."
+        },
+        {
+          "question": "What is the primary asset you build with a personal brand?",
+          "options": [
+            "A collection of cameras",
+            "Trust and reputation equity that follows you across every business venture you ever launch",
+            "A large electricity bill",
+            "A trophy"
+          ],
+          "correctIndex": 1,
+          "explanation": "Personal brand equity is portable and compounds across your entire career."
+        },
+        {
+          "question": "How does UAE commercial law protect registered trademarks and creative intellectual property?",
+          "options": [
+            "It provides no protection",
+            "The UAE Ministry of Economy registers and legally enforces trademarks, penalizing infringers and copycats",
+            "Only verbal agreements apply",
+            "It deletes all websites"
+          ],
+          "correctIndex": 1,
+          "explanation": "The UAE provides robust federal intellectual property, trademark, and copyright protection."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "What is a Personal Monopoly in media and business strategy?",
+        "options": [
+          "The unique intersection of skills and perspective where you have zero direct competitors",
+          "Buying all properties on a board",
+          "A state-owned company",
+          "A legal monopoly on video editing"
+        ],
+        "correctIndex": 0,
+        "explanation": "Personal monopolies make creators singular and irreplaceable."
+      },
+      {
+        "question": "Why is audio quality considered 70% of video production value?",
+        "options": [
+          "Audiences immediately click away from muffled or echo-filled audio, while modest video is tolerated",
+          "Audio uses less internet",
+          "Audio is louder",
+          "Cameras don't record video"
+        ],
+        "correctIndex": 0,
+        "explanation": "Clear audio directly influences viewer trust and retention."
+      },
+      {
+        "question": "What is the core benefit of the Pillar Content Repurposing model?",
+        "options": [
+          "One long-form recording session is systematically transformed into dozens of micro-assets across all feeds",
+          "You never have to record again",
+          "It makes videos load faster",
+          "It eliminates the need for a camera"
+        ],
+        "correctIndex": 0,
+        "explanation": "Pillar content maximizes output leverage per hour of creative investment."
+      },
+      {
+        "question": "What is B-Roll in video editing?",
+        "options": [
+          "Secondary footage layered over main speaking tracks to illustrate points and sustain engagement",
+          "Mistakes left in by accident",
+          "Credits at the end",
+          "A video graded B in quality"
+        ],
+        "correctIndex": 0,
+        "explanation": "B-roll visually reinforces the narrative."
+      },
+      {
+        "question": "What is the standard vertical video aspect ratio for TikTok and Instagram Reels?",
+        "options": [
+          "9:16 (1080x1920 pixels)",
+          "16:9",
+          "4:3",
+          "1:1"
+        ],
+        "correctIndex": 0,
+        "explanation": "9:16 fills mobile screens vertically."
+      },
+      {
+        "question": "Why is high-ticket advisory monetization superior to AdSense display revenue?",
+        "options": [
+          "It generates orders of magnitude higher revenue from a focused audience of corporate decision makers",
+          "It is easier to do",
+          "Display ads don't exist",
+          "Nobody watches video"
+        ],
+        "correctIndex": 0,
+        "explanation": "High-ticket B2B monetization extracts premium value from audience authority."
+      },
+      {
+        "question": "What is an Advisory Retainer?",
+        "options": [
+          "An ongoing monthly agreement where a client pays for continuous strategic guidance and access",
+          "A one-time penalty",
+          "An hourly wage job",
+          "A discount coupon"
+        ],
+        "correctIndex": 0,
+        "explanation": "Retainers provide predictable recurring revenue."
+      },
+      {
+        "question": "What is Three-Point Lighting?",
+        "options": [
+          "Key Light, Fill Light, and Rim / Back Light creating three-dimensional visual depth",
+          "Sun, Moon, and Stars",
+          "Three flashlights",
+          "Red, Green, Blue lights"
+        ],
+        "correctIndex": 0,
+        "explanation": "Three-point lighting separates subjects cleanly from backgrounds."
+      },
+      {
+        "question": "What is the primary role of a Call to Action (CTA)?",
+        "options": [
+          "Directing the viewer on the exact next step to take to enter your business conversion funnel",
+          "Calling emergency services",
+          "An alarm clock",
+          "A video title"
+        ],
+        "correctIndex": 0,
+        "explanation": "CTAs channel engaged viewers into business leads."
+      },
+      {
+        "question": "What is Dubai Media City (DMC) known for in the UAE?",
+        "options": [
+          "The region's primary media and creative talent ecosystem hosting global networks",
+          "Farming",
+          "A car repair center",
+          "A medical clinic"
+        ],
+        "correctIndex": 0,
+        "explanation": "Dubai Media City is the creative and broadcasting hub of the region."
+      }
+    ]
+  },
+  "duration": "4 Weeks"
+}

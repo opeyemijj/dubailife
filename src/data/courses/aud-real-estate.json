@@ -1,0 +1,462 @@
+{
+  "id": "aud-real-estate",
+  "institutionId": "aud",
+  "title": "Real Estate & Property Investment",
+  "tagline": "Analyze off-plan vs secondary market yields, DLD escrow accounts, RERA laws, and mortgage structures.",
+  "category": "Finance",
+  "level": "bachelor_degree",
+  "duration": "4 Weeks (Executive Masterclass)",
+  "rating": 4.95,
+  "enrolledCount": 1680,
+  "icon": "🏢",
+  "superpower": {
+    "id": "property_tycoon",
+    "name": "Real Estate Mogul",
+    "icon": "🏢",
+    "description": "+25% rental yield optimization and priority access to off-plan property launches.",
+    "badgeText": "DLD Specialist",
+    "perkType": "property_discount"
+  },
+  "syllabus": [
+    "Week 1: Dubai Land Department (DLD), RERA Laws & Escrow Account Law No. 8",
+    "Week 2: Off-Plan Developments, Oqood Registration, Developer Payment Plans & Construction Audits",
+    "Week 3: Secondary Market Transactions, Form F (MOU), Transfer Conveyancing & Mortgage Caps",
+    "Week 4: Rental Yield Optimization, Ejari Smart Contracts, Short-Term Holiday Homes & Portfolio Scaling"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "DLD Governance, RERA & Law No. 8 Escrow Framework",
+      "objective": "Understand how the Dubai Land Department (DLD) and RERA protect real estate investors through project trust accounts.",
+      "slides": [
+        {
+          "title": "The Institutional Framework: DLD vs RERA",
+          "body": "The Dubai Land Department (DLD), founded in 1960, is the supreme government entity overseeing land registry, title deeds, and property transactions in Dubai. The Real Estate Regulatory Agency (RERA) acts as the executive regulatory arm of DLD, licensing real estate brokers, developers, escrow agents, and governing HOA building management.",
+          "bullets": [
+            "DLD: Sole legal authority for issuing Title Deeds (Sakk) and registering property transfers",
+            "RERA: Regulates developer licensing, rental caps (Rental Increase Calculator), and real estate advertising permits",
+            "DLD 4% Transfer Fee: Standard government fee paid upon transfer (traditionally split 50/50 or paid by buyer per contract)"
+          ],
+          "codeSnippet": "// DLD Transaction Cost Breakdown (AED)\nfunction calculateDLDTransferCost(propertyPriceAED) {\n  const dldFee = propertyPriceAED * 0.04; // 4% DLD transfer fee\n  const adminFee = 580; // DLD admin fee\n  const trusteeFee = propertyPriceAED >= 500000 ? 4000 : 2000; // Registration Trustee fee\n  const trusteeVat = trusteeFee * 0.05;\n  return {\n    dldFee,\n    trusteeFee: trusteeFee + trusteeVat,\n    totalGovCosts: dldFee + adminFee + trusteeFee + trusteeVat\n  };\n}",
+          "takeaway": "Always verify developer and broker permits through the official DLD REST mobile application before placing deposits."
+        },
+        {
+          "title": "Law No. 8 of 2007: Escrow Trust Accounts",
+          "body": "Dubai Law No. 8 of 2007 revolutionized real estate security by mandating that every developer selling off-plan units must open a dedicated project escrow account with an approved bank. Buyer payments can never be deposited into developer corporate accounts; they must go into the escrow account and are disbursed only upon certified construction milestones.",
+          "bullets": [
+            "Project Escrow Account: Inspected by RERA-approved engineering auditors before funds release",
+            "5% Retention Guarantee: Kept in escrow for one year post-handover to cover structural defect repairs",
+            "20% Land / Construction Rule: Developers must own the land 100% or complete 20% of construction before launching sales"
+          ],
+          "codeSnippet": "Escrow Milestone Disbursals:\nMilestone                | % Retained | Audit Requirement\nFoundation Complete      | 20% Release | Third-Party Site Survey\nSuperstructure 50%       | 40% Release | Structural Engineer Signoff\nFacade & MEP Done        | 70% Release | Civil Defense Inspection\nHandover (Building Comp) | 95% Release | Municipality Completion Cert\nDefects Liability (1 yr) | 100% Final  | Post-Handover Audit",
+          "takeaway": "Never wire off-plan property installments to any bank account other than the officially registered RERA Escrow Account."
+        }
+      ],
+      "lab": {
+        "title": "DLD Title Verification & Escrow Audit Lab",
+        "brief": "Verify an off-plan tower's construction progress report on the DLD REST portal and audit escrow disbursement milestones.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "An investor is offered an exclusive off-plan duplex in Downtown Dubai. The sales agent requests that the 10% booking deposit be wired to the master developer's general international corporate account in London. What should the investor do?",
+        "options": [
+          {
+            "text": "Wire the funds immediately to secure the prime unit before other buyers take it.",
+            "correct": false,
+            "explanation": "Direct developer payments violate UAE Law No. 8 and forfeit RERA escrow protections."
+          },
+          {
+            "text": "Refuse and demand the official RERA Project Escrow Account details registered with DLD, verifying the project name and escrow IBAN on DLD REST.",
+            "correct": true,
+            "explanation": "All off-plan payments must strictly flow into the designated RERA project escrow account to ensure buyer funds are ring-fenced."
+          },
+          {
+            "text": "Pay in physical cash to the agent at a hotel lounge.",
+            "correct": false,
+            "explanation": "Violates AML regulations and lacks official DLD recording."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What percentage is the standard Dubai Land Department property transfer fee?",
+          "options": [
+            "2%",
+            "4%",
+            "6%",
+            "8%"
+          ],
+          "correctIndex": 1,
+          "explanation": "The standard DLD transfer fee is 4% of the property's gross purchase price."
+        },
+        {
+          "question": "Under Law No. 8 of 2007, where must all off-plan property purchaser funds be deposited?",
+          "options": [
+            "In the developer's personal account",
+            "In a RERA-certified project escrow trust account",
+            "In the buyer's foreign bank account",
+            "Directly with the Dubai Municipality"
+          ],
+          "correctIndex": 1,
+          "explanation": "Law No. 8 mandates that all off-plan funds be held in a regulated project escrow account with an approved financial institution."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Off-Plan Strategy, Oqood Registration & Construction Audits",
+      "objective": "Evaluate off-plan post-handover payment plans, capital appreciation timelines, and Oqood pre-title registration.",
+      "slides": [
+        {
+          "title": "Oqood: The Pre-Title Deed System",
+          "body": "When you buy an off-plan property in Dubai, you do not receive an immediate Title Deed (Sakk) because the building does not physically exist yet. Instead, DLD issues an 'Oqood' (Interim Real Estate Register), which legally records the purchaser's ownership interest in the unit during construction.",
+          "bullets": [
+            "Oqood Certificate: Serves as the government-backed guarantee of off-plan unit ownership",
+            "4% Oqood Fee: Equal to the DLD transfer fee, paid during initial contract booking",
+            "Automatic Sakk Conversion: Upon building completion and handover, Oqood converts to a permanent Title Deed"
+          ],
+          "codeSnippet": "// Off-Plan Payment Plan Modeling\nconst paymentPlan = {\n  project: 'Dubai Creek Harbour Tower',\n  purchasePriceAED: 2400000,\n  milestones: [\n    { event: 'Booking', pct: 0.10, amount: 240000 },\n    { event: 'Construction 20%', pct: 0.10, amount: 240000 },\n    { event: 'Construction 40%', pct: 0.10, amount: 240000 },\n    { event: 'Construction 60%', pct: 0.10, amount: 240000 },\n    { event: 'Handover (Completion)', pct: 0.20, amount: 480000 },\n    { event: 'Post-Handover 24 Mo', pct: 0.30, amount: 720000 }\n  ]\n};",
+          "takeaway": "Ensure the developer registers your unit on Oqood within 30-60 days of SPA signing; failure to register exposes the buyer to legal vulnerability."
+        },
+        {
+          "title": "Evaluating Post-Handover Payment Plans (PHPP)",
+          "body": "Post-handover payment plans allow investors to pay a percentage of the purchase price (e.g. 30% to 50%) over 2 to 5 years after receiving the keys. When structured properly, the property's rental income subsidizes the remaining installments, creating self-funding capital assets.",
+          "bullets": [
+            "Cash Flow Arbitrage: Rental yield offsets the post-handover developer installment",
+            "Premium Pricing: Developers frequently build a 5-10% price premium into units sold with generous PHPPs",
+            "Assignment of Sale: Selling an off-plan unit before handover typically requires paying 30-40% of the contract value and obtaining a developer NOC"
+          ],
+          "codeSnippet": "Net Yield Comparison:\nMetric             | Off-Plan (PHPP)       | Ready Secondary\nInitial Outlay     | 20-30% Over 2 Years   | 20% Down + 7% Fees (Cash)\nRental Income      | 0 (During Constr)     | Immediate (Day 1)\nCapital Uplift     | High Potential        | Steady / Moderate\nMortgage Financing | At Handover (Up to 80%)| Day 1 Approved",
+          "takeaway": "Calculate the implicit interest rate embedded in post-handover payment plans versus upfront bank mortgage interest."
+        }
+      ],
+      "lab": {
+        "title": "Off-Plan Yield & Cash Flow Modeling Lab",
+        "brief": "Model a 60/40 payment plan on a 2-bedroom apartment in Jumeirah Village Circle (JVC) with projected rental yields vs developer financing.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "An investor purchases an off-plan apartment in Business Bay with an 80/20 payment plan (20% at handover). They wish to flip the contract 18 months before completion. What does RERA and developer regulation require before reselling?",
+        "options": [
+          {
+            "text": "They can resell at any time without developer permission or fees.",
+            "correct": false,
+            "explanation": "Off-plan reassignments require meeting the developer's minimum paid equity threshold and obtaining a formal NOC."
+          },
+          {
+            "text": "They must have paid the developer's minimum threshold (typically 30-40% of SPA value), clear any overdue dues, obtain a developer NOC, and register the transfer at DLD Trustee.",
+            "correct": true,
+            "explanation": "Dubai developers mandate 30-40% completion of payments before issuing an NOC for off-plan resale assignments."
+          },
+          {
+            "text": "Off-plan resale is strictly banned in the Emirate of Dubai.",
+            "correct": false,
+            "explanation": "Off-plan resale is active and legally supported via Oqood transfer."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the name of Dubai's interim real estate registry for off-plan properties?",
+          "options": [
+            "Ejari",
+            "Oqood",
+            "Tasheel",
+            "Sakk"
+          ],
+          "correctIndex": 1,
+          "explanation": "Oqood is the DLD portal and certificate system for registering off-plan property sales."
+        },
+        {
+          "question": "What typical percentage of the purchase price must usually be paid before a developer issues an NOC for an off-plan resale?",
+          "options": [
+            "5-10%",
+            "30-40%",
+            "75-80%",
+            "100% only"
+          ],
+          "correctIndex": 1,
+          "explanation": "Most major developers (Emaar, Sobha, Nakheel) require 30% to 40% of the unit price paid before allowing resale assignment."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Secondary Market, Form F Conveyancing & Mortgages",
+      "objective": "Execute secondary market real estate transactions using standard RERA contracts (Form A, B, F) and navigate mortgage caps.",
+      "slides": [
+        {
+          "title": "The RERA Contract Suite: Forms A, B & F (MOU)",
+          "body": "Secondary market sales follow strict RERA procedural forms to protect buyers and sellers. Form A is the Seller-Broker agreement. Form B is the Buyer-Broker agreement. Form F (the unified Memorandum of Understanding / MOU) is the binding sale and purchase agreement between buyer and seller.",
+          "bullets": [
+            "Form F: Outlines agreed price, 10% deposit security check, finance contingency clauses, and target completion date",
+            "10% Security Deposit: Held in trust by the conveyancer or RERA-registered broker as a guarantee against default",
+            "Developer NOC: Seller must settle all service charges with the master developer to receive an NOC for transfer"
+          ],
+          "codeSnippet": "Unified Secondary Market Process:\n1. Form B signed (Buyer & Buyer Broker)\n2. Form A signed (Seller & Seller Broker)\n3. Form F (MOU) executed with 10% manager's check deposit\n4. Bank Valuation & Final Mortgage Approval (if financed)\n5. Master Developer NOC applied & issued\n6. DLD Registration Trustee office transfer -> Manager's checks exchanged -> Title Deed issued",
+          "takeaway": "Always insert a mortgage finance contingency clause in Form F to protect your 10% deposit if bank valuation falls short."
+        },
+        {
+          "title": "CBUAE Mortgage Regulations & Down Payment Caps",
+          "body": "The Central Bank of the UAE (CBUAE) regulates mortgage lending across all domestic commercial banks. Loan-to-Value (LTV) ratios are strictly capped based on residency status and property value to prevent systemic asset bubbles.",
+          "bullets": [
+            "Expatriate First Home ≤ AED 5M: Maximum 80% LTV (20% minimum cash down payment)",
+            "Expatriate First Home > AED 5M: Maximum 70% LTV (30% minimum cash down payment)",
+            "Second / Investment Property: Maximum 60% LTV (40% minimum cash down payment for all expats)",
+            "UAE Nationals First Home ≤ AED 5M: Maximum 85% LTV (15% minimum cash down payment)"
+          ],
+          "codeSnippet": "// Buyer Cash Required Calculation (AED 3M Property - Expats)\nconst propertyPrice = 3000000;\nconst downPayment = propertyPrice * 0.20; // 600,000 (80% LTV)\nconst dldTransferFee = propertyPrice * 0.04; // 120,000\nconst brokerFee = propertyPrice * 0.02 * 1.05; // 63,000 (2% + 5% VAT)\nconst trusteeRegistration = 4200; // Registration Trustee\nconst mortgageRegFee = (propertyPrice * 0.80) * 0.0025 + 290; // 0.25% of loan + admin = 6,290\nconst bankValuation = 3150;\nconst totalCashRequired = downPayment + dldTransferFee + brokerFee + trusteeRegistration + mortgageRegFee + bankValuation;\n// Result: ~796,640 AED (~26.5% total cash outlay)",
+          "takeaway": "Budget at least 26% to 27% in total upfront cash for secondary market property purchases financed via bank mortgages."
+        }
+      ],
+      "lab": {
+        "title": "Secondary Market Conveyancing & Cash Outlay Lab",
+        "brief": "Draft a complete financial closing statement for an AED 4.5M secondary market villa purchase in Dubai Hills Estate including mortgage registration fees.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "An expatriate resident wishes to buy their first residential home in Dubai for AED 6,000,000 using a commercial bank mortgage. What is the minimum statutory down payment required under CBUAE regulations?",
+        "options": [
+          {
+            "text": "10% (AED 600,000)",
+            "correct": false,
+            "explanation": "10% is not permitted under CBUAE mortgage regulations."
+          },
+          {
+            "text": "20% (AED 1,200,000)",
+            "correct": false,
+            "explanation": "20% is only for properties up to AED 5,000,000. Above AED 5M, the expat cap drops to 30%."
+          },
+          {
+            "text": "30% (AED 1,800,000)",
+            "correct": true,
+            "explanation": "For properties valued over AED 5,000,000, CBUAE rules mandate a maximum 70% LTV (30% down payment) for expatriates."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Which RERA unified contract represents the legally binding Memorandum of Understanding (MOU) between buyer and seller?",
+          "options": [
+            "Form A",
+            "Form B",
+            "Form F",
+            "Form I"
+          ],
+          "correctIndex": 2,
+          "explanation": "Form F is the unified contract of sale signed by both parties in secondary market transactions."
+        },
+        {
+          "question": "What is the maximum LTV for an expatriate buying a first residential property under AED 5,000,000?",
+          "options": [
+            "70%",
+            "80%",
+            "85%",
+            "90%"
+          ],
+          "correctIndex": 1,
+          "explanation": "Under CBUAE regulations, expatriates can borrow up to 80% LTV on their first home valued at AED 5M or less."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Rental Yields, Ejari Contracts & Short-Term Holiday Homes",
+      "objective": "Maximize net rental yields, manage tenant tenancy under RERA Rent Law 26 of 2007, and operate Dubai DET holiday homes.",
+      "slides": [
+        {
+          "title": "RERA Tenancy Law & The Rental Increase Calculator",
+          "body": "Landlord-tenant relationships in Dubai are governed by Law No. 26 of 2007 and Law No. 33 of 2008. RERA protects tenants against arbitrary rent spikes through the official RERA Rental Index Calculator, while landlords must provide 12 months' written notice via Notary Public to evict for sale or personal use.",
+          "bullets": [
+            "Rental Increase Caps: 0% increase if current rent is within 10% of market average; tiered caps (up to 20%) if 40%+ below market",
+            "12-Month Eviction Notice: Must be served via registered mail or Notary Public stating lawful grounds (sale, own use, demolition)",
+            "Ejari Registration: Mandatory for tenant utility (DEWA) activation and legal standing at the Rental Dispute Settlement Centre (RDSC)"
+          ],
+          "codeSnippet": "// RERA Rent Increase Matrix (Law 43 of 2013)\nfunction getReraAllowedIncrease(currentRent, benchmarkMarketRent) {\n  const pctBelow = ((benchmarkMarketRent - currentRent) / benchmarkMarketRent) * 100;\n  if (pctBelow <= 10) return 0;       // Up to 10% below: 0% increase\n  if (pctBelow <= 20) return 0.05;    // 11-20% below: max 5% increase\n  if (pctBelow <= 30) return 0.10;    // 21-30% below: max 10% increase\n  if (pctBelow <= 40) return 0.15;    // 31-40% below: max 15% increase\n  return 0.20;                        // > 40% below: max 20% increase\n}",
+          "takeaway": "Check the updated building-specific RERA Rental Index before issuing annual lease renewal notices to tenants."
+        },
+        {
+          "title": "Long-Term Leasing vs Short-Term Holiday Homes",
+          "body": "Dubai's booming tourism economy enables property owners to license residential apartments as Short-Term Holiday Homes through the Department of Economy and Tourism (DET). Prime locations like Downtown Dubai, Dubai Marina, and Palm Jumeirah can generate 20% to 35% higher gross revenues on holiday rentals.",
+          "bullets": [
+            "DET Holiday Home Permit: QR code license required on property entrance and online booking listings (Airbnb, Booking.com)",
+            "Tourism Dirham Fee: AED 10 to AED 15 per bedroom per night remitted monthly to DET",
+            "Operating Expenses: Cleaning, linen turnover, platform commissions (15-20%), DEWA and chiller expenses borne by owner"
+          ],
+          "codeSnippet": "Rental Strategy Comparison:\nMetric             | Long-Term Annual Lease | Short-Term Holiday Home\nGross Yield        | 6.5% - 8.0%            | 9.5% - 12.0%\nVacancy Risk       | Low (Annual Check)     | High (Seasonal Summer Slump)\nFurnishing Cost    | Nil (Unfurnished)      | 40k - 80k AED Upfront\nManagement Fee     | 5% - 8%                | 15% - 20% of Gross Revenue\nNet Yield Average  | 5.8% - 7.2%            | 6.8% - 8.5% (Prime Hotspots)",
+          "takeaway": "Short-term holiday rentals outperform long-term leases in waterfront/tourist zones, but long-term yields provide superior risk-adjusted returns in suburban family communities."
+        }
+      ],
+      "lab": {
+        "title": "Rental Portfolio Optimization Lab",
+        "brief": "Perform a comparative yield analysis between an annual lease and DET-licensed short-term rental for an apartment in Palm Jumeirah.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "A landlord wants to increase a long-term tenant's annual rent from AED 100,000 to AED 125,000 (a 25% increase) because market rates in the building have risen. What does Dubai law specify?",
+        "options": [
+          {
+            "text": "The landlord is entitled to raise rent by 25% as long as they give 30 days notice.",
+            "correct": false,
+            "explanation": "Violates RERA rental increase laws and notice timelines."
+          },
+          {
+            "text": "The maximum statutory increase permitted under Decree No. 43 of 2013 is 20% (even if more than 40% below market), and 90 days prior notice before lease expiration is required.",
+            "correct": true,
+            "explanation": "Decree No. 43 caps the maximum annual rental increase at 20%, and changes to lease terms require 90 days notice."
+          },
+          {
+            "text": "The landlord can immediately disconnect DEWA utilities until the tenant agrees.",
+            "correct": false,
+            "explanation": "Illegal under Law No. 26 of 2007 and grounds for immediate RDSC penalties against the landlord."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Under Decree No. 43 of 2013, what is the maximum percentage a landlord can increase rent in a single year?",
+          "options": [
+            "10%",
+            "15%",
+            "20%",
+            "30%"
+          ],
+          "correctIndex": 2,
+          "explanation": "Decree No. 43 of 2013 establishes a maximum ceiling of 20% for any annual rental increase."
+        },
+        {
+          "question": "How many months of prior written notice through Notary Public or registered mail must a landlord serve to evict a tenant for personal use or sale?",
+          "options": [
+            "3 Months",
+            "6 Months",
+            "12 Months",
+            "24 Months"
+          ],
+          "correctIndex": 2,
+          "explanation": "Law No. 33 of 2008 requires a 12-month notice served via Notary Public or registered mail for eviction upon lease expiry."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "What is the primary function of Dubai Law No. 8 of 2007 in real estate development?",
+        "options": [
+          "It regulates mortgage interest rates",
+          "It mandates project escrow trust accounts for all off-plan developments",
+          "It establishes the Dubai Financial Market",
+          "It bans expatriate ownership"
+        ],
+        "correctIndex": 1,
+        "explanation": "Law No. 8 of 2007 establishes mandatory escrow trust accounts for off-plan property developments."
+      },
+      {
+        "question": "What is the standard Dubai Land Department property transfer fee?",
+        "options": [
+          "2%",
+          "4%",
+          "5%",
+          "7%"
+        ],
+        "correctIndex": 1,
+        "explanation": "The standard DLD transfer fee is 4% of the property value."
+      },
+      {
+        "question": "What is the minimum property equity requirement to qualify for the 10-year Real Estate Golden Visa in Dubai?",
+        "options": [
+          "AED 750,000",
+          "AED 1,000,000",
+          "AED 2,000,000",
+          "AED 5,000,000"
+        ],
+        "correctIndex": 2,
+        "explanation": "Investors holding property valued at AED 2,000,000 or more are eligible for the 10-year Golden Visa."
+      },
+      {
+        "question": "Which RERA unified contract represents the legally binding Memorandum of Understanding between buyer and seller in secondary transactions?",
+        "options": [
+          "Form A",
+          "Form B",
+          "Form F",
+          "Form U"
+        ],
+        "correctIndex": 2,
+        "explanation": "Form F is the unified MOU contract of sale in the secondary real estate market."
+      },
+      {
+        "question": "What is the maximum LTV for an expatriate buying their first residential property under AED 5,000,000?",
+        "options": [
+          "75%",
+          "80%",
+          "85%",
+          "90%"
+        ],
+        "correctIndex": 1,
+        "explanation": "Expatriates can borrow up to 80% LTV on their first home up to AED 5M."
+      },
+      {
+        "question": "Which government system records and legalizes all residential and commercial rental leases in Dubai?",
+        "options": [
+          "Oqood",
+          "Ejari",
+          "DLD REST",
+          "Tasheel"
+        ],
+        "correctIndex": 1,
+        "explanation": "Ejari is the mandatory lease registration system operated by the Dubai Land Department."
+      },
+      {
+        "question": "What is the name of the interim registry system used by DLD to record off-plan ownership prior to building completion?",
+        "options": [
+          "Oqood",
+          "Trakhees",
+          "Makani",
+          "Sakk"
+        ],
+        "correctIndex": 0,
+        "explanation": "Oqood is the interim property register for off-plan real estate sales."
+      },
+      {
+        "question": "How much prior notice must be given before lease expiration to propose modifications to tenancy terms (such as rent adjustments)?",
+        "options": [
+          "30 Days",
+          "60 Days",
+          "90 Days",
+          "180 Days"
+        ],
+        "correctIndex": 2,
+        "explanation": "Law No. 26 of 2007 requires 90 days' notice prior to the expiration of the tenancy contract to amend lease terms."
+      },
+      {
+        "question": "What government body regulates holiday homes and short-term vacation rentals in Dubai?",
+        "options": [
+          "Dubai Municipality",
+          "Department of Economy and Tourism (DET)",
+          "RERA Building Inspection",
+          "Federal Tax Authority"
+        ],
+        "correctIndex": 1,
+        "explanation": "DET regulates holiday homes and issues operator and property QR-code permits."
+      },
+      {
+        "question": "What percentage of off-plan developer funds is retained in escrow for one year post-handover to cover structural defects?",
+        "options": [
+          "1%",
+          "5%",
+          "10%",
+          "20%"
+        ],
+        "correctIndex": 1,
+        "explanation": "A 5% retention warranty is held in escrow for one year post-handover to protect against defects."
+      }
+    ]
+  },
+  "tuitionFee": 4200
+}

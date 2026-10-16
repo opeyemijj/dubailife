@@ -1,0 +1,582 @@
+{
+  "id": "onebrain-ecommerce",
+  "institutionId": "onebrain",
+  "title": "Cross-Border E-commerce & Brand Building",
+  "tagline": "Shopify Infrastructure, GCC Cash-on-Delivery (COD), Private Labeling & Logistics.",
+  "category": "E-Commerce & Retail",
+  "icon": "📦",
+  "durationWeeks": 4,
+  "level": "accelerator",
+  "tuitionFee": 15000,
+  "superpower": {
+    "id": "ecommerce_margin",
+    "name": "Wholesale Margin Boost",
+    "icon": "📦",
+    "description": "Boosts profit margins on all retail and consumable merchandise sales across Dubai by +15%.",
+    "badgeText": "E-com Certified",
+    "perkType": "commission_boost"
+  },
+  "syllabus": {
+    "overview": "A comprehensive 4-week retail and supply chain accelerator. Master product validation, Jebel Ali Free Zone (JAFZA) 3PL bonded warehousing, reducing GCC Cash-on-Delivery (COD) Return-to-Origin (RTO) below 8%, and transitioning from dropshipping to private labeling.",
+    "prerequisites": "Basic understanding of retail sales and online shopping.",
+    "learningOutcomes": [
+      "Set up high-converting Shopify headless stores with localized GCC checkout",
+      "Deploy automated WhatsApp order confirmation workflows reducing failed delivery rates",
+      "Negotiate factory MOQs and establish bonded warehouse inventory in Dubai JAFZA",
+      "Scale cross-border fulfillment across Saudi Arabia, UAE, Qatar, and Kuwait"
+    ],
+    "weeklyBreakdown": [
+      {
+        "week": 1,
+        "topic": "GCC E-commerce Dynamics, Cash-on-Delivery & Last-Mile Delivery",
+        "hours": 12
+      },
+      {
+        "week": 2,
+        "topic": "Shopify Store Architecture, Frictionless UX & Split Payments",
+        "hours": 14
+      },
+      {
+        "week": 3,
+        "topic": "Supply Chain Sourcing, Factory MOQs & Jebel Ali 3PL Logistics",
+        "hours": 15
+      },
+      {
+        "week": 4,
+        "topic": "Private Label Scaling, Cross-Border Expansion & Capstone Store Launch",
+        "hours": 18
+      }
+    ]
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "title": "GCC E-commerce Dynamics, Cash-on-Delivery & Last-Mile Delivery",
+      "objective": "Understand regional payment preferences, address verification, and reducing Return-to-Origin (RTO).",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "The Reality of Cash on Delivery (COD) in the GCC",
+          "content": "While card adoption is surging in urban Dubai, COD remains dominant across the wider GCC. Unconfirmed orders bleed capital through courier shipping and return fees. Automated WhatsApp confirmation with GPS pin location drops reduces RTO from 25% down to under 7%.",
+          "codeSnippet": "// Automated WhatsApp confirmation:\nif (customer.confirmsWhatsApp) {\n  dispatchCourierShipment(orderId);\n} else {\n  holdOrderForCallCenterValidation(orderId);\n}",
+          "keyTakeaway": "Never dispatch a COD shipment without automated phone and address validation."
+        },
+        {
+          "title": "Return-to-Origin (RTO) Unit Economics",
+          "content": "Every returned parcel incurs two delivery charges (forward + reverse shipping) and inventory lockup. If your RTO exceeds 15%, an otherwise profitable ad campaign becomes net negative.",
+          "codeSnippet": "NetProfit = (DeliveredOrders * Margin) - (ReturnedOrders * ReturnCourierFee)",
+          "keyTakeaway": "RTO management is the hidden lever of GCC e-commerce profitability."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 1: Deploy a WhatsApp Address Validation Bot",
+        "brief": "Build an automated Twilio/Meta WhatsApp flow that captures exact GPS location pins from customers prior to fulfillment dispatch.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Measure blended metrics rather than isolated vanity stats."
+      },
+      "caseStudy": {
+        "scenario": "A Dubai store has a 28% return rate on orders shipped to the desert suburbs. How do you fix it?",
+        "options": [
+          {
+            "text": "Require WhatsApp GPS pin sharing and phone confirmation before dispatching courier drivers",
+            "correct": true,
+            "explanation": "Accurate GPS coordinates eliminate driver delivery failure in unnumbered villa zones."
+          },
+          {
+            "text": "Increase prices by 50%",
+            "correct": false,
+            "explanation": "Price hikes do not solve failed delivery logistics."
+          },
+          {
+            "text": "Stop selling outside Downtown",
+            "correct": false,
+            "explanation": "Suburban consumers represent major buying power when reached with proper logistics."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is RTO in e-commerce fulfillment?",
+          "options": [
+            "Return To Origin — parcels returned to merchant due to delivery failure",
+            "Real Time Order",
+            "Ready To Operate",
+            "Retail Tax Overview"
+          ],
+          "correctIndex": 0,
+          "explanation": "RTO represents failed deliveries returned to the warehouse, incurring courier penalties."
+        },
+        {
+          "question": "Why is WhatsApp address confirmation standard practice in GCC e-commerce?",
+          "options": [
+            "Because email has low open rates and address systems often lack standard street numbers",
+            "It is free",
+            "To chat with customers about movies",
+            "It replaces the delivery van"
+          ],
+          "correctIndex": 0,
+          "explanation": "WhatsApp enables rapid GPS location sharing, ensuring couriers locate the customer's exact villa."
+        },
+        {
+          "question": "What is a 3PL?",
+          "options": [
+            "Third-Party Logistics provider managing warehousing, picking, packing, and dispatch",
+            "Three Price Levels",
+            "Third Public License",
+            "Triple Product Launch"
+          ],
+          "correctIndex": 0,
+          "explanation": "3PL warehouses handle storage and order fulfillment operations for online merchants."
+        },
+        {
+          "question": "Why is Jebel Ali Port (JAFZA) a strategic e-commerce hub?",
+          "options": [
+            "It is cold",
+            "It combines one of the world's largest container ports directly with Al Maktoum Airport bonded logistics",
+            "It is for farming",
+            "It charges 50% customs"
+          ],
+          "correctIndex": 1,
+          "explanation": "JAFZA seamlessly integrates sea, air, and highway corridors reaching 2 billion people."
+        },
+        {
+          "question": "What is Average Order Value (AOV)?",
+          "options": [
+            "Average revenue per customer transaction",
+            "The speed of the delivery van",
+            "The weight of the box",
+            "The number of items on sale"
+          ],
+          "correctIndex": 0,
+          "explanation": "Higher AOV offsets fixed customer acquisition and delivery costs."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Shopify Store Architecture, Frictionless UX & Split Payments",
+      "objective": "Design high-converting mobile storefronts, Tabby/Tamara split payments, and post-purchase upsells.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Buy Now Pay Later (BNPL): Tabby & Tamara",
+          "content": "Offering split payments (4 interest-free installments via Tabby or Tamara) lifts checkout conversion by up to 35% and increases Average Order Value by 40% across Dubai and Saudi Arabia. Consumers perceive higher purchasing power with zero financing fees.",
+          "codeSnippet": "// Tabby Checkout SDK Integration:\n<TabbyPromo price={product.price} currency='AED' installments={4} />",
+          "keyTakeaway": "BNPL integration is essential for unlocking high-ticket retail conversion in the Middle East."
+        },
+        {
+          "title": "Post-Purchase One-Click Upsells",
+          "content": "The highest conversion moment is immediately after a customer enters payment information. Presenting a complimentary add-on offer before the thank-you page converts at 15-25% with zero additional marketing acquisition cost.",
+          "codeSnippet": "onPurchaseComplete: offerUpsell({ productId: 'matching-accessory', discount: '30%' })",
+          "keyTakeaway": "One-click upsells turn breakeven advertising into high net-margin scale."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 2: Implement 1-Click Upsells & Localized Arabic Checkout",
+        "brief": "Configure a Shopify headless checkout with automated currency switching (AED/SAR), Tabby integration, and post-purchase funnels.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Measure blended metrics rather than isolated vanity stats."
+      },
+      "caseStudy": {
+        "scenario": "Your mobile store has a 70% cart abandonment rate at the payment gateway step. What should you test?",
+        "options": [
+          {
+            "text": "Add Apple Pay, Tabby split payments, and remove mandatory user registration",
+            "correct": true,
+            "explanation": "Eliminating checkout friction and adding modern mobile payment methods maximizes completed purchases."
+          },
+          {
+            "text": "Make the logo bigger",
+            "correct": false,
+            "explanation": "Visual logo tweaks do not resolve checkout payment friction."
+          },
+          {
+            "text": "Charge an extra fee for mobile users",
+            "correct": false,
+            "explanation": "This increases abandonment."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is Buy Now Pay Later (BNPL) like Tabby and Tamara?",
+          "options": [
+            "A bank loan taking 3 months to approve",
+            "Interest-free split payment solutions allowing customers to divide purchases into 4 installments",
+            "A credit card debt penalty",
+            "A lottery"
+          ],
+          "correctIndex": 1,
+          "explanation": "BNPL enables flexible installment payments at checkout, lifting conversion rates."
+        },
+        {
+          "question": "What is a Post-Purchase Upsell?",
+          "options": [
+            "An exclusive one-click offer presented immediately after payment authorization before the final confirmation screen",
+            "An email sent 1 year later",
+            "A refund request",
+            "A paper coupon"
+          ],
+          "correctIndex": 0,
+          "explanation": "Post-purchase upsells capture instant incremental revenue without risking the initial order."
+        },
+        {
+          "question": "What does 'Cart Abandonment Rate' measure?",
+          "options": [
+            "The percentage of shoppers who add items to cart but exit without completing payment",
+            "Broken shopping carts in malls",
+            "Returns",
+            "Website views"
+          ],
+          "correctIndex": 0,
+          "explanation": "Cart abandonment highlights friction points in checkout flows."
+        },
+        {
+          "question": "Why is multi-currency pricing (AED and SAR) important in GCC stores?",
+          "options": [
+            "It looks pretty",
+            "Customers convert significantly higher when viewing prices in their local sovereign currency without foreign exchange fees",
+            "It takes longer to buy",
+            "It confuses banks"
+          ],
+          "correctIndex": 1,
+          "explanation": "Local currency pricing eliminates foreign exchange conversion anxiety for Saudi and UAE shoppers."
+        },
+        {
+          "question": "What is Free Shipping Threshold strategy?",
+          "options": [
+            "Giving free shipping on orders exceeding a minimum spend (e.g. Free delivery on orders over AED 250)",
+            "Never charging for anything",
+            "A shipping fine",
+            "Slow delivery"
+          ],
+          "correctIndex": 0,
+          "explanation": "Free shipping thresholds incentivize customers to add more items to cart, lifting AOV."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Supply Chain Sourcing, Factory MOQs & Jebel Ali 3PL Logistics",
+      "objective": "Master supplier vetting, factory Minimum Order Quantities (MOQs), and bonded freight forwarding.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Direct Factory Sourcing vs Trading Companies",
+          "content": "Middlemen mark up wholesale prices by 40-70%. By sourcing directly from vetted manufacturers (via Alibaba Verified, 1688, or local trade exhibitions like Canton Fair and Dubai Gitex/Gulfood), you control bill-of-materials costs and ensure quality control inspections before shipment.",
+          "codeSnippet": "COGS Analysis: Factory Direct ($4.20/unit) vs Local Reseller ($12.50/unit) = $8.30 margin advantage",
+          "keyTakeaway": "Factory relationships unlock the profit margins required to scale paid ads aggressively."
+        },
+        {
+          "title": "Bonded Free Zone Warehousing in JAFZA",
+          "content": "Storing inventory in Jebel Ali Free Zone allows goods to be held tax-free and duty-free until they are cleared for local consumption or re-exported across the GCC. Custom 3PL APIs connect directly to your Shopify store for automated picking and packing.",
+          "codeSnippet": "Inventory Model: Sea freight bulk delivery to JAFZA -> Daily courier dispatch to UAE & KSA",
+          "keyTakeaway": "Bonded warehousing defers customs duties and accelerates regional delivery speeds."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 3: Draft an RFQ (Request for Quote) & Quality Control Inspection Checklist",
+        "brief": "Draft a professional RFQ specification sheet including raw material tolerances, drop tests, and custom packaging standards.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Measure blended metrics rather than isolated vanity stats."
+      },
+      "caseStudy": {
+        "scenario": "A supplier sends a sample of premium quality, but the production batch of 5,000 units arrives with defective closures. How was this prevented?",
+        "options": [
+          {
+            "text": "Hire a pre-shipment third-party inspection agency (e.g. SGS/QIMA) to audit and pass goods at the factory floor before final wire transfer",
+            "correct": true,
+            "explanation": "Pre-shipment inspections catch manufacturing defects before balance payments are released."
+          },
+          {
+            "text": "Trust the supplier blindly",
+            "correct": false,
+            "explanation": "Unverified trust is a fatal supply chain mistake."
+          },
+          {
+            "text": "Send angry emails after goods arrive in Dubai",
+            "correct": false,
+            "explanation": "Returning international bulk freight is economically unfeasible."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What does MOQ stand for in manufacturing?",
+          "options": [
+            "Minimum Order Quantity required by a factory before initiating custom production",
+            "Monthly Operating Quota",
+            "Maximum Order Quality",
+            "Money On Queue"
+          ],
+          "correctIndex": 0,
+          "explanation": "MOQ defines the minimum production batch size accepted by factories."
+        },
+        {
+          "question": "What is Pre-Shipment Inspection (PSI)?",
+          "options": [
+            "A quality control audit conducted at the factory floor before goods leave the country of manufacture",
+            "A customs tax",
+            "A shipping bill",
+            "An insurance policy"
+          ],
+          "correctIndex": 0,
+          "explanation": "PSI verifies product specifications and quality before final supplier payment is made."
+        },
+        {
+          "question": "What is an Incoterm like FOB (Free On Board)?",
+          "options": [
+            "A video game",
+            "A standardized commercial trade term defining whether the buyer or seller pays shipping and assumes transit risk",
+            "A computer chip",
+            "An email protocol"
+          ],
+          "correctIndex": 1,
+          "explanation": "Incoterms define precise legal responsibilities and shipping costs in international trade."
+        },
+        {
+          "question": "What is the primary benefit of storing inventory in a Dubai bonded warehouse?",
+          "options": [
+            "Customs duties are deferred until goods are sold and dispatched into the domestic market",
+            "It is cold",
+            "Workers work for free",
+            "No electricity bills"
+          ],
+          "correctIndex": 0,
+          "explanation": "Bonded warehouses eliminate upfront customs duties on re-exported or stored inventory."
+        },
+        {
+          "question": "What is Bill of Lading (B/L)?",
+          "options": [
+            "A restaurant menu",
+            "The official legal transport document issued by a freight carrier detailing the cargo consignment",
+            "A marketing email",
+            "A product label"
+          ],
+          "correctIndex": 1,
+          "explanation": "The Bill of Lading acts as proof of shipment and document of title for ocean/air freight."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Private Label Scaling, Cross-Border Expansion & Capstone Store Launch",
+      "objective": "Build brand equity, custom packaging, customer retention cohorts, and cross-border expansion.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "From Commodity Dropshipper to Defensible Brand",
+          "content": "Dropshipping generic products is a race to the bottom with zero defensibility. A private label brand commands 3x higher price points through bespoke packaging, unboxing experiences, localized Arabic customer support, and trademarked intellectual property registered with the UAE Ministry of Economy.",
+          "codeSnippet": "Valuation Multiple: Generic Dropshipper (0.5x revenue) vs Established Brand (3-5x EBITDA)",
+          "keyTakeaway": "Brand equity turns one-off transactions into an acquirable corporate asset."
+        },
+        {
+          "title": "Cross-Border Scaling: The Saudi Arabia (KSA) Opportunity",
+          "content": "Saudi Arabia represents the largest consumer e-commerce market in the Middle East. Scaling from Dubai into Riyadh requires fast courier routes via land/air, localized SAR pricing, and compliance with the Saudi Zakat, Tax and Customs Authority (ZATCA).",
+          "codeSnippet": "Cross-Border Strategy: Central Dubai hub -> 48-hour bonded road express to Riyadh & Jeddah",
+          "keyTakeaway": "Mastering the UAE-KSA trade corridor unlocks the largest purchasing demographic in the region."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 4: Capstone — Launch a Vetted Private Label Brand",
+        "brief": "Deliver a complete e-commerce operational blueprint: factory sourcing terms, Shopify store, COD confirmation bot, and cross-border 3PL contract.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Measure blended metrics rather than isolated vanity stats."
+      },
+      "caseStudy": {
+        "scenario": "A competitor begins copying your product imagery and selling counterfeits on local marketplaces. What legal protection do you leverage in the UAE?",
+        "options": [
+          {
+            "text": "Registered trademark with the UAE Ministry of Economy and Brand Registry protection on marketplace portals",
+            "correct": true,
+            "explanation": "Registered trademarks empower brand owners to legally seize counterfeit shipments and remove unauthorized listings."
+          },
+          {
+            "text": "Argue in Instagram comments",
+            "correct": false,
+            "explanation": "Comments offer zero legal remedies."
+          },
+          {
+            "text": "Close your company",
+            "correct": false,
+            "explanation": "Formal IP protection defends brands from infringers."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is Private Labeling in retail commerce?",
+          "options": [
+            "Printing blank boxes",
+            "Manufacturing custom-branded products with your proprietary specifications and trademarks",
+            "Selling other brands with permission",
+            "Used products"
+          ],
+          "correctIndex": 1,
+          "explanation": "Private labeling builds long-term brand equity and customer loyalty."
+        },
+        {
+          "question": "What is Dubai CommerCity?",
+          "options": [
+            "A shopping mall in Deira",
+            "The region's first dedicated e-commerce free zone purpose-built for digital trade and automated logistics",
+            "A cinema",
+            "A residential park"
+          ],
+          "correctIndex": 1,
+          "explanation": "Dubai CommerCity provides purpose-built logistics, automated warehousing, and e-commerce licensing."
+        },
+        {
+          "question": "Why is the Saudi Arabian market critical for Dubai e-commerce brands?",
+          "options": [
+            "It has cold weather",
+            "It represents the largest consumer population and retail purchasing power in the GCC region",
+            "It has no stores",
+            "It only accepts cash"
+          ],
+          "correctIndex": 1,
+          "explanation": "Saudi Arabia provides massive scale and population depth for GCC consumer brands."
+        },
+        {
+          "question": "What is Customer Churn Rate in subscription commerce?",
+          "options": [
+            "The percentage of recurring customers who cancel their orders or subscriptions over a given timeframe",
+            "The speed of the delivery van",
+            "The weight of the box",
+            "The number of new products"
+          ],
+          "correctIndex": 0,
+          "explanation": "Lowering churn rate compounds recurring subscription revenue."
+        },
+        {
+          "question": "What is the primary factor driving repeat customer orders in online retail?",
+          "options": [
+            "Annoying popups",
+            "Exceptional product quality, fast 24h delivery, and responsive customer service",
+            "Increasing prices randomly",
+            "Removing contact details"
+          ],
+          "correctIndex": 1,
+          "explanation": "Product excellence and fast fulfillment turn first-time buyers into loyal brand advocates."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "What does COD stand for in retail commerce?",
+        "options": [
+          "Cash On Delivery",
+          "Certificate Of Origin",
+          "Customer Order Date",
+          "Commercial Office Division"
+        ],
+        "correctIndex": 0,
+        "explanation": "Cash On Delivery allows customers to pay upon physical parcel handover."
+      },
+      {
+        "question": "What is RTO in e-commerce fulfillment?",
+        "options": [
+          "Return To Origin — failed deliveries returned to warehouse",
+          "Real Time Order",
+          "Ready To Operate",
+          "Retail Tax Overview"
+        ],
+        "correctIndex": 0,
+        "explanation": "RTO occurs when orders cannot be delivered, causing loss on shipping expenses."
+      },
+      {
+        "question": "What is a 3PL?",
+        "options": [
+          "Third-Party Logistics provider handling warehousing, picking, packing, and courier dispatch",
+          "Three Price Levels",
+          "Third Public License",
+          "Triple Product Launch"
+        ],
+        "correctIndex": 0,
+        "explanation": "3PL warehouses handle inventory storage, fulfillment, and courier dispatch."
+      },
+      {
+        "question": "Why is JAFZA considered a premier global logistics hub?",
+        "options": [
+          "It connects Jebel Ali Port directly with Al Maktoum Airport bonded corridors",
+          "It is cold",
+          "It has no taxes on farming",
+          "It charges 50% customs"
+        ],
+        "correctIndex": 0,
+        "explanation": "JAFZA connects deepwater maritime shipping directly with air cargo hubs."
+      },
+      {
+        "question": "What is a Post-Purchase Upsell?",
+        "options": [
+          "An exclusive one-click offer presented after payment details are entered before confirmation",
+          "An email sent months later",
+          "A refund request",
+          "A paper catalog"
+        ],
+        "correctIndex": 0,
+        "explanation": "Post-purchase upsells boost revenue with zero additional marketing spend."
+      },
+      {
+        "question": "What does MOQ stand for in manufacturing?",
+        "options": [
+          "Minimum Order Quantity required by factories before producing custom goods",
+          "Monthly Operating Quotas",
+          "Maximum Order Quality",
+          "Money On Queue"
+        ],
+        "correctIndex": 0,
+        "explanation": "MOQ represents the lowest batch size a factory will manufacture."
+      },
+      {
+        "question": "What is Buy Now Pay Later (BNPL) like Tabby and Tamara?",
+        "options": [
+          "Interest-free installment split payments at checkout",
+          "A high-interest bank loan",
+          "A lottery program",
+          "A discount code"
+        ],
+        "correctIndex": 0,
+        "explanation": "BNPL lifts checkout conversion by splitting totals into 4 payments."
+      },
+      {
+        "question": "How does automated WhatsApp location confirmation reduce GCC RTO rates?",
+        "options": [
+          "It captures exact GPS pins, ensuring drivers locate unnumbered villas without repeated failed attempts",
+          "It cancels all orders",
+          "It increases prices",
+          "It deletes customer numbers"
+        ],
+        "correctIndex": 0,
+        "explanation": "Precise GPS pins prevent courier delivery failures in sprawling suburbs."
+      },
+      {
+        "question": "What is Pre-Shipment Inspection (PSI)?",
+        "options": [
+          "A quality control audit at the factory floor before releasing final payment",
+          "A customs invoice",
+          "A shipping label",
+          "An insurance policy"
+        ],
+        "correctIndex": 0,
+        "explanation": "PSI protects brands against receiving defective mass-produced goods."
+      },
+      {
+        "question": "What does Dubai CommerCity offer to digital retail brands?",
+        "options": [
+          "Dedicated e-commerce licensing, bonded warehousing, and automated fulfillment infrastructure",
+          "A movie theatre",
+          "A zoo",
+          "A residential building"
+        ],
+        "correctIndex": 0,
+        "explanation": "Dubai CommerCity is the region's specialized digital commerce hub."
+      }
+    ]
+  },
+  "duration": "4 Weeks"
+}

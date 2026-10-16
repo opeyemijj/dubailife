@@ -1,0 +1,461 @@
+{
+  "id": "dc-uae-studies",
+  "institutionId": "dc",
+  "title": "UAE Studies & National Heritage",
+  "tagline": "Explore the Trucial States, maritime pearl diving, Bedouin culture, and the 1971 Union architecture.",
+  "category": "Culture",
+  "level": "secondary_diploma",
+  "duration": "4 Weeks (KHDA Outstanding Curriculum)",
+  "rating": 4.98,
+  "enrolledCount": 2150,
+  "icon": "🦅",
+  "superpower": {
+    "id": "heritage_scholar",
+    "name": "Emirati Heritage Scholar",
+    "icon": "🦅",
+    "description": "+20% social charisma, historical landmarks unlocked, plus a 20% University Scholarship Voucher!",
+    "badgeText": "DC Scholar",
+    "perkType": "general"
+  },
+  "syllabus": [
+    "Week 1: The Trucial States, Pearling Fleets & Maritime Trade of the Arabian Gulf",
+    "Week 2: Sheikh Zayed bin Sultan Al Nahyan & The Historic 1971 Union of the Emirates",
+    "Week 3: Bedouin Traditions, Falconry, Hospitality & Arabic Desert Ethos",
+    "Week 4: Modern Vision: Dubai's Economic Transformation from Creek to Global Crossroads"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "The Trucial States & The Maritime Pearling Economy",
+      "objective": "Discover the pre-oil economy of the Arabian Gulf, diving fleets (Ghawwas), and the Trucial Coast treaties.",
+      "slides": [
+        {
+          "title": "The Golden Age of Gulf Pearling",
+          "body": "Before the discovery of commercial oil, the economy of the lower Arabian Gulf was anchored in natural pearl diving (Ghaus Al Kabir). Dubai Creek served as a natural harbor for hundreds of wooden dhows (sambuks and jalboots) that sailed into the warm Gulf waters for months at a time.",
+          "bullets": [
+            "The Pearling Crew: The Nakhuda (captain), Ghawwas (diver), and Saib (rope puller who hoisted the diver to safety)",
+            "Diving Realities: Divers descended up to 20 meters holding heavy stones with only nose clips (ftam) made of turtle shell",
+            "The 1930s Collapse: The invention of Japanese cultured pearls by Kokichi Mikimoto decimated the natural pearl market, forcing economic adaptation"
+          ],
+          "codeSnippet": "Historical Pearling Hierarchy:\nRole      | Responsibility                 | Compensation Share\nNakhuda   | Ship Master & Commercial Head   | Largest Profit Share\nGhawwas   | Deep-Water Pearl Diver          | 3 Shares of Seasonal Profit\nSaib      | Lifeline Rope Puller (Surface)  | 2 Shares of Seasonal Profit\nNahham    | Sea Singer (Morale & Rhythm)    | Fixed Honorarium\nRadif     | Apprentice Boy (Ship Logistics) | Food + Apprentice Stipend",
+          "takeaway": "The collapse of the pearling industry sparked Dubai's determination to diversify into international free trade and re-export shipping."
+        },
+        {
+          "title": "The Trucial States Treaties (1820 - 1892)",
+          "body": "During the 19th century, maritime trade routes connecting British India to the West were vulnerable to conflicts in the Gulf waters. The British government signed maritime treaties with the ruling Sheikhs of the coast, establishing what became known as the Trucial States.",
+          "bullets": [
+            "General Maritime Treaty of 1820: Ended piracy and established peaceful commercial sea lanes",
+            "Perpetual Maritime Truce of 1853: Cemented permanent peace at sea among the ruling coastal Sheikhdoms",
+            "Exclusive Agreement of 1892: Britain handled foreign affairs and defense, leaving domestic governance to the ruling families"
+          ],
+          "codeSnippet": "The 7 Trucial Emirates:\n- Abu Dhabi (Al Nahyan)\n- Dubai (Al Maktoum)\n- Sharjah (Al Qasimi)\n- Ajman (Al Nuaimi)\n- Umm Al Quwain (Al Mualla)\n- Ras Al Khaimah (Al Qasimi)\n- Fujairah (Al Sharqi - recognized 1952)",
+          "takeaway": "Traditional tribal governance retained deep local autonomy, laying the foundation for modern federal unity."
+        }
+      ],
+      "lab": {
+        "title": "Historical Pearling & Maritime Artifacts Lab",
+        "brief": "Analyze historical navigation charts, pearling trade ledgers from Dubai Creek, and the impact of the 1930s cultured pearl disruption.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "What economic shock in the 1930s caused the collapse of the UAE's traditional pearl diving industry, prompting early diversification?",
+        "options": [
+          {
+            "text": "A total ban on sailing imposed by the United Nations.",
+            "correct": false,
+            "explanation": "The UN did not exist in the 1930s."
+          },
+          {
+            "text": "The commercial invention and mass production of cultured pearls in Japan, which undercut prices worldwide.",
+            "correct": true,
+            "explanation": "Japanese cultured pearls dramatically lowered global pearl prices, devastating the Arabian Gulf's traditional diving economy."
+          },
+          {
+            "text": "The complete drying up of oysters in the Arabian Gulf.",
+            "correct": false,
+            "explanation": "Oysters remained plentiful, but global market prices collapsed."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What was the role of the 'Saib' on a traditional Emirati pearling dhow?",
+          "options": [
+            "The ship's cook",
+            "The rope puller who hauled the diver back to the surface",
+            "The pearl merchant",
+            "The sea singer"
+          ],
+          "correctIndex": 1,
+          "explanation": "The Saib held the lifeline rope (Eida) and pulled the diver safely to the surface after every breath-hold dive."
+        },
+        {
+          "question": "What were the emirates historically known as prior to the formation of the United Arab Emirates in 1971?",
+          "options": [
+            "The Pirate Coast",
+            "The Trucial States",
+            "The Oman Protectorate",
+            "The Gulf Federation"
+          ],
+          "correctIndex": 1,
+          "explanation": "They were known as the Trucial States following the maritime truces signed with Britain in the 19th century."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Sheikh Zayed & The Historic 1971 Union",
+      "objective": "Study the diplomatic vision of Sheikh Zayed and Sheikh Rashid that birthed the United Arab Emirates on December 2, 1971.",
+      "slides": [
+        {
+          "title": "The Meeting at Argoub Al Sedira (1968)",
+          "body": "Following Britain's announcement in 1968 that it would withdraw all military forces from east of Suez by the end of 1971, the leaders of the Emirates faced a defining crossroads. On February 18, 1968, Sheikh Zayed bin Sultan Al Nahyan of Abu Dhabi and Sheikh Rashid bin Saeed Al Maktoum of Dubai met in a desert tent at Argoub Al Sedira.",
+          "bullets": [
+            "The Historic Accord: Agreement to merge their defense, foreign affairs, immigration, and public services",
+            "Open Invitation: Calling upon the five other Trucial Emirates and the rulers of Qatar and Bahrain to join a wider union",
+            "The Foundation: Trust, shared heritage, and a vision of uplifting people through oil revenues and education"
+          ],
+          "codeSnippet": "Chronology of the Union:\n- 18 Feb 1968: Argoub Al Sedira bilateral union between Abu Dhabi & Dubai\n- 27 Feb 1968: Supreme Council of the 9 Rulers meets in Dubai\n- 18 Jul 1971: Six Emirates sign the provisional Constitution of the UAE\n- 02 Dec 1971: The United Arab Emirates formally declared at Union House, Dubai\n- 10 Feb 1972: Ras Al Khaimah officially joins as the 7th Emirate",
+          "takeaway": "The UAE represents the only enduringly successful federal union in the modern Arab world."
+        },
+        {
+          "title": "Union House & The Constitution",
+          "body": "On December 2, 1971, at Union House (Dar Al Etihad) on Jumeirah Beach Road in Dubai, the rulers of six Emirates signed the declaration of the UAE and raised the federal flag for the first time. Sheikh Zayed was elected the first President, and Sheikh Rashid became Vice President and Prime Minister.",
+          "bullets": [
+            "Federal Supreme Council: The highest constitutional authority in the UAE, comprising the rulers of the seven Emirates",
+            "Federal National Council (FNC): 40-member parliamentary body representing the citizens of the Emirates",
+            "The UAE Flag: Designed by Abdullah Mohammed Al Maainah, featuring pan-Arab colors (Red, Green, White, Black)"
+          ],
+          "codeSnippet": "Constitutional Branches:\nFederal Supreme Council (7 Rulers)\n         │\n         ├──► President & Vice President\n         │\n         ├──► Cabinet (Council of Ministers)\n         │\n         ├──► Federal Judiciary (Supreme Court)\n         │\n         └──► Federal National Council (FNC - Consultative Body)",
+          "takeaway": "Union House in Dubai remains a national sanctuary celebrating the founding moment of the nation."
+        }
+      ],
+      "lab": {
+        "title": "Union House Archival & Constitutional Analysis Lab",
+        "brief": "Examine the original text of the 1971 UAE Provisional Constitution and analyze the balance of federal vs local emirate powers.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "On what historic date was the United Arab Emirates officially established as an independent sovereign federation at Union House in Dubai?",
+        "options": [
+          {
+            "text": "November 3, 1975",
+            "correct": false,
+            "explanation": "Incorrect date."
+          },
+          {
+            "text": "December 2, 1971",
+            "correct": true,
+            "explanation": "December 2, 1971 is UAE National Day, marking the founding of the federation."
+          },
+          {
+            "text": "January 1, 1980",
+            "correct": false,
+            "explanation": "Incorrect date."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Who was elected as the founding President of the United Arab Emirates in 1971?",
+          "options": [
+            "Sheikh Rashid bin Saeed Al Maktoum",
+            "Sheikh Zayed bin Sultan Al Nahyan",
+            "Sheikh Mohammed bin Rashid Al Maktoum",
+            "Sheikh Khalifa bin Zayed Al Nahyan"
+          ],
+          "correctIndex": 1,
+          "explanation": "Sheikh Zayed bin Sultan Al Nahyan, Ruler of Abu Dhabi, was the founding father and first President of the UAE."
+        },
+        {
+          "question": "Which emirate joined the UAE as the seventh emirate in February 1972?",
+          "options": [
+            "Qatar",
+            "Bahrain",
+            "Ras Al Khaimah",
+            "Fujairah"
+          ],
+          "correctIndex": 2,
+          "explanation": "Ras Al Khaimah formally joined the federation on February 10, 1972."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Bedouin Traditions, Falconry & Emirati Desert Ethos",
+      "objective": "Explore the cultural values of the desert: generosity (Karam), the Majlis tradition, camel husbandry, and UNESCO falconry heritage.",
+      "slides": [
+        {
+          "title": "The Majlis: Heart of Emirati Civic Society",
+          "body": "The Majlis (council) is the cornerstone of Emirati social, political, and cultural life. Rooted in tribal democracy, any citizen can enter the ruler's or elder's Majlis to discuss grievances, propose community ideas, and seek counsel over traditional Arabic coffee.",
+          "bullets": [
+            "Gahwa (Arabic Coffee): Brewed with lightly roasted beans, cardamom, and saffron; served in small handleless cups (finjan)",
+            "Etiquette (Sanad): Served from the Dallah with the left hand, poured into the finjan held in the right hand; shaking the cup signals you have had enough",
+            "UNESCO Inscription: The Majlis and Arabic coffee are inscribed on UNESCO's Representative List of Intangible Cultural Heritage of Humanity"
+          ],
+          "codeSnippet": "Gahwa & Majlis Protocol:\n1. Greet elders first with traditional nose touch (Khushm) or handshake\n2. Receive the finjan with your RIGHT hand only\n3. Do not blow on the coffee; sip slowly\n4. Never accept more than 3 cups (hospitality etiquette)\n5. Gently shake the finjan side to side to politely decline a refill",
+          "takeaway": "The Majlis embodies the accessible, consensual leadership model that continues to define UAE governance."
+        },
+        {
+          "title": "Falconry & The Noble Camel",
+          "body": "For centuries, the Bedouin relied on falcons (Shaheen and Saker) to hunt small game (bustard/houbara and hares) during winter migrations, and camels for desert transit, milk, and wool. Today, falconry and camel racing are treasured national sports supported by royal patronage.",
+          "bullets": [
+            "Abu Dhabi Falcon Hospital: World's largest avian veterinary hospital dedicated to the welfare of falcons",
+            "Camel Racing: High-tech sports featuring lightweight robotic jockeys controlled by walkie-talkies from tracking SUVs",
+            "Poetry (Nabati): Traditional vernacular desert poetry celebrating bravery, chivalry, love, and national pride"
+          ],
+          "codeSnippet": "Heritage Symbolism:\nSymbol        | Cultural Meaning\nFalcon        | Courage, sharp vision, nobility (Emblem of the UAE)\nCamel         | Endurance, patience, lifeline of the Bedouin\nGhaf Tree     | Resilience, hospitality (National Tree of the UAE)\nDate Palm     | Abundance, survival, life-giving sustenance",
+          "takeaway": "Traditional heritage is fiercely preserved in Dubai alongside cutting-edge modern technological advancement."
+        }
+      ],
+      "lab": {
+        "title": "Majlis Etiquette & Heritage Protocol Lab",
+        "brief": "Master the subtle rules of Emirati Majlis hospitality, coffee serving customs, and the cultural symbolism of the Ghaf tree.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "When being served Arabic coffee (Gahwa) in a traditional Emirati Majlis, what is the customary gesture to signal to the host that you do not want another cup?",
+        "options": [
+          {
+            "text": "Place the cup upside down on the Persian carpet.",
+            "correct": false,
+            "explanation": "Considered impolite in Majlis etiquette."
+          },
+          {
+            "text": "Gently oscillate (shake) the finjan cup from side to side between your fingers before handing it back with your right hand.",
+            "correct": true,
+            "explanation": "Shaking the finjan is the universal cultural signal that you are satisfied and finished drinking."
+          },
+          {
+            "text": "Throw the cup into the central fireplace.",
+            "correct": false,
+            "explanation": "Unacceptable behavior."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the national tree of the United Arab Emirates, symbolizing resilience and coexistence in the desert?",
+          "options": [
+            "Oak",
+            "Ghaf Tree",
+            "Eucalyptus",
+            "Pine"
+          ],
+          "correctIndex": 1,
+          "explanation": "The drought-tolerant Ghaf tree (Prosopis cineraria) is the national tree of the UAE."
+        },
+        {
+          "question": "What hand should you always use to receive and hold a finjan of Arabic coffee in the Majlis?",
+          "options": [
+            "Left hand",
+            "Right hand",
+            "Both hands together",
+            "Either hand"
+          ],
+          "correctIndex": 1,
+          "explanation": "Traditional etiquette strictly mandates using the right hand to receive and drink Arabic coffee."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "From Creek to Global Crossroads: The Modern Transformation",
+      "objective": "Trace Dubai's rapid development under Sheikh Rashid and Sheikh Mohammed: dredging the Creek, Jebel Ali Port, and Emirates Airline.",
+      "slides": [
+        {
+          "title": "Dredging Dubai Creek & Port Rashid (1950s - 1970s)",
+          "body": "In the late 1950s, Dubai Creek began silting up, threatening the passage of heavy commercial dhows. In an audacious move, Sheikh Rashid bin Saeed Al Maktoum took a massive loan to dredge and widen the Creek in 1959. The project multiplied maritime trade ten-fold and funded future infrastructure.",
+          "bullets": [
+            "Dredging of the Creek (1959-1961): Allowed ocean-going vessels up to 500 tons to berth in Deira and Bur Dubai",
+            "Al Maktoum Bridge (1963): First physical bridge uniting Deira and Bur Dubai, eliminating reliance on abra boats alone",
+            "Port Rashid (1972): Modern deep-water port with 15 berths, later expanded to 35 berths to handle booming containerized cargo"
+          ],
+          "codeSnippet": "Dubai's Visionary Infrastructure Milestones:\n- 1959: Dredging Dubai Creek (Trade expands 10x)\n- 1972: Opening of Port Rashid (Deep sea container trade)\n- 1979: Jebel Ali Port & Free Zone (World's largest man-made harbor)\n- 1979: Dubai World Trade Centre (Middle East's tallest skyscraper at the time)\n- 1985: Emirates Airline founded with two leased aircraft\n- 2009: Dubai Metro launched (World's longest automated driverless rail)",
+          "takeaway": "Building ambitious infrastructure ahead of demand has been Dubai's consistent growth engine for over six decades."
+        },
+        {
+          "title": "Jebel Ali: The World's Largest Man-Made Harbor",
+          "body": "In the late 1970s, critics questioned why Dubai needed another mega-port 40 kilometers outside the city center. Sheikh Rashid persevered, constructing Jebel Ali Port, which opened in 1979. Accompanied by JAFZA (Jebel Ali Free Zone) in 1985, it grew into the maritime nexus connecting East Asia, the Middle East, and Africa.",
+          "bullets": [
+            "Engineering Wonder: The largest man-made harbor ever constructed on Earth",
+            "JAFZA Ecosystem: Home to over 9,500 companies accounting for significant non-oil Dubai trade",
+            "Emirates Airline: Launched in 1985 by Sheikh Mohammed bin Rashid Al Maktoum, turning Dubai into the primary global aviation hub"
+          ],
+          "codeSnippet": "The Dubai Economic Formula:\n[Infrastructure Built Ahead of Demand] \n         +\n[Open Skies & Deregulated Free Zones]\n         +\n[Zero Income Tax & 100% Capital Repatriation]\n         +\n[Safety, Law & World-Class Quality of Life]\n         =\n[Global Capital & Talent Magnet]",
+          "takeaway": "Dubai's modern skyline is the direct result of deliberate long-term visionary infrastructure planning."
+        }
+      ],
+      "lab": {
+        "title": "Dubai Creek to Jebel Ali Economic Case Lab",
+        "brief": "Trace the economic multiplier effects of dredging Dubai Creek and compare the early Jebel Ali risk assessment with its 21st-century output.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "What critical infrastructure project in 1959 enabled Dubai Creek to accommodate larger ocean dhows and catalyzed modern merchant trade?",
+        "options": [
+          {
+            "text": "Building the Palm Jumeirah monorail",
+            "correct": false,
+            "explanation": "Built decades later in 2009."
+          },
+          {
+            "text": "The dredging and widening of Dubai Creek under Sheikh Rashid bin Saeed Al Maktoum",
+            "correct": true,
+            "explanation": "Dredging the Creek enabled 500-ton vessels to navigate and dock, multiplying merchant trade exponentially."
+          },
+          {
+            "text": "Constructing the Burj Khalifa",
+            "correct": false,
+            "explanation": "The Burj Khalifa opened in 2010."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What landmark project opened in 1979 as the world's largest man-made harbor?",
+          "options": [
+            "Port Rashid",
+            "Jebel Ali Port",
+            "Dubai Creek Marina",
+            "Hamriya Port"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jebel Ali Port opened in 1979 and remains the world's largest man-made harbor."
+        },
+        {
+          "question": "In what year was the national carrier Emirates Airline founded under the leadership of Sheikh Mohammed bin Rashid Al Maktoum?",
+          "options": [
+            "1971",
+            "1985",
+            "1995",
+            "2005"
+          ],
+          "correctIndex": 1,
+          "explanation": "Emirates Airline was founded in 1985 with two leased aircraft from Pakistan International Airlines."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "On what date was the United Arab Emirates formally proclaimed as a sovereign nation?",
+        "options": [
+          "2 December 1971",
+          "18 February 1968",
+          "10 February 1972",
+          "1 January 1970"
+        ],
+        "correctIndex": 0,
+        "explanation": "2 December 1971 is UAE National Day, marking the founding of the federation at Union House."
+      },
+      {
+        "question": "Who was the founding father and first President of the United Arab Emirates?",
+        "options": [
+          "Sheikh Rashid bin Saeed Al Maktoum",
+          "Sheikh Zayed bin Sultan Al Nahyan",
+          "Sheikh Shakhbout bin Sultan",
+          "Sheikh Mohammed bin Rashid Al Maktoum"
+        ],
+        "correctIndex": 1,
+        "explanation": "Sheikh Zayed bin Sultan Al Nahyan was the founding father and first President of the UAE."
+      },
+      {
+        "question": "What traditional industry was the economic lifeblood of the Arabian Gulf before commercial oil and cultured pearls?",
+        "options": [
+          "Silk spinning",
+          "Natural pearl diving",
+          "Automobile assembly",
+          "Coal mining"
+        ],
+        "correctIndex": 1,
+        "explanation": "Natural pearl diving formed the core of the regional maritime economy for centuries."
+      },
+      {
+        "question": "What is the traditional name for the rope puller who hauled pearl divers back to the surface?",
+        "options": [
+          "Nakhuda",
+          "Ghawwas",
+          "Saib",
+          "Nahham"
+        ],
+        "correctIndex": 2,
+        "explanation": "The Saib held the diver's lifeline rope and pulled them to the surface after every dive."
+      },
+      {
+        "question": "Which emirate joined the UAE as the seventh emirate in February 1972?",
+        "options": [
+          "Qatar",
+          "Bahrain",
+          "Ras Al Khaimah",
+          "Muscat"
+        ],
+        "correctIndex": 2,
+        "explanation": "Ras Al Khaimah joined the federation on 10 February 1972."
+      },
+      {
+        "question": "What is the national tree of the UAE, celebrated for its desert resilience and drought tolerance?",
+        "options": [
+          "Date Palm",
+          "Ghaf Tree",
+          "Acacia",
+          "Olive Tree"
+        ],
+        "correctIndex": 1,
+        "explanation": "The Ghaf tree is the national tree of the UAE, symbolizing endurance and peace."
+      },
+      {
+        "question": "What hand must always be used to receive and drink Arabic coffee (Gahwa) in the Majlis?",
+        "options": [
+          "Left hand",
+          "Right hand",
+          "Either hand",
+          "Both hands"
+        ],
+        "correctIndex": 1,
+        "explanation": "Cultural etiquette requires using the right hand to receive, hold, and drink coffee in the Majlis."
+      },
+      {
+        "question": "What historic 1959 civil engineering project by Sheikh Rashid transformed Dubai Creek into a booming merchant trade hub?",
+        "options": [
+          "Dredging and deepening the Creek",
+          "Filling in the Creek with sand",
+          "Building a hydroelectric dam",
+          "Closing the Creek to shipping"
+        ],
+        "correctIndex": 0,
+        "explanation": "Dredging Dubai Creek allowed modern 500-ton cargo ships to enter and trade."
+      },
+      {
+        "question": "What world-famous aviation carrier was founded in Dubai in 1985 with just two aircraft?",
+        "options": [
+          "Gulf Air",
+          "Emirates Airline",
+          "Etihad Airways",
+          "Flydubai"
+        ],
+        "correctIndex": 1,
+        "explanation": "Emirates Airline was founded in 1985 under the leadership of Sheikh Mohammed bin Rashid Al Maktoum."
+      },
+      {
+        "question": "What is the world's largest man-made harbor, opened by Dubai in 1979?",
+        "options": [
+          "Port of Rotterdam",
+          "Jebel Ali Port",
+          "Port Rashid",
+          "Shanghai Port"
+        ],
+        "correctIndex": 1,
+        "explanation": "Jebel Ali Port is the largest man-made harbor in the world."
+      }
+    ]
+  },
+  "tuitionFee": 1600
+}

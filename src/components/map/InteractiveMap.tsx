@@ -56,6 +56,7 @@ const isFloorTileType = (type?: string) =>
   !!type && (type === 'island-plain' || type === 'two-plains-tile' || type.includes('floor-tile') || type.includes('plot'));
 
 const OVERLAY_TYPES = new Set([
+  'academic-tile',
   'game-tile',
   'floor-ad',
   'floor-mosaic',
@@ -96,6 +97,7 @@ const isOverlayType = (type?: string) =>
 
 export const getEntityCategoryInfo = (entity: any) => {
   const type = (entity?.type || '').toLowerCase();
+  if (type === 'academic-tile') return { icon: '🎓', category: 'Academic City', key: 'academics', color: 'from-amber-500 to-purple-600', badgeBg: 'bg-purple-900/60 border-purple-500/40 text-purple-200' };
   if (type === 'game-tile') return { icon: '🎮', category: 'Game City', key: 'games', color: 'from-fuchsia-500 to-indigo-600', badgeBg: 'bg-indigo-900/60 border-indigo-500/40 text-indigo-200' };
   const id = (entity?.id || '').toLowerCase();
   const name = (entity?.name || '').toLowerCase();
@@ -510,6 +512,12 @@ export function InteractiveMap({
       setSelectedDestination(defaultDest);
       setSelectedCabinClass('silver');
       setMetroModalOpen(true);
+      return;
+    }
+    // Academic City: each campus tile opens its hub.
+    if (loc.type === 'academic-tile') {
+      gameAudio.playClickSound();
+      router.push(loc.campus ? `/academics/${loc.campus}` : '/academics');
       return;
     }
     // Game City: each tile opens its game's room.

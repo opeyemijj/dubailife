@@ -1,0 +1,582 @@
+{
+  "id": "onebrain-crypto",
+  "institutionId": "onebrain",
+  "title": "Crypto, Web3 & VARA Compliance",
+  "tagline": "Blockchain Architecture, Smart Contracts, DeFi, and Dubai's Global Regulatory Framework.",
+  "category": "Blockchain & Web3",
+  "icon": "🪙",
+  "durationWeeks": 4,
+  "level": "accelerator",
+  "tuitionFee": 15000,
+  "superpower": {
+    "id": "crypto_yield",
+    "name": "Crypto Staking & VARA Pass",
+    "icon": "🪙",
+    "description": "Earn 3% weekly staking yields on wallet balances stored in the Dubai Digital Vault + zero gas fees.",
+    "badgeText": "Web3 Certified",
+    "perkType": "crypto_yield"
+  },
+  "syllabus": {
+    "overview": "A definitive 4-week professional masterclass on decentralized finance, smart contract security, tokenomics, liquidity provision, and Dubai's regulatory architecture under the Virtual Assets Regulatory Authority (VARA).",
+    "prerequisites": "Familiarity with digital assets and basic financial concepts.",
+    "learningOutcomes": [
+      "Audit and deploy Solidity smart contracts adhering to OpenZeppelin security standards",
+      "Navigate Dubai VARA license categories: Broker-Dealer, Exchange, Custody & VA Management",
+      "Implement AMM liquidity pools, automated yield farming, and impermanent loss hedging",
+      "Design institutional-grade cold-storage custody architectures"
+    ],
+    "weeklyBreakdown": [
+      {
+        "week": 1,
+        "topic": "Blockchain Primitives, Cryptographic Consensus & Smart Contracts",
+        "hours": 14
+      },
+      {
+        "week": 2,
+        "topic": "Dubai VARA Regulatory Rulebooks & Legal Compliance",
+        "hours": 12
+      },
+      {
+        "week": 3,
+        "topic": "DeFi Protocols, AMM Math & Yield Architecture",
+        "hours": 16
+      },
+      {
+        "week": 4,
+        "topic": "Institutional Custody, Smart Contract Auditing & Capstone Launch",
+        "hours": 18
+      }
+    ]
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Blockchain Primitives, Cryptographic Consensus & Smart Contracts",
+      "objective": "Master distributed ledger mechanics, EVM gas execution, and writing secure Solidity contracts.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Cryptographic Hashing & Immutability",
+          "content": "Blockchains maintain tamper-proof ledgers through SHA-256 / keccak256 cryptographic hashing. Each block header contains the hash of the previous block, creating an unbreakable chain. Transactions once confirmed across decentralized validator nodes cannot be revised or reversed.",
+          "codeSnippet": "function transfer(address to, uint256 amount) external returns (bool) {\n    require(balanceOf[msg.sender] >= amount, 'Insufficient balance');\n    balanceOf[msg.sender] -= amount;\n    balanceOf[to] += amount;\n    emit Transfer(msg.sender, to, amount);\n    return true;\n}",
+          "keyTakeaway": "Cryptographic commitment guarantees immutability without trusting central intermediaries."
+        },
+        {
+          "title": "EVM Gas Mechanics & Reentrancy Vulnerabilities",
+          "content": "Every opcode on the Ethereum Virtual Machine costs computational 'gas'. The infamous DAO hack was caused by a Reentrancy bug: where an external contract calls back into the caller before state balances are updated. Always employ the Checks-Effects-Interactions pattern.",
+          "codeSnippet": "// Checks-Effects-Interactions Pattern:\nfunction withdraw(uint256 amount) external {\n    require(balances[msg.sender] >= amount); // Checks\n    balances[msg.sender] -= amount;         // Effects\n    (bool ok, ) = msg.sender.call{value: amount}(''); // Interactions\n    require(ok);\n}",
+          "keyTakeaway": "Update internal state balances BEFORE calling external addresses."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 1: Deploy and Exploit a Reentrancy Contract in Hardhat",
+        "brief": "Deploy an insecure vault contract on a local testnet, execute a simulated drain attack, and fix it using OpenZeppelin's ReentrancyGuard.",
+        "deliverable": "Solidity contract code and test suite passing with zero security vulnerabilities.",
+        "proTip": "Never use tx.origin for authentication checks; always rely on msg.sender."
+      },
+      "caseStudy": {
+        "scenario": "A Dubai Web3 startup plans to launch a staking vault without auditing its unstake() function. A hacker executes an external fallback loop and drains 1,000 ETH. What pattern was violated?",
+        "options": [
+          {
+            "text": "Checks-Effects-Interactions",
+            "correct": true,
+            "explanation": "Reentrancy occurs when external transfers are invoked before deducting the user's recorded balance."
+          },
+          {
+            "text": "Proof of Work",
+            "correct": false,
+            "explanation": "PoW is a consensus mechanism, unrelated to contract logic vulnerabilities."
+          },
+          {
+            "text": "VARA Registration",
+            "correct": false,
+            "explanation": "VARA is a regulatory body, not a code pattern."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the Checks-Effects-Interactions pattern in Solidity?",
+          "options": [
+            "A graphic design pattern",
+            "Enforcing conditional checks, mutating internal contract state, and only then calling external addresses",
+            "Checking your phone during transactions",
+            "A tax formula"
+          ],
+          "correctIndex": 1,
+          "explanation": "Checks-Effects-Interactions prevents reentrancy by resolving state mutations before handing execution control to external code."
+        },
+        {
+          "question": "Why is tx.origin dangerous for authorization in smart contracts?",
+          "options": [
+            "It runs out of gas",
+            "Phishing contracts can trick intermediate users into proxying unauthorized transactions",
+            "It only works on Bitcoin",
+            "It has high latency"
+          ],
+          "correctIndex": 1,
+          "explanation": "tx.origin refers to the original transaction signer, allowing attacker contracts to disguise unauthorized calls."
+        },
+        {
+          "question": "What is the difference between custodial and non-custodial wallets?",
+          "options": [
+            "Non-custodial means user holds private keys; custodial means a 3rd party institution holds them",
+            "Custodial has no passwords",
+            "Non-custodial only stores Bitcoin",
+            "There is no difference"
+          ],
+          "correctIndex": 0,
+          "explanation": "Non-custodial gives sole cryptographic ownership to the holder ('Not your keys, not your coins')."
+        },
+        {
+          "question": "What is Proof of Stake (PoS)?",
+          "options": [
+            "Burning coal for power",
+            "Consensus where validators bond capital (tokens) to secure the network rather than energy-intensive mining",
+            "A banking paper form",
+            "A legal certificate"
+          ],
+          "correctIndex": 1,
+          "explanation": "PoS secures blockchains using capital incentives and bonded validator stake."
+        },
+        {
+          "question": "What is an ERC-20 token standard?",
+          "options": [
+            "A passport standard",
+            "A standardized smart contract interface for fungible tokens on EVM networks",
+            "A government identity card",
+            "A hardware device"
+          ],
+          "correctIndex": 1,
+          "explanation": "ERC-20 defines the universal interface for fungible asset transfers, approvals, and balance queries."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Dubai VARA Regulatory Rulebooks & Legal Compliance",
+      "objective": "Understand Law No. (4) of 2022, Virtual Asset Regulatory Authority licensing, AML/CFT screening, and mandatory cold storage ratios.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "VARA Law No. (4) of 2022 & Scope",
+          "content": "VARA regulates all virtual asset activities across Dubai mainland and free zones (excluding DIFC which is overseen by DFSA). Operating virtual asset exchanges, custody services, broker-dealers, or advisory practices requires explicit licensing.",
+          "codeSnippet": "// VARA Compliance Checklist:\n- Mandatory AML/KYC on-chain analytics (Chainalysis/Elliptic)\n- Minimum Capital Adequacy Requirement\n- 85%+ mandatory cold storage ratio for custodial platforms\n- Clear consumer risk disclosures in marketing",
+          "keyTakeaway": "Dubai is the world's first jurisdiction with a purpose-built, dedicated virtual assets regulatory authority."
+        },
+        {
+          "title": "VA Marketing Regulations & Penalties",
+          "content": "Unlicensed public marketing of crypto tokens or trading services in Dubai carries administrative fines up to AED 10,000,000. All promotional materials must carry standardized risk warnings informing consumers that virtual assets are volatile and not government insured.",
+          "codeSnippet": "Notice: 'Virtual assets are subject to market volatility. Past performance is no guarantee of future returns.'",
+          "keyTakeaway": "Compliance is the structural moat separating institutional firms from illegal schemes."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 2: Draft a VARA License Application & Custody Policy",
+        "brief": "Prepare a simulated VARA Broker-Dealer Compliance Dossier, including cold-storage custody protocols, transaction monitoring thresholds, and incident response guidelines.",
+        "deliverable": "A completed 5-page compliance framework complying with the VARA Custody Rulebook.",
+        "proTip": "Institutional custodians must separate customer funds into segregated omnibus on-chain accounts."
+      },
+      "caseStudy": {
+        "scenario": "A crypto firm in Business Bay launches outdoor billboard ads promising 'Guaranteed 25% returns on crypto deposits' without VARA authorization. What actions does the regulator take?",
+        "options": [
+          {
+            "text": "Nothing, billboards are unregulated",
+            "correct": false,
+            "explanation": "All commercial advertising in Dubai is strictly monitored."
+          },
+          {
+            "text": "Issues immediate cease-and-desist orders, imposes heavy fines up to AED 10M, and suspends commercial trade license",
+            "correct": true,
+            "explanation": "VARA strictly interdicts misleading public promotions and unauthorized marketing."
+          },
+          {
+            "text": "Congratulates them on marketing",
+            "correct": false,
+            "explanation": "False return promises violate consumer protection statutes."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Which regulatory body governs virtual asset activities across Dubai (excluding DIFC)?",
+          "options": [
+            "Dubai Police",
+            "Virtual Assets Regulatory Authority (VARA)",
+            "RTA",
+            "Dubai Health Authority"
+          ],
+          "correctIndex": 1,
+          "explanation": "VARA is Dubai's customized standalone regulator for virtual assets."
+        },
+        {
+          "question": "Which financial free zone operates under DFSA rather than VARA?",
+          "options": [
+            "DIFC (Dubai International Financial Centre)",
+            "Dubai Media City",
+            "Dubai Internet City",
+            "Business Bay"
+          ],
+          "correctIndex": 0,
+          "explanation": "DIFC operates its own independent common law jurisdiction under the DFSA."
+        },
+        {
+          "question": "What minimum cold storage ratio does VARA mandate for institutional custodial platforms?",
+          "options": [
+            "0%",
+            "At least 85% of client virtual assets in cold storage",
+            "10%",
+            "50%"
+          ],
+          "correctIndex": 1,
+          "explanation": "VARA requires at least 85% of client assets to be secured in air-gapped cold storage."
+        },
+        {
+          "question": "What is mandatory on all public virtual asset marketing materials in Dubai?",
+          "options": [
+            "A discount voucher",
+            "Prominent standardized risk disclosures regarding volatility and capital risk",
+            "Free coins",
+            "A picture of a skyscraper"
+          ],
+          "correctIndex": 1,
+          "explanation": "VARA enforces transparent consumer warnings on all promotional channels."
+        },
+        {
+          "question": "What tool is standardly required for Virtual Asset Service Providers to detect illicit transaction flows?",
+          "options": [
+            "Excel spreadsheets",
+            "Automated blockchain analytics & transaction monitoring (e.g. Chainalysis, Elliptic)",
+            "Paper receipts",
+            "Phone calls"
+          ],
+          "correctIndex": 1,
+          "explanation": "Blockchain monitoring tools screen addresses against sanctions and terrorist financing lists."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "DeFi Protocols, AMM Math & Yield Architecture",
+      "objective": "Understand Automated Market Makers (x * y = k), liquidity pools, slippage curves, and impermanent loss hedging.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Automated Market Makers & Constant Product Formula",
+          "content": "Decentralized exchanges like Uniswap replace traditional order books with liquidity pools using the constant product invariant: x * y = k. When traders buy asset X, the reserve of X decreases and Y increases, mathematically driving up the relative price along the bonding curve.",
+          "codeSnippet": "// Constant Product Invariant:\n// (reserveX - amountOut) * (reserveY + amountIn) = k\nuint256 amountOut = (reserveOut * amountInWithFee) / ((reserveIn * 1000) + amountInWithFee);",
+          "keyTakeaway": "Pricing is deterministic and mathematically enforced by smart contract pool ratios."
+        },
+        {
+          "title": "Impermanent Loss & Dynamic Hedging",
+          "content": "Impermanent Loss occurs when the relative price of pooled assets diverges from their initial deposit ratio. If ETH doubles against USD, arbitrageurs drain the higher-value asset, leaving the LP holding more USD and less ETH compared to pure HODLing. Hedging via short perpetual futures neutralizes divergence risk.",
+          "codeSnippet": "IL Formula:\nIL = (2 * sqrt(priceRatio)) / (1 + priceRatio) - 1;",
+          "keyTakeaway": "Trading fee yields must exceed calculated impermanent loss for liquidity provision to be net profitable."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 3: Build an Arbitrage Bot & Liquidity Yield Calculator",
+        "brief": "Build a Python script that calculates real-time slippage, optimal swap routes across DEX pools, and estimates annual percentage yield net of impermanent loss.",
+        "deliverable": "A working Python mathematical simulation model testing liquidity scenarios.",
+        "proTip": "Concentrated liquidity pools (Uniswap V3) multiply capital efficiency up to 4000x within defined price ticks."
+      },
+      "caseStudy": {
+        "scenario": "An LP deposits $100,000 into a 50/50 BTC/USDC pool. BTC rallies by 300%. The LP withdraws and notices they would have had $140,000 holding pure BTC. What explains this shortfall?",
+        "options": [
+          {
+            "text": "The pool stole their funds",
+            "correct": false,
+            "explanation": "The contract executed its mathematical formula correctly."
+          },
+          {
+            "text": "Impermanent loss caused by price divergence between BTC and USDC",
+            "correct": true,
+            "explanation": "As BTC appreciates, the AMM automatically sells appreciating BTC for stable USDC along the curve."
+          },
+          {
+            "text": "High network gas fees",
+            "correct": false,
+            "explanation": "Gas fees are paid per transaction, not as a percentage of pool divergence."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the core mathematical formula governing Uniswap V2 liquidity pools?",
+          "options": [
+            "a + b = c",
+            "x * y = k (Constant Product)",
+            "E = mc^2",
+            "Price = Supply / Demand"
+          ],
+          "correctIndex": 1,
+          "explanation": "x * y = k guarantees that the product of pool token reserves remains constant across swaps."
+        },
+        {
+          "question": "What causes Impermanent Loss for liquidity providers?",
+          "options": [
+            "The computer turning off",
+            "Price ratio divergence between the two paired assets in the pool",
+            "Paying gas fees",
+            "Network upgrades"
+          ],
+          "correctIndex": 1,
+          "explanation": "Impermanent loss measures the opportunity cost of LPing vs holding tokens in volatile price swings."
+        },
+        {
+          "question": "What is Slippage in decentralized token swaps?",
+          "options": [
+            "Dropping your phone",
+            "The difference between expected execution price and actual realized trade price due to pool depth",
+            "Transaction cancellation",
+            "A bonus discount"
+          ],
+          "correctIndex": 1,
+          "explanation": "Slippage occurs when order size impacts pool reserves relative to liquidity depth."
+        },
+        {
+          "question": "What does 'Concentrated Liquidity' mean in modern AMMs?",
+          "options": [
+            "Liquidity provided only by banks",
+            "Capital allocated within custom defined price ranges rather than from 0 to infinity",
+            "Only holding one token",
+            "Instant withdrawal"
+          ],
+          "correctIndex": 1,
+          "explanation": "Concentrated liquidity concentrates capital where trades actually occur, maximizing fee yields."
+        },
+        {
+          "question": "What is Flash Loan in DeFi?",
+          "options": [
+            "A loan that takes 5 days",
+            "An uncollateralized loan that must be borrowed and repaid within the exact same atomic blockchain transaction",
+            "A bank mortgage",
+            "A credit card"
+          ],
+          "correctIndex": 1,
+          "explanation": "Flash loans allow zero-collateral borrowing provided the funds are returned before the block transaction finishes."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Institutional Custody, Smart Contract Auditing & Capstone Launch",
+      "objective": "Execute comprehensive security audits, static analysis with Slither, MPC multi-sig custody, and final capstone deployment.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Multi-Party Computation (MPC) vs Multi-Sig",
+          "content": "Traditional multi-sig requires on-chain transactions signed by multiple private keys (costly gas and exposed threshold). Institutional custodians in Dubai utilize MPC (Shamir's Secret Sharing & threshold signatures): private keys are split into cryptographic shards distributed across isolated cloud enclaves, signing transactions off-chain without ever assembling the full key in memory.",
+          "codeSnippet": "// MPC Threshold: 3-of-5 key shard signing ceremony\n// Key material is never consolidated in plaintext at any point in time.",
+          "keyTakeaway": "MPC eliminates single points of failure for enterprise digital asset custody."
+        },
+        {
+          "title": "Static Analysis & Smart Contract Audit Playbook",
+          "content": "Prior to deploying contracts holding millions of dirhams, audits must combine automated static analysis (Slither, Mythril) with formal verification and manual line-by-line peer review. Top vulnerabilities audited include reentrancy, integer overflow, oracle manipulation, and centralized owner backdoors.",
+          "codeSnippet": "$ slither . --filter-paths 'node_modules' --print human-summary",
+          "keyTakeaway": "No contract should ever go to mainnet without passing static analysis and third-party independent audits."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 4: Capstone — Deploy an Institutional VARA-Compliant Staking Protocol",
+        "brief": "Build, audit, and deploy a multi-sig staking protocol with automated reward distributions, comprehensive unit tests, and a VARA risk disclosure portal.",
+        "deliverable": "Mainnet-ready audited Solidity codebase, Slither security report, and deployment script.",
+        "proTip": "Always implement emergency pause mechanisms (Pausable) controlled by a multi-sig with time-lock delays."
+      },
+      "caseStudy": {
+        "scenario": "A lending protocol relies on a single DEX pool spot price to calculate loan liquidation thresholds. An attacker borrows 50M USDC via flash loan, distorts the DEX price, and liquidates 20M of collateral at a discount. What was the security flaw?",
+        "options": [
+          {
+            "text": "Slow internet connection",
+            "correct": false,
+            "explanation": "Blockchain blocks confirm deterministically."
+          },
+          {
+            "text": "Reliance on a single-block manipulable spot price oracle instead of a Time-Weighted Average Price (TWAP) or Chainlink decentralized oracle",
+            "correct": true,
+            "explanation": "Flash loans can manipulate spot prices within a single block. Robust systems must use TWAP or decentralized oracles."
+          },
+          {
+            "text": "Having too many users",
+            "correct": false,
+            "explanation": "User count does not introduce oracle manipulation vectors."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is a Flash Loan Oracle Attack?",
+          "options": [
+            "Hacking the power grid",
+            "Manipulating a spot price pool with massive borrowed capital to exploit protocol liquidation or borrow logic within a single transaction",
+            "Stealing a physical server",
+            "Deleting an email"
+          ],
+          "correctIndex": 1,
+          "explanation": "Spot prices on single pools can be temporarily skewed within one transaction; decentralized oracles prevent this."
+        },
+        {
+          "question": "What is MPC (Multi-Party Computation) in institutional crypto custody?",
+          "options": [
+            "A video game controller",
+            "Splitting cryptographic keys into mathematical shares across separate secure enclaves so no single party holds the full key",
+            "A government computer",
+            "A paper notebook"
+          ],
+          "correctIndex": 1,
+          "explanation": "MPC distributes key shards so no single server or person ever possesses the master private key."
+        },
+        {
+          "question": "What is a Time-Lock in decentralized governance?",
+          "options": [
+            "An alarm clock",
+            "A mandatory delay (e.g. 48 hours) between a proposal passing and its code execution, allowing users to withdraw funds if malicious",
+            "A freeze on withdrawals forever",
+            "A bank holiday"
+          ],
+          "correctIndex": 1,
+          "explanation": "Timelocks protect users against rogue governance upgrades by providing advance notice before code execution."
+        },
+        {
+          "question": "What is Slither in smart contract engineering?",
+          "options": [
+            "A video game",
+            "A static analysis framework for Solidity that detects common security vulnerabilities and code flaws",
+            "A Python package for snake research",
+            "A cryptocurrency coin"
+          ],
+          "correctIndex": 1,
+          "explanation": "Slither inspects ASTs to flag security vulnerabilities and code smells automatically."
+        },
+        {
+          "question": "Under VARA regulations, how must customer virtual assets be maintained by licensed exchanges?",
+          "options": [
+            "Mixed with company operating funds",
+            "Segregated in dedicated accounts and never commingled with the company's operational balance sheet",
+            "Loaned out to founders",
+            "Stored in cash in a suitcase"
+          ],
+          "correctIndex": 1,
+          "explanation": "VARA strictly mandates the segregation of client assets to protect consumers from corporate insolvency."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "What is the primary role of Keccak-256 in Ethereum?",
+        "options": [
+          "Compiling JavaScript",
+          "Cryptographic hashing of block headers, transactions, and state trees",
+          "Calculating taxes",
+          "Managing Wi-Fi"
+        ],
+        "correctIndex": 1,
+        "explanation": "Keccak-256 is the core cryptographic hash function underpinning EVM state and signatures."
+      },
+      {
+        "question": "What is Reentrancy in smart contracts?",
+        "options": [
+          "Rebooting a computer",
+          "An exploit where an external contract calls back into the calling contract before state balances are updated",
+          "Sending duplicate emails",
+          "Mining tokens twice"
+        ],
+        "correctIndex": 1,
+        "explanation": "Reentrancy drains funds by re-executing withdrawal paths before balances are decremented."
+      },
+      {
+        "question": "What is the constant product formula used in standard AMMs?",
+        "options": [
+          "x + y = k",
+          "x * y = k",
+          "x / y = k",
+          "x ^ y = k"
+        ],
+        "correctIndex": 1,
+        "explanation": "x * y = k maintains pricing balance between pooled asset pairs."
+      },
+      {
+        "question": "Under Dubai Law No. (4) of 2022, which body regulates virtual assets across Dubai mainland?",
+        "options": [
+          "Dubai Municipality",
+          "VARA",
+          "Dubai Police",
+          "RTA"
+        ],
+        "correctIndex": 1,
+        "explanation": "VARA is the dedicated virtual assets regulator in Dubai."
+      },
+      {
+        "question": "What is Impermanent Loss?",
+        "options": [
+          "Losing your phone",
+          "The difference in value between holding assets vs depositing them into an AMM liquidity pool during price divergence",
+          "A gas fee",
+          "A bank penalty"
+        ],
+        "correctIndex": 1,
+        "explanation": "Price divergence causes AMM balances to hold less value than pure holding would yield."
+      },
+      {
+        "question": "What does MPC (Multi-Party Computation) protect against?",
+        "options": [
+          "Slow internet",
+          "Single points of failure by distributing private key shards across separate independent parties",
+          "Computer viruses",
+          "Hardware crashes"
+        ],
+        "correctIndex": 1,
+        "explanation": "MPC eliminates single master key vulnerabilities."
+      },
+      {
+        "question": "Why is a TWAP (Time-Weighted Average Price) oracle safer than a single spot price?",
+        "options": [
+          "It uses no gas",
+          "It calculates prices averaged across multiple blocks, making single-transaction flash loan manipulation economically infeasible",
+          "It is shorter to code",
+          "It is backed by gold"
+        ],
+        "correctIndex": 1,
+        "explanation": "TWAP dampens instantaneous volatility and defeats flash loan price attacks."
+      },
+      {
+        "question": "What is an ERC-721 token?",
+        "options": [
+          "A fungible dollar",
+          "The standard for Non-Fungible Tokens (unique digital assets and ownership deeds)",
+          "A cryptocurrency exchange",
+          "An operating system"
+        ],
+        "correctIndex": 1,
+        "explanation": "ERC-721 represents non-fungible, unique cryptographic assets."
+      },
+      {
+        "question": "What penalty can VARA impose for unauthorized public marketing of virtual assets in Dubai?",
+        "options": [
+          "A free meal",
+          "Fines up to AED 10 Million and commercial license suspension",
+          "A warning email only",
+          "Nothing"
+        ],
+        "correctIndex": 1,
+        "explanation": "VARA enforces rigorous advertising compliance with penalties up to AED 10M."
+      },
+      {
+        "question": "What is the Checks-Effects-Interactions pattern?",
+        "options": [
+          "A design system",
+          "Verifying conditions, updating contract state, and finally calling external contracts to prevent reentrancy",
+          "Writing code backwards",
+          "A financial audit"
+        ],
+        "correctIndex": 1,
+        "explanation": "Checks-Effects-Interactions is the foundational defense against reentrancy exploits."
+      }
+    ]
+  },
+  "duration": "4 Weeks"
+}

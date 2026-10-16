@@ -1,0 +1,582 @@
+{
+  "id": "onebrain-marketing",
+  "institutionId": "onebrain",
+  "title": "Performance Marketing & Viral Growth",
+  "tagline": "Paid Meta/TikTok Ads, Creative Hook Strategy, Unit Economics, and Dubai Influencer PR.",
+  "category": "Digital Marketing",
+  "icon": "📣",
+  "durationWeeks": 4,
+  "level": "accelerator",
+  "tuitionFee": 15000,
+  "superpower": {
+    "id": "ad_multiplier",
+    "name": "Viral Reach Multiplier",
+    "icon": "📣",
+    "description": "Boosts billboard impressions and customer foot traffic to owned venues by +25%.",
+    "badgeText": "Growth Certified",
+    "perkType": "ad_multiplier"
+  },
+  "syllabus": {
+    "overview": "A high-octane 4-week growth hacking accelerator. Master the 3-second short-form hook formula, Meta Advantage+ and TikTok ad buying architectures, blended CAC/LTV unit economics, and UAE National Media Council (NMC) influencer legal compliance.",
+    "prerequisites": "Basic social media literacy and familiarity with digital business.",
+    "learningOutcomes": [
+      "Engineer 3-second viral hooks producing >40% hook rates across TikTok and Instagram Reels",
+      "Deploy Conversion API (CAPI) server-side tracking bypassing iOS privacy degradation",
+      "Model customer acquisition unit economics ensuring LTV is at least 3x CAC",
+      "Execute licensed influencer campaigns adhering to UAE advertising regulations"
+    ],
+    "weeklyBreakdown": [
+      {
+        "week": 1,
+        "topic": "The 3-Second Hook & Creative Strategy Architecture",
+        "hours": 12
+      },
+      {
+        "week": 2,
+        "topic": "Paid Media Buying on Meta & TikTok (Advantage+ & CAPI)",
+        "hours": 14
+      },
+      {
+        "week": 3,
+        "topic": "Unit Economics, Funnel Conversion Rate Optimization & LTV",
+        "hours": 15
+      },
+      {
+        "week": 4,
+        "topic": "Dubai Influencer PR, UAE Media Council Rules & Capstone Campaign",
+        "hours": 18
+      }
+    ]
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "title": "The 3-Second Hook & Creative Strategy Architecture",
+      "objective": "Master visual pattern interrupts, psychological curiosity gaps, and short-form retention curves.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "The 3-Second Drop-off Reality",
+          "content": "On TikTok and Reels, over 80% of audience drop-off happens within the first 3 seconds. The algorithm ranks content by hook retention rate and completion percentage. Creative is the new targeting: the visual and auditory hook dictates which audience cohort the platform's AI matches your ad to.",
+          "codeSnippet": "// The Viral Hook Formula:\n// [Visual Pattern Interrupt] + [Provocative Polarizing Statement] + [Curiosity Gap Open Loop]",
+          "keyTakeaway": "Test 10 hook variations for every single offer body; hook rate determines ad auction win rate."
+        },
+        {
+          "title": "User-Generated Content (UGC) vs High-Gloss Commercials",
+          "content": "Studio commercials look like advertisements and are swiped away in 0.5 seconds. Authentic UGC recorded on an iPhone with natural ambient light and conversational pacing consistently out-converts $50,000 studio productions by 300% to 500% in Dubai's direct-to-consumer landscape.",
+          "codeSnippet": "UGC Best Practice: Native in-app captions, jump cuts every 2.5 seconds, direct eye contact.",
+          "keyTakeaway": "Make ads that look like organic TikToks, not television commercials."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 1: Produce 5 Hook Variations for a Dubai Luxury Concept",
+        "brief": "Script, record, and storyboard 5 distinct hook angles (FOMO, Counter-Intuitive, Dubai Lifestyle, Cost Contrast, Secret Reveal).",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Measure blended metrics rather than isolated vanity stats."
+      },
+      "caseStudy": {
+        "scenario": "Your ad campaign generates 100,000 impressions but has a 0.2% Click-Through-Rate (CTR) and an 8% 3-second hook rate. What is broken?",
+        "options": [
+          {
+            "text": "The hook is weak and fails to stop the scroll; re-record the first 3 seconds with a strong visual pattern interrupt",
+            "correct": true,
+            "explanation": "Low hook rate indicates viewers are swiping away before ever hearing the value proposition."
+          },
+          {
+            "text": "Change the company font",
+            "correct": false,
+            "explanation": "Font styling does not stop viewers from swiping."
+          },
+          {
+            "text": "Increase the ad budget 10x",
+            "correct": false,
+            "explanation": "Spending more on an ad that people swipe away burns capital."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is Hook Rate in short-form video advertising?",
+          "options": [
+            "The weight of a fishing hook",
+            "The percentage of people who watch the first 3 seconds instead of swiping away",
+            "The number of comments",
+            "The cost of the video editor"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hook rate measures 3-second video views divided by total impressions."
+        },
+        {
+          "question": "Why does UGC typically outperform polished studio commercials on social feeds?",
+          "options": [
+            "It costs more money",
+            "It blends natively into the feed as authentic user content rather than triggering ad blindness",
+            "It is only filmed in black and white",
+            "It doesn't use audio"
+          ],
+          "correctIndex": 1,
+          "explanation": "Native-looking creator videos disarm viewer skepticism and prevent instant swiping."
+        },
+        {
+          "question": "What is a 'Pattern Interrupt' in creative strategy?",
+          "options": [
+            "A glitching computer",
+            "An unexpected visual or auditory element in the first second that breaks habitual mindless scrolling",
+            "A flat line",
+            "A long silence"
+          ],
+          "correctIndex": 1,
+          "explanation": "Pattern interrupts shock the viewer's subconscious attention, freezing thumb movement."
+        },
+        {
+          "question": "What is the recommended cut pacing for high-retention short-form video?",
+          "options": [
+            "One camera angle for 60 seconds",
+            "Dynamic cuts, zoom punches, or B-roll every 2 to 3 seconds",
+            "Cutting every 0.1 seconds",
+            "Never cutting"
+          ],
+          "correctIndex": 1,
+          "explanation": "Fast visual pacing sustains cognitive engagement throughout the video duration."
+        },
+        {
+          "question": "In modern Meta and TikTok advertising algorithms, what is 'Creative is Targeting'?",
+          "options": [
+            "Targeting only people named Creative",
+            "The machine learning algorithm finds your target demographic based on who engages with your video content",
+            "Only running text ads",
+            "Bypassing ad auction fees"
+          ],
+          "correctIndex": 1,
+          "explanation": "Algorithms use video semantic analysis and engagement signals to discover optimal buyers."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Paid Media Buying on Meta & TikTok (Advantage+ & CAPI)",
+      "objective": "Configure Meta Advantage+ Shopping Campaigns (ASC), Conversion API (CAPI), and bid caps.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Conversion API (CAPI) vs Client Pixel",
+          "content": "Browser-based tracking pixels lose up to 40% of conversion events due to iOS Safari privacy protections (ITP) and ad-blockers. Meta CAPI sends purchase events server-to-server directly from your Next.js backend, restoring conversion attribution and training the ad algorithm on verified revenue data.",
+          "codeSnippet": "import { FacebookAdsApi, ServerEvent } from 'facebook-nodejs-business-sdk';\n// Server-to-server purchase event tracking\nawait sendCapiEvent({\n  eventName: 'Purchase',\n  eventTime: Math.floor(Date.now() / 1000),\n  userData: { em: hashEmail(user.email) },\n  customData: { currency: 'AED', value: orderTotal }\n});",
+          "keyTakeaway": "Server-side CAPI is non-negotiable for accurate attribution and algorithmic ad scaling."
+        },
+        {
+          "title": "Advantage+ Shopping Campaigns (ASC) & Broad Targeting",
+          "content": "Micro-targeting narrow interests (e.g. 'Users who like Dubai Mall and luxury watches') drives CPMs through the roof. Modern media buying uses Broad Targeting (Age, Gender, Location = UAE) combined with ASC, allowing the platform's multi-billion parameter AI model to optimize delivery across millions of users.",
+          "codeSnippet": "Ad Structure: 1 CBO / ASC Campaign -> 3 Ad Sets (Testing, Scaling, Retargeting)",
+          "keyTakeaway": "Let the algorithm find your buyers; do not constrain machine learning with micro-interests."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 2: Configure Meta CAPI & Advantage+ Testing Framework",
+        "brief": "Deploy a server-side Next.js route sending verified purchase events to Meta Events Manager with 9+ Event Quality Match score.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Measure blended metrics rather than isolated vanity stats."
+      },
+      "caseStudy": {
+        "scenario": "Your Meta ad campaign displays AED 50 Cost Per Acquisition (CPA) in Ads Manager, but your bank reports AED 95 CPA in reality. What explains the discrepancy?",
+        "options": [
+          {
+            "text": "Over-attribution and lack of server-side deduplication; calibrate blended Merchandised ROAS and CAPI deduplication",
+            "correct": true,
+            "explanation": "View-through attribution and duplicate events inflate platform-reported numbers. Blended ROAS measures true bank deposits."
+          },
+          {
+            "text": "The bank is stealing money",
+            "correct": false,
+            "explanation": "Attribution window discrepancies are standard advertising mechanics."
+          },
+          {
+            "text": "Facebook made a typo",
+            "correct": false,
+            "explanation": "Attribution modeling requires rigorous server reconciliation."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is Meta Conversion API (CAPI)?",
+          "options": [
+            "A graphic design app",
+            "A server-to-server data pipeline sharing conversion events directly from backend servers to Meta",
+            "A crypto token",
+            "A Facebook chat"
+          ],
+          "correctIndex": 1,
+          "explanation": "CAPI bypasses browser ad-blockers and privacy restrictions via direct server event streaming."
+        },
+        {
+          "question": "What is ROAS?",
+          "options": [
+            "Return On Ad Spend (Revenue generated divided by ad spend)",
+            "Rate Of Average Sales",
+            "Reach Of Audience Strategy",
+            "Revenue Over Annual Salary"
+          ],
+          "correctIndex": 0,
+          "explanation": "ROAS measures immediate return per dollar or dirham spent on advertising."
+        },
+        {
+          "question": "What is Broad Targeting in modern media buying?",
+          "options": [
+            "Targeting 5 people",
+            "Targeting an entire geographic population without restrictive interest layers, letting creative guide algorithm delivery",
+            "Targeting only competitors",
+            "Targeting only emails"
+          ],
+          "correctIndex": 1,
+          "explanation": "Broad targeting allows ad platform AI to minimize CPMs and discover unexpected high-intent buyer pools."
+        },
+        {
+          "question": "What does 'Creative Fatigue' mean?",
+          "options": [
+            "The video editor is sleepy",
+            "Ad frequency rises, audience becomes blind to the creative, and CPA increases over time",
+            "The computer restarts",
+            "The ad is deleted"
+          ],
+          "correctIndex": 1,
+          "explanation": "Audiences eventually become habituated to identical creatives, requiring fresh creative iterations."
+        },
+        {
+          "question": "What is Lookalike Audience (LAL)?",
+          "options": [
+            "An audience segment created by advertising AI resembling your best existing paying customers",
+            "A mirror app",
+            "Fake followers",
+            "Celebrity impersonators"
+          ],
+          "correctIndex": 0,
+          "explanation": "Lookalikes identify prospects sharing behavioral traits with your verified high-value buyers."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Unit Economics, Funnel Conversion Rate Optimization & LTV",
+      "objective": "Calculate CAC, LTV, AOV, blended ROAS, and optimize checkout conversion funnels.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "The Golden Ratio: LTV must be >= 3x CAC",
+          "content": "Customer Acquisition Cost (CAC) is total marketing spend divided by new customers acquired. Customer Lifetime Value (LTV) is average purchase value multiplied by purchase frequency and customer lifespan. If CAC is AED 300 and LTV is AED 1,200, the 4:1 ratio allows you to aggressively outbid competitors.",
+          "codeSnippet": "CAC = TotalAdSpend / NewCustomersAcquired\nLTV = AverageOrderValue * PurchaseFrequency * CustomerLifespan\nHealth Metric: LTV / CAC >= 3.0",
+          "keyTakeaway": "He who can afford to spend the most to acquire a customer will dominate the market."
+        },
+        {
+          "title": "Conversion Rate Optimization (CRO) & Frictionless Checkout",
+          "content": "A store converting at 1.5% that improves to 3.0% doubles its revenue with zero extra advertising spend. Removing mandatory account creation, adding Apple Pay / Google Pay, and displaying transparent delivery timelines immediately lifts conversion by 25% to 40%.",
+          "codeSnippet": "// CRO Checklist:\n- 1-Click Apple Pay & Tabby/Tamara Split Pay\n- Zero mandatory password creation at checkout\n- Sticky Add-to-Cart bar on mobile view",
+          "keyTakeaway": "Friction at checkout kills advertising profitability faster than high CPMs."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 3: Build a Financial Unit Economics Dashboard in Google Sheets",
+        "brief": "Model a Dubai consumer brand across 12 months with variable CAC, repurchase curves, and contribution margins.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Measure blended metrics rather than isolated vanity stats."
+      },
+      "caseStudy": {
+        "scenario": "A luxury perfume brand in Dubai spends AED 100,000 on ads to acquire 1,000 customers (CAC = AED 100). Average order is AED 120 with AED 40 cost of goods. The founder thinks they are losing money. What did they fail to factor in?",
+        "options": [
+          {
+            "text": "Repeat purchase rate and LTV: 45% of customers buy twice more within 90 days, yielding a 90-day LTV of AED 280",
+            "correct": true,
+            "explanation": "Evaluating high-retention products solely on initial first-order CAC ignores backend customer lifetime value."
+          },
+          {
+            "text": "They need to fire their staff",
+            "correct": false,
+            "explanation": "Incorrect financial deduction."
+          },
+          {
+            "text": "They should stop all advertising immediately",
+            "correct": false,
+            "explanation": "First-order break-even with strong backend repeat rate is a venture-scaling model."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is CAC in business unit economics?",
+          "options": [
+            "Customer Acquisition Cost",
+            "Central Accounting Certificate",
+            "Commercial Advertising Code",
+            "Computer Audio Cable"
+          ],
+          "correctIndex": 0,
+          "explanation": "CAC measures the total sales and marketing cost required to gain one paying customer."
+        },
+        {
+          "question": "What does an LTV:CAC ratio of 3:1 indicate?",
+          "options": [
+            "The business is bankrupt",
+            "A healthy, scalable business model where customer lifetime value is triple acquisition cost",
+            "Ad spend is 3 times revenue",
+            "A failing startup"
+          ],
+          "correctIndex": 1,
+          "explanation": "3:1 is recognized globally as the gold standard of sustainable venture scale."
+        },
+        {
+          "question": "What is AOV (Average Order Value)?",
+          "options": [
+            "The average amount of money each customer spends per transaction",
+            "The speed of the delivery van",
+            "The weight of the box",
+            "The number of products on sale"
+          ],
+          "correctIndex": 0,
+          "explanation": "Increasing AOV via bundles and upsells directly enhances marketing margins."
+        },
+        {
+          "question": "Why does adding Apple Pay dramatically increase mobile checkout conversion in Dubai?",
+          "options": [
+            "It looks cooler",
+            "It eliminates manual typing of credit card numbers and shipping addresses with one biometric tap",
+            "It makes products free",
+            "It connects to Wi-Fi"
+          ],
+          "correctIndex": 1,
+          "explanation": "Biometric checkout removes friction, reducing mobile shopping cart abandonment."
+        },
+        {
+          "question": "What is Blended ROAS (MER)?",
+          "options": [
+            "Total business revenue divided by total blended advertising spend across all platforms",
+            "The taste of a drink",
+            "A tax formula",
+            "A social media follower count"
+          ],
+          "correctIndex": 0,
+          "explanation": "Blended Marketing Efficiency Ratio (MER) measures true commercial bottom-line marketing performance."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Dubai Influencer PR, UAE Media Council Rules & Capstone Campaign",
+      "objective": "Navigate UAE National Media Council licensing, influencer contracts, and omni-channel scale.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "UAE National Media Council (NMC) Influencer Licensing",
+          "content": "Under UAE media regulations, any individual carrying out commercial advertising on social media must hold an official NMC Influencer License (or be contracted through an accredited media agency holding a company license). Brands utilizing unlicensed influencers face substantial fines and public relations fallout.",
+          "codeSnippet": "NMC Compliance Rule:\nAll sponsored posts must carry prominent disclosure: '#Ad' or '#Sponsored' in both English and Arabic.",
+          "keyTakeaway": "Never execute commercial influencer partnerships in the UAE without verified licenses."
+        },
+        {
+          "title": "Performance Influencer Contracts: Affiliates & Usage Rights",
+          "content": "Flat upfront fee influencer promotions are high risk. Master marketers negotiate hybrid contracts: a modest base fee paired with affiliate revenue share and 60-day paid advertising digital usage rights (whitelisting/Spark Ads), allowing the brand to run the creator's video directly from their profile as an ad.",
+          "codeSnippet": "// Contract Clause:\n'Creator grants Brand exclusive 90-day digital advertising usage rights to run Creator-generated content as Meta and TikTok Spark Ads.'",
+          "keyTakeaway": "Securing paid advertising usage rights unlocks 10x more value than a 24-hour disappearing story."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 4: Capstone — Launch an Omni-Channel Viral Growth Campaign",
+        "brief": "Design an integrated marketing campaign for a flagship Dubai venue combining viral UGC, Meta ASC ad sets, and licensed influencer seeding.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Measure blended metrics rather than isolated vanity stats."
+      },
+      "caseStudy": {
+        "scenario": "An influencer agrees to promote your brand for free in exchange for products, but refuses to include '#Ad' disclosure on their Instagram reel. What should you do?",
+        "options": [
+          {
+            "text": "Insist on '#Ad' disclosure; operating without disclosure violates UAE National Media Council statutes and risks substantial fines for both parties",
+            "correct": true,
+            "explanation": "UAE media law strictly mandates clear commercial disclosure on all sponsored content."
+          },
+          {
+            "text": "Ignore the law and post anyway",
+            "correct": false,
+            "explanation": "Exposes the brand to regulatory sanctions."
+          },
+          {
+            "text": "Ask them to post at 3 AM so nobody sees it",
+            "correct": false,
+            "explanation": "Violates legal requirements."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Under UAE law, what must commercial social media influencers possess?",
+          "options": [
+            "An official Influencer / Media License from the UAE Media Council and DET",
+            "A driver license only",
+            "At least 1 million followers",
+            "A degree in journalism"
+          ],
+          "correctIndex": 0,
+          "explanation": "The UAE Media Council mandates formal commercial media licensing for influencers."
+        },
+        {
+          "question": "What disclosure tag is legally required on sponsored posts in the UAE?",
+          "options": [
+            "#YOLO",
+            "#Ad or #Sponsored in clear visible text",
+            "#Secret",
+            "No tag required"
+          ],
+          "correctIndex": 1,
+          "explanation": "Clear sponsorship disclosures are legally mandatory to protect consumers."
+        },
+        {
+          "question": "What are 'Whitelisting / Spark Ads' in influencer marketing?",
+          "options": [
+            "Deleting bad comments",
+            "Running paid ad campaigns directly through the creator's social handle to target new audiences with creator social proof",
+            "Free ads on Google",
+            "Hacking accounts"
+          ],
+          "correctIndex": 1,
+          "explanation": "Spark Ads let brands amplify creator content with paid ad spend while retaining creator authenticity."
+        },
+        {
+          "question": "What is an Affiliate Revenue Share contract?",
+          "options": [
+            "Paying an influencer based on a percentage of verified tracked sales they generate",
+            "Paying fixed salary forever",
+            "Free meals only",
+            "Selling company equity"
+          ],
+          "correctIndex": 0,
+          "explanation": "Affiliate deals align creator incentives with actual commercial sales performance."
+        },
+        {
+          "question": "What is the primary danger of buying fake followers on social media?",
+          "options": [
+            "Nothing happens",
+            "It destroys algorithmic engagement rates, burns ad spend on bots, and triggers platform shadowbans",
+            "It makes videos load faster",
+            "It increases sales"
+          ],
+          "correctIndex": 1,
+          "explanation": "Fake followers dilute engagement metrics, signaling to algorithms that your content is low quality."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "Why is the first 3 seconds of video creative the most critical advertising metric?",
+        "options": [
+          "80%+ of users swipe away in the first 3 seconds; hook rate dictates algorithmic audience delivery",
+          "It costs less electricity",
+          "It plays louder",
+          "Phones shut down after 3 seconds"
+        ],
+        "correctIndex": 0,
+        "explanation": "Hook rate determines whether the viewer stays to consume your value proposition."
+      },
+      {
+        "question": "What is the primary advantage of Meta Conversion API (CAPI)?",
+        "options": [
+          "Server-to-server data tracking immune to browser ad-blockers and iOS privacy restrictions",
+          "Free advertising credits",
+          "Faster computer speeds",
+          "Automatic video editing"
+        ],
+        "correctIndex": 0,
+        "explanation": "CAPI streams verified purchase events directly from servers, restoring accurate attribution."
+      },
+      {
+        "question": "What does an LTV:CAC ratio of 3:1 signify in venture economics?",
+        "options": [
+          "A sustainable, profitable business model where customer lifetime value is triple acquisition cost",
+          "A failing startup",
+          "High advertising debt",
+          "Low customer retention"
+        ],
+        "correctIndex": 0,
+        "explanation": "A 3:1 ratio is the benchmark of sustainable business scaling."
+      },
+      {
+        "question": "Under UAE Media Council regulations, what is required for commercial social promotions?",
+        "options": [
+          "An official media license and prominent #Ad / #Sponsored disclosure",
+          "No rules apply",
+          "Only posting in Arabic",
+          "Free products for everyone"
+        ],
+        "correctIndex": 0,
+        "explanation": "UAE law strictly mandates licensing and transparent sponsorship disclosure."
+      },
+      {
+        "question": "What is User-Generated Content (UGC)?",
+        "options": [
+          "Authentic creator-style videos that blend natively into social feeds without triggering ad blindness",
+          "Government broadcasts",
+          "Computer-generated 3D cartoons",
+          "Television news"
+        ],
+        "correctIndex": 0,
+        "explanation": "UGC feels organic and non-promotional, consistently out-converting polished studio ads."
+      },
+      {
+        "question": "What is A/B split testing?",
+        "options": [
+          "Testing two versions of a creative or landing page simultaneously to isolate which converts better",
+          "Grading students",
+          "Splitting an invoice",
+          "Running two ad accounts"
+        ],
+        "correctIndex": 0,
+        "explanation": "A/B testing provides statistically rigorous validation for incremental conversion gains."
+      },
+      {
+        "question": "Why does Broad Targeting frequently outperform narrow interest targeting in modern ad algorithms?",
+        "options": [
+          "It allows machine learning AI to optimize delivery across millions of users at lower CPMs",
+          "It only targets rich people",
+          "It uses less bandwidth",
+          "It doesn't cost money"
+        ],
+        "correctIndex": 0,
+        "explanation": "Broad targeting gives platform algorithms the latitude to find high-intent buyers efficiently."
+      },
+      {
+        "question": "What is Creative Fatigue?",
+        "options": [
+          "Audience becomes over-exposed to an ad creative, causing engagement to drop and CPA to rise",
+          "The graphic designer is tired",
+          "A broken monitor",
+          "Closing an ad account"
+        ],
+        "correctIndex": 0,
+        "explanation": "Repeated exposure to identical creative causes ad blindness, requiring fresh variations."
+      },
+      {
+        "question": "What is Spark Ads / Whitelisting?",
+        "options": [
+          "Amplifying creator posts directly through their social handle using brand paid advertising spend",
+          "Deleting negative reviews",
+          "Hacking social media",
+          "Free discounts"
+        ],
+        "correctIndex": 0,
+        "explanation": "Spark ads combine creator social proof with brand performance ad targeting."
+      },
+      {
+        "question": "What is Average Order Value (AOV)?",
+        "options": [
+          "The average amount spent per transaction by customers",
+          "The delivery speed of an order",
+          "The weight of the box",
+          "The number of items on sale"
+        ],
+        "correctIndex": 0,
+        "explanation": "Lifting AOV via upsells and bundles expands marketing profitability margins."
+      }
+    ]
+  },
+  "duration": "4 Weeks"
+}

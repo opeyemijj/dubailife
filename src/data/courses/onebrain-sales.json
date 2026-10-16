@@ -1,0 +1,582 @@
+{
+  "id": "onebrain-sales",
+  "institutionId": "onebrain",
+  "title": "High-Ticket Closing & B2B Negotiation",
+  "tagline": "Enterprise Pipelines, Objection Dismantling, Discovery Diagnostic & Closing Commercial Deals.",
+  "category": "Sales & Negotiation",
+  "icon": "🤝",
+  "durationWeeks": 4,
+  "level": "accelerator",
+  "tuitionFee": 15000,
+  "superpower": {
+    "id": "deal_closer",
+    "name": "High-Ticket Closer",
+    "icon": "🤝",
+    "description": "Earns a permanent +20% bonus commission on all commercial property transactions and sponsorship contracts.",
+    "badgeText": "Closer Certified",
+    "perkType": "commission_boost"
+  },
+  "syllabus": {
+    "overview": "A comprehensive 4-week enterprise sales and high-stakes negotiation accelerator. Master diagnostic discovery calls, BANT & MEDDIC qualification, isolating and dismantling price objections, principled BATNA negotiation, and closing multimillion-dirham commercial deals in Dubai.",
+    "prerequisites": "Communication fluency and desire to master commercial closing.",
+    "learningOutcomes": [
+      "Conduct deep diagnostic discovery calls uncovering emotional stakes and commercial pain",
+      "Qualify prospective buyers using the MEDDIC enterprise sales framework",
+      "Re-anchor value and dismantle price, timing, and authority objections proactively",
+      "Navigate Dubai business culture, majlis rapport, and BATNA walk-away positions"
+    ],
+    "weeklyBreakdown": [
+      {
+        "week": 1,
+        "topic": "The Diagnostic Discovery & Uncovering Latent Pain",
+        "hours": 12
+      },
+      {
+        "week": 2,
+        "topic": "MEDDIC Enterprise Qualification & Stakeholder Mapping",
+        "hours": 14
+      },
+      {
+        "week": 3,
+        "topic": "Dismantling Objections, Value Anchoring & The Trial Close",
+        "hours": 15
+      },
+      {
+        "week": 4,
+        "topic": "Principled Negotiation (BATNA), Dubai Majlis Etiquette & Capstone Close",
+        "hours": 18
+      }
+    ]
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "title": "The Diagnostic Discovery & Uncovering Latent Pain",
+      "objective": "Master the doctor-patient sales framework: ask diagnostic questions, quantify the cost of inaction, and uncover emotional stakes.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Doctors Don't Pitch; They Diagnose",
+          "content": "Amateurs pitch features within the first 60 seconds; master closers act like senior physicians. You do not write a prescription before a thorough examination. Spend 80% of sales conversations asking open-ended diagnostic questions to quantify the prospect's operational bottlenecks.",
+          "codeSnippet": "Diagnostic Framework:\n1. 'What prompted you to look into this now?'\n2. 'What happens if you do nothing for the next 12 months?'\n3. 'What is that operational bottleneck costing you in lost net margin?'",
+          "keyTakeaway": "Prescription without diagnosis is malpractice in medicine and enterprise sales."
+        },
+        {
+          "title": "Quantifying the Cost of Inaction (COI)",
+          "content": "Clients never object to spending AED 100,000 if they realize that doing nothing is quietly costing them AED 50,000 every single month. When you mathematically prove that postponing a decision costs 5x your fee, the client closes themselves.",
+          "codeSnippet": "COI Equation: (Current Monthly Losses * 12 Months) vs Investment Fee",
+          "keyTakeaway": "Price is only an objection in the absence of quantified value and urgency."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 1: Design a 15-Question Enterprise Discovery Script",
+        "brief": "Draft a diagnostic question guide for a Dubai commercial property deal that reveals hidden budget, timeline, and decision-making criteria.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Focus on actionable real-world execution."
+      },
+      "caseStudy": {
+        "scenario": "A prospect immediately interrupts your opening greeting and says: 'Just tell me your price right now, don't waste my time.' How do you respond?",
+        "options": [
+          {
+            "text": "'I can certainly give you pricing ranges, but since our solutions range from AED 20,000 to AED 500,000 depending on your exact requirements, let me ask 2 quick questions so I don't give you the wrong figure. Fair enough?'",
+            "correct": true,
+            "explanation": "Politely holding frame prevents commoditization and pivots the conversation back to diagnostic qualification."
+          },
+          {
+            "text": "Quote the lowest possible number and pray they stay on the call",
+            "correct": false,
+            "explanation": "Cheap quotes commoditize your service and anchor you to low margins."
+          },
+          {
+            "text": "Hang up the phone immediately",
+            "correct": false,
+            "explanation": "Emotional reactivity kills sales opportunities."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the primary objective of a Discovery Call in B2B sales?",
+          "options": [
+            "Talking uninterrupted for 45 minutes about your company history",
+            "Diagnosing the prospect's current state, urgent pain points, budget, and decision criteria",
+            "Offering 50% discounts",
+            "Collecting credit cards"
+          ],
+          "correctIndex": 1,
+          "explanation": "Discovery qualifies the lead and identifies how and if you can deliver transformative value."
+        },
+        {
+          "question": "What is the 'Cost of Inaction' (COI) in commercial negotiations?",
+          "options": [
+            "The cost of drinking coffee in meetings",
+            "The financial and operational loss the client suffers every month by failing to solve their current problem",
+            "A late payment fee",
+            "A legal penalty"
+          ],
+          "correctIndex": 1,
+          "explanation": "COI frames delaying a solution as far more expensive than hiring your firm."
+        },
+        {
+          "question": "What ratio of talking vs listening is practiced by top enterprise closers?",
+          "options": [
+            "80% talking, 20% listening",
+            "20% talking (asking piercing questions), 80% listening attentively",
+            "50/50 exactly",
+            "100% talking"
+          ],
+          "correctIndex": 1,
+          "explanation": "Master closers guide conversations with diagnostic questions and let the client articulate their own pain."
+        },
+        {
+          "question": "What is an 'Internal Champion' inside a client organization?",
+          "options": [
+            "An Olympic athlete",
+            "An influential stakeholder inside the client company who actively advocates for your solution to senior executives",
+            "The CEO of the vendor",
+            "A paid lobbyist"
+          ],
+          "correctIndex": 1,
+          "explanation": "Internal champions provide insider political context and sell on your behalf when you are not in the room."
+        },
+        {
+          "question": "What is an Executive Summary in a commercial proposal?",
+          "options": [
+            "A list of all employees",
+            "A concise summary articulating the client's problem, proposed solution, projected ROI, and timeline for C-suite decision makers",
+            "A page of photos",
+            "Blank space"
+          ],
+          "correctIndex": 1,
+          "explanation": "Busy decision makers read the executive summary first to evaluate commercial feasibility."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "MEDDIC Enterprise Qualification & Stakeholder Mapping",
+      "objective": "Implement Metrics, Economic Buyer, Decision Criteria, Decision Process, Identify Pain, Champion.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "The MEDDIC Qualification Framework",
+          "content": "Enterprise deals take months to close; pursuing unqualified leads destroys sales teams. MEDDIC enforces relentless qualification: Metrics (quantified business impact), Economic Buyer (the single person who controls the checkbook), Decision Criteria (technical vs commercial requirements), Decision Process (approval steps and procurement timelines), Identify Pain (root business problem), Champion (internal advocate).",
+          "codeSnippet": "MEDDIC Checklist:\n[M] Metrics: Can we prove +AED 2M net upside?\n[E] Economic Buyer: Have we met the CFO / Managing Director directly?\n[D] Decision Criteria: What exact specs are competitors being judged on?\n[D] Decision Process: Who signs, what legal reviews occur, how long is procurement?\n[I] Identify Pain: What happens if this is not solved by Q3?\n[C] Champion: Does the VP of Operations fight for us internally?",
+          "keyTakeaway": "If you don't know who the Economic Buyer is, you do not have a qualified deal."
+        },
+        {
+          "title": "Navigating Procurement & Multi-Stakeholder Committees",
+          "content": "In corporate Dubai, decisions rarely belong to one person. The CFO focuses on payback period and cash flow; the CTO focuses on security and system integration; the CEO focuses on competitive moat. Tailor your message to the personal incentives of each committee member.",
+          "codeSnippet": "Stakeholder Alignment: CFO (ROI & Terms) + Legal (Indemnity & Compliance) + Operations (Ease of Use)",
+          "keyTakeaway": "Enterprise sales is politics: align all internal stakeholders before contract submission."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 2: Score an Enterprise Deal with the MEDDIC Matrix",
+        "brief": "Analyze an active corporate pipeline deal, score each MEDDIC dimension from 1 to 5, and pinpoint the missing stakeholder link.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Focus on actionable real-world execution."
+      },
+      "caseStudy": {
+        "scenario": "You have been negotiating with a Director of Marketing for 6 weeks who loves your proposal. When you send the contract, they say: 'I have to show this to our Managing Director, they make all final purchasing decisions.' What MEDDIC rule did you violate?",
+        "options": [
+          {
+            "text": "Economic Buyer: you spent 6 weeks pitching an influencer rather than meeting the true checkbook owner directly",
+            "correct": true,
+            "explanation": "Always identify and engage the Economic Buyer early in the sales cycle."
+          },
+          {
+            "text": "Your price was too low",
+            "correct": false,
+            "explanation": "This is a stakeholder access flaw, not a pricing flaw."
+          },
+          {
+            "text": "Nothing, this is great news",
+            "correct": false,
+            "explanation": "Having your deal pitched secondhand to an unseen decision maker kills close rates."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What does the 'E' stand for in the MEDDIC sales qualification framework?",
+          "options": [
+            "Email",
+            "Economic Buyer — the person with formal authority to release budget and sign contracts",
+            "Enterprise",
+            "Electronic Signature"
+          ],
+          "correctIndex": 1,
+          "explanation": "Economic Buyers hold the ultimate budget authority to approve transactions."
+        },
+        {
+          "question": "Why is qualifying 'Decision Process' critical in B2B deals?",
+          "options": [
+            "It lets you guess the price",
+            "It maps out every legal, procurement, and board approval step and timeline required before a deal can close",
+            "It makes calls shorter",
+            "It replaces lawyers"
+          ],
+          "correctIndex": 1,
+          "explanation": "Understanding the decision process prevents surprise delays in corporate procurement."
+        },
+        {
+          "question": "What is BANT qualification?",
+          "options": [
+            "Budget, Authority, Need, and Timeline",
+            "Business, Advertising, Network, and Technology",
+            "Balance, Assets, Net, and Tax",
+            "Brand, Awareness, Name, and Trust"
+          ],
+          "correctIndex": 0,
+          "explanation": "BANT is a classic sales qualification checklist assessing buyer readiness."
+        },
+        {
+          "question": "How should a proposal pitch change when presenting to a CFO vs a CTO?",
+          "options": [
+            "Use the exact same slides",
+            "Focus on financial ROI, payback period, and risk mitigation for the CFO; focus on technical architecture, security, and integration for the CTO",
+            "Don't talk to the CFO",
+            "Only discuss price"
+          ],
+          "correctIndex": 1,
+          "explanation": "Different C-suite executives have completely different professional criteria."
+        },
+        {
+          "question": "What is the primary risk of relying on an internal Champion who lacks organizational influence?",
+          "options": [
+            "They talk too much",
+            "They cannot successfully shepherd the deal through executive committee resistance or procurement pushback",
+            "They cost money",
+            "They cancel meetings"
+          ],
+          "correctIndex": 1,
+          "explanation": "A champion must have sufficient internal political capital to defend your proposal."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Dismantling Objections, Value Anchoring & The Trial Close",
+      "objective": "Diffuse price, timing, and authority resistance; master the Takeaway Close and objection isolation.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Isolating Objections: Is Price the Real Issue?",
+          "content": "When a prospect says 'Your price is too high', 80% of the time price is a smokescreen for lack of trust, fear of looking foolish to their boss, or confusion regarding value. Never discount immediately; isolate the objection first.",
+          "codeSnippet": "Isolation Script:\n'I appreciate that perspective, and price is always important. Setting aside price for just a moment, is there anything else about our proposed solution that gives you hesitation?'",
+          "keyTakeaway": "If you lower your price without isolating objections, you commoditize your offering and still don't close."
+        },
+        {
+          "title": "The Trial Close & The Takeaway",
+          "content": "Never ask for a $100,000 commitment out of nowhere. Use Trial Closes to test temperature: 'Based on what we've reviewed, how does this approach feel to your team?' If they express doubt, you address it before presenting the final signature page. If resistance persists, use The Takeaway: gracefully pull the offer back, triggering buyer FOMO.",
+          "codeSnippet": "Takeaway Script:\n'It sounds like this might not be the right timing or priority for your team right now, and that's completely okay. Should we shelve this for Q4?'",
+          "keyTakeaway": "Detachment from outcome creates irresistible psychological closing leverage."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 3: Roleplay & Dismantle 5 Common Enterprise Objections",
+        "brief": "Record responses dismantling: 'Your price is 30% higher than competitor X', 'We don't have budget until next year', and 'We do this in-house'.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Focus on actionable real-world execution."
+      },
+      "caseStudy": {
+        "scenario": "A prospect says: 'Competitor B offered to do this for half your price.' What is the master closer response?",
+        "options": [
+          {
+            "text": "'Competitor B is a capable firm. In fact, if your primary goal is finding the absolute lowest price on the market, they might be the better fit for you. However, our clients come to us specifically when failure is not an option and they need guaranteed execution. Is lowest cost or guaranteed delivery your priority on this project?'",
+            "correct": true,
+            "explanation": "Validating the competitor while reframing lowest cost vs risk of failure isolates what the client genuinely prioritizes."
+          },
+          {
+            "text": "Match the competitor's 50% discount immediately",
+            "correct": false,
+            "explanation": "Immediate discounting proves your initial price was arbitrary and destroys trust."
+          },
+          {
+            "text": "Say Competitor B is terrible and incompetent",
+            "correct": false,
+            "explanation": "Badmouthing competitors makes you look defensive and amateur."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is an 'Objection Isolation' technique in negotiation?",
+          "options": [
+            "Putting the client in a separate room",
+            "Asking whether any other concerns exist beyond the stated objection to ensure you are resolving the root issue",
+            "Ignoring the objection",
+            "Ending the call"
+          ],
+          "correctIndex": 1,
+          "explanation": "Isolating objections ensures you resolve the genuine bottleneck rather than superficial smokescreens."
+        },
+        {
+          "question": "What is a 'Trial Close'?",
+          "options": [
+            "Taking a client to court",
+            "A temperature-check question (e.g. 'How does this feel so far?') to gauge buying readiness before asking for the commitment",
+            "A free trial subscription",
+            "Giving away the product"
+          ],
+          "correctIndex": 1,
+          "explanation": "Trial closes reveal hidden hesitations before formal contract signing."
+        },
+        {
+          "question": "What is 'The Takeaway Close'?",
+          "options": [
+            "Ordering food during meetings",
+            "Psychologically withdrawing the offer to test genuine buyer urgency and reverse power dynamics",
+            "Stealing client documents",
+            "Cancelling all future meetings"
+          ],
+          "correctIndex": 1,
+          "explanation": "Demonstrating willingness to walk away increases perceived authority and desirability."
+        },
+        {
+          "question": "Why is immediate price discounting detrimental to enterprise sales relationships?",
+          "options": [
+            "It proves your initial pricing was inflated and teaches the client to push for further cuts on every future invoice",
+            "It costs too much ink",
+            "It is illegal",
+            "It makes servers slow"
+          ],
+          "correctIndex": 0,
+          "explanation": "Unconditional discounting erodes credibility and invites perpetual margin erosion."
+        },
+        {
+          "question": "What does 'Value Re-Anchoring' achieve in objection handling?",
+          "options": [
+            "Anchoring client boats",
+            "Reframing the investment fee against the massive financial downside of inaction or failure",
+            "Deleting invoices",
+            "Changing product names"
+          ],
+          "correctIndex": 1,
+          "explanation": "Anchoring your fee to a multimillion-dirham commercial upside makes your fee appear minor."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Principled Negotiation (BATNA), Dubai Majlis Etiquette & Capstone Close",
+      "objective": "Master Best Alternative to a Negotiated Agreement (BATNA), UAE business protocol, and closing deals.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "BATNA: Your Strongest Walk-Away Leverage",
+          "content": "You cannot negotiate effectively from a position of desperation. Harvard's Principled Negotiation framework proves that your power in any negotiation is directly proportional to the strength of your BATNA (Best Alternative To a Negotiated Agreement). If you have 3 other enterprise clients waiting to sign, you will never accept disadvantageous contract terms.",
+          "codeSnippet": "Negotiation Rule: Never enter a negotiation room without having defined your walk-away BATNA threshold in advance.",
+          "keyTakeaway": "He who is willing to walk away from the table controls the table."
+        },
+        {
+          "title": "Dubai Majlis & Business Protocol",
+          "content": "In Dubai and the wider UAE, business is personal. Trust, honorable conduct, and personal rapport (العلاقات) precede any major contract signing. Relationships are cemented over Gahwa (Arabic coffee) in the Majlis before legal contracts are executed. Respect, patience, and reciprocal honor are paramount.",
+          "codeSnippet": "Protocol:\n- Receive Arabic coffee and dates with your right hand\n- Engage in polite personal inquiries before jumping into business\n- Your word is your bond: honor verbal commitments unconditionally",
+          "keyTakeaway": "In Dubai, people do business with people they respect and trust as honorable individuals."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 4: Capstone — Live Commercial Deal Closing Simulation",
+        "brief": "Participate in a multi-round simulated negotiation for a prime Dubai commercial lease contract, defending pricing and securing favorable contract terms.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Focus on actionable real-world execution."
+      },
+      "caseStudy": {
+        "scenario": "A client signs a major contract with your firm in Dubai. How do you solidify the long-term partnership?",
+        "options": [
+          {
+            "text": "Deliver exceptional onboarding within the first 48 hours, maintain personal relationship touchpoints, and honor all commitments unconditionally",
+            "correct": true,
+            "explanation": "Post-sale execution and personal integrity turn one-off deals into decade-long commercial relationships."
+          },
+          {
+            "text": "Stop answering their phone calls now that you have their money",
+            "correct": false,
+            "explanation": "Unethical conduct destroying reputation."
+          },
+          {
+            "text": "Immediately try to sell them another product before delivering the first",
+            "correct": false,
+            "explanation": "Aggressive premature upselling erodes relationship trust."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What does BATNA stand for in principled negotiation?",
+          "options": [
+            "Best Alternative To a Negotiated Agreement — your strongest walk-away alternative",
+            "Bank Account Transfer Notice Authorization",
+            "Business Asset Tracking Network Agency",
+            "Basic Annual Trade Number Assessment"
+          ],
+          "correctIndex": 0,
+          "explanation": "BATNA defines your walk-away threshold, providing psychological leverage in negotiations."
+        },
+        {
+          "question": "What role does emotional intelligence (EQ) play in Dubai's business culture?",
+          "options": [
+            "None at all",
+            "Crucial: personal relationships, mutual trust, and respectful rapport precede any major contract signing",
+            "Only technical specs matter",
+            "Meetings are strictly forbidden"
+          ],
+          "correctIndex": 1,
+          "explanation": "Personal trust and honorable rapport are foundational to commercial partnerships in the UAE."
+        },
+        {
+          "question": "Which hand should always be used to receive traditional Arabic coffee (Gahwa) and dates in corporate meetings?",
+          "options": [
+            "Right hand",
+            "Left hand only",
+            "Both hands behind back",
+            "It doesn't matter"
+          ],
+          "correctIndex": 0,
+          "explanation": "The right hand is universally used for eating, drinking, and exchanging business cards in Arab culture."
+        },
+        {
+          "question": "What is the 'Concession Trading' rule in enterprise contract negotiations?",
+          "options": [
+            "Never give a concession without getting something of equal or greater value in return (e.g. faster payment terms for a discount)",
+            "Give everything away for free",
+            "Never talk to lawyers",
+            "Cancel contracts"
+          ],
+          "correctIndex": 0,
+          "explanation": "Reciprocal concession trading preserves deal value and prevents one-sided exploitation."
+        },
+        {
+          "question": "What is an MOU (Memorandum of Understanding)?",
+          "options": [
+            "A document outlining baseline agreed terms and mutual commercial intent prior to definitive binding legal contracts",
+            "Monthly Order Update",
+            "Mobile Online Unit",
+            "Municipality Official Utility"
+          ],
+          "correctIndex": 0,
+          "explanation": "MOUs formalize agreed commercial terms before definitive contract execution."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "What is the primary objective of a Diagnostic Discovery Call?",
+        "options": [
+          "Diagnose the prospect's root pain, commercial bottlenecks, budget, and decision criteria",
+          "Talk uninterrupted about your company for 45 minutes",
+          "Give immediate 50% discounts",
+          "Collect credit card numbers"
+        ],
+        "correctIndex": 0,
+        "explanation": "Discovery qualifies the lead and identifies how and if you can deliver transformative value."
+      },
+      {
+        "question": "What is the 'Cost of Inaction' in high-ticket enterprise negotiations?",
+        "options": [
+          "The financial and operational loss the client suffers every month by failing to solve their current problem",
+          "The cost of coffee in meetings",
+          "A late payment fee",
+          "A legal penalty"
+        ],
+        "correctIndex": 0,
+        "explanation": "Cost of inaction highlights that delaying a decision is far more expensive than hiring your firm."
+      },
+      {
+        "question": "What does the 'E' stand for in the MEDDIC enterprise qualification framework?",
+        "options": [
+          "Economic Buyer — the person with formal authority to release budget and sign contracts",
+          "Email",
+          "Enterprise",
+          "Electronic Signature"
+        ],
+        "correctIndex": 0,
+        "explanation": "Economic Buyers hold the ultimate budget authority to approve transactions."
+      },
+      {
+        "question": "What is BATNA in principled negotiation?",
+        "options": [
+          "Best Alternative To a Negotiated Agreement — your strongest walk-away alternative",
+          "Bank Account Transfer Notice Authorization",
+          "Business Asset Tracking Network Agency",
+          "Basic Annual Trade Number Assessment"
+        ],
+        "correctIndex": 0,
+        "explanation": "BATNA defines your walk-away threshold, providing psychological leverage in negotiations."
+      },
+      {
+        "question": "Why is unconditional price discounting damaging to enterprise sales relationships?",
+        "options": [
+          "It proves initial pricing was arbitrary and invites the client to push for further cuts on every future invoice",
+          "It costs too much ink",
+          "It is illegal",
+          "It makes servers slow"
+        ],
+        "correctIndex": 0,
+        "explanation": "Unconditional discounting erodes credibility and invites perpetual margin erosion."
+      },
+      {
+        "question": "What is a 'Trial Close'?",
+        "options": [
+          "A temperature-check question (e.g. 'How does this feel so far?') to gauge buying readiness before asking for the commitment",
+          "Taking a client to court",
+          "A free trial subscription",
+          "Giving away the product"
+        ],
+        "correctIndex": 0,
+        "explanation": "Trial closes reveal hidden hesitations before formal contract signing."
+      },
+      {
+        "question": "What is an Internal Champion in enterprise sales?",
+        "options": [
+          "An influential stakeholder inside the client company who actively advocates for your solution to senior executives",
+          "An Olympic athlete",
+          "The CEO of the vendor",
+          "A paid lobbyist"
+        ],
+        "correctIndex": 0,
+        "explanation": "Internal champions provide insider political context and sell on your behalf when you are not in the room."
+      },
+      {
+        "question": "What does an Executive Summary in a commercial proposal provide?",
+        "options": [
+          "A concise summary articulating the client's problem, proposed solution, projected ROI, and timeline for C-suite decision makers",
+          "A list of all employees",
+          "A page of photos",
+          "Blank space"
+        ],
+        "correctIndex": 0,
+        "explanation": "Busy decision makers read the executive summary first to evaluate commercial feasibility."
+      },
+      {
+        "question": "What role does personal rapport and the Majlis play in Dubai's business culture?",
+        "options": [
+          "Crucial: personal relationships, mutual trust, and respectful rapport precede any major contract signing",
+          "None at all",
+          "Only technical specs matter",
+          "Meetings are strictly forbidden"
+        ],
+        "correctIndex": 0,
+        "explanation": "Personal trust and honorable rapport are foundational to commercial partnerships in the UAE."
+      },
+      {
+        "question": "What is the Concession Trading rule in contract negotiations?",
+        "options": [
+          "Never give a concession without getting something of equal or greater value in return",
+          "Give everything away for free",
+          "Never talk to lawyers",
+          "Cancel contracts"
+        ],
+        "correctIndex": 0,
+        "explanation": "Reciprocal concession trading preserves deal value and prevents one-sided exploitation."
+      }
+    ]
+  },
+  "duration": "4 Weeks"
+}

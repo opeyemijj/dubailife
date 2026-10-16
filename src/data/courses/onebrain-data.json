@@ -1,0 +1,582 @@
+{
+  "id": "onebrain-data",
+  "institutionId": "onebrain",
+  "title": "Data Analytics & AI Business Intelligence",
+  "tagline": "SQL Mastery, PowerBI Dashboards, Predictive Churn, and Commercial Metrics.",
+  "category": "Data Science & Analytics",
+  "icon": "📊",
+  "durationWeeks": 4,
+  "level": "accelerator",
+  "tuitionFee": 15000,
+  "superpower": {
+    "id": "market_forecast",
+    "name": "Market Forecaster",
+    "icon": "📊",
+    "description": "Reveals upcoming real estate demand and venue price trends 24 hours before the general public.",
+    "badgeText": "Data Certified",
+    "perkType": "general"
+  },
+  "syllabus": {
+    "overview": "A comprehensive 4-week enterprise data accelerator. Master advanced SQL queries, window functions, cohort retention analysis, PowerBI executive dashboard design, customer churn modeling, and leveraging the Dubai Open Data Initiative.",
+    "prerequisites": "Basic spreadsheet literacy.",
+    "learningOutcomes": [
+      "Query multi-million row relational databases with advanced SQL joins and window aggregations",
+      "Model Net Revenue Retention (NRR) and cohort retention curves",
+      "Design executive real-time dashboards in PowerBI and Metabase",
+      "Extract and analyze municipal economic datasets via the Dubai Data Portal"
+    ],
+    "weeklyBreakdown": [
+      {
+        "week": 1,
+        "topic": "Relational Algebra, SQL Joins & Window Functions",
+        "hours": 12
+      },
+      {
+        "week": 2,
+        "topic": "Cohort Analysis, Retention Curves & Churn Prediction",
+        "hours": 14
+      },
+      {
+        "week": 3,
+        "topic": "Executive BI Dashboards, PowerBI & Visual KPI Modeling",
+        "hours": 15
+      },
+      {
+        "week": 4,
+        "topic": "Dubai Open Data, Predictive Modeling & Capstone Forecast",
+        "hours": 18
+      }
+    ]
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Relational Algebra, SQL Joins & Window Functions",
+      "objective": "Master INNER, LEFT, FULL joins, GROUP BY aggregations, and window functions (ROW_NUMBER, LAG, LEAD).",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "SQL: The Universal Language of Enterprise Data",
+          "content": "Spreadsheets crash at 100,000 rows; SQL databases process 100,000,000 rows in milliseconds. Understanding relational algebra and indexing enables analysts to extract deep customer insights, transaction velocities, and commercial revenue breakdowns on demand.",
+          "codeSnippet": "SELECT v.name, count(t.id) as transactions, sum(t.amount) as total_revenue\nFROM venues v\nLEFT JOIN transactions t ON t.venue_id = v.id\nWHERE t.created_at >= NOW() - INTERVAL '30 days'\nGROUP BY v.id, v.name\nHAVING sum(t.amount) > 50000\nORDER BY total_revenue DESC;",
+          "keyTakeaway": "Mastering relational queries transforms raw transaction tables into actionable executive intelligence."
+        },
+        {
+          "title": "Window Functions: LAG, LEAD & Running Totals",
+          "content": "Traditional GROUP BY collapses rows into summaries. Window functions calculate running totals, moving averages, and month-over-month growth rates while preserving individual row granularity.",
+          "codeSnippet": "SELECT date, daily_revenue,\n  SUM(daily_revenue) OVER (ORDER BY date) as running_cumulative_revenue,\n  LAG(daily_revenue, 1) OVER (ORDER BY date) as previous_day_revenue\nFROM daily_metrics;",
+          "keyTakeaway": "Window functions calculate cumulative metrics without complex self-joins."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 1: Write Advanced SQL Queries for Dubai Land Registry",
+        "brief": "Query simulated transactions database calculating 30-day moving average price-per-square-foot across Dubai Marina, Downtown, and Palm Jumeirah.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Focus on actionable real-world execution."
+      },
+      "caseStudy": {
+        "scenario": "A database query taking 45 seconds to scan 10 million transactions is slowing down the executive dashboard. How do you optimize it?",
+        "options": [
+          {
+            "text": "Add a composite B-tree index on (venue_id, created_at) and review execution plan with EXPLAIN ANALYZE",
+            "correct": true,
+            "explanation": "Composite indexes enable index-only scans, reducing query latency from seconds to milliseconds."
+          },
+          {
+            "text": "Delete half the database",
+            "correct": false,
+            "explanation": "Destroying historical data is never a solution."
+          },
+          {
+            "text": "Restart the computer",
+            "correct": false,
+            "explanation": "Hardware restarts do not resolve unindexed table scans."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What does SQL stand for?",
+          "options": [
+            "Simple Question Language",
+            "Structured Query Language",
+            "Standard Quality Logic",
+            "Server Queue Link"
+          ],
+          "correctIndex": 1,
+          "explanation": "SQL is the universal language for querying relational databases."
+        },
+        {
+          "question": "What is the difference between an INNER JOIN and a LEFT JOIN?",
+          "options": [
+            "INNER returns only rows with matches in both tables; LEFT returns all rows from the left table plus matching rows",
+            "LEFT only runs on left-handed computers",
+            "INNER is faster to type",
+            "There is no difference"
+          ],
+          "correctIndex": 0,
+          "explanation": "LEFT JOIN preserves all records from the left dataset regardless of match in the right table."
+        },
+        {
+          "question": "What does the SQL window function LAG() do?",
+          "options": [
+            "Makes the database slow down",
+            "Accesses data from a preceding row in the same result set without using a self-join",
+            "Deletes old records",
+            "Encrypts text"
+          ],
+          "correctIndex": 1,
+          "explanation": "LAG() allows instant comparison with previous period values for growth calculations."
+        },
+        {
+          "question": "What does the EXPLAIN ANALYZE command do in PostgreSQL?",
+          "options": [
+            "Explains what SQL is",
+            "Executes the query and displays the actual execution plan with node costs and execution times",
+            "Deletes corrupted rows",
+            "Translates SQL to Python"
+          ],
+          "correctIndex": 1,
+          "explanation": "EXPLAIN ANALYZE reveals whether queries utilize indexes or perform costly full table scans."
+        },
+        {
+          "question": "What is a Primary Key?",
+          "options": [
+            "A physical key to the office",
+            "A column containing unique values that identify each row in a database table",
+            "The first column in an Excel sheet",
+            "A password"
+          ],
+          "correctIndex": 1,
+          "explanation": "Primary keys guarantee entity uniqueness and relational integrity."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Cohort Analysis, Retention Curves & Churn Prediction",
+      "objective": "Measure customer retention, Net Revenue Retention (NRR), and predictive churn modeling.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Cohort Retention & The Retention Smile",
+          "content": "Customer acquisition fills the top of the funnel, but retention dictates terminal business value. Cohort analysis tracks groups of users who signed up in the same month (e.g. January 2026 Cohort). If retention flattens out into a horizontal line (or smiles upward via expansion revenue), the company has achieved true Product-Market Fit.",
+          "codeSnippet": "RetentionRate = (ActiveUsersInMonthN / TotalUsersInCohortAtMonth0) * 100",
+          "keyTakeaway": "A leaky bucket cannot be scaled: fix retention before expanding ad spend."
+        },
+        {
+          "title": "Net Revenue Retention (NRR)",
+          "content": "NRR measures the percentage of recurring revenue retained from existing customers over a period, incorporating upgrades, expansions, and cancellations. An NRR above 115% means the business grows exponentially even with zero new customer acquisition.",
+          "codeSnippet": "NRR = (StartingMRR + ExpansionMRR - Downgrades - Churn) / StartingMRR",
+          "keyTakeaway": "Elite SaaS and subscription companies operate with NRR > 120%."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 2: Build a Retention Cohort Matrix in Python/Pandas",
+        "brief": "Ingest 100,000 customer transaction events and generate an unstacked heatmap matrix tracking monthly retention decay curves.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Focus on actionable real-world execution."
+      },
+      "caseStudy": {
+        "scenario": "A company boasts that its customer base grew from 1,000 to 10,000 users this year, but its Net Revenue Retention is 65%. What is the true diagnosis?",
+        "options": [
+          {
+            "text": "Severe churn masked by aggressive ad spend; 35% of revenue is leaking every year, which will collapse when ad spend pauses",
+            "correct": true,
+            "explanation": "Low NRR indicates severe product churn hidden by heavy front-end acquisition spend."
+          },
+          {
+            "text": "The business is doing phenomenally well",
+            "correct": false,
+            "explanation": "65% NRR represents an unsustainable leaky bucket."
+          },
+          {
+            "text": "They need to spend more money on ads",
+            "correct": false,
+            "explanation": "Accelerating spend into a churn-heavy product burns capital."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is a Cohort Analysis in data analytics?",
+          "options": [
+            "Tracking the behavior of a specific group of users who share a common characteristic (such as signup month) over time",
+            "Analyzing all users at once",
+            "A company meeting",
+            "A financial audit"
+          ],
+          "correctIndex": 0,
+          "explanation": "Cohort analysis isolates behavioral changes over time across specific user groups."
+        },
+        {
+          "question": "What is Customer Churn Rate?",
+          "options": [
+            "The percentage of customers who stop doing business or cancel their subscriptions over a specific period",
+            "The rate at which customers discover a company",
+            "The amount of profit per customer",
+            "The speed of the website"
+          ],
+          "correctIndex": 0,
+          "explanation": "Churn rate tracks lost customer accounts over time."
+        },
+        {
+          "question": "What does Net Revenue Retention (NRR) above 100% mean?",
+          "options": [
+            "The company is losing money",
+            "Revenue from existing customers is expanding faster than churn and downgrades, driving organic growth",
+            "All customers cancelled",
+            "Ad spend is doubled"
+          ],
+          "correctIndex": 1,
+          "explanation": "NRR > 100% means existing accounts generate net expansion revenue without new customer acquisition."
+        },
+        {
+          "question": "What does a flattening horizontal line on a retention curve indicate?",
+          "options": [
+            "Product-Market Fit: a dedicated core of customers retain indefinitely",
+            "The company is failing",
+            "The computer froze",
+            "Zero sales"
+          ],
+          "correctIndex": 0,
+          "explanation": "A flattened curve indicates a baseline of permanent, loyal, non-churning users."
+        },
+        {
+          "question": "What is LTV (Customer Lifetime Value)?",
+          "options": [
+            "The total net profit a business earns from a customer over the entire duration of their relationship",
+            "The age of the customer",
+            "The cost of shipping",
+            "The time spent on the website"
+          ],
+          "correctIndex": 0,
+          "explanation": "LTV quantifies the comprehensive enterprise value generated per customer."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Executive BI Dashboards, PowerBI & Visual KPI Modeling",
+      "objective": "Build interactive C-suite dashboards, data modeling with DAX, and automated data refresh.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Designing for Decision Makers, Not Vanity",
+          "content": "Bad dashboards display 50 cluttered charts that answer zero questions. Elite executive dashboards follow the 5-second rule: an executive should glance at the screen and immediately understand (1) Current Performance vs Target, (2) Root Cause of Any Variance, and (3) Required Corrective Action.",
+          "codeSnippet": "Dashboard Architecture: Macro KPI Cards at Top -> Trend Breakdown in Middle -> Actionable Anomaly Table at Bottom",
+          "keyTakeaway": "If a metric does not drive a specific business decision, eliminate it from the screen."
+        },
+        {
+          "title": "PowerBI Data Modeling & Star Schemas",
+          "content": "Never dump one massive flat table into PowerBI. Professional data engineering structures models into Star Schemas: a central Fact Table (recording transactions with timestamps and numbers) surrounded by Dimension Tables (Customer, Venue, Product, Date) connected by 1-to-many relationships.",
+          "codeSnippet": "Star Schema:\n  Fact_Sales (amount, quantity, date_id, customer_id, venue_id)\n    ├── Dim_Customer (customer_id, tier, nationality)\n    ├── Dim_Venue (venue_id, name, district)\n    └── Dim_Date (date_id, day, month, year, is_uae_holiday)",
+          "keyTakeaway": "Star schemas optimize DAX calculation speed and prevent circular relationship errors."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 3: Build a Real-Time Executive Revenue Dashboard",
+        "brief": "Design a multi-tab PowerBI/Metabase dashboard visualizing daily venue revenue, hourly foot traffic, and gross margin variance across Dubai districts.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Focus on actionable real-world execution."
+      },
+      "caseStudy": {
+        "scenario": "An executive complains that a dashboard takes 30 seconds to reload every time they click a filter. How do you resolve it?",
+        "options": [
+          {
+            "text": "Refactor the data model into a Star Schema, aggregate historical fact tables, and use import mode instead of live unindexed direct queries",
+            "correct": true,
+            "explanation": "Star schema modeling with indexed aggregations provides instantaneous sub-second interactive filtering."
+          },
+          {
+            "text": "Tell the executive not to click filters",
+            "correct": false,
+            "explanation": "Unacceptable user experience."
+          },
+          {
+            "text": "Remove all charts",
+            "correct": false,
+            "explanation": "Proper data modeling solves performance bottlenecks."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is a Star Schema in data warehousing?",
+          "options": [
+            "A diagram of outer space",
+            "An architectural data model featuring a central numeric Fact table surrounded by descriptive Dimension tables",
+            "A type of database password",
+            "A spreadsheet template"
+          ],
+          "correctIndex": 1,
+          "explanation": "Star schemas optimize analytical query performance and dimensional slicing."
+        },
+        {
+          "question": "What is a Fact Table in a data warehouse?",
+          "options": [
+            "A table containing verified true facts",
+            "A table storing quantitative measurements, metrics, and transaction foreign keys",
+            "A table of user passwords",
+            "A table of phone numbers"
+          ],
+          "correctIndex": 1,
+          "explanation": "Fact tables record atomic numerical business transactions (sales, clicks, logins)."
+        },
+        {
+          "question": "What is DAX in PowerBI?",
+          "options": [
+            "Data Analysis Expressions — the formula expression language used to create custom measures and calculated columns",
+            "A brand of computer",
+            "A video format",
+            "A Dubai government tax"
+          ],
+          "correctIndex": 0,
+          "explanation": "DAX enables advanced mathematical calculations over dimensional data models."
+        },
+        {
+          "question": "What is the '5-Second Rule' in executive dashboard design?",
+          "options": [
+            "Dropping food on the floor",
+            "A decision maker should understand current business performance and variance within 5 seconds of viewing the dashboard",
+            "Dashboards must auto-refresh every 5 seconds",
+            "Deleting files after 5 seconds"
+          ],
+          "correctIndex": 1,
+          "explanation": "Dashboards must present critical commercial signals with zero cognitive clutter."
+        },
+        {
+          "question": "Why are vanity metrics (like page views) dangerous when used for strategic decisions?",
+          "options": [
+            "They cost money",
+            "They look impressive on surface charts but have zero correlation with cash flow, net profit, or customer retention",
+            "They use too much ink",
+            "They only work on mobile"
+          ],
+          "correctIndex": 1,
+          "explanation": "Vanity metrics mask underlying operational decay and mislead executive leadership."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Dubai Open Data, Predictive Modeling & Capstone Forecast",
+      "objective": "Leverage the Dubai Open Data Initiative, train predictive machine learning regression models, and project market demand.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Dubai Open Data Initiative & Smart Dubai API",
+          "content": "Under the Dubai Data Law, government entities publish public datasets on Dubai Pulse and Dubai Data Portal: covering tourism arrivals, airport passenger flow, public transit footfall, and real estate transactions. Integrating these APIs allows businesses to forecast consumer demand 30 days in advance.",
+          "codeSnippet": "import requests\nres = requests.get('https://api.dubaipulse.gov.ae/open/economy/realestate_transactions')\ndata = res.json()",
+          "keyTakeaway": "Open data provides macro macroeconomic indicators to benchmark company performance."
+        },
+        {
+          "title": "Predictive Forecasting with Python & Scikit-Learn",
+          "content": "Moving from retrospective reporting ('what happened') to predictive intelligence ('what will happen') requires training machine learning models (Random Forest, Gradient Boosting, ARIMA time series) on historical seasonal trends, public holidays, and macro indicators to predict venue foot traffic.",
+          "codeSnippet": "from sklearn.ensemble import GradientBoostingRegressor\nmodel = GradientBoostingRegressor(n_estimators=100)\nmodel.fit(X_train, y_train)\nforecast_next_30_days = model.predict(X_future)",
+          "keyTakeaway": "Predictive forecasts optimize staff scheduling, inventory orders, and dynamic venue pricing."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 4: Capstone — Deploy an AI Market Demand Forecaster",
+        "brief": "Train a machine learning model on historical Dubai tourism and foot traffic datasets, generating a 30-day predictive demand forecast with confidence intervals.",
+        "deliverable": "Strategic project deliverable verified against commercial metrics.",
+        "proTip": "Focus on actionable real-world execution."
+      },
+      "caseStudy": {
+        "scenario": "Your forecasting model predicts high venue demand for next Tuesday, but foot traffic is 70% below projections. What feature did the model miss?",
+        "options": [
+          {
+            "text": "A local public holiday or unexpected weather anomaly; retrain the model including federal holiday calendars and weather APIs as features",
+            "correct": true,
+            "explanation": "Machine learning models require relevant external shock indicators (holidays, weather) to capture non-linear demand shifts."
+          },
+          {
+            "text": "The model is stupid",
+            "correct": false,
+            "explanation": "Feature engineering determines model efficacy."
+          },
+          {
+            "text": "Delete the code",
+            "correct": false,
+            "explanation": "Engineering better input features fixes the prediction."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the Dubai Open Data Initiative (Dubai Data)?",
+          "options": [
+            "Giving free laptops to citizens",
+            "A city-wide legislative initiative making public sector data accessible to drive digital economy innovation and smart city planning",
+            "An open Wi-Fi network in malls",
+            "A public library"
+          ],
+          "correctIndex": 1,
+          "explanation": "Dubai Data unlocks municipal datasets to fuel smart city economic growth."
+        },
+        {
+          "question": "What is the difference between Descriptive and Predictive analytics?",
+          "options": [
+            "Descriptive explains what happened in the past; Predictive models what will happen in the future using statistical learning",
+            "Descriptive is in English; Predictive is in Arabic",
+            "Descriptive is for schools; Predictive is for banks",
+            "There is no difference"
+          ],
+          "correctIndex": 0,
+          "explanation": "Predictive analytics utilizes statistical models to forecast future outcomes."
+        },
+        {
+          "question": "What is an ARIMA model commonly used for?",
+          "options": [
+            "Video editing",
+            "Time series forecasting to model trends, seasonality, and cyclic fluctuations over sequential time data",
+            "Managing databases",
+            "Creating 3D games"
+          ],
+          "correctIndex": 1,
+          "explanation": "ARIMA is a classical econometric time-series forecasting model."
+        },
+        {
+          "question": "What is Feature Engineering in machine learning?",
+          "options": [
+            "Fixing broken computer hardware",
+            "Selecting, transforming, and creating the most predictive input variables from raw data to train algorithms",
+            "Writing CSS code",
+            "Designing logos"
+          ],
+          "correctIndex": 1,
+          "explanation": "Feature engineering directly determines the predictive accuracy of machine learning models."
+        },
+        {
+          "question": "Under the Dubai D33 Economic Agenda, what is the role of digital data assets?",
+          "options": [
+            "To generate AED 100 Billion annually in digital transformation value and establish Dubai as a global data hub",
+            "To store old paperwork",
+            "To limit internet access",
+            "To build physical bridges"
+          ],
+          "correctIndex": 0,
+          "explanation": "The D33 agenda prioritizes data-driven transformation as a primary economic engine."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "What does SQL stand for?",
+        "options": [
+          "Structured Query Language",
+          "Simple Question Language",
+          "Standard Quality Logic",
+          "Server Queue Link"
+        ],
+        "correctIndex": 0,
+        "explanation": "SQL is the standard language for relational database management."
+      },
+      {
+        "question": "What is the purpose of an INDEX on a database table?",
+        "options": [
+          "Drastically speeds up query lookups on specific columns at the cost of slight write overhead",
+          "Prints a table of contents",
+          "Encrypts all passwords",
+          "Deletes old rows"
+        ],
+        "correctIndex": 0,
+        "explanation": "Indexes optimize lookup speed by avoiding sequential table scans."
+      },
+      {
+        "question": "What does the SQL window function LAG() allow an analyst to do?",
+        "options": [
+          "Access data from a preceding row in the same result set without using a self-join",
+          "Slow down the server",
+          "Delete old data",
+          "Encrypt numbers"
+        ],
+        "correctIndex": 0,
+        "explanation": "LAG() enables period-over-period comparisons in a single pass."
+      },
+      {
+        "question": "What is a Star Schema in data warehousing?",
+        "options": [
+          "An architectural model featuring a central numeric Fact table surrounded by descriptive Dimension tables",
+          "A diagram of outer space",
+          "A spreadsheet template",
+          "A database password"
+        ],
+        "correctIndex": 0,
+        "explanation": "Star schemas optimize analytical slicing and metric calculation performance."
+      },
+      {
+        "question": "What does Net Revenue Retention (NRR) above 100% indicate?",
+        "options": [
+          "Revenue from existing customers is expanding faster than churn and downgrades, driving organic growth",
+          "The company is losing money",
+          "All customers cancelled",
+          "Ad spend doubled"
+        ],
+        "correctIndex": 0,
+        "explanation": "NRR > 100% signifies net organic expansion from retained customer accounts."
+      },
+      {
+        "question": "What is Customer Churn Rate?",
+        "options": [
+          "The percentage of customers who stop doing business or cancel their subscriptions over a specific period",
+          "The rate of new signups",
+          "The profit per user",
+          "The website speed"
+        ],
+        "correctIndex": 0,
+        "explanation": "Churn measures lost customers over a given period."
+      },
+      {
+        "question": "What is a Fact Table in a data warehouse?",
+        "options": [
+          "A table storing quantitative measurements, metrics, and transaction foreign keys",
+          "A table of verified facts",
+          "A user password table",
+          "A list of phone numbers"
+        ],
+        "correctIndex": 0,
+        "explanation": "Fact tables record atomic numerical transactions."
+      },
+      {
+        "question": "What does the Dubai Open Data Initiative (Dubai Data) provide?",
+        "options": [
+          "Public access to municipal and economic datasets to drive innovation and smart city planning",
+          "Free computers",
+          "Open Wi-Fi",
+          "A library book club"
+        ],
+        "correctIndex": 0,
+        "explanation": "Dubai Data unlocks governmental datasets for public and private innovation."
+      },
+      {
+        "question": "Why are vanity metrics dangerous in executive decision making?",
+        "options": [
+          "They look impressive but have zero correlation with net profit, cash flow, or customer retention",
+          "They use too much ink",
+          "They cost extra money",
+          "They only work on mobile"
+        ],
+        "correctIndex": 0,
+        "explanation": "Vanity metrics mask operational decay."
+      },
+      {
+        "question": "What does a flattening horizontal line on a cohort retention curve signify?",
+        "options": [
+          "Product-Market Fit: a dedicated core of customers retain permanently",
+          "Total business failure",
+          "A computer glitch",
+          "Zero sales"
+        ],
+        "correctIndex": 0,
+        "explanation": "A horizontal asymptote indicates non-churning, loyal customer cohorts."
+      }
+    ]
+  },
+  "duration": "4 Weeks"
+}

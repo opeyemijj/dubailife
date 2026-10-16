@@ -38,6 +38,23 @@ export type NeedKey = "hunger" | "energy" | "fun" | "social" | "hygiene" | "blad
 export type Needs = Record<NeedKey, number>;
 export const DEFAULT_NEEDS: Needs = { hunger: 92, energy: 85, fun: 80, social: 65, hygiene: 90, bladder: 88 };
 
+export interface EnrolledCourseState {
+  enrolledAt: string;
+  completedLessons: number[];
+  lastStudiedAt?: string;
+  examScore?: number;
+  examPassed?: boolean;
+  graduatedAt?: string;
+  honors?: "Pass" | "Cum Laude" | "Magna Cum Laude" | "Summa Cum Laude";
+}
+
+export interface CitizenAcademic {
+  enrolled: Record<string, EnrolledCourseState>;
+  diplomas: string[];
+  degrees: string[];
+  activeBuffs: string[];
+}
+
 export interface Citizen {
   id: string;
   name: string;
@@ -57,6 +74,8 @@ export interface Citizen {
   needs?: Partial<Needs>;
   /** Venues visited ("placeId/venueId"), for the profile. */
   visited?: string[];
+  /** Academic progress, degrees, diplomas, and unlocked superpowers. */
+  academic?: CitizenAcademic;
   /** Last place on the city map (world units), so travel continues across pages. */
   location?: { x: number; y: number; placeId?: string };
   createdAt: string;
@@ -328,3 +347,123 @@ export function boostNeed(need: NeedKey, amount: number) {
     return { ...c, needs: { ...needs, [need]: Math.max(0, Math.min(100, needs[need] + amount)) } };
   });
 }
+
+// ---------------------------------------------------------------- academics
+
+/** Enrolls citizen in an academic course, charging tuition. Returns false if funds are insufficient. */
+export function enrollInCourse(courseId: string, tuitionFee: number): boolean {
+  if (tuitionFee > 0 && !adjustBalance(-tuitionFee)) {
+    return false;
+  }
+  updateCitizen((c) => {
+    const academic: CitizenAcademic = c.academic ?? { enrolled: {}, diplomas: [], degrees: [], activeBuffs: [] };
+    const enrolled = { ...academic.enrolled };
+    if (!enrolled[courseId]) {
+      enrolled[courseId] = {
+        enrolledAt: new Date().toISOString(),
+        completedLessons: [],
+        lastStudiedAt: new Date().toISOString(),
+      };
+    }
+    return {
+      ...c,
+      academic: {
+        ...academic,
+        enrolled,
+      },
+    };
+  });
+  return true;
+}
+
+/** Marks a lesson number as completed for a given course. */
+export function completeLesson(courseId: string, lessonNumber: number) {
+  updateCitizen((c) => {
+    const academic: CitizenAcademic = c.academic ?? { enrolled: {}, diplomas: [], degrees: [], activeBuffs: [] };
+    const current = academic.enrolled[courseId] ?? {
+      enrolledAt: new Date().toISOString(),
+      completedLessons: [],
+    };
+    const completedSet = new Set(current.completedLessons);
+    completedSet.add(lessonNumber);
+    const updated = {
+      ...current,
+      completedLessons: Array.from(completedSet).sort((a, b) => a - b),
+      lastStudiedAt: new Date().toISOString(),
+    };
+    return {
+      ...c,
+      academic: {
+        ...academic,
+        enrolled: {
+          ...academic.enrolled,
+          [courseId]: updated,
+        },
+      },
+    };
+  });
+}
+
+/** Records final exam passage, assigns degree/diploma, adds superpower buff and graduation gown item. */
+export function graduateCourse(
+  courseId: string,
+  score: number,
+  honors: "Pass" | "Cum Laude" | "Magna Cum Laude" | "Summa Cum Laude",
+  buffId: string,
+  isSecondary: boolean
+) {
+  updateCitizen((c) => {
+    const academic: CitizenAcademic = c.academic ?? { enrolled: {}, diplomas: [], degrees: [], activeBuffs: [] };
+    const current = academic.enrolled[courseId] ?? {
+      enrolledAt: new Date().toISOString(),
+      completedLessons: [],
+    };
+    const enrolled = {
+      ...academic.enrolled,
+      [courseId]: {
+        ...current,
+        examScore: score,
+        examPassed: true,
+        graduatedAt: new Date().toISOString(),
+        honors,
+        lastStudiedAt: new Date().toISOString(),
+      },
+    };
+
+    const diplomas = new Set(academic.diplomas);
+    const degrees = new Set(academic.degrees);
+    if (isSecondary) diplomas.add(courseId);
+    else degrees.add(courseId);
+
+    const activeBuffs = new Set(academic.activeBuffs);
+    if (buffId) activeBuffs.add(buffId);
+
+    // Also award graduation cap and gown in inventory if not already owned!
+    const inventory = [...(c.inventory ?? [])];
+    const hasGown = inventory.some((item) => item.productId === "academic-gown");
+    if (!hasGown) {
+      inventory.push({
+        uid: `gown-${Date.now().toString(36)}`,
+        productId: "academic-gown",
+        storeId: "academic-city",
+        name: "Academic Cap & Gown",
+        price: 0,
+        boughtAt: new Date().toISOString(),
+        icon: "🎓",
+        wearable: "head" as any,
+      });
+    }
+
+    return {
+      ...c,
+      inventory,
+      academic: {
+        enrolled,
+        diplomas: Array.from(diplomas),
+        degrees: Array.from(degrees),
+        activeBuffs: Array.from(activeBuffs),
+      },
+    };
+  });
+}
+

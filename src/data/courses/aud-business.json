@@ -1,0 +1,461 @@
+{
+  "id": "aud-business",
+  "institutionId": "aud",
+  "title": "Business & Entrepreneurship in Dubai",
+  "tagline": "Master free zones, corporate tax, mainland trade licenses, and scale-up strategies in the UAE.",
+  "category": "Business",
+  "level": "bachelor_degree",
+  "duration": "4 Weeks (Intensive Executive)",
+  "rating": 4.9,
+  "enrolledCount": 1420,
+  "icon": "📈",
+  "superpower": {
+    "id": "zero_tax_license",
+    "name": "Zero-Tax Navigator",
+    "icon": "📈",
+    "description": "+20% business revenue boost & 15% discount on commercial trade permits in Dubai.",
+    "badgeText": "DET Certified",
+    "perkType": "commission_boost"
+  },
+  "syllabus": [
+    "Week 1: Dubai Legal Jurisdictions & Trade Licensing (Mainland vs Free Zone vs Offshore)",
+    "Week 2: UAE Federal Corporate Tax (9%), Qualifying Free Zone Persons (QFZP) & VAT Compliance",
+    "Week 3: Corporate Banking, FinTech Rails & Investor Capital Structuring (ADGM vs DIFC)",
+    "Week 4: Operational Scaling, Emiratization (Nafis), Labor Law & Golden Visa Sponsorship"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Dubai Legal Jurisdictions & Licensing Architectures",
+      "objective": "Navigate DET mainland trade licenses, 40+ Free Zones (DMCC, DIFC, DAFZ), and commercial structures.",
+      "slides": [
+        {
+          "title": "The 3 Jurisdictions: Mainland vs Free Zone vs Offshore",
+          "body": "Dubai operates three distinct legal frameworks for commercial enterprises. DET (Department of Economy and Tourism) governs mainland entities, allowing unrestricted trading anywhere across the UAE. Free Zones offer 100% foreign ownership and customs exemptions but historically restricted direct mainland trading without a local distributor. Offshore entities serve primarily as asset holding vehicles.",
+          "bullets": [
+            "DET Mainland: Direct B2C/B2B UAE trade without intermediaries",
+            "Specialized Free Zones: DMCC for commodities/tech, DIFC for financial institutions, DAFZ for logistics",
+            "100% Foreign Ownership: Federal Decree-Law No. 26 of 2020 abolished the 51% local sponsor mandate for 1,000+ commercial activities"
+          ],
+          "codeSnippet": "// Trade License Cost & Structure Calculation (AED)\nconst mainlandLicense = {\n  activityCode: '620101', // Computer software consultancy\n  detGovFee: 14500,\n  marketFeePct: 0.05, // 5% of commercial office lease\n  officeRentAED: 80000,\n  totalYear1: 14500 + (80000 * 0.05) + 3000 // 21,500 AED\n};",
+          "takeaway": "Choose mainland if selling directly to UAE consumers; choose free zone if exporting services globally or seeking zero-tax QFZP status."
+        },
+        {
+          "title": "Activity Codes & Regulatory Approvals",
+          "body": "Every trade license in Dubai binds your company to specific ISIC-4 activity codes. Selecting incorrect activity codes results in bank rejection, licensing delays, or fines from external regulators like SIRA (security), DHA (health), or KHDA (education).",
+          "bullets": [
+            "DET unified activity classification maps over 2,200 commercial operations",
+            "Cross-sector activities can require dual-authority NOCs (No Objection Certificates)",
+            "Commercial vs Professional licenses: Professional licenses historically retain 100% foreign ownership even under civil company structures"
+          ],
+          "codeSnippet": "Jurisdiction Comparison:\nFeature        | DET Mainland    | Free Zone (DMCC/IFZA) | DIFC / ADGM\nOwnership      | 100% (Most)     | 100%                 | 100%\nLocal Market   | Direct Access   | Via Agent/Dual Lic   | Financial / Advisory\nApplicable Law | UAE Civil Code  | Zone Regs + Civil    | English Common Law",
+          "takeaway": "Ensure your commercial lease (Ejari) matches the office quota requirements for the number of employee visas requested."
+        }
+      ],
+      "lab": {
+        "title": "Mainland vs Free Zone Entity Structuring Lab",
+        "brief": "A B2B SaaS platform wants to sell subscription software to Dubai government agencies and European enterprises. Design their legal entity setup, Ejari requirements, and initial trade license budget.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "An enterprise software founder wants to sell directly to Abu Dhabi and Dubai government ministries while keeping intellectual property in an English Common Law holding company. What is the optimal architecture?",
+        "options": [
+          {
+            "text": "Incorporate solely in a low-cost Northern Emirate Free Zone and invoice UAE government ministries directly.",
+            "correct": false,
+            "explanation": "Northern Emirate FZ entities cannot easily register as vendors on the UAE Federal Supplier Portal or DET procurement registries without a mainland branch."
+          },
+          {
+            "text": "Establish a DIFC or ADGM Holding Company that wholly owns a DET Mainland operating LLC with a commercial Ejari in Dubai.",
+            "correct": true,
+            "explanation": "DIFC/ADGM provides English Common Law protection for equity and IP, while the DET mainland operating company allows seamless government procurement."
+          },
+          {
+            "text": "Operate as an offshore company in the British Virgin Islands without registering in the UAE.",
+            "correct": false,
+            "explanation": "Illegal for domestic commercial operations in the UAE and renders corporate bank accounts impossible."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What major federal reform eliminated the mandatory 51% Emirati sponsorship for most commercial mainland activities?",
+          "options": [
+            "Federal Decree-Law No. 26 of 2020",
+            "VARA Rulebook 2023",
+            "Corporate Tax Law No. 47",
+            "Cabinet Decision 85 of 2022"
+          ],
+          "correctIndex": 0,
+          "explanation": "Federal Decree-Law No. 26 of 2020 amended the Commercial Companies Law to permit 100% foreign ownership across over 1,000 activities."
+        },
+        {
+          "question": "Which document represents the mandatory municipal registration of a commercial lease in Dubai?",
+          "options": [
+            "Tawtheeq",
+            "Ejari",
+            "Makani",
+            "Tasheel"
+          ],
+          "correctIndex": 1,
+          "explanation": "Ejari (managed by the Dubai Land Department) is the mandatory lease registration system in Dubai required for trade license renewals."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "UAE Federal Corporate Tax & QFZP Compliance",
+      "objective": "Master the 9% corporate tax regime under Federal Decree-Law No. 47 of 2022, small business relief, and Qualifying Free Zone Person status.",
+      "slides": [
+        {
+          "title": "The 9% Corporate Tax Architecture",
+          "body": "Effective for financial years starting on or after 1 June 2023, the UAE implemented a federal corporate tax of 9% on taxable net profits exceeding AED 375,000 (~$102,000 USD). Profits up to AED 375,000 remain taxed at 0% to foster entrepreneurship and startups.",
+          "bullets": [
+            "0% rate applies to taxable net income from AED 0 up to AED 375,000",
+            "9% statutory rate applies to all taxable net profits exceeding AED 375,000",
+            "Small Business Relief: Available for resident persons with gross revenue ≤ AED 3,000,000 in any relevant tax period through 2026"
+          ],
+          "codeSnippet": "// UAE Corporate Tax Calculator\nfunction calculateUAECorporateTax(netProfitAED, revenueAED) {\n  if (revenueAED <= 3000000) {\n    return { taxDue: 0, status: 'Small Business Relief Eligible (0%)' };\n  }\n  if (netProfitAED <= 375000) return { taxDue: 0, status: '0% Baseline Threshold' };\n  \n  const taxablePortion = netProfitAED - 375000;\n  const taxDue = taxablePortion * 0.09;\n  return { taxDue, effectiveRate: (taxDue / netProfitAED) * 100 };\n}",
+          "takeaway": "Every registered business entity in the UAE must register with the Federal Tax Authority (FTA) and obtain a Corporate Tax TRN, even if zero tax is due."
+        },
+        {
+          "title": "Qualifying Free Zone Persons (QFZP) & De Minimis Rules",
+          "body": "Free Zone entities can benefit from a 0% corporate tax rate on 'Qualifying Income'. However, they must maintain adequate substance, earn qualifying income from qualifying activities or transactions with other Free Zone persons, and ensure non-qualifying revenue does not exceed the de minimis threshold (the lower of 5% of total revenue or AED 5,000,000).",
+          "bullets": [
+            "Adequate Substance: Full-time employees, operating expenditure, and core income-generating activities situated within the Free Zone",
+            "Qualifying Income: Transactions with other Free Zone entities, or specific qualifying activities with non-Free Zone persons",
+            "Disqualification Risk: Breaching the de minimis threshold taints the entity, subjecting all income to 9% tax for 5 consecutive years"
+          ],
+          "codeSnippet": "QFZP Criteria Checklist:\n1. Derives Qualifying Income (Cabinet Decision No. 55 / 2023)\n2. Meets Adequate Substance (People + Office + Spend in Free Zone)\n3. Complies with Transfer Pricing Arm's-Length Principle\n4. Audited Financial Statements Prepared under IFRS\n5. Non-qualifying revenue < min(5% total rev, 5M AED)",
+          "takeaway": "To retain 0% QFZP tax status, maintain audited IFRS financials and track mainland revenue rigorously."
+        }
+      ],
+      "lab": {
+        "title": "Corporate Tax Modeling & QFZP Audit Lab",
+        "brief": "Calculate the corporate tax liability for a DMCC trading firm with AED 12M revenue, including mainland sales, and determine if they maintain 0% QFZP status.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "A DMCC Free Zone consulting firm generates AED 8,000,000 in total revenue. AED 7,500,000 is earned from international European clients, but AED 500,000 is earned from providing direct advisory services to a mainland Dubai hotel group. Does the company qualify for 0% QFZP status?",
+        "options": [
+          {
+            "text": "Yes, because the majority of their income is international.",
+            "correct": false,
+            "explanation": "Consulting/advisory provided to mainland entities is an excluded activity. AED 500k is 6.25% of 8M, exceeding the 5% de minimis cap."
+          },
+          {
+            "text": "No, because the mainland consulting income is an excluded activity and 500k exceeds the 5% de minimis limit (which is 400k), disqualifying the entire entity to 9% tax.",
+            "correct": true,
+            "explanation": "5% of 8,000,000 is AED 400,000. Earning AED 500,000 in non-qualifying mainland income breaches de minimis and subjects the entire company to 9% tax."
+          },
+          {
+            "text": "Yes, because Free Zone companies never pay tax in the UAE regardless of customer location.",
+            "correct": false,
+            "explanation": "Incorrect. The UAE Corporate Tax law strictly regulates Free Zone income streams."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the maximum gross revenue threshold for UAE Small Business Relief under Corporate Tax?",
+          "options": [
+            "AED 1,000,000",
+            "AED 3,000,000",
+            "AED 5,000,000",
+            "AED 10,000,000"
+          ],
+          "correctIndex": 1,
+          "explanation": "Small Business Relief allows eligible resident taxpayers with revenue up to AED 3,000,000 to be treated as having no taxable income."
+        },
+        {
+          "question": "What happens if a Free Zone entity breaches the de minimis threshold for non-qualifying income?",
+          "options": [
+            "Only the excess is taxed at 9%",
+            "It loses QFZP status for that year and the subsequent 4 years",
+            "It pays a fixed fine of AED 10,000",
+            "Its trade license is suspended"
+          ],
+          "correctIndex": 1,
+          "explanation": "Breaching the de minimis rule causes the entity to lose QFZP status for 5 tax periods, subjecting all taxable income to 9%."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Corporate Banking & Capital Structuring in the UAE",
+      "objective": "Navigate KYC/AML onboarding with Tier-1 UAE banks (Emirates NBD, Mashreq, FAB) and structure equity via DIFC/ADGM SPVs.",
+      "slides": [
+        {
+          "title": "The UAE Corporate Banking Landscape",
+          "body": "Opening a corporate bank account in the UAE is one of the most critical operational hurdles for founders due to strict CBUAE (Central Bank of the UAE) Anti-Money Laundering (AML) regulations and FATF compliance standards. Understanding bank risk appetites and document readiness determines approval timelines.",
+          "bullets": [
+            "Tier 1 Banks: Emirates NBD, First Abu Dhabi Bank (FAB), Mashreq, Dubai Islamic Bank (DIB)",
+            "Digital / SME Neo-Banks: Wio Bank, Mashreq NeoBiz, 3S Money (instant IBANs for low-risk tech profiles)",
+            "Mandatory KYC Dossier: Attested parent company docs, UBO utility bills, commercial contracts/invoices, 6-month personal bank statements"
+          ],
+          "codeSnippet": "// Corporate Banking Readiness Checklist\nconst kycPack = {\n  tradeLicense: 'Valid & matching DET/FZ portal',\n  memorandumOfAssociation: 'Notarized with clear UBO %',\n  tenancyContract: 'Ejari verified or FZ physical lease',\n  uboProfiles: 'Emirates ID + Passport + CV + Proof of Address',\n  commercialSubstance: 'Existing client contracts or MOUs',\n  sourceOfFunds: 'Verified bank statements of primary shareholder'\n};",
+          "takeaway": "Maintain a verified physical office lease and authentic commercial paper trail to secure Tier-1 corporate bank accounts within 10-14 days."
+        },
+        {
+          "title": "Venture Financing & SPVs in DIFC and ADGM",
+          "body": "Venture capital in the MENA region rarely invests directly into mainland LLCs or offshore entities due to shareholder liability constraints. Instead, institutional investors mandate top-co holding structures in DIFC (Dubai International Financial Centre) or ADGM (Abu Dhabi Global Market) using English Common Law Special Purpose Vehicles (SPVs).",
+          "bullets": [
+            "DIFC Prescribed Companies: Low-cost holding structures for holding shares in operating subsidiaries",
+            "Convertible Notes & SAFEs: Standard YC-style SAFEs are fully enforceable in DIFC/ADGM courts",
+            "Class A/B Shares: Enables multi-class equity structures, liquidation preferences, and employee option pools (ESOPs)"
+          ],
+          "codeSnippet": "Institutional Setup Architecture:\n[Investors / Founders]\n         │\n         ▼\n[DIFC Prescribed Company (SPV Holding TopCo - English Common Law)]\n         │ 100% Equity\n         ▼\n[DET Mainland Operating LLC (Dubai Operations & Commercial Invoicing)]",
+          "takeaway": "House your intellectual property and equity cap table in DIFC/ADGM, while running daily local operations through a UAE mainland subsidiary."
+        }
+      ],
+      "lab": {
+        "title": "Bank Account KYC & DIFC Holding Company Pitch Lab",
+        "brief": "Draft a compliant corporate bank account application narrative and structure an equity cap table using a DIFC Prescribed Company SPV.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "A founder has raised $1.5M from a GCC venture fund and is asked to incorporate an institutional holding company. The operating team is based in Business Bay, Dubai. How should the corporate structure be established?",
+        "options": [
+          {
+            "text": "Incorporate a simple mainland sole establishment with all investor shares recorded informally in a side agreement.",
+            "correct": false,
+            "explanation": "Side agreements (nominee arrangements) lack strong enforceability and institutional VCs will refuse disbursement."
+          },
+          {
+            "text": "Form a DIFC Category 4 Prescribed Company as the ultimate holding company that issues preferred stock to investors, and own the Business Bay operating LLC.",
+            "correct": true,
+            "explanation": "DIFC common law supports preferred share classes, drag-along rights, and investor protections required by institutional VC syndicates."
+          },
+          {
+            "text": "Keep the company entirely offshore in the Cayman Islands without any UAE legal entity.",
+            "correct": false,
+            "explanation": "Does not allow hiring staff in Dubai, issuing residence visas, or local banking."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Which digital business banking platform has revolutionized SME account opening in the UAE backed by ADQ and FAB?",
+          "options": [
+            "Revolut UAE",
+            "Wio Business",
+            "Monzo MENA",
+            "Chime Dubai"
+          ],
+          "correctIndex": 1,
+          "explanation": "Wio Bank (Wio Business) is the pioneering UAE digital bank offering rapid corporate onboarding."
+        },
+        {
+          "question": "What legal system forms the jurisdictional foundation of the DIFC Courts?",
+          "options": [
+            "UAE Civil Law",
+            "Egyptian Commercial Code",
+            "English Common Law",
+            "Sharia Jurisprudence only"
+          ],
+          "correctIndex": 2,
+          "explanation": "DIFC operates as an independent jurisdiction with its own civil and commercial laws based on English Common Law."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Operational Scaling, Nafis, Labor Law & Golden Visas",
+      "objective": "Master UAE Labor Law (Federal Decree-Law No. 33 of 2021), the Nafis Emiratization program, WPS payroll, and Executive Golden Visa pathways.",
+      "slides": [
+        {
+          "title": "UAE Labor Law & Wages Protection System (WPS)",
+          "body": "UAE employment is regulated under Federal Decree-Law No. 33 of 2021. All private mainland companies (and select Free Zones) must disburse salaries through the Wages Protection System (WPS) to ensure electronic verification of timely wage payments.",
+          "bullets": [
+            "Fixed-Term Employment Contracts: Unlimited contracts have been transitioned to fixed-term contracts (renewable)",
+            "End of Service Gratuity (EOSG): 21 days' basic wage for each year of service for the first 5 years; 30 days for each additional year",
+            "Alternative Gratuity Scheme: Voluntary employer savings investment funds (Cabinet Resolution No. 96 of 2023)"
+          ],
+          "codeSnippet": "// UAE End-of-Service Gratuity (EOSG) Calculation\nfunction calculateEOSG(basicSalaryAED, yearsOfService) {\n  let gratuity = 0;\n  if (yearsOfService < 1) return 0;\n  if (yearsOfService <= 5) {\n    gratuity = (basicSalaryAED / 30) * 21 * yearsOfService;\n  } else {\n    const first5Years = (basicSalaryAED / 30) * 21 * 5;\n    const extraYears = (basicSalaryAED / 30) * 30 * (yearsOfService - 5);\n    gratuity = first5Years + extraYears;\n  }\n  // Max cap: 2 years total basic salary\n  return Math.min(gratuity, basicSalaryAED * 24);\n}",
+          "takeaway": "Failure to pay at least 90% of your registered workforce through WPS on time triggers severe MOHRE portal blocks and financial penalties."
+        },
+        {
+          "title": "Nafis Emiratization Quotas & The 10-Year Golden Visa",
+          "body": "Under the UAE government's Nafis initiative, private sector companies with 50 or more skilled workers must increase their Emirati workforce by 2% annually (reaching 10% by 2026). In addition, targeted smaller companies (20-49 employees in specific sectors) must employ at least one UAE citizen.",
+          "bullets": [
+            "MOHRE Fines: Non-compliance incurs penalties of AED 7,000+ per month for each unfilled Emirati quota slot",
+            "Golden Visa for Entrepreneurs: Available to founders of an accredited project valued at ≥ AED 500,000 or approved by an official UAE incubator",
+            "Golden Visa for Executives: Minimum monthly basic salary of AED 30,000 with bachelor's degree and MOHRE employment contract"
+          ],
+          "codeSnippet": "Golden Visa Categories for Business Leaders:\nCategory        | Minimum Criteria                          | Validity\nReal Estate     | AED 2M+ equity in UAE property            | 10 Years\nInvestor / Cap  | AED 2M+ capital deposit / commercial inv  | 10 Years\nEntrepreneur    | AED 500k project approval or tech startup | 10 Years\nExecutive       | AED 30k/mo salary + MOHRE Level 1/2      | 10 Years",
+          "takeaway": "Strategic planning for Emiratization and executive residency ensures long-term operational continuity for growing Dubai enterprises."
+        }
+      ],
+      "lab": {
+        "title": "Workforce Compliance & Golden Visa Strategy Lab",
+        "brief": "Structure a hiring plan for a 60-person tech company in Dubai mainland that complies with MOHRE quotas, WPS payroll schedules, and executive visas.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "A mainland tech company expands from 40 to 55 employees in Dubai. By what percentage must they increase their UAE national workforce to remain fully compliant with MOHRE regulations?",
+        "options": [
+          {
+            "text": "They are exempt because tech companies are never subject to Emiratization quotas.",
+            "correct": false,
+            "explanation": "Private sector companies with 50+ skilled employees are subject to the Nafis targets."
+          },
+          {
+            "text": "They must hire UAE national skilled workers to meet the 2% semi-annual/annual Nafis quota targets, or pay monthly contributions for each unfulfilled quota.",
+            "correct": true,
+            "explanation": "Passing the 50-skilled-worker threshold activates mandatory Nafis quotas with escalating penalties for non-compliance."
+          },
+          {
+            "text": "They only need to pay wages in cash without filing reports.",
+            "correct": false,
+            "explanation": "Cash salary payments violate WPS regulations and result in company license suspension."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Under UAE Labor Law, what is the statutory End of Service Gratuity for the first 5 years of service based on?",
+          "options": [
+            "30 days gross salary per year",
+            "21 days basic salary per year",
+            "15 days total compensation per year",
+            "1 month basic salary per year"
+          ],
+          "correctIndex": 1,
+          "explanation": "Under Federal Decree-Law No. 33 of 2021, EOSG is calculated as 21 days' basic wage for each year of service for the first 5 years."
+        },
+        {
+          "question": "What is the minimum monthly salary requirement for the 10-year Executive Golden Visa category in the UAE?",
+          "options": [
+            "AED 15,000",
+            "AED 20,000",
+            "AED 30,000",
+            "AED 50,000"
+          ],
+          "correctIndex": 2,
+          "explanation": "Executive Golden Visa applicants must have an attested bachelor's degree and a minimum monthly salary of AED 30,000."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "What is the standard federal corporate tax rate on taxable net business profits exceeding AED 375,000 in the UAE?",
+        "options": [
+          "5%",
+          "9%",
+          "15%",
+          "0%"
+        ],
+        "correctIndex": 1,
+        "explanation": "Under Federal Decree-Law No. 47 of 2022, taxable profits exceeding AED 375,000 are subject to a 9% corporate tax rate."
+      },
+      {
+        "question": "Which legal document governs commercial lease registration with the Dubai Land Department?",
+        "options": [
+          "Tawtheeq",
+          "Ejari",
+          "Nafis",
+          "Makani"
+        ],
+        "correctIndex": 1,
+        "explanation": "Ejari is the mandatory lease registration system in Dubai required for commercial trade licensing."
+      },
+      {
+        "question": "What is the maximum non-qualifying revenue allowed for a Free Zone company to maintain Qualifying Free Zone Person (0% tax) status?",
+        "options": [
+          "The lower of 5% of total revenue or AED 5,000,000",
+          "Up to 25% of gross revenue",
+          "Unlimited if foreign owned",
+          "AED 10,000,000 flat"
+        ],
+        "correctIndex": 0,
+        "explanation": "The de minimis threshold is the lower of 5% of total revenue or AED 5,000,000."
+      },
+      {
+        "question": "What legal system governs corporate disputes in the Dubai International Financial Centre (DIFC)?",
+        "options": [
+          "French Napoleonic Code",
+          "English Common Law",
+          "Maritime Admiralty Law",
+          "UAE Federal Penal Code"
+        ],
+        "correctIndex": 1,
+        "explanation": "The DIFC has its own independent court system based on English Common Law."
+      },
+      {
+        "question": "What is the maximum revenue ceiling for a UAE business to claim Small Business Relief through 2026?",
+        "options": [
+          "AED 1,000,000",
+          "AED 3,000,000",
+          "AED 5,000,000",
+          "AED 12,000,000"
+        ],
+        "correctIndex": 1,
+        "explanation": "Small Business Relief is available for resident taxpayers whose gross revenue does not exceed AED 3,000,000 in any relevant tax period."
+      },
+      {
+        "question": "Which digital banking platform was created in the UAE specifically to solve SME bank onboarding challenges?",
+        "options": [
+          "Wio Business",
+          "Chime MENA",
+          "Monzo Gulf",
+          "N26 Dubai"
+        ],
+        "correctIndex": 0,
+        "explanation": "Wio Bank (Wio Business) provides rapid digital onboarding for UAE companies."
+      },
+      {
+        "question": "What electronic mechanism is mandatory for all mainland companies to disburse employee salaries?",
+        "options": [
+          "Direct Western Union transfers",
+          "Wages Protection System (WPS)",
+          "Crypto USDC payroll",
+          "Cash envelopes with receipt"
+        ],
+        "correctIndex": 1,
+        "explanation": "WPS is monitored directly by MOHRE and the Central Bank of the UAE to safeguard employee salary payments."
+      },
+      {
+        "question": "What investment threshold in UAE property qualifies an investor for a 10-year Real Estate Golden Visa?",
+        "options": [
+          "AED 500,000",
+          "AED 1,000,000",
+          "AED 2,000,000",
+          "AED 5,000,000"
+        ],
+        "correctIndex": 2,
+        "explanation": "Owning one or more properties with a combined purchase value of at least AED 2,000,000 qualifies for the 10-year Golden Visa."
+      },
+      {
+        "question": "What government initiative drives the employment of UAE nationals in the private sector?",
+        "options": [
+          "Nafis",
+          "Trakhees",
+          "Tasheel",
+          "Amer"
+        ],
+        "correctIndex": 0,
+        "explanation": "Nafis is the UAE government program tasked with accelerating the integration of Emirati talent into the private corporate sector."
+      },
+      {
+        "question": "Under Federal Decree-Law No. 26 of 2020, what was the primary change to UAE commercial companies?",
+        "options": [
+          "Mandatory 100% local sponsorship was introduced",
+          "Foreign investors were granted 100% ownership across over 1,000 commercial activities",
+          "All Free Zones were merged into the mainland",
+          "Corporate tax was abolished for 50 years"
+        ],
+        "correctIndex": 1,
+        "explanation": "The reform removed the requirement for commercial companies to have an Emirati majority shareholder, granting 100% foreign ownership."
+      }
+    ]
+  },
+  "tuitionFee": 3500
+}

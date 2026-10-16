@@ -1,0 +1,461 @@
+{
+  "id": "ud-cybersecurity",
+  "institutionId": "ud",
+  "title": "Cybersecurity & Digital Asset Protection",
+  "tagline": "Enterprise security architecture, Dubai Cyber Security Center (DESC) standards, and zero-trust engineering.",
+  "category": "Technology",
+  "level": "bachelor_degree",
+  "duration": "4 Weeks (Professional Masterclass)",
+  "rating": 4.93,
+  "enrolledCount": 1250,
+  "icon": "🛡️",
+  "superpower": {
+    "id": "cyber_shield",
+    "name": "Zero-Breach Shield",
+    "icon": "🛡️",
+    "description": "+30% security score and full immunity to phishing scams across city financial portals.",
+    "badgeText": "DESC Hardened",
+    "perkType": "general"
+  },
+  "syllabus": [
+    "Week 1: Dubai Electronic Security Center (DESC) Framework & ISR Compliance",
+    "Week 2: Cloud Infrastructure Hardening & Zero-Trust Architecture (AWS/Azure UAE Regions)",
+    "Week 3: Cryptographic Key Management, HSMs & Digital Asset Cold Storage Security",
+    "Week 4: Incident Response, Threat Hunting & GCC Threat Intelligence Operations"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Dubai Electronic Security Center (DESC) & ISR Standards",
+      "objective": "Implement the Dubai Information Security Regulation (ISR) and DESC government cyber standards.",
+      "slides": [
+        {
+          "title": "The UAE Cybersecurity Mandate & DESC",
+          "body": "The Dubai Electronic Security Center (DESC), established under Law No. 11 of 2014, sets mandatory cybersecurity standards for all government and semi-government entities in Dubai, as well as critical infrastructure providers. The Dubai Cyber Security Strategy positions Dubai as the world's most secure digital economy.",
+          "bullets": [
+            "Information Security Regulation (ISR): Comprehensive standard covering governance, risk, and technical controls",
+            "Dubai Cyber Index: Real-time monitoring of government entity security postures",
+            "Critical National Infrastructure (CNI): Strict segregation of operational technology (OT) from corporate IT networks"
+          ],
+          "codeSnippet": "// DESC ISR Compliance Assessment Matrix\nconst isrDomains = [\n  { domain: 'ISR-GOV', title: 'Security Governance & Leadership', priority: 'Critical' },\n  { domain: 'ISR-AST', title: 'Asset Management & Data Classification', priority: 'High' },\n  { domain: 'ISR-ACC', title: 'Access Control & Privileged Access', priority: 'Critical' },\n  { domain: 'ISR-CRY', title: 'Cryptographic Protection & Key Lifecycle', priority: 'High' },\n  { domain: 'ISR-OPS', title: 'Operations Security & Vulnerability Mgmt', priority: 'Critical' },\n  { domain: 'ISR-INC', title: 'Incident Management & DESC Escalation', priority: 'Critical' }\n];",
+          "takeaway": "DESC ISR compliance is mandatory for any vendor contracting with Dubai government departments."
+        },
+        {
+          "title": "UAE Data Protection & Cloud Sovereignty",
+          "body": "Federal Decree-Law No. 45 of 2021 on Personal Data Protection (PDPL) establishes stringent conditions for data processing and cross-border transfers. For government and financial services data, data residency mandates require storage within local UAE cloud data centers (e.g. AWS UAE region in Abu Dhabi or Azure UAE North in Dubai).",
+          "bullets": [
+            "Data Localization: Secret and Top Secret government data must remain physically within UAE borders",
+            "Cross-Border Transfers: Permitted only to jurisdictions with adequate data protection regimes approved by the UAE Data Office",
+            "Penalties: Severe administrative fines for unauthorized disclosure or processing without lawful consent"
+          ],
+          "codeSnippet": "Data Classification Tiers (UAE Government):\nTier         | Definition                | Storage Location Required\nPublic       | Freely shareable           | Any Cloud (Global)\nRestricted   | Internal business use      | UAE or Approved Adequate Region\nConfidential | Competitive / PII data    | UAE Cloud Region (Local)\nSecret       | National security / CNI   | On-Prem / Sovereign Local Cloud Only",
+          "takeaway": "Architect your cloud workloads to store customer PII within UAE-hosted cloud regions to comply with Federal Decree-Law No. 45."
+        }
+      ],
+      "lab": {
+        "title": "DESC ISR Audit & Cloud Sovereignty Lab",
+        "brief": "Perform an ISR gap analysis for a Dubai FinTech application running on a multi-cloud architecture and draft data residency policies.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "A multinational enterprise provides SaaS HR solutions to a Dubai government authority. Where must the employee personal records and operational databases be hosted to comply with DESC guidelines?",
+        "options": [
+          {
+            "text": "On any low-cost public cloud server in the United States or Western Europe.",
+            "correct": false,
+            "explanation": "Violates UAE data residency and DESC ISR cloud hosting standards."
+          },
+          {
+            "text": "Within a certified UAE-based sovereign cloud or local data center region (e.g. AWS UAE or Azure UAE North) compliant with DESC ISR standards.",
+            "correct": true,
+            "explanation": "Dubai government and critical infrastructure data must reside locally within accredited UAE cloud regions."
+          },
+          {
+            "text": "Data does not need to be stored; it can be deleted daily.",
+            "correct": false,
+            "explanation": "Violates legal record retention and audit requirements."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Which government authority establishes mandatory cybersecurity regulations for Dubai entities?",
+          "options": [
+            "TDRA",
+            "DESC (Dubai Electronic Security Center)",
+            "DHA",
+            "RERA"
+          ],
+          "correctIndex": 1,
+          "explanation": "DESC is the dedicated agency regulating and protecting Dubai's digital and cyber systems."
+        },
+        {
+          "question": "Under UAE Federal Data Protection Law No. 45 of 2021, what is required for cross-border data transfer of sensitive personal data?",
+          "options": [
+            "No rules exist",
+            "Approval from the UAE Data Office or transfer to countries with adequate protection",
+            "Only verbal agreement",
+            "A police certificate"
+          ],
+          "correctIndex": 1,
+          "explanation": "Cross-border transfers require an adequate level of statutory protection or approval from the UAE Data Office."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Zero-Trust Architecture & Local Cloud Hardening",
+      "objective": "Build Zero-Trust network topologies, enforce mutual TLS (mTLS), and secure local AWS/Azure UAE tenant environments.",
+      "slides": [
+        {
+          "title": "The Zero-Trust Paradigm: Never Trust, Always Verify",
+          "body": "Traditional perimeter security (castle-and-moat) is obsolete against modern APTs and insider threats. Zero-Trust Architecture (ZTA) mandates that every user, service, and device must be explicitly authenticated, authorized, and cryptographically verified on every single transaction.",
+          "bullets": [
+            "Identity as the Perimeter: Strong MFA, conditional access policies, and ephemeral credentials",
+            "Micro-Segmentation: Isolating network workloads using software-defined perimeters and Kubernetes network policies",
+            "Mutual TLS (mTLS): Service-to-service communication encrypted and authenticated with rotating x509 certificates"
+          ],
+          "codeSnippet": "# Kubernetes Zero-Trust Network Policy (Default Deny All)\napiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: default-deny-all\n  namespace: production\nspec:\n  podSelector: {}\n  policyTypes:\n  - Ingress\n  - Egress\n---\n# Allow Ingress Only From Verified API Gateway\napiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: allow-api-gateway\n  namespace: production\nspec:\n  podSelector:\n    matchLabels:\n      app: transaction-service\n  ingress:\n  - from:\n    - podSelector:\n        matchLabels:\n          app: kong-gateway\n    ports:\n    - protocol: TCP\n      port: 8443",
+          "takeaway": "Deploy default-deny network policies across all cloud containers and enforce service mesh mTLS."
+        },
+        {
+          "title": "Cloud Security Posture Management (CSPM)",
+          "body": "Misconfigured cloud storage buckets, overly permissive IAM roles, and exposed management ports account for over 80% of enterprise cloud breaches. Implementing automated CSPM tools continuously audits cloud configurations against CIS Benchmarks.",
+          "bullets": [
+            "IAM Principle of Least Privilege: Eliminate wildcard permissions (`*`) in cloud policies",
+            "KMS Envelope Encryption: Encrypt all S3/Azure Blob objects at rest with customer-managed keys (CMK)",
+            "GuardDuty & Sentinel: Real-time cloud threat detection analyzing VPC flow logs, DNS logs, and CloudTrail events"
+          ],
+          "codeSnippet": "// AWS IAM Policy Hardening (Least Privilege)\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [{\n    \"Sid\": \"StrictS3AccessToUAEBucket\",\n    \"Effect\": \"Allow\",\n    \"Action\": [\"s3:GetObject\", \"s3:PutObject\"],\n    \"Resource\": \"arn:aws:s3:::dubai-fintech-vault-me-central-1/*\",\n    \"Condition\": {\n      \"Bool\": { \"aws:SecureTransport\": \"true\" },\n      \"IpAddress\": { \"aws:SourceIp\": [\"194.170.0.0/16\"] }\n    }\n  }]\n}",
+          "takeaway": "Enforce `aws:SecureTransport` (HTTPS only) and restrict administrative IAM access through hardware MFA keys."
+        }
+      ],
+      "lab": {
+        "title": "Zero-Trust Mesh & IAM Hardening Lab",
+        "brief": "Deploy an Istio service mesh with strict mTLS enforcement and configure an automated CIS Benchmark audit pipeline.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "An engineer proposes deploying a cloud microservice with an IAM role granting `s3:*` on all cloud resources to speed up development. What is the correct security response?",
+        "options": [
+          {
+            "text": "Approve it for production to prevent any permission errors.",
+            "correct": false,
+            "explanation": "Wildcard admin access severely compromises enterprise security."
+          },
+          {
+            "text": "Reject the policy and enforce least-privilege scoping to only specific bucket ARNs with read/write actions and mandatory HTTPS conditions.",
+            "correct": true,
+            "explanation": "Zero-Trust mandates least privilege; granting wildcard permissions violates cloud security best practices."
+          },
+          {
+            "text": "Disable encryption on the bucket to improve latency.",
+            "correct": false,
+            "explanation": "Disabling encryption exposes data at rest to catastrophic leaks."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the core principle of Zero-Trust Architecture?",
+          "options": [
+            "Trust anyone within the internal office WiFi",
+            "Never trust, always verify explicitly",
+            "Use single passwords for all servers",
+            "Disable firewalls for microservices"
+          ],
+          "correctIndex": 1,
+          "explanation": "Zero-Trust assumes no implicit trust and requires continuous authentication and verification."
+        },
+        {
+          "question": "What cryptographic protocol ensures both the client and server verify each other's identity in microservice communication?",
+          "options": [
+            "mTLS (Mutual TLS)",
+            "Plain HTTP",
+            "FTP",
+            "Telnet"
+          ],
+          "correctIndex": 0,
+          "explanation": "Mutual TLS (mTLS) provides bidirectional cryptographic authentication between services."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Hardware Security Modules & Digital Asset Cold Storage",
+      "objective": "Design institutional cryptographic key architectures, FIPS 140-2 Level 3 HSMs, and multi-party computation (MPC) cold vaults.",
+      "slides": [
+        {
+          "title": "Hardware Security Modules (HSMs) in Digital Banking",
+          "body": "For financial institutions and VARA-licensed crypto custodians, cryptographic private keys must never exist in plaintext memory on general-purpose servers. Dedicated Hardware Security Modules (HSMs) generate, store, and execute cryptographic signing operations inside tamper-resistant physical hardware.",
+          "bullets": [
+            "FIPS 140-2 Level 3 / Level 4: Physical tamper detection and automatic key zeroization upon physical breach",
+            "PKCS#11 API: Standard programming interface for interacting with enterprise HSM devices",
+            "Cloud HSMs: Dedicated single-tenant cloud HSM instances in UAE data centers (AWS CloudHSM, Azure Dedicated HSM)"
+          ],
+          "codeSnippet": "// Pseudocode: Signing Transaction via FIPS 140-2 HSM\nasync function signPayloadWithHSM(payloadHash, keyHandle) {\n  const session = await hsm.openSession({ pin: process.env.HSM_PIN });\n  try {\n    const signature = await session.sign({\n      mechanism: CKM_ECDSA_SHA256,\n      key: keyHandle,\n      data: payloadHash\n    });\n    return signature.toString('hex');\n  } finally {\n    await session.close();\n  }\n}",
+          "takeaway": "In institutional finance and digital asset custody, private keys must remain physically confined within dedicated HSM hardware."
+        },
+        {
+          "title": "Multi-Party Computation (MPC) & Multi-Sig Vaults",
+          "body": "VARA (Virtual Assets Regulatory Authority) regulations mandate that digital asset custodians eliminate single points of failure in private key management. Multi-Party Computation (MPC) splits cryptographic private keys into secret shares distributed across disparate physical locations and cloud environments.",
+          "bullets": [
+            "Threshold Signature Schemes (TSS): k-of-n key shares must collaborate to compute a valid signature without reconstructing the private key",
+            "Geographic Redundancy: Distribute key shares across Dubai, Abu Dhabi, and secure European vaults",
+            "Quorum Approvals: Multi-person approval policies (e.g. 3-of-5 executive sign-offs) for transactions over $100,000"
+          ],
+          "codeSnippet": "Institutional MPC Architecture:\n[Client Initiate Request]\n         │\n         ▼\n[Policy Engine: Whitelist + Velocity Check + Biometric Approval]\n         │ (Approved)\n ┌───────┼───────┐\n ▼       ▼       ▼\n[Share 1] [Share 2] [Share 3]  (Threshold 2-of-3 MPC)\n[Dubai HSM] [Abu Dhabi Cloud] [Cold Backup Vault]\n         │\n         ▼\n[Cryptographic Threshold Signature Computed -> Broadcasted to Blockchain]",
+          "takeaway": "Deploy 2-of-3 or 3-of-5 MPC threshold architectures to satisfy VARA custody rulebooks."
+        }
+      ],
+      "lab": {
+        "title": "Institutional Key Management & MPC Lab",
+        "brief": "Architect a multi-jurisdiction MPC key management scheme for a Dubai crypto custodian with automated velocity limits and air-gapped recovery.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "A digital asset broker wants to store customers' $50M crypto portfolio using a single private key saved on an encrypted USB thumb drive in the CEO's office safe. Does this comply with VARA custody standards?",
+        "options": [
+          {
+            "text": "Yes, because the safe is physically locked.",
+            "correct": false,
+            "explanation": "Single points of failure and lack of institutional HSM/MPC controls violate regulatory custody standards."
+          },
+          {
+            "text": "No. VARA requires institutional-grade custody architectures (such as FIPS 140-2 HSMs or MPC threshold key sharing) with segregation of client assets and disaster recovery procedures.",
+            "correct": true,
+            "explanation": "VARA rules strictly forbid single-key setups and require multi-signature/MPC security frameworks."
+          },
+          {
+            "text": "Yes, provided the CEO does not tell anyone the USB password.",
+            "correct": false,
+            "explanation": "Completely non-compliant with institutional standards."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What security standard certification is required for enterprise Hardware Security Modules?",
+          "options": [
+            "ISO 9001",
+            "FIPS 140-2 Level 3 / Level 4",
+            "PCI-DSS Level 5",
+            "GDPR Section 8"
+          ],
+          "correctIndex": 1,
+          "explanation": "FIPS 140-2 (Level 3 or 4) validates physical tamper resistance and cryptographic key protection."
+        },
+        {
+          "question": "What technology allows generating blockchain signatures without ever assembling the complete private key in a single location?",
+          "options": [
+            "FTP File Transfer",
+            "Multi-Party Computation (MPC / TSS)",
+            "Single RSA Key",
+            "Symmetric AES-128"
+          ],
+          "correctIndex": 1,
+          "explanation": "MPC uses threshold signature schemes to sign transactions using distributed key shares without assembling the full key."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Incident Response & Threat Intelligence in the GCC",
+      "objective": "Develop incident response plans, mitigate DDoS and ransomware attacks, and collaborate with national CERT teams.",
+      "slides": [
+        {
+          "title": "The GCC Threat Landscape: Ransomware & State Actors",
+          "body": "Enterprises in the UAE and GCC face targeted advanced persistent threat (APT) groups, state-sponsored espionage, and financially motivated ransomware cartels targeting energy, financial, and real estate sectors. Incident Response (IR) readiness dictates enterprise survival.",
+          "bullets": [
+            "aeCERT: UAE National Computer Emergency Response Team coordinating national incident response",
+            "Ransomware Defenses: Immutable air-gapped backups, privileged account isolation, and PowerShell/WMI restriction",
+            "Mean Time to Detect (MTTD) & Contain (MTTC): Industry benchmarks target < 1 hour detection and < 4 hours containment"
+          ],
+          "codeSnippet": "// Automated Threat Containment Webhook (SOAR)\napp.post('/api/soar/containment-alert', async (req, res) => {\n  const { hostIp, threatType, severity } = req.body;\n  if (severity === 'CRITICAL' && threatType === 'RANSOMWARE_ENCRYPTION_DETECTED') {\n    // 1. Isolate endpoint from network\n    await edr.isolateHost(hostIp);\n    // 2. Revoke active Active Directory tokens for compromised user\n    await activeDirectory.revokeAllTokens(req.body.userPrincipal);\n    // 3. Notify CISO and aeCERT incident desk\n    await pagerDuty.triggerHighSeverityAlert({ hostIp, threatType });\n    return res.json({ status: 'Host isolated, tokens revoked within 450ms' });\n  }\n});",
+          "takeaway": "Deploy automated SOAR playbooks that isolate compromised endpoints within seconds of ransomware behavior detection."
+        },
+        {
+          "title": "Forensic Analysis & Mandatory DESC Breach Notification",
+          "body": "When a confirmed data breach or major security incident occurs in Dubai, regulatory reporting clocks start ticking immediately. Under DESC and UAE PDPL guidelines, entities must notify relevant authorities and affected data subjects without undue delay.",
+          "bullets": [
+            "Evidence Preservation: Memory dumps (Volatility), disk imaging (FTK Imager), and preserving chain of custody",
+            "Root Cause Analysis (RCA): Identifying initial access broker vector (phishing, unpatched VPN, compromised contractor credentials)",
+            "Mandatory Notification: Escalation to DESC and UAE Data Office within statutory reporting windows"
+          ],
+          "codeSnippet": "Incident Response Lifecycle (NIST SP 800-61):\n[1. Preparation]   -> Tooling, playbooks, tabletop drills\n[2. Detection]     -> SIEM alerts, EDR telemetry, anomaly detection\n[3. Containment]   -> Network isolation, credential revocation\n[4. Eradication]   -> Malware removal, vulnerability patching\n[5. Recovery]      -> Clean backup restoration, monitoring\n[6. Lessons Learned] -> RCA documentation, regulator briefings",
+          "takeaway": "Document a clear chain of custody during digital forensics to ensure evidence is admissible in UAE legal proceedings."
+        }
+      ],
+      "lab": {
+        "title": "Ransomware Defense & Forensics Lab",
+        "brief": "Execute an incident response containment simulation responding to an active Cobalt Strike beacon inside a simulated corporate network.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "A Dubai financial enterprise detects an active unauthorized exfiltration of customer account records. According to DESC and UAE data protection standards, what is the mandatory immediate protocol?",
+        "options": [
+          {
+            "text": "Hide the incident and pay an extortion fee secretly.",
+            "correct": false,
+            "explanation": "Illegal, fuels cyber extortion, and carries criminal penalties under UAE law."
+          },
+          {
+            "text": "Isolate affected systems, activate the Incident Response plan, preserve forensic evidence, and notify DESC/aeCERT within statutory reporting windows.",
+            "correct": true,
+            "explanation": "DESC and UAE PDPL mandate immediate containment, forensic preservation, and prompt regulator escalation."
+          },
+          {
+            "text": "Format all hard drives immediately without preserving any logs.",
+            "correct": false,
+            "explanation": "Destroys critical evidence and hampers investigation."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the national Computer Emergency Response Team of the UAE called?",
+          "options": [
+            "US-CERT",
+            "aeCERT",
+            "Emirates Police Squad",
+            "DESC Defense"
+          ],
+          "correctIndex": 1,
+          "explanation": "aeCERT is the official cyber emergency response team for the United Arab Emirates."
+        },
+        {
+          "question": "What is the primary objective of automated SOAR (Security Orchestration, Automation, and Response) tools during a ransomware outbreak?",
+          "options": [
+            "Format the CEO's computer",
+            "Isolate compromised endpoints and revoke credentials in seconds",
+            "Send marketing emails",
+            "Mine cryptocurrency"
+          ],
+          "correctIndex": 1,
+          "explanation": "SOAR tools rapidly execute containment playbooks, isolating infected hosts and preventing lateral movement."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "Which Dubai agency establishes information security regulations and audits government cybersecurity compliance?",
+        "options": [
+          "DLD",
+          "DESC (Dubai Electronic Security Center)",
+          "DHA",
+          "KHDA"
+        ],
+        "correctIndex": 1,
+        "explanation": "DESC oversees Dubai's cybersecurity regulations and audits digital security compliance."
+      },
+      {
+        "question": "What is the fundamental philosophy of Zero-Trust Architecture?",
+        "options": [
+          "Trust internal network devices automatically",
+          "Never trust, always verify explicitly",
+          "Eliminate passwords entirely without replacement",
+          "Grant full administrative rights to all employees"
+        ],
+        "correctIndex": 1,
+        "explanation": "Zero-Trust assumes breach and verifies every user, device, and request continuously."
+      },
+      {
+        "question": "What security standard validates the physical tamper resistance of Hardware Security Modules (HSMs)?",
+        "options": [
+          "ISO 14001",
+          "FIPS 140-2 Level 3 / Level 4",
+          "PCI-DSS Version 1",
+          "IEEE 802.11"
+        ],
+        "correctIndex": 1,
+        "explanation": "FIPS 140-2 Level 3/4 confirms cryptographic protection and physical tamper resistance."
+      },
+      {
+        "question": "What cryptographic technique allows multiple parties to compute a valid digital signature without combining private keys?",
+        "options": [
+          "Multi-Party Computation (MPC)",
+          "Single DES Encryption",
+          "Plain MD5 Hashing",
+          "Symmetric AES"
+        ],
+        "correctIndex": 0,
+        "explanation": "MPC and Threshold Signature Schemes allow signing without assembling the complete private key."
+      },
+      {
+        "question": "Under UAE Data Protection Law No. 45 of 2021, where should sensitive government and personal data ideally be hosted?",
+        "options": [
+          "On unsecured foreign servers",
+          "Within certified UAE-based cloud data center regions",
+          "On personal laptop hard drives",
+          "Public torrent networks"
+        ],
+        "correctIndex": 1,
+        "explanation": "Data localization mandates require sovereign and sensitive records to reside within UAE data centers."
+      },
+      {
+        "question": "What is the primary benefit of mutual TLS (mTLS) in microservice architectures?",
+        "options": [
+          "It provides bidirectional cryptographic authentication and encryption between services",
+          "It speeds up network latency by removing encryption",
+          "It eliminates the need for firewalls",
+          "It replaces database indexes"
+        ],
+        "correctIndex": 0,
+        "explanation": "mTLS cryptographically authenticates both client and server while encrypting transit data."
+      },
+      {
+        "question": "What does the national team 'aeCERT' coordinate in the UAE?",
+        "options": [
+          "Highway traffic cameras",
+          "National cybersecurity incident response and alerts",
+          "Real estate construction permits",
+          "Aviation flight paths"
+        ],
+        "correctIndex": 1,
+        "explanation": "aeCERT is the UAE national team coordinating cybersecurity incident handling and intelligence."
+      },
+      {
+        "question": "In the event of an active ransomware infection, what is the first priority of containment?",
+        "options": [
+          "Pay the ransom immediately",
+          "Isolate the infected endpoints from the corporate network to stop lateral spread",
+          "Post about it on social media",
+          "Delete all domain backups"
+        ],
+        "correctIndex": 1,
+        "explanation": "Immediate network isolation prevents ransomware from spreading across corporate subnets and encrypting shared storage."
+      },
+      {
+        "question": "What document defines the baseline security controls for Dubai government and critical entities?",
+        "options": [
+          "Information Security Regulation (ISR)",
+          "Ejari Tenancy Agreement",
+          "VARA Rulebook",
+          "Makani Geolocation Standard"
+        ],
+        "correctIndex": 0,
+        "explanation": "The DESC Information Security Regulation (ISR) outlines governance and technical security controls."
+      },
+      {
+        "question": "What cloud security tool automatically audits cloud infrastructure configurations against CIS benchmarks?",
+        "options": [
+          "CSPM (Cloud Security Posture Management)",
+          "A text editor",
+          "A network ping utility",
+          "A DNS lookup script"
+        ],
+        "correctIndex": 0,
+        "explanation": "CSPM tools continuously evaluate cloud environments against security baselines to detect misconfigurations."
+      }
+    ]
+  },
+  "tuitionFee": 3800
+}

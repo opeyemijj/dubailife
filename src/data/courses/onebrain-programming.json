@@ -1,0 +1,582 @@
+{
+  "id": "onebrain-programming",
+  "institutionId": "onebrain",
+  "title": "Modern Full-Stack & Python Automation",
+  "tagline": "TypeScript, Next.js, Python Scripting, APIs, and Rapid MVP Deployment.",
+  "category": "Software Engineering",
+  "icon": "💻",
+  "durationWeeks": 4,
+  "level": "accelerator",
+  "tuitionFee": 15000,
+  "superpower": {
+    "id": "code_automation",
+    "name": "Automated Tech Stack",
+    "icon": "💻",
+    "description": "Lowers operational server and store running costs by 20% + unlocks developer terminal tools.",
+    "badgeText": "Dev Certified",
+    "perkType": "general"
+  },
+  "syllabus": {
+    "overview": "A comprehensive 4-week full-stack engineering accelerator. Build production Next.js React Server Components, type-safe RPCs, PostgreSQL schemas with Row Level Security, Python automation web-scrapers, and Model Context Protocol (MCP) server integration.",
+    "prerequisites": "Basic coding fundamentals in any language.",
+    "learningOutcomes": [
+      "Ship high-performance Next.js 16 full-stack applications with Server Components and Server Actions",
+      "Architect secure PostgreSQL databases with Supabase Row Level Security (RLS) policies",
+      "Automate multi-step business pipelines using Python, pandas, and automated web scrapers",
+      "Deploy Dockerized CI/CD pipelines to sovereign cloud hosting"
+    ],
+    "weeklyBreakdown": [
+      {
+        "week": 1,
+        "topic": "Next.js App Router, Server Components & Zero-Bundle Architecture",
+        "hours": 14
+      },
+      {
+        "week": 2,
+        "topic": "PostgreSQL, Supabase RLS & Type-Safe Database RPCs",
+        "hours": 14
+      },
+      {
+        "week": 3,
+        "topic": "Python Automation, Web Scraping & Scheduled Worker Crons",
+        "hours": 16
+      },
+      {
+        "week": 4,
+        "topic": "Agentic MCP Server Integration, Docker & Sovereign Cloud Deployment",
+        "hours": 18
+      }
+    ]
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Next.js App Router, Server Components & Zero-Bundle Architecture",
+      "objective": "Understand React Server Components (RSC), hydration, streaming SSR, and Server Actions.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "React Server Components vs Traditional SPAs",
+          "content": "Traditional Single Page Applications (SPAs) ship megabytes of JavaScript to client phones, causing slow Largest Contentful Paint (LCP) and battery drain. Next.js App Router renders components on the server ahead of time, shipping clean HTML with zero JavaScript bundle overhead for static views.",
+          "codeSnippet": "// Server Component by default:\nexport default async function VenueDashboard({ params }) {\n  const data = await db.query('SELECT * FROM venues');\n  return <VenueList items={data} />;\n}",
+          "keyTakeaway": "Keep state and heavy libraries on the server; ship interactive client components only where DOM events occur."
+        },
+        {
+          "title": "Server Actions & Progressive Mutation",
+          "content": "Server Actions allow client forms to mutate backend state directly via asynchronous RPC calls without writing boilerplate API route handlers. Server Actions integrate seamlessly with optimistic UI updates and form validation.",
+          "codeSnippet": "'use server';\nexport async function updateStoreInventory(storeId, count) {\n  await db.update('inventory').set({ count }).where({ storeId });\n}",
+          "keyTakeaway": "Server actions unify frontend mutations with backend transactions."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 1: Ship a Zero-Client-JS Dubai Real Estate Portal",
+        "brief": "Build a property listing view with server-side pagination, search parameters, and streaming Suspense boundaries.",
+        "deliverable": "Code repository / operational blueprint tested and verified.",
+        "proTip": "Document every architectural tradeoff and execution boundary."
+      },
+      "caseStudy": {
+        "scenario": "A client in Dubai complains that their luxury portal takes 6 seconds to load on mobile connections in the desert. How do you fix it?",
+        "options": [
+          {
+            "text": "Rewrite heavy data components as React Server Components, eliminating 80% of client JS bundle",
+            "correct": true,
+            "explanation": "RSC renders HTML on the server and streams it instantly to mobile clients."
+          },
+          {
+            "text": "Add more spinner animations",
+            "correct": false,
+            "explanation": "Spinners do not improve page load speed or Core Web Vitals."
+          },
+          {
+            "text": "Tell users to buy faster phones",
+            "correct": false,
+            "explanation": "Unacceptable customer experience."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the primary benefit of React Server Components (RSC)?",
+          "options": [
+            "They require Flash player",
+            "They render on the server and send zero JS bundle overhead to the client",
+            "They only run on iPhones",
+            "They eliminate CSS"
+          ],
+          "correctIndex": 1,
+          "explanation": "RSC renders UI on the server, drastically reducing client bundle payload."
+        },
+        {
+          "question": "What does 'use server' declare at the top of a function in Next.js?",
+          "options": [
+            "It turns the server off",
+            "It marks the function as a callable Server Action from client components",
+            "It increases server bill",
+            "It deletes the database"
+          ],
+          "correctIndex": 1,
+          "explanation": "'use server' marks an asynchronous function as a secure server-side RPC endpoint."
+        },
+        {
+          "question": "Why is TypeScript preferred for production enterprise applications?",
+          "options": [
+            "It runs faster on CPUs",
+            "Static compile-time type checking catches runtime undefined errors before shipping",
+            "It is shorter to write",
+            "It only works on Mac"
+          ],
+          "correctIndex": 1,
+          "explanation": "TypeScript enforces strict contracts and eliminates undefined property crashes."
+        },
+        {
+          "question": "What is an Idempotent API operation?",
+          "options": [
+            "An API that crashes",
+            "An operation that produces the exact same outcome no matter how many times it is repeated",
+            "A slow network call",
+            "An encrypted token"
+          ],
+          "correctIndex": 1,
+          "explanation": "Idempotent requests prevent duplicate payments or orders on network retries."
+        },
+        {
+          "question": "What is Streaming SSR with React Suspense?",
+          "options": [
+            "Streaming video like Netflix",
+            "Streaming HTML chunks to the browser progressively as backend data fetches resolve",
+            "A slow internet speed",
+            "A radio station"
+          ],
+          "correctIndex": 1,
+          "explanation": "Streaming SSR delivers fast initial visual paint while slow data queries load in parallel."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "PostgreSQL, Supabase RLS & Type-Safe Database RPCs",
+      "objective": "Design relational schemas, enforce Row Level Security, and write atomic PostgreSQL functions.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Row Level Security (RLS) as Zero-Trust Data Defense",
+          "content": "In multi-tenant cloud applications, application-layer authorization checks are prone to developer omission bugs. Row Level Security enforces tenant isolation directly inside the PostgreSQL kernel: users can only SELECT or UPDATE rows where auth.uid() matches user_id.",
+          "codeSnippet": "CREATE POLICY \"Users manage own wallet\"\nON public.wallets\nFOR ALL\nUSING (auth.uid() = user_id);",
+          "keyTakeaway": "Enforce security at the database engine level, not in ephemeral web server memory."
+        },
+        {
+          "title": "Stored Procedures (RPC) for Financial Atomicity",
+          "content": "When transferring virtual AED or deducting inventory balances, client-side math is vulnerable to race conditions and double-spending. ACID-compliant PostgreSQL functions wrap debits and credits in atomic transactions that automatically rollback on error.",
+          "codeSnippet": "CREATE FUNCTION transfer_aed(p_to uuid, p_amount bigint) RETURNS void AS $$\nBEGIN\n  UPDATE balances SET balance = balance - p_amount WHERE id = auth.uid() AND balance >= p_amount;\n  IF NOT FOUND THEN RAISE EXCEPTION 'insufficient_funds'; END IF;\n  UPDATE balances SET balance = balance + p_amount WHERE id = p_to;\nEND; $$ LANGUAGE plpgsql SECURITY DEFINER;",
+          "keyTakeaway": "Atomic transactions prevent race condition exploits and double-spending."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 2: Implement an Audited Escrow Ledger in Supabase",
+        "brief": "Write migration scripts with custom enums, immutable audit ledger tables, and an RLS test suite.",
+        "deliverable": "Code repository / operational blueprint tested and verified.",
+        "proTip": "Document every architectural tradeoff and execution boundary."
+      },
+      "caseStudy": {
+        "scenario": "An attacker sends 10 parallel HTTP requests simultaneously to withdraw AED 1,000 from an account holding only AED 1,000. How do you prevent a double-spend?",
+        "options": [
+          {
+            "text": "Check balance in Node.js memory before updating",
+            "correct": false,
+            "explanation": "Race conditions allow parallel threads to pass the in-memory check simultaneously."
+          },
+          {
+            "text": "Use database row locking (FOR UPDATE) or atomic single-statement updates enforcing balance >= amount",
+            "correct": true,
+            "explanation": "PostgreSQL row locks serialize concurrent updates, ensuring only the first succeeds."
+          },
+          {
+            "text": "Add a 1-second setTimeout delay in JavaScript",
+            "correct": false,
+            "explanation": "Sleep delays do not prevent concurrent race conditions."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is Row Level Security (RLS) in PostgreSQL?",
+          "options": [
+            "A physical lock on a server rack",
+            "A database engine security mechanism that filters query results based on user identity",
+            "An Excel formula",
+            "A browser extension"
+          ],
+          "correctIndex": 1,
+          "explanation": "RLS restricts which table rows an authenticated user can select, insert, update, or delete."
+        },
+        {
+          "question": "What does the ACID acronym stand for in database transactions?",
+          "options": [
+            "Atomicity, Consistency, Isolation, and Durability",
+            "Automated Computer Internet Database",
+            "Audio Code Instruction Display",
+            "Apple Computer Interface Design"
+          ],
+          "correctIndex": 0,
+          "explanation": "ACID guarantees that database transactions are processed reliably."
+        },
+        {
+          "question": "What is a Foreign Key constraint?",
+          "options": [
+            "A passport number",
+            "A relationship enforcing that a column value must match a primary key in another table",
+            "A password to open the server",
+            "A tax ID"
+          ],
+          "correctIndex": 1,
+          "explanation": "Foreign keys preserve referential integrity across relational tables."
+        },
+        {
+          "question": "Why should sensitive financial calculations run inside database stored procedures (RPC)?",
+          "options": [
+            "They use less electricity",
+            "They execute atomically inside a single database transaction, preventing race conditions",
+            "They make code shorter",
+            "They eliminate taxes"
+          ],
+          "correctIndex": 1,
+          "explanation": "RPC functions guarantee atomic execution without intermediate network vulnerabilities."
+        },
+        {
+          "question": "What does database INDEX do?",
+          "options": [
+            "Prints a table of contents",
+            "Drastically speeds up query lookups on specific columns at the cost of slight write overhead",
+            "Encrypts all passwords",
+            "Deletes old rows"
+          ],
+          "correctIndex": 1,
+          "explanation": "Indexes allow database engines to jump directly to target rows without full table scans."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Python Automation, Web Scraping & Scheduled Worker Crons",
+      "objective": "Build automated data extraction pipelines, WhatsApp alert bots, and cron background tasks.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Automated Web Scraping with BeautifulSoup & Playwright",
+          "content": "Automated scrapers allow businesses to monitor competitor real estate prices, hotel room rates, and flight seat availability in real time. Using headless browsers with Playwright bypasses JavaScript-heavy SPAs and dynamic hydration.",
+          "codeSnippet": "from playwright.sync_api import sync_playwright\nwith sync_playwright() as p:\n    browser = p.chromium.launch(headless=True)\n    page = browser.new_page()\n    page.goto('https://dld.gov.ae/en/open-data')\n    print(page.title())",
+          "keyTakeaway": "Headless browser automation unlocks dynamic client-rendered web datasets."
+        },
+        {
+          "title": "Scheduled Worker Crons & WhatsApp Business API",
+          "content": "Automated Python workers running on cron schedules query APIs, detect transaction anomalies, and send automated WhatsApp notifications to executive phones in under 5 seconds.",
+          "codeSnippet": "import requests\ndef send_whatsapp_alert(phone, text):\n    requests.post('https://graph.facebook.com/v18.0/me/messages', json={\n        'to': phone, 'text': {'body': text}\n    }, headers={'Authorization': 'Bearer ' + TOKEN})",
+          "keyTakeaway": "Automation bridges database mutations with instant mobile notifications."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 3: Build an Automated Dubai Marina Real Estate Scraper",
+        "brief": "Create a scheduled Python script that extracts daily median rental prices from property portals and stores them in PostgreSQL.",
+        "deliverable": "Code repository / operational blueprint tested and verified.",
+        "proTip": "Document every architectural tradeoff and execution boundary."
+      },
+      "caseStudy": {
+        "scenario": "A website blocks your scraper after 10 requests with HTTP 429 Too Many Requests. What is the production resolution?",
+        "options": [
+          {
+            "text": "Implement exponential backoff, user-agent rotation, and distributed residential proxy pools",
+            "correct": true,
+            "explanation": "Rotating IPs and headers mimics legitimate distributed traffic and respects rate limits."
+          },
+          {
+            "text": "Spam the server with 1,000 requests per second",
+            "correct": false,
+            "explanation": "This triggers IP ban."
+          },
+          {
+            "text": "Give up on automation",
+            "correct": false,
+            "explanation": "Proxies and backoff are standard engineering practices."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is a Cron job in Linux / server environments?",
+          "options": [
+            "A computer virus",
+            "A time-based job scheduler that executes scripts at specified recurring intervals",
+            "A hard drive test",
+            "A video player"
+          ],
+          "correctIndex": 1,
+          "explanation": "Cron automates recurring script execution on predictable schedules."
+        },
+        {
+          "question": "What is Playwright used for in automation?",
+          "options": [
+            "Writing theatre plays",
+            "Headless browser automation, testing, and scraping across Chromium, Firefox, and WebKit",
+            "Recording audio",
+            "Managing databases"
+          ],
+          "correctIndex": 1,
+          "explanation": "Playwright provides programmatic control over modern web browsers."
+        },
+        {
+          "question": "What does HTTP status code 429 signify?",
+          "options": [
+            "Page Not Found",
+            "Too Many Requests (Rate limit exceeded)",
+            "Server Error",
+            "Successful Payment"
+          ],
+          "correctIndex": 1,
+          "explanation": "429 indicates that the client has sent too many requests in a given amount of time."
+        },
+        {
+          "question": "Why is Exponential Backoff essential in automated API worker loops?",
+          "options": [
+            "It makes computers sleep",
+            "It gradually increases the delay between retry attempts to prevent hammering overloaded servers",
+            "It saves battery",
+            "It deletes cache"
+          ],
+          "correctIndex": 1,
+          "explanation": "Exponential backoff allows struggling servers time to recover before retries."
+        },
+        {
+          "question": "What library in Python is the standard for tabular data manipulation and analytics?",
+          "options": [
+            "pandas",
+            "turtle",
+            "pygame",
+            "tkinter"
+          ],
+          "correctIndex": 0,
+          "explanation": "pandas is the industry-standard high-performance data manipulation library."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Agentic MCP Server Integration, Docker & Sovereign Cloud Deployment",
+      "objective": "Package microservices with Docker, implement Model Context Protocol servers, and deploy to UAE sovereign clouds.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Dockerizing Production Microservices",
+          "content": "Docker packages code, system dependencies, and runtime libraries into lightweight, reproducible containers. This guarantees that code executing perfectly on a developer's MacBook behaves identically when deployed to a Linux cluster in Dubai.",
+          "codeSnippet": "FROM node:20-alpine\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci --only=production\nCOPY . .\nCMD [\"npm\", \"start\"]",
+          "keyTakeaway": "Containerization eliminates 'it worked on my machine' deployment discrepancies."
+        },
+        {
+          "title": "Connecting Agents to Real-World Infrastructure via MCP",
+          "content": "Build Model Context Protocol servers exposing custom business endpoints. By registering your Python scrapers and Next.js APIs as MCP tools, autonomous AI agents can query your internal business data and execute administrative workflows on demand.",
+          "codeSnippet": "const server = new McpServer({\n  name: 'DubaiBusinessTools',\n  version: '1.0.0'\n});\nserver.tool('get_property_yield', { area: z.string() }, async ({ area }) => {\n  return { content: [{ type: 'text', text: `Yield in ${area}: 7.2%` }] };\n});",
+          "keyTakeaway": "MCP turns traditional backend APIs into cognitive agent capabilities."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 4: Capstone — Deploy an Autonomous Full-Stack AI Booking Engine",
+        "brief": "Deploy a Next.js frontend, Supabase database, and Python MCP automation worker into production with continuous integration.",
+        "deliverable": "Code repository / operational blueprint tested and verified.",
+        "proTip": "Document every architectural tradeoff and execution boundary."
+      },
+      "caseStudy": {
+        "scenario": "Your Docker container crashes in production with 'JavaScript heap out of memory'. What is the root cause and remedy?",
+        "options": [
+          {
+            "text": "A memory leak caused by unclosed database connections or global arrays; profile heap dumps with Node inspect and configure memory limits",
+            "correct": true,
+            "explanation": "Profiling heap snapshots isolates memory leaks and stabilizes container execution."
+          },
+          {
+            "text": "The server room is hot",
+            "correct": false,
+            "explanation": "Software heap limits are programmatic, not physical temperature."
+          },
+          {
+            "text": "Restart the container every 5 minutes forever",
+            "correct": false,
+            "explanation": "Band-aid restarts do not resolve production code leaks."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is a Docker container image?",
+          "options": [
+            "A JPEG screenshot",
+            "A standalone, executable package containing code, runtime, libraries, and settings necessary to run an app",
+            "A desktop wallpaper",
+            "A hard drive partition"
+          ],
+          "correctIndex": 1,
+          "explanation": "Container images contain everything needed to run software reproducibly anywhere."
+        },
+        {
+          "question": "What is CI/CD in modern engineering pipelines?",
+          "options": [
+            "Continuous Integration and Continuous Deployment for automated testing and shipping",
+            "Cash in Cash Delivery",
+            "Computer Instruction Display",
+            "Central Internet Circuit"
+          ],
+          "correctIndex": 0,
+          "explanation": "CI/CD automates test suites, linting, and zero-downtime production deployment."
+        },
+        {
+          "question": "What is the primary role of a Reverse Proxy (like NGINX or Cloudflare)?",
+          "options": [
+            "To reverse video playback",
+            "To handle SSL termination, load balancing, DDoS protection, and cache routing before origin servers",
+            "To print invoices",
+            "To design graphics"
+          ],
+          "correctIndex": 1,
+          "explanation": "Reverse proxies safeguard origin servers from direct exposure and manage traffic."
+        },
+        {
+          "question": "What does Environment Variables (env) protect against?",
+          "options": [
+            "Cold weather",
+            "Accidental leakage of database passwords and private API keys into public Git repositories",
+            "Slow CPU speeds",
+            "Broken keyboards"
+          ],
+          "correctIndex": 1,
+          "explanation": "Environment variables keep secret credentials isolated from source code."
+        },
+        {
+          "question": "What is the benefit of deploying to local sovereign cloud regions in the UAE?",
+          "options": [
+            "Lower electricity bills",
+            "Strict legal compliance with UAE Federal Data Protection Law and lower latency (<10ms) across Dubai",
+            "Free software licenses",
+            "No taxes"
+          ],
+          "correctIndex": 1,
+          "explanation": "Local cloud hosting satisfies federal data residency statutes while providing single-digit millisecond latency."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "What is the primary advantage of React Server Components (RSC)?",
+        "options": [
+          "They render on the server and send zero JavaScript bundle overhead to the client",
+          "They require flash player",
+          "They only run on smartphones",
+          "They eliminate CSS"
+        ],
+        "correctIndex": 0,
+        "explanation": "RSC renders UI on the server, drastically reducing client JS payload."
+      },
+      {
+        "question": "What does PostgreSQL Row Level Security (RLS) guarantee?",
+        "options": [
+          "Fast typing",
+          "Tenant data isolation enforced directly at the database engine level",
+          "Free database hosting",
+          "Automatic backups"
+        ],
+        "correctIndex": 1,
+        "explanation": "RLS enforces security policies on individual table rows based on auth identity."
+      },
+      {
+        "question": "What is an Idempotent API operation?",
+        "options": [
+          "An operation that produces the exact same outcome no matter how many times it is repeated",
+          "An API that crashes easily",
+          "A slow network call",
+          "An encrypted password"
+        ],
+        "correctIndex": 0,
+        "explanation": "Idempotent requests protect against duplicate payments or records on retries."
+      },
+      {
+        "question": "What does Model Context Protocol (MCP) enable for AI models?",
+        "options": [
+          "Decoupled, standardized tool calling and resource access across external systems",
+          "Translating text to audio",
+          "Playing video games",
+          "Designing logos"
+        ],
+        "correctIndex": 0,
+        "explanation": "MCP standardizes the interface between LLMs and external software tools."
+      },
+      {
+        "question": "Why are atomic database transactions (RPC) critical for financial balances?",
+        "options": [
+          "They make code longer",
+          "They ensure all debit and credit steps either succeed together or rollback completely, preventing race conditions",
+          "They use less RAM",
+          "They look cool"
+        ],
+        "correctIndex": 1,
+        "explanation": "Transactions prevent double-spending and inconsistent intermediate ledger states."
+      },
+      {
+        "question": "What does Docker containerization eliminate in production deployments?",
+        "options": [
+          "Environment and dependency discrepancies ('it worked on my machine' bugs)",
+          "The need for programming",
+          "The need for electricity",
+          "Software bugs forever"
+        ],
+        "correctIndex": 0,
+        "explanation": "Docker standardizes runtime environments across development and production."
+      },
+      {
+        "question": "What does HTTP status code 429 indicate?",
+        "options": [
+          "Too Many Requests (Rate limit reached)",
+          "Page Found",
+          "Payment Received",
+          "Internal Server Error"
+        ],
+        "correctIndex": 0,
+        "explanation": "429 signals that client requests have exceeded the API rate limit."
+      },
+      {
+        "question": "What does CORS stand for in web security?",
+        "options": [
+          "Cross-Origin Resource Sharing",
+          "Central Online Routing System",
+          "Crypto Order Rate Sheet",
+          "Computer Operating Remote Standard"
+        ],
+        "correctIndex": 0,
+        "explanation": "CORS controls whether browsers can make cross-origin requests to another domain."
+      },
+      {
+        "question": "Why must secret API keys never be committed to public Git repos?",
+        "options": [
+          "They take up too much disk space",
+          "Automated bots will scrape them within seconds to drain accounts and compromise databases",
+          "GitHub will delete the repo",
+          "Git only stores text"
+        ],
+        "correctIndex": 1,
+        "explanation": "Scraper bots actively monitor public commits to hijack exposed credentials."
+      },
+      {
+        "question": "What is Exponential Backoff?",
+        "options": [
+          "Gradually increasing the delay between retry attempts to allow overloaded systems time to recover",
+          "Walking backwards",
+          "Deleting old data",
+          "Slowing down CPU clock"
+        ],
+        "correctIndex": 0,
+        "explanation": "Exponential backoff prevents retry storms from overwhelming backend servers."
+      }
+    ]
+  },
+  "duration": "4 Weeks"
+}

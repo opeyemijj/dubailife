@@ -1,0 +1,468 @@
+{
+  "id": "gems-arabic",
+  "institutionId": "gems",
+  "title": "Arabic for Newcomers & Dubai Etiquette",
+  "tagline": "Spoken Gulf Arabic (Khaleeji), government vocabulary, business greetings, and cross-cultural manners.",
+  "category": "Language",
+  "level": "secondary_diploma",
+  "duration": "4 Weeks (Interactive Immersion)",
+  "rating": 4.97,
+  "enrolledCount": 2890,
+  "icon": "🗣️",
+  "superpower": {
+    "id": "arabic_fluency",
+    "name": "Arabic Cultural Fluency",
+    "icon": "🗣️",
+    "description": "+25% merchant souk negotiation discounts, local civic rapport, plus a 20% University Scholarship Voucher!",
+    "badgeText": "Khaleeji Fluent",
+    "perkType": "arabic_dialogue"
+  },
+  "syllabus": [
+    "Week 1: Spoken Khaleeji Greetings, Honorifics & Everyday Courtesy Phrases",
+    "Week 2: Navigating Dubai Government Portals, Official Terminology & Civic Titles",
+    "Week 3: Market Bargaining, Taxi & Restaurant Arabic (Souks, Dining & Daily Life)",
+    "Week 4: Business Etiquette, Majlis Decorum & Cross-Cultural Sensitivity in the UAE"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Essential Khaleeji Greetings & Social Honorifics",
+      "objective": "Master conversational Gulf Arabic greetings, appropriate honorifics, and everyday courteous responses.",
+      "slides": [
+        {
+          "title": "The Universal Greeting: Salam Alaykum",
+          "body": "In the UAE and the broader Arab world, conversations begin with warmth and respectful greetings before any business is discussed. The universal greeting 'As-salamu alaykum' translates to 'Peace be upon you', and the reciprocal response is 'Wa alaykum as-salam'.",
+          "bullets": [
+            "As-salamu alaykum -> Response: Wa alaykum as-salam (And upon you be peace)",
+            "Marhaban -> Response: Marhaban bik / Ahlan wa sahlan (Welcome)",
+            "Sabah al-khayr -> Response: Sabah an-noor (Good morning / Morning of light)",
+            "Masa' al-khayr -> Response: Masa' an-noor (Good evening / Evening of light)"
+          ],
+          "codeSnippet": "// Spoken Khaleeji Dialogue Matrix\nconst greetings = [\n  { arabic: 'السلام عليكم', transliteration: 'As-salamu alaykum', meaning: 'Peace be upon you (Formal greeting)' },\n  { arabic: 'وعليكم السلام', transliteration: 'Wa alaykum as-salam', meaning: 'And upon you be peace (Response)' },\n  { arabic: 'شحالك؟', transliteration: 'Sh-halak? (m) / Sh-halich? (f)', meaning: 'How are you? (Khaleeji/Emirati dialect)' },\n  { arabic: 'الحمد لله بخير', transliteration: 'Alhamdulillah, bikhayr', meaning: 'Praise be to God, well' },\n  { arabic: 'تفضل', transliteration: 'Tafaddal (m) / Tafaddali (f)', meaning: 'Please, go ahead / Welcome in' },\n  { arabic: 'مشكور', transliteration: 'Mashkoor (m) / Mashkoorah (f)', meaning: 'Thank you (Deeply appreciated in Khaleeji)' }\n];",
+          "takeaway": "Using local Khaleeji expressions like 'Sh-halak' and 'Mashkoor' creates immediate goodwill with Emirati citizens."
+        },
+        {
+          "title": "Honorifics & Respectful Address",
+          "body": "Addressing people correctly demonstrates cultural awareness. In Dubai, leaders and citizens hold traditional titles that reflect royal lineage, public service, or religious pilgrimages.",
+          "bullets": [
+            "Sheikh (m) / Sheikha (f): Member of a ruling family, or an esteemed religious/tribal leader",
+            "Sayyid (m) / Sayyida (f): Formal address for 'Mr.' or 'Mrs.' in professional correspondence",
+            "Abu [Eldest Son's Name]: Friendly, highly respectful teknonym (e.g. Abu Rashid = Father of Rashid)",
+            "Um [Eldest Son's Name]: Respectful teknonym for mothers"
+          ],
+          "codeSnippet": "Common Courtesies:\nPhrase             | Pronunciation   | When to Use\nInshallah          | In-sha-Allah    | 'God willing' (When planning future events)\nAlhamdulillah      | Al-ham-du-lillah | 'Praise be to God' (When asked how you are)\nMashallah          | Ma-sha-Allah    | Expressing admiration without envy\nAfwan              | Af-wan          | 'You are welcome' / 'Excuse me'\nHabibi / Habibti   | Ha-bee-bee      | 'My friend / My dear' (Informal friendly)",
+          "takeaway": "Honorifics express deep social respect; never address a member of the ruling family without the title 'His/Her Highness Sheikh/Sheikha'."
+        }
+      ],
+      "lab": {
+        "title": "Khaleeji Conversational Greetings Lab",
+        "brief": "Practice authentic pronunciation of Gulf Arabic greeting exchanges and appropriate situational responses.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "An Emirati business partner asks you: 'Sh-halak?' (How are you?). What is the most natural and courteous response?",
+        "options": [
+          {
+            "text": "Say 'La' and walk away.",
+            "correct": false,
+            "explanation": "'La' means 'No' and walking away is rude."
+          },
+          {
+            "text": "'Alhamdulillah, bikhayr. Wenta sh-halak?' (Praise God, well. And how are you?)",
+            "correct": true,
+            "explanation": "This is the customary and warm response in Gulf Arabic."
+          },
+          {
+            "text": "Say 'Kalas'.",
+            "correct": false,
+            "explanation": "'Khalas' means 'Finished/Enough', which makes no sense here."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the proper reciprocal reply to the formal greeting 'As-salamu alaykum'?",
+          "options": [
+            "Sabah an-noor",
+            "Wa alaykum as-salam",
+            "Mashkoor",
+            "Inshallah"
+          ],
+          "correctIndex": 1,
+          "explanation": "'Wa alaykum as-salam' (And upon you be peace) is the universal reciprocal reply."
+        },
+        {
+          "question": "What Khaleeji word is commonly used in Dubai to warmly say 'Thank you'?",
+          "options": [
+            "Mashkoor",
+            "Yalla",
+            "Mafi",
+            "Wayn"
+          ],
+          "correctIndex": 0,
+          "explanation": "'Mashkoor' (masculine) / 'Mashkoorah' (feminine) is the standard Gulf Arabic expression for thank you."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Dubai Civic & Government Terminology",
+      "objective": "Navigate official Dubai public portals, government department acronyms, and essential administrative words.",
+      "slides": [
+        {
+          "title": "Decoding Dubai Government Entities",
+          "body": "Interacting with Dubai's government services is remarkably streamlined, but knowing the Arabic terms behind official departments and documents helps you navigate permits, visas, and legal paperwork effortlessly.",
+          "bullets": [
+            "Amer: Government customer service centers handling residency visas, Emirates IDs, and entry permits",
+            "Tasheel: Service centers specialized in MOHRE labor contracts and work permits",
+            "Tawjeeh: Centers providing labor awareness and guidance for employees and employers",
+            "Ejari: Meaning 'My Rent' in Arabic; the DLD lease registration system"
+          ],
+          "codeSnippet": "Essential Civic Vocabulary:\nArabic Term  | Meaning / Institution          | Context\nالهوية      | Al-Hawiyyah (Emirates ID)       | Mandatory identity card\nالإقامة     | Al-Iqamah (Residency Visa)     | Passport residency stamp/e-visa\nبلدية دبي   | Baladiyyat Dubai                | Dubai Municipality\nمحاكم دبي   | Mahakim Dubai                   | Dubai Courts\nشرطة دبي   | Shurtat Dubai                   | Dubai Police\nهيئة الطرق  | RTA (Hay'at at-Turuq)           | Roads & Transport Authority",
+          "takeaway": "Recognizing administrative Arabic terms saves time when navigating digital portals like Dubai Now and ICP."
+        },
+        {
+          "title": "Official Terminology for Business & Residency",
+          "body": "When setting up companies, leasing offices, or managing staff, specific Arabic legal concepts appear repeatedly in contracts and official trade license documents.",
+          "bullets": [
+            "Wakala: Power of Attorney (delegating legal authority to a representative)",
+            "Daman: Security deposit or financial guarantee",
+            "Tashira: Official entry visa",
+            "Ghurfat Dubai: Dubai Chamber of Commerce"
+          ],
+          "codeSnippet": "// Government Document Terms\nconst docTerms = {\n  aqd: 'Contract / Agreement (عقد)',\n  sakk: 'Title Deed (صك)',\n  ruksa: 'Trade License (رخصة)',\n  tafweez: 'Authorization / Mandate (تفويض)',\n  khalas: 'Clearance / Certificate of Completion (خلو طرف)'\n};",
+          "takeaway": "Ensure your commercial contracts contain both verified English and Arabic text, as Arabic remains the official legal language of UAE courts."
+        }
+      ],
+      "lab": {
+        "title": "Government Portal & Document Navigation Lab",
+        "brief": "Read and identify key fields on an official UAE Trade License (Rukhsah Tijariyyah) and Emirates ID application form in Arabic.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "You are registering a commercial tenancy contract in Dubai to renew your trade license. What is the name of the DLD lease registration system?",
+        "options": [
+          {
+            "text": "Makani",
+            "correct": false,
+            "explanation": "Makani is Dubai's 10-digit building geolocation coordinate system."
+          },
+          {
+            "text": "Ejari",
+            "correct": true,
+            "explanation": "Ejari (literally 'My Rent') is the official DLD tenancy registration system."
+          },
+          {
+            "text": "Salik",
+            "correct": false,
+            "explanation": "Salik is the electronic road toll system."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What do 'Amer' centers handle in Dubai?",
+          "options": [
+            "Vehicle registration only",
+            "Residency visas, entry permits, and immigration services",
+            "Real estate construction permits",
+            "Food hygiene inspections"
+          ],
+          "correctIndex": 1,
+          "explanation": "Amer centers process visa applications and immigration transactions on behalf of GDRFA."
+        },
+        {
+          "question": "What is the official Arabic term for a commercial Trade License in the UAE?",
+          "options": [
+            "Sakk",
+            "Rukhsah Tijariyyah",
+            "Ejari",
+            "Iqamah"
+          ],
+          "correctIndex": 1,
+          "explanation": "'Rukhsah Tijariyyah' (رخصة تجارية) is the formal term for a commercial trade license."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Souk Bargaining, Taxis & Restaurant Arabic",
+      "objective": "Converse confidently in the Gold and Spice Souks, guide RTA taxi drivers, and order authentic local dishes.",
+      "slides": [
+        {
+          "title": "The Art of Courteous Souk Bargaining",
+          "body": "Bargaining in Dubai's traditional souks (Deira Gold Souk, Spice Souk, Textile Souk) is an enjoyable cultural dance, not a confrontation. Polite humor, mutual respect, and Arabic phrases earn lower prices and warm merchant hospitality.",
+          "bullets": [
+            "Kam hadha?: 'How much is this?'",
+            "Ghaali ktheer!: 'Too expensive!' (said with a friendly smile)",
+            "A'tini aakhir si'r: 'Give me your final/best price'",
+            "Kammil: 'Make it a round figure / discount it'"
+          ],
+          "codeSnippet": "Souk Bargaining Dialogue:\nBuyer: 'As-salamu alaykum! Kam hadha al-z'afaran?' (How much is this saffron?)\nMerchant: '100 Dirhams ya habibi.'\nBuyer: 'Mashallah jameel, lakin ghaali ktheer! A'tini aakhir si'r.' (Beautiful, but too expensive! Give me your final price.)\nMerchant: 'Lil-tayyibin... 75 Dirhams.' (For good people... 75)\nBuyer: 'Khalliha 60 Dirhams wa mashkoor.' (Make it 60 and thank you.)",
+          "takeaway": "Always maintain a relaxed, respectful demeanor when negotiating in souks; aggressive bargaining is counterproductive."
+        },
+        {
+          "title": "Directional Arabic for Taxis & Daily Commutes",
+          "body": "While most Dubai taxi drivers speak English, knowing key directional Arabic words ensures smooth navigation through historic neighborhoods and congested routes.",
+          "bullets": [
+            "Yameen: Right | Yasaar: Left | Seedah / Ala Tool: Straight ahead",
+            "Hina / Ihna: Here | Hinaak: Over there",
+            "Waggif hina, low samaht: 'Stop here, please'",
+            "Kammil seedah: 'Continue straight ahead'"
+          ],
+          "codeSnippet": "Daily Navigation Words:\nWord          | Meaning\nSeedah        | Straight ahead\nYameen        | Right\nYasaar        | Left\nShari'        | Street / Road\nJisr          | Bridge\nDawwar        | Roundabout\nMahattah      | Station (Metro / Petrol)",
+          "takeaway": "Saying 'Seedah' and 'Waggif hina, low samaht' gets you to your destination with clarity and politeness."
+        }
+      ],
+      "lab": {
+        "title": "Deira Souk Negotiation & Taxi Directions Lab",
+        "brief": "Simulate a complete negotiation dialogue for purchasing authentic Frankincense (Luban) and guide a taxi through Bur Dubai.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "You are in an RTA taxi approaching your hotel in Downtown Dubai. How do you politely tell the driver to stop right here?",
+        "options": [
+          {
+            "text": "'Yalla بسرعه'",
+            "correct": false,
+            "explanation": "Meaning 'Hurry up', which is impolite and does not give the stop command."
+          },
+          {
+            "text": "'Waggif hina, low samaht' (Stop here, please)",
+            "correct": true,
+            "explanation": "This is the polite and standard way to request a stop."
+          },
+          {
+            "text": "'Kammil seedah'",
+            "correct": false,
+            "explanation": "Means 'Continue straight ahead', the opposite of stopping."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What does the directional Arabic word 'Seedah' mean?",
+          "options": [
+            "Turn right",
+            "Turn left",
+            "Go straight ahead",
+            "Make a U-turn"
+          ],
+          "correctIndex": 2,
+          "explanation": "'Seedah' (or 'Ala Tool') means straight ahead in Gulf Arabic."
+        },
+        {
+          "question": "What is the polite phrase meaning 'How much is your final price'?",
+          "options": [
+            "Kam hadha?",
+            "A'tini aakhir si'r",
+            "Ma indak fuloos",
+            "La Shukran"
+          ],
+          "correctIndex": 1,
+          "explanation": "'A'tini aakhir si'r' translates to 'Give me your final / best price'."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Business Etiquette & Cross-Cultural Sensitivity",
+      "objective": "Master professional meetings, Ramadan protocol, public decorum, and building authentic long-term trust in the UAE.",
+      "slides": [
+        {
+          "title": "Professional Meetings & The Personal Connection",
+          "body": "In the UAE corporate culture, relationships precede business transactions. Rushing straight into contract terms without inquiring about family, health, and mutual acquaintances is perceived as transactional and impatient.",
+          "bullets": [
+            "Relationship First: The first 15 minutes of a meeting are devoted to hospitality and personal rapport",
+            "Patience (Sabr): Decisions frequently involve consensus building among senior partners and family stakeholders",
+            "Handshake Etiquette: Do not offer to shake hands with a local woman unless she extends her hand first; otherwise, place your right hand over your heart with a slight nod"
+          ],
+          "codeSnippet": "Business Decorum Best Practices:\n1. Stand up when someone enters the room, especially elders or female colleagues\n2. Never show the soles of your shoes directly to someone in a meeting\n3. Pass business cards, documents, and drinks with your RIGHT hand\n4. Dress conservatively and professionally (smart business attire)\n5. Respect prayer times (avoid scheduling over noon Dhuhr prayer)",
+          "takeaway": "Placing your right hand over your heart with a gentle bow is a universally respected sign of courtesy in the UAE."
+        },
+        {
+          "title": "The Holy Month of Ramadan & Public Etiquette",
+          "body": "Ramadan is the most sacred month in the Islamic calendar, marked by fasting from dawn until sunset, charitable giving (Zakat), and spiritual reflection. Understanding and honoring Ramadan customs reflects profound cultural respect.",
+          "bullets": [
+            "Ramadan Kareem / Ramadan Mubarak: Traditional greeting wishing a generous and blessed month",
+            "Iftar: The evening meal breaking the fast at sunset, traditionally starting with dates and water",
+            "Suhoor: The pre-dawn meal consumed before beginning the fast",
+            "Public Fasting Etiquette: Refrain from eating, drinking, or chewing gum in public outdoor spaces during daylight hours"
+          ],
+          "codeSnippet": "Ramadan Etiquette Summary:\n- Greet colleagues with: 'Ramadan Kareem' (May Ramadan be generous)\n- Working Hours: Private and public sector working hours are reduced by 2 hours daily\n- Iftar Gatherings: Accepting an invitation to an Iftar is an honor and deepens personal bonds\n- Modesty: Dress more conservatively in public spaces during the holy month",
+          "takeaway": "Embracing UAE cultural traditions transforms expatriates from temporary visitors into respected, integrated members of the community."
+        }
+      ],
+      "lab": {
+        "title": "Cross-Cultural Business Simulation Lab",
+        "brief": "Conduct a simulated commercial partnership meeting with an Emirati business delegation, observing greetings, seating order, and hospitality protocol.",
+        "deliverable": "Submit verified implementation summary and audit report.",
+        "proTip": "In Dubai institutional ecosystems, documentation rigor and regulatory fidelity dictate commercial success."
+      },
+      "caseStudy": {
+        "scenario": "You are introduced to an Emirati businesswoman in a professional executive boardroom. What is the correct greeting etiquette regarding physical contact?",
+        "options": [
+          {
+            "text": "Immediately reach out and grab both of her hands warmly.",
+            "correct": false,
+            "explanation": "Impolite and violates personal space and cultural boundaries."
+          },
+          {
+            "text": "Wait to see if she extends her hand first. If she does not, place your right hand over your heart with a respectful nod and warm greeting.",
+            "correct": true,
+            "explanation": "This is the universally accepted and culturally refined etiquette in the UAE."
+          },
+          {
+            "text": "Turn your back and ignore her entirely.",
+            "correct": false,
+            "explanation": "Disrespectful."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the traditional greeting used to wish someone a blessed Holy Month of Ramadan?",
+          "options": [
+            "Eid Mubarak",
+            "Ramadan Kareem",
+            "Mabrook",
+            "Kullu aam wa antum bikhayr"
+          ],
+          "correctIndex": 1,
+          "explanation": "'Ramadan Kareem' (or 'Ramadan Mubarak') is the standard greeting for the holy month."
+        },
+        {
+          "question": "What is the evening meal called that breaks the daily fast at sunset during Ramadan?",
+          "options": [
+            "Suhoor",
+            "Iftar",
+            "Gahwa",
+            "Majlis"
+          ],
+          "correctIndex": 1,
+          "explanation": "'Iftar' is the evening meal eaten after the sunset call to prayer (Maghrib) to break the fast."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "What is the customary reciprocal response to 'As-salamu alaykum'?",
+        "options": [
+          "Sabah an-noor",
+          "Wa alaykum as-salam",
+          "Mashkoor",
+          "Afwan"
+        ],
+        "correctIndex": 1,
+        "explanation": "'Wa alaykum as-salam' (And upon you be peace) is the correct reciprocal response."
+      },
+      {
+        "question": "What Khaleeji word means 'Thank you' in everyday spoken Gulf Arabic?",
+        "options": [
+          "Mashkoor",
+          "Yalla",
+          "Khabar",
+          "La"
+        ],
+        "correctIndex": 0,
+        "explanation": "'Mashkoor' is the standard Khaleeji word for thank you."
+      },
+      {
+        "question": "What does the government word 'Ejari' literally translate to in Arabic?",
+        "options": [
+          "My Company",
+          "My Rent",
+          "My House",
+          "My License"
+        ],
+        "correctIndex": 1,
+        "explanation": "'Ejari' literally translates to 'My Rent'."
+      },
+      {
+        "question": "What center handles residency visas and immigration services on behalf of GDRFA in Dubai?",
+        "options": [
+          "Tasheel",
+          "Amer",
+          "Tadbeer",
+          "Tawjeeh"
+        ],
+        "correctIndex": 1,
+        "explanation": "Amer centers process entry permits and residence visa applications."
+      },
+      {
+        "question": "What does the directional Arabic word 'Seedah' mean?",
+        "options": [
+          "Turn left",
+          "Go straight ahead",
+          "Turn right",
+          "Stop"
+        ],
+        "correctIndex": 1,
+        "explanation": "'Seedah' means go straight ahead."
+      },
+      {
+        "question": "When greeting an Emirati businesswoman, what should you do if she does not extend her hand?",
+        "options": [
+          "Force a handshake",
+          "Place your right hand over your heart with a respectful nod",
+          "Leave the meeting room immediately",
+          "Clap your hands"
+        ],
+        "correctIndex": 1,
+        "explanation": "Placing your right hand over your heart with a polite nod is the culturally respectful gesture."
+      },
+      {
+        "question": "What is the traditional evening meal called when breaking the fast during Ramadan?",
+        "options": [
+          "Suhoor",
+          "Iftar",
+          "Dallah",
+          "Majlis"
+        ],
+        "correctIndex": 1,
+        "explanation": "Iftar is the sunset meal that breaks the fast during Ramadan."
+      },
+      {
+        "question": "What hand should you always use to give, receive, or drink Arabic coffee?",
+        "options": [
+          "Left hand",
+          "Right hand",
+          "Both hands",
+          "Either hand"
+        ],
+        "correctIndex": 1,
+        "explanation": "Traditional cultural protocol dictates using the right hand."
+      },
+      {
+        "question": "What does the phrase 'A'tini aakhir si'r' mean in a souk negotiation?",
+        "options": [
+          "Where is the exit?",
+          "Give me your final / best price",
+          "I don't have money",
+          "This is fake"
+        ],
+        "correctIndex": 1,
+        "explanation": "'A'tini aakhir si'r' means 'Give me your best / final price'."
+      },
+      {
+        "question": "What does the term 'Wakala' refer to in UAE legal and business documents?",
+        "options": [
+          "Trade License",
+          "Power of Attorney / Representation",
+          "Building Tenancy",
+          "Bank Check"
+        ],
+        "correctIndex": 1,
+        "explanation": "A 'Wakala' is a legal Power of Attorney granting authority to act on someone's behalf."
+      }
+    ]
+  },
+  "tuitionFee": 1400
+}

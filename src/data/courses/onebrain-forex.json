@@ -1,0 +1,582 @@
+{
+  "id": "onebrain-forex",
+  "institutionId": "onebrain",
+  "title": "Forex & Algorithmic Trading",
+  "tagline": "Currencies, Leverage Risk, Chart Analytics, and High-Probability Technical Trading.",
+  "category": "Financial Markets",
+  "icon": "📈",
+  "durationWeeks": 4,
+  "level": "accelerator",
+  "tuitionFee": 15000,
+  "superpower": {
+    "id": "trading_desk",
+    "name": "Market Maker Spread Pass",
+    "icon": "📈",
+    "description": "Unlocks the VIP Financial Trading Desk with institutional spread rates and real-time market signals.",
+    "badgeText": "Trader Certified",
+    "perkType": "trading_desk"
+  },
+  "syllabus": {
+    "overview": "A professional 4-week trading masterclass covering foreign exchange market microstructure, the USD/AED monetary peg, order flow analytics, strict mathematical risk-of-ruin management, and algorithmic strategy backtesting in Python and MQL5.",
+    "prerequisites": "Basic arithmetic and chart reading familiarity.",
+    "learningOutcomes": [
+      "Calculate lot sizes, pip values, and leverage margin limits under the 1% risk rule",
+      "Identify high-probability price action patterns, fair value gaps, and liquidity sweeps",
+      "Model risk-to-reward ratios to maintain positive expectancy over 1,000+ trades",
+      "Deploy automated trading algorithms connecting to institutional broker APIs"
+    ],
+    "weeklyBreakdown": [
+      {
+        "week": 1,
+        "topic": "Market Microstructure, Currency Pairs & The USD/AED Peg",
+        "hours": 12
+      },
+      {
+        "week": 2,
+        "topic": "Price Action, Market Structure & Order Flow Liquidity",
+        "hours": 14
+      },
+      {
+        "week": 3,
+        "topic": "Risk Management Math, Expectancy & Trading Psychology",
+        "hours": 15
+      },
+      {
+        "week": 4,
+        "topic": "Algorithmic Trading, Python Backtesting & Prop Firm Rules",
+        "hours": 18
+      }
+    ]
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Market Microstructure, Currency Pairs & The USD/AED Peg",
+      "objective": "Understand global interbank currency liquidity, base vs quote pairs, spread, and the UAE Dirham peg.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "The $7.5 Trillion Daily Foreign Exchange Market",
+          "content": "Forex is the world's largest, most liquid financial market. It operates 24 hours a day across global financial hubs: Tokyo, London, and New York. Currencies are traded in pairs (EUR/USD, GBP/USD). The first currency is the Base, and the second is the Quote.",
+          "codeSnippet": "// Calculating 1 Pip value on EUR/USD:\n// Pip = 0.0001\n// Value per pip on 1 Standard Lot (100,000 units) = $10.00 USD",
+          "keyTakeaway": "Understanding pip valuation is the prerequisite for calculating position risk."
+        },
+        {
+          "title": "The UAE Dirham Peg (USD/AED = 3.6725)",
+          "content": "Since 1997, the UAE Central Bank has maintained an official currency peg to the US Dollar at exactly 3.6725 AED per 1.00 USD. This guarantees monetary stability for businesses operating in Dubai and eliminates currency exchange volatility when trading dollar-denominated assets.",
+          "codeSnippet": "const USD_AED_PEG = 3.6725;\nfunction convertUsdToAed(usd) { return usd * USD_AED_PEG; }",
+          "keyTakeaway": "The dollar peg gives Dubai businesses zero foreign exchange risk on US dollar transactions."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 1: Position Size Calculator & Margin Call Simulation",
+        "brief": "Create an Excel/Python calculator that takes account equity, stop-loss distance in pips, and risk percentage, and returns exact permissible lot size.",
+        "deliverable": "A tested calculator ensuring account risk never breaches 1.0% on EUR/USD and GBP/JPY.",
+        "proTip": "Never calculate lot size by eye; always use mathematical formulas based on stop-loss distance."
+      },
+      "caseStudy": {
+        "scenario": "A beginner trader with a $10,000 account enters 5 standard lots on GBP/USD with a 30-pip stop loss. A news flash moves the market 30 pips against them. What happens?",
+        "options": [
+          {
+            "text": "They lose $1,500 (15% of their account on a single trade), violating risk rules",
+            "correct": true,
+            "explanation": "5 lots at $10/pip = $50/pip loss. 30 pips * $50 = $1,500 drawdown on a $10,000 account."
+          },
+          {
+            "text": "They make $10,000 profit",
+            "correct": false,
+            "explanation": "The market moved against them into their stop-loss."
+          },
+          {
+            "text": "Nothing happens",
+            "correct": false,
+            "explanation": "Stop loss orders trigger execution."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the official peg rate of the UAE Dirham (AED) to the US Dollar (USD)?",
+          "options": [
+            "1 USD = 1 AED",
+            "1 USD = 3.6725 AED",
+            "1 USD = 5.00 AED",
+            "1 USD = 10.00 AED"
+          ],
+          "correctIndex": 1,
+          "explanation": "The UAE Central Bank maintains the fixed peg at 3.6725 AED per 1.00 USD."
+        },
+        {
+          "question": "What is 1 Standard Lot in foreign exchange trading?",
+          "options": [
+            "1,000 units",
+            "10,000 units",
+            "100,000 units of the base currency",
+            "1,000,000 units"
+          ],
+          "correctIndex": 2,
+          "explanation": "1 Standard Lot represents 100,000 units; a mini lot is 10,000; a micro lot is 1,000."
+        },
+        {
+          "question": "What is Spread in financial trading?",
+          "options": [
+            "The difference between the Bid (sell) and Ask (buy) price",
+            "The broker's annual holiday",
+            "The profit made on a trade",
+            "A candlestick pattern"
+          ],
+          "correctIndex": 0,
+          "explanation": "Spread is the transaction cost charged by liquidity providers between buying and selling prices."
+        },
+        {
+          "question": "What does 1:100 leverage mean in practical terms?",
+          "options": [
+            "You win 100% of trades",
+            "You can control $100,000 of currency with $1,000 of margin capital",
+            "You must wait 100 minutes to trade",
+            "Your commission is $100"
+          ],
+          "correctIndex": 1,
+          "explanation": "Leverage allows trading larger positions with fractional margin, multiplying profits and losses equally."
+        },
+        {
+          "question": "What is a Stop-Loss order?",
+          "options": [
+            "A profit order",
+            "A protective order that automatically closes a losing trade at a predetermined price",
+            "A tax document",
+            "A phone call"
+          ],
+          "correctIndex": 1,
+          "explanation": "Stop-losses enforce predetermined risk boundaries to prevent catastrophic capital destruction."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Price Action, Market Structure & Order Flow Liquidity",
+      "objective": "Analyze market structure (BOS, CHoCH), liquidity pools, and Fair Value Gaps (FVG).",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Market Structure: Break of Structure (BOS) & Change of Character (CHoCH)",
+          "content": "Markets move in waves of expansion and retracement. In an uptrend, price creates Higher Highs (HH) and Higher Lows (HL). A Break of Structure (BOS) confirms trend continuation. When price breaches the most recent Higher Low, a Change of Character (CHoCH) signals potential institutional reversal.",
+          "codeSnippet": "// Structure Logic:\nif (currentHigh > previousHigh) trend = 'BULLISH_CONTINUATION';\nif (currentLow < previousHigherLow) trend = 'BEARISH_REVERSAL_CHOCH';",
+          "keyTakeaway": "Trade in the direction of structural order flow; never fight the higher timeframe trend."
+        },
+        {
+          "title": "Liquidity Sweeps & Fair Value Gaps (FVG)",
+          "content": "Institutional market makers require deep liquidity to fill massive orders. They frequently push price past obvious retail support/resistance levels to sweep stop-loss orders before reversing. Fair Value Gaps represent 3-candle price imbalances where aggressive buying/selling leaves unfilled liquidity.",
+          "codeSnippet": "FVG Definition: Candle 1 High < Candle 3 Low (Bullish FVG imbalance zone)",
+          "keyTakeaway": "Institutions target retail stop clusters for liquidity; enter on confirmed sweeps."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 2: Chart Liquidity Sweeps on EUR/USD 15m Timeframe",
+        "brief": "Identify 5 institutional liquidity sweeps and Fair Value Gap retests on historical charts, documenting entry, stop-loss, and take-profit targets.",
+        "deliverable": "Annotated chart screenshots with quantified 1:3 risk-to-reward setups.",
+        "proTip": "Higher timeframe (4H, Daily) liquidity zones dominate lower timeframe (5m, 15m) noise."
+      },
+      "caseStudy": {
+        "scenario": "Price approaches a major daily resistance level where thousands of retail traders placed buy-stop breakout orders. The market spikes 10 pips above resistance, then prints a giant bearish rejection candle. What just occurred?",
+        "options": [
+          {
+            "text": "A genuine breakout",
+            "correct": false,
+            "explanation": "Genuine breakouts sustain momentum above resistance."
+          },
+          {
+            "text": "An institutional liquidity sweep / turtle soup setup taking retail breakout liquidity before reversing downward",
+            "correct": true,
+            "explanation": "Smart money sweeps retail stop orders above resistance to accumulate short positions."
+          },
+          {
+            "text": "A broker computer crash",
+            "correct": false,
+            "explanation": "Standard order flow behavior."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What does Change of Character (CHoCH) indicate in price action?",
+          "options": [
+            "The broker changing names",
+            "A potential market reversal when price breaches the structural key swing point",
+            "The market closing early",
+            "A flat market"
+          ],
+          "correctIndex": 1,
+          "explanation": "CHoCH signals that market structure is shifting from bullish to bearish or vice versa."
+        },
+        {
+          "question": "What is a Fair Value Gap (FVG)?",
+          "options": [
+            "A discount coupon",
+            "A 3-candle price imbalance where rapid price movement left unfilled liquidity",
+            "A stock market crash",
+            "An exchange fee"
+          ],
+          "correctIndex": 1,
+          "explanation": "FVGs represent price imbalances where market makers often return to re-balance liquidity."
+        },
+        {
+          "question": "Where does institutional liquidity typically rest on a chart?",
+          "options": [
+            "In the middle of nowhere",
+            "Just above swing highs (buy stops) and below swing lows (sell stops)",
+            "On round numbers only",
+            "At midnight only"
+          ],
+          "correctIndex": 1,
+          "explanation": "Retail stop-losses cluster predictably above swing highs and below swing lows."
+        },
+        {
+          "question": "Why do professional traders analyze higher timeframes (Daily/4H) first?",
+          "options": [
+            "They have bigger screens",
+            "Higher timeframes establish macro institutional trend and primary liquidity levels",
+            "Daily candles are faster",
+            "Brokers charge less"
+          ],
+          "correctIndex": 1,
+          "explanation": "Macro timeframe trends overpower lower timeframe intraday volatility."
+        },
+        {
+          "question": "What indicates a Bullish Engulfing pattern?",
+          "options": [
+            "A small candle followed by a large candle whose body completely engulfs the prior candle body",
+            "Three red candles",
+            "A flat line",
+            "A downward trend"
+          ],
+          "correctIndex": 0,
+          "explanation": "Bullish engulfing demonstrates aggressive buyer absorption overtaking previous sellers."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Risk Management Math, Expectancy & Trading Psychology",
+      "objective": "Calculate mathematical expectancy, Risk of Ruin, and master emotional detachment.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Mathematical Expectancy & Risk-of-Ruin",
+          "content": "You do not need a 90% win rate to be wealthy. A trader with a 40% win rate and a 1:3 Risk-to-Reward ratio will generate exponential profitability over 100 trades. Risking more than 2% per trade dramatically increases the mathematical probability of account wipeout during normal statistical losing streaks.",
+          "codeSnippet": "Expectancy = (Win% * AvgWin) - (Loss% * AvgLoss)\nExample: (0.40 * $300) - (0.60 * $100) = $120 - $60 = +$60 per trade",
+          "keyTakeaway": "Profitability is an exercise in probability and asymmetrical risk-to-reward."
+        },
+        {
+          "title": "Trading Psychology & Emotional Discipline",
+          "content": "Fear, greed, and revenge trading account for 95% of retail failure. Professional traders view each trade as one of the next 10,000 trades. When a stop-loss is hit, it is not a personal failure; it is simply the business cost of acquiring market information.",
+          "codeSnippet": "// The Golden Rule:\nif (accountLossToday >= 0.03) {\n  terminateTradingSession(); // Walk away for the day\n}",
+          "keyTakeaway": "Unshakable discipline to walk away after daily loss limits separates pros from gamblers."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 3: 1,000-Trade Monte Carlo Simulation",
+        "brief": "Run a Monte Carlo script simulating 1,000 trades with a 45% win rate and 1:2.5 risk-to-reward, analyzing max drawdown curves.",
+        "deliverable": "Simulation report proving why risking 1% survives 12 consecutive losses, whereas risking 5% leads to account liquidation.",
+        "proTip": "Drawdown recovery requires asymmetrical returns: a 50% loss requires a 100% gain just to break even."
+      },
+      "caseStudy": {
+        "scenario": "A trader suffers 3 consecutive losses totaling $300. Emotionally frustrated, they double their position size on the 4th trade to 'win it all back' and lose $600. What psychological trap did they succumb to?",
+        "options": [
+          {
+            "text": "Smart money trading",
+            "correct": false,
+            "explanation": "Martingale revenge trading violates all professional rules."
+          },
+          {
+            "text": "Revenge trading and Martingale position sizing",
+            "correct": true,
+            "explanation": "Doubling position sizes to recover losses exponentially compounds the risk of total account liquidation."
+          },
+          {
+            "text": "Hedging",
+            "correct": false,
+            "explanation": "Hedging reduces directional risk, not increases it."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is mathematical expectancy in trading?",
+          "options": [
+            "Hoping for good luck",
+            "The average amount you can expect to win (or lose) per dollar risked across a large sample of trades",
+            "The speed of execution",
+            "A broker commission"
+          ],
+          "correctIndex": 1,
+          "explanation": "Expectancy factors win rate and win/loss size to determine long-term statistical profitability."
+        },
+        {
+          "question": "If your strategy has a 40% win rate with a 1:3 Risk-to-Reward ratio, is it profitable?",
+          "options": [
+            "No, win rate is below 50%",
+            "Yes, highly profitable with positive expectancy of +0.6R per trade",
+            "It breaks even",
+            "Impossible to tell"
+          ],
+          "correctIndex": 1,
+          "explanation": "40 wins * 3 = 120R; 60 losses * 1 = 60R; Net +60R profit over 100 trades."
+        },
+        {
+          "question": "If you lose 50% of your trading capital, what percentage gain is required to return to break even?",
+          "options": [
+            "50%",
+            "100%",
+            "75%",
+            "25%"
+          ],
+          "correctIndex": 1,
+          "explanation": "A $10,000 account cut to $5,000 must gain $5,000 (100% of $5,000) to reach $10,000 again."
+        },
+        {
+          "question": "What is the maximum risk per trade recommended by professional prop trading firms?",
+          "options": [
+            "10% to 20%",
+            "1% to 2% of total account equity",
+            "50%",
+            "All in"
+          ],
+          "correctIndex": 1,
+          "explanation": "Limiting risk to 1-2% ensures statistical drawdown streaks never wipe out the account."
+        },
+        {
+          "question": "What should a trader do immediately after reaching their maximum daily loss limit?",
+          "options": [
+            "Trade bigger to recover",
+            "Close the trading platform and walk away for the day",
+            "Call the broker to complain",
+            "Switch to crypto"
+          ],
+          "correctIndex": 1,
+          "explanation": "Enforcing daily loss cutoffs protects emotional capital and account solvency."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Algorithmic Trading, Python Backtesting & Prop Firm Rules",
+      "objective": "Write automated trading bots in Python/MQL5, backtest on historical tick data, and pass prop firm evaluations.",
+      "readTimeMinutes": 15,
+      "slides": [
+        {
+          "title": "Algorithmic Execution with MetaTrader & Python",
+          "content": "Human execution introduces latency and emotional hesitation. Algorithmic trading executes orders automatically via MetaTrader 5 (MT5) Python API or REST endpoints based on programmatic criteria: time-of-day filters, volatility bands, and moving average cross validations.",
+          "codeSnippet": "import MetaTrader5 as mt5\n\nif not mt5.initialize():\n    print('initialize() failed')\n# Send market order with automated stop loss\nrequest = {\n    'action': mt5.TRADE_ACTION_DEAL,\n    'symbol': 'EURUSD',\n    'volume': 0.1,\n    'type': mt5.ORDER_TYPE_BUY,\n    'sl': 1.0820,\n    'tp': 1.0920,\n}\nresult = mt5.order_send(request)",
+          "keyTakeaway": "Algorithms eliminate execution hesitation and enforce mechanical stop-loss discipline."
+        },
+        {
+          "title": "Passing Dubai Prop Firm Funding Challenges",
+          "content": "Proprietary trading firms provide funded capital ($50,000 to $200,000) to disciplined traders who pass 2-phase evaluation challenges. Passing requires strict adherence to maximum daily drawdown limits (typically 5%) and overall maximum drawdown (typically 10%).",
+          "codeSnippet": "// Prop Firm Evaluation Rules:\n- Profit Target: Phase 1 (8%), Phase 2 (5%)\n- Max Daily Loss: 5%\n- Max Trailing Drawdown: 10%\n- Profit Split: 80% to Trader, 20% to Firm",
+          "keyTakeaway": "Prop firms evaluate risk control and drawdown consistency, not reckless win rates."
+        }
+      ],
+      "practicalLab": {
+        "title": "Lab 4: Capstone — Deploy an Automated Mean-Reversion Bot",
+        "brief": "Build a Python trading bot with automated stop-loss, trailing take-profit, and risk management limits, backtested over 2 years of EUR/USD data.",
+        "deliverable": "Backtest report demonstrating Sharpe Ratio > 1.5 and Maximum Drawdown < 6%.",
+        "proTip": "Beware of curve fitting: an algorithm optimized to be 100% perfect on past data will fail on live forward data."
+      },
+      "caseStudy": {
+        "scenario": "A developer backtests an algorithm that achieves 99% win rate by removing stop-losses and doubling down on losing positions. What will happen when deployed to live markets?",
+        "options": [
+          {
+            "text": "It will make them a billionaire",
+            "correct": false,
+            "explanation": "Grid/Martingale systems without stop-losses always suffer 100% liquidation on black-swan trends."
+          },
+          {
+            "text": "It will suffer a catastrophic 100% account blow-up during an extended trending market",
+            "correct": true,
+            "explanation": "Strategies that refuse to cut losses eventually encounter a trend they cannot survive."
+          },
+          {
+            "text": "Nothing, the broker will stop it",
+            "correct": false,
+            "explanation": "The account will reach margin call liquidation."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is Overfitting / Curve-Fitting in algorithmic trading?",
+          "options": [
+            "Buying tight clothes",
+            "Optimizing parameters so excessively on past data that the bot fails on live forward market data",
+            "A fast computer processor",
+            "A type of chart"
+          ],
+          "correctIndex": 1,
+          "explanation": "Overfitting creates the illusion of past perfection that fails in real forward execution."
+        },
+        {
+          "question": "What is Sharpe Ratio in strategy evaluation?",
+          "options": [
+            "The sharpness of a monitor screen",
+            "A metric evaluating risk-adjusted return (excess return per unit of volatility/risk)",
+            "The commission fee",
+            "The number of trades taken"
+          ],
+          "correctIndex": 1,
+          "explanation": "Sharpe ratio above 1.5 indicates strong risk-adjusted returns relative to drawdown."
+        },
+        {
+          "question": "In prop firm evaluation rules, what does 'Max Daily Drawdown' mean?",
+          "options": [
+            "Maximum profit allowed daily",
+            "The maximum allowable loss from midnight equity before the funded account is automatically breached",
+            "The time the market closes",
+            "A trading fee"
+          ],
+          "correctIndex": 1,
+          "explanation": "Breaching daily drawdown limits automatically terminates the trading account."
+        },
+        {
+          "question": "What is Slippage in algorithmic trade execution?",
+          "options": [
+            "Latency delay causing order fills at prices different from the requested limit price",
+            "Dropping a hard drive",
+            "A discount",
+            "An internet disconnection"
+          ],
+          "correctIndex": 0,
+          "explanation": "Slippage occurs during high-impact market news when liquidity thins."
+        },
+        {
+          "question": "What is the primary advantage of automated algo trading over manual trading?",
+          "options": [
+            "You never lose money",
+            "Total elimination of emotional hesitation, precise mechanical execution, and 24/5 market monitoring",
+            "Computers don't pay taxes",
+            "Brokers give free money"
+          ],
+          "correctIndex": 1,
+          "explanation": "Algorithms execute disciplined rules relentlessly without fear, greed, or revenge."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "What is the official peg rate of the UAE Dirham to the US Dollar?",
+        "options": [
+          "1 USD = 3.6725 AED",
+          "1 USD = 1.00 AED",
+          "1 USD = 5.00 AED",
+          "1 USD = 10.00 AED"
+        ],
+        "correctIndex": 0,
+        "explanation": "The UAE Central Bank maintains the official peg of 3.6725 AED per USD."
+      },
+      {
+        "question": "What is Spread in trading?",
+        "options": [
+          "The difference between Bid (sell) and Ask (buy) price",
+          "The broker's annual holiday",
+          "The profit made on a trade",
+          "A candlestick pattern"
+        ],
+        "correctIndex": 0,
+        "explanation": "Spread is the transaction cost charged by liquidity providers."
+      },
+      {
+        "question": "What is 1 Standard Lot in currency trading?",
+        "options": [
+          "1,000 units",
+          "10,000 units",
+          "100,000 units of the base currency",
+          "1,000,000 units"
+        ],
+        "correctIndex": 2,
+        "explanation": "1 Standard Lot equals 100,000 base currency units."
+      },
+      {
+        "question": "What is the golden rule of risk management practiced by top prop firms?",
+        "options": [
+          "Risk 50% on every trade",
+          "Never risk more than 1% to 2% of total account equity per position",
+          "Never use stop-losses",
+          "Trade only while sleeping"
+        ],
+        "correctIndex": 1,
+        "explanation": "1-2% risk ensures survival across statistical drawdown streaks."
+      },
+      {
+        "question": "What indicates a Change of Character (CHoCH) on a chart?",
+        "options": [
+          "A potential market reversal when price breaches the structural key swing point",
+          "The market closing early",
+          "A flat market",
+          "A broker changing names"
+        ],
+        "correctIndex": 0,
+        "explanation": "CHoCH signals structural reversal from bullish to bearish or vice versa."
+      },
+      {
+        "question": "What is a Fair Value Gap (FVG)?",
+        "options": [
+          "A 3-candle price imbalance where rapid price movement left unfilled liquidity",
+          "A discount coupon",
+          "A stock market crash",
+          "An exchange fee"
+        ],
+        "correctIndex": 0,
+        "explanation": "FVGs represent price imbalances where market makers often return to rebalance."
+      },
+      {
+        "question": "If you lose 50% of your account capital, what gain is required to break even?",
+        "options": [
+          "50%",
+          "100%",
+          "75%",
+          "25%"
+        ],
+        "correctIndex": 1,
+        "explanation": "A $5,000 account must gain $5,000 (100%) to return to its initial $10,000."
+      },
+      {
+        "question": "What is mathematical expectancy?",
+        "options": [
+          "The average amount you can expect to win or lose per dollar risked across a large sample of trades",
+          "Hoping for good luck",
+          "The speed of execution",
+          "A broker commission"
+        ],
+        "correctIndex": 0,
+        "explanation": "Expectancy factors win rate and win/loss size to determine long-term profitability."
+      },
+      {
+        "question": "What does Overfitting mean in algorithmic backtesting?",
+        "options": [
+          "Optimizing parameters so excessively on past data that the bot fails on live forward data",
+          "Buying tight clothes",
+          "A fast computer processor",
+          "A chart pattern"
+        ],
+        "correctIndex": 0,
+        "explanation": "Overfitted models fail in live market forward testing."
+      },
+      {
+        "question": "Why is trading psychology considered more critical than technical indicators?",
+        "options": [
+          "Indicators don't work",
+          "Fear, greed, and revenge trading cause undisciplined traders to abandon risk rules and blow accounts",
+          "Brokers charge extra for psychology",
+          "Psychology changes chart prices directly"
+        ],
+        "correctIndex": 1,
+        "explanation": "Discipline and detachment determine long-term survival in financial markets."
+      }
+    ]
+  },
+  "duration": "4 Weeks"
+}
