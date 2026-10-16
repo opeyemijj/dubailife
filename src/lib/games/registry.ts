@@ -1,6 +1,6 @@
 // The games in Game City (Dubai Hills). All free. Each has a tile on the map and its own room.
 
-export type GameId = "ludo" | "chess" | "dominoes" | "pool" | "word" | "trivia" | "connect4" | "battleship" | "checkers" | "snakes" | "snake" | "memory";
+export type GameId = "ludo" | "chess" | "dominoes" | "pool" | "word" | "trivia" | "connect4" | "battleship" | "checkers" | "snakes" | "snake" | "memory" | "candy" | "tetris";
 
 export interface GameInfo {
   id: GameId;
@@ -43,6 +43,10 @@ export const GAMES: GameInfo[] = [
     rules: "Steer the snake to eat the dates and grow. Don't hit the walls or yourself — it speeds up as you grow. Highest score wins." },
   { id: "memory", name: "Memory Match", tagline: "Find the Dubai pairs", icon: "🃏", bg: "#fff7ed", fg: "#7c2d12", accent: "#ea580c", minPlayers: 2, maxPlayers: 4, kind: "race",
     rules: "Flip two cards at a time to find matching Dubai landmarks. Fewer flips and a faster time score more." },
+  { id: "candy", name: "Candy Crush", tagline: "Match, crush, and cascade sweet combos", icon: "🍬", bg: "#fdf2f8", fg: "#831843", accent: "#db2777", minPlayers: 2, maxPlayers: 4, kind: "race",
+    rules: "Swap adjacent candies to match 3 or more in a row or column. Match 4 to create a Striped Candy that clears a row or column, or 5 for a Rainbow Color Bomb! Score big in 25 moves." },
+  { id: "tetris", name: "Tetris", tagline: "Drop tetrominoes, clear lines, level up", icon: "🕹️", bg: "#0f172a", fg: "#38bdf8", accent: "#0284c7", minPlayers: 2, maxPlayers: 4, kind: "race",
+    rules: "Rotate and drop falling tetromino blocks (I, J, L, O, S, T, Z) to fill complete horizontal lines. Clear lines to score points and advance levels. Clear 4 lines at once for a massive Tetris bonus!" },
 ];
 
 export const gameInfo = (id: string) => GAMES.find((g) => g.id === id) ?? null;

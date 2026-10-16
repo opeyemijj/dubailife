@@ -10,13 +10,16 @@ export const ACADEMIC_CITY = { id: "tile-west-coast-marina", name: "Academic Cit
 /** Renamed plots, by map entity id. */
 export const DISTRICT_NAMES: Record<string, string> = { [GAME_CITY.id]: GAME_CITY.name, [ACADEMIC_CITY.id]: ACADEMIC_CITY.name };
 
-/** The game tiles, in three rows of four centred on the plot and well inside its edges (back rows a little
+/** The game tiles, in four rows centred on the plot and well inside its edges (back rows
  *  further right, following the slant), so none spills onto the roads around it. */
 export const GAME_TILES = GAMES.map((g, i) => {
-  const col = i % 4, row = Math.floor(i / 4);
+  const row = Math.floor(i / 4);
+  const isLastRow = i >= 12;
+  const col = isLastRow ? (i - 12 + 1) : (i % 4);
   return {
     id: tileId(g.id), name: g.name, type: "game-tile", game: g.id,
-    virtualX: GAME_CITY.x - 375 + col * 250 + (1 - row) * 48, virtualY: GAME_CITY.y + 205 - row * 205,
+    virtualX: GAME_CITY.x - 375 + col * 250 + (1.5 - row) * 44,
+    virtualY: GAME_CITY.y + 240 - row * 165,
     width: 210, height: 140, generated: true as const, interactive: true,
   };
 });

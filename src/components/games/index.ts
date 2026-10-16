@@ -12,6 +12,23 @@ import { checkers } from "./Checkers";
 import { snakes } from "./SnakesLadders";
 import { snake } from "./SnakeArcade";
 import { memory } from "./Memory";
+import { candy } from "./CandyMatch";
+import { tetris } from "./TetrisGame";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const MODULES: Record<GameId, GameModule<any>> = { ludo, chess, dominoes, pool, word, trivia, connect4, battleship, checkers, snakes, snake, memory };
+export const MODULES: Record<GameId, GameModule<any>> = {
+  ludo,
+  chess,
+  dominoes,
+  pool,
+  word,
+  trivia,
+  connect4,
+  battleship,
+  checkers,
+  snakes,
+  snake,
+  memory,
+  candy,
+  tetris,
+};

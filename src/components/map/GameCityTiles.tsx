@@ -49,6 +49,33 @@ function Art({ game }: { game: string }) {
       return <div className="flex items-center gap-0.5">{[0, 1, 2, 3, 4].map((i) => <span key={i} className={`w-4 h-4 rounded ${i === 4 ? 'bg-lime-300' : 'bg-green-500'}`} />)}<span className="ml-2 text-2xl">🌴</span></div>;
     case 'memory':
       return <div className="grid grid-cols-3 gap-1">{['🏙️', '', '🐪', '', '🏙️', ''].map((x, i) => <span key={i} className={`w-6 h-7 rounded text-sm flex items-center justify-center ${x ? 'bg-white' : 'bg-gradient-to-br from-orange-400 to-rose-500'}`}>{x}</span>)}</div>;
+    case 'candy':
+      return (
+        <div className="grid grid-cols-3 gap-1 p-1.5 rounded-xl bg-pink-900/40 border border-pink-400/40 shadow">
+          {['🍬', '🍭', '🍩', '🍫', '🍓', '🍋'].map((c, i) => (
+            <span key={i} className="text-xl leading-none flex items-center justify-center drop-shadow">
+              {c}
+            </span>
+          ))}
+        </div>
+      );
+    case 'tetris':
+      return (
+        <div className="flex flex-col gap-0.5 p-1.5 rounded-lg bg-slate-900/90 border border-cyan-400/50 shadow">
+          <div className="flex gap-0.5 justify-center">
+            <span className="w-3.5 h-3.5 rounded-sm bg-cyan-400 shadow-[0_0_8px_#22d3ee]" />
+            <span className="w-3.5 h-3.5 rounded-sm bg-cyan-400 shadow-[0_0_8px_#22d3ee]" />
+            <span className="w-3.5 h-3.5 rounded-sm bg-cyan-400 shadow-[0_0_8px_#22d3ee]" />
+            <span className="w-3.5 h-3.5 rounded-sm bg-cyan-400 shadow-[0_0_8px_#22d3ee]" />
+          </div>
+          <div className="flex gap-0.5 justify-center">
+            <span className="w-3.5 h-3.5 rounded-sm bg-purple-500 shadow-[0_0_8px_#a855f7]" />
+            <span className="w-3.5 h-3.5 rounded-sm bg-purple-500 shadow-[0_0_8px_#a855f7]" />
+            <span className="w-3.5 h-3.5 rounded-sm bg-yellow-400 shadow-[0_0_8px_#facc15]" />
+            <span className="w-3.5 h-3.5 rounded-sm bg-yellow-400 shadow-[0_0_8px_#facc15]" />
+          </div>
+        </div>
+      );
     default:
       return <div className="w-14 h-14 rounded-full bg-pink-500 text-white text-4xl font-black flex items-center justify-center shadow">?</div>;
   }
