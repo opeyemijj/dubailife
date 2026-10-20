@@ -3,7 +3,7 @@
 Furniture models are CC0 1.0 (public domain), downloaded from Poly Pizza (https://poly.pizza).
 
 ## Citizens — Microsoft Rocketbox (MIT License)
-rocketbox/*.glb (18 citizens) and rocketbox/anims/*.glb (idle, sit, wave, clap clips) are converted from
+rocketbox/*.glb (18 citizens and 30 outfits from the Adults and Professions sets) and rocketbox/anims/*.glb (animation clips) are converted from
 https://github.com/microsoft/Microsoft-Rocketbox — Copyright (c) 2020 Microsoft, MIT License:
 
 > Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated

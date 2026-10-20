@@ -130,11 +130,42 @@ export function GameRoomPage({ game }: { game: string }) {
               </section>
             )}
             <section className="grid sm:grid-cols-2 gap-3">
-              <ModeCard icon={<Bot className="w-5 h-5" />} title="Play solo vs AI" text="Practice against the computer, any time.">
+              {info.minPlayers === 1 && (
+                <div className="sm:col-span-2 rounded-3xl p-5 bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 text-white border-2 border-purple-400 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 text-center sm:text-left">
+                    <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-3xl shrink-0 shadow-inner">
+                      {info.icon}
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-purple-300">Instant Arcade Solo Run</div>
+                      <h3 className="text-xl font-black">Play Single Player</h3>
+                      <p className="text-xs text-slate-300 max-w-md">
+                        {info.id === "candy"
+                          ? "Match candies, cascade sweet combos, and reach 3 stars across 25 moves."
+                          : info.id === "tetris"
+                          ? "Rotate and drop falling tetrominoes, clear lines, and beat your high score."
+                          : "Play classic solo mode by yourself to set new high scores and climb the leaderboards."}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    disabled={!!busy}
+                    onClick={() => void startAi(0)}
+                    className="w-full sm:w-auto h-12 px-8 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-sm tracking-wide shadow-lg shadow-amber-400/30 transition-transform active:scale-95 disabled:opacity-60 flex items-center justify-center gap-2 shrink-0"
+                  >
+                    <span>{busy === "ai-0" ? "Starting…" : "▶ Play Single Player"}</span>
+                  </button>
+                </div>
+              )}
+              <ModeCard
+                icon={<Bot className="w-5 h-5" />}
+                title={info.minPlayers === 1 ? "Race vs AI Bots" : "Play solo vs AI"}
+                text={info.minPlayers === 1 ? "Race against computer opponents to see who gets the highest score." : "Practice against the computer, any time."}
+              >
                 <div className="flex flex-wrap gap-2">
                   {Array.from({ length: info.maxPlayers - 1 }, (_, i) => i + 1).map((n) => (
                     <button key={n} disabled={!!busy} onClick={() => void startAi(n)} className="h-10 px-4 rounded-xl bg-slate-900 text-white text-sm font-black disabled:opacity-60">
-                      {busy === `ai-${n}` ? "…" : info.maxPlayers > 2 ? `vs ${n} AI` : "Start"}
+                      {busy === `ai-${n}` ? "…" : `vs ${n} AI`}
                     </button>
                   ))}
                 </div>
@@ -385,7 +416,8 @@ function RoomChat({ roomId, myId, myUsername, floating = false }: { roomId: stri
 // ---------------------------------------------------------------- pieces
 
 function ResultCard({ info, result, seats, me, mode, roomId, onAgain, onExit }: { info: GameInfo; result: Result; seats: Seat[]; me: number; mode: "ai" | "multiplayer"; roomId?: string; onAgain: () => void; onExit: () => void }) {
-  const outcome: Outcome = result.winners.length === 0 ? "draw" : result.winners.includes(me) ? "win" : "loss";
+  const isSolo = seats.length === 1;
+  const outcome: Outcome = isSolo ? "win" : result.winners.length === 0 ? "draw" : result.winners.includes(me) ? "win" : "loss";
   const saved = useRef(false);
   useEffect(() => {
     if (saved.current) return;
@@ -393,19 +425,32 @@ function ResultCard({ info, result, seats, me, mode, roomId, onAgain, onExit }: 
     void recordResult(info.id, mode, outcome, result.scores?.[me] ?? (outcome === "win" ? 1 : 0), roomId);
     if (outcome === "win") gameAudio.playCoinSound();
   }, [info.id, mode, outcome, result, me, roomId]);
+
+  const finalScore = result.scores?.[me];
+
   return (
-    <section className="rounded-3xl p-6 text-center space-y-4 border-2" style={{ background: info.bg, color: info.fg, borderColor: info.accent }}>
-      <div className="text-6xl">{outcome === "win" ? "🏆" : outcome === "draw" ? "🤝" : "💪"}</div>
-      <h2 className="text-3xl font-black">{outcome === "win" ? "You win!" : outcome === "draw" ? "It's a draw" : `${result.winners.map((w) => seats[w]?.name).join(" & ")} wins`}</h2>
-      {result.scores && (
+    <section className="rounded-3xl p-6 text-center space-y-4 border-2 shadow-xl" style={{ background: info.bg, color: info.fg, borderColor: info.accent }}>
+      <div className="text-6xl">{isSolo ? "🎉" : outcome === "win" ? "🏆" : outcome === "draw" ? "🤝" : "💪"}</div>
+      <h2 className="text-3xl font-black">
+        {isSolo ? "Run Complete!" : outcome === "win" ? "You win!" : outcome === "draw" ? "It's a draw" : `${result.winners.map((w) => seats[w]?.name).join(" & ")} wins`}
+      </h2>
+      {finalScore !== undefined ? (
+        <div className="p-4 rounded-2xl bg-white/90 backdrop-blur border border-black/10 inline-block shadow-inner">
+          <div className="text-xs font-black uppercase tracking-wider text-slate-500">Your Final Score</div>
+          <div className="text-3xl font-black font-mono text-slate-900 mt-0.5">{finalScore.toLocaleString()} pts</div>
+        </div>
+      ) : null}
+      {!isSolo && result.scores && (
         <div className="flex flex-wrap justify-center gap-2">
           {seats.map((s, i) => <span key={i} className="px-3 py-1.5 rounded-full bg-white/70 text-slate-900 font-black text-sm">{i === me ? "You" : s.name}: {result.scores![i]}</span>)}
         </div>
       )}
       <p className="text-sm font-bold opacity-80">Saved to your profile and the {info.name} Hall of Fame.</p>
       <div className="flex flex-wrap justify-center gap-2">
-        <button onClick={onAgain} className="h-12 px-6 rounded-2xl bg-slate-900 text-white font-black">{mode === "ai" ? "Play again" : "Back to the game menu"}</button>
-        {mode === "ai" && <button onClick={onExit} className="h-12 px-6 rounded-2xl bg-white text-slate-900 font-black">Game menu</button>}
+        <button onClick={onAgain} className="h-12 px-6 rounded-2xl bg-slate-900 text-white font-black hover:bg-slate-800 transition-colors">
+          {isSolo ? "Play again" : mode === "ai" ? "Play again" : "Back to the game menu"}
+        </button>
+        {mode === "ai" && <button onClick={onExit} className="h-12 px-6 rounded-2xl bg-white text-slate-900 font-black border border-slate-300 hover:bg-slate-50 transition-colors">Game menu</button>}
       </div>
     </section>
   );
@@ -418,6 +463,21 @@ function Avatar({ look, name, ai }: { look?: AvatarLookProps | null; name: strin
 }
 
 function PlayerStrip({ seats, me, turn, slots }: { seats: Seat[]; me: number; turn: number | null; slots?: number }) {
+  if (seats.length === 1) {
+    const s = seats[0];
+    return (
+      <div className="flex justify-center items-center gap-2">
+        <div className="flex items-center gap-2.5 pl-1.5 pr-4 py-1.5 rounded-full border-2 border-purple-500/40 bg-white text-slate-900 shadow-sm">
+          <Avatar look={s.look} name={s.name} ai={s.ai} />
+          <div className="text-left">
+            <span className="text-xs font-black block leading-tight">{s.name}</span>
+            <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider">Single Player Solo Run</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-wrap justify-center gap-2">
       {seats.map((s, i) => (
@@ -471,7 +531,9 @@ function Hero({ info }: { info: GameInfo }) {
       <span className="text-6xl sm:text-7xl shrink-0">{info.icon}</span>
       <div className="min-w-0">
         <h2 className="text-2xl sm:text-3xl font-black">{info.name}</h2>
-        <p className="font-bold opacity-80">{info.tagline} · {info.minPlayers === info.maxPlayers ? `${info.minPlayers} players` : `${info.minPlayers}–${info.maxPlayers} players`}</p>
+        <p className="font-bold opacity-80">
+          {info.tagline} · {info.minPlayers === 1 ? `Solo & Multiplayer (1–${info.maxPlayers} players)` : info.minPlayers === info.maxPlayers ? `${info.minPlayers} players` : `${info.minPlayers}–${info.maxPlayers} players`}
+        </p>
         <p className="text-sm mt-2 opacity-90">{info.rules}</p>
       </div>
     </section>

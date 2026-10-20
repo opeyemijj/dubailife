@@ -4,7 +4,7 @@
 // Used in onboarding and on the profile.
 
 import { Check } from "lucide-react";
-import { presetFor, rosterFor, rosterThumb, type AvatarLookProps } from "./roster";
+import { outfitsFor, presetFor, rosterFor, rosterThumb, type AvatarLookProps } from "./roster";
 
 export function LookPicker({ look, onChange, dark = false }: { look: AvatarLookProps; onChange: (look: AvatarLookProps) => void; dark?: boolean }) {
   const face = presetFor(look);
@@ -35,7 +35,7 @@ export function LookPicker({ look, onChange, dark = false }: { look: AvatarLookP
         <div className={`text-xs font-bold uppercase tracking-wider mb-1 ${label}`}>Outfit</div>
         <p className={`text-[11px] mb-2 ${dark ? "text-white/40" : "text-slate-400"}`}>Change clothes any time — your face stays the same.</p>
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-          {people.map((r) => {
+          {outfitsFor(look.gender).map((r) => {
             const active = !look.custom && wear === r.id;
             return (
               <button key={r.id} onClick={() => onChange({ ...look, custom: undefined, wear: r.id === face ? undefined : r.id })} className={tile(active)} aria-label={`Outfit: ${r.label}`}>

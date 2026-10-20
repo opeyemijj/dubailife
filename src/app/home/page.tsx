@@ -19,6 +19,8 @@ import { CATALOG, getCatalogItem, withHomeItems, type CatalogItem, type Placemen
 import { useOnlineCount, formatOnline } from "@/lib/presence";
 import { WardrobeModal } from "@/components/avatar/WardrobeModal";
 import { getPendingVenue } from "@/components/city/VenueDressCodeModal";
+import { NeedsDock } from "@/components/life/NeedsDock";
+import { gainSkill, lifeEvent } from "@/lib/life";
 
 export default function HomePage() {
   const router = useRouter();
@@ -140,6 +142,8 @@ export default function HomePage() {
 
     if (type === "cooler") {
       setNeeds(prev => ({ ...prev, hunger: Math.min(100, prev.hunger + 15) }));
+      lifeEvent("cook");
+      gainSkill("cooking", 12);
       showToast("🍎 Ate a healthy snack from the cooler! Hunger restored.");
     } else if (type === "bed") {
       setNeeds(prev => ({ ...prev, energy: Math.min(100, prev.energy + 20) }));
@@ -334,53 +338,8 @@ export default function HomePage() {
       {/* BOTTOM LEFT: CITIZEN VITALS & NEEDS HUD (Image 2) */}
       {!cleanScreen && (
         <div className="absolute bottom-20 sm:bottom-24 left-3 sm:left-6 z-30 pointer-events-auto">
-          <div className="flex items-center gap-2 bg-white/95 backdrop-blur-xl border border-white p-2 pr-3.5 rounded-full shadow-2xl">
-            {/* Avatar Head Circle */}
-            <Link href="/profile" aria-label="Your profile" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-emerald-500 overflow-hidden bg-slate-100 shrink-0 shadow-sm">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={rosterThumb(presetFor(citizen?.look ?? { gender: "woman" }))} alt="" className="w-full h-full object-cover object-top" />
-            </Link>
-
-            {/* 6 Mini Needs Meters */}
-            <div className="grid grid-cols-3 gap-x-2.5 gap-y-1 text-[9px] font-bold text-slate-600">
-              <div className="flex items-center gap-1">
-                <span>🍩</span>
-                <div className="w-8 sm:w-10 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${needs.hunger}%` }} />
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <span>⚡</span>
-                <div className="w-8 sm:w-10 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${needs.energy}%` }} />
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <span>🎉</span>
-                <div className="w-8 sm:w-10 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${needs.fun}%` }} />
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <span>💬</span>
-                <div className="w-8 sm:w-10 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-amber-400 rounded-full" style={{ width: `${needs.social}%` }} />
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <span>🧼</span>
-                <div className="w-8 sm:w-10 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${needs.hygiene}%` }} />
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <span>🚽</span>
-                <div className="w-8 sm:w-10 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${needs.bladder}%` }} />
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* The dock opens your needs, goals, skills, people and career. */}
+          <NeedsDock />
         </div>
       )}
 

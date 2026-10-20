@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Briefcase, Check, HelpCircle, LogOut, Megaphone, MessageCircle, MessagesSquare, Search, Shirt, ShoppingBag, Sparkles, X } from "lucide-react";
 import type { Place, Product, StationKind, Venue } from "@/lib/city/types";
 import { adjustBalance, boostNeed, updateCitizen, useCitizen, type InventoryItem } from "@/lib/citizenStore";
+import { gainSkill, lifeEvent } from "@/lib/life";
 import type { AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 import { gameAudio } from "@/utils/gameAudio";
 import { InteriorScene, type CarryingState, type DeliveryDef, type VipTableReservation, type WalkTarget } from "./InteriorScene";
@@ -628,6 +629,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         setTimeout(() => setActiveConsumption((c) => (c?.propKind === drinkProp ? null : c)), 18000);
       } else if (isFood) {
         const foodProp: ServeKind = (serveKind && ["plate", "dessert", "pastry"].includes(serveKind)) ? serveKind : "plate";
+        lifeEvent("meal");
         setActiveConsumption({ kind: "eat", propKind: foodProp, tint: TINT[base] });
         emitRef.current?.({ type: "consumption", action: "eat", prop: foodProp, tint: TINT[base] });
         setTimeout(() => setActiveConsumption((c) => (c?.propKind === foodProp ? null : c)), 20000);
@@ -693,6 +695,8 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     if (pay > 0) adjustBalance(pay);
     updateCitizen((c) => (c.job ? { ...c, job: { ...c.job, lastShiftAt: new Date().toISOString() } } : c));
     boostNeed("energy", -15);
+    lifeEvent("shift");
+    gainSkill("hustle", 10 + correct * 5);
     gameAudio.playCoinSound();
     say(`Shift done: ${correct}/${job.shift.length} customers happy · earned AED ${pay}.`);
     setPanel(null);
@@ -713,6 +717,11 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       say(`${a.icon} ${a.label}`);
     }
     boostNeed("fun", 8);
+    // Practice: dancing, sport and swimming, the stage, landmarks.
+    if (a.animation === "dance") { lifeEvent("dance"); gainSkill("dance", 15); }
+    else if (["pooldeck", "beach", "waterpark", "rink"].includes(venue.layout) || /swim|skate|surf|ski|yoga|gym|work ?out|run|tennis|padel|golf|kayak|paddle|dive/i.test(a.label)) { lifeEvent("workout"); gainSkill("fitness", 15); }
+    else if (venue.layout === "theatre" || /sing|karaoke|dj|music|piano|concert|show/i.test(a.label)) gainSkill("music", 12);
+    else if (venue.layout === "mosque" || place.kind === "attraction") gainSkill("culture", 10);
     if (a.animation !== "dance" && a.animation !== "sit") setTimeout(() => setPlayerAnimation("idle"), 4000);
   };
 
@@ -877,7 +886,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       const lines = localChat[local.id] ?? [];
       const to = elsewhere(place.id, venue.id, localsHere.now, local.id);
       const canHop = !!gifts && gifts.hops < 5;
-      const reply = (mine: string, theirs: string) => { bubble("me", mine); bubble(local.id, theirs); localTalk(local.id, { mine: true, text: mine }, { mine: false, text: theirs }); };
+      const reply = (mine: string, theirs: string) => { bubble("me", mine); bubble(local.id, theirs); localTalk(local.id, { mine: true, text: mine }, { mine: false, text: theirs }); lifeEvent("chat", local.id); gainSkill("charisma", 8); };
       const chip = "p-3 rounded-2xl bg-slate-50 border border-slate-100 text-left text-sm font-black";
       sheet = (
         <Sheet onClose={closeAll} title={`@${local.username}`} subtitle="✨ Local · Dubai Life host">
@@ -1046,7 +1055,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
           <button onClick={() => setWallAdOpen(true)} className="h-11 px-4 rounded-full bg-white/95 shadow-xl text-xs font-black flex items-center gap-1.5 text-slate-900 hover:bg-slate-50"><Megaphone className="w-4 h-4 text-amber-500" /> Wall Ad</button>
           {job && <button onClick={openStaff} className="h-11 px-4 rounded-full bg-white/95 shadow-xl text-xs font-black flex items-center gap-1.5"><Briefcase className="w-4 h-4" /> {worksHere ? "Work a shift" : "Jobs"}</button>}
           {onDanceFloor && playerAnimation !== "dance" && (
-            <button onClick={() => { setPlayerAnimation("dance"); boostNeed("fun", 6); }} className="h-11 px-4 rounded-full bg-fuchsia-500 text-white shadow-xl text-xs font-black flex items-center gap-1.5">💃 Dance</button>
+            <button onClick={() => { setPlayerAnimation("dance"); boostNeed("fun", 6); lifeEvent("dance"); gainSkill("dance", 8); }} className="h-11 px-4 rounded-full bg-fuchsia-500 text-white shadow-xl text-xs font-black flex items-center gap-1.5">💃 Dance</button>
           )}
           {playerAnimation !== "idle" && <button onClick={() => setPlayerAnimation("idle")} className="h-11 px-4 rounded-full bg-amber-400 shadow-xl text-xs font-black flex items-center gap-1.5"><Sparkles className="w-4 h-4" /> Stop</button>}
           <button onClick={() => setPeopleOpen(true)} aria-label={`Chat${unreadHere ? `, ${unreadHere} unread` : ""}`}

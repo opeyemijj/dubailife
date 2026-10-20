@@ -12,7 +12,7 @@ import * as THREE from "three";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { applyBodyShape, buildBodyFrame, defaultBodyType, prepareForShaping } from "./bodyShape";
-import { ROSTER, presetFor, rosterAnimations, rosterModel, type AvatarLookProps, type Gender } from "./roster";
+import { isOutfit, presetFor, rosterAnimations, rosterModel, type AvatarLookProps, type Gender } from "./roster";
 import { composeOutfit } from "./outfit";
 import { createRetargeter } from "./retarget";
 import { useAvatarUrl } from "./customAvatarStore";
@@ -293,7 +293,7 @@ function RosterAvatar({
 }) {
   const gltf = useGLTF(rosterModel(presetFor(look)));
   // The chosen outfit: this face on another roster citizen's clothes.
-  const wearId = look.wear && look.wear !== presetFor(look) && ROSTER.some((r) => r.id === look.wear && r.gender === look.gender) ? look.wear : null;
+  const wearId = look.wear && look.wear !== presetFor(look) && isOutfit(look.wear, look.gender) ? look.wear : null;
   const wearGltf = useGLTF(rosterModel(wearId ?? presetFor(look)));
   const source = useMemo(() => (wearId ? composeOutfit(gltf.scene, wearGltf.scene) : gltf.scene), [wearId, gltf.scene, wearGltf.scene]);
   const model = usePreparedModel(source, true);

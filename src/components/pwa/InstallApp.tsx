@@ -7,7 +7,7 @@ import { Download, Share, SquarePlus, X } from "lucide-react";
 import { promptInstall, useInstallState } from "@/lib/install";
 import { ModalPortal } from "@/components/ui/modal-portal";
 
-export function InstallApp({ variant = "link" }: { variant?: "link" | "row" }) {
+export function InstallApp({ variant = "link" }: { variant?: "link" | "row" | "light-row" }) {
   const state = useInstallState();
   const [iosHelp, setIosHelp] = useState(false);
   if (state === "installed" || state === "unavailable") return null;
@@ -15,8 +15,8 @@ export function InstallApp({ variant = "link" }: { variant?: "link" | "row" }) {
   const onClick = () => (state === "prompt" ? void promptInstall() : setIosHelp(true));
   return (
     <>
-      {variant === "row" ? (
-        <button onClick={onClick} className="w-full h-12 rounded-xl border border-white/15 bg-white/5 text-white font-bold flex items-center justify-center gap-2">
+      {variant !== "link" ? (
+        <button onClick={onClick} className={`w-full h-12 rounded-xl font-bold flex items-center justify-center gap-2 ${variant === "light-row" ? "bg-slate-100 text-slate-800" : "border border-white/15 bg-white/5 text-white"}`}>
           <Download className="w-4 h-4" /> Install the Dubai Life app
         </button>
       ) : (

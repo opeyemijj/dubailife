@@ -57,7 +57,7 @@ function result(s: CandyState) {
   const v = s.scores as number[];
   const best = Math.max(...v);
   const w = v.map((x, i) => (x === best ? i : -1)).filter((i) => i >= 0);
-  return { winners: w.length === v.length ? [] : w, scores: v };
+  return { winners: w.length === v.length && v.length > 1 ? [] : w, scores: v };
 }
 
 function Board({ state, me, onFinish }: BoardProps<CandyState>) {
@@ -361,7 +361,9 @@ function Board({ state, me, onFinish }: BoardProps<CandyState>) {
         <div className="text-4xl">🍬</div>
         <h3 className="text-xl font-black text-pink-300">Run Finished!</h3>
         <p className="font-mono text-2xl font-black text-amber-300">{state.scores[me]} pts</p>
-        <p className="text-xs text-slate-400">Waiting for other players to finish their sugar cascades…</p>
+        <p className="text-xs text-slate-400">
+          {state.scores.length === 1 ? "Locking in your high score…" : "Waiting for other players to finish their sugar cascades…"}
+        </p>
       </div>
     );
   }

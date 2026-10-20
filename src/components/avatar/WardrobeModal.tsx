@@ -2,15 +2,29 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Check, Sparkles, ArrowRight, Shirt, Compass } from "lucide-react";
+import { Check, ArrowRight, Shirt } from "lucide-react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { CitizenAvatar, StudioEnvironment } from "@/components/avatar/CitizenAvatar";
-import { presetFor, rosterFor, rosterThumb, type AvatarLookProps } from "@/components/avatar/roster";
+import { OCCASIONS, outfitsFor, presetFor, rosterThumb, type AvatarLookProps, type Occasion } from "@/components/avatar/roster";
+import { DRESS_CODES, type DressCodeType } from "@/lib/city/dressCodes";
 import { useCitizen, updateCitizen } from "@/lib/citizenStore";
 import { getPendingVenue, clearPendingVenue, type PendingVenue } from "@/components/city/VenueDressCodeModal";
 import { useRouter } from "next/navigation";
 import type { Accessory } from "@/lib/city/types";
+
+/** Which occasions suit each venue dress code. */
+const SUITS: Record<DressCodeType, Occasion[]> = {
+  club_chic: ["night", "formal"],
+  smart_casual: ["work", "formal", "night"],
+  beachwear: ["beach"],
+  fashion_forward: ["night", "formal"],
+  casual_modest: ["everyday", "traditional", "work"],
+};
+const suitsFor = (title?: string): Occasion[] => {
+  const code = Object.values(DRESS_CODES).find((d) => d.title === title);
+  return code ? SUITS[code.type] : [];
+};
 
 interface WardrobeModalProps {
   open: boolean;
@@ -38,7 +52,14 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
   const gender = selectedLook.gender;
   const face = presetFor(selectedLook);
   const currentWear = selectedLook.wear ?? face;
-  const people = rosterFor(gender);
+  const all = outfitsFor(gender);
+  const suits = suitsFor(pending?.dressCodeTitle);
+  // "all", "suits" (the venue's dress code) or one occasion.
+  // Opens on what suits the venue when changing for one; otherwise everything.
+  const [picked, setOccasion] = useState<"all" | "suits" | Occasion | null>(null);
+  const occasion = picked ?? (pending && suits.length ? "suits" : "all");
+  const shown = occasion === "all" ? all : occasion === "suits" ? all.filter((o) => suits.includes(o.occasion)) : all.filter((o) => o.occasion === occasion);
+  const wornNow = all.find((o) => o.id === currentWear);
 
   // Owned accessories from inventory
   const ownedAccessories = (citizen?.inventory ?? []).filter((item) => item.wearable);
@@ -72,7 +93,7 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-900 text-white border border-white/10 shadow-2xl w-[95vw] max-w-2xl max-h-[92vh] overflow-hidden rounded-[32px] p-0 flex flex-col">
+      <DialogContent className="bg-slate-900 text-white border border-white/10 shadow-2xl w-[95vw] max-w-2xl sm:max-w-3xl max-h-[92vh] overflow-hidden rounded-[32px] p-0 flex flex-col">
         {/* Top Header */}
         <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between gap-3 bg-slate-950/40">
           <div className="flex items-center gap-2.5">
@@ -110,7 +131,7 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
         {/* Main Content: Avatar 3D Preview (Left/Top) + Wardrobe Items (Right/Bottom) */}
         <div className="flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-2">
           {/* 3D Turntable Preview */}
-          <div className="relative h-64 md:h-auto bg-gradient-to-b from-slate-950/80 to-slate-900 border-b md:border-b-0 md:border-r border-white/10 flex flex-col items-center justify-center">
+          <div className="relative h-72 md:h-auto md:min-h-[460px] bg-gradient-to-b from-slate-950/80 to-slate-900 border-b md:border-b-0 md:border-r border-white/10 flex flex-col items-center justify-center">
             <div className="absolute inset-0">
               <Canvas
                 camera={{ position: [0, 1.2, 2.5], fov: 38 }}
@@ -144,18 +165,37 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
 
           {/* Wardrobe Selector */}
           <div className="p-4 sm:p-5 space-y-5 overflow-y-auto max-h-[50vh] md:max-h-[550px]">
-            {/* Outfits Category */}
+            {/* Outfits, by occasion */}
             <div>
               <div className="text-xs font-black uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
-                <span>Owned Outfits</span>
-                <span className="text-[10px] text-slate-500 font-bold">{people.length} available</span>
+                <span>Outfits</span>
+                <span className="text-[10px] text-slate-500 font-bold">{all.length} outfits</span>
+              </div>
+              {pending && wornNow && suits.length > 0 && (
+                <p className={`text-[11px] font-bold mb-2 ${suits.includes(wornNow.occasion) ? "text-emerald-400" : "text-amber-300"}`}>
+                  {suits.includes(wornNow.occasion) ? `✓ ${wornNow.label} suits ${pending.venueName}` : `${wornNow.label} isn't quite right for ${pending.venueName}. Try one that suits it.`}
+                </p>
+              )}
+              <div className="flex flex-wrap gap-1.5 pb-2.5">
+                {[
+                  ...(pending && suits.length ? [{ id: "suits" as const, label: "Suits the venue", icon: "✅" }] : []),
+                  { id: "all" as const, label: "All", icon: "✨" },
+                  ...OCCASIONS.filter((o) => all.some((x) => x.occasion === o.id)),
+                ].map((o) => (
+                  <button key={o.id} onClick={() => setOccasion(o.id)}
+                    className={`shrink-0 h-8 px-3 rounded-full text-[11px] font-black whitespace-nowrap transition-colors ${occasion === o.id ? "bg-emerald-500 text-white" : "bg-white/10 text-slate-300 hover:bg-white/15"}`}>
+                    {o.icon} {o.label}
+                  </button>
+                ))}
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {people.map((r) => {
+                {shown.map((r) => {
                   const active = currentWear === r.id;
                   return (
                     <button
                       key={r.id}
+                      aria-label={r.label}
+                      title={r.label}
                       onClick={() =>
                         setSelectedLook((prev) => ({
                           ...prev,

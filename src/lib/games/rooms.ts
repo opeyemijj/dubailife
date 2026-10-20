@@ -71,6 +71,9 @@ export type Outcome = "win" | "loss" | "draw";
 
 export async function recordResult(game: GameId, mode: "ai" | "multiplayer", outcome: Outcome, score: number, roomId?: string) {
   await supabase().rpc("record_game_result", { p_game: game, p_mode: mode, p_outcome: outcome, p_score: Math.round(score), p_room: roomId ?? null });
+  const { gainSkill, lifeEvent } = await import("@/lib/life");
+  lifeEvent("game");
+  gainSkill("gaming", outcome === "win" ? 15 : 8);
 }
 
 export interface HallRow { user_id: string; username: string; name: string; look: AvatarLookProps | null; wins: number; played: number; best_score: number | null; points: number }

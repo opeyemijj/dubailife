@@ -39,13 +39,13 @@ export const GAMES: GameInfo[] = [
     rules: "Move diagonally forward. Jumping over a rival's piece captures it, and captures are compulsory — chain them when you can. Reach the far side to be crowned and move both ways." },
   { id: "snakes", name: "Snakes & Ladders", tagline: "Climb up, slide down", icon: "🪜", bg: "#ecfccb", fg: "#365314", accent: "#16a34a", minPlayers: 2, maxPlayers: 4, kind: "turns",
     rules: "Roll and move. Ladders take you up, snakes take you down. First to land exactly on 100 wins." },
-  { id: "snake", name: "Snake", tagline: "Eat, grow, don't crash", icon: "🐍", bg: "#052e16", fg: "#bbf7d0", accent: "#22c55e", minPlayers: 2, maxPlayers: 4, kind: "race",
+  { id: "snake", name: "Snake", tagline: "Eat, grow, don't crash", icon: "🐍", bg: "#052e16", fg: "#bbf7d0", accent: "#22c55e", minPlayers: 1, maxPlayers: 4, kind: "race",
     rules: "Steer the snake to eat the dates and grow. Don't hit the walls or yourself — it speeds up as you grow. Highest score wins." },
   { id: "memory", name: "Memory Match", tagline: "Find the Dubai pairs", icon: "🃏", bg: "#fff7ed", fg: "#7c2d12", accent: "#ea580c", minPlayers: 2, maxPlayers: 4, kind: "race",
     rules: "Flip two cards at a time to find matching Dubai landmarks. Fewer flips and a faster time score more." },
-  { id: "candy", name: "Candy Crush", tagline: "Match, crush, and cascade sweet combos", icon: "🍬", bg: "#fdf2f8", fg: "#831843", accent: "#db2777", minPlayers: 2, maxPlayers: 4, kind: "race",
+  { id: "candy", name: "Candy Crush", tagline: "Match, crush, and cascade sweet combos", icon: "🍬", bg: "#fdf2f8", fg: "#831843", accent: "#db2777", minPlayers: 1, maxPlayers: 4, kind: "race",
     rules: "Swap adjacent candies to match 3 or more in a row or column. Match 4 to create a Striped Candy that clears a row or column, or 5 for a Rainbow Color Bomb! Score big in 25 moves." },
-  { id: "tetris", name: "Tetris", tagline: "Drop tetrominoes, clear lines, level up", icon: "🕹️", bg: "#0f172a", fg: "#38bdf8", accent: "#0284c7", minPlayers: 2, maxPlayers: 4, kind: "race",
+  { id: "tetris", name: "Tetris", tagline: "Drop tetrominoes, clear lines, level up", icon: "🕹️", bg: "#0f172a", fg: "#38bdf8", accent: "#0284c7", minPlayers: 1, maxPlayers: 4, kind: "race",
     rules: "Rotate and drop falling tetromino blocks (I, J, L, O, S, T, Z) to fill complete horizontal lines. Clear lines to score points and advance levels. Clear 4 lines at once for a massive Tetris bonus!" },
 ];
 

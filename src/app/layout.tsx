@@ -9,6 +9,7 @@ import { Suspense } from "react";
 import { SITE } from "@/lib/site";
 import { ServiceWorker } from "@/components/pwa/ServiceWorker";
 import { KeyboardShortcuts } from "@/components/common/KeyboardShortcuts";
+import { LifeHub } from "@/components/life/LifeHub";
 
 const fredoka = Fredoka({ subsets: ["latin"], display: 'swap' });
 
@@ -105,6 +106,7 @@ export default function RootLayout({
         <Suspense fallback={null}><MessageAlerts /></Suspense>
         {children}
         <KeyboardShortcuts />
+        <LifeHub />
       </body>
     </html>
   );

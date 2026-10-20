@@ -11,6 +11,7 @@ import type { AvatarLookProps } from "@/components/avatar/roster";
 import { withHomeItems, type OwnedFurniture, type Placement } from "@/lib/furniture";
 import type { Accessory } from "@/lib/city/types";
 import { supabase } from "@/lib/supabase/client";
+import type { LifeState } from "@/lib/life";
 
 export interface InventoryItem {
   uid: string;
@@ -76,6 +77,8 @@ export interface Citizen {
   visited?: string[];
   /** Academic progress, degrees, diplomas, and unlocked superpowers. */
   academic?: CitizenAcademic;
+  /** Skills, wishes, ✨ points and perks (see lib/life). */
+  life?: Partial<LifeState>;
   /** Last place on the city map (world units), so travel continues across pages. */
   location?: { x: number; y: number; placeId?: string };
   createdAt: string;

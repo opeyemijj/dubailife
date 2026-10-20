@@ -4,6 +4,7 @@
 // conversations; rooms in venues and homes use the same table for their chat.
 
 import { supabase } from "@/lib/supabase/client";
+import { gainSkill, lifeEvent } from "@/lib/life";
 import type { AvatarLookProps } from "@/components/avatar/roster";
 
 export const MESSAGE_DAYS = 7;
@@ -78,6 +79,7 @@ export async function loadConversation(me: string, other: string): Promise<Messa
 export async function sendMessage(me: string, to: string, body: string, place: string | null = null): Promise<Message | null> {
   const row = { id: crypto.randomUUID(), from_id: me, to_id: to, body, place };
   const { error } = await supabase().from("messages").insert(row);
+  if (!error) { lifeEvent("chat", to); gainSkill("charisma", 6); }
   return error ? null : { ...row, created_at: new Date().toISOString() };
 }
 

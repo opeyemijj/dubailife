@@ -1,5 +1,6 @@
 "use client";
 
+import { gainSkill, skillForCourse } from "@/lib/life";
 import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -109,6 +110,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
     if (percentage >= 70) {
       gameAudio.playClickSound();
       completeLesson(course.id, activeLesson.lessonNumber);
+      gainSkill(skillForCourse(course.category), 25);
     }
   };
 
