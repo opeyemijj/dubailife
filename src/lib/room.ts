@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase/client";
 import { refreshCitizen, useCitizen } from "@/lib/citizenStore";
 import type { AvatarLookProps } from "@/components/avatar/roster";
 import type { AvatarAnimation } from "@/components/avatar/CitizenAvatar";
+import { sendPushNotification } from "@/lib/push/client";
 
 export interface Peer {
   userId: string;
@@ -300,7 +301,27 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
 export async function sendMoney(to: Peer, amount: number, place: string): Promise<string | null> {
   const { error } = await supabase().rpc("send_money", { p_to: to.userId, p_amount: amount, p_place: place });
   refreshCitizen();
-  if (!error) return null;
+  if (!error) {
+    void (async () => {
+      try {
+        const { data: { user } } = await supabase().auth.getUser();
+        const meId = user?.id;
+        const { data: prof } = meId ? await supabase().from("profiles").select("username").eq("id", meId).maybeSingle() : { data: null };
+        const myName = prof?.username ? `@${prof.username}` : "A citizen";
+        void sendPushNotification(
+          to.userId,
+          {
+            title: "Money Received 💸",
+            body: `${myName} sent you AED ${amount.toLocaleString()}${place ? ` at ${place}` : ""}!`,
+            url: "/phone?tab=alerts",
+            tag: `money-${Date.now()}`,
+          },
+          meId
+        );
+      } catch {}
+    })();
+    return null;
+  }
   return /insufficient_funds/.test(error.message) ? "You don't have enough AED for that."
     : /too_many/.test(error.message) ? "Slow down — try again in a minute."
     : /amount_out_of_range/.test(error.message) ? "Send between 1 and AED 1,000,000."
@@ -310,12 +331,40 @@ export async function sendMoney(to: Peer, amount: number, place: string): Promis
 /** Sends (or accepts) a friend request. */
 export async function befriend(myId: string, other: Peer): Promise<"sent" | "friends" | "error"> {
   const db = supabase();
+  // Get sender profile for push notifications
+  const { data: myProf } = await db.from("profiles").select("username").eq("id", myId).maybeSingle();
+  const myUsername = myProf?.username ? `@${myProf.username}` : "A citizen";
+
   // If they already asked me, accept theirs.
   const { data: theirs } = await db.from("friendships").select("status").eq("user_id", other.userId).eq("friend_id", myId).maybeSingle();
   if (theirs) {
     const { error } = await db.from("friendships").update({ status: "accepted" }).eq("user_id", other.userId).eq("friend_id", myId);
+    if (!error) {
+      void sendPushNotification(
+        other.userId,
+        {
+          title: "Friend Request Accepted 🤝",
+          body: `${myUsername} accepted your friend request!`,
+          url: "/phone?tab=contacts",
+          tag: `friend-acc-${myId}`,
+        },
+        myId
+      );
+    }
     return error ? "error" : "friends";
   }
   const { error } = await db.from("friendships").insert({ user_id: myId, friend_id: other.userId });
+  if (!error) {
+    void sendPushNotification(
+      other.userId,
+      {
+        title: "New Friend Request 🤝",
+        body: `${myUsername} wants to be friends with you!`,
+        url: "/phone?tab=alerts",
+        tag: `friend-req-${myId}`,
+      },
+      myId
+    );
+  }
   return error && !/duplicate/.test(error.message) ? "error" : "sent";
 }

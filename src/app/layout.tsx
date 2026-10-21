@@ -5,6 +5,8 @@ import { PresenceTracker } from "@/components/PresenceTracker";
 import { KnockListener } from "@/components/property/KnockListener";
 import { MoneyListener } from "@/components/social/MoneyListener";
 import { MessageAlerts } from "@/components/social/MessageAlerts";
+import { FriendRequestListener } from "@/components/social/FriendRequestListener";
+import { NotificationPrompt } from "@/components/pwa/NotificationPrompt";
 import { Suspense } from "react";
 import { SITE } from "@/lib/site";
 import { ServiceWorker } from "@/components/pwa/ServiceWorker";
@@ -103,7 +105,9 @@ export default function RootLayout({
         <PresenceTracker />
         <KnockListener />
         <MoneyListener />
+        <FriendRequestListener />
         <Suspense fallback={null}><MessageAlerts /></Suspense>
+        <NotificationPrompt />
         {children}
         <KeyboardShortcuts />
         <LifeHub />

@@ -122,10 +122,11 @@ function sketchOf(emoji: string): Array<[number, number, string, number]> {
   if (!n) return [];
   cx /= n; cy /= n;
   edge.sort((p, q) => Math.atan2(p[1] - cy, p[0] - cx) - Math.atan2(q[1] - cy, q[0] - cx));
-  const s = 1000 / N;
+  // Fit the square sketch into the 4:3 canvas (1000 × 750 units), centred.
+  const s = 700 / N, ox = (1000 - 700) / 2, oy = 25;
   return [
-    ...edge.filter((_, i) => i % 2 === 0).map(([x, y]) => [x * s, y * s, "#1f2937", 7] as [number, number, string, number]),
-    ...fillPts.sort((p, q) => p[1] - q[1] || p[0] - q[0]).map(([x, y]) => [x * s, y * s, col(x, y), 26] as [number, number, string, number]),
+    ...edge.filter((_, i) => i % 2 === 0).map(([x, y]) => [ox + x * s, oy + y * s, "#1f2937", 7] as [number, number, string, number]),
+    ...fillPts.sort((p, q) => p[1] - q[1] || p[0] - q[0]).map(([x, y]) => [ox + x * s, oy + y * s, col(x, y), 22] as [number, number, string, number]),
   ];
 }
 
@@ -169,9 +170,17 @@ function Board({ state, me, seats, onMove, onFinish, canMove }: BoardProps<DrawS
     g.lineCap = "round"; g.lineJoin = "round";
     if (aiDraws) {
       const count = Math.floor(sketch.length * Math.min(1, elapsed / (DURATION * 0.72)));
+      // Colour first (underneath), then the outline on top, joining neighbouring outline points into lines.
       for (let i = 0; i < count; i++) {
         const [x, y, c, w] = sketch[i];
-        g.fillStyle = c; g.beginPath(); g.arc(x * k, y * k, (w / 2) * k, 0, Math.PI * 2); g.fill();
+        if (w === 7) continue;
+        g.fillStyle = c; g.globalAlpha = 0.85; g.beginPath(); g.arc(x * k, y * k, (w / 2) * k, 0, Math.PI * 2); g.fill();
+      }
+      g.globalAlpha = 1; g.strokeStyle = "#1f2937"; g.lineWidth = 7 * k;
+      for (let i = 1; i < count; i++) {
+        const [x0, y0, , w0] = sketch[i - 1], [x1, y1, , w1] = sketch[i];
+        if (w0 !== 7 || w1 !== 7 || Math.hypot(x1 - x0, y1 - y0) > 40) continue;
+        g.beginPath(); g.moveTo(x0 * k, y0 * k); g.lineTo(x1 * k, y1 * k); g.stroke();
       }
       return;
     }

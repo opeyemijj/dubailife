@@ -9,7 +9,7 @@ import { sendMoney } from "@/lib/room";
 import { markRead, useUnreadCounts } from "@/lib/unread";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Bell, Lightbulb, MessageSquare, Search, Send, UserPlus, Users } from "lucide-react";
+import { ArrowLeft, Bell, BellRing, Lightbulb, MessageSquare, Search, Send, UserPlus, Users } from "lucide-react";
 import { Ideas } from "@/components/social/Ideas";
 import { useRequireCitizen } from "@/lib/citizenStore";
 import { supabase } from "@/lib/supabase/client";
@@ -21,6 +21,14 @@ import {
   MESSAGE_DAYS, contacts, findPeople, listConversations, loadConversation, onIncoming, sendMessage,
   type Contact, type Conversation, type Message,
 } from "@/lib/messages";
+import {
+  getNotificationPermission,
+  isPushSupported,
+  sendPushNotification,
+  subscribeToPush,
+  testPushNotification,
+  unsubscribeFromPush,
+} from "@/lib/push/client";
 
 type Tab = "chats" | "ideas" | "contacts" | "alerts";
 
@@ -290,12 +298,37 @@ function People({ me, online, open }: { me: string; online: ReadonlySet<string>;
   const outgoing = (rows ?? []).filter((f) => f.status === "pending" && f.user_id === me);
   const known = new Set((rows ?? []).map((f) => (f.user_id === me ? f.friend_id : f.user_id)));
 
+  const { citizen } = useRequireCitizen();
   const add = async (c: Contact) => {
-    await supabase().from("friendships").insert({ user_id: me, friend_id: c.id });
+    const { error } = await supabase().from("friendships").insert({ user_id: me, friend_id: c.id });
+    if (!error) {
+      void sendPushNotification(
+        c.id,
+        {
+          title: "New Friend Request 🤝",
+          body: `@${citizen?.username || "A citizen"} wants to be friends with you!`,
+          url: "/phone?tab=alerts",
+          tag: `friend-req-${me}`,
+        },
+        me
+      );
+    }
     void refresh();
   };
   const accept = async (f: Friendship) => {
-    await supabase().from("friendships").update({ status: "accepted" }).eq("user_id", f.user_id).eq("friend_id", me);
+    const { error } = await supabase().from("friendships").update({ status: "accepted" }).eq("user_id", f.user_id).eq("friend_id", me);
+    if (!error) {
+      void sendPushNotification(
+        f.user_id,
+        {
+          title: "Friend Request Accepted 🤝",
+          body: `@${citizen?.username || "Your friend"} accepted your friend request!`,
+          url: "/phone?tab=contacts",
+          tag: `friend-acc-${me}`,
+        },
+        me
+      );
+    }
     void refresh();
   };
 
@@ -350,6 +383,78 @@ function People({ me, online, open }: { me: string; online: ReadonlySet<string>;
 
 interface Alert { id: string; icon: string; title: string; detail?: string; at: string }
 
+function PushSettingsCard({ me }: { me: string }) {
+  const [permission, setPermission] = useState<string>("default");
+  const [supported, setSupported] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [testSent, setTestSent] = useState(false);
+
+  useEffect(() => {
+    setSupported(isPushSupported());
+    setPermission(getNotificationPermission());
+  }, []);
+
+  if (!supported) return null;
+
+  const handleToggle = async () => {
+    setLoading(true);
+    if (permission === "granted") {
+      await unsubscribeFromPush(me);
+      setPermission("default");
+    } else {
+      const res = await subscribeToPush(me);
+      if (res.ok) {
+        setPermission("granted");
+      }
+    }
+    setLoading(false);
+  };
+
+  const handleTest = async () => {
+    setTestSent(true);
+    await testPushNotification(me);
+    setTimeout(() => setTestSent(false), 3000);
+  };
+
+  return (
+    <div className="p-3.5 rounded-2xl bg-gradient-to-r from-sky-950/60 to-indigo-950/60 border border-sky-500/20 mb-3 space-y-2.5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <BellRing className={`w-4 h-4 ${permission === "granted" ? "text-emerald-400" : "text-amber-400"}`} />
+          <span className="text-xs font-black">
+            Push Notifications: {permission === "granted" ? "Enabled 🔔" : "Disabled 🔕"}
+          </span>
+        </div>
+        <button
+          onClick={handleToggle}
+          disabled={loading}
+          className={`px-2.5 py-1 rounded-xl text-[11px] font-black transition ${
+            permission === "granted"
+              ? "bg-white/10 hover:bg-white/20 text-white/80"
+              : "bg-sky-500 hover:bg-sky-400 text-white"
+          }`}
+        >
+          {loading ? "…" : permission === "granted" ? "Turn Off" : "Turn On"}
+        </button>
+      </div>
+      <p className="text-[11px] text-white/60">
+        Receive lock screen & banner pop-ups for friend requests, direct messages, and door knocks on your phone.
+      </p>
+      {permission === "granted" && (
+        <div className="flex items-center gap-2 pt-1 border-t border-white/5">
+          <button
+            onClick={handleTest}
+            disabled={testSent}
+            className="text-[11px] font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1 active:scale-95 transition"
+          >
+            {testSent ? "Test sent! Check notification bar" : "Send test notification"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Alerts({ me }: { me: string }) {
   const [alerts, setAlerts] = useState<Alert[] | null>(null);
 
@@ -379,26 +484,29 @@ function Alerts({ me }: { me: string }) {
   }, [me]);
 
   const grouped = useMemo(() => alerts ?? [], [alerts]);
-  if (alerts === null) return <p className="text-sm text-white/50 text-center py-8">Loading…</p>;
-  if (grouped.length === 0) return (
-    <div className="text-center py-10 space-y-2">
-      <div className="text-4xl">🔔</div>
-      <p className="text-sm text-white/60">Nothing yet.</p>
-      <p className="text-xs text-white/40">Money, knocks on your door and friend requests show up here.</p>
-    </div>
-  );
   return (
     <div className="space-y-2">
-      {grouped.map((a) => (
-        <div key={a.id} className="flex items-start gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
-          <span className="text-2xl leading-none mt-0.5">{a.icon}</span>
-          <span className="flex-1 min-w-0">
-            <span className="block text-sm font-bold">{a.title}</span>
-            {a.detail && <span className="block text-xs text-white/50 capitalize-first">{a.detail}</span>}
-          </span>
-          <span className="text-[11px] text-white/40 shrink-0">{when(a.at)}</span>
+      <PushSettingsCard me={me} />
+      {alerts === null ? (
+        <p className="text-sm text-white/50 text-center py-8">Loading…</p>
+      ) : grouped.length === 0 ? (
+        <div className="text-center py-10 space-y-2">
+          <div className="text-4xl">🔔</div>
+          <p className="text-sm text-white/60">Nothing yet.</p>
+          <p className="text-xs text-white/40">Money, knocks on your door and friend requests show up here.</p>
         </div>
-      ))}
+      ) : (
+        grouped.map((a) => (
+          <div key={a.id} className="flex items-start gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
+            <span className="text-2xl leading-none mt-0.5">{a.icon}</span>
+            <span className="flex-1 min-w-0">
+              <span className="block text-sm font-bold">{a.title}</span>
+              {a.detail && <span className="block text-xs text-white/50 capitalize-first">{a.detail}</span>}
+            </span>
+            <span className="text-[11px] text-white/40 shrink-0">{when(a.at)}</span>
+          </div>
+        ))
+      )}
     </div>
   );
 }

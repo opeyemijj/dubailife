@@ -6,6 +6,7 @@
 import { supabase } from "@/lib/supabase/client";
 import { gainSkill, lifeEvent } from "@/lib/life";
 import type { AvatarLookProps } from "@/components/avatar/roster";
+import { sendPushNotification } from "@/lib/push/client";
 
 export const MESSAGE_DAYS = 7;
 
@@ -79,7 +80,26 @@ export async function loadConversation(me: string, other: string): Promise<Messa
 export async function sendMessage(me: string, to: string, body: string, place: string | null = null): Promise<Message | null> {
   const row = { id: crypto.randomUUID(), from_id: me, to_id: to, body, place };
   const { error } = await supabase().from("messages").insert(row);
-  if (!error) { lifeEvent("chat", to); gainSkill("charisma", 6); }
+  if (!error) {
+    lifeEvent("chat", to);
+    gainSkill("charisma", 6);
+    void (async () => {
+      try {
+        const { data: myProf } = await supabase().from("profiles").select("username").eq("id", me).maybeSingle();
+        const senderName = myProf?.username ? `@${myProf.username}` : "A citizen";
+        void sendPushNotification(
+          to,
+          {
+            title: `Message from ${senderName}`,
+            body: body.length > 80 ? body.slice(0, 77) + "…" : body,
+            url: `/phone?tab=chats&chat=${me}`,
+            tag: `chat-${me}`,
+          },
+          me
+        );
+      } catch {}
+    })();
+  }
   return error ? null : { ...row, created_at: new Date().toISOString() };
 }
 

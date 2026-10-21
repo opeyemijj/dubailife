@@ -4,6 +4,7 @@
 
 import { supabase } from "@/lib/supabase/client";
 import type { OwnedFurniture } from "@/lib/furniture";
+import { sendPushNotification } from "@/lib/push/client";
 
 export type Access = "public" | "friends" | "invite" | "private";
 export type Listing = "none" | "rent" | "sale" | "rent_or_sale";
@@ -107,7 +108,34 @@ export const rentFlat = (flatId: string, months: number) => call<Flat>("rent_fla
 export const listFlat = (flatId: string, listing: Listing, rent: number | null, sale: number | null) => call<Flat>("list_flat", { p_flat: flatId, p_listing: listing, p_rent: rent, p_sale: sale });
 export const setAccess = (flatId: string, access: Access) => call<null>("set_flat_access", { p_flat: flatId, p_access: access });
 export const addGuest = (flatId: string, username: string, canEdit: boolean) => call<null>("add_flat_guest", { p_flat: flatId, p_username: username, p_can_edit: canEdit });
-export const requestEntry = (flatId: string, note?: string) => call<{ id: string; status: "pending" | "approved" | "denied" }>("request_entry", { p_flat: flatId, p_note: note ?? null });
+export const requestEntry = async (flatId: string, note?: string) => {
+  const res = await call<{ id: string; status: "pending" | "approved" | "denied" }>("request_entry", { p_flat: flatId, p_note: note ?? null });
+  if (res.ok) {
+    void (async () => {
+      try {
+        const { data: flat } = await supabase().from("flats").select("tenant_id, owner_id, building_id, unit").eq("id", flatId).maybeSingle();
+        const residentId = flat?.tenant_id || flat?.owner_id;
+        if (residentId) {
+          const { data: { user } } = await supabase().auth.getUser();
+          const visitorId = user?.id;
+          const { data: prof } = visitorId ? await supabase().from("profiles").select("username, display_name").eq("id", visitorId).maybeSingle() : { data: null };
+          const visitorName = prof?.display_name || (prof?.username ? `@${prof.username}` : "A visitor");
+          void sendPushNotification(
+            residentId,
+            {
+              title: "Door Knock ✊",
+              body: `${visitorName} knocked at your apartment (${flat.building_id} · ${flat.unit})`,
+              url: `/property/${flat.building_id}`,
+              tag: `knock-${flatId}`,
+            },
+            visitorId
+          );
+        }
+      } catch {}
+    })();
+  }
+  return res;
+};
 export const respondEntry = (requestId: string, approve: boolean) => call<{ id: string; status: string }>("respond_entry", { p_request: requestId, p_approve: approve });
 
 export async function getInterior(flatId: string): Promise<Result<{ interior: { furniture: OwnedFurniture[] }; can_edit: boolean; reason: string }>> {
