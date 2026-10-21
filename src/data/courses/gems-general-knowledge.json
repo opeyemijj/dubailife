@@ -1,0 +1,471 @@
+{
+  "id": "gems-general-knowledge",
+  "institutionId": "gems-wellington",
+  "title": "World Geography, Global Trade & Geopolitics",
+  "tagline": "Strategic maritime chokepoints, aviation crossroads, global economic cartography, and international diplomatic protocols.",
+  "category": "General Knowledge",
+  "level": "secondary_diploma",
+  "duration": "4 Weeks (Global Horizons)",
+  "rating": 4.97,
+  "enrolledCount": 1490,
+  "icon": "🌍",
+  "superpower": {
+    "id": "global_vision",
+    "name": "Global Trade Visionary",
+    "icon": "🌍",
+    "description": "Unlocks international trade intelligence and grants a 15% discount on shipping, logistics and port services.",
+    "badgeText": "Global Scholar",
+    "perkType": "general"
+  },
+  "syllabus": [
+    "Week 1: Strategic Maritime Chokepoints & International Container Shipping",
+    "Week 2: Great Circle Aviation Corridors & Dubai's Global Connectivity Hub",
+    "Week 3: Physical Geography, Arid Biomes & Global Natural Resource Belts",
+    "Week 4: Geopolitical Systems, Trade Treaties (CEPA) & Diplomatic Protocol"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Strategic Maritime Chokepoints & International Container Shipping",
+      "objective": "Map the 5 critical maritime transit chokepoints that govern 80% of world goods trade and understand twenty-foot equivalent container (TEU) economics.",
+      "slides": [
+        {
+          "title": "The Arteries of Global Maritime Commerce",
+          "body": "Over 80% of global merchandise trade by volume travels by sea. Five narrow geographic passages—maritime chokepoints—dictate global energy security, consumer supply chains, and shipping freight rates.",
+          "bullets": [
+            "Strait of Hormuz: Connecting the Arabian Gulf to the Indian Ocean; transports ~20 million barrels of petroleum daily (20% of global liquid petroleum consumption)",
+            "Suez Canal: 193 km artificial waterway in Egypt linking the Mediterranean Sea to the Red Sea, cutting Asia-to-Europe transit times by 10-14 days",
+            "Bab el-Mandeb: The 'Gate of Tears' bottleneck linking the Red Sea to the Gulf of Aden",
+            "Strait of Malacca: Narrow funnel between Indonesia, Malaysia, and Singapore carrying 25% of all traded goods and 60% of East Asia's oil imports",
+            "Panama Canal: 82 km lock-based corridor linking the Atlantic and Pacific oceans"
+          ],
+          "codeSnippet": "// Maritime Chokepoint Traffic Metric\nconst chokepoints = [\n  { name: 'Strait of Hormuz', keyCommodity: 'Global Petroleum & LNG', share: '21% of petroleum' },\n  { name: 'Strait of Malacca', keyCommodity: 'Manufactured Electronics & Crude', share: '90,000 ships/yr' },\n  { name: 'Suez Canal', keyCommodity: 'Containerized Cargo & European Energy', share: '12% of world trade' },\n  { name: 'Panama Canal', keyCommodity: 'Grain, LNG & Trans-Pacific Containers', share: '5% of world trade' }\n];",
+          "takeaway": "Disruptions at any single maritime chokepoint ripple across global inflation, insurance surcharges, and supply chain lead times."
+        },
+        {
+          "title": "Containerization Economics: The 20-Foot Box That Built the Modern World",
+          "body": "Before Malcolm McLean invented standardized intermodal shipping containers in 1956, loading cargo (break-bulk) was slow, theft-prone, and expensive. Today, giant Ultra Large Container Vessels (ULCVs) carry up to 24,000 TEUs across oceans.",
+          "bullets": [
+            "TEU: Twenty-foot Equivalent Unit (standard 20x8x8.5 ft metal shipping container)",
+            "FEU: Forty-foot container (equals 2 TEUs, standard for retail consumer merchandise)",
+            "Jebel Ali Port (DP World): The largest deepwater port between Rotterdam and Singapore, handling over 14 million TEUs annually",
+            "Intermodal Transport: Seamless transfer of the same container between ship, rail, and flatbed truck without unpacking the contents"
+          ],
+          "codeSnippet": "/* Container Shipping Efficiency */\nconst teuEconomics = {\n  shipCapacity: '24,000 TEU',\n  fuelPerContainerPerKm: '0.015 liters (Lowest carbon footprint per ton-km of any transit mode)',\n  transitTimeShanghaiToJebelAli: '14 to 18 days'\n};",
+          "takeaway": "Standardized containerization reduced global ocean transport costs by over 90%, enabling modern globalization and just-in-time manufacturing."
+        }
+      ],
+      "lab": {
+        "title": "Supply Chain Routing & Chokepoint Contingency Lab",
+        "brief": "Plot alternate shipping routes and compute cost differentials for a 20,000 TEU container ship rerouting around the Cape of Good Hope versus the Suez Canal.",
+        "deliverable": "Submit voyage fuel burn, canal toll savings, and delay impact analysis.",
+        "proTip": "Routing around Africa adds ~3,500 nautical miles and 10 to 14 days of steaming time, requiring up to $1M in additional bunker fuel."
+      },
+      "caseStudy": {
+        "scenario": "A sudden canal closure blocks transit through the Suez Canal. A Dubai logistics firm must decide whether to anchor and wait or divert ships around Africa's Cape of Good Hope. Which parameter is paramount?",
+        "options": [
+          {
+            "text": "The color of the shipping containers.",
+            "correct": false,
+            "explanation": "Container aesthetics have zero bearing on maritime transit physics."
+          },
+          {
+            "text": "Expected duration of the blockage compared to the 10-14 day sailing penalty and additional fuel costs of rounding the Cape.",
+            "correct": true,
+            "explanation": "If the anticipated queue exceeds the round-Africa sailing duration, immediate diversion preserves schedule integrity."
+          },
+          {
+            "text": "Flying all 24,000 containers on passenger airplanes.",
+            "correct": false,
+            "explanation": "Air freight costs 8 to 10 times more and lacks the weight capacity to replace thousands of ocean containers."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Which narrow maritime strait is the world's most critical transit route for crude oil, connecting the Arabian Gulf with the Gulf of Oman?",
+          "options": [
+            "Strait of Gibraltar",
+            "Strait of Hormuz",
+            "Bosphorus Strait",
+            "Bering Strait"
+          ],
+          "correctIndex": 1,
+          "explanation": "The Strait of Hormuz carries roughly 20% of the world's daily petroleum supply."
+        },
+        {
+          "question": "What does the maritime acronym 'TEU' stand for in commercial container shipping?",
+          "options": [
+            "Total Export Unit",
+            "Twenty-foot Equivalent Unit",
+            "Transit European Union",
+            "Terminal Energy Utility"
+          ],
+          "correctIndex": 1,
+          "explanation": "TEU stands for Twenty-foot Equivalent Unit, the standard measure of container ship capacity."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Great Circle Aviation Corridors & Dubai's Global Connectivity Hub",
+      "objective": "Understand spherical geometry, Great Circle navigation, the 8-hour flight radius, and how Dubai International Airport (DXB) became the world's busiest international air hub.",
+      "slides": [
+        {
+          "title": "Spherical Geometry & Great Circle Flight Paths",
+          "body": "On a flat Mercator projection map, a straight line looks like the shortest distance between two points. But because the Earth is an oblate spheroid, the true shortest distance between two points is a Great Circle arc.",
+          "bullets": [
+            "Great Circle: The intersection of the sphere with a plane that passes through the exact center of the Earth",
+            "Why Dubai-to-Los Angeles flights fly over the Arctic: The polar Great Circle arc saves thousands of kilometers and hours of fuel compared to flying in a 'straight' flat map line across the Atlantic",
+            "Jet Stream Wind Currents: High-altitude eastward winds (150-300 km/h) that pilots navigate into or out of to slash fuel burn and flight times",
+            "ETOPS (Extended-range Twin-engine Operational Performance Standards): Regulatory rules allowing twin-engine jets (Boeing 777, Airbus A350) to fly trans-oceanic routes far from diversion airports"
+          ],
+          "codeSnippet": "// Haversine Formula for Great Circle Distance on Sphere\nfunction haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number) {\n  const R = 6371; // Earth radius in km\n  const dLat = (lat2 - lat1) * Math.PI / 180;\n  const dLon = (lon2 - lon1) * Math.PI / 180;\n  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;\n  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));\n}\n// Dubai to London: ~5,500 km Great Circle arc",
+          "takeaway": "Flights curve dramatically on flat 2D maps because pilots fly 3D spherical Great Circle routes to minimize distance and fuel burn."
+        },
+        {
+          "title": "The 8-Hour Flight Radius: Dubai's Geographic Superpower",
+          "body": "Dubai's physical location on planet Earth is an unmatched geopolitical asset. Positioned at the crossroads of Europe, Asia, and Africa, Dubai connects emerging and established economies with seamless single-leg aviation connections.",
+          "bullets": [
+            "4-Hour Flight Radius: Reaches 2 billion people (Middle East, South Asia, East Africa, Caucasus)",
+            "8-Hour Flight Radius: Reaches two-thirds (66%) of the entire world population (all of Europe, China, India, Russia, Africa, and Southeast Asia)",
+            "Sixth-Freedom Traffic Rights: Emirates Airline's hub-and-spoke model transfers passengers between any two points on earth through DXB with one seamless stop",
+            "Dubai International Airport (DXB) handles over 90 million international passengers annually, making it the #1 international airport on Earth"
+          ],
+          "codeSnippet": "/* Geographic Reach of Dubai Hub */\nconst globalReach = {\n  fourHourRadiusPopulation: '2.0 Billion',\n  eightHourRadiusPopulation: '5.2 Billion (66% of humanity)',\n  annualPassengersDXB: '90M+ International',\n  timeZoneAdvantage: 'Bridges Asian market close and European market open on the same business day'\n};",
+          "takeaway": "Dubai's hub dominance is grounded in geographic physics: two-thirds of humanity lives within an 8-hour nonstop flight of its runways."
+        }
+      ],
+      "lab": {
+        "title": "Aviation Route & Great Circle Plotting Lab",
+        "brief": "Calculate the true Great Circle route between Dubai (DXB) and New York (JFK), compare against Mercator map projections, and determine optimal polar waypoints.",
+        "deliverable": "Submit spherical flight plan with calculated fuel burn differentials.",
+        "proTip": "Mercator projections severely distort landmass size near the poles (Greenland appears the size of Africa, though Africa is actually 14x larger!)."
+      },
+      "caseStudy": {
+        "scenario": "A cargo carrier wants to transport microchips from Taipei to Frankfurt. Why is routing via a Dubai transfer hub more cost-efficient than flying across the Pacific Ocean?",
+        "options": [
+          {
+            "text": "Because the Pacific Ocean has no oxygen for jet engines.",
+            "correct": false,
+            "explanation": "Jet engines breathe atmospheric air regardless of the surface below."
+          },
+          {
+            "text": "The overland Eurasian Great Circle path via the Gulf is thousands of kilometers shorter and balances twin-leg fuel payload capacities.",
+            "correct": true,
+            "explanation": "Trans-Eurasian routing through Dubai is geographically direct and avoids the extreme headwinds and distances of a trans-Pacific detour."
+          },
+          {
+            "text": "Planes cannot fly over water at night.",
+            "correct": false,
+            "explanation": "Aviation operates 24/7 over oceans using satellite navigation."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the true shortest mathematical path between two points on the curved surface of a sphere called?",
+          "options": [
+            "A Mercator tangent",
+            "A Great Circle arc",
+            "A Rhumb line",
+            "An Equidistant parallel"
+          ],
+          "correctIndex": 1,
+          "explanation": "A Great Circle arc represents the shortest distance between any two coordinates on a sphere."
+        },
+        {
+          "question": "Approximately what percentage of the world's population lives within an 8-hour flight of Dubai?",
+          "options": [
+            "20%",
+            "35%",
+            "66% (Two-thirds)",
+            "95%"
+          ],
+          "correctIndex": 2,
+          "explanation": "Roughly two-thirds of the world's population (~5 billion people) lives within an 8-hour flight of Dubai."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Physical Geography, Arid Biomes & Global Natural Resource Belts",
+      "objective": "Explore atmospheric Hadley Cells, desert formation, mineral and energy resource belts, and how arid civilizations master water scarcity.",
+      "slides": [
+        {
+          "title": "Why Deserts Exist: The Science of Atmospheric Hadley Cells",
+          "body": "Deserts are not randomly scattered across the globe. Almost all the world's great warm deserts (the Arabian Desert, the Sahara, the Kalahari, the Great Australian Desert) lie in two distinct bands around 20° to 30° North and South of the equator.",
+          "bullets": [
+            "Hadley Cell Circulation: Intense solar heating at the equator causes moist, warm air to rise, dump torrential tropical rain (rainforests), and travel high in the troposphere toward the subtropics",
+            "Subtropical High Pressure: Around 30° latitude, this dry air cools, becomes dense, and sinks toward the surface",
+            "Adiabatic Warming: As dry air sinks, it compresses and warms up, evaporating any clouds and creating permanent high-pressure clear skies with almost zero precipitation",
+            "Rain Shadow Deserts: Secondary deserts (like the Mojave or Atacama) formed when high mountain ranges block moist ocean air from passing"
+          ],
+          "codeSnippet": "// Atmospheric Circulation Bands\nconst climateBelts = {\n  equator: '0°: Intertropical Convergence Zone (ITCZ) - Low Pressure, Heavy Rain',\n  subtropics: '20°-30° N/S: Subtropical High Pressure - Sinking Dry Air, Arid Deserts (Arabia, Sahara)',\n  temperate: '40°-60° N/S: Ferrel Cell - Cyclonic storms, deciduous forests',\n  poles: '90°: Polar High - Sinking freezing dry air (Polar Deserts)'\n};",
+          "takeaway": "Deserts exist because planetary atmospheric physics forces dry air to descend and compress along the subtropical high-pressure belt."
+        },
+        {
+          "title": "Global Resource Belts: Oil, Rare Earths & Agricultural Breadbaskets",
+          "body": "Natural resources are distributed by planetary geology. Ancient pre-historic shallow seas laid down hydrocarbon beds; plate tectonic boundaries formed rich mineral veins; and fertile river deltas created agricultural breadbaskets.",
+          "bullets": [
+            "Hydrocarbon Belt: The Arabian-Iranian sedimentary basin holds over 50% of the world's conventional oil reserves due to the ancient Mesozoic Tethys Sea deposits",
+            "The Lithium Triangle: Chile, Argentina, and Bolivia hold over 60% of world lithium in high-altitude salt flats (Salars)",
+            "Rare Earth Elements (REEs): Critical for electric motors and defense tech; over 70% of processing is concentrated in China",
+            "Agricultural Breadbaskets: Deep Chernozem black soil belts in Ukraine, the American Midwest, and the Argentine Pampas supply global grain calories"
+          ],
+          "codeSnippet": "/* Strategic Commodity Distribution */\nconst resourceMap = [\n  { commodity: 'Lithium', primaryRegion: 'South American Lithium Triangle & Australia' },\n  { commodity: 'Cobalt', primaryRegion: 'Democratic Republic of Congo (>70% of supply)' },\n  { commodity: 'Petroleum & Gas', primaryRegion: 'Arabian Gulf Basin & North America' },\n  { commodity: 'Wheat/Grains', primaryRegion: 'North American Great Plains & Eurasian Steppe' }\n];",
+          "takeaway": "No nation is completely self-sufficient; global stability depends on trade agreements bridging uneven geological resource distributions."
+        }
+      ],
+      "lab": {
+        "title": "Global Biome & Commodity Cartography Lab",
+        "brief": "Map global agricultural import routes into the GCC and analyze strategic food security reserves (grain silos, vertical farming, trade redundancy).",
+        "deliverable": "Submit GIS resource overlay and national food security vulnerability matrix.",
+        "proTip": "The UAE National Food Security Strategy 2051 emphasizes high-tech controlled-environment agriculture and diversified trade partnerships."
+      },
+      "caseStudy": {
+        "scenario": "A policy analyst asks why the Arabian Peninsula and the Sahara are both extremely arid deserts despite being bordered by the ocean. What is the fundamental scientific reason?",
+        "options": [
+          {
+            "text": "The ocean water is too warm to evaporate.",
+            "correct": false,
+            "explanation": "Warm ocean water evaporates very quickly."
+          },
+          {
+            "text": "They sit under the descending dry air arm of the Hadley Cell circulation, which creates persistent high atmospheric pressure suppressing cloud formation.",
+            "correct": true,
+            "explanation": "Descending air compresses and warms adiabatically, preventing the condensation needed to form rain clouds."
+          },
+          {
+            "text": "The rotation of the Earth blows all the clouds into space.",
+            "correct": false,
+            "explanation": "Scientific impossibility."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the primary atmospheric circulation cell that causes warm, dry air to descend around 20° to 30° latitude, creating the world's great deserts?",
+          "options": [
+            "Hadley Cell",
+            "Polar Cell",
+            "Ferrel Cell",
+            "Coriolis Cell"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hadley Cells circulate air between the equator and subtropics, with descending dry air creating desert belts."
+        },
+        {
+          "question": "Which ancient geological sea covered the Middle East for millions of years, leading to the formation of the world's largest hydrocarbon oil and gas deposits?",
+          "options": [
+            "The Baltic Sea",
+            "The Tethys Sea",
+            "The Panthalassa Ocean",
+            "The Black Sea"
+          ],
+          "correctIndex": 1,
+          "explanation": "The warm, nutrient-rich Mesozoic Tethys Sea deposited the organic marine matter that transformed into the Arabian oil and gas reserves."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Geopolitical Systems, Trade Treaties (CEPA) & Diplomatic Protocol",
+      "objective": "Understand multilateral international organizations (UN, WTO), Comprehensive Economic Partnership Agreements (CEPA), and diplomatic immunity conventions.",
+      "slides": [
+        {
+          "title": "Trade Treaties & UAE Comprehensive Economic Partnerships (CEPA)",
+          "body": "In international trade, high tariffs (taxes on imports), quotas, and non-tariff regulatory barriers restrict wealth creation. The UAE has pioneered groundbreaking bilateral Comprehensive Economic Partnership Agreements (CEPA) with major world powers.",
+          "bullets": [
+            "Tariff Elimination: CEPAs eliminate customs tariffs on 90%+ of traded product lines (e.g. UAE-India, UAE-Indonesia, UAE-Turkey, UAE-Israel)",
+            "Services & Digital Trade: Modern CEPAs protect cross-border digital data flows, intellectual property, and professional visa mobility",
+            "WTO Most Favored Nation (MFN): Principle that an advantage granted to one WTO member must generally be extended to all, unless inside a certified Free Trade Agreement",
+            "Rules of Origin: Strict criteria defining where a product was actually manufactured to prevent third-party tariff evasion"
+          ],
+          "codeSnippet": "// CEPA Economic Multiplier Model\ninterface TradeDeal {\n  partner: string;\n  tariffReductionPercent: number;\n  bilateralTradeTargetUSD: string;\n}\nconst uaeCepas: TradeDeal[] = [\n  { partner: 'India', tariffReductionPercent: 90, bilateralTradeTargetUSD: '100 Billion' },\n  { partner: 'Indonesia', tariffReductionPercent: 99, bilateralTradeTargetUSD: '10 Billion' },\n  { partner: 'Turkey', tariffReductionPercent: 93, bilateralTradeTargetUSD: '40 Billion' }\n];",
+          "takeaway": "Bilateral CEPAs slash trade frictions and position the UAE as an open, interconnected neutral bridge between the Global South and Western economies."
+        },
+        {
+          "title": "Diplomatic Protocol & The Vienna Conventions",
+          "body": "International relations depend on centuries-old diplomatic conventions that ensure states can communicate peacefully even during geopolitical crises.",
+          "bullets": [
+            "Vienna Convention on Diplomatic Relations (1961): Foundational treaty establishing rules of diplomatic interaction between sovereign states",
+            "Inviolability of Embassies: An embassy's grounds and buildings are sovereign-protected; host nation police or military cannot enter without the ambassador's explicit permission",
+            "Diplomatic Immunity: Diplomats are shielded from civil lawsuits and criminal prosecution in the host state (though they can be expelled as 'Persona Non Grata')",
+            "Diplomatic Pouch: Official sealed diplomatic mail and shipments cannot be opened, searched, or detained by host country customs"
+          ],
+          "codeSnippet": "/* Key Diplomatic Legal Concepts */\nconst diplomaticLaw = {\n  personaNonGrata: 'State rejection of an individual diplomat without requiring explanation',\n  inviolability: 'Absolute physical protection of embassy premises, archives, and communications',\n  precedence: 'Rigid diplomatic seating order based strictly on presentation date of credentials'\n};",
+          "takeaway": "Diplomatic immunity and embassy inviolability are the bedrock of international law, ensuring open communication channels between sovereign states."
+        }
+      ],
+      "lab": {
+        "title": "Bilateral Trade Negotiation & Tariff Harmonization Lab",
+        "brief": "Draft key terms of a bilateral trade agreement between the UAE and an emerging trade partner, negotiating tariff phase-outs and dispute settlement mechanisms.",
+        "deliverable": "Submit draft CEPA treaty summary and economic impact forecast.",
+        "proTip": "Ensure strict rules of origin (e.g. minimum 35% local value addition) to certify authentic domestic manufacturing."
+      },
+      "caseStudy": {
+        "scenario": "Host country customs officials suspect that a foreign embassy's sealed diplomatic pouch contains undeclared luxury commercial goods. Under the 1961 Vienna Convention, can customs open and inspect the pouch?",
+        "options": [
+          {
+            "text": "Yes, customs officers can open any package entering the border.",
+            "correct": false,
+            "explanation": "Standard customs powers do not apply to official diplomatic pouches under international treaty."
+          },
+          {
+            "text": "No, the diplomatic pouch is strictly inviolable and cannot be opened or detained under Article 27 of the Vienna Convention.",
+            "correct": true,
+            "explanation": "Diplomatic pouches bearing visible external markings of their character may not be opened or detained under any circumstances."
+          },
+          {
+            "text": "Only if they open it in front of local television news cameras.",
+            "correct": false,
+            "explanation": "International law does not allow media inspections."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the primary purpose of a Comprehensive Economic Partnership Agreement (CEPA)?",
+          "options": [
+            "To build joint military bases",
+            "To eliminate tariffs, streamline customs, and expand bilateral trade in goods and services",
+            "To adopt a single global currency",
+            "To ban all international tourism"
+          ],
+          "correctIndex": 1,
+          "explanation": "A CEPA is an advanced free trade agreement designed to dismantle tariffs and regulatory trade barriers."
+        },
+        {
+          "question": "Under the 1961 Vienna Convention on Diplomatic Relations, what action can a host state take if a diplomat violates domestic law?",
+          "options": [
+            "Send them to local prison without trial",
+            "Declare them 'Persona Non Grata' and compel their departure from the country",
+            "Confiscate the foreign embassy building",
+            "Impose personal income taxes on the ambassador"
+          ],
+          "correctIndex": 1,
+          "explanation": "A host government can declare any diplomat 'Persona Non Grata' (unwelcome person), requiring their immediate recall by their home government."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "Approximately what percentage of global merchandise trade by volume is carried by maritime sea freight?",
+        "options": [
+          "20%",
+          "50%",
+          "Over 80%",
+          "99%"
+        ],
+        "correctIndex": 2,
+        "explanation": "Over 80% of world goods volume is transported via maritime shipping."
+      },
+      {
+        "question": "Which critical waterway connects the Mediterranean Sea directly with the Red Sea, enabling ships to avoid circumnavigating Africa?",
+        "options": [
+          "Panama Canal",
+          "Suez Canal",
+          "Kiel Canal",
+          "Corinth Canal"
+        ],
+        "correctIndex": 1,
+        "explanation": "The Suez Canal in Egypt connects the Mediterranean and Red Sea."
+      },
+      {
+        "question": "Why do commercial aircraft flying from the Middle East or Asia to the United States fly over high northern polar latitudes?",
+        "options": [
+          "To view the Northern Lights",
+          "Because Great Circle routes across the 3D spherical Earth represent the shortest physical distance",
+          "Because airplanes cannot fly over salt water",
+          "To avoid paying international air traffic control fees"
+        ],
+        "correctIndex": 1,
+        "explanation": "Great Circle routes on a sphere are shorter than straight lines drawn on flat 2D maps."
+      },
+      {
+        "question": "Which UAE port is the largest container handling port in the Middle East, operated by DP World?",
+        "options": [
+          "Port Rashid",
+          "Jebel Ali Port",
+          "Port of Fujairah",
+          "Khalifa Port"
+        ],
+        "correctIndex": 1,
+        "explanation": "Jebel Ali Port is the world's ninth busiest port and the largest between Europe and East Asia."
+      },
+      {
+        "question": "What is the primary physical reason most major warm deserts are located between 20° and 30° latitude North and South?",
+        "options": [
+          "High ocean salinity",
+          "The sinking, dry air column of the atmospheric Hadley Cell circulation suppressing clouds",
+          "Too many mountains blocking the sun",
+          "Solar flares hitting that specific latitude"
+        ],
+        "correctIndex": 1,
+        "explanation": "Descending air in Hadley Cells heats adiabatically, preventing cloud formation and creating arid subtropical deserts."
+      },
+      {
+        "question": "Which region of South America (spanning Chile, Bolivia, and Argentina) holds over half of the world's known lithium reserves?",
+        "options": [
+          "The Amazon Basin",
+          "The Lithium Triangle",
+          "Patagonia",
+          "The Pampas"
+        ],
+        "correctIndex": 1,
+        "explanation": "The 'Lithium Triangle' of Andean salt flats contains the majority of planetary lithium resources."
+      },
+      {
+        "question": "What is the primary governing international treaty for diplomatic relations between sovereign nations?",
+        "options": [
+          "The Geneva Convention",
+          "The 1961 Vienna Convention on Diplomatic Relations",
+          "The Kyoto Protocol",
+          "The Bretton Woods Agreement"
+        ],
+        "correctIndex": 1,
+        "explanation": "The 1961 Vienna Convention on Diplomatic Relations sets the rules of diplomatic immunity and embassy inviolability."
+      },
+      {
+        "question": "Under the rules of diplomatic protocol, can host nation police officers enter a foreign embassy without the ambassador's permission?",
+        "options": [
+          "Yes, if they suspect a parking violation",
+          "No, embassy premises are inviolable under international law",
+          "Yes, between 9:00 AM and 5:00 PM only",
+          "Yes, with a warrant from a local magistrate"
+        ],
+        "correctIndex": 1,
+        "explanation": "Embassies enjoy inviolability; host nation agents cannot enter without the mission head's express permission."
+      },
+      {
+        "question": "What does a CEPA agreement stand for in UAE international economic policy?",
+        "options": [
+          "Central European Petroleum Agreement",
+          "Comprehensive Economic Partnership Agreement",
+          "Cooperative Environmental Protection Accord",
+          "Consumer Electronic Production Alliance"
+        ],
+        "correctIndex": 1,
+        "explanation": "CEPA stands for Comprehensive Economic Partnership Agreement."
+      },
+      {
+        "question": "Why is the standard shipping container measured in 'TEUs' considered a revolutionary technological innovation?",
+        "options": [
+          "It made shipping containers radioactive",
+          "Standardized intermodal dimensions allow cargo to transfer instantly between ships, trains, and trucks without unpacking, cutting costs by over 90%",
+          "It is made of solid gold",
+          "It can float in air like a blimp"
+        ],
+        "correctIndex": 1,
+        "explanation": "Intermodal containerization allowed seamless mechanical transfer across all transport modes, dramatically reducing freight handling costs."
+      }
+    ]
+  },
+  "tuitionFee": 1400
+}
+

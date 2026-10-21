@@ -1,0 +1,474 @@
+{
+  "id": "gems-maths",
+  "institutionId": "gems-wellington",
+  "title": "Applied Mathematics & Financial Numeracy",
+  "tagline": "Mental arithmetic, compound interest mechanics, probability matrices, and real-world quantitative decision-making.",
+  "category": "Mathematics",
+  "level": "secondary_diploma",
+  "duration": "4 Weeks (Applied Foundations)",
+  "rating": 4.96,
+  "enrolledCount": 1840,
+  "icon": "📐",
+  "superpower": {
+    "id": "quantitative_mastery",
+    "name": "Quantitative Mastery",
+    "icon": "📐",
+    "description": "+15% compound yield speed and instant financial calculation accuracy across all city businesses.",
+    "badgeText": "Maths Whiz",
+    "perkType": "general"
+  },
+  "syllabus": [
+    "Week 1: Rapid Mental Arithmetic, Percentages & Margin Calculations",
+    "Week 2: Compound Interest, Exponential Growth & The Rule of 72",
+    "Week 3: Probability, Expected Value & Quantitative Risk Management",
+    "Week 4: Statistics, Data Interpretation & Chart Deconstruction"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Rapid Mental Arithmetic, Percentages & Margin Calculations",
+      "objective": "Master lightning-fast mental math heuristics, percentage conversions, and gross vs net profit margin calculations.",
+      "slides": [
+        {
+          "title": "Mental Math Heuristics & Percentage Anchors",
+          "body": "In fast-paced business and daily transactions, calculating percentages in your head without a calculator is a core superpower. Break any percentage into familiar building blocks: 10% (shift decimal left by one place), 1% (shift left by two places), and 5% (half of 10%).",
+          "bullets": [
+            "Calculating 15%: Find 10% + half of that 10% (e.g. 15% of 240 AED = 24 + 12 = 36 AED)",
+            "Calculating 35%: Find 10% * 3 + 5% (e.g. 35% of 800 = 240 + 40 = 280 AED)",
+            "Percentage reversal symmetry: x% of y is mathematically identical to y% of x (e.g. 8% of 50 = 50% of 8 = 4)",
+            "Fraction shortcuts: 1/8 = 12.5%, 1/6 = 16.67%, 1/3 = 33.33%, 3/8 = 37.5%"
+          ],
+          "codeSnippet": "// Rapid Percentage & Reversal Formula\n// x% of y == y% of x\nconst quickPercent = (percent: number, total: number) => (percent * total) / 100;\n// 18% of 50 AED -> 50% of 18 AED = 9 AED\nconsole.log(quickPercent(18, 50)); // 9",
+          "takeaway": "Deconstruct complex percentages into 10%, 5%, and 1% steps, or reverse them (x% of y = y% of x) for instantaneous mental computation."
+        },
+        {
+          "title": "Markup vs. Profit Margin: The Universal Trap",
+          "body": "One of the most dangerous arithmetic mistakes in commerce is confusing markup with profit margin. Markup is percentage added to cost, while profit margin is percentage of revenue that remains as profit.",
+          "bullets": [
+            "Markup = (Selling Price - Cost) / Cost",
+            "Margin = (Selling Price - Cost) / Selling Price",
+            "Example: Cost = 80 AED, Selling Price = 100 AED",
+            "Markup = (20 / 80) = 25% markup",
+            "Margin = (20 / 100) = 20% margin",
+            "A 100% markup always yields exactly a 50% profit margin"
+          ],
+          "codeSnippet": "function computeEconomics(cost: number, sellPrice: number) {\n  const profit = sellPrice - cost;\n  const markup = (profit / cost) * 100;\n  const margin = (profit / sellPrice) * 100;\n  return { profit, markup: `${markup}%`, margin: `${margin}%` };\n}\n// Cost: 60 AED, Sells: 100 AED -> Markup: 66.67%, Margin: 40%",
+          "takeaway": "Never price products confusing margin with markup. If you need a 30% margin on a 70 AED item, sell price must be 70 / (1 - 0.30) = 100 AED, not 70 * 1.30 = 91 AED."
+        }
+      ],
+      "lab": {
+        "title": "Rapid Retail Margin & VAT Audit Lab",
+        "brief": "Compute selling prices for 5 imported retail goods requiring a minimum 35% gross profit margin plus 5% UAE VAT.",
+        "deliverable": "Submit verified pricing calculation sheet with margin breakdowns.",
+        "proTip": "To preserve a target margin m when adding cost c: Price = c / (1 - m). Then multiply by 1.05 for UAE VAT."
+      },
+      "caseStudy": {
+        "scenario": "A boutique owner buys a watch wholesale for 600 AED and marks it up by 50%. A client negotiates a 30% discount off the sticker price. Did the boutique make a profit or loss?",
+        "options": [
+          {
+            "text": "Made a profit of 30 AED",
+            "correct": true,
+            "explanation": "Sticker price = 600 * 1.50 = 900 AED. 30% discount of 900 = 270 AED discount. Sale price = 900 - 270 = 630 AED. Profit = 630 - 600 = +30 AED (5% profit)."
+          },
+          {
+            "text": "Broke even at exactly 600 AED",
+            "correct": false,
+            "explanation": "Incorrect because 50% markup and 30% discount apply to different base numbers."
+          },
+          {
+            "text": "Suffered a loss of 60 AED",
+            "correct": false,
+            "explanation": "Incorrect math. The boutique still clears 30 AED profit."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Using the percentage reversal rule, what is 16% of 25?",
+          "options": [
+            "3.5",
+            "4",
+            "4.5",
+            "5"
+          ],
+          "correctIndex": 1,
+          "explanation": "16% of 25 is identical to 25% of 16. A quarter of 16 is 4."
+        },
+        {
+          "question": "If an item costs 75 AED and you require a 25% profit margin, what must the selling price be?",
+          "options": [
+            "93.75 AED",
+            "100 AED",
+            "105 AED",
+            "110 AED"
+          ],
+          "correctIndex": 1,
+          "explanation": "Selling Price = Cost / (1 - Margin) = 75 / (1 - 0.25) = 75 / 0.75 = 100 AED. (Profit is 25 AED on 100 AED = 25% margin)."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Compound Interest, Exponential Growth & The Rule of 72",
+      "objective": "Understand exponential mathematical functions, compounding frequency mechanics, and the Rule of 72 for investment doubling times.",
+      "slides": [
+        {
+          "title": "The Compounding Equation: A = P(1 + r/n)^(nt)",
+          "body": "Linear growth adds a fixed amount every period (1, 2, 3, 4). Exponential growth multiplies previous totals by a compounding factor (1, 2, 4, 8, 16). Compounding interest creates a curve where early gains look small, but future gains hockey-stick upward.",
+          "bullets": [
+            "P: Principal (starting capital)",
+            "r: Annual nominal interest rate (as a decimal)",
+            "n: Compounding frequency per year (12 for monthly, 365 for daily)",
+            "t: Time in years",
+            "Albert Einstein famously noted: 'Compound interest is the eighth wonder of the world. He who understands it, earns it; he who doesn't, pays it.'"
+          ],
+          "codeSnippet": "// Compound Interest Engine\nfunction calculateCompounding(principal: number, annualRate: number, years: number, n: number = 12) {\n  const total = principal * Math.pow(1 + (annualRate / n), n * years);\n  return Number(total.toFixed(2));\n}\n// 10,000 AED invested at 8% annual return for 30 years compounded monthly:\nconsole.log(calculateCompounding(10000, 0.08, 30)); // 109,357.30 AED (10.9x growth!)",
+          "takeaway": "Time in the market matters far more than timing the market. Doubling your investment horizon squares the exponential compounding factor."
+        },
+        {
+          "title": "The Rule of 72: Instant Doubling Calculations",
+          "body": "The Rule of 72 is an accurate mathematical shortcut derived from natural logarithms (ln(2) ≈ 0.693). To calculate the approximate number of years required to double your money, divide 72 by the annual interest rate percentage.",
+          "bullets": [
+            "Years to Double ≈ 72 / Interest Rate (%)",
+            "At 6% return: 72 / 6 = 12 years to double",
+            "At 9% return: 72 / 9 = 8 years to double",
+            "At 12% return: 72 / 12 = 6 years to double",
+            "Inflation erosion: At 3% annual inflation, money loses half its purchasing power in 72 / 3 = 24 years"
+          ],
+          "codeSnippet": "// Doubling Time Calculator\nconst yearsToDouble = (annualRatePercent: number) => 72 / annualRatePercent;\nconsole.log(`At 8% return: money doubles every ${yearsToDouble(8)} years`); // 9 years",
+          "takeaway": "Use 72 / rate to evaluate any business return, loan payoff, or inflation impact instantly without spreadsheet software."
+        }
+      ],
+      "lab": {
+        "title": "Retirement & Portfolio Compounding Model",
+        "brief": "Build a simulation comparing two investors: Person A saves 1,000 AED/month from ages 20 to 30 then stops, while Person B saves 1,000 AED/month from ages 30 to 60 at 8% annual return.",
+        "deliverable": "Submit comparative growth chart demonstrating early compounding dominance.",
+        "proTip": "Person A will often end up with more money despite contributing only 1/3 as much capital, purely due to the exponential time exponent."
+      },
+      "caseStudy": {
+        "scenario": "A student invests 25,000 AED in a diversified index fund yielding an average of 9% annual return. Using the Rule of 72, how much will the investment be worth in 24 years without depositing any additional funds?",
+        "options": [
+          {
+            "text": "50,000 AED (doubled once)",
+            "correct": false,
+            "explanation": "24 years divided by (72/9 = 8) gives 3 doubling cycles, not 1."
+          },
+          {
+            "text": "100,000 AED (doubled twice)",
+            "correct": false,
+            "explanation": "That would only be 16 years (2 doublings)."
+          },
+          {
+            "text": "200,000 AED (doubled three times)",
+            "correct": true,
+            "explanation": "At 9%, money doubles every 72/9 = 8 years. In 24 years, there are 24/8 = 3 doublings: 25k -> 50k -> 100k -> 200,000 AED (an 8x return)."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "According to the Rule of 72, how many years does it take for capital to double at an 8% annual rate of return?",
+          "options": [
+            "6 years",
+            "7.2 years",
+            "9 years",
+            "12 years"
+          ],
+          "correctIndex": 2,
+          "explanation": "72 divided by 8 equals 9 years."
+        },
+        {
+          "question": "What happens to the effective annual rate (APY) as the compounding frequency increases (e.g. from annually to daily)?",
+          "options": [
+            "It decreases",
+            "It stays strictly identical",
+            "It increases slightly and approaches Euler's constant e^(r)",
+            "It becomes negative"
+          ],
+          "correctIndex": 2,
+          "explanation": "Frequent compounding earns interest on interest faster, increasing APY until it reaches continuous compounding limit P*e^(rt)."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Probability, Expected Value & Quantitative Risk Management",
+      "objective": "Calculate independent and conditional probabilities, evaluate Expected Monetary Value (EMV), and debunk the Gambler's Fallacy.",
+      "slides": [
+        {
+          "title": "Expected Value (EV): The Decision Engine of the Rational Mind",
+          "body": "Expected Value is the probability-weighted average of all possible outcomes. In professional trading, insurance, and game design, successful operators never make decisions based on what 'might' happen; they calculate whether the EV is positive.",
+          "bullets": [
+            "EV = Sum of [Probability of Outcome * Value of Outcome]",
+            "Positive EV (+EV): Long-term mathematical advantage (e.g. casino house edge)",
+            "Negative EV (-EV): Guaranteed statistical loss over high sample sizes (e.g. lottery tickets)",
+            "Example: 60% chance of gaining 1,000 AED, 40% chance of losing 800 AED -> EV = (0.60 * 1000) + (0.40 * -800) = 600 - 320 = +280 AED"
+          ],
+          "codeSnippet": "// Expected Value Calculator\ninterface Outcome { probability: number; payoff: number; }\nfunction calculateEV(outcomes: Outcome[]): number {\n  return outcomes.reduce((sum, o) => sum + (o.probability * o.payoff), 0);\n}\nconst coinBet = [\n  { probability: 0.5, payoff: 200 }, // Win 200 AED\n  { probability: 0.5, payoff: -100 }  // Lose 100 AED\n];\nconsole.log(calculateEV(coinBet)); // +50 AED expected profit per flip",
+          "takeaway": "Never judge a decision solely by its outcome. A +EV decision can have an unlucky outcome, but repeated +EV choices inevitably create wealth."
+        },
+        {
+          "title": "The Gambler's Fallacy & The Law of Large Numbers",
+          "body": "The human brain is wired to find patterns even in random noise. The Gambler's Fallacy is the mistaken belief that past independent events influence future probabilities (e.g., 'A coin landed on Heads 5 times in a row, so Tails is due next').",
+          "bullets": [
+            "Independence Principle: Each coin toss, dice roll, or independent random event has zero memory of prior trials",
+            "P(Tails on flip 6 | 5 Heads) is still exactly 0.50 (50%)",
+            "The Law of Large Numbers: As sample size increases, observed sample mean converges toward expected theoretical mean",
+            "Small sample sizes produce wild variance; large sample sizes produce mathematical certainty"
+          ],
+          "codeSnippet": "// Independent Probability Principle\nconst P_Heads = 0.5;\n// Probability of 5 heads in a row: 0.5^5 = 0.03125 (3.125%)\n// BUT probability of flip #6 being heads given 5 prior heads:\nconst P_flip6_heads = 0.5; // Always exactly 50%",
+          "takeaway": "Independent events do not 'balance out' by changing future odds. The Law of Large Numbers works by dilution, not compensation."
+        }
+      ],
+      "lab": {
+        "title": "Monte Carlo Expected Value Simulator",
+        "brief": "Run 10,000 simulated trials of a commercial decision scenario with asymmetric risk:reward ratios to prove statistical convergence.",
+        "deliverable": "Submit distribution histogram showing convergence to theoretical EV.",
+        "proTip": "Risk of ruin must always be checked: an investment can be +EV, but if a single loss wipes out 100% of your bankroll, you cannot survive to experience the long-run EV."
+      },
+      "caseStudy": {
+        "scenario": "A venture partner offers you an investment: 80% chance of gaining 50,000 AED, but a 20% chance of losing 150,000 AED. What is the Expected Value of this deal?",
+        "options": [
+          {
+            "text": "+10,000 AED (Positive EV)",
+            "correct": true,
+            "explanation": "EV = (0.80 * 50,000) + (0.20 * -150,000) = 40,000 - 30,000 = +10,000 AED."
+          },
+          {
+            "text": "-10,000 AED (Negative EV)",
+            "correct": false,
+            "explanation": "Incorrect arithmetic. 40,000 minus 30,000 is positive 10,000 AED."
+          },
+          {
+            "text": "0 AED (Break-even)",
+            "correct": false,
+            "explanation": "The expected value is positive 10,000 AED."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "A fair coin has landed on Heads 7 times consecutively. What is the exact probability that the 8th flip lands on Heads?",
+          "options": [
+            "12.5%",
+            "25%",
+            "50%",
+            "87.5%"
+          ],
+          "correctIndex": 2,
+          "explanation": "Coin flips are independent events. The coin has no memory, so the probability remains 50% (1 in 2)."
+        },
+        {
+          "question": "What is the expected value of rolling a standard fair 6-sided die?",
+          "options": [
+            "3.0",
+            "3.5",
+            "4.0",
+            "3.67"
+          ],
+          "correctIndex": 1,
+          "explanation": "EV = (1+2+3+4+5+6)/6 = 21/6 = 3.5."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Statistics, Data Interpretation & Chart Deconstruction",
+      "objective": "Distinguish between mean, median, and mode in skewed distributions, detect misleading visual charts, and separate correlation from causation.",
+      "slides": [
+        {
+          "title": "Mean vs. Median: Detecting Skewed Realities",
+          "body": "When reading reports about Dubai salaries, real estate prices, or startup revenues, the arithmetic average (Mean) is heavily distorted by extreme outliers (billionaires or ultra-luxury penthouses). The Median (middle value) provides the true typical experience.",
+          "bullets": [
+            "Mean: Sum of all values divided by count (sensitive to extreme outliers)",
+            "Median: 50th percentile rank; half the population is above, half below (robust against outliers)",
+            "Mode: Most frequently occurring value in the dataset",
+            "Rule of thumb: In wealth and real estate distributions, Median is almost always lower than Mean due to right-tail skewness"
+          ],
+          "codeSnippet": "function analyzeDistribution(numbers: number[]) {\n  const sorted = [...numbers].sort((a, b) => a - b);\n  const sum = sorted.reduce((a, b) => a + b, 0);\n  const mean = sum / sorted.length;\n  const mid = Math.floor(sorted.length / 2);\n  const median = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;\n  return { mean, median };\n}\n// Incomes: [3000, 3500, 4000, 4500, 100000]\n// Mean: 23,000 AED | Median: 4,000 AED (Median represents the true norm!)",
+          "takeaway": "Always ask for the Median whenever analyzing prices, salaries, or turnaround times to eliminate billionaire or outlier distortion."
+        },
+        {
+          "title": "Correlation vs. Causation & Truncated Graph Axes",
+          "body": "Statistical literacy protects you from manipulation by advertisements, pitch decks, and news headlines. Two variables can correlate strongly without any direct cause-and-effect relationship.",
+          "bullets": [
+            "Confounding Variables: Ice cream sales and shark attacks both rise in summer; the true cause is warm weather, not ice cream causing sharks",
+            "Truncated Y-Axes: Starting a bar chart axis at 90 instead of 0 makes a 2% gain look like a 500% explosion",
+            "Spurious Correlations: Random patterns in massive big data sets that occur purely by coincidence",
+            "Standard Deviation: A measure of dispersion; 68% of data in a normal distribution falls within ±1 sigma"
+          ],
+          "codeSnippet": "/* Detecting Chart Distortion: \n   Relative Change = (New - Old) / Old\n   If bar visually triples (300% visual height) while \n   data only moved from 95 to 97 (2.1% true change), \n   the Y-axis was truncated to manipulate viewer perception. */",
+          "takeaway": "Verify chart baseline axes start at zero, and remember that correlation never proves causation without controlled empirical mechanisms."
+        }
+      ],
+      "lab": {
+        "title": "Financial Report Audit & Deception Detection Lab",
+        "brief": "Inspect 3 published corporate investor presentations to identify truncated axes, cherry-picked date ranges, and disguised outlier averages.",
+        "deliverable": "Submit statistical audit report highlighting misleading visual representations.",
+        "proTip": "Always redraw charts with a standardized 0-baseline before approving commercial acquisitions."
+      },
+      "caseStudy": {
+        "scenario": "An office has 9 employees earning 10,000 AED/month each. The CEO is paid 310,000 AED/month. The HR director claims: 'The average salary at our firm is 40,000 AED/month!' Is this statement accurate and representative?",
+        "options": [
+          {
+            "text": "The statement is mathematically false (the average is 10,000 AED).",
+            "correct": false,
+            "explanation": "Total salary = 9*10k + 310k = 400,000 AED. 400k / 10 people = 40,000 AED mean. It is mathematically true as a mean."
+          },
+          {
+            "text": "The mean is indeed 40,000 AED, but highly misleading; the median salary is only 10,000 AED.",
+            "correct": true,
+            "explanation": "The mean is 40,000 AED because of the single 310k outlier, but 90% of employees earn 10,000 AED (the median)."
+          },
+          {
+            "text": "The statement proves every employee earns at least 40,000 AED.",
+            "correct": false,
+            "explanation": "Averages do not dictate individual salaries."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Which measure of central tendency is least affected by extreme outliers in a skewed data distribution?",
+          "options": [
+            "Mean",
+            "Median",
+            "Range",
+            "Variance"
+          ],
+          "correctIndex": 1,
+          "explanation": "The median (the middle value) is robust and unaffected by extreme outliers in the tails."
+        },
+        {
+          "question": "What is the common visual manipulation technique where a graph's vertical axis does not begin at zero to exaggerate small percentage differences?",
+          "options": [
+            "Logarithmic transform",
+            "Truncated graph axis",
+            "Scatter plot regression",
+            "Box-and-whisker plot"
+          ],
+          "correctIndex": 1,
+          "explanation": "A truncated axis starts above zero, artificially magnifying visual differences between data points."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "What is 4% of 75 using the percentage reversal heuristic?",
+        "options": [
+          "2.5",
+          "3",
+          "3.5",
+          "4"
+        ],
+        "correctIndex": 1,
+        "explanation": "4% of 75 = 75% of 4 = 3/4 of 4 = 3."
+      },
+      {
+        "question": "If a boutique pays 120 AED cost for a jacket and sells it for 200 AED, what is the profit margin?",
+        "options": [
+          "40%",
+          "66.7%",
+          "80%",
+          "25%"
+        ],
+        "correctIndex": 0,
+        "explanation": "Profit = 200 - 120 = 80 AED. Margin = 80 / 200 = 40%."
+      },
+      {
+        "question": "Using the Rule of 72, approximately how many years will it take for an investment to double at a 12% annual return?",
+        "options": [
+          "4 years",
+          "6 years",
+          "8 years",
+          "10 years"
+        ],
+        "correctIndex": 1,
+        "explanation": "72 / 12 = 6 years."
+      },
+      {
+        "question": "In the compound interest formula A = P(1 + r/n)^(nt), what does the variable 'n' represent?",
+        "options": [
+          "Total number of years",
+          "Annual interest rate",
+          "Number of times interest compounds per year",
+          "The net profit"
+        ],
+        "correctIndex": 2,
+        "explanation": "'n' denotes the compounding frequency per year (e.g. 12 for monthly)."
+      },
+      {
+        "question": "You roll two standard 6-sided dice. What is the probability of rolling a sum of 7?",
+        "options": [
+          "1/6 (6/36)",
+          "1/12 (3/36)",
+          "1/36",
+          "1/4 (9/36)"
+        ],
+        "correctIndex": 0,
+        "explanation": "There are 6 combinations that sum to 7: (1,6), (2,5), (3,4), (4,3), (5,2), (6,1) out of 36 total outcomes = 6/36 = 1/6."
+      },
+      {
+        "question": "What is the Expected Monetary Value (EMV) of a raffle ticket that costs 10 AED, has a 1 in 100 chance of winning 500 AED, and a 99 in 100 chance of winning 0?",
+        "options": [
+          "+5 AED",
+          "-5 AED",
+          "+10 AED",
+          "0 AED"
+        ],
+        "correctIndex": 1,
+        "explanation": "Expected payoff = (0.01 * 500) = 5 AED. Net EV = 5 AED payout - 10 AED cost = -5 AED."
+      },
+      {
+        "question": "Believing that a roulette ball is 'due' to land on Red because Black hit 8 times in a row is an example of what cognitive error?",
+        "options": [
+          "Confirmation bias",
+          "Gambler's fallacy",
+          "Sunk cost fallacy",
+          "Hindsight bias"
+        ],
+        "correctIndex": 1,
+        "explanation": "The Gambler's Fallacy assumes previous independent random trials alter future odds."
+      },
+      {
+        "question": "Which statistical measure represents the exact middle number when a dataset is sorted in numerical order?",
+        "options": [
+          "Mean",
+          "Mode",
+          "Median",
+          "Standard Deviation"
+        ],
+        "correctIndex": 2,
+        "explanation": "The median divides the ordered dataset into two equal halves (50th percentile)."
+      },
+      {
+        "question": "If an investment grows from 10,000 AED to 40,000 AED over 16 years, what approximate annual compound return did it generate according to the Rule of 72?",
+        "options": [
+          "6%",
+          "9%",
+          "12%",
+          "15%"
+        ],
+        "correctIndex": 1,
+        "explanation": "10k to 40k is 2 doublings (10k -> 20k -> 40k). 16 years / 2 doublings = 8 years per doubling. 72 / 8 = 9% annual return."
+      },
+      {
+        "question": "Why is correlation between two variables insufficient to prove that one variable causes the other?",
+        "options": [
+          "Correlation is only used for qualitative data",
+          "A third confounding variable or coincidence could explain the relationship",
+          "Correlation only measures negative trends",
+          "Mathematical formulas cannot compute causality"
+        ],
+        "correctIndex": 1,
+        "explanation": "A correlation could be caused by an unobserved confounding factor or pure chance (spurious correlation)."
+      }
+    ]
+  },
+  "tuitionFee": 1400
+}
+

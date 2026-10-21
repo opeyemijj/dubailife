@@ -13,6 +13,9 @@ import audBusinessJson from "@/data/courses/aud-business.json";
 import audRealEstateJson from "@/data/courses/aud-real-estate.json";
 import dcUaeStudiesJson from "@/data/courses/dc-uae-studies.json";
 import gemsArabicJson from "@/data/courses/gems-arabic.json";
+import gemsMathsJson from "@/data/courses/gems-maths.json";
+import gemsScienceJson from "@/data/courses/gems-science.json";
+import gemsGeneralKnowledgeJson from "@/data/courses/gems-general-knowledge.json";
 import onebrainAiJson from "@/data/courses/onebrain-ai.json";
 import onebrainContentJson from "@/data/courses/onebrain-content.json";
 import onebrainCryptoJson from "@/data/courses/onebrain-crypto.json";
@@ -272,14 +275,16 @@ export const ACADEMIC_CAMPUSES: Record<string, AcademicInstitution> = {
     tuitionStandard: 5000,
     location: "Academic City · Sheikh Zayed Pavilion",
     dean: {
-      name: "Maryssa O'Connor",
+      name: "Laura",
       title: "Principal & CEO",
-      avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80",
+      avatar: "/academics/laura.png",
       quote: "From fluent Arabic communication to financial independence, we instill skills that make our students thrive across the globe.",
     },
     features: [
       "World-class Arabic & Islamic Cultural Integration Lab",
-      "Personal Wealth & Youth Venture Incubator",
+      "Applied Mathematics, Financial Numeracy & Logic Studio",
+      "Sustainable Physics, Clean Energy & Desalination Labs",
+      "World Geography, Global Trade Corridors & Diplomatic Protocol",
       "International Baccalaureate World School Accreditation",
       "20% University Scholarship Voucher awarded to all graduates",
     ],
@@ -431,6 +436,9 @@ export const ACADEMIC_COURSES: AcademicCourse[] = [
   // Secondary School Diplomas
   mapCourseJson(dcUaeStudiesJson),
   mapCourseJson(gemsArabicJson),
+  mapCourseJson(gemsMathsJson),
+  mapCourseJson(gemsScienceJson),
+  mapCourseJson(gemsGeneralKnowledgeJson),
 
   // Brain University book library
   ...BOOK_COURSES,

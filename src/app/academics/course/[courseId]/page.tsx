@@ -1,7 +1,7 @@
 "use client";
 
 import { gainSkill, skillForCourse } from "@/lib/life";
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -57,6 +57,28 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
 
   // Certificate Modal State
   const [showCertificate, setShowCertificate] = useState(false);
+
+  // Smooth scroll refs for horizontal chapters & quiz
+  const chapterScrollRef = useRef<HTMLDivElement>(null);
+  const selectedButtonRef = useRef<HTMLButtonElement>(null);
+  const quizSectionRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll active chapter into center view
+  useEffect(() => {
+    if (selectedButtonRef.current) {
+      selectedButtonRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }, [selectedLessonIdx, activeTab]);
+
+  const scrollToQuiz = () => {
+    if (quizSectionRef.current) {
+      quizSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
   if (!course) {
     notFound();
@@ -150,7 +172,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
   };
 
   return (
-    <main className="relative min-h-[100dvh] bg-slate-950 text-white pb-32">
+    <main className="relative min-h-[100dvh] bg-slate-950 text-white pb-32 overflow-x-hidden">
       {/* Top Banner Gradient */}
       <div className="absolute top-0 inset-x-0 h-72 bg-gradient-to-b from-purple-950/40 via-indigo-950/20 to-transparent pointer-events-none" />
 
@@ -214,14 +236,14 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
 
         {/* Tab Controls (Only when enrolled) */}
         {isEnrolled && (
-          <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/10 rounded-xl text-xs font-bold">
+          <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold">
             <button
               onClick={() => setActiveTab("syllabus")}
-              className={`flex-1 py-2 rounded-lg transition-colors ${
-                activeTab === "syllabus" ? "bg-white text-slate-950" : "text-slate-400 hover:text-white"
+              className={`flex-1 py-2 px-1 text-center rounded-xl transition-all truncate text-[11px] sm:text-xs font-bold ${
+                activeTab === "syllabus" ? "bg-white text-slate-950 shadow-md font-black" : "text-slate-400 hover:text-white"
               }`}
             >
-              Curriculum ({course.lessons.length})
+              {unit === "Chapter" ? "Chapters" : "Curriculum"} ({course.lessons.length})
             </button>
             <button
               onClick={() => {
@@ -230,16 +252,16 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
                 setQuizAnswers({});
                 setQuizSubmitted(false);
               }}
-              className={`flex-1 py-2 rounded-lg transition-colors ${
-                activeTab === "lesson" ? "bg-purple-600 text-white" : "text-slate-400 hover:text-white"
+              className={`flex-1 py-2 px-1 text-center rounded-xl transition-all truncate text-[11px] sm:text-xs font-bold ${
+                activeTab === "lesson" ? "bg-purple-600 text-white shadow-md shadow-purple-600/30 font-black" : "text-slate-400 hover:text-white"
               }`}
             >
-              Interactive Lesson
+              {unit === "Chapter" ? "Read Chapter" : "Interactive Lesson"}
             </button>
             <button
               onClick={() => setActiveTab("exam")}
-              className={`flex-1 py-2 rounded-lg transition-colors ${
-                activeTab === "exam" ? "bg-amber-600 text-white" : "text-slate-400 hover:text-white"
+              className={`flex-1 py-2 px-1 text-center rounded-xl transition-all truncate text-[11px] sm:text-xs font-bold ${
+                activeTab === "exam" ? "bg-amber-600 text-white shadow-md shadow-amber-600/30 font-black" : "text-slate-400 hover:text-white"
               }`}
             >
               Final Exam 🎓
@@ -295,9 +317,44 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
                   <span>Curriculum Breakdown ({course.lessons.length} {unit}s)</span>
                 </h2>
                 <span className="text-[11px] font-bold text-purple-300 bg-purple-950/60 border border-purple-500/30 px-2.5 py-0.5 rounded-full">
-                  {course.duration || "4 Weeks"}
+                  {course.duration || `${course.lessons.length} ${unit}s`}
                 </span>
               </div>
+
+              {/* Quick Horizontal Chapter Jumper */}
+              {isEnrolled && course.lessons.length > 3 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 scroll-smooth no-scrollbar [-webkit-overflow-scrolling:touch]">
+                  {course.lessons.map((l, i) => {
+                    const isDone = completedLessons.includes(l.lessonNumber);
+                    return (
+                      <button
+                        key={l.id || i}
+                        onClick={() => {
+                          setSelectedLessonIdx(i);
+                          setCurrentSlideIdx(0);
+                          setQuizAnswers({});
+                          setQuizSubmitted(false);
+                          setCaseStudyChoice(null);
+                          setActiveTab("lesson");
+                        }}
+                        className={`shrink-0 px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                          isDone
+                            ? "bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/50"
+                            : "bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10"
+                        }`}
+                        title={l.title}
+                      >
+                        {isDone ? (
+                          <CheckCircle className="w-3 h-3 text-emerald-400 shrink-0" />
+                        ) : (
+                          <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-slate-500" />
+                        )}
+                        <span>{unit} {l.lessonNumber}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               <div className="space-y-2.5">
                 {course.lessons.map((lesson, idx) => {
                   const isDone = completedLessons.includes(lesson.lessonNumber);
@@ -388,29 +445,92 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
         {/* ==================================================================== */}
         {isEnrolled && activeTab === "lesson" && (
           <section className="space-y-4">
-            {/* Lesson Module Selector */}
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-black text-purple-300 uppercase tracking-wider">
-                {unit} {activeLesson.lessonNumber} of {course.lessons.length}
-              </span>
-              <div className="flex items-center gap-1.5">
-                {course.lessons.map((l, i) => (
+            {/* Lesson / Chapter Module Selector with Internal Horizontal Scroll */}
+            <div className="rounded-2xl bg-slate-900/90 border border-white/10 p-3 space-y-2.5 shadow-lg">
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="min-w-0 flex items-center gap-2">
+                  <span className="font-black text-purple-300 uppercase tracking-wider text-[11px] shrink-0">
+                    {unit} {activeLesson.lessonNumber} of {course.lessons.length}
+                  </span>
+                  <span className="hidden sm:inline text-slate-500">•</span>
+                  <span className="hidden sm:inline text-xs font-bold text-slate-200 truncate">
+                    {activeLesson.title}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
                   <button
-                    key={i}
+                    disabled={selectedLessonIdx === 0}
                     onClick={() => {
-                      setSelectedLessonIdx(i);
+                      setSelectedLessonIdx((p) => Math.max(0, p - 1));
                       setCurrentSlideIdx(0);
                       setQuizAnswers({});
                       setQuizSubmitted(false);
                       setCaseStudyChoice(null);
                     }}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                      selectedLessonIdx === i ? "bg-purple-600 text-white shadow-md shadow-purple-600/30" : "bg-white/10 text-slate-400 hover:text-white"
-                    }`}
+                    className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/15 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center text-slate-300 transition-colors"
+                    aria-label={`Previous ${unit}`}
+                    title={`Previous ${unit}`}
                   >
-                    {unit} {l.lessonNumber}
+                    <ChevronLeft className="w-4 h-4" />
                   </button>
-                ))}
+                  <button
+                    disabled={selectedLessonIdx === course.lessons.length - 1}
+                    onClick={() => {
+                      setSelectedLessonIdx((p) => Math.min(course.lessons.length - 1, p + 1));
+                      setCurrentSlideIdx(0);
+                      setQuizAnswers({});
+                      setQuizSubmitted(false);
+                      setCaseStudyChoice(null);
+                    }}
+                    className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/15 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center text-slate-300 transition-colors"
+                    aria-label={`Next ${unit}`}
+                    title={`Next ${unit}`}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Internal Horizontal Scrollable Track */}
+              <div className="relative">
+                <div
+                  ref={chapterScrollRef}
+                  className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 scroll-smooth no-scrollbar [-webkit-overflow-scrolling:touch]"
+                >
+                  {course.lessons.map((l, i) => {
+                    const isDone = completedLessons.includes(l.lessonNumber);
+                    const isSelected = selectedLessonIdx === i;
+                    return (
+                      <button
+                        key={l.id || i}
+                        ref={isSelected ? selectedButtonRef : undefined}
+                        onClick={() => {
+                          setSelectedLessonIdx(i);
+                          setCurrentSlideIdx(0);
+                          setQuizAnswers({});
+                          setQuizSubmitted(false);
+                          setCaseStudyChoice(null);
+                        }}
+                        className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                          isSelected
+                            ? "bg-purple-600 text-white shadow-md shadow-purple-600/40 ring-2 ring-purple-400 font-black"
+                            : isDone
+                              ? "bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/50"
+                              : "bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10"
+                        }`}
+                        title={l.title}
+                      >
+                        {isDone ? (
+                          <CheckCircle className="w-3 h-3 text-emerald-400 shrink-0" />
+                        ) : (
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSelected ? "bg-white" : "bg-slate-500"}`} />
+                        )}
+                        <span>{unit} {l.lessonNumber}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
@@ -469,17 +589,26 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
                   <button
                     disabled={currentSlideIdx === 0}
                     onClick={() => setCurrentSlideIdx((prev) => Math.max(0, prev - 1))}
-                    className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 text-xs font-bold flex items-center gap-1"
+                    className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 text-xs font-bold flex items-center gap-1 transition-colors"
                   >
                     <ChevronLeft className="w-4 h-4" /> Previous
                   </button>
-                  <button
-                    disabled={currentSlideIdx === activeLesson.slides.length - 1}
-                    onClick={() => setCurrentSlideIdx((prev) => Math.min(activeLesson.slides.length - 1, prev + 1))}
-                    className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-30 text-xs font-black flex items-center gap-1"
-                  >
-                    Next Slide <ChevronRight className="w-4 h-4" />
-                  </button>
+                  {currentSlideIdx < activeLesson.slides.length - 1 ? (
+                    <button
+                      onClick={() => setCurrentSlideIdx((prev) => Math.min(activeLesson.slides.length - 1, prev + 1))}
+                      className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-black flex items-center gap-1 text-white shadow-md shadow-purple-600/30 transition-colors"
+                    >
+                      Next Slide <ChevronRight className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={scrollToQuiz}
+                      className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-black flex items-center gap-1.5 text-white shadow-md shadow-emerald-600/30 transition-all hover:scale-[1.02]"
+                    >
+                      <span>Go to Quiz</span>
+                      <span className="text-sm">↓</span>
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -558,7 +687,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
             )}
 
             {/* 5-Question Checkpoint Quiz */}
-            <div className="rounded-3xl bg-slate-900 border border-white/10 p-5 space-y-4">
+            <div ref={quizSectionRef} className="rounded-3xl bg-slate-900 border border-white/10 p-5 space-y-4 scroll-mt-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <HelpCircle className="w-4 h-4 text-purple-400" />
@@ -625,9 +754,9 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
               ) : (
                 <div className="space-y-2">
                   {completedLessons.includes(activeLesson.lessonNumber) ? (
-                    <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-xs text-emerald-300 font-bold flex items-center justify-between">
-                      <span className="flex items-center gap-1.5">
-                        <CheckCircle className="w-4 h-4" />
+                    <div className="p-3.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-xs text-emerald-300 font-bold flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                      <span className="flex items-center gap-1.5 leading-snug">
+                        <CheckCircle className="w-4 h-4 shrink-0 text-emerald-400" />
                         <span>{unit} completed! You unlocked the next {unit.toLowerCase()}.</span>
                       </span>
                       {selectedLessonIdx < course.lessons.length - 1 && (
@@ -639,21 +768,21 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
                             setQuizSubmitted(false);
                             setCaseStudyChoice(null);
                           }}
-                          className="px-3 py-1 bg-emerald-500 text-slate-950 rounded-lg font-black text-xs"
+                          className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg font-black text-xs shrink-0 self-end sm:self-auto transition-colors"
                         >
                           Next {unit} →
                         </button>
                       )}
                     </div>
                   ) : (
-                    <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-xs text-rose-300 font-bold flex items-center justify-between">
-                      <span>Score below 70%. Review slides and try again!</span>
+                    <div className="p-3.5 rounded-xl bg-rose-950/60 border border-rose-500/40 text-xs text-rose-300 font-bold flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                      <span className="leading-snug">Score below 70%. Review slides and try again!</span>
                       <button
                         onClick={() => {
                           setQuizAnswers({});
                           setQuizSubmitted(false);
                         }}
-                        className="px-3 py-1 bg-rose-600 text-white rounded-lg font-black text-xs"
+                        className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-black text-xs shrink-0 self-end sm:self-auto transition-colors"
                       >
                         Retry Quiz
                       </button>
@@ -805,11 +934,11 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
       {/* GRADUATION DIPLOMA / CERTIFICATE MODAL                               */}
       {/* ==================================================================== */}
       {showCertificate && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="relative w-full max-w-lg rounded-3xl bg-gradient-to-b from-amber-50 to-amber-100 text-slate-950 p-7 shadow-2xl border-4 border-amber-500 space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+          <div className="relative w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-3xl bg-gradient-to-b from-amber-50 to-amber-100 text-slate-950 p-5 sm:p-7 shadow-2xl border-4 border-amber-500 space-y-4">
             {/* Certificate Header */}
             <div className="text-center space-y-1">
-              <div className="text-4xl">{campus?.crestIcon}</div>
+              <div className="text-3xl sm:text-4xl">{campus?.crestIcon}</div>
               <div className="text-xs font-black uppercase tracking-widest text-amber-800">{campus?.name}</div>
               <div className="text-[10px] uppercase font-bold tracking-widest text-slate-600">
                 Official Degree of Completion
@@ -818,11 +947,11 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
 
             <div className="text-center py-2 space-y-1 border-y border-amber-300">
               <div className="text-xs text-slate-600">This officially certifies that</div>
-              <div className="text-xl font-black text-slate-900 tracking-tight underline decoration-amber-500 underline-offset-4">
+              <div className="text-lg sm:text-xl font-black text-slate-900 tracking-tight underline decoration-amber-500 underline-offset-4">
                 {citizen?.name || "Distinguished Citizen"}
               </div>
               <div className="text-xs text-slate-600">has successfully completed all requirements for</div>
-              <div className="text-base font-black text-amber-900">{course.title}</div>
+              <div className="text-sm sm:text-base font-black text-amber-900">{course.title}</div>
               <div className="text-xs font-bold text-amber-800">
                 Honors Awarded: <span className="underline">{enrollment?.honors || examResult?.honors || "Cum Laude"}</span>
               </div>

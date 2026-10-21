@@ -1,0 +1,470 @@
+{
+  "id": "gems-science",
+  "institutionId": "gems-wellington",
+  "title": "Everyday Science, Energy & Sustainable Physics",
+  "tagline": "Thermodynamics of extreme desert cooling, solar photovoltaic engineering, reverse osmosis water science, and aerodynamics.",
+  "category": "Natural Sciences",
+  "level": "secondary_diploma",
+  "duration": "4 Weeks (Scientific Inquiry)",
+  "rating": 4.98,
+  "enrolledCount": 1620,
+  "icon": "🔬",
+  "superpower": {
+    "id": "scientific_reasoning",
+    "name": "Empirical Reasoning",
+    "icon": "🔬",
+    "description": "+20% utility resource efficiency and lower cooling overhead across all player-owned real estate in Dubai.",
+    "badgeText": "Science Scholar",
+    "perkType": "property_discount"
+  },
+  "syllabus": [
+    "Week 1: Thermodynamics, Heat Transfer & District Cooling Engineering",
+    "Week 2: Solar Photovoltaics, Semi-Conductors & Desert Renewable Power",
+    "Week 3: Reverse Osmosis, Salinity Gradients & Desalination Chemistry",
+    "Week 4: Structural Aerodynamics, Vortex Shedding & Supertall Physics"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Thermodynamics, Heat Transfer & District Cooling Engineering",
+      "objective": "Understand the three laws of thermodynamics, conduction/convection/radiation mechanisms, and how district chilled water grids cool Dubai's skyline efficiently.",
+      "slides": [
+        {
+          "title": "Heat Transfer Mechanisms & Thermal Equilibrium",
+          "body": "Heat is thermal energy in transit from high temperature to low temperature. The Second Law of Thermodynamics dictates that heat never spontaneously flows from a cooler body to a warmer body without work input. In hot arid desert climates, buildings gain heat through three distinct pathways.",
+          "bullets": [
+            "Conduction: Transfer through physical matter via atomic collisions (Fourier's Law; heat passing through walls and window frames)",
+            "Convection: Heat transfer via fluid or air movement (e.g., hot desert breezes heating glass facades)",
+            "Radiation: Electromagnetic infrared waves traveling through space from the sun without requiring a physical medium",
+            "Thermal Mass & Low-E Glass: Double glazing with micro-thin metallic coatings reflects infrared solar radiation while admitting visible light"
+          ],
+          "codeSnippet": "// Heat Transfer Calculation (Conduction)\n// Q = (k * A * (T_hot - T_cold)) / d\n// k = Thermal conductivity (W/m·K)\n// A = Surface area (m²), d = thickness (m)\nconst conductionHeatGain = (k: number, area: number, deltaT: number, thickness: number) => {\n  return (k * area * deltaT) / thickness; // Watts (Joules/sec)\n};\n// Low-E double glazing drops k from 1.0 (standard glass) down to 0.15 W/m·K",
+          "takeaway": "Energy efficiency in the desert relies on preventing radiation via low-emissivity coatings and blocking conduction with high-performance thermal insulation."
+        },
+        {
+          "title": "How District Cooling Beats Conventional Air Conditioning",
+          "body": "Traditional split AC units rely on noisy, inefficient compressors on every balcony. Dubai pioneered vast central District Cooling plants (like Empower and Tabreed) that produce chilled water (4.5°C) centrally and pump it through underground insulated pipes to hundreds of skyscrapers.",
+          "bullets": [
+            "Central chiller plants operate at peak thermodynamic Carnot efficiency (using industrial centrifugal chillers)",
+            "Saves up to 50% electrical power compared to individual domestic air conditioning units",
+            "Chilled water absorbs indoor heat via Heat Exchangers (HEX) in building basements, returning at 13°C to be re-cooled",
+            "Thermal Energy Storage (TES): Freezing water or chilling massive brine tanks at night during off-peak power rates to cool towers during daytime peak heat"
+          ],
+          "codeSnippet": "// Coefficient of Performance (COP)\n// COP = Useful Cooling Provided (kW) / Electrical Work Consumed (kW)\n// Individual window AC: COP ≈ 2.2\n// Modern District Cooling Plant: COP ≈ 6.5+ (Nearly 3x more efficient!)",
+          "takeaway": "Centralized district cooling leverages economies of scale and thermodynamics to cut power grid strain by over 40% across Dubai's urban core."
+        }
+      ],
+      "lab": {
+        "title": "Building Energy & Thermal Envelope Audit Lab",
+        "brief": "Measure heat ingress through standard single-pane vs double-glazed low-E windows under simulated 45°C ambient desert conditions.",
+        "deliverable": "Submit thermal load comparison and recommended insulation specifications.",
+        "proTip": "Reducing solar heat gain coefficient (SHGC) from 0.70 to 0.25 reduces HVAC sizing requirements by up to 35%."
+      },
+      "caseStudy": {
+        "scenario": "A commercial tower in Business Bay is choosing between installing 400 individual rooftop AC compressor units or connecting to the central district cooling chilled-water pipeline. Which choice minimizes lifecycle energy consumption?",
+        "options": [
+          {
+            "text": "Rooftop compressors, because shorter refrigerant pipes eliminate pumping friction.",
+            "correct": false,
+            "explanation": "Individual rooftop units suffer severe efficiency losses operating in 48°C ambient air, with COP under 2.5."
+          },
+          {
+            "text": "District cooling pipeline, which delivers chilled water with plant COP exceeding 6.0 and saves up to 50% power.",
+            "correct": true,
+            "explanation": "District cooling central plants use water-cooled industrial chillers with thermal storage, dramatically lowering total energy use."
+          },
+          {
+            "text": "Neither; running ceiling fans alone is sufficient in 45°C summer heat.",
+            "correct": false,
+            "explanation": "Fans circulate air but cannot remove latent and sensible heat from enclosed buildings."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the primary heat transfer mechanism by which solar energy travels through the vacuum of space to heat the earth?",
+          "options": [
+            "Conduction",
+            "Convection",
+            "Thermal radiation",
+            "Advection"
+          ],
+          "correctIndex": 2,
+          "explanation": "Thermal radiation travels as electromagnetic waves and does not require any physical medium."
+        },
+        {
+          "question": "What does a higher Coefficient of Performance (COP) in a cooling chiller signify?",
+          "options": [
+            "The chiller is louder and consumes more electricity",
+            "The chiller delivers more cooling output per unit of electrical energy consumed",
+            "The chiller produces hot air instead of cold",
+            "The chiller requires higher maintenance costs"
+          ],
+          "correctIndex": 1,
+          "explanation": "COP is the ratio of useful cooling provided to electrical energy consumed; a higher COP equals higher thermodynamic efficiency."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Solar Photovoltaics, Semi-Conductors & Desert Renewable Power",
+      "objective": "Understand the photoelectric effect, silicon semiconductor p-n junctions, solar cell efficiency limits, and desert solar park operations.",
+      "slides": [
+        {
+          "title": "The Photoelectric Effect & P-N Junction Semiconductors",
+          "body": "Solar photovoltaic (PV) panels convert sunlight directly into direct current (DC) electricity using the photoelectric effect, for which Albert Einstein won his 1921 Nobel Prize. Photons with sufficient energy strike silicon atoms, knocking valence electrons free into the conduction band.",
+          "bullets": [
+            "Silicon is doped with Phosphorus (n-type: extra electrons) and Boron (p-type: extra electron holes)",
+            "The P-N junction creates a permanent built-in electric field that drives knocked-free electrons in one direction, creating electric current",
+            "Shockley-Queisser Limit: The theoretical maximum efficiency of a single-junction silicon solar cell is approximately 33.7%",
+            "Modern commercial mono-crystalline solar panels achieve 21% - 24% real-world conversion efficiency"
+          ],
+          "codeSnippet": "// Solar Power Output Formula\n// Power (W) = Solar Irradiance (W/m²) * Area (m²) * Panel Efficiency * Performance Ratio\nconst solarOutput = (irradiance: number, areaM2: number, efficiency: number, pr: number = 0.8) => {\n  return irradiance * areaM2 * efficiency * pr;\n};\n// Dubai peak sun: 1000 W/m² on 20m² rooftop panels at 22% efficiency:\nconsole.log(solarOutput(1000, 20, 0.22)); // 3,520 Watts (3.52 kW DC output)",
+          "takeaway": "Solar PV harnesses quantum physics: photons knock electrons across a semiconductor junction to generate clean DC electricity without moving parts."
+        },
+        {
+          "title": "Desert Solar Engineering: Dust, Heat & Bifacial Panels",
+          "body": "The Mohammed bin Rashid Al Maktoum Solar Park in Dubai is the world's largest single-site solar park. Generating solar energy in harsh desert environments presents unique scientific challenges: temperature coefficients and dust soiling.",
+          "bullets": [
+            "Negative Temperature Coefficient: As silicon gets hotter (above 25°C), electrical resistance rises and panel efficiency drops by ~0.4% per °C",
+            "Robotic Waterless Cleaning: Autonomous dry-brushing robots sweep fine desert dust daily to avoid soiling losses without wasting precious water",
+            "Bifacial Panels: Dual-sided glass panels that capture direct sunlight on top, and reflected sunlight (albedo) from the white desert sand on the underside",
+            "Inverters convert DC electricity into 50Hz AC electricity synchronized with Dubai's DEWA high-voltage transmission grid"
+          ],
+          "codeSnippet": "// Temperature Degradation Calculation\n// P_actual = P_rated * [1 + tempCoeff * (T_cell - 25°C)]\nconst tempDegradation = (pRated: number, tCell: number, tempCoeff = -0.004) => {\n  return pRated * (1 + tempCoeff * (tCell - 25));\n};\n// At 65°C desert midday panel temp: 400W panel produces 336W (16% thermal loss)",
+          "takeaway": "Desert solar optimization relies on bifacial technology and autonomous dry-cleaning to maximize energy yield despite extreme desert heat."
+        }
+      ],
+      "lab": {
+        "title": "Solar Array Orientation & Albedo Yield Lab",
+        "brief": "Calculate the optimal tilt angle and ground-clearance height for a bifacial solar array installed over high-albedo white desert limestone sand.",
+        "deliverable": "Submit ray-tracing simulation and estimated annual MWh generation schedule.",
+        "proTip": "In Dubai (latitude ~25°N), a fixed tilt angle of 24°-26° South maximizes year-round irradiance."
+      },
+      "caseStudy": {
+        "scenario": "A solar farm operator notices a 15% drop in power output during midsummer despite crystal-clear blue skies and zero clouds. What physical factors explain this phenomenon?",
+        "options": [
+          {
+            "text": "The sun is too close to the earth, causing photon saturation.",
+            "correct": false,
+            "explanation": "Earth is actually slightly farther from the sun in Northern Hemisphere summer (aphelion)."
+          },
+          {
+            "text": "Elevated cell temperatures (silicon resistance rise) and accumulated fine dust soiling on glass surfaces.",
+            "correct": true,
+            "explanation": "High semiconductor temperatures reduce voltage output, while desert dust layers scatter incoming photons."
+          },
+          {
+            "text": "The inverter ran out of magnetic storage flux.",
+            "correct": false,
+            "explanation": "Nonsense pseudo-physics."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the theoretical upper limit of efficiency for a single-junction silicon solar cell known as?",
+          "options": [
+            "Carnot efficiency limit",
+            "Shockley-Queisser limit",
+            "Heisenberg limit",
+            "Betz limit"
+          ],
+          "correctIndex": 1,
+          "explanation": "The Shockley-Queisser limit (~33.7%) defines the maximum theoretical efficiency of a single p-n junction solar cell."
+        },
+        {
+          "question": "What type of electrical current is directly produced by photovoltaic solar cells before passing through an inverter?",
+          "options": [
+            "Alternating Current (AC)",
+            "Direct Current (DC)",
+            "Three-phase AC",
+            "Radiofrequency current"
+          ],
+          "correctIndex": 1,
+          "explanation": "Solar panels generate Direct Current (DC), which must be converted to Alternating Current (AC) by an inverter for grid use."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Reverse Osmosis, Salinity Gradients & Desalination Chemistry",
+      "objective": "Understand osmotic pressure, semi-permeable membrane mechanics, Energy Recovery Devices (ERD), and sustainable brine management.",
+      "slides": [
+        {
+          "title": "Natural Osmosis vs. Reverse Osmosis (RO)",
+          "body": "Naturally, water molecules move across a semi-permeable membrane from low solute concentration (freshwater) toward high solute concentration (seawater) until osmotic equilibrium is reached. Reverse Osmosis forces this process backward.",
+          "bullets": [
+            "Osmotic Pressure (Pi): The minimum pressure required to stop the natural osmotic flow of water",
+            "Arabian Gulf seawater has high salinity (~42,000 ppm TDS), requiring an osmotic pressure of ~30-35 bar",
+            "Applied Hydraulic Pressure: High-pressure pumps apply 60 to 75 bar (nearly 1,000 PSI) to force water molecules backward through a synthetic polyamide membrane",
+            "Pore size of RO membranes is approximately 0.1 to 1 nanometer—small enough to allow H2O molecules through while filtering out 99.8% of dissolved NaCl and mineral ions"
+          ],
+          "codeSnippet": "// van 't Hoff's Formula for Osmotic Pressure:\n// Pi = i * M * R * T\n// i: van 't Hoff factor (for NaCl ≈ 1.9)\n// M: Molarity of salt ions (mol/L)\n// R: Ideal gas constant (0.08314 L·bar/mol·K)\n// T: Absolute temperature in Kelvin (273.15 + C)",
+          "takeaway": "Reverse Osmosis is a mechanical filtration process operating at nanoscale pores under extreme hydraulic pressure exceeding natural osmotic pressure."
+        },
+        {
+          "title": "Energy Recovery Devices (ERD) & Seawater Desalination",
+          "body": "In early thermal desalination (boiling seawater using steam), desalination consumed massive fossil fuel energy. Modern Sea Water Reverse Osmosis (SWRO) facilities like DEWA's Hassyan plant use isobaric Energy Recovery Devices to slash energy consumption.",
+          "bullets": [
+            "Concentrated Brine leaves the membrane at high pressure (~65 bar); throwing this away would waste enormous pumping energy",
+            "Isobaric Pressure Exchanger (PX): Directly transfers hydraulic energy from the rejected high-pressure brine to incoming seawater with over 97% mechanical efficiency",
+            "Modern SWRO plants consume under 3.0 kWh per cubic meter (1,000 liters) of fresh drinking water",
+            "Post-Treatment: Desalinated water is so pure it is corrosive; it must be remineralized with calcium and carbonate before distribution to taps"
+          ],
+          "codeSnippet": "// Specific Energy Consumption (SEC)\n// Thermal Desalination (MSF): ~12-15 kWh/m³\n// Modern SWRO with Pressure Exchanger: ~2.8-3.2 kWh/m³\n// Energy savings: > 75% reduction in carbon footprint",
+          "takeaway": "Isobaric energy recovery devices recycle the hydraulic pressure of waste brine, making modern membrane desalination clean, scalable, and energy-efficient."
+        }
+      ],
+      "lab": {
+        "title": "Salinity & Membrane Flux Calculation Lab",
+        "brief": "Calculate the recovery ratio and brine concentration factor for a 10,000 m³/day SWRO plant processing Arabian Gulf seawater at 42,000 ppm TDS.",
+        "deliverable": "Submit mass balance flow diagram and specific power consumption audit.",
+        "proTip": "Recovery ratio in seawater RO is typically 40% to 45% to prevent mineral scaling on membrane surfaces."
+      },
+      "caseStudy": {
+        "scenario": "A coastal resort plans to install a small seawater desalination plant. The engineer proposes omitting the Energy Recovery Device (ERD) to save upfront capital cost. Is this economically and scientifically sound?",
+        "options": [
+          {
+            "text": "Yes, because ERDs only filter bacteria and have no effect on electricity.",
+            "correct": false,
+            "explanation": "ERDs are hydraulic pressure exchange devices, not filters."
+          },
+          {
+            "text": "No, because the ERD recycles up to 60% of pumping energy; omitting it doubles electrical operating costs and causes rapid financial loss.",
+            "correct": true,
+            "explanation": "Without an isobaric pressure exchanger, high-pressure brine energy is wasted as heat, doubling electric power demand."
+          },
+          {
+            "text": "Yes, because modern seawater has zero osmotic pressure.",
+            "correct": false,
+            "explanation": "Seawater has high osmotic pressure (~32 bar)."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What must the applied hydraulic pressure in a Reverse Osmosis desalination system exceed to force freshwater across the membrane?",
+          "options": [
+            "Atmospheric pressure only (1 bar)",
+            "The natural osmotic pressure of the seawater",
+            "The boiling point of water",
+            "The speed of sound"
+          ],
+          "correctIndex": 1,
+          "explanation": "Applied pressure must exceed natural osmotic pressure to reverse natural osmotic flow."
+        },
+        {
+          "question": "What is the primary function of an isobaric Energy Recovery Device (ERD) in an SWRO plant?",
+          "options": [
+            "To evaporate the brine into steam",
+            "To transfer hydraulic pressure from rejected brine directly to incoming feed seawater",
+            "To add chlorine and fluoride to drinking water",
+            "To freeze seawater into ice pellets"
+          ],
+          "correctIndex": 1,
+          "explanation": "An ERD captures up to 97% of the hydraulic pressure from the discharge brine and transfers it to the incoming seawater feed."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Structural Aerodynamics, Vortex Shedding & Supertall Physics",
+      "objective": "Explore aerodynamic drag, vortex shedding resonance, harmonic dampening, and the structural physics that allow the Burj Khalifa to reach 828 meters.",
+      "slides": [
+        {
+          "title": "Vortex Shedding: The Enemy of Supertall Towers",
+          "body": "When high-speed desert winds hit a tall rectangular skyscraper, alternating swirling vortices detach from opposite sides of the building. This phenomenon, known as the Von Kármán Vortex Street, creates alternating lateral suction forces that push the building side-to-side.",
+          "bullets": [
+            "If the vortex shedding frequency matches the building's natural structural resonance frequency, harmonic amplification occurs, risking structural failure",
+            "Aerodynamic 'Confusing the Wind': The Burj Khalifa features a stepped, spiral Y-shaped buttressed core that changes shape at 26 different tiers",
+            "Because the building profile is different at every height level, wind vortices cannot organize or sync into a single coherent resonant frequency",
+            "Dramatically reduces lateral wind shear forces without requiring hundreds of tons of dead steel weight"
+          ],
+          "codeSnippet": "// Strouhal Number & Vortex Frequency\n// f = (St * V) / D\n// f = Shedding frequency (Hz), St = Strouhal number (~0.21)\n// V = Wind speed (m/s), D = Building diameter (m)\n// By constantly varying D across 26 setbacks, f is randomized at every altitude!",
+          "takeaway": "The Burj Khalifa's iconic stepped setbacks are an aerodynamic necessity designed to break up vortex shedding and dissipate wind forces harmlessly."
+        },
+        {
+          "title": "Materials Science: High-Performance Concrete & Damping",
+          "body": "Building nearly 1 kilometer into the sky required inventing novel materials. Standard construction concrete cures and cracks too quickly in 50°C summer heat, so engineers formulated ultra-high-strength self-consolidating concrete pumped to unprecedented heights.",
+          "bullets": [
+            "Concrete Recipe: Fly ash, silica fume, and Portland cement combined with chilled water and crushed ice to control hydration temperatures",
+            "High-pressure concrete pumps drove wet concrete over 600 vertical meters at night under cool conditions",
+            "Tuned Mass Dampers (TMD): Massive suspended pendulum weights or sloshing water tanks at tower crowns that oscillate out-of-phase with wind sway",
+            "Dynamic building sway at the 828m tip is engineered to be under 1.5 meters during extreme 50-year gale-force winds"
+          ],
+          "codeSnippet": "/* Supertall Structural Metrics */\nconst burjMetrics = {\n  heightMeters: 828,\n  concreteWeightTons: 330000,\n  maxWindSwayTip: '1.5 meters (Gentle harmonic period ~9 seconds)',\n  buttressedCoreDesign: 'Y-shape with 3 aerodynamic outrigger wings'\n};",
+          "takeaway": "Supertall skyscraper engineering marries concrete chemistry, tuned mass oscillation, and geometric aerodynamics to conquer the physics of gravity and wind."
+        }
+      ],
+      "lab": {
+        "title": "Wind Tunnel Boundary Layer Simulation Lab",
+        "brief": "Analyze aerodynamic drag coefficients (Cd) of a blunt cylinder vs stepped aerodynamic tower in a simulated atmospheric boundary layer wind tunnel.",
+        "deliverable": "Submit CFD velocity vectors and structural base-moment force calculations.",
+        "proTip": "Stepping the building facade can decrease overturning base moments by as much as 45% compared to an extruded prism."
+      },
+      "caseStudy": {
+        "scenario": "A structural engineer is designing a 500-meter tower on the Dubai coast. Wind tunnel testing reveals violent lateral oscillations at 60 km/h wind speeds. What aerodynamic modification should the architect prioritize?",
+        "options": [
+          {
+            "text": "Make the tower wider and perfectly rectangular from base to roof.",
+            "correct": false,
+            "explanation": "Uniform rectangular profiles maximize coherent vortex shedding and worsen lateral swaying."
+          },
+          {
+            "text": "Introduce vertical facade setbacks, rounded corners, or vortex-disrupting spiral tiers to vary the cross-section along its height.",
+            "correct": true,
+            "explanation": "Varying cross-sections prevents vortices from shedding synchronously at any single resonant frequency."
+          },
+          {
+            "text": "Paint the building with anti-vibration lacquer.",
+            "correct": false,
+            "explanation": "Surface paint cannot dampen gigawatt wind shear forces."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the aerodynamic phenomenon where alternating low-pressure vortices shed from a building facade, causing lateral oscillations?",
+          "options": [
+            "Bernoulli cavitation",
+            "Von Kármán vortex shedding",
+            "Brownian motion",
+            "Doppler effect"
+          ],
+          "correctIndex": 1,
+          "explanation": "Von Kármán vortex shedding creates alternating lateral lift forces perpendicular to wind flow."
+        },
+        {
+          "question": "How did engineers pump wet concrete over 600 meters high during Burj Khalifa construction without premature curing?",
+          "options": [
+            "They used microwave heaters",
+            "They pumped exclusively at night using ice instead of water in the concrete mix",
+            "They carried it up in passenger elevators",
+            "They mixed the concrete with petroleum"
+          ],
+          "correctIndex": 1,
+          "explanation": "Nighttime pumping with crushed ice lowered hydration heat and prevented flash-setting in extreme desert temperatures."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "Which mode of heat transfer does NOT require any physical matter or fluid medium to propagate?",
+        "options": [
+          "Conduction",
+          "Convection",
+          "Thermal radiation",
+          "Advection"
+        ],
+        "correctIndex": 2,
+        "explanation": "Thermal radiation propagates as electromagnetic waves through the vacuum of space."
+      },
+      {
+        "question": "Why is district cooling substantially more energy efficient than hundreds of decentralized rooftop split AC units?",
+        "options": [
+          "It uses free cooling without electricity",
+          "Central industrial water-cooled chillers achieve much higher Carnot efficiency (COP > 6.0) with thermal storage",
+          "It blows air through open windows",
+          "It operates only during winter months"
+        ],
+        "correctIndex": 1,
+        "explanation": "Large-scale industrial chillers with water cooling towers and thermal storage achieve more than double the COP of small air-cooled units."
+      },
+      {
+        "question": "What is the photoelectric effect, for which Albert Einstein received his Nobel Prize?",
+        "options": [
+          "The heating of water through sunlight",
+          "The emission of electrons when electromagnetic radiation (light photons) strikes a material",
+          "The reflection of light in a glass mirror",
+          "The polarization of radio waves"
+        ],
+        "correctIndex": 1,
+        "explanation": "The photoelectric effect describes photons transferring energy to electrons, liberating them into a conductive state."
+      },
+      {
+        "question": "What happens to the electrical efficiency of silicon photovoltaic solar panels when their operating temperature rises significantly above 25°C?",
+        "options": [
+          "Efficiency rises dramatically",
+          "Efficiency stays exactly the same",
+          "Efficiency decreases due to rising internal semiconductor electrical resistance",
+          "The panel produces AC current directly"
+        ],
+        "correctIndex": 2,
+        "explanation": "Silicon solar panels have a negative temperature coefficient (~-0.4%/°C), losing power output as they heat up."
+      },
+      {
+        "question": "In a reverse osmosis seawater desalination facility, what is the primary purpose of an isobaric Energy Recovery Device (ERD)?",
+        "options": [
+          "To cool the facility with air conditioning",
+          "To capture high hydraulic pressure from waste brine and transfer it directly to incoming seawater feed",
+          "To add minerals and carbon dioxide to potable water",
+          "To generate steam for electricity generation"
+        ],
+        "correctIndex": 1,
+        "explanation": "Isobaric pressure exchangers recycle up to 97% of the hydraulic pressure from rejected brine into the feed stream."
+      },
+      {
+        "question": "Why does desalinated water require post-treatment remineralization (adding calcium and carbonate) before distribution?",
+        "options": [
+          "Pure RO permeate is so demineralized and acidic that it would corrode public municipal pipelines and lack taste",
+          "To make the water salty again",
+          "To remove microorganisms",
+          "To color the water blue"
+        ],
+        "correctIndex": 0,
+        "explanation": "Demineralized pure permeate is aggressive and corrosive to metallic pipes; lime and CO2 are added for health and stabilization."
+      },
+      {
+        "question": "What structural design technique was famously used on the Burj Khalifa to 'confuse the wind' and prevent synchronized vortex shedding?",
+        "options": [
+          "Installing huge wind sails on the exterior",
+          "Building 26 stepped setbacks and rounded spiral tiers that constantly vary cross-sectional geometry along its height",
+          "Constructing the tower out of soft rubber",
+          "Enclosing the tower in a spherical glass dome"
+        ],
+        "correctIndex": 1,
+        "explanation": "Changing the cross-sectional shape at 26 different heights prevents wind vortices from organizing into a coherent harmonic frequency."
+      },
+      {
+        "question": "What is a Tuned Mass Damper (TMD) in tall skyscraper engineering?",
+        "options": [
+          "An anchor in the bedrock",
+          "A heavy inertial mass engineered to sway in opposition to wind vibrations to dampen building resonance",
+          "A high-speed elevator brake",
+          "A lightning conductor rod"
+        ],
+        "correctIndex": 1,
+        "explanation": "A TMD oscillates out-of-phase with the building's structural frequency, absorbing and dissipating kinetic wind sway."
+      },
+      {
+        "question": "What is the typical pore size of a high-rejection polyamide Reverse Osmosis membrane?",
+        "options": [
+          "1 to 2 millimeters",
+          "0.1 to 1 nanometer (allowing water molecules through while rejecting dissolved sodium and chloride ions)",
+          "100 micrometers",
+          "10 centimeters"
+        ],
+        "correctIndex": 1,
+        "explanation": "RO membranes have sub-nanometer pores (around 0.1-1 nm) that screen out hydrated mineral ions like Na+ and Cl-."
+      },
+      {
+        "question": "What is the Second Law of Thermodynamics regarding spontaneous heat flow?",
+        "options": [
+          "Heat always spontaneously flows from a cooler object to a hotter object",
+          "Energy can be created from nothing",
+          "Heat will not spontaneously flow from a colder body to a hotter body without external work input",
+          "Temperature is independent of atomic velocity"
+        ],
+        "correctIndex": 2,
+        "explanation": "The Second Law dictates that thermal energy naturally dissipates down temperature gradients unless external mechanical work is performed."
+      }
+    ]
+  },
+  "tuitionFee": 1400
+}
+
