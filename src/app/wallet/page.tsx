@@ -115,7 +115,7 @@ export default function WalletPage() {
             ...(buying.bonus ? [{ label: "Bonus", value: `+${buying.bonus.toLocaleString()}` }] : []),
             { label: "You'll receive", value: `${(buying.coins + buying.bonus).toLocaleString()} virtual AED` },
           ]}
-          note="Virtual AED is game money for use inside Dubai Life only. It has no cash value and can't be exchanged back for real money."
+          note="Virtual AED is game money for use inside Come To Dubai only. It has no cash value and can't be exchanged back for real money."
           onConfirm={async () => {
             const { error } = await supabase().rpc("create_coin_payment", { p_package: buying.id });
             return error ? commerceError(error.message) : null;

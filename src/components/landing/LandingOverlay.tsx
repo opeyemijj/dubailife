@@ -162,7 +162,7 @@ export function LandingOverlay({
               <div className="flex items-center gap-1.5 font-black text-slate-900 text-xs sm:text-sm">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/brand/icon-192.png" alt="" width={22} height={22} className="w-[22px] h-[22px] rounded-md" />
-                <span>cometodubai.app</span>
+                <span>Come To Dubai</span>
               </div>
 
               <div className="w-[1px] h-3.5 bg-slate-200" />
@@ -227,7 +227,7 @@ export function LandingOverlay({
           {/* Governor Ticker Banner (As shown in Screenshot 1) */}
           <div className="hidden sm:inline-flex items-center gap-2 bg-emerald-800/90 hover:bg-emerald-800 backdrop-blur-md text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg border border-emerald-600/50 pointer-events-auto transition-transform">
             <span>🏛️</span>
-            <span>Welcome to cometodubai.app! Claim your apartment in Downtown and meet people in the city 🌴</span>
+            <span>Welcome to Come To Dubai! Claim your apartment in Downtown and meet people in the city 🌴</span>
           </div>
 
         </div>

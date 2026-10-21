@@ -1,4 +1,19 @@
+import type { Metadata } from "next";
 import { PropertyRoute } from "@/components/property/PropertyRoute";
+
+export async function generateMetadata({ params }: { params: Promise<{ buildingId: string; unit: string }> }): Promise<Metadata> {
+  const { buildingId, unit } = await params;
+  const decodedUnit = decodeURIComponent(unit);
+  const buildingName = buildingId.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const title = `${buildingName} Unit ${decodedUnit} — Virtual Property`;
+  const description = `Tour ${buildingName} Unit ${decodedUnit} inside Come To Dubai (cometodubai.app). Explore luxury apartments, meet citizens, and customize virtual homes in 3D.`;
+  return {
+    title,
+    description,
+    openGraph: { title: `${title} - Come To Dubai`, description },
+    twitter: { title: `${title} - Come To Dubai`, description },
+  };
+}
 
 export default async function PropertyPage({ params }: { params: Promise<{ buildingId: string; unit: string }> }) {
   const { buildingId, unit } = await params;

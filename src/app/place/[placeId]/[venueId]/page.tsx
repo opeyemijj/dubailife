@@ -11,10 +11,16 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const venue = getVenue(placeId, venueId);
   if (!place || !venue) return { title: "Place not found", robots: { index: false } };
   const where = place.venues.length > 1 ? ` at ${place.name}` : "";
-  const title = `${venue.name}${where} — visit in virtual Dubai`;
-  const description = `Walk into ${venue.name}${where} in 3D: ${venue.blurb} Shop, meet real players and hang out in ${SITE.name}, a free virtual Dubai in your browser.`.slice(0, 300);
+  const title = `${venue.name}${where} — Virtual Dubai 3D`;
+  const description = `Walk into ${venue.name}${where} in 3D: ${venue.blurb} Shop, meet real players and hang out on Come To Dubai (cometodubai.app), the free virtual Dubai browser game.`.slice(0, 300);
   const url = `/place/${placeId}/${venueId}`;
-  return { title, description, alternates: { canonical: url }, openGraph: { title, description, url }, twitter: { title, description } };
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title: `${title} - Come To Dubai`, description, url },
+    twitter: { title: `${title} - Come To Dubai`, description },
+  };
 }
 
 export default async function VenuePage({ params }: Params) {

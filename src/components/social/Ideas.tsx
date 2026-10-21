@@ -58,7 +58,7 @@ export function Ideas({ me }: { me: string }) {
       <div className="rounded-2xl bg-gradient-to-br from-violet-500/20 to-sky-500/10 border border-white/10 p-4 flex items-center gap-3">
         <Lightbulb className="w-8 h-8 text-amber-300 shrink-0" />
         <div className="flex-1 min-w-0">
-          <div className="font-black">Help shape Dubai Life</div>
+          <div className="font-black">Help shape Come To Dubai</div>
           <p className="text-xs text-white/60">Suggest a place, a feature or a fix. The most-voted ideas get built first.</p>
         </div>
         <button onClick={() => setWriting(true)} className="h-10 px-3 rounded-xl bg-white text-zinc-950 text-xs font-black flex items-center gap-1 shrink-0"><Plus className="w-4 h-4" /> Idea</button>

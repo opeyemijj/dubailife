@@ -34,6 +34,26 @@ function HomeContent() {
 
   return (
     <main className="fixed inset-0 h-[100dvh] w-screen bg-[#d6bc8a] overflow-hidden select-none touch-none overscroll-none font-sans">
+      {/* Search Engine & Screen Reader Semantic Indexing for Canvas/3D Game */}
+      <header className="sr-only">
+        <h1>Come To Dubai — Free 3D Virtual Dubai Simulator & Browser Game</h1>
+        <p>
+          Welcome to Come To Dubai (cometodubai.app), the premier free 3D virtual Dubai life simulator.
+          Explore Downtown Dubai, Burj Khalifa, and The Dubai Mall in interactive 3D. Decorate luxury penthouses,
+          play 17 multiplayer games like Ludo, Chess, and Pool, meet real players, and advertise your business in virtual Dubai.
+        </p>
+        <nav aria-label="City Quick Navigation">
+          <ul>
+            <li><a href="/explore">Explore Virtual Downtown Dubai 3D Map</a></li>
+            <li><a href="/business">Virtual Dubai Business & 3D Billboard Directory</a></li>
+            <li><a href="/academics">Dubai Academic City Courses & Skills</a></li>
+            <li><a href="/games/ludo">Play Multiplayer Ludo Online Free</a></li>
+            <li><a href="/games/chess">Play Multiplayer Chess Online Free</a></li>
+            <li><a href="/games/8ball">Play 8-Ball Pool Online Free</a></li>
+          </ul>
+        </nav>
+      </header>
+
       {/* 2D Isometric City Map in Background: Interaction locked until user signs in */}
       <InteractiveMap
         hideTopHUD={true}
@@ -52,9 +72,9 @@ function HomeContent() {
                 <h2 className="text-xl font-black leading-tight">{guestPlace.billboard ? "Advertise here" : `Go to ${guestPlace.name}`}</h2>
               </div>
               <p className="text-slate-600">{guestPlace.billboard
-                ? "Create your Dubai Life to advertise on this billboard and reach real players exploring the city."
-                : `Create your Dubai Life to hang out at ${guestPlace.name}, meet real players and chat.`}</p>
-              <button onClick={() => { setGuestPlace(null); router.push("/?signup=true", { scroll: false }); }} className="w-full h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-lg shadow-lg shadow-emerald-500/25">Create your Dubai Life · free</button>
+                ? "Join Come To Dubai to advertise on this billboard and reach real players exploring the city."
+                : `Join Come To Dubai to hang out at ${guestPlace.name}, meet real players and chat.`}</p>
+              <button onClick={() => { setGuestPlace(null); router.push("/?signup=true", { scroll: false }); }} className="w-full h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-lg shadow-lg shadow-emerald-500/25">Join Come To Dubai · Free</button>
               <button onClick={() => { setGuestPlace(null); router.push("/?login=true", { scroll: false }); }} className="w-full h-12 rounded-2xl border border-slate-200 font-bold">I have an account · Log in</button>
             </div>
           </div>

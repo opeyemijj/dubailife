@@ -9,10 +9,16 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { placeId } = await params;
   const place = getPlace(placeId);
   if (!place) return { title: "Place not found", robots: { index: false } };
-  const title = `${place.name} — explore in virtual Dubai`;
-  const description = `${place.blurb} Explore ${place.name}${place.venues.length > 1 ? `, with ${place.venues.length} places inside,` : ""} in 3D in ${SITE.name}, a free virtual Dubai you play in your browser.`.slice(0, 300);
+  const title = `${place.name} — Virtual Dubai 3D Experience`;
+  const description = `${place.blurb} Explore ${place.name}${place.venues.length > 1 ? `, with ${place.venues.length} places inside,` : ""} in 3D on Come To Dubai (cometodubai.app), the free virtual Dubai simulator in your browser.`.slice(0, 300);
   const url = `/place/${placeId}`;
-  return { title, description, alternates: { canonical: url }, openGraph: { title, description, url }, twitter: { title, description } };
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title: `${title} - Come To Dubai`, description, url },
+    twitter: { title: `${title} - Come To Dubai`, description },
+  };
 }
 
 export default async function PlacePage({ params }: Params) {

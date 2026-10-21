@@ -280,7 +280,7 @@ const hostOf = (url: string | null) => { try { return url ? new URL(url).hostnam
 /** A floor ad opened from the map: the brand at the top, "Sponsored · site", and the ad shown big. */
 function SponsoredSheet({ ad, house, onClose, onAdvertise, onOpen, free }: { ad?: LiveAd; house: HouseAd | null; onClose: () => void; onAdvertise: () => void; onOpen: () => void; free: boolean }) {
   const title = ad ? ad.title : house!.title;
-  const site = ad ? hostOf(ad.link_url) : "Dubai Life";
+  const site = ad ? hostOf(ad.link_url) : "Come To Dubai";
   return (
     <ModalPortal>
       <div className="fixed inset-0 z-[190] bg-slate-950/40 flex items-end sm:items-center justify-center p-0 sm:p-6" role="dialog" aria-modal="true" onClick={onClose}>

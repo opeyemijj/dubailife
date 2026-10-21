@@ -889,8 +889,8 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       const reply = (mine: string, theirs: string) => { bubble("me", mine); bubble(local.id, theirs); localTalk(local.id, { mine: true, text: mine }, { mine: false, text: theirs }); lifeEvent("chat", local.id); gainSkill("charisma", 8); };
       const chip = "p-3 rounded-2xl bg-slate-50 border border-slate-100 text-left text-sm font-black";
       sheet = (
-        <Sheet onClose={closeAll} title={`@${local.username}`} subtitle="✨ Local · Dubai Life host">
-          <p className="text-[11px] text-slate-500 bg-amber-50 border border-amber-100 rounded-xl p-2">Locals are Dubai Life&apos;s hosts, not real players. They show you around and hand out gifts.</p>
+        <Sheet onClose={closeAll} title={`@${local.username}`} subtitle="✨ Local · Come To Dubai host">
+          <p className="text-[11px] text-slate-500 bg-amber-50 border border-amber-100 rounded-xl p-2">Locals are Come To Dubai&apos;s hosts, not real players. They show you around and hand out gifts.</p>
           {lines.length > 0 && (
             <div className="space-y-1.5">
               {lines.map((m, i) => (
@@ -1078,7 +1078,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
               {room.unread[p.userId] ? <span className="min-w-6 h-6 px-1.5 rounded-full bg-rose-500 text-white text-xs font-black flex items-center justify-center">{room.unread[p.userId]}</span> : <MessagesSquare className="w-4 h-4 text-slate-400" />}
             </button>
           ))}
-          {localPeers.length > 0 && <p className="pt-2 text-[11px] font-black uppercase tracking-wide text-amber-600">Locals · Dubai Life hosts</p>}
+          {localPeers.length > 0 && <p className="pt-2 text-[11px] font-black uppercase tracking-wide text-amber-600">Locals · Come To Dubai hosts</p>}
           {localPeers.map((p) => (
             <button key={p.userId} onClick={() => { setPeopleOpen(false); openLocal(p); }}
               className="w-full flex items-center gap-3 p-3 rounded-2xl bg-amber-50 border border-amber-100 text-left">

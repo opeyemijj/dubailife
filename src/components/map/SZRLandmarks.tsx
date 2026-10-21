@@ -2,7 +2,8 @@ import React from 'react';
 
 // Sheikh Zayed Road landmarks standing on the floor-ad strip: the hotel towers (each with its own
 // silhouette — Fairmont's four lit pyramids, The H's twin towers, Shangri-La's stepped crown…) and
-// Coca-Cola Arena. Drawn front-on with a shaded side face, anchored at the base like other buildings.
+// Coca-Cola Arena. Drawn like the older towers (TallBuilding): the front face, a narrow darker left wall
+// receding up and to the left, and a sliver of roof, anchored at the base like other buildings.
 
 export type TowerCrown = 'stepped' | 'slab' | 'spire' | 'pyramids' | 'twin';
 
@@ -25,12 +26,15 @@ const shade = (hex: string, amt: number) => {
 
 /** One glass tower: podium, shaft with window bands, side face and a crown. */
 function Shaft({ x, w, top, bottom, glass, frame, id }: { x: number; w: number; top: number; bottom: number; glass: string; frame: string; id: string }) {
-  const side = 14;
+  // Left wall ~16% of the front's width, rising by about half its width (as TallBuilding does).
+  const side = Math.max(6, Math.round(w * 0.16)), rise = Math.round(side * 0.55);
   const rows = Math.floor((bottom - top - 8) / 9);
   return (
     <g>
-      {/* side face */}
-      <polygon points={`${x + w},${top} ${x + w + side},${top - 6} ${x + w + side},${bottom - 6} ${x + w},${bottom}`} fill={shade(glass, -45)} />
+      {/* left wall and roof */}
+      <polygon points={`${x - side},${top - rise} ${x},${top} ${x},${bottom} ${x - side},${bottom - rise}`} fill={shade(glass, -55)} />
+      {Array.from({ length: rows }, (_, i) => <line key={i} x1={x - side} y1={top - rise + 6 + i * 9} x2={x} y2={top + 6 + i * 9} stroke="#ffffff" strokeWidth="1.2" opacity="0.12" />)}
+      <polygon points={`${x},${top} ${x + w},${top} ${x + w - side},${top - rise} ${x - side},${top - rise}`} fill={shade(frame, -20)} />
       {/* front face */}
       <rect x={x} y={top} width={w} height={bottom - top} fill={`url(#${id}-glass)`} stroke={frame} strokeWidth="1.2" />
       {Array.from({ length: rows }, (_, i) => (
@@ -57,7 +61,8 @@ export const SZRTower: React.FC<SZRTowerProps> = ({
       </defs>
       {/* ground shadow and podium */}
       <ellipse cx="55" cy="272" rx="52" ry="6" fill="#000" opacity="0.18" />
-      <polygon points="8,250 96,250 104,244 104,266 96,272 8,272" fill={shade(frame, -70)} />
+      <polygon points="0,244 8,250 8,272 0,266" fill={shade(frame, -70)} />
+      <polygon points="0,244 88,244 96,250 8,250" fill={shade(frame, -25)} />
       <rect x="8" y="250" width="88" height="22" fill={shade(frame, -40)} />
       <rect x="38" y="256" width="28" height="16" fill="#0f172a" />
       <rect x="40" y="258" width="24" height="12" fill={accent} opacity="0.45" />
@@ -128,11 +133,12 @@ export const CocaColaArena: React.FC<{ width?: number; height?: number; name?: s
     <ellipse cx="125" cy="133" rx="122" ry="7" fill="#000" opacity="0.18" />
     {/* plaza */}
     <polygon points="6,120 244,120 236,134 14,134" fill="#e7e5e4" />
-    {/* side wall */}
-    <polygon points="226,56 244,48 244,112 226,120" fill="#7f1d1d" />
+    <g transform="translate(16,0)">
+    {/* left wall */}
+    <polygon points="-14,48 10,56 10,120 -14,112" fill="#7f1d1d" />
     {/* main hall */}
     <rect x="10" y="56" width="216" height="64" fill="#f8fafc" stroke="#cbd5e1" />
-    <path d="M10,58 Q118,8 226,58 L244,50 Q132,0 26,50 Z" fill="#b91c1c" />
+    <path d="M10,58 Q118,8 226,58 L202,50 Q104,0 -14,50 Z" fill="#b91c1c" />
     <path d="M10,58 Q118,12 226,58 Z" fill="url(#cca-roof)" />
     {/* red band with the name */}
     <rect x="10" y="62" width="216" height="16" fill="#dc2626" />
@@ -145,6 +151,7 @@ export const CocaColaArena: React.FC<{ width?: number; height?: number; name?: s
     <text x="183" y="96" textAnchor="middle" fontSize="6.5" fontWeight="900" fill="#facc15" fontFamily="system-ui, sans-serif">LIVE</text>
     <text x="183" y="104" textAnchor="middle" fontSize="5.5" fontWeight="800" fill="#f472b6" fontFamily="system-ui, sans-serif">TONIGHT</text>
     {/* crowd queue */}
+    </g>
     {Array.from({ length: 9 }, (_, i) => <circle key={i} cx={36 + i * 9} cy={126 + (i % 2)} r="2.2" fill={['#f97316', '#0ea5e9', '#a855f7', '#22c55e'][i % 4]} />)}
   </svg>
 );
@@ -162,9 +169,9 @@ export const SZRLounge: React.FC<{ width?: number; height?: number; name?: strin
         <filter id={`${id}-glow`} x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.2" result="g" /><feMerge><feMergeNode in="g" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
       </defs>
       <ellipse cx="85" cy="124" rx="80" ry="5" fill="#000" opacity="0.2" />
-      {/* side face and roof terrace */}
-      <polygon points="146,34 162,26 162,110 146,118" fill="#18181b" />
-      <polygon points="18,34 146,34 162,26 34,26" fill="#3f3f46" />
+      {/* left wall and roof terrace */}
+      <polygon points="2,26 18,34 18,118 2,110" fill="#18181b" />
+      <polygon points="18,34 146,34 130,26 2,26" fill="#3f3f46" />
       {/* front façade, two floors */}
       <rect x="18" y="34" width="128" height="84" fill={`url(#${id}-wall)`} stroke="#3f3f46" />
       {[0, 1, 2, 3].map((i) => <rect key={i} x={26 + i * 30} y="44" width="22" height="18" rx="1" fill={[a, b, c, a][i]} opacity="0.55" />)}

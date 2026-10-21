@@ -35,7 +35,7 @@ export default function AdminLogin() {
         <div className="flex items-center gap-3">
           <span className="w-11 h-11 rounded-2xl bg-slate-900 text-white flex items-center justify-center"><Lock className="w-5 h-5" /></span>
           <div>
-            <h1 className="text-lg font-black text-slate-900">Dubai Life · Admin</h1>
+            <h1 className="text-lg font-black text-slate-900">Come To Dubai · Admin</h1>
             <p className="text-xs text-slate-500">Authorised staff only</p>
           </div>
         </div>

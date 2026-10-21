@@ -1,0 +1,19 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Dubai Academic City — Courses, Skills & Certifications",
+  description:
+    "Learn high-income skills in real estate, marketing, AI, and business at Dubai Academic City in Come To Dubai. Earn certificates and advance your career.",
+  alternates: { canonical: "/academics" },
+  openGraph: {
+    title: "Dubai Academic City — Courses, Skills & Certifications - Come To Dubai",
+    description:
+      "Learn high-income skills in real estate, marketing, AI, and business at Dubai Academic City in Come To Dubai. Earn certificates and advance your career.",
+    url: "/academics",
+  },
+};
+
+export default function AcademicsLayout({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}
+
