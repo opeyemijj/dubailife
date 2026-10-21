@@ -1,6 +1,6 @@
 "use client";
 
-// Button to add Dubai Life to the home screen. Hidden once installed.
+// Button to add cometodubai.app to the home screen. Hidden once installed.
 
 import { useState } from "react";
 import { Download, Share, SquarePlus, X } from "lucide-react";
@@ -17,7 +17,7 @@ export function InstallApp({ variant = "link" }: { variant?: "link" | "row" | "l
     <>
       {variant !== "link" ? (
         <button onClick={onClick} className={`w-full h-12 rounded-xl font-bold flex items-center justify-center gap-2 ${variant === "light-row" ? "bg-slate-100 text-slate-800" : "border border-white/15 bg-white/5 text-white"}`}>
-          <Download className="w-4 h-4" /> Install the Dubai Life app
+          <Download className="w-4 h-4" /> Install the cometodubai.app app
         </button>
       ) : (
         <button onClick={onClick} className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-700 hover:text-emerald-800">
@@ -31,7 +31,7 @@ export function InstallApp({ variant = "link" }: { variant?: "link" | "row" | "l
               <div className="flex items-center gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/brand/icon-192.png" alt="" className="w-12 h-12 rounded-2xl" />
-                <div className="flex-1"><h2 className="font-black text-lg leading-tight">Add Dubai Life to your Home Screen</h2><p className="text-xs text-slate-500">Opens full screen, like an app.</p></div>
+                <div className="flex-1"><h2 className="font-black text-lg leading-tight">Add cometodubai.app to your Home Screen</h2><p className="text-xs text-slate-500">Opens full screen, like an app.</p></div>
                 <button onClick={() => setIosHelp(false)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center" aria-label="Close"><X className="w-4 h-4" /></button>
               </div>
               <ol className="space-y-3 text-sm">

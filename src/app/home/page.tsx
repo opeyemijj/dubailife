@@ -9,7 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { 
   Volume2, VolumeX, Plus, Eye, Check, ChevronUp, ChevronDown,
   Home, ShoppingBag, Map, Smartphone, Sparkles, X, Megaphone,
-  RotateCw, RotateCcw, Keyboard, Move, Package, LogOut, Shirt
+  RotateCw, RotateCcw, Keyboard, Move, Package, LogOut, Shirt, Bell
 } from "lucide-react";
 import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -21,6 +21,7 @@ import { WardrobeModal } from "@/components/avatar/WardrobeModal";
 import { getPendingVenue } from "@/components/city/VenueDressCodeModal";
 import { NeedsDock } from "@/components/life/NeedsDock";
 import { gainSkill, lifeEvent } from "@/lib/life";
+import { getNotificationPermission, subscribeToPush } from "@/lib/push/client";
 
 export default function HomePage() {
   const router = useRouter();
@@ -40,7 +41,12 @@ export default function HomePage() {
   }, [searchParams]);
   // The welcome only appears the first time this citizen opens their home.
   const [welcomeModalOpen, setWelcomeModalOpenState] = useState(false);
+  const [homePushEnabled, setHomePushEnabled] = useState(false);
+  const [homePushLoading, setHomePushLoading] = useState(false);
   const welcomeKey = `welcome-seen:${citizen?.id ?? ""}`;
+  useEffect(() => {
+    setHomePushEnabled(getNotificationPermission() === "granted");
+  }, []);
   useEffect(() => {
     if (!citizen?.id) return;
     let seen = false;
@@ -412,7 +418,7 @@ export default function HomePage() {
       {/* First visit only. A plain card (not a dialog) so nothing is left covering the screen once it's closed. */}
       {welcomeModalOpen && (
         <ModalPortal>
-          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Welcome to Dubai Life">
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Welcome to cometodubai.app">
             <div className="absolute inset-0 bg-black/30" onClick={() => setWelcomeModalOpen(false)} aria-hidden />
             <div className="relative bg-white text-slate-900 shadow-2xl w-[92vw] max-w-md rounded-3xl p-6 sm:p-7 text-left space-y-4">
               <button onClick={() => setWelcomeModalOpen(false)} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600" aria-label="Close">✕</button>
@@ -422,9 +428,9 @@ export default function HomePage() {
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                Welcome to Dubai Life!
+                Welcome to cometodubai.app!
               </h3>
-              <p className="text-xs text-slate-400 font-semibold">From the Dubai Life team</p>
+              <p className="text-xs text-slate-400 font-semibold">From the cometodubai.app team</p>
             </div>
           </div>
 
@@ -441,6 +447,38 @@ export default function HomePage() {
               <span className="text-emerald-500 font-black">◆</span>
               <span><strong>City Map:</strong> Explore Downtown Dubai, ride the Metro, discover luxury clubs, and build your fortune!</span>
             </div>
+          </div>
+
+          {/* App Installation & Push Notifications Callout */}
+          <div className="bg-gradient-to-r from-sky-50 to-indigo-50 p-3.5 rounded-2xl border border-sky-200/80 space-y-2 text-xs">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📱</span>
+                <span className="font-black text-slate-900">Add to Home Screen & Push</span>
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-sky-200/60 text-sky-800">
+                Essential
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-600 leading-snug">
+              Add cometodubai.app to your phone&apos;s Home Screen (Share → Add to Home Screen on iPhone) and turn on notifications so friend requests and messages pop up even when the game is closed!
+            </p>
+            {!homePushEnabled && (
+              <button
+                onClick={async () => {
+                  setHomePushLoading(true);
+                  const res = await subscribeToPush(citizen?.id);
+                  setHomePushLoading(false);
+                  if (res.ok) setHomePushEnabled(true);
+                  else alert(res.error || "Please allow notifications when prompted by your browser.");
+                }}
+                disabled={homePushLoading}
+                className="w-full py-2 px-3 bg-sky-500 hover:bg-sky-600 text-white font-black text-xs rounded-xl shadow transition active:scale-95 flex items-center justify-center gap-1.5"
+              >
+                <Bell className="w-3.5 h-3.5" />
+                <span>{homePushLoading ? "Enabling…" : "Turn on Push Notifications"}</span>
+              </button>
+            )}
           </div>
 
           <div className="space-y-2 pt-2">

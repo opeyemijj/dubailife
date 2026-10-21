@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { 
   ArrowLeft, Shuffle, Check, Sparkles, Building, Briefcase, 
   Utensils, PartyPopper, Dumbbell, Smile, Moon, Sparkle, Trophy,
-  Star, Heart, Shield, CheckCircle2, Home, Landmark, Camera, X
+  Star, Heart, Shield, CheckCircle2, Home, Landmark, Camera, X,
+  Bell, Download, Share, SquarePlus, Smartphone
 } from "lucide-react";
 import { AvatarCanvas, type AvatarLookProps } from "./AvatarCanvas";
 import { BODY_TYPES, defaultBodyType } from "@/components/avatar/bodyShape";
@@ -15,6 +16,8 @@ import { AvaturnCreator, type CreatedAvatar } from "@/components/avatar/AvaturnC
 import { createProfile, useCitizen } from "@/lib/citizenStore";
 import { clearSignupDraft, updateSignupDraft, useSignupDraft } from "@/lib/signupDraft";
 import { ONBOARDING_STEPS, type OnboardingStep } from "@/lib/onboardingSteps";
+import { promptInstall, useInstallState } from "@/lib/install";
+import { getNotificationPermission, isStandalonePwa, subscribeToPush } from "@/lib/push/client";
 
 
 const DEFAULT_LOOK: AvatarLookProps = { gender: "woman", preset: defaultPreset("woman"), bodyType: "Hourglass" };
@@ -32,6 +35,16 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
   const { isLoggedIn, hydrated, session } = useCitizen();
   const [finishing, setFinishing] = useState(false);
   const [finishError, setFinishError] = useState<string | null>(null);
+  const [completionData, setCompletionData] = useState<{ userId: string; username: string } | null>(null);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+  const installState = useInstallState();
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    setIsInstalled(isStandalonePwa() || installState === "installed");
+    setPushEnabled(getNotificationPermission() === "granted");
+  }, [installState]);
   const currentStep = ONBOARDING_STEPS.indexOf(step) + 1; // 1: Look, 2: Personality, 3: Dream, 4: Birth Lottery, 5: Home
   const setCurrentStep = (n: number) => router.push(`/onboarding/${ONBOARDING_STEPS[n - 1]}`);
   // From the draft, or — if the confirmation link opened elsewhere — from the account itself.
@@ -107,7 +120,9 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
       return;
     }
     clearSignupDraft();
-    router.push("/home");
+    setFinishing(false);
+    // Show post-registration modal instructing user to install app and enable push
+    setCompletionData({ userId: session?.userId || "", username: account.username });
   };
 
   const stepTitles = ["Look", "Personality", "Dream", "Birth lottery", "Home"];
@@ -568,6 +583,120 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
           </div>
         </div>
       </div>
+      {/* Post-Registration App & Push Notification Setup Modal */}
+      {completionData && (
+        <div className="fixed inset-0 z-[200] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white text-slate-900 rounded-3xl p-6 sm:p-7 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
+            <div className="text-center space-y-1">
+              <span className="text-4xl block">🎉</span>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900">
+                Welcome, @{completionData.username}!
+              </h2>
+              <p className="text-xs text-slate-500 font-medium">
+                Your residency and starter grant are confirmed.
+              </p>
+            </div>
+
+            <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-xs text-amber-900 font-semibold leading-relaxed">
+              ⚡ <b>Important:</b> To get pop-up alerts for friend requests, direct messages, and knocks even when your phone is closed, complete these 2 quick steps:
+            </div>
+
+            {/* Step 1: Install to Home Screen */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-2xl">📱</span>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900">Step 1: Add to Home Screen</h4>
+                    <p className="text-[11px] text-slate-500">Play full screen like a real app</p>
+                  </div>
+                </div>
+                {isInstalled && (
+                  <span className="text-[10px] font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                    Installed ✓
+                  </span>
+                )}
+              </div>
+
+              {!isInstalled && (
+                installState === "ios" ? (
+                  <div className="p-3 bg-sky-50 border border-sky-100 rounded-xl space-y-2 text-xs text-slate-700">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-7 h-7 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
+                        <Share className="w-3.5 h-3.5" />
+                      </span>
+                      <span>1. Tap the <b>Share</b> button in Safari browser bar</span>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-7 h-7 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
+                        <SquarePlus className="w-3.5 h-3.5" />
+                      </span>
+                      <span>2. Select <b>Add to Home Screen</b>, then tap <b>Add</b></span>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={async () => {
+                      const ok = await promptInstall();
+                      if (ok) setIsInstalled(true);
+                    }}
+                    className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 shadow active:scale-95 transition"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Install cometodubai.app App
+                  </button>
+                )
+              )}
+            </div>
+
+            {/* Step 2: Enable Push Notifications */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-2xl">🔔</span>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900">Step 2: Turn on Push Notifications</h4>
+                    <p className="text-[11px] text-slate-500">Instant friend request & message pop-ups</p>
+                  </div>
+                </div>
+                {pushEnabled && (
+                  <span className="text-[10px] font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                    Enabled ✓
+                  </span>
+                )}
+              </div>
+
+              {!pushEnabled ? (
+                <button
+                  onClick={async () => {
+                    setPushLoading(true);
+                    const res = await subscribeToPush(completionData.userId);
+                    setPushLoading(false);
+                    if (res.ok) setPushEnabled(true);
+                    else alert(res.error || "Please allow notifications when prompted by your browser.");
+                  }}
+                  disabled={pushLoading}
+                  className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 rounded-xl text-xs font-black flex items-center justify-center gap-2 shadow active:scale-95 transition disabled:opacity-50"
+                >
+                  <Bell className="w-3.5 h-3.5" /> {pushLoading ? "Enabling…" : "Turn on Notifications"}
+                </button>
+              ) : (
+                <p className="text-[11px] text-emerald-600 font-bold">
+                  ✓ Push notifications are active! You will receive pop-ups on your phone.
+                </p>
+              )}
+            </div>
+
+            {/* Proceed to Home */}
+            <button
+              onClick={() => router.push("/home")}
+              className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm shadow-lg shadow-emerald-500/25 transition-all active:scale-98 flex items-center justify-center gap-1.5"
+            >
+              <span>Enter My Apartment & Play</span>
+              <span>›</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

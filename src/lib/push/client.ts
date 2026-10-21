@@ -55,7 +55,7 @@ export async function subscribeToPush(userId?: string): Promise<{ ok: boolean; e
       permission = await Notification.requestPermission();
     }
     if (permission !== "granted") {
-      return { ok: false, error: "Notification permission was denied. Check iPhone Settings → Notifications → Dubai Life." };
+      return { ok: false, error: "Notification permission was denied. Check iPhone Settings → Notifications → cometodubai.app." };
     }
 
     // 2. Wait for service worker to be ready

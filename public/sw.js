@@ -1,4 +1,4 @@
-// Dubai Life service worker with Web Push Notification support.
+// cometodubai.app service worker with Web Push Notification support.
 // - Pages: always from the network (so new releases show at once), with an offline page fallback.
 // - Build files, icons and 3D models: kept after the first visit, refreshed in the background.
 // - Live data (Supabase, Mixcloud, YouTube, APIs) is never cached.
@@ -48,16 +48,16 @@ self.addEventListener("fetch", (event) => {
 // --- Web Push Notifications (iOS & Android Compatible) ---
 
 self.addEventListener("push", (event) => {
-  let payload = { title: "Dubai Life", body: "You have a new alert in Dubai Life." };
+  let payload = { title: "cometodubai.app", body: "You have a new alert in cometodubai.app." };
   if (event.data) {
     try {
       payload = event.data.json();
     } catch {
-      payload = { title: "Dubai Life", body: event.data.text() };
+      payload = { title: "cometodubai.app", body: event.data.text() };
     }
   }
 
-  const title = payload.title || "Dubai Life";
+  const title = payload.title || "cometodubai.app";
   // Clean notification options: iOS Safari strictly requires clean options (no invalid actions or unsupported properties)
   const options = {
     body: payload.body || "New notification",

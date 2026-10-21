@@ -7,7 +7,8 @@ import { useCitizen } from "@/lib/citizenStore";
 import { ModalPortal } from "@/components/ui/modal-portal";
 
 const STEPS = [
-  { icon: "👋", title: "Welcome to Dubai Life", text: "You're now a citizen of Downtown Dubai. Everyone you see in venues is a real player." },
+  { icon: "👋", title: "Welcome to cometodubai.app", text: "You're now a citizen of Downtown Dubai. Everyone you see in venues is a real player." },
+  { icon: "📱", title: "Install App & Notifications", text: "Add cometodubai.app to your Home Screen (Share → Add to Home Screen on iPhone) and turn on notifications so friend requests and messages pop up even when the game is closed!" },
   { icon: "🗺️", title: "Go anywhere", text: "Pinch and drag the map, then tap a building to go inside — malls, clubs, restaurants, hotels and pools. Walk there or take a taxi." },
   { icon: "🚶", title: "Move around inside", text: "In a venue, tap the floor to walk, tap counters to shop or order, and tap people to chat. Clubs have a live DJ and a dance floor." },
   { icon: "🛍️", title: "Shop, eat and work", text: "Buy food, clothes and furniture with virtual AED. Talk to staff to get a job and earn wages every shift." },
