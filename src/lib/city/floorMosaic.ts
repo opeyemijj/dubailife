@@ -1,27 +1,26 @@
 import { mapSeed } from "@/data/mapSeed";
+import { CELL, ROWS, MOSAIC_OFFSET, e11 } from "./szrRoad";
+import { SZR_DEFAULTS, STRIP_TYPES } from "./szr";
+
+export { CELL, ROWS, MOSAIC_OFFSET, e11 };
 
 // The floor-ad mosaic: a dense grid of ad blocks of mixed sizes laid on the sand between Sheikh Zayed
 // Road and the Jumeirah coast road (like a "million dollar homepage" on the ground). Each block is
 // booked on its own for 7 days as placement "floor:<block id>"; the id carries its size (…-w4h3) so the
-// server prices it per cell. The layout is fixed (seeded), so block ids never change.
-
-export const CELL = 18; // px per cell on the map
-export const ROWS = 8;
+// server prices it per cell. The layout is seeded, so block ids only change when something standing on
+// the strip moves.
 
 /**
- * One continuous mosaic from JBR in the west to past Downtown. It only breaks around billboards standing
- * on it (so no ad is ever hidden behind one), cell by cell.
+ * One continuous mosaic from JBR in the west to just past The H by the Trade Centre. It only breaks around the billboards and
+ * buildings standing on it (so no ad is ever hidden behind one), cell by cell.
  */
 export const SECTIONS = [
-  { key: "a", x0: -600, cols: 238, seed: 20261017 },
+  { key: "a", x0: -600, cols: 267, seed: 20261017 },
 ] as const;
 export type SectionKey = (typeof SECTIONS)[number]["key"];
 
 export interface Block { id: string; c: number; r: number; w: number; h: number }
 
-/** Centre line of Sheikh Zayed Road (virtual y); the mosaic's middle is 120 units north of it. */
-export const e11 = (x: number) => 1072 - (160 * (x + 3000)) / 9600;
-export const MOSAIC_OFFSET = 120;
 
 /** The world x range a cell covers, allowing for the mosaic's slant (top rows sit further right). */
 const SLANT = 0.2355;
@@ -31,15 +30,21 @@ function cellSpan(x0: number, c: number, r: number): [number, number] {
 }
 
 /**
- * Cells left empty ("c,r"): under every billboard standing on the mosaic, so none of its ads are ever
- * hidden behind one.
+ * Cells left empty ("c,r"): under every billboard and building standing on the mosaic, so none of its
+ * ads are ever hidden behind one.
  */
 export function blockedCells(key: SectionKey): Set<string> {
   const { x0, cols } = SECTIONS.find((s) => s.key === key)!;
   const spans: Array<[number, number]> = [];
   const pad = 14;
-  for (const e of mapSeed as Array<{ type: string; virtualX: number; virtualY: number; width?: number; height?: number; scale?: number }>) {
-    if (!/billboard/.test(e.type)) continue;
+  // Billboards, plus the hotels and clubs on Sheikh Zayed Road: where the map editor last saved them, or
+  // where they stand by default.
+  type Standing = { id: string; type: string; virtualX: number; virtualY: number; width?: number; height?: number; scale?: number };
+  const saved = mapSeed as Standing[];
+  const savedIds = new Set(saved.map((e) => e.id));
+  const standing = [...saved, ...(SZR_DEFAULTS as Standing[]).filter((e) => !savedIds.has(e.id))];
+  for (const e of standing) {
+    if (!/billboard/.test(e.type) && !STRIP_TYPES.includes(e.type)) continue;
     const s = e.scale ?? 1, w = (e.width ?? 140) * s, h = (e.height ?? 90) * s;
     // Sprites stand on a point 90% of the way down them.
     const bottom = e.virtualY - 0.1 * h, top = e.virtualY + 0.9 * h;
@@ -138,6 +143,9 @@ export const HOUSE_ADS: HouseAd[] = [
   { title: "Own a business?", sub: "Claim your venue · AED 1,000/mo", bg: "#ffffff", fg: "#0f172a", accent: "#059669", icon: "✅", cta: "For businesses", href: "/business" },
   { title: "White Beach", sub: "DJs & sunsets at Atlantis", bg: "#f8fafc", fg: "#0f172a", accent: "#e11d48", icon: "🏖️", cta: "Go to White Beach", href: "/place/atlantis-the-palm/white-beach" },
   { title: "Talise Spa", sub: "26 treatment villas", bg: "#e7d3a8", fg: "#3b2a1e", accent: "#0f766e", icon: "💆", cta: "Book a treatment", href: "/place/madinat-jumeirah/talise-spa" },
+  { title: "Coca-Cola Arena", sub: "Live tonight · City Walk", bg: "#dc2626", fg: "#ffffff", accent: "#ffffff", icon: "🎤", cta: "Get tickets", href: "/place/coca-cola-arena/coca-cola-arena" },
+  { title: "Enish", sub: "Jollof · suya · Afrobeats", bg: "#14532d", fg: "#f0fdf4", accent: "#facc15", icon: "🍛", cta: "Go to Enish", href: "/place/enish-dubai/enish-dubai" },
+  { title: "The Avenue", sub: "Shangri-La · 42nd floor", bg: "#0b0b12", fg: "#fde68a", accent: "#d4af37", icon: "🥂", cta: "Go to The Avenue", href: "/place/the-avenue/the-avenue" },
   { title: "Your ad here", sub: "Tap any spot · 7 days", bg: "#a3e635", fg: "#14532d", accent: "#14532d", icon: "📣", cta: "Advertise here", href: "#advertise" },
 ];
 

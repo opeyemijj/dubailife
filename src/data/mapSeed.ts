@@ -532,8 +532,8 @@ export const mapSeed = [
     "id": "dubai-frame",
     "name": "Dubai Frame",
     "type": "dubai-frame",
-    "virtualX": 3986,
-    "virtualY": 1047,
+    "virtualX": 4363,
+    "virtualY": 1309,
     "rotate": 0,
     "scale": 1.5
   },
@@ -542,7 +542,7 @@ export const mapSeed = [
     "name": "E11 Mega Billboard 1",
     "type": "giant-billboard",
     "virtualX": 2128,
-    "virtualY": 1080,
+    "virtualY": 1320,
     "width": 140,
     "height": 90,
     "scale": 1.5
@@ -552,7 +552,7 @@ export const mapSeed = [
     "name": "E11 LED Billboard 2",
     "type": "giant-billboard",
     "virtualX": 1184,
-    "virtualY": 1098,
+    "virtualY": 1334,
     "width": 140,
     "height": 90,
     "scale": 1.5
@@ -562,9 +562,10 @@ export const mapSeed = [
     "name": "E11 Marina Billboard 3",
     "type": "giant-billboard",
     "virtualX": 509,
-    "virtualY": 1080,
+    "virtualY": 1340,
     "width": 140,
-    "height": 90
+    "height": 90,
+    "scale": 1.5
   },
   {
     "id": "giant-billboard-1791645077909-3",
@@ -578,7 +579,7 @@ export const mapSeed = [
   },
   {
     "id": "tile-west-coast-marina",
-    "name": "West Coast & Marina Horizon",
+    "name": "Academic City · West Coast",
     "type": "floor-tile",
     "virtualX": 165,
     "virtualY": 467,
@@ -623,7 +624,7 @@ export const mapSeed = [
   },
   {
     "id": "tile-dubai-hills-central",
-    "name": "Dubai Hills & Royal Green Spine",
+    "name": "Game City · Dubai Hills",
     "type": "floor-tile",
     "virtualX": 1139,
     "virtualY": -12,
@@ -2868,7 +2869,7 @@ export const mapSeed = [
     "name": "Downtown Boulevard LED Billboard",
     "type": "giant-billboard",
     "virtualX": 3022,
-    "virtualY": 1084,
+    "virtualY": 1324,
     "width": 140,
     "height": 90,
     "scale": 2
@@ -2903,5 +2904,177 @@ export const mapSeed = [
     "width": 140,
     "height": 90,
     "billboardStyle": "classic-highway"
+  },
+  {
+    "id": "coca-cola-arena",
+    "name": "Coca-Cola Arena",
+    "type": "coca-cola-arena",
+    "width": 250,
+    "height": 140,
+    "virtualX": 1460,
+    "virtualY": 1068,
+    "interactive": true
+  },
+  {
+    "id": "shangri-la-dubai",
+    "name": "Shangri-La Dubai",
+    "type": "szr-tower",
+    "width": 120,
+    "height": 300,
+    "sign": "SHANGRI-LA",
+    "glass": "#2dd4bf",
+    "frame": "#e2e8f0",
+    "accent": "#fbbf24",
+    "crown": "stepped",
+    "virtualX": 2260,
+    "virtualY": 1128,
+    "interactive": true,
+    "scale": 0.75
+  },
+  {
+    "id": "the-avenue",
+    "name": "The Avenue · Shangri-La",
+    "type": "szr-club",
+    "width": 130,
+    "height": 96,
+    "marquee": "THE AVENUE",
+    "colors": [
+      "#d4af37",
+      "#fde68a",
+      "#b45309"
+    ],
+    "virtualX": 2260,
+    "virtualY": 1070,
+    "interactive": true,
+    "scale": 0.75
+  },
+  {
+    "id": "voco-dubai",
+    "name": "voco Dubai",
+    "type": "szr-tower",
+    "width": 110,
+    "height": 270,
+    "sign": "voco",
+    "glass": "#0ea5e9",
+    "frame": "#f1f5f9",
+    "accent": "#84cc16",
+    "crown": "spire",
+    "virtualX": 2540,
+    "virtualY": 1121,
+    "interactive": true,
+    "scale": 0.75
+  },
+  {
+    "id": "conrad-dubai",
+    "name": "Conrad Dubai",
+    "type": "szr-tower",
+    "width": 110,
+    "height": 290,
+    "sign": "CONRAD",
+    "glass": "#1e40af",
+    "frame": "#cbd5e1",
+    "accent": "#f8fafc",
+    "crown": "slab",
+    "virtualX": 2800,
+    "virtualY": 1118,
+    "interactive": true,
+    "scale": 0.75
+  },
+  {
+    "id": "fairmont-dubai",
+    "name": "Fairmont Dubai",
+    "type": "szr-tower",
+    "width": 120,
+    "height": 280,
+    "sign": "FAIRMONT",
+    "glass": "#94a3b8",
+    "frame": "#f5f5f4",
+    "accent": "#fde047",
+    "crown": "pyramids",
+    "virtualX": 3240,
+    "virtualY": 1110,
+    "interactive": true,
+    "scale": 0.75
+  },
+  {
+    "id": "vibz-dubai",
+    "name": "Vibz Dubai · Fairmont",
+    "type": "szr-club",
+    "width": 130,
+    "height": 96,
+    "marquee": "VIBZ",
+    "colors": [
+      "#a855f7",
+      "#22d3ee",
+      "#ec4899"
+    ],
+    "virtualX": 3240,
+    "virtualY": 1056,
+    "interactive": true,
+    "scale": 0.75
+  },
+  {
+    "id": "sheraton-grand-dubai",
+    "name": "Sheraton Grand Hotel Dubai",
+    "type": "szr-tower",
+    "width": 115,
+    "height": 310,
+    "sign": "SHERATON GRAND",
+    "glass": "#b45309",
+    "frame": "#fef3c7",
+    "accent": "#f8fafc",
+    "crown": "slab",
+    "virtualX": 3720,
+    "virtualY": 1110,
+    "interactive": true,
+    "scale": 0.75
+  },
+  {
+    "id": "the-h-dubai",
+    "name": "The H Dubai",
+    "type": "szr-tower",
+    "width": 130,
+    "height": 300,
+    "sign": "THE H DUBAI",
+    "glass": "#64748b",
+    "frame": "#e5e7eb",
+    "accent": "#f59e0b",
+    "crown": "twin",
+    "virtualX": 4070,
+    "virtualY": 1107,
+    "interactive": true,
+    "scale": 0.75
+  },
+  {
+    "id": "enish-dubai",
+    "name": "Enish · The H Dubai",
+    "type": "szr-club",
+    "width": 110,
+    "height": 86,
+    "marquee": "ENISH",
+    "colors": [
+      "#22c55e",
+      "#ffffff",
+      "#16a34a"
+    ],
+    "virtualX": 4061,
+    "virtualY": 1041,
+    "interactive": true
+  },
+  {
+    "id": "gambachi-social-club",
+    "name": "Gambachi Social Club · The H Dubai",
+    "type": "szr-club",
+    "width": 110,
+    "height": 86,
+    "marquee": "GAMBACHI",
+    "colors": [
+      "#facc15",
+      "#16a34a",
+      "#f97316"
+    ],
+    "virtualX": 3710,
+    "virtualY": 1046,
+    "interactive": true
   }
 ];

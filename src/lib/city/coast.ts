@@ -1,4 +1,5 @@
-import { CELL, MOSAIC_OFFSET, ROWS, SECTIONS, e11 } from "./floorMosaic";
+import { SECTIONS } from "./floorMosaic";
+import { CELL, MOSAIC_OFFSET, ROWS, e11 } from "./szrRoad";
 
 // The Jumeirah coastline: Burj Al Arab and its neighbours, and the public beaches, placed along the
 // shore drawn in components/map/MapBackground (sea at the top, coast road ~240 units inland).

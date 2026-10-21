@@ -21,7 +21,8 @@ const book = (prefix: string, what: string): Product => ({ id: `${prefix}:table`
 
 export type Cuisine =
   | "cafe" | "pool" | "beach" | "lounge" | "japanese" | "nikkei" | "persian" | "british" | "thai" | "indian" | "french"
-  | "italian" | "lebanese" | "gastropub" | "gelato" | "desserts" | "mexican" | "seafood" | "steak" | "turkish" | "chinese" | "brazilian" | "spanish" | "greek" | "buffet" | "wellness";
+  | "italian" | "lebanese" | "gastropub" | "gelato" | "desserts" | "mexican" | "seafood" | "steak" | "turkish" | "chinese" | "brazilian" | "spanish" | "greek" | "buffet" | "wellness"
+  | "nigerian" | "vietnamese";
 
 const MENUS: Record<Cuisine, Item[]> = {
   cafe: [
@@ -50,6 +51,24 @@ const MENUS: Record<Cuisine, Item[]> = {
     ["spritz", "Signature spritz", 85, "🍸", "Bitter orange and prosecco. 21+.", "social", 12],
     ["mocktail", "Passionfruit mocktail", 48, "🍹", "Passionfruit, vanilla, soda.", "social", 10],
     ["daybed", "Beach daybed for the day", 600, "🏖️", "Daybed for two with towels and shade.", "fun", 30],
+  ],
+  nigerian: [
+    ["jollof", "Party jollof rice & chicken", 85, "🍛", "Smoky tomato jollof with grilled chicken and dodo.", "hunger", 45],
+    ["suya", "Beef suya platter", 75, "🍢", "Spiced skewers with yaji, onions and tomatoes.", "hunger", 30],
+    ["egusi", "Pounded yam & egusi soup", 95, "🍲", "Melon-seed soup with assorted meat.", "hunger", 50],
+    ["pepper-soup", "Goat pepper soup", 70, "🍜", "Hot, peppery and fragrant.", "hunger", 30],
+    ["asun", "Asun", 70, "🌶️", "Spicy smoked goat bites.", "hunger", 25],
+    ["dodo", "Dodo (fried plantain)", 30, "🍌", "Sweet ripe plantain, fried golden.", "hunger", 15],
+    ["puff-puff", "Puff-puff", 30, "🍩", "Warm fried dough balls, dusted in sugar.", "fun", 10],
+    ["chapman", "Chapman", 40, "🍹", "Nigeria's favourite fruity mocktail.", "social", 12],
+    ["zobo", "Zobo", 30, "🥤", "Chilled hibiscus drink with ginger.", "energy", 10],
+  ],
+  vietnamese: [
+    ["pho", "Beef pho", 95, "🍜", "Slow-simmered broth, rice noodles, fresh herbs.", "hunger", 40],
+    ["rolls", "Fresh summer rolls", 65, "🥢", "Prawn, herbs and peanut dip.", "hunger", 20],
+    ["sea-bass", "Caramelised sea bass", 165, "🐟", "Clay-pot style with pepper and ginger.", "hunger", 40],
+    ["banh-xeo", "Bánh xèo", 75, "🥞", "Crisp turmeric pancake with prawns.", "hunger", 30],
+    ["coffee", "Vietnamese iced coffee", 38, "☕", "Strong drip coffee with condensed milk.", "energy", 14],
   ],
   lounge: [
     ["signature", "Signature cocktail", 95, "🍸", "House creation with a view. 21+.", "social", 12],

@@ -1,6 +1,6 @@
 // The games in Game City (Dubai Hills). All free. Each has a tile on the map and its own room.
 
-export type GameId = "ludo" | "chess" | "dominoes" | "pool" | "word" | "trivia" | "connect4" | "battleship" | "checkers" | "snakes" | "snake" | "memory" | "candy" | "tetris";
+export type GameId = "ludo" | "chess" | "dominoes" | "pool" | "word" | "trivia" | "connect4" | "battleship" | "checkers" | "snakes" | "snake" | "memory" | "candy" | "tetris" | "tycoon" | "trading" | "draw";
 
 export interface GameInfo {
   id: GameId;
@@ -47,6 +47,12 @@ export const GAMES: GameInfo[] = [
     rules: "Swap adjacent candies to match 3 or more in a row or column. Match 4 to create a Striped Candy that clears a row or column, or 5 for a Rainbow Color Bomb! Score big in 25 moves." },
   { id: "tetris", name: "Tetris", tagline: "Drop tetrominoes, clear lines, level up", icon: "🕹️", bg: "#0f172a", fg: "#38bdf8", accent: "#0284c7", minPlayers: 1, maxPlayers: 4, kind: "race",
     rules: "Rotate and drop falling tetromino blocks (I, J, L, O, S, T, Z) to fill complete horizontal lines. Clear lines to score points and advance levels. Clear 4 lines at once for a massive Tetris bonus!" },
+  { id: "tycoon", name: "Dubai Tycoon", tagline: "Buy Dubai, build villas, bankrupt your rivals", icon: "🏙️", bg: "#ecfdf5", fg: "#064e3b", accent: "#059669", minPlayers: 2, maxPlayers: 4, kind: "turns",
+    rules: "Roll and move round Dubai. Buy the districts you land on and charge rent to anyone who lands there. Own both districts in a colour to double the rent and build villas. Metro stations, Lucky Souk cards, Salik and the speed camera keep it lively. Last player solvent wins, or the richest after 30 rounds." },
+  { id: "trading", name: "Business Empire", tagline: "Trade property, run businesses, grow your net worth", icon: "📈", bg: "#eff6ff", fg: "#1e3a8a", accent: "#2563eb", minPlayers: 2, maxPlayers: 4, kind: "turns",
+    rules: "Each round, buy property and businesses from the market, sell when prices rise and upgrade your businesses. Property pays rent, businesses pay profit, and market news moves prices every round. Highest net worth after 10 rounds wins." },
+  { id: "draw", name: "Draw & Guess", tagline: "Draw the word, guess the doodle", icon: "🎨", bg: "#fefce8", fg: "#713f12", accent: "#f59e0b", minPlayers: 2, maxPlayers: 6, kind: "turns",
+    rules: "Players take turns drawing a secret word while everyone else types guesses. Guess faster to score more; the artist scores for every correct guess. Most points after everyone has drawn twice wins." },
 ];
 
 export const gameInfo = (id: string) => GAMES.find((g) => g.id === id) ?? null;

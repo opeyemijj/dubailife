@@ -617,6 +617,104 @@ function madinatJumeirah(): Place {
   };
 }
 
+// ---------------------------------------------------------------- Sheikh Zayed Road
+// Hotels by the Trade Centre, Coca-Cola Arena and the Nigerian and Afrobeats spots on the floor-ad strip
+// (lib/city/szr.ts). Outlets with a well-known name use it; the rest are labelled by hotel and cuisine.
+
+/** A city hotel: lobby, café, restaurants, rooftop pool and spa (no beach on Sheikh Zayed Road). */
+function cityHotel(h: { id: string; name: string; short: string; blurb: string; brand: Brand; room: number; suitePrice: number; outlets: Venue[]; spa: string }): Place {
+  const lobbyId = slug(`${h.name} Lobby & Reception`);
+  return {
+    id: h.id, name: h.name, kind: "hotel", blurb: h.blurb,
+    venues: [
+      venue(`${h.name} Lobby & Reception`, "Reception · rooms & concierge", "hotel", {
+        palette: { floor: h.brand.floor, wall: h.brand.wall, accent: h.brand.accent }, blurb: `Check in, book a room or ask the concierge at ${h.name}.`,
+        products: [
+          { id: `${lobbyId}:room`, name: "City-view room, 1 night", price: h.room, icon: "🛏️", station: "reception", desc: "King bed with floor-to-ceiling views of Sheikh Zayed Road.", service: true },
+          { id: `${lobbyId}:suite`, name: "Burj Khalifa-view suite, 1 night", price: h.suitePrice, icon: "🌆", station: "reception", desc: "Separate living room facing the Burj Khalifa.", service: true },
+          { id: `${lobbyId}:transfer`, name: "Airport limousine", price: 350, icon: "🚘", station: "reception", desc: "Chauffeur transfer to or from DXB.", service: true },
+        ],
+      }),
+      outlet(`${h.short} · Lobby Café`, "Café · lobby lounge", "cafe", h.brand, { blurb: "Coffee, pastries and afternoon tea in the lobby." }),
+      ...h.outlets,
+      poolBar(`${h.short} · Rooftop Pool`, h.brand, 250, "Rooftop pool above Sheikh Zayed Road with loungers and a pool bar."),
+      brandSpa(h.spa, h.brand),
+    ],
+  };
+}
+
+const AFRO_BRAND: Brand = { floor: "#0b0b12", wall: "#12121c", accent: "#facc15", light: "#22c55e" };
+const DANCE = (label = "Dance") => [{ id: "dance", label, icon: "💃", animation: "dance" as const }];
+
+// The clubs and restaurants inside the hotels: each is its own place on the map (standing in front of
+// its hotel) and also listed among the hotel's venues.
+const THE_AVENUE = lounge("The Avenue", "Nightclub & lounge · 42nd floor", { floor: "#0b0b12", wall: "#12121c", accent: "#d4af37", light: "#f59e0b" }, "Oriental-style club and terrace on the 42nd floor of Shangri-La.");
+const VIBZ = { ...lounge("Vibz Dubai", "Nightclub · Fairmont ground floor", { ...AFRO_BRAND, accent: "#a855f7", light: "#22d3ee" }, "Nightclub at Fairmont Dubai: hip-hop, Afro, Bollywood and R&B nights."), activities: DANCE("Dance on Afro night") };
+const ENISH = outlet("Enish Dubai", "Nigerian restaurant & lounge · The H, level 1", "nigerian", AFRO_BRAND, {
+  layout: "dining", blurb: "Nigerian restaurant and lounge on level 1 of The H Dubai: jollof, suya, pounded yam and egusi, with Afrobeats.",
+  activities: DANCE("Dance to Afrobeats"),
+});
+const GAMBACHI = { ...lounge("Gambachi Social Club", "Nightclub & social club · The H", { ...AFRO_BRAND, accent: "#facc15" }, "Nightclub and social club at The H Dubai: international DJs, live shows, VIP tables and fine dining."), activities: DANCE() };
+
+const SZR_PLACES: Place[] = [
+  cityHotel({
+    id: "shangri-la-dubai", name: "Shangri-La Dubai", short: "Shangri-La", blurb: "Five-star tower on Sheikh Zayed Road with Shang Palace, Hoi An and The Avenue on the 42nd floor.",
+    brand: { floor: "#efe6d8", wall: "#fbf7f0", accent: "#b45309" }, room: 950, suitePrice: 3800, spa: "CHI, The Spa",
+    outlets: [
+      outlet("Shang Palace", "Cantonese restaurant", "chinese", { floor: "#7f1d1d", wall: "#fef3c7", accent: "#b91c1c" }, { blurb: "Cantonese classics and dim sum." }),
+      outlet("Hoi An", "Vietnamese restaurant", "vietnamese", { floor: "#3f2a1e", wall: "#f5efe3", accent: "#a16207" }, { blurb: "Vietnamese and French-colonial cooking." }),
+      THE_AVENUE,
+    ],
+  }),
+  cityHotel({
+    id: "voco-dubai", name: "voco Dubai", short: "voco", blurb: "IHG's voco hotel on Sheikh Zayed Road, a short walk from the Trade Centre.",
+    brand: { floor: "#e2e8f0", wall: "#f8fafc", accent: "#65a30d" }, room: 550, suitePrice: 1900, spa: "voco Dubai Spa",
+    outlets: [outlet("voco · All-Day Dining", "International restaurant", "buffet", { floor: "#e2e8f0", wall: "#f8fafc", accent: "#65a30d" })],
+  }),
+  cityHotel({
+    id: "conrad-dubai", name: "Conrad Dubai", short: "Conrad", blurb: "Hilton's luxury tower opposite the Dubai World Trade Centre.",
+    brand: { floor: "#1e293b", wall: "#f1f5f9", accent: "#1e40af" }, room: 850, suitePrice: 3200, spa: "Conrad Dubai Spa",
+    outlets: [
+      outlet("Conrad · Italian Restaurant", "Italian restaurant", "italian", { floor: "#1e293b", wall: "#f1f5f9", accent: "#1e40af" }),
+      outlet("Conrad · Steakhouse", "Steakhouse", "steak", { floor: "#292524", wall: "#e7e5e4", accent: "#9a3412" }),
+    ],
+  }),
+  cityHotel({
+    id: "fairmont-dubai", name: "Fairmont Dubai", short: "Fairmont", blurb: "The tower with four lit pyramids on top, next to the World Trade Centre, with Vibz on the ground floor.",
+    brand: { floor: "#efe6d8", wall: "#fbf7f0", accent: "#a16207" }, room: 800, suitePrice: 2900, spa: "Willow Stream Spa",
+    outlets: [outlet("Spectrum on One", "International buffet", "buffet", { floor: "#efe6d8", wall: "#fbf7f0", accent: "#a16207" }, { blurb: "Eight open kitchens from around the world." }), VIBZ],
+  }),
+  cityHotel({
+    id: "sheraton-grand-dubai", name: "Sheraton Grand Hotel Dubai", short: "Sheraton Grand", blurb: "Marriott's Sheraton Grand tower on Sheikh Zayed Road, by the Trade Centre.",
+    brand: { floor: "#efe1c6", wall: "#fdf6e3", accent: "#b45309" }, room: 600, suitePrice: 2200, spa: "Sheraton Grand Spa",
+    outlets: [
+      outlet("Sheraton Grand · All-Day Dining", "International buffet", "buffet", { floor: "#efe1c6", wall: "#fdf6e3", accent: "#b45309" }),
+      outlet("Sheraton Grand · Indian Restaurant", "Indian restaurant", "indian", { floor: "#7c2d12", wall: "#fef3c7", accent: "#c2410c" }),
+    ],
+  }),
+  cityHotel({
+    id: "the-h-dubai", name: "The H Dubai", short: "The H", blurb: "Twin towers at One Sheikh Zayed Road, home to Enish and Gambachi Social Club.",
+    brand: { floor: "#e5e7eb", wall: "#f9fafb", accent: "#b45309" }, room: 650, suitePrice: 2400, spa: "The H Dubai Spa",
+    outlets: [outlet("The H · Lebanese Restaurant", "Lebanese restaurant", "lebanese", { floor: "#e5e7eb", wall: "#f9fafb", accent: "#b45309" }), ENISH, GAMBACHI],
+  }),
+  single("coca-cola-arena", "Coca-Cola Arena", "attraction", venue("Coca-Cola Arena", "Concerts & events arena", "club", {
+    role: "Arena host", noJob: true, feature: "stage", palette: { floor: "#1c1917", wall: "#0f172a", accent: "#dc2626", light: "#f43f5e" },
+    blurb: "Dubai's biggest indoor arena at City Walk: concerts, comedy and fights.",
+    products: [
+      ticket("coca-cola-arena:standing", "Concert ticket · standing", 295, "Tonight's headliner, general admission."),
+      ticket("coca-cola-arena:seated", "Concert ticket · seated", 450, "Reserved seat in the bowl."),
+      ticket("coca-cola-arena:vip", "VIP box", 1500, "Private box with food and drinks.", "🥂"),
+      { id: "coca-cola-arena:cola", name: "Coca-Cola", price: 15, icon: "🥤", station: "bar", desc: "Ice cold.", consumable: { need: "energy", amount: 8 } },
+      { id: "coca-cola-arena:nachos", name: "Loaded nachos", price: 45, icon: "🌮", station: "bar", desc: "Cheese, jalapeños, salsa.", consumable: { need: "hunger", amount: 20 } },
+    ],
+    activities: [{ id: "dance", label: "Dance at the show", icon: "💃", animation: "dance" }, { id: "cheer", label: "Cheer the headliner", icon: "🙌", animation: "clap" }],
+  })),
+  single("the-avenue", "The Avenue · Shangri-La", "club", THE_AVENUE),
+  single("vibz-dubai", "Vibz Dubai · Fairmont", "club", VIBZ),
+  single("enish-dubai", "Enish · The H Dubai", "club", ENISH),
+  single("gambachi-social-club", "Gambachi Social Club · The H Dubai", "club", GAMBACHI),
+];
+
 const COAST_PLACES: Place[] = [
   palmHotel({
     id: "burj-al-arab", name: "Burj Al Arab", short: "Burj Al Arab", brand: { floor: "#7f1d1d", wall: "#fef3c7", accent: "#d4af37" },
@@ -996,6 +1094,7 @@ export const PLACES: Place[] = [
   },
   ...PALM_PLACES,
   ...COAST_PLACES,
+  ...SZR_PLACES,
 ];
 
 const BY_ID = new Map(PLACES.map((p) => [p.id, p]));

@@ -4,7 +4,8 @@ import { gameInfo } from '@/lib/games/registry';
 // A game's tile in Game City: a raised pad in the map's slant, with the game's illustration, its name
 // and "Tap to play".
 
-const SLANT = 'skewX(-13.25deg)';
+// The plot's slant, plus the slight tilt of its long edges, so each tile sits square on the plot.
+const SLANT = 'skewY(0.955deg) skewX(-13.25deg)';
 
 function Art({ game }: { game: string }) {
   switch (game) {
@@ -76,6 +77,30 @@ function Art({ game }: { game: string }) {
           </div>
         </div>
       );
+    case 'tycoon':
+      return (
+        <div className="relative w-16 h-16 rounded-md bg-emerald-50 border-2 border-emerald-800 shadow grid grid-cols-4 grid-rows-4 p-0.5 gap-px">
+          {Array.from({ length: 16 }, (_, k) => {
+            const r = Math.floor(k / 4), c = k % 4, edge = r === 0 || r === 3 || c === 0 || c === 3;
+            return <span key={k} className="rounded-[2px]" style={{ background: edge ? ['#92400e', '#38bdf8', '#ec4899', '#f97316', '#dc2626', '#facc15', '#16a34a', '#1e3a8a'][k % 8] : 'transparent' }} />;
+          })}
+          <span className="absolute inset-0 flex items-center justify-center text-xl">🏙️</span>
+        </div>
+      );
+    case 'trading':
+      return (
+        <div className="relative flex items-end gap-1 h-14 px-2 pb-1 rounded-lg bg-white/80 shadow">
+          {[30, 45, 38, 60, 52, 78].map((h, k) => <span key={k} className="w-2.5 rounded-t-sm" style={{ height: `${h}%`, background: k % 2 ? '#2563eb' : '#60a5fa' }} />)}
+          <span className="absolute -top-2 -right-2 text-xl">📈</span>
+        </div>
+      );
+    case 'draw':
+      return (
+        <div className="relative w-20 h-14 rounded-lg bg-white border-2 border-amber-300 shadow overflow-hidden">
+          <svg viewBox="0 0 80 56" className="absolute inset-0"><path d="M10 40 Q22 10 36 30 T64 18" stroke="#ef4444" strokeWidth="4" fill="none" strokeLinecap="round" /><circle cx="58" cy="40" r="7" fill="none" stroke="#3b82f6" strokeWidth="3" /></svg>
+          <span className="absolute -bottom-1 -right-1 text-xl">✏️</span>
+        </div>
+      );
     default:
       return <div className="w-14 h-14 rounded-full bg-pink-500 text-white text-4xl font-black flex items-center justify-center shadow">?</div>;
   }
@@ -87,9 +112,9 @@ export function GameTile({ game, width = 220, height = 150 }: { game: string; wi
   return (
     <div style={{ width, height, transform: SLANT }} className="relative rounded-2xl border-4 border-white shadow-[0_8px_0_rgba(0,0,0,0.25)] overflow-hidden" >
       <div className="absolute inset-0" style={{ background: `linear-gradient(160deg, ${info.bg}, ${info.accent}55)` }} />
-      <div className="relative h-full flex flex-col items-center justify-center gap-2 px-3 text-center" style={{ color: info.fg, transform: 'skewX(13.25deg)' }}>
+      <div className="relative h-full flex flex-col items-center justify-center gap-1.5 px-2 text-center" style={{ color: info.fg, transform: 'skewX(13.25deg) skewY(-0.955deg)' }}>
         <Art game={game} />
-        <div className="font-black text-lg leading-none drop-shadow-sm">{info.name}</div>
+        <div className="font-black text-base leading-tight drop-shadow-sm">{info.name}</div>
         <div className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: info.accent, color: '#fff' }}>Tap to play</div>
       </div>
     </div>
