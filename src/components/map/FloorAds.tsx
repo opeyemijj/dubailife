@@ -5,16 +5,21 @@ import { CELL, ROWS, SECTIONS, blockedCells, houseAdsFor, mosaicBlocks, type Sec
 // Floor ads: flat panels laid on the ground between the roads, in the map's tilted view (the same
 // slant as the floor tiles). Each shows its booked image, or an "Ad space" placeholder when free.
 
-/** The map's depth slant: things further away lean right by 0.2355 × their depth. */
-const SLANT = 'skewX(-13.25deg)';
+/**
+ * Unified project ground isometry (strictly matching FloorTile):
+ * - Depth slant: dx = 0.2355 * dy (skewX(-13.25deg), features lean right by 0.2355 × depth as they recede)
+ * - Baseline tilt: dy = 0.01667 * dx (skewY(0.955deg), ground tilts down to the right with slope 1/60)
+ * Combining both gives the exact ground affine transform matrix: matrix(1, 0.01667, -0.2355, 1, 0, 0).
+ */
+export const FLOOR_ISOMETRY = 'matrix(1, 0.01667, -0.2355, 1, 0, 0)';
 
 export function FloorAdTile({ width = 90, height = 64, campaigns, name }: { width?: number; height?: number; campaigns?: Array<Pick<LiveBillboardAd, 'id' | 'title' | 'creative_url'>>; name?: string }) {
   const ad = campaigns?.[0];
   const wide = width > height * 1.4;
   return (
     <div
-      style={{ width, height, transform: SLANT }}
-      className="relative rounded-md overflow-hidden border-2 border-white shadow-[0_2px_0_#b49565] bg-gradient-to-br from-slate-800 to-slate-950"
+      style={{ width, height, transform: FLOOR_ISOMETRY, transformOrigin: 'center' }}
+      className="relative rounded-md overflow-hidden border-2 border-white shadow-[0_3px_0_#64748b,0_4px_8px_rgba(0,0,0,0.35)] bg-gradient-to-br from-slate-800 to-slate-950"
       aria-label={ad ? `Sponsored: ${ad.title}` : name ?? 'Floor ad space'}
     >
       {ad ? (
@@ -56,7 +61,7 @@ export function FloorMosaic({ section, ads }: { section: SectionKey; ads?: Recor
     }
   }
   return (
-    <div style={{ width: W, height: H, transform: SLANT }} className="relative" data-ad-grid={section}>
+    <div style={{ width: W, height: H, transform: FLOOR_ISOMETRY, transformOrigin: 'center' }} className="relative select-none" data-ad-grid={section}>
       {runs.map(([r, a, b]) => (
         <div key={`${r}-${a}`} className="absolute pointer-events-none"
           style={{ left: a * CELL, top: r * CELL, width: (b - a) * CELL, height: CELL, backgroundColor: '#7fb2d6', backgroundImage: 'linear-gradient(#cfe2f1 1.5px, transparent 1.5px), linear-gradient(90deg, #cfe2f1 1.5px, transparent 1.5px)', backgroundSize: `${CELL}px ${CELL}px` }} />

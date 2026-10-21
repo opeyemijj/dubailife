@@ -5,9 +5,11 @@ import path from 'path';
 import { getAdmin } from '@/lib/admin/dal';
 
 export async function saveMapSeed(venues: unknown[], mapConfig: unknown) {
-  // Only admins may rewrite the map.
+  // Only super admins may rewrite the map.
   const admin = await getAdmin();
-  if (!admin) return { success: false, error: 'Admins only. Log in at /admin/login.' };
+  if (!admin || admin.role !== "super_admin") {
+    return { success: false, error: "Super admins only. Log in with a super admin account." };
+  }
   try {
     const filePath = path.join(process.cwd(), 'src', 'data', 'mapSeed.ts');
     

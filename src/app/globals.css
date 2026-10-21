@@ -155,3 +155,11 @@ html, body { overscroll-behavior: none; }
 .map-lite .animate-ping {
   animation: none !important;
 }
+
+/* Mirrored building bodies (components/map/mirror.tsx): flip lettering back so signs still read. */
+.svg-mirror text {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scaleX(-1);
+}
+

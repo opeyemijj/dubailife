@@ -2,7 +2,8 @@
 
 // Academic City: Dubai's premier higher education and skills ecosystem.
 // Combines elite academic institutions (AUD, UD, Dubai College, GEMS Wellington)
-// with OneBrain University — the high-impact new-economy accelerator for AI, Crypto, Forex, and Coding.
+// with Brain University — the high-impact new-economy accelerator for AI, Crypto, Forex and Coding, and its
+// library of best-selling motivational books, each chapter summarised as a module.
 // Course content is strictly separated from the database and loaded from dedicated JSON files in @/data/courses/.
 
 import type { Citizen } from "@/lib/citizenStore";
@@ -23,6 +24,17 @@ import onebrainMarketingJson from "@/data/courses/onebrain-marketing.json";
 import onebrainProgrammingJson from "@/data/courses/onebrain-programming.json";
 import onebrainSalesJson from "@/data/courses/onebrain-sales.json";
 import udCybersecurityJson from "@/data/courses/ud-cybersecurity.json";
+// Brain University book library: one JSON file per book (src/data/books), each chapter a module.
+import bookAtomicHabits from "@/data/books/atomic-habits.json";
+import bookSevenHabits from "@/data/books/seven-habits.json";
+import bookHowToWinFriends from "@/data/books/how-to-win-friends.json";
+import bookThinkAndGrowRich from "@/data/books/think-and-grow-rich.json";
+import bookRichDadPoorDad from "@/data/books/rich-dad-poor-dad.json";
+import bookPsychologyOfMoney from "@/data/books/psychology-of-money.json";
+import bookMindset from "@/data/books/mindset.json";
+import bookDeepWork from "@/data/books/deep-work.json";
+import bookMansSearch from "@/data/books/mans-search-for-meaning.json";
+import bookPowerOfHabit from "@/data/books/power-of-habit.json";
 
 export type AcademicTier = "accelerator" | "university" | "secondary";
 
@@ -135,13 +147,17 @@ export interface AcademicCourse {
   weeks: CourseWeek[];
   lessons: LessonDef[];
   finalExam: ExamDef;
+  /** What one module is called: "Week" for courses, "Chapter" for books. */
+  unitLabel?: string;
+  /** Books: who wrote it. */
+  author?: string;
 }
 
 export const ACADEMIC_CAMPUSES: Record<string, AcademicInstitution> = {
   onebrain: {
     id: "onebrain",
-    name: "OneBrain University",
-    shortName: "OneBrain",
+    name: "Brain University",
+    shortName: "Brain U",
     tier: "accelerator",
     crestIcon: "⚡",
     badge: "NextGen Skills Accelerator",
@@ -335,11 +351,65 @@ function mapCourseJson(raw: any): AcademicCourse {
 }
 
 // ============================================================================
+// BRAIN UNIVERSITY BOOK LIBRARY (one JSON file per book, each chapter a module)
+// ============================================================================
+
+interface BookChapterJson { number: number; part?: string; title: string; summary: string; keyIdeas: string[]; tryThis: string; quiz: QuizQuestion[] }
+interface BookJson {
+  id: string; institutionId: string; title: string; author: string; published: number; icon: string; category: string;
+  tagline: string; tuitionFee: number; superpower: SuperpowerBuff; overview: string; chapters: BookChapterJson[];
+}
+
+/** A book as a course: each chapter is a module (summary, key ideas, an exercise and a quiz). */
+function mapBookJson(raw: BookJson): AcademicCourse {
+  const lessons: LessonDef[] = raw.chapters.map((ch) => ({
+    id: `${raw.id}-ch${ch.number}`,
+    lessonNumber: ch.number,
+    title: ch.title,
+    readTimeMinutes: 3,
+    slides: [
+      { title: ch.part ? `${ch.part} · Summary` : "Summary", content: ch.summary },
+      { title: "Key ideas", content: "", bullets: ch.keyIdeas },
+      { title: "Try this", content: ch.tryThis, takeaway: ch.keyIdeas[0] },
+    ],
+    quiz: ch.quiz,
+  }));
+  const weeks: CourseWeek[] = lessons.map((l, i) => ({ week: l.lessonNumber, title: l.title, objective: raw.chapters[i].part ?? raw.title, slides: l.slides, quiz: l.quiz }));
+  // The final exam draws one question from across the book (up to 15).
+  const all = raw.chapters.flatMap((ch) => ch.quiz);
+  const step = Math.max(1, Math.floor(all.length / 15));
+  const questions = all.filter((_, i) => i % step === 0).slice(0, 15);
+  return {
+    id: raw.id,
+    institutionId: raw.institutionId,
+    title: raw.title,
+    tagline: raw.tagline,
+    category: raw.category,
+    icon: raw.icon,
+    level: "accelerator",
+    duration: `${raw.chapters.length} chapters`,
+    tuitionFee: raw.tuitionFee,
+    superpower: raw.superpower,
+    syllabus: [`${raw.title} by ${raw.author} (${raw.published})`, raw.overview],
+    weeks,
+    lessons,
+    finalExam: { durationSeconds: Math.max(180, questions.length * 20), passingScore: 70, questions },
+    unitLabel: "Chapter",
+    author: raw.author,
+  };
+}
+
+export const BOOK_COURSES: AcademicCourse[] = [
+  bookAtomicHabits, bookSevenHabits, bookHowToWinFriends, bookThinkAndGrowRich, bookRichDadPoorDad,
+  bookPsychologyOfMoney, bookMindset, bookDeepWork, bookMansSearch, bookPowerOfHabit,
+].map((b) => mapBookJson(b as BookJson));
+
+// ============================================================================
 // COURSES CATALOG WITH COMPREHENSIVE CURRICULA (LOADED FROM JSON FILES)
 // ============================================================================
 
 export const ACADEMIC_COURSES: AcademicCourse[] = [
-  // 10 OneBrain University Accelerator Courses
+  // 10 Brain University Accelerator Courses
   mapCourseJson(onebrainAiJson),
   mapCourseJson(onebrainCryptoJson),
   mapCourseJson(onebrainForexJson),
@@ -361,6 +431,9 @@ export const ACADEMIC_COURSES: AcademicCourse[] = [
   // Secondary School Diplomas
   mapCourseJson(dcUaeStudiesJson),
   mapCourseJson(gemsArabicJson),
+
+  // Brain University book library
+  ...BOOK_COURSES,
 ];
 
 // ============================================================================
@@ -385,7 +458,7 @@ export const ACADEMIC_TILES = [
   },
   {
     id: "academic-onebrain",
-    name: "OneBrain University · NextGen Hub",
+    name: "Brain University · NextGen Hub",
     type: "academic-tile",
     campus: "onebrain",
     virtualX: ACADEMIC_MAP_CENTER.x + 190,

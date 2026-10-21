@@ -201,10 +201,10 @@ function BookAd({ placement, billboardStyle, plan, onBack, onBooked, floor = fal
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl bg-slate-900 p-3 flex justify-center">
-        <div className="w-full max-w-[320px]">
+      <div className="rounded-2xl bg-slate-900 p-4 flex justify-center overflow-hidden">
+        <div className="w-full max-w-[320px] flex justify-center py-2">
           {floor
-            ? <FloorAdTile campaigns={preview} width={300} height={150} />
+            ? <FloorAdTile campaigns={preview} width={260} height={130} />
             : <IsometricBillboard id="preview" billboardStyle={(billboardStyle as "mega-led") || "mega-led"} campaigns={preview} />}
         </div>
       </div>

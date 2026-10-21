@@ -68,7 +68,7 @@ export default function AcademicDistrictPage() {
                   <span className="text-[10px] bg-emerald-500 text-slate-950 font-black px-2 py-0.2 rounded-full">VOUCHER</span>
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  As an Outstanding Secondary School graduate, you receive a guaranteed 20% tuition discount on all OneBrain Accelerator and University degrees!
+                  As an Outstanding Secondary School graduate, you receive a guaranteed 20% tuition discount on all Brain University Accelerator and University degrees!
                 </p>
               </div>
             </div>
@@ -135,7 +135,7 @@ export default function AcademicDistrictPage() {
               filter === "accelerator" ? "bg-purple-600 text-white" : "text-slate-400 hover:text-white"
             }`}
           >
-            ⚡ OneBrain Accelerator
+            ⚡ Brain University Accelerator
           </button>
           <button
             onClick={() => setFilter("university")}

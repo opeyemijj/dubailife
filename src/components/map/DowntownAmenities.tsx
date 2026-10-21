@@ -78,8 +78,8 @@ export const DubaiOpera: React.FC<AmenityProps> = ({
 
     {/* Stage Fly Tower (The tall vertical box at the stern of the dhow) */}
     <g>
-      {/* Shaded Left Flank */}
-      <polygon points="120,98 132,98.2 132,32.2 120,32" fill="url(#opera-depth-wall)" />
+      {/* Shaded Right Flank */}
+      <polygon points="168,98.8 180,98.6 180,32.6 168,32.8" fill="url(#opera-depth-wall)" />
       {/* Front Facade */}
       <polygon points="132,98.2 168,98.8 168,32.8 132,32.2" fill="url(#opera-hull-roof)" stroke="#cbd5e1" strokeWidth="0.5" />
       {/* Fly Tower Louvers */}
@@ -193,9 +193,9 @@ export const SoukAlBahar: React.FC<AmenityProps> = ({
     </g>
 
     {/* Main Arabesque Souk Complex */}
-    <g>
-      {/* Shaded Left Wall */}
-      <polygon points="28,88 40,88.2 40,42.2 28,42" fill="#78350f" opacity="0.5" />
+    <g transform="translate(-6.3 0)">
+      {/* Shaded Right Wall */}
+      <polygon points="160,90.2 172,90 172,44 160,44.2" fill="#78350f" opacity="0.5" />
       {/* Front Sandstone Facades with Arches */}
       <polygon points="40,88.2 160,90.2 160,44.2 40,42.2" fill="url(#souk-sand-wall)" stroke="#ca8a04" strokeWidth="0.5" />
 
@@ -336,9 +336,9 @@ export const AddressDowntown: React.FC<AmenityProps> = ({
     <polygon points="16,297 112,298.6 116,284.6 20,283" fill="#f8fafc" />
 
     {/* 3D Supertall Tower */}
-    <g>
-      {/* Left Shaded Depth Facade */}
-      <polygon points="26,283 38,284.5 38,42.5 26,41" fill="url(#ad-depth-side)" />
+    <g transform="translate(-3.4 0)">
+      {/* Right Shaded Depth Facade */}
+      <polygon points="96,285.5 108,284 108,42 96,43.5" fill="url(#ad-depth-side)" />
       {/* Sunlit Curved Front Facade */}
       <polygon points="38,284.5 96,285.5 96,43.5 38,42.5" fill="url(#ad-titanium-face)" stroke="#cbd5e1" strokeWidth="0.6" />
 
@@ -397,7 +397,7 @@ export const AddressSkyView: React.FC<AmenityProps> = ({
 
     {/* TOWER 1 (Left Tower, 260m) */}
     <g>
-      <polygon points="32,241 42,242.5 42,48.5 32,47" fill="#1e293b" />
+      <polygon points="76,243 86,241.5 86,47.5 76,49" fill="#1e293b" />
       <polygon points="42,242.5 76,243 76,49 42,48.5" fill="url(#asv-glass)" stroke="#38bdf8" strokeWidth="0.5" />
       {Array.from({ length: 18 }).map((_, i) => (
         <line key={`asv1-${i}`} x1="42" y1={58 + i * 10} x2="76" y2={58.5 + i * 10} stroke="#ffffff" strokeWidth="0.5" opacity="0.6" />
@@ -406,7 +406,7 @@ export const AddressSkyView: React.FC<AmenityProps> = ({
 
     {/* TOWER 2 (Right Tower, 237m) */}
     <g>
-      <polygon points="114,242 124,243.5 124,54.5 114,53" fill="#1e293b" />
+      <polygon points="158,244 168,242.5 168,53.5 158,55" fill="#1e293b" />
       <polygon points="124,243.5 158,244 158,55 124,54.5" fill="url(#asv-glass)" stroke="#38bdf8" strokeWidth="0.5" />
       {Array.from({ length: 18 }).map((_, i) => (
         <line key={`asv2-${i}`} x1="124" y1={64 + i * 10} x2="158" y2={64.5 + i * 10} stroke="#ffffff" strokeWidth="0.5" opacity="0.6" />
@@ -464,9 +464,9 @@ export const PalaceDowntown: React.FC<AmenityProps> = ({
     <polygon points="12,120 168,122.6 178,92.6 22,90" fill="#fef3c7" stroke="#cbd5e1" strokeWidth="0.8" />
 
     {/* Palace Main Building */}
-    <g>
+    <g transform="translate(-2.6 0)">
       {/* Shaded Side */}
-      <polygon points="30,92 42,92.2 42,48.2 30,48" fill="#78350f" opacity="0.5" />
+      <polygon points="150,94 162,93.8 162,49.8 150,50" fill="#78350f" opacity="0.5" />
       {/* Front Facade with Arched Loggia */}
       <polygon points="42,92.2 150,94 150,50 42,48.2" fill="url(#palace-sand)" stroke="#ca8a04" strokeWidth="0.5" />
 
@@ -598,9 +598,9 @@ export const TimeOutMarket: React.FC<AmenityProps> = ({
     <polygon points="10,90 126,92 126,94 10,92" fill="#94a3b8" />
 
     {/* Building Box */}
-    <g>
-      {/* Left Shaded Wall */}
-      <polygon points="22,70 30,70.1 30,36.1 22,36" fill="#451a03" />
+    <g transform="translate(-1.3 0)">
+      {/* Right Shaded Wall */}
+      <polygon points="114,71.5 122,71.4 122,37.4 114,37.5" fill="#451a03" />
       {/* Front Facade */}
       <polygon points="30,70.1 114,71.5 114,37.5 30,36.1" fill="url(#tom-brick)" stroke="#78350f" strokeWidth="0.8" />
 
@@ -668,9 +668,9 @@ export const TheGuild: React.FC<AmenityProps> = ({
     <polygon points="12,90 126,92 126,94 12,92" fill="#64748b" />
 
     {/* Building Body */}
-    <g>
+    <g transform="translate(-2.3 0)">
       {/* Side Wall */}
-      <polygon points="24,70 32,70.1 32,32.1 24,32" fill="#0f172a" />
+      <polygon points="116,71.5 124,71.4 124,33.4 116,33.5" fill="#0f172a" />
       {/* Front Architectural Bronze Facade */}
       <polygon points="32,70.1 116,71.5 116,33.5 32,32.1" fill="url(#guild-obsidian)" stroke="#d97706" strokeWidth="0.8" />
 
@@ -728,9 +728,9 @@ export const ArmaniPrive: React.FC<AmenityProps> = ({
     <polygon points="12,86 118,87.8 118,90 12,88.2" fill="#09090b" />
 
     {/* Obsidian Monolith Cube Pavilion */}
-    <g>
+    <g transform="translate(-3.1 0)">
       {/* Side Shaded Wall */}
-      <polygon points="26,67 34,67.1 34,27.1 26,27" fill="#000000" />
+      <polygon points="108,68.3 116,68.2 116,28.2 108,28.3" fill="#000000" />
       {/* Front Facade */}
       <polygon points="34,67.1 108,68.3 108,28.3 34,27.1" fill="url(#armani-black)" stroke="#ca8a04" strokeWidth="0.8" />
 
@@ -784,7 +784,7 @@ export const DubaiAquarium: React.FC<AmenityProps> = ({
     {/* Aquarium Glass Tunnel Pavilion */}
     <g>
       {/* Side Wall */}
-      <polygon points="22,70 30,70.1 30,36.1 22,36" fill="#075985" />
+      <polygon points="114,71.5 122,71.4 122,37.4 114,37.5" fill="#075985" />
       {/* Front Facade */}
       <polygon points="30,70.1 114,71.5 114,37.5 30,36.1" fill="#0f172a" stroke="#38bdf8" strokeWidth="0.8" />
 
@@ -836,8 +836,8 @@ export const BluDubaiClub: React.FC<AmenityProps> = ({
     <polygon points="12,86 118,87.8 118,90 12,88.2" fill="#0284c7" opacity="0.6" />
 
     {/* Club Architecture */}
-    <g>
-      <polygon points="26,67 34,67.1 34,25.1 26,25" fill="#020617" />
+    <g transform="translate(-3.1 0)">
+      <polygon points="108,68.3 116,68.2 116,26.2 108,26.3" fill="#020617" />
       <polygon points="34,67.1 108,68.3 108,26.3 34,25.1" fill="url(#blu-gradient)" stroke="#38bdf8" strokeWidth="1" />
 
       {/* Cyber Blue Neon Grid & Laser Lights */}
@@ -888,8 +888,8 @@ export const OneOakClub: React.FC<AmenityProps> = ({
     <polygon points="12,86 118,87.8 118,90 12,88.2" fill="#f59e0b" opacity="0.5" />
 
     {/* Monolith Cube Facade */}
-    <g>
-      <polygon points="26,67 34,67.1 34,25.1 26,25" fill="#09090b" />
+    <g transform="translate(-3.1 0)">
+      <polygon points="108,68.3 116,68.2 116,26.2 108,26.3" fill="#09090b" />
       <polygon points="34,67.1 108,68.3 108,26.3 34,25.1" fill="#18181b" stroke="#f59e0b" strokeWidth="0.8" />
 
       {/* Signature 1OAK Geometric Slats */}
@@ -948,9 +948,9 @@ export const TingIrie: React.FC<AmenityProps> = ({
     <polygon points="10,90 126,92 126,94 10,92" fill="#eab308" opacity="0.6" />
 
     {/* Tropical Modern Pavilion Facade */}
-    <g>
+    <g transform="translate(-1.3 0)">
       {/* Side Wall */}
-      <polygon points="22,70 30,70.1 30,34.1 22,34" fill="#0c0a09" />
+      <polygon points="114,71.5 122,71.4 122,35.4 114,35.5" fill="#0c0a09" />
       {/* Front Facade */}
       <polygon points="30,70.1 114,71.5 114,35.5 30,34.1" fill="url(#ting-timber)" stroke="#facc15" strokeWidth="0.8" />
 

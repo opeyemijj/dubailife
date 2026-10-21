@@ -9,7 +9,7 @@ export interface AcademicCampus3DProps {
 }
 
 // ============================================================================
-// 1. ONEBRAIN UNIVERSITY — 3D CYBERNETIC ACCELERATOR CAMPUS
+// 1. BRAIN UNIVERSITY — 3D CYBERNETIC ACCELERATOR CAMPUS
 // ============================================================================
 export const OneBrain3DCampus: React.FC<AcademicCampus3DProps> = ({
   width = 280,
@@ -96,9 +96,9 @@ export const OneBrain3DCampus: React.FC<AcademicCampus3DProps> = ({
           stroke="#6366f1"
           strokeWidth="1"
         />
-        {/* Left Shaded Facade */}
+        {/* Right Shaded Facade */}
         <polygon
-          points="68,154 68,96.5 82,62 82,119.5"
+          points="212,155.5 212,98 226,63.5 226,121"
           fill="url(#obShadedWall)"
           stroke="#4f46e5"
           strokeWidth="1"
@@ -113,7 +113,7 @@ export const OneBrain3DCampus: React.FC<AcademicCampus3DProps> = ({
         {/* Digital LED Entrance Marquee */}
         <polygon points="105,118 175,118.5 175,108 105,107.5" fill="#090514" stroke="#a855f7" strokeWidth="1.2" />
         <text x="140" y="115.5" fill="#38bdf8" fontSize="6" fontWeight="900" letterSpacing="0.8" textAnchor="middle">
-          ⚡ ONEBRAIN LABS
+          ⚡ BRAIN LABS
         </text>
 
         {/* Side Ribbon Windows */}
@@ -130,9 +130,9 @@ export const OneBrain3DCampus: React.FC<AcademicCampus3DProps> = ({
           stroke="#06b6d4"
           strokeWidth="1.2"
         />
-        {/* Shaded Left Cantilever Facade */}
+        {/* Shaded Right Cantilever Facade */}
         <polygon
-          points="80,102 80,51 94,26 94,77"
+          points="200,103.2 200,52 214,27 214,78.2"
           fill="#312e81"
           stroke="#4338ca"
           strokeWidth="1"
@@ -285,8 +285,8 @@ export const AUD3DCampus: React.FC<AcademicCampus3DProps> = ({
       <g>
         {/* Left Wing Front */}
         <polygon points="45,140 105,140.5 105,82 45,81.5" fill="url(#audWallGrad)" stroke="#d97706" strokeWidth="1" />
-        {/* Left Wing Shaded Side */}
-        <polygon points="45,140 45,81.5 58,54 58,112.5" fill="url(#audShadedWall)" stroke="#92400e" strokeWidth="1" />
+        {/* Shaded Side (on the right wing's right edge: buildings show front and right) */}
+        <polygon points="235,141.5 235,83 248,55.5 248,114" fill="url(#audShadedWall)" stroke="#92400e" strokeWidth="1" />
         {/* Left Wing Roof */}
         <polygon points="45,81.5 105,82 118,54.5 58,54" fill="#b45309" stroke="#78350f" strokeWidth="0.8" />
 
@@ -457,8 +457,8 @@ export const UD3DCampus: React.FC<AcademicCampus3DProps> = ({
       <g>
         {/* Left Tower Front */}
         <polygon points="65,142 120,142.5 120,44 65,43.5" fill="url(#udSteelGrad)" stroke="#0284c7" strokeWidth="1" />
-        {/* Left Tower Shaded Side */}
-        <polygon points="65,142 65,43.5 78,20 78,118.5" fill="#475569" stroke="#334155" strokeWidth="1" />
+        {/* Shaded Side (on the right tower's right edge) */}
+        <polygon points="215,143.5 215,45 228,21.5 228,120" fill="#475569" stroke="#334155" strokeWidth="1" />
         {/* Left Tower Roof */}
         <polygon points="65,43.5 120,44 133,20.5 78,20" fill="#0f172a" stroke="#0284c7" strokeWidth="0.8" />
 
@@ -598,8 +598,8 @@ export const DubaiCollege3DCampus: React.FC<AcademicCampus3DProps> = ({
       <g>
         {/* Left Hall Front */}
         <polygon points="40,138 120,138.6 120,78 40,77.4" fill="url(#dcBrickGrad)" stroke="#7f1d1d" strokeWidth="1" />
-        {/* Left Hall Shaded Side */}
-        <polygon points="40,138 40,77.4 52,52 52,112.6" fill="url(#dcShadedBrick)" stroke="#450a0a" strokeWidth="1" />
+        {/* Shaded Side (on the right hall's right edge) */}
+        <polygon points="240,139.6 240,79 252,53.6 252,114.2" fill="url(#dcShadedBrick)" stroke="#450a0a" strokeWidth="1" />
         {/* Left Hall Pitched Slate Roof */}
         <polygon points="40,77.4 120,78 132,52.6 52,52" fill="#334155" stroke="#1e293b" strokeWidth="0.8" />
 
@@ -637,8 +637,8 @@ export const DubaiCollege3DCampus: React.FC<AcademicCampus3DProps> = ({
       <g>
         {/* Central Tower Shaft */}
         <polygon points="118,136 162,136.4 162,34 118,33.6" fill="url(#dcBrickGrad)" stroke="#7f1d1d" strokeWidth="1.2" />
-        {/* Left Shaded Tower Side */}
-        <polygon points="118,136 118,33.6 128,14 128,116.4" fill="url(#dcShadedBrick)" stroke="#450a0a" strokeWidth="1" />
+        {/* Right Shaded Tower Side */}
+        <polygon points="162,136.4 162,34 172,14.4 172,116.8" fill="url(#dcShadedBrick)" stroke="#450a0a" strokeWidth="1" />
 
         {/* Stone Quoins on Tower Corners */}
         {[0, 1, 2, 3, 4, 5, 6].map((k) => (
@@ -747,8 +747,8 @@ export const GEMSWellington3DCampus: React.FC<AcademicCampus3DProps> = ({
       <g>
         {/* Left Wing Front */}
         <polygon points="45,138 110,138.5 110,76 45,75.5" fill="url(#gemsWhiteGrad)" stroke="#2563eb" strokeWidth="1" />
-        {/* Left Wing Shaded Side */}
-        <polygon points="45,138 45,75.5 58,50 58,112.5" fill="#94a3b8" stroke="#64748b" strokeWidth="1" />
+        {/* Shaded Side (on the right wing's right edge: buildings show front and right) */}
+        <polygon points="235,139.5 235,77 248,51.5 248,114" fill="#94a3b8" stroke="#64748b" strokeWidth="1" />
         {/* Left Wing Roof */}
         <polygon points="45,75.5 110,76 123,50.5 58,50" fill="#1e40af" stroke="#1d4ed8" strokeWidth="0.8" />
 

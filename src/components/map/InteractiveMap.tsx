@@ -37,7 +37,7 @@ import { getPlace, placeForEntity } from '@/lib/city/places';
 import { entranceOf, HOME_SPOT } from '@/lib/city/geo';
 import type { Place } from '@/lib/city/types';
 import { useCitizen, adjustBalance, updateCitizen } from '@/lib/citizenStore';
-import { useIsAdmin } from '@/lib/admin/client';
+import { useIsAdmin, useIsSuperAdmin } from '@/lib/admin/client';
 import { BillboardAds, useLiveAds } from '@/components/commerce/BillboardAds';
 
 import { WORLD_WIDTH, WORLD_HEIGHT, EstateBase, ClickableHouseNew, ApartmentBuildingIconNew, RooftopIconNew, NightclubIconNew, RestaurantIconNew, EstateCommunityBlock, SmallHouseIcon, StadiumIcon, HospitalIcon, SchoolIcon, CasinoIcon, ParkIcon, BurjKhalifaIcon, BulgariIslandIcon, AtlantisTheRoyalIcon, BeachClubIconNew, JumeirahBeachHotelIcon, BurjAlArabIcon, MuseumOfTheFutureIcon, DubaiFrameIcon, AtlantisIcon, EmiratesTowersIcon, IndexTowerIcon, AlYaqoubTowerIcon, GevoraIcon, RoseRayhaanIcon, DWTCIcon, SalikGate, RoadSign, SkylineTower, AirportBlock, VillaHouse, ApartmentHouse, TycoonBlock, BluewatersBlock, ArabianRanchesBlock, JBRBlock, EmiratesHillsBlock, BusinessBayBlock, DeiraBlock, MotorCityBlock, PalmCommunityBlock, GenericNeighborhood, BillboardSpace, IsometricBillboard, DubaiMetroStation, MetroStationBlock, categoryColors, BridgeBlock, AdPlacement, initialAds, getBuildingSprite, ActionDef, venueActions } from './Icons';
@@ -238,8 +238,15 @@ export function InteractiveMap({
   const [hoveredVenueId, setHoveredVenueId] = useState<string | null>(null);
   
   const [isEditMode, setIsEditMode] = useState(false);
-  // Map editing is for admins only (saving is also checked on the server).
-  const isAdmin = useIsAdmin();
+  // Map editing, deleting and right-clicking are strictly for SUPER ADMINS only.
+  const isSuperAdmin = useIsSuperAdmin();
+  useEffect(() => {
+    if (!isSuperAdmin && isEditMode) {
+      setIsEditMode(false);
+      setSelectedEditIds([]);
+      setContextMenu(null);
+    }
+  }, [isSuperAdmin, isEditMode]);
   const [selectedEditIds, setSelectedEditIds] = useState<string[]>([]);
   const selectedEditId = selectedEditIds.length > 0 ? selectedEditIds[selectedEditIds.length - 1] : null;
   const setSelectedEditId = (id: string | null) => {
@@ -624,7 +631,7 @@ export function InteractiveMap({
   };
 
   const handlePointerDown = (e: React.PointerEvent, id: string) => {
-    if (!isEditMode) return;
+    if (!isSuperAdmin || !isEditMode) return;
     e.stopPropagation();
 
     // Shift or Command/Control multi-select
@@ -673,7 +680,7 @@ export function InteractiveMap({
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDraggingItem || !dragRef.current.activeIds || dragRef.current.activeIds.length === 0) return;
+    if (!isSuperAdmin || !isEditMode || !isDraggingItem || !dragRef.current.activeIds || dragRef.current.activeIds.length === 0) return;
     const dx = e.clientX - dragRef.current.startX;
     const dy = e.clientY - dragRef.current.startY;
 
@@ -695,7 +702,7 @@ export function InteractiveMap({
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
-    if (!isDraggingItem) return;
+    if (!isSuperAdmin || !isEditMode || !isDraggingItem) return;
     setIsDraggingItem(false);
 
     if (dragRef.current.wasMulti && !dragRef.current.hasMoved && dragRef.current.wasAlreadySelected && dragRef.current.clickedId) {
@@ -733,6 +740,7 @@ export function InteractiveMap({
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; id: string } | null>(null);
 
   const handleDeleteSelected = (targetId?: string) => {
+    if (!isSuperAdmin) return;
     const idsToDelete = targetId ? [targetId] : (selectedEditIds.length > 0 ? selectedEditIds : (selectedEditId ? [selectedEditId] : []));
     if (idsToDelete.length === 0) return;
     setVenues(prev => prev.filter(v => !idsToDelete.includes(v.id)));
@@ -745,6 +753,7 @@ export function InteractiveMap({
   const [dupGap, setDupGap] = useState<number>(20);
 
   const handleDuplicateSelected = (targetId?: string) => {
+    if (!isSuperAdmin) return;
     const idsToDup = targetId ? [targetId] : (selectedEditIds.length > 0 ? selectedEditIds : (selectedEditId ? [selectedEditId] : []));
     if (idsToDup.length === 0) return;
     const newItems: any[] = [];
@@ -768,6 +777,7 @@ export function InteractiveMap({
   };
 
   const handleBatchDuplicate = (targetId?: string) => {
+    if (!isSuperAdmin) return;
     const idToDup = targetId || selectedEditId;
     if (!idToDup) return;
     const item = venues.find(v => v.id === idToDup);
@@ -933,10 +943,13 @@ export function InteractiveMap({
   }, [allRenderedEntities, view, isEditMode, hydrated]);
 
   return (
-    <div className={`absolute inset-0 w-screen h-[100dvh] z-0 bg-[#d6bc8a] overflow-hidden touch-none select-none overscroll-none ${lite ? 'map-lite' : ''}`}>
+    <div
+      onContextMenu={(e) => { e.preventDefault(); if (!isSuperAdmin) setContextMenu(null); }}
+      className={`absolute inset-0 w-screen h-[100dvh] z-0 bg-[#d6bc8a] overflow-hidden touch-none select-none overscroll-none ${lite ? 'map-lite' : ''}`}
+    >
       
-      {/* Top Left: Edit Mode Controls (admins only; safe position below TopBar) */}
-      {isAdmin && <div className="absolute top-20 sm:top-24 left-3 sm:left-6 z-30 flex items-center gap-2 pointer-events-auto">
+      {/* Top Left: Edit Mode Controls (Super Admin only; safe position below TopBar) */}
+      {isSuperAdmin && <div className="absolute top-20 sm:top-24 left-3 sm:left-6 z-30 flex items-center gap-2 pointer-events-auto">
         <button
           onClick={() => {
             setIsEditMode(!isEditMode);
@@ -1389,13 +1402,17 @@ export function InteractiveMap({
                   onMouseLeave={() => {
                     if (isSpecialPlace) setHoveredVenueId(prev => prev === loc.id ? null : prev);
                   }}
-                  onPointerDown={(e) => isEditMode ? handlePointerDown(e, loc.id) : undefined}
-                  onPointerMove={isEditMode ? handlePointerMove : undefined}
-                  onPointerUp={isEditMode ? handlePointerUp : undefined}
-                  onPointerCancel={isEditMode ? handlePointerUp : undefined}
+                  onPointerDown={(e) => (isSuperAdmin && isEditMode) ? handlePointerDown(e, loc.id) : undefined}
+                  onPointerMove={(isSuperAdmin && isEditMode) ? handlePointerMove : undefined}
+                  onPointerUp={(isSuperAdmin && isEditMode) ? handlePointerUp : undefined}
+                  onPointerCancel={(isSuperAdmin && isEditMode) ? handlePointerUp : undefined}
                   onContextMenu={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    if (!isSuperAdmin) {
+                      setContextMenu(null);
+                      return;
+                    }
                     setIsEditMode(true);
                     setSelectedEditId(loc.id);
                     setContextMenu({
@@ -1814,7 +1831,7 @@ export function InteractiveMap({
 
       
       {/* Floating Multi-Selection Action Bar */}
-      {isEditMode && selectedEditIds.length > 1 && (
+      {isSuperAdmin && isEditMode && selectedEditIds.length > 1 && (
         <div className="absolute bottom-24 sm:bottom-8 left-1/2 -translate-x-1/2 z-[100] bg-zinc-950/95 backdrop-blur-2xl border border-blue-500/60 rounded-2xl shadow-2xl p-3 px-5 text-white flex items-center gap-4 animate-in slide-in-from-bottom-5 duration-200 pointer-events-auto">
           <div className="flex items-center gap-2.5">
             <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping" />
@@ -1884,7 +1901,7 @@ export function InteractiveMap({
       )}
 
       {/* Floating Inspector Panel for Selected Landmark in Edit Mode */}
-      {isEditMode && (() => {
+      {isSuperAdmin && isEditMode && (() => {
         const sel = venues.find(v => v.id === selectedEditId);
         if (!sel) return null;
 
@@ -2399,8 +2416,8 @@ export function InteractiveMap({
         );
       })()}
 
-      {/* Right-Click Context Menu for any component */}
-      {contextMenu && (() => {
+      {/* Right-Click Context Menu for any component - Super Admin only */}
+      {isSuperAdmin && contextMenu && (() => {
         const target = venues.find(v => v.id === contextMenu.id);
         if (!target) return null;
 

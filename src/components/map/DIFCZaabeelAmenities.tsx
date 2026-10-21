@@ -50,9 +50,9 @@ export const DIFCMosque: React.FC<AmenityProps> = ({
     <polygon points="22,119 58,119.5 62,111 26,110.5" fill="url(#difc-pool)" opacity="0.85" />
 
     {/* Modern Cuboid Prayer Hall */}
-    <g>
+    <g transform="translate(-4.5 0)">
       {/* Shaded Depth Wall */}
-      <polygon points="36,108 52,109.5 52,45.5 36,44" fill="#64748b" />
+      <polygon points="130,111 146,109.5 146,45 130,46.5" fill="#64748b" />
       {/* Front Facade */}
       <polygon points="52,109.5 130,111 130,46.5 52,45.5" fill="url(#difc-mosque-stone)" stroke="#cbd5e1" strokeWidth="0.8" />
 
@@ -71,7 +71,7 @@ export const DIFCMosque: React.FC<AmenityProps> = ({
       ))}
 
       {/* Modern Minimalist Slender Minaret */}
-      <polygon points="26,107 34,108 34,14 26,13" fill="#475569" />
+      <polygon points="42,108.5 50,107 50,13.5 42,14.5" fill="#475569" />
       <polygon points="34,108 42,108.5 42,14.5 34,14" fill="url(#difc-mosque-stone)" stroke="#cbd5e1" strokeWidth="0.5" />
       <line x1="38" y1="14" x2="38" y2="4" stroke="#f59e0b" strokeWidth="1.2" />
       <circle cx="38" cy="3" r="1.5" fill="#f59e0b" />
@@ -116,8 +116,8 @@ export const ZabeelMosque: React.FC<AmenityProps> = ({
     <polygon points="14,131 154,133 160,119 20,118" fill="#f8fafc" />
 
     {/* Main Sanctuary Hall */}
-    <g>
-      <polygon points="40,117 56,118.5 56,62.5 40,61" fill="#64748b" />
+    <g transform="translate(-3.5 0)">
+      <polygon points="124,119.5 140,118 140,62 124,63.5" fill="#64748b" />
       <polygon points="56,118.5 124,119.5 124,63.5 56,62.5" fill="url(#zabeel-marble)" stroke="#cbd5e1" strokeWidth="0.8" />
 
       {/* Islamic Arches on Facade */}
@@ -134,13 +134,13 @@ export const ZabeelMosque: React.FC<AmenityProps> = ({
       <circle cx="90" cy="15" r="2" fill="#ca8a04" />
 
       {/* Left Minaret */}
-      <polygon points="26,116 34,117 34,18 26,17" fill="#475569" />
+      <polygon points="42,117.5 50,116 50,17 42,18.5" fill="#475569" />
       <polygon points="34,117 42,117.5 42,18.5 34,18" fill="url(#zabeel-marble)" stroke="#cbd5e1" strokeWidth="0.5" />
       <path d="M 32 18 Q 38 8 44 18.5 Z" fill="url(#zabeel-dome-gold)" />
       <line x1="38" y1="8" x2="38" y2="2" stroke="#fef08a" strokeWidth="1" />
 
       {/* Right Minaret */}
-      <polygon points="132,119 140,120 140,19 132,18" fill="#475569" />
+      <polygon points="148,120.5 156,119 156,18 148,19.5" fill="#475569" />
       <polygon points="140,120 148,120.5 148,19.5 140,19" fill="url(#zabeel-marble)" stroke="#cbd5e1" strokeWidth="0.5" />
       <path d="M 138 19 Q 144 9 150 19.5 Z" fill="url(#zabeel-dome-gold)" />
       <line x1="144" y1="9" x2="144" y2="3" stroke="#fef08a" strokeWidth="1" />
@@ -187,7 +187,7 @@ export const OneZaabeel: React.FC<AmenityProps> = ({
 
     {/* Tower 1 (Left Tower, 305m) */}
     <g>
-      <polygon points="32,177 44,178.5 44,22.5 32,21" fill="#0f172a" />
+      <polygon points="76,179 88,177.5 88,21.5 76,23" fill="#0f172a" />
       <polygon points="44,178.5 76,179 76,23 44,22.5" fill="url(#oz-glass)" stroke="#7dd3fc" strokeWidth="0.6" />
       {Array.from({ length: 14 }).map((_, i) => (
         <line key={`oz1-fl-${i}`} x1="44" y1={35 + i * 10} x2="76" y2={35.5 + i * 10} stroke="#ffffff" strokeWidth="0.5" opacity="0.6" />
@@ -196,7 +196,7 @@ export const OneZaabeel: React.FC<AmenityProps> = ({
 
     {/* Tower 2 (Right Tower, 235m) */}
     <g>
-      <polygon points="112,179 124,180.5 124,52.5 112,51" fill="#0f172a" />
+      <polygon points="152,181 164,179.5 164,51.5 152,53" fill="#0f172a" />
       <polygon points="124,180.5 152,181 152,53 124,52.5" fill="url(#oz-glass)" stroke="#7dd3fc" strokeWidth="0.6" />
       {Array.from({ length: 11 }).map((_, i) => (
         <line key={`oz2-fl-${i}`} x1="124" y1={65 + i * 10} x2="152" y2={65.5 + i * 10} stroke="#ffffff" strokeWidth="0.5" opacity="0.6" />
@@ -208,7 +208,7 @@ export const OneZaabeel: React.FC<AmenityProps> = ({
       {/* 3D Cantilever Bridge spanning across towers with cantilever extension to the right */}
       <polygon points="20,105 174,106.5 174,86.5 20,85" fill="url(#oz-cantilever)" stroke="#bae6fd" strokeWidth="0.8" />
       {/* Top Deck Infinity Pool & Promenade */}
-      <polygon points="20,85 174,86.5 170,81.5 16,80" fill="#38bdf8" stroke="#ffffff" strokeWidth="0.5" />
+      <polygon points="20,85 174,86.5 178,81.5 24,80" fill="#38bdf8" stroke="#ffffff" strokeWidth="0.5" />
       <rect x="76" y="82" width="36" height="3" fill="#facc15" />
       {/* Diagonal Structural Steel Bracing inside Glass Bridge */}
       {[30, 50, 70, 90, 110, 130, 150].map((bx, i) => (
@@ -248,8 +248,8 @@ export const RitzCarltonDIFC: React.FC<AmenityProps> = ({
     <polygon points="16,125 134,127 138,115 20,114" fill="#f8fafc" />
 
     {/* Limestone Main Building */}
-    <g>
-      <polygon points="28,113 42,114.5 42,32.5 28,31" fill="#57493a" />
+    <g transform="translate(-7.4 0)">
+      <polygon points="120,115.5 134,114 134,32 120,33.5" fill="#57493a" />
       <polygon points="42,114.5 120,115.5 120,33.5 42,32.5" fill="url(#rc-limestone)" stroke="#d4c5b1" strokeWidth="0.8" />
       {/* Classical French Windows with Juliet Balconies */}
       {Array.from({ length: 6 }).map((_, r) => (
@@ -289,8 +289,9 @@ export const ZumaDIFC: React.FC<AmenityProps> = ({
   >
     <polygon points="8,102 120,103.5 126,91 14,89.5" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="0.8" />
     <polygon points="12,101 116,102.5 120,92 16,91" fill="#1c1917" />
+    <g transform="translate(-6.8 0)">
     {/* Dark Timber & Steel Architecture */}
-    <polygon points="22,90 34,91.5 34,36.5 22,35" fill="#0c0a09" />
+    <polygon points="106,92.5 118,91 118,36 106,37.5" fill="#0c0a09" />
     <polygon points="34,91.5 106,92.5 106,37.5 34,36.5" fill="#292524" stroke="#44403c" strokeWidth="0.8" />
     {/* Timber Louvers */}
     {Array.from({ length: 8 }).map((_, i) => (
@@ -299,6 +300,7 @@ export const ZumaDIFC: React.FC<AmenityProps> = ({
     {/* Ambient Glowing Entrance */}
     <rect x="58" y="74" width="24" height="18" fill="#f59e0b" rx="1" opacity="0.9" />
     <text x="70" y="86" fill="#000000" fontSize="7" fontWeight="900" textAnchor="middle" letterSpacing="1">ZUMA</text>
+    </g>
   </svg>
 );
 
@@ -322,8 +324,9 @@ export const AmazonicoDIFC: React.FC<AmenityProps> = ({
   >
     <polygon points="10,112 128,113.5 134,101 16,99.5" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="0.8" />
     <polygon points="14,111 124,112.5 128,102 18,101" fill="#14532d" />
+    <g transform="translate(-7.8 0)">
     {/* Lush 3-Storey Terraced Pavilion */}
-    <polygon points="26,100 38,101.5 38,36.5 26,35" fill="#052e16" />
+    <polygon points="114,102.5 126,101 126,36 114,37.5" fill="#052e16" />
     <polygon points="38,101.5 114,102.5 114,37.5 38,36.5" fill="#166534" stroke="#4ade80" strokeWidth="0.8" />
     {/* Golden Curved Canopies & Foliage */}
     <rect x="44" y="44" width="64" height="12" fill="#ca8a04" rx="2" />
@@ -334,6 +337,7 @@ export const AmazonicoDIFC: React.FC<AmenityProps> = ({
     <circle cx="76" cy="31" r="6" fill="#16a34a" />
     <circle cx="94" cy="33" r="5" fill="#15803d" />
     <text x="76" y="94" fill="#fde047" fontSize="7" fontWeight="900" textAnchor="middle" letterSpacing="1">AMAZÓNICO</text>
+    </g>
   </svg>
 );
 
@@ -357,8 +361,9 @@ export const LPMDIFC: React.FC<AmenityProps> = ({
   >
     <polygon points="10,92 118,93.5 124,81 16,79.5" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="0.8" />
     <polygon points="14,91 114,92.5 118,82 18,81" fill="#f8fafc" />
+    <g transform="translate(-8.8 0)">
     {/* Provencal White & Wood Bistro Facade */}
-    <polygon points="26,80 38,81.5 38,32.5 26,31" fill="#78716c" />
+    <polygon points="106,82.5 118,81 118,32 106,33.5" fill="#78716c" />
     <polygon points="38,81.5 106,82.5 106,33.5 38,32.5" fill="#fafaf9" stroke="#e7e5e4" strokeWidth="0.8" />
     {/* Classic Bistro Striped Awning */}
     <polygon points="36,54 108,55 106,44 34,43" fill="#0284c7" />
@@ -366,6 +371,7 @@ export const LPMDIFC: React.FC<AmenityProps> = ({
       <rect key={`lpm-awn-${ax}`} x={ax} y="44" width="6" height="11" fill="#ffffff" />
     ))}
     <text x="72" y="72" fill="#0f172a" fontSize="7.5" fontWeight="900" textAnchor="middle" letterSpacing="1">LPM</text>
+    </g>
   </svg>
 );
 
@@ -422,9 +428,9 @@ export const IsometricNightclubVenue: React.FC<NightclubProps & { marqueeText: s
       <polygon points="10,90 126,92 126,94 10,92" fill={glow} opacity="0.65" />
 
       {/* 2. Main Architectural Pavilion Facade */}
-      <g>
-        {/* Left Shaded Depth Wall */}
-        <polygon points="22,70 30,70.1 30,34.1 22,34" fill="#0c0a09" />
+      <g transform="translate(-1.3 0)">
+        {/* Right Shaded Depth Wall */}
+        <polygon points="114,71.5 122,70.4 122,34.4 114,35.5" fill="#0c0a09" />
         {/* Front Facade Wall */}
         <polygon points="30,70.1 114,71.5 114,35.5 30,34.1" fill={`url(#nc-facade-${safeId})`} stroke={glow} strokeWidth="0.8" />
 

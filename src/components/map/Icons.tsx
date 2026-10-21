@@ -42,6 +42,7 @@ import {
 } from './DIFCZaabeelAmenities';
 import { DXBAirportBlock } from './DXBAirport';
 import { CocaColaArena, SZRLounge, SZRTower } from './SZRLandmarks';
+import { MirrorX } from './mirror';
 export { DXBAirportBlock };
 export {
   DIFCMosque,
@@ -168,9 +169,9 @@ export const IsometricHouse: React.FC<IsometricHouseProps> = ({
           strokeWidth="0.8" 
         />
 
-        {/* Left Side Facade (Shaded wall receding along 0.235 slant) */}
+        {/* Right Side Facade and gable (shaded, receding back-right like the roof and the ground) */}
         <polygon 
-          points="28,63 35,37 35,15 31.5,24 28,41" 
+          points="74,63.8 81,53 81,33 77.5,24.5 74,41.8" 
           fill="#cbd5e1" 
           stroke="#94a3b8" 
           strokeWidth="0.8" 
@@ -205,8 +206,8 @@ export const IsometricHouse: React.FC<IsometricHouseProps> = ({
         <rect x="61.5" y="45" width="6" height="5" fill="#38bdf8" opacity="0.8" />
         <line x1="64.5" y1="45" x2="64.5" y2="50" stroke="#ffffff" strokeWidth="0.5" />
 
-        {/* Side Windows on shaded facade */}
-        <polygon points="30,51 33,40 33,46 30,57" fill="#0284c7" opacity="0.65" />
+        {/* Side Window on the shaded facade */}
+        <polygon points="76,55 79,50.5 79,45.5 76,50" fill="#0284c7" opacity="0.65" />
       </g>
 
       {/* ==================================================================== */}
@@ -635,13 +636,6 @@ export const IsometricHospital: React.FC<IsometricHospitalProps> = ({
           stroke="#cbd5e1" 
           strokeWidth="0.8" 
         />
-        {/* Shaded Left Facade (Receding along slant dY=-22, dX=+5.2) */}
-        <polygon 
-          points="28,106 28,66 33.2,44 33.2,84" 
-          fill="#cbd5e1" 
-          stroke="#94a3b8" 
-          strokeWidth="0.6" 
-        />
         {/* Outpatient Roof Deck */}
         <polygon 
           points="28,66 78,66.8 83.2,44.8 33.2,44" 
@@ -704,11 +698,11 @@ export const IsometricHospital: React.FC<IsometricHospitalProps> = ({
           stroke="#cbd5e1" 
           strokeWidth="1" 
         />
-        {/* Tower Shaded Left Facade (Receding dY=-24, dX=+5.65) */}
+        {/* Tower Shaded Right Facade (Receding dY=-24, dX=+5.65) */}
         <polygon 
-          points="76,104 76,32 81.65,8 81.65,80" 
-          fill="#cbd5e1" 
-          stroke="#94a3b8" 
+          points="156,105.3 156,33.3 161.65,9.3 161.65,81.3" 
+          fill="#94a3b8" 
+          stroke="#64748b" 
           strokeWidth="0.8" 
         />
         {/* Tower Rooftop Deck */}
@@ -1764,6 +1758,8 @@ export const DubaiFrameIcon = ({ width = 110, height = 150, name = "Dubai Frame"
       <polygon points="56,183 104,183.8 110,174 62,173.2" fill="#38bdf8" stroke="#ffffff" strokeWidth="0.8" />
     </g>
 
+    {/* Front and right side: mirrored round x=82.2 so it also sits centred on its plinth. */}
+    <MirrorX cx={82.2}>
     {/* 2. South Tower (Left 3D Tower) */}
     <g>
       {/* Left Shaded Depth Face (along depth slant dx = +0.2355*dy) */}
@@ -1808,6 +1804,7 @@ export const DubaiFrameIcon = ({ width = 110, height = 150, name = "Dubai Frame"
       <rect x="62" y="177" width="36" height="5.5" rx="1" fill="#fef08a" />
       <text x="80" y="181.5" fill="#78350f" fontSize="3.8" fontWeight="black" textAnchor="middle" letterSpacing="0.5">DUBAI FRAME</text>
     </g>
+    </MirrorX>
   </svg>
 );
 
@@ -1854,6 +1851,8 @@ export const EmiratesTowersIcon = ({ width = 130, height = 280 }: { width?: numb
       <polygon points="68,305 92,305.4 96,284.4 72,284" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.5" />
     </g>
 
+    {/* Front and right side: mirrored round x=84.6 so it also sits centred on its plinth. */}
+    <MirrorX cx={84.6}>
     {/* TOWER 1: Office Tower (Tallest, 354m) - Left */}
     <g>
       {/* Shaded Depth Wall (along FloorTile 0.2355 slant) */}
@@ -1885,6 +1884,7 @@ export const EmiratesTowersIcon = ({ width = 130, height = 280 }: { width?: numb
     {/* Connecting Podium Galleria Retail Spine */}
     <polygon points="68,284.6 94,285 94,250 68,250" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.6" />
     <polygon points="72,256 90,256.3 90,278 72,278" fill="#38bdf8" opacity="0.8" />
+    </MirrorX>
   </svg>
 );
 
@@ -1912,6 +1912,8 @@ export const GevoraIcon = ({ width = 80, height = 300 }: { width?: number, heigh
     <polygon points="18,348 82,349 88,336 24,335" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="0.8" />
     <polygon points="22,347 78,348 82,337 26,336" fill="#f8fafc" />
 
+    {/* Front and right side: mirrored round x=52.7 */}
+    <MirrorX cx={52.7}>
     {/* 3D Main Golden Tower Body */}
     <g>
       {/* Shaded Left Depth Facade */}
@@ -1935,6 +1937,7 @@ export const GevoraIcon = ({ width = 80, height = 300 }: { width?: number, heigh
       <line x1="56" y1="18" x2="56" y2="4" stroke="#fef08a" strokeWidth="1.2" />
       <circle cx="56" cy="3" r="1.5" fill="#ef4444" className="animate-pulse" />
     </g>
+    </MirrorX>
   </svg>
 );
 
@@ -1962,6 +1965,8 @@ export const RoseRayhaanIcon = ({ width = 80, height = 280 }: { width?: number, 
     <polygon points="16,330 84,331.1 90,318.1 22,317" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="0.8" />
     <polygon points="20,329 80,330 84,319 24,318" fill="#f8fafc" />
 
+    {/* Front and right side: mirrored round x=52.7 */}
+    <MirrorX cx={52.7}>
     {/* 3D Blue Curtain Wall Tower */}
     <g>
       <polygon points="26,318 38,319.5 38,62.5 26,61" fill="url(#rose-blue-side)" />
@@ -1980,6 +1985,7 @@ export const RoseRayhaanIcon = ({ width = 80, height = 280 }: { width?: number, 
       <line x1="56" y1="40" x2="56" y2="12" stroke="#ffffff" strokeWidth="1.2" />
       <circle cx="56" cy="11" r="1.5" fill="#ef4444" className="animate-pulse" />
     </g>
+    </MirrorX>
   </svg>
 );
 
@@ -1994,6 +2000,8 @@ export const DWTCIcon = ({ width = 110, height = 200 }: { width?: number, height
     <polygon points="12,230 128,232 134,216 18,214" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="0.8" />
     <polygon points="16,229 124,231 128,217 20,215" fill="#f8fafc" />
 
+    {/* Front and right side: mirrored round x=72.2 */}
+    <MirrorX cx={72.2}>
     {/* Sheikh Rashid Tower (39-story brutalist white precast concrete tower) */}
     <g>
       {/* Shaded Depth Facade */}
@@ -2023,6 +2031,7 @@ export const DWTCIcon = ({ width = 110, height = 200 }: { width?: number, height
       <line x1="75" y1="24" x2="75" y2="8" stroke="#cbd5e1" strokeWidth="1.2" />
       <circle cx="75" cy="7" r="1.5" fill="#ef4444" className="animate-pulse" />
     </g>
+    </MirrorX>
   </svg>
 );
 
@@ -2055,6 +2064,8 @@ export const IndexTowerIcon = ({ width = 95, height = 310 }: { width?: number, h
     <polygon points="12,342 98,343.5 104,329 18,327.5" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="0.8" />
     <polygon points="16,341 94,342.3 98,330 22,328.7" fill="#0284c7" opacity="0.8" />
 
+    {/* Front and right side: mirrored round x=57.7 */}
+    <MirrorX cx={57.7}>
     {/* Main Foster + Partners Supertall Structure (80 Storeys) */}
     <g>
       {/* West Shaded Depth Wall */}
@@ -2092,6 +2103,7 @@ export const IndexTowerIcon = ({ width = 95, height = 310 }: { width?: number, h
       <line x1="62" y1="28" x2="62" y2="10" stroke="#f8fafc" strokeWidth="1.2" />
       <circle cx="62" cy="9" r="1.5" fill="#ef4444" className="animate-pulse" />
     </g>
+    </MirrorX>
   </svg>
 );
 
@@ -2124,6 +2136,8 @@ export const AlYaqoubTowerIcon = ({ width = 85, height = 300 }: { width?: number
     <polygon points="16,340 84,341.2 90,327 22,325.8" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="0.8" />
     <polygon points="20,339 80,340 84,328 24,327" fill="#f8fafc" />
 
+    {/* Front and right side: mirrored round x=52.8 */}
+    <MirrorX cx={52.8}>
     {/* Tower Shaft (328m, Big Ben of Dubai) */}
     <g>
       {/* Shaded Depth Corner */}
@@ -2162,6 +2176,7 @@ export const AlYaqoubTowerIcon = ({ width = 85, height = 300 }: { width?: number
       <line x1="56" y1="12" x2="56" y2="3" stroke="#f4f4f5" strokeWidth="1.2" />
       <circle cx="56" cy="2.5" r="1.5" fill="#ef4444" className="animate-pulse" />
     </g>
+    </MirrorX>
   </svg>
 );
 
@@ -3868,7 +3883,7 @@ export const IsometricBillboard: React.FC<IsometricBillboardProps> = ({
           <g>
             {/* Sculpted Metallic Pylon Pedestal */}
             <polygon points="128,214 192,215 186,132 134,131" fill="url(#luxuryBronzeGrad)" stroke="#78350f" strokeWidth="1" />
-            <polygon points="128,214 134,131 126,130 120,213" fill="#451a03" />
+            <polygon points="192,215 186,132 194,131 200,214" fill="#451a03" />
             {/* Center LED Spine Slit */}
             <line x1="160" y1="214" x2="160" y2="131" stroke="#38bdf8" strokeWidth="1.5" opacity="0.8" />
             {/* Ambient Cyan Underglow beneath display */}
@@ -4006,12 +4021,12 @@ export const IsometricBillboard: React.FC<IsometricBillboardProps> = ({
       {renderStyleSpecificStructure()}
 
       {/* ==================================================================== */}
-      {/* 3. 3D CABINET HOUSING (Rear Depth Bevels aligned along -0.235 slant) */}
+      {/* 3. 3D CABINET HOUSING (Rear Depth Bevels aligned along +0.235 slant) */}
       {/* ==================================================================== */}
       <g>
-        {/* Top Roof Casing (Receding back along slant: dX=-6, dY=-16) */}
+        {/* Top Roof Casing (Receding back along slant: dX=+6, dY=-16, like the ground) */}
         <polygon 
-          points="30,25 290,29.3 284,13.3 24,9" 
+          points="30,25 290,29.3 296,13.3 36,9" 
           fill={billboardStyle === 'luxury-curved' ? '#b45309' : '#1e293b'} 
           stroke="#0f172a" 
           strokeWidth="1" 
@@ -4019,14 +4034,14 @@ export const IsometricBillboard: React.FC<IsometricBillboardProps> = ({
         {[0.2, 0.4, 0.6, 0.8].map((t, idx) => {
           const x1 = 30 + t * 260;
           const y1 = 25 + t * 4.3;
-          const x2 = 24 + t * 260;
+          const x2 = 36 + t * 260;
           const y2 = 9 + t * 4.3;
           return <line key={`roof-louver-${idx}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#334155" strokeWidth="0.8" />;
         })}
 
-        {/* Left Side Thickness Bevel (Deep shadow) */}
+        {/* Right Side Thickness Bevel (Deep shadow) */}
         <polygon 
-          points="30,25 24,9 24,125 30,141" 
+          points="290,29.3 296,13.3 296,129.3 290,145.3" 
           fill={billboardStyle === 'luxury-curved' ? '#78350f' : '#0f172a'} 
           stroke="#020617" 
           strokeWidth="1" 

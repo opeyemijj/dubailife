@@ -6,8 +6,10 @@ import { mapSeed, mapConfig as initialConfig } from '@/data/mapSeed';
 import { saveMapSeed } from '@/app/actions/saveSeed';
 import * as Icons from '../map/Icons';
 import { Button } from '@/components/ui/button';
+import { useIsSuperAdmin } from '@/lib/admin/client';
 
 export default function BuilderClient() {
+    const isSuperAdmin = useIsSuperAdmin();
     const [venues, setVenues] = useState<any[]>(mapSeed);
   const [config, setConfig] = useState(initialConfig || { pitch: 45, yaw: 0, startX: -120, startY: -140, startScale: 0.35 });
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -160,6 +162,7 @@ export default function BuilderClient() {
     };
 
     const deleteSelected = () => {
+        if (!isSuperAdmin) return;
         const idsToDelete = selectedIds.length > 0 ? selectedIds : (selectedId ? [selectedId] : []);
         if (idsToDelete.length === 0) return;
         setVenues(prev => prev.filter(v => !idsToDelete.includes(v.id)));
@@ -171,6 +174,7 @@ export default function BuilderClient() {
     const handleContextMenu = (e: React.MouseEvent, id: string) => {
         e.preventDefault();
         e.stopPropagation();
+        if (!isSuperAdmin) return;
         setSelectedId(id as any);
         setContextMenu({
             x: e.clientX,
@@ -2098,7 +2102,7 @@ export default function BuilderClient() {
             )}
 
             {/* Right-Click Context Menu for any component */}
-            {contextMenu && (() => {
+            {isSuperAdmin && contextMenu && (() => {
                 const target = venues.find(v => v.id === contextMenu.id);
                 if (!target) return null;
 

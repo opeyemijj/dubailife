@@ -1,4 +1,5 @@
 import React from 'react';
+import { MirrorX } from './mirror';
 
 export type TallBuildingShape = 
   | 'rectangular' 
@@ -820,7 +821,8 @@ export const TallBuilding: React.FC<TallBuildingProps> = ({
   // - Recedes towards the top-right with FloorTile's exact ratio (slantX = depth * 0.235)
   // - Bottom and top edges have FloorTile's gentle baseline tilt (slope = 0.0166)
   // - Lower side has FloorTile's slim subtle emboss lip
-  const centerX = Math.round(FRONT_X_LEFT + FRONT_W / 2 - LEFT_FACADE_W / 2); // ~119
+  // Centred under the building as drawn: its front plus the wall on the right (the body is mirrored).
+  const centerX = Math.round(FRONT_X_LEFT + FRONT_W / 2 + LEFT_FACADE_W / 2); // ~141
   const centerY = Math.round(BASE_Y - ROOF_DEPTH_Y / 2); // ~344
 
   const pad = Math.max(10, Math.min(120, plotPadding));
@@ -913,6 +915,8 @@ export const TallBuilding: React.FC<TallBuildingProps> = ({
       {/* ==================================================================== */}
       {/* 3. MAIN BUILDING BODY & FACADES (Front Dominant, Left Narrow)         */}
       {/* ==================================================================== */}
+      {/* Front and right side: the body is drawn with a left wall, so it is mirrored round the front. */}
+      <MirrorX cx={FRONT_X_LEFT + FRONT_W / 2}>
       {renderBuildingBody()}
 
       {/* ==================================================================== */}
@@ -953,6 +957,8 @@ export const TallBuilding: React.FC<TallBuildingProps> = ({
           strokeWidth="1.2" 
         />
       </g>
+
+      </MirrorX>
 
       {/* ==================================================================== */}
       {/* 5. OPTIONAL BUILDING BADGE / NAME                                    */}

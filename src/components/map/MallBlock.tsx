@@ -219,14 +219,14 @@ export const MallBlock: React.FC<MallBlockProps> = ({
 
       {/* ==================================================================== */}
       {/* 4. DUBAI MALL ATRIUM COMPLEX (Strictly following FloorTile Isometry)  */}
-      {/* (Front visible, Left side slightly visible, Camera angle from top)   */}
+      {/* (Front visible, right side slightly visible, camera angle from top)   */}
       {/* ==================================================================== */}
 
       {/* --- LEVEL 1: GROUND & ATRIUM COMPLEX --- */}
       <g>
-        {/* Left Side Facade (Recedes along FloorTile depth: dx=+0.2355*dy) */}
+        {/* Right Side Facade (Recedes along FloorTile depth: dx=+0.2355*dy) */}
         <polygon 
-          points="46,168 53,138 53,92 46,122" 
+          points="276,171.8 283,141.8 283,95.8 276,125.8" 
           fill="url(#mallLeftFacade)" 
           stroke="#334155" 
           strokeWidth="1" 
@@ -287,9 +287,9 @@ export const MallBlock: React.FC<MallBlockProps> = ({
 
       {/* --- LEVEL 2: UPPER FASHION AVENUE TIER --- */}
       <g>
-        {/* Left Side Facade (FloorTile depth slant: dx=+0.2355*dy) */}
+        {/* Right Side Facade (FloorTile depth slant: dx=+0.2355*dy) */}
         <polygon 
-          points="56,114 62,88 62,46 56,72" 
+          points="266,117.5 272,91.5 272,49.5 266,75.5" 
           fill="url(#mallLeftFacade)" 
           stroke="#334155" 
           strokeWidth="1" 

@@ -30,6 +30,8 @@ import { gameAudio } from "@/utils/gameAudio";
 export default function CourseViewerPage({ params }: { params: Promise<{ courseId: string }> }) {
   const { courseId } = use(params);
   const course = getCourse(courseId);
+  // What one module is called: "Week" for courses, "Chapter" for books.
+  const unit = course?.unitLabel ?? "Week";
   const { citizen } = useCitizen();
 
   const [activeTab, setActiveTab] = useState<"syllabus" | "lesson" | "exam">("syllabus");
@@ -290,7 +292,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-black text-slate-300 uppercase tracking-wider flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-purple-400" />
-                  <span>Curriculum Breakdown ({course.lessons.length} Weeks)</span>
+                  <span>Curriculum Breakdown ({course.lessons.length} {unit}s)</span>
                 </h2>
                 <span className="text-[11px] font-bold text-purple-300 bg-purple-950/60 border border-purple-500/30 px-2.5 py-0.5 rounded-full">
                   {course.duration || "4 Weeks"}
@@ -325,12 +327,12 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
                               isDone ? "bg-emerald-500 text-slate-950" : "bg-white/10 text-white"
                             }`}
                           >
-                            {isDone ? "✓" : `W${lesson.lessonNumber}`}
+                            {isDone ? "✓" : `${unit[0]}${lesson.lessonNumber}`}
                           </div>
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] font-black uppercase tracking-wider text-purple-300">
-                                Week {lesson.lessonNumber}
+                                {unit} {lesson.lessonNumber}
                               </span>
                               {isDone && (
                                 <span className="text-[9px] font-black uppercase text-emerald-400 bg-emerald-500/20 px-1.5 py-0.2 rounded">
@@ -389,7 +391,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
             {/* Lesson Module Selector */}
             <div className="flex items-center justify-between text-xs">
               <span className="font-black text-purple-300 uppercase tracking-wider">
-                Week {activeLesson.lessonNumber} of {course.lessons.length}
+                {unit} {activeLesson.lessonNumber} of {course.lessons.length}
               </span>
               <div className="flex items-center gap-1.5">
                 {course.lessons.map((l, i) => (
@@ -406,7 +408,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
                       selectedLessonIdx === i ? "bg-purple-600 text-white shadow-md shadow-purple-600/30" : "bg-white/10 text-slate-400 hover:text-white"
                     }`}
                   >
-                    Week {l.lessonNumber}
+                    {unit} {l.lessonNumber}
                   </button>
                 ))}
               </div>
@@ -488,7 +490,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-black text-indigo-400 uppercase tracking-wider">
                     <Wrench className="w-4 h-4" />
-                    <span>Week {activeLesson.lessonNumber} Practical Lab</span>
+                    <span>{unit} {activeLesson.lessonNumber} Practical Lab</span>
                   </div>
                   <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
                     Hands-on Lab
@@ -561,7 +563,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
                 <div className="flex items-center gap-2">
                   <HelpCircle className="w-4 h-4 text-purple-400" />
                   <h4 className="text-sm font-black text-white">
-                    Week {activeLesson.lessonNumber} Checkpoint Quiz ({activeLesson.quiz.length} Questions)
+                    {unit} {activeLesson.lessonNumber} Checkpoint Quiz ({activeLesson.quiz.length} {activeLesson.quiz.length === 1 ? "Question" : "Questions"})
                   </h4>
                 </div>
                 <span className="text-[11px] font-bold text-slate-400">70% Required to Pass</span>
@@ -626,7 +628,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
                     <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-xs text-emerald-300 font-bold flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
                         <CheckCircle className="w-4 h-4" />
-                        <span>Week Completed! You unlocked next week&apos;s curriculum.</span>
+                        <span>{unit} completed! You unlocked the next {unit.toLowerCase()}.</span>
                       </span>
                       {selectedLessonIdx < course.lessons.length - 1 && (
                         <button
@@ -639,7 +641,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
                           }}
                           className="px-3 py-1 bg-emerald-500 text-slate-950 rounded-lg font-black text-xs"
                         >
-                          Next Week →
+                          Next {unit} →
                         </button>
                       )}
                     </div>

@@ -90,7 +90,7 @@ function floorAds(): CoastEntity[] {
     const cx = s.x0 + w / 2;
     return {
       id: `floor-ad-mosaic-${s.key}`, name: "Floor ads", type: "floor-mosaic", section: s.key,
-      virtualX: Math.round(cx), virtualY: Math.round(e11(cx) + MOSAIC_OFFSET), width: w, height: h, rotate: 0.95, generated: true, interactive: true,
+      virtualX: Math.round(cx), virtualY: Math.round(e11(cx) + MOSAIC_OFFSET), width: w, height: h, generated: true, interactive: true,
     };
   });
 }

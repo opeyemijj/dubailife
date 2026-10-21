@@ -1,3 +1,4 @@
+import { MirrorX } from './mirror';
 import React from 'react';
 
 export interface BurjKhalifaProps {
@@ -160,6 +161,8 @@ export const BurjKhalifa: React.FC<BurjKhalifaProps> = ({
       {/* (Front visible, Left side slightly visible, Camera angle from top)   */}
       {/* ==================================================================== */}
 
+      {/* Front and right side: the tower is drawn with its left faces showing, so it is mirrored round its spine. */}
+      <MirrorX cx={160}>
       {/* --- CENTRAL PODIUM ISLAND --- */}
       <g>
         {/* Left Side Facade (Along FloorTile depth vector: dx=+0.2355*dy) */}
@@ -424,6 +427,7 @@ export const BurjKhalifa: React.FC<BurjKhalifaProps> = ({
         <circle cx="160" cy="16" r="1.5" fill="#ef4444" />
       </g>
       </g>
+      </MirrorX>
 
       {/* ==================================================================== */}
       {/* 4. PRESTIGE GOLD EMBOSSED BADGE                                      */}
