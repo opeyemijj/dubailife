@@ -1,6 +1,7 @@
 "use client";
 
 import type { PushPayload } from "./types";
+import { supabase } from "@/lib/supabase/client";
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BCXeb8s6jaMrCw--SxVn5zpJodf79vyXQFYF35USsQ5nuVy5rWRVyLXhTagx5ZFRJxquq-u5DAtloZkLQHRaCkc";
 
@@ -41,17 +42,20 @@ export function getNotificationPermission(): NotificationPermission | "unsupport
 /** Subscribes this device to push notifications and saves the subscription on the server. */
 export async function subscribeToPush(userId?: string): Promise<{ ok: boolean; error?: string }> {
   if (!isPushSupported()) {
-    return { ok: false, error: "Push notifications are not supported by this browser." };
+    return {
+      ok: false,
+      error: "Push notifications are not supported in this browser view. On iOS, add the game to your Home Screen first.",
+    };
   }
 
   try {
-    // 1. Request permission if not already granted
+    // 1. Request permission if not already granted (must be in response to user gesture on iOS)
     let permission = Notification.permission;
     if (permission === "default") {
       permission = await Notification.requestPermission();
     }
     if (permission !== "granted") {
-      return { ok: false, error: "Notification permission was denied." };
+      return { ok: false, error: "Notification permission was denied. Check iPhone Settings → Notifications → Dubai Life." };
     }
 
     // 2. Wait for service worker to be ready
@@ -72,21 +76,46 @@ export async function subscribeToPush(userId?: string): Promise<{ ok: boolean; e
       });
     }
 
-    // 4. Send subscription to our backend
     const subJson = sub.toJSON();
-    const res = await fetch("/api/push/subscribe", {
+
+    // 4. Save directly via authenticated browser client so it's guaranteed in DB
+    if (userId && sub.endpoint && subJson.keys?.p256dh && subJson.keys?.auth) {
+      try {
+        const record = {
+          endpoint: sub.endpoint,
+          expirationTime: sub.expirationTime,
+          keys: {
+            p256dh: subJson.keys.p256dh,
+            auth: subJson.keys.auth,
+          },
+          userAgent: navigator.userAgent,
+          updatedAt: new Date().toISOString(),
+        };
+
+        const { data: prof } = await supabase().from("profiles").select("citizen").eq("id", userId).maybeSingle();
+        const citizenData = (prof?.citizen as Record<string, unknown>) || {};
+        const existing = Array.isArray(citizenData.push_subscriptions) ? citizenData.push_subscriptions : [];
+        const filtered = existing.filter((s: { endpoint?: string }) => s.endpoint !== record.endpoint);
+        filtered.push(record);
+
+        await supabase()
+          .from("profiles")
+          .update({ citizen: { ...citizenData, push_subscriptions: filtered.slice(-5) } })
+          .eq("id", userId);
+      } catch (err) {
+        console.error("[Direct push save failed]", err);
+      }
+    }
+
+    // 5. Also register with server API
+    await fetch("/api/push/subscribe", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         subscription: subJson,
         userId,
       }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      return { ok: false, error: err.error || "Failed to register subscription with server." };
-    }
+    }).catch(() => {});
 
     try {
       localStorage.setItem("dl_push_enabled", "true");
@@ -108,6 +137,16 @@ export async function unsubscribeFromPush(userId?: string): Promise<{ ok: boolea
     if (sub) {
       const endpoint = sub.endpoint;
       await sub.unsubscribe();
+
+      if (userId) {
+        try {
+          const { data: prof } = await supabase().from("profiles").select("citizen").eq("id", userId).maybeSingle();
+          const citizenData = (prof?.citizen as Record<string, unknown>) || {};
+          const existing = Array.isArray(citizenData.push_subscriptions) ? citizenData.push_subscriptions : [];
+          const filtered = existing.filter((s: { endpoint?: string }) => s.endpoint !== endpoint);
+          await supabase().from("profiles").update({ citizen: { ...citizenData, push_subscriptions: filtered } }).eq("id", userId);
+        } catch {}
+      }
 
       await fetch("/api/push/subscribe", {
         method: "DELETE",

@@ -388,16 +388,27 @@ function PushSettingsCard({ me }: { me: string }) {
   const [supported, setSupported] = useState(false);
   const [loading, setLoading] = useState(false);
   const [testSent, setTestSent] = useState(false);
+  const [testMessage, setTestMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setSupported(isPushSupported());
     setPermission(getNotificationPermission());
   }, []);
 
-  if (!supported) return null;
+  if (!supported) {
+    return (
+      <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-3 space-y-1 text-xs">
+        <div className="font-bold text-amber-300">📱 Home Screen Required on iPhone</div>
+        <p className="text-white/70 text-[11px]">
+          To receive push notifications on iOS, tap the browser <b>Share</b> button and select <b>Add to Home Screen</b>. Then open the app from your Home Screen!
+        </p>
+      </div>
+    );
+  }
 
   const handleToggle = async () => {
     setLoading(true);
+    setTestMessage(null);
     if (permission === "granted") {
       await unsubscribeFromPush(me);
       setPermission("default");
@@ -405,6 +416,8 @@ function PushSettingsCard({ me }: { me: string }) {
       const res = await subscribeToPush(me);
       if (res.ok) {
         setPermission("granted");
+      } else {
+        alert(res.error || "Permission could not be enabled.");
       }
     }
     setLoading(false);
@@ -412,8 +425,15 @@ function PushSettingsCard({ me }: { me: string }) {
 
   const handleTest = async () => {
     setTestSent(true);
-    await testPushNotification(me);
-    setTimeout(() => setTestSent(false), 3000);
+    setTestMessage("Sending test notification to your device…");
+    const res = await testPushNotification(me);
+    if (res?.ok && res?.result?.sent > 0) {
+      setTestMessage("Delivered! Check your lock screen / notification banner.");
+    } else {
+      const err = res?.error || (res?.result?.failed ? "Delivery failed by push gateway." : "No registered device found. Try turning notifications off then on again.");
+      setTestMessage(err);
+    }
+    setTimeout(() => setTestSent(false), 5000);
   };
 
   return (
@@ -441,14 +461,19 @@ function PushSettingsCard({ me }: { me: string }) {
         Receive lock screen & banner pop-ups for friend requests, direct messages, and door knocks on your phone.
       </p>
       {permission === "granted" && (
-        <div className="flex items-center gap-2 pt-1 border-t border-white/5">
+        <div className="space-y-1.5 pt-1 border-t border-white/5">
           <button
             onClick={handleTest}
             disabled={testSent}
             className="text-[11px] font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1 active:scale-95 transition"
           >
-            {testSent ? "Test sent! Check notification bar" : "Send test notification"}
+            {testSent ? "Testing…" : "Send test notification"}
           </button>
+          {testMessage && (
+            <p className="text-[10px] text-sky-200/80 bg-sky-950/40 px-2 py-1 rounded-lg">
+              {testMessage}
+            </p>
+          )}
         </div>
       )}
     </div>

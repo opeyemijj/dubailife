@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
-import { deletePushSubscription, savePushSubscription } from "@/lib/push/server";
 import type { PushSubscriptionRecord } from "@/lib/push/types";
 
 export async function POST(req: Request) {
@@ -28,10 +27,38 @@ export async function POST(req: Request) {
         auth: subscription.keys.auth,
       },
       userAgent: req.headers.get("user-agent") || undefined,
+      updatedAt: new Date().toISOString(),
     };
 
-    const res = await savePushSubscription(userId, record);
-    return NextResponse.json(res);
+    // 1. Try push_subscriptions table
+    try {
+      await supabase.from("push_subscriptions").upsert(
+        {
+          user_id: userId,
+          endpoint: record.endpoint,
+          p256dh: record.keys.p256dh,
+          auth: record.keys.auth,
+          user_agent: record.userAgent || null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "endpoint" }
+      );
+    } catch {}
+
+    // 2. Save in profiles.citizen.push_subscriptions (authenticated update via session)
+    try {
+      const { data: profile } = await supabase.from("profiles").select("citizen").eq("id", userId).maybeSingle();
+      const citizen = (profile?.citizen as Record<string, unknown>) || {};
+      const existing = Array.isArray(citizen.push_subscriptions) ? (citizen.push_subscriptions as PushSubscriptionRecord[]) : [];
+      const filtered = existing.filter((s) => s.endpoint !== record.endpoint);
+      filtered.push(record);
+
+      await supabase.from("profiles").update({ citizen: { ...citizen, push_subscriptions: filtered.slice(-5) } }).eq("id", userId);
+    } catch (e) {
+      console.error("[Subscribe profile update error]", e);
+    }
+
+    return NextResponse.json({ ok: true });
   } catch (err: unknown) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "Failed to save subscription" }, { status: 500 });
   }
@@ -50,10 +77,20 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
-    await deletePushSubscription(userId, endpoint);
+    try {
+      await supabase.from("push_subscriptions").delete().eq("user_id", userId).eq("endpoint", endpoint);
+    } catch {}
+
+    try {
+      const { data: profile } = await supabase.from("profiles").select("citizen").eq("id", userId).maybeSingle();
+      const citizen = (profile?.citizen as Record<string, unknown>) || {};
+      const existing = Array.isArray(citizen.push_subscriptions) ? (citizen.push_subscriptions as PushSubscriptionRecord[]) : [];
+      const filtered = existing.filter((s) => s.endpoint !== endpoint);
+      await supabase.from("profiles").update({ citizen: { ...citizen, push_subscriptions: filtered } }).eq("id", userId);
+    } catch {}
+
     return NextResponse.json({ ok: true });
   } catch (err: unknown) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "Failed to remove subscription" }, { status: 500 });
   }
 }
-

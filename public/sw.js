@@ -3,7 +3,7 @@
 // - Build files, icons and 3D models: kept after the first visit, refreshed in the background.
 // - Live data (Supabase, Mixcloud, YouTube, APIs) is never cached.
 // - Push: handles background push notifications for friend requests, messages, money, knocks.
-const VERSION = "v2";
+const VERSION = "v3";
 const STATIC = `dl-static-${VERSION}`;
 const OFFLINE = "/offline.html";
 
@@ -45,38 +45,41 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
-// --- Web Push Notifications ---
+// --- Web Push Notifications (iOS & Android Compatible) ---
 
 self.addEventListener("push", (event) => {
-  if (!event.data) return;
-
-  let payload = {};
-  try {
-    payload = event.data.json();
-  } catch {
-    payload = { title: "Dubai Life", body: event.data.text() };
+  let payload = { title: "Dubai Life", body: "You have a new alert in Dubai Life." };
+  if (event.data) {
+    try {
+      payload = event.data.json();
+    } catch {
+      payload = { title: "Dubai Life", body: event.data.text() };
+    }
   }
 
   const title = payload.title || "Dubai Life";
+  // Clean notification options: iOS Safari strictly requires clean options (no invalid actions or unsupported properties)
   const options = {
-    body: payload.body || "You have a new alert in Dubai Life.",
+    body: payload.body || "New notification",
     icon: payload.icon || "/brand/icon-192.png",
     badge: payload.badge || "/brand/icon-192.png",
     tag: payload.tag || `dl-${Date.now()}`,
     data: {
       url: payload.url || "/phone",
-      timestamp: Date.now(),
-      ...payload.data,
     },
-    vibrate: [120, 80, 120],
-    renotify: true,
-    requireInteraction: payload.requireInteraction ?? false,
-    actions: payload.actions || [
-      { action: "open", title: "Open" },
-    ],
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    self.registration
+      .showNotification(title, options)
+      .catch(() => {
+        // Fallback for minimal options if OS rejects any field
+        return self.registration.showNotification(title, {
+          body: options.body,
+          icon: "/brand/icon-192.png",
+        });
+      })
+  );
 });
 
 self.addEventListener("notificationclick", (event) => {
@@ -85,7 +88,7 @@ self.addEventListener("notificationclick", (event) => {
 
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
-      // If a window is already open, focus it and navigate
+      // Focus existing window and navigate
       for (const client of windowClients) {
         if ("focus" in client) {
           if ("navigate" in client) {
@@ -94,7 +97,7 @@ self.addEventListener("notificationclick", (event) => {
           return client.focus();
         }
       }
-      // Otherwise open a new window
+      // Or open a new window
       if (clients.openWindow) {
         return clients.openWindow(targetUrl);
       }
