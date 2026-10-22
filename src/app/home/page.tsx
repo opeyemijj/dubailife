@@ -450,6 +450,7 @@ export default function HomePage() {
 
           <div className="bg-amber-50 p-3.5 rounded-2xl border border-amber-200 text-xs font-semibold text-amber-900 leading-relaxed">
             🌅 <strong>Your first day:</strong> plan your budget, work a shift, pass a lesson and add a friend. The checklist in the corner pays a bonus when you finish.
+            <button onClick={() => router.push("/guide")} className="block mt-1.5 font-black text-sky-700">📖 How Dubai works: visas, jobs and prizes ›</button>
           </div>
 
           <div className="space-y-2 pt-2">

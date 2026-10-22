@@ -1,0 +1,110 @@
+{
+  "_note": "How life in Come To Dubai works. Shown as cards in onboarding (the 'Your Dubai' step) and in full on /guide. Keep in step with the design spec and the game's rules.",
+  "intro": "You've just landed at DXB with AED 50,000 and a 30-day visit visa. Here's how to build a life here.",
+  "tournament": { "cashFrom": "2027-01-01T00:00:00+04:00", "cashAed": 5000, "nonCash": "a Dubai experience for two" },
+  "sections": [
+    {
+      "id": "visa",
+      "icon": "🛂",
+      "title": "Beat the visa clock",
+      "summary": "You arrive on a 30-day visit visa. Move up the ladder before it runs out.",
+      "points": [
+        "🛬 Visit visa (30 days): where everyone starts. The clock only runs on days you play; overstaying costs AED 50 a day.",
+        "🎓 Student visa (90 days): graduate from a course in Academic City.",
+        "💼 Employment visa (2 years): get a job on the Job Board or at a shop or venture.",
+        "🧑‍💻 Freelance visa (5 years): earn AED 360,000 and hold a degree.",
+        "🌟 Golden Visa (10 years): own AED 2,000,000 of property bought with money you earned, or graduate with honours and run a venture with staff."
+      ],
+      "cta": { "label": "See your visa", "action": "visa" }
+    },
+    {
+      "id": "money",
+      "icon": "💰",
+      "title": "Make your money last",
+      "summary": "Living costs come out at 09:00 GST on days you play. Watch your runway.",
+      "points": [
+        "Your Blueprint sets where you live, how you get around, your phone plan, gym and money sent home.",
+        "Runway = your wallet ÷ your daily costs. Under 14 days, the Expat Trap warning appears.",
+        "Keep 90+ days of runway and you earn the Financial Discipline Yield every week.",
+        "Away for a while? You're charged for at most 3 days, and your visa clock waits for you."
+      ],
+      "cta": { "label": "Plan your budget", "action": "visa" }
+    },
+    {
+      "id": "earn",
+      "icon": "💼",
+      "title": "Earn a living",
+      "summary": "Get hired today, then build your own business with friends.",
+      "points": [
+        "City companies on the Job Board hire on the spot. Better jobs need a course, a degree or a driving licence.",
+        "Work one shift a day; wages are paid every Friday at 17:00 GST.",
+        "Start a venture (from a karak café to a yacht charter), invite friends as partners, post jobs and hire other players.",
+        "Qualified staff make a venture earn up to 3× more."
+      ],
+      "cta": { "label": "Open the Job Board", "href": "/jobs" }
+    },
+    {
+      "id": "learn",
+      "icon": "🎓",
+      "title": "Learn and level up",
+      "summary": "Study in Academic City and pass the driving test to unlock better jobs and visas.",
+      "points": [
+        "Brain University, Crescent and Falcon universities, and the Foundation Academy: one new lesson a day per course.",
+        "Graduating unlocks the student visa and raises your pay; books are summarised chapter by chapter.",
+        "The Driving Academy: eye test, theory and Smart Yard parking. A licence unlocks cars and driving jobs.",
+        "Certificates are in-game achievements, not accredited qualifications."
+      ],
+      "cta": { "label": "Visit Academic City", "href": "/academics" }
+    },
+    {
+      "id": "safety",
+      "icon": "🛡️",
+      "title": "Spot the scams",
+      "summary": "Scam calls and texts will try to trick you. Report them for a bounty.",
+      "points": [
+        "A few times a week, a fake call or text arrives on your in-game phone (always marked SIMULATION).",
+        "Report it to e-Crime for an AED 500–1,000 bounty. Fall for it and you lose up to 10% of your wallet (never more than AED 5,000).",
+        "Every scam ends with the red flags and what the real version looks like."
+      ],
+      "cta": { "label": "Try the scam check", "href": "/scam-check" }
+    },
+    {
+      "id": "people",
+      "icon": "🤝",
+      "title": "Make friends",
+      "summary": "Meet players in venues, share a flat, team up and earn together.",
+      "points": [
+        "Tap anyone in a venue to chat, wave, dance, buy them a drink or send money.",
+        "Choose a shared bed space and you're matched with roommates.",
+        "Friend quests: you and a friend both score 100 points in a week and you each get AED 2,000.",
+        "Invite friends: you both get AED 10,000 once they've played 3 days."
+      ],
+      "cta": { "label": "Invite a friend", "action": "people" }
+    },
+    {
+      "id": "compete",
+      "icon": "🏆",
+      "title": "Compete and win",
+      "summary": "Everything you do scores points for the weekly league and the monthly tournament.",
+      "points": [
+        "Points come from lessons, scam reports, shifts, multiplayer wins and healthy days, never from buying.",
+        "Weekly leagues of 30 players: the top 7 move up to the next tier.",
+        "The monthly tournament winner gets {prize}. Free to enter, 21+, skill only.",
+        "The season pass and Dubai Plus add titles, frames and badges for your profile."
+      ],
+      "cta": { "label": "See the tournament", "href": "/tournament" }
+    },
+    {
+      "id": "wellbeing",
+      "icon": "✨",
+      "title": "Stay well",
+      "summary": "Eat, rest, have fun and see friends. Feeling great pays.",
+      "points": [
+        "Your needs (hunger, energy, fun, social, hygiene) show in the dock at the top.",
+        "Above 85% you're a Peak Performer: better pay and faster learning.",
+        "Below 30% you burn out and lose your bonuses until you recover."
+      ],
+      "cta": { "label": "Check your needs", "action": "needs" }
+    }
+  ]
+}

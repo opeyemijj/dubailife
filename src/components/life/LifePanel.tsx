@@ -534,6 +534,7 @@ function SettingsTab({ onClose, onProfile }: { onClose: () => void; onProfile: (
       </button>
       <button onClick={() => onProfile()} className="w-full text-left flex items-center gap-3 rounded-3xl bg-slate-100/80 p-4 font-bold">👤 <span className="flex-1">Profile & look</span>›</button>
       <Link href="/wallet" onClick={onClose} className="flex items-center gap-3 rounded-3xl bg-slate-100/80 p-4 font-bold">💳 <span className="flex-1">Wallet</span>›</Link>
+      <Link href="/guide" onClick={onClose} className="flex items-center gap-3 rounded-3xl bg-amber-50 p-4 font-bold">📖 <span className="flex-1">How Dubai works<span className="block text-xs font-semibold text-slate-500">Visas, money, jobs, prizes and more</span></span>›</Link>
       <div className="hidden sm:flex items-center gap-3 rounded-3xl bg-slate-100/80 p-4 text-sm text-slate-600">⌨️ <span className="flex-1">Press <kbd className="px-1.5 py-0.5 rounded bg-white font-mono font-bold">S</kbd> anywhere to open this panel, <kbd className="px-1.5 py-0.5 rounded bg-white font-mono font-bold">?</kbd> for all shortcuts.</span></div>
       <BlockedPlayers />
       <button onClick={() => { onClose(); void signOut(); }} className="w-full flex items-center justify-center gap-2 h-12 rounded-2xl bg-rose-50 text-rose-600 font-black text-sm mt-3"><LogOut className="w-4 h-4" /> Log out</button>

@@ -105,6 +105,7 @@ export function FirstDay() {
               return <li key={s.id}>{ok ? <div className={cls}>{body}</div> : "href" in s ? <Link href={s.href!} onClick={() => gameAudio.playClickSound()} className={cls}>{body}</Link> : <button onClick={go} className={cls}>{body}</button>}</li>;
             })}
           </ol>
+          <Link href="/guide" className="block text-center text-xs font-black text-sky-600">📖 How Dubai works: visas, jobs, prizes ›</Link>
           {ready && <button onClick={claim} className="w-full h-11 rounded-2xl bg-amber-400 text-slate-950 font-black">Claim AED {(status.reward ?? 0).toLocaleString()}</button>}
           {paid > 0 && <p className="text-center text-sm font-black text-emerald-700">+AED {paid.toLocaleString()} added to your wallet 🎉</p>}
           {paid > 0 && <ShareButton moment="first-day" text="I survived my first day in Dubai 🌅" className="w-full h-10 rounded-2xl bg-sky-500 text-white text-sm" />}
