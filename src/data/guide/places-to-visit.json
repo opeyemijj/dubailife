@@ -1,0 +1,760 @@
+{
+  "_note": "Discover → Places to visit: every place in the city (and each club, bar and lounge inside hotels and malls) with what to do, where and why. 'id' is a place id, or 'placeId/venueId' for a venue inside one. A place ticks off once you've walked into it.",
+  "categories": [
+    "Clubs & lounges",
+    "Bars",
+    "Landmarks",
+    "Fun & shows",
+    "Beaches & parks",
+    "Shopping",
+    "Food",
+    "Culture",
+    "Hotels & pools"
+  ],
+  "places": [
+    {
+      "id": "enish-dubai",
+      "category": "Clubs & lounges",
+      "icon": "🍲",
+      "where": "The H Dubai, Sheikh Zayed Road",
+      "what": "Enjoy good food, pop bottles and dance with friends.",
+      "why": "Jollof, suya and Afrobeats: Dubai's favourite Nigerian night out."
+    },
+    {
+      "id": "gambachi-social-club",
+      "category": "Clubs & lounges",
+      "icon": "🍾",
+      "where": "The H Dubai, Sheikh Zayed Road",
+      "what": "Book a VIP table, catch the live show and dance till late.",
+      "why": "International DJs and a crowd that comes to party."
+    },
+    {
+      "id": "blu-dubai",
+      "category": "Clubs & lounges",
+      "icon": "🪩",
+      "where": "Downtown Dubai",
+      "what": "Dance to hip-hop and R&B with your crew.",
+      "why": "One of Downtown's biggest club nights and the easiest place to meet new people."
+    },
+    {
+      "id": "armani-prive",
+      "category": "Clubs & lounges",
+      "icon": "🖤",
+      "where": "Armani Hotel, Burj Khalifa",
+      "what": "Dress up, get on the list and party in style.",
+      "why": "Downtown's most glamorous club, inside the world's tallest tower."
+    },
+    {
+      "id": "one-oak",
+      "category": "Clubs & lounges",
+      "icon": "🎧",
+      "where": "Downtown Dubai",
+      "what": "Party to celebrity DJs on the big nights.",
+      "why": "Where the city goes when a famous name is on the decks."
+    },
+    {
+      "id": "ting-irie",
+      "category": "Clubs & lounges",
+      "icon": "🇯🇲",
+      "where": "Downtown Dubai",
+      "what": "Eat Jamaican jerk, then dance to reggae and dancehall.",
+      "why": "The most fun, laid-back night out in Downtown."
+    },
+    {
+      "id": "kiza-difc",
+      "category": "Clubs & lounges",
+      "icon": "🥁",
+      "where": "Emirates Financial Towers, DIFC",
+      "what": "Dine, then dance to Afrobeats and amapiano.",
+      "why": "A luxury African lounge with a big, friendly crowd."
+    },
+    {
+      "id": "babylon-difc",
+      "category": "Clubs & lounges",
+      "icon": "🎭",
+      "where": "Gate Village, DIFC",
+      "what": "Have dinner with a cabaret show, then stay for the party.",
+      "why": "A theatrical night out you'll talk about all week."
+    },
+    {
+      "id": "sphere-zaabeel",
+      "category": "Clubs & lounges",
+      "icon": "🌌",
+      "where": "The Link at One Za'abeel",
+      "what": "Party 100 m above the city.",
+      "why": "The most futuristic club view in Dubai."
+    },
+    {
+      "id": "the-avenue",
+      "category": "Clubs & lounges",
+      "icon": "🏮",
+      "where": "Shangri-La, 42nd floor, Sheikh Zayed Road",
+      "what": "Sip cocktails on the terrace above Sheikh Zayed Road.",
+      "why": "An oriental-style lounge with skyline views."
+    },
+    {
+      "id": "vibz-dubai",
+      "category": "Clubs & lounges",
+      "icon": "🎶",
+      "where": "Fairmont Dubai, Sheikh Zayed Road",
+      "what": "Dance to hip-hop, Afro, Bollywood and R&B.",
+      "why": "Every crowd has a night here."
+    },
+    {
+      "id": "buddha-bar",
+      "category": "Clubs & lounges",
+      "icon": "🪷",
+      "where": "Grosvenor House, Dubai Marina",
+      "what": "Dine under the giant Buddha and stay for the DJ.",
+      "why": "A moody, stylish night in the Marina."
+    },
+    {
+      "id": "bla-bla-dubai",
+      "category": "Clubs & lounges",
+      "icon": "🎤",
+      "where": "JBR beachfront",
+      "what": "Hop between bars, catch a live band and chill by the pool.",
+      "why": "Several bars in one place: perfect for a big group."
+    },
+    {
+      "id": "w-dubai-the-palm/sobe",
+      "category": "Clubs & lounges",
+      "icon": "🌇",
+      "where": "W Dubai – The Palm",
+      "what": "Watch the sunset with a DJ on the rooftop.",
+      "why": "The Palm's best sundowner view of Ain Dubai."
+    },
+    {
+      "id": "five-palm-jumeirah/the-penthouse",
+      "category": "Clubs & lounges",
+      "icon": "🏙️",
+      "where": "FIVE Palm Jumeirah",
+      "what": "Party on the rooftop with Marina views.",
+      "why": "FIVE is the Palm's party hotel; this is where its nights end."
+    },
+    {
+      "id": "atlantis-the-royal/ling-ling",
+      "category": "Clubs & lounges",
+      "icon": "🥢",
+      "where": "Atlantis The Royal, Palm Jumeirah",
+      "what": "Late-night Asian bites and DJs.",
+      "why": "A sleek lounge in the Palm's newest icon."
+    },
+    {
+      "id": "pier-7/pier-7-rooftop-lounge",
+      "category": "Clubs & lounges",
+      "icon": "🌃",
+      "where": "Pier 7, Dubai Marina",
+      "what": "Cocktails on the roof over the Marina.",
+      "why": "Seven floors of food below, the best view on top."
+    },
+    {
+      "id": "address-skyview",
+      "category": "Clubs & lounges",
+      "icon": "🥂",
+      "where": "Address Sky View, Downtown",
+      "what": "Head up to the sky bridge lounge for drinks with a view.",
+      "why": "Downtown from above, Burj Khalifa right in front of you."
+    },
+    {
+      "id": "barasti",
+      "category": "Bars",
+      "icon": "🍹",
+      "where": "Dubai Marina beachfront",
+      "what": "Sundowners on the sand, live sport and DJs.",
+      "why": "Dubai's classic beach bar: everyone ends up here."
+    },
+    {
+      "id": "lock-stock-barrel-jbr",
+      "category": "Bars",
+      "icon": "🎸",
+      "where": "JBR",
+      "what": "Live bands, DJs and a packed weekend crowd.",
+      "why": "Big energy and easy to make friends."
+    },
+    {
+      "id": "hurricanes-grill",
+      "category": "Bars",
+      "icon": "🍖",
+      "where": "Across from JBR",
+      "what": "Ribs, steaks and the big game on the screens.",
+      "why": "The spot to watch sport with friends."
+    },
+    {
+      "id": "burj-al-arab/gilt",
+      "category": "Bars",
+      "icon": "✨",
+      "where": "Burj Al Arab, top of the sail",
+      "what": "A drink in the gold-lined bar at the very top.",
+      "why": "Once-in-a-lifetime glamour."
+    },
+    {
+      "id": "burj-al-arab/skyview-bar",
+      "category": "Bars",
+      "icon": "🫖",
+      "where": "Burj Al Arab, 27th floor",
+      "what": "Afternoon tea or cocktails high above the Gulf.",
+      "why": "The most iconic window seat in Dubai."
+    },
+    {
+      "id": "madinat-jumeirah/bahri-bar",
+      "category": "Bars",
+      "icon": "🌅",
+      "where": "Mina A'Salam, Madinat Jumeirah",
+      "what": "Terrace drinks facing the Burj Al Arab.",
+      "why": "A golden-hour favourite."
+    },
+    {
+      "id": "madinat-jumeirah/trader-vic-s",
+      "category": "Bars",
+      "icon": "🌺",
+      "where": "Madinat Jumeirah souk",
+      "what": "Tropical drinks and island food.",
+      "why": "The tiki classic for a fun group night."
+    },
+    {
+      "id": "madinat-jumeirah/mezzanine-bar-kitchen",
+      "category": "Bars",
+      "icon": "🍸",
+      "where": "Madinat Jumeirah souk",
+      "what": "A drink above the souk lanes.",
+      "why": "A cosy hideaway before or after the souk."
+    },
+    {
+      "id": "burj-khalifa",
+      "category": "Landmarks",
+      "icon": "🗼",
+      "where": "Downtown Dubai",
+      "what": "Ride up to the 124th, 125th or 148th floor.",
+      "why": "The world's tallest building and the view everyone posts."
+    },
+    {
+      "id": "dubai-fountain",
+      "category": "Landmarks",
+      "icon": "⛲",
+      "where": "Burj Lake, Downtown",
+      "what": "Watch the fountain dance in the evening.",
+      "why": "Free, every 30 minutes, and unforgettable."
+    },
+    {
+      "id": "dubai-frame",
+      "category": "Landmarks",
+      "icon": "🖼️",
+      "where": "Zabeel Park",
+      "what": "Walk the glass-floored bridge 150 m up.",
+      "why": "Old Dubai on one side, new Dubai on the other."
+    },
+    {
+      "id": "motf",
+      "category": "Landmarks",
+      "icon": "🔮",
+      "where": "Sheikh Zayed Road",
+      "what": "Explore life in 2071.",
+      "why": "The most beautiful building in the world, inside and out."
+    },
+    {
+      "id": "burj-al-arab",
+      "category": "Landmarks",
+      "icon": "⛵",
+      "where": "Its own island off Umm Suqeim",
+      "what": "Step inside the sail.",
+      "why": "The world-famous symbol of Dubai luxury."
+    },
+    {
+      "id": "the-palm-tower",
+      "category": "Landmarks",
+      "icon": "🌴",
+      "where": "Palm Jumeirah",
+      "what": "See the whole Palm from The View, then swim in the AURA sky pool.",
+      "why": "The best photo of the Palm you'll ever take."
+    },
+    {
+      "id": "dxb-international-airport",
+      "category": "Landmarks",
+      "icon": "✈️",
+      "where": "Dubai International Airport",
+      "what": "Explore the world's busiest international hub.",
+      "why": "Where your Dubai story began."
+    },
+    {
+      "id": "emirates-towers",
+      "category": "Landmarks",
+      "icon": "🏢",
+      "where": "Sheikh Zayed Road",
+      "what": "See the iconic twin towers next to the Museum of the Future.",
+      "why": "A Dubai skyline classic."
+    },
+    {
+      "id": "one-zaabeel",
+      "category": "Landmarks",
+      "icon": "🌉",
+      "where": "Za'abeel",
+      "what": "Cross The Link between the twin towers.",
+      "why": "The world's longest cantilevered building."
+    },
+    {
+      "id": "gevora",
+      "category": "Landmarks",
+      "icon": "🥇",
+      "where": "Sheikh Zayed Road",
+      "what": "Visit the world's tallest hotel.",
+      "why": "356 m of gold."
+    },
+    {
+      "id": "al-yaqoub",
+      "category": "Landmarks",
+      "icon": "🕰️",
+      "where": "Sheikh Zayed Road",
+      "what": "See Dubai's 'Big Ben' tower.",
+      "why": "A one-of-a-kind landmark on the strip."
+    },
+    {
+      "id": "dwtc",
+      "category": "Landmarks",
+      "icon": "🏛️",
+      "where": "Trade Centre",
+      "what": "Visit the historic Sheikh Rashid Tower.",
+      "why": "Where modern Dubai's skyline began."
+    },
+    {
+      "id": "zabeel-mosque",
+      "category": "Culture",
+      "icon": "🕌",
+      "where": "Za'abeel",
+      "what": "Visit the golden-domed grand mosque.",
+      "why": "Calm, beautiful and a window into Emirati culture."
+    },
+    {
+      "id": "difc-mosque",
+      "category": "Culture",
+      "icon": "🕋",
+      "where": "Gate Avenue, DIFC",
+      "what": "See the modern mosque's mashrabiya screens.",
+      "why": "Islamic architecture with a modern twist."
+    },
+    {
+      "id": "dubai-opera",
+      "category": "Culture",
+      "icon": "🎭",
+      "where": "Downtown Dubai",
+      "what": "Catch an opera, ballet or concert.",
+      "why": "A night of culture in a dhow-shaped hall."
+    },
+    {
+      "id": "dubai-aquarium",
+      "category": "Fun & shows",
+      "icon": "🦈",
+      "where": "The Dubai Mall",
+      "what": "Walk through the shark tunnel.",
+      "why": "10 million litres of sea life in the middle of a mall."
+    },
+    {
+      "id": "wild-wadi",
+      "category": "Fun & shows",
+      "icon": "🌊",
+      "where": "Next to Jumeirah Beach Hotel",
+      "what": "Brave the Jumeirah Sceirah drop slide.",
+      "why": "The most fun you can have in a day, right by the Burj Al Arab."
+    },
+    {
+      "id": "coca-cola-arena",
+      "category": "Fun & shows",
+      "icon": "🎤",
+      "where": "City Walk",
+      "what": "See a concert, a comedy show or a fight night.",
+      "why": "Dubai's biggest indoor arena."
+    },
+    {
+      "id": "atlantis-the-palm",
+      "category": "Fun & shows",
+      "icon": "🐠",
+      "where": "Tip of Palm Jumeirah",
+      "what": "Hit Aquaventure and The Lost Chambers.",
+      "why": "The Palm's pink icon, packed with things to do."
+    },
+    {
+      "id": "the-pointe",
+      "category": "Fun & shows",
+      "icon": "🎆",
+      "where": "Tip of the Palm",
+      "what": "Dinner facing Atlantis and the fountain show.",
+      "why": "A perfect date night spot."
+    },
+    {
+      "id": "madinat-jumeirah",
+      "category": "Fun & shows",
+      "icon": "🛶",
+      "where": "Umm Suqeim",
+      "what": "Ride an abra through the waterways, then explore 36 spots.",
+      "why": "A whole Arabian town of food, bars and shops."
+    },
+    {
+      "id": "dubai-mall",
+      "category": "Shopping",
+      "icon": "🛍️",
+      "where": "Downtown Dubai",
+      "what": "Shop for outfits and furniture, then catch the aquarium or ice rink.",
+      "why": "The world's most-visited mall, at the foot of the Burj."
+    },
+    {
+      "id": "souk-al-bahar",
+      "category": "Shopping",
+      "icon": "🏺",
+      "where": "Burj Lake, Downtown",
+      "what": "Wander the Arabian-style souk and dine with a fountain view.",
+      "why": "Old-Dubai charm right next to Downtown."
+    },
+    {
+      "id": "jbr",
+      "category": "Shopping",
+      "icon": "🏖️",
+      "where": "Jumeirah Beach Residence",
+      "what": "Stroll The Walk: cafés, shops and the beach.",
+      "why": "The Marina's favourite promenade."
+    },
+    {
+      "id": "bluewaters",
+      "category": "Shopping",
+      "icon": "🎡",
+      "where": "Bluewaters Island",
+      "what": "Ride Ain Dubai, then eat by the beach.",
+      "why": "The island with the world's biggest observation wheel."
+    },
+    {
+      "id": "dubai-marina-mall",
+      "category": "Shopping",
+      "icon": "⚓",
+      "where": "Dubai Marina",
+      "what": "Shop, catch a film and walk the marina.",
+      "why": "Everything in one place by the water."
+    },
+    {
+      "id": "palm-jumeirah-mall",
+      "category": "Shopping",
+      "icon": "🌴",
+      "where": "Palm Jumeirah",
+      "what": "Shop at the Palm's main mall.",
+      "why": "Right under The Palm Tower."
+    },
+    {
+      "id": "golden-mile-galleria",
+      "category": "Shopping",
+      "icon": "🛒",
+      "where": "Golden Mile, Palm Jumeirah",
+      "what": "Shop and dine on the terraces.",
+      "why": "A relaxed local hangout on the Palm."
+    },
+    {
+      "id": "timeout-market",
+      "category": "Food",
+      "icon": "🍔",
+      "where": "Souk Al Bahar, Downtown",
+      "what": "Try the city's best chefs in one food hall.",
+      "why": "Something for everyone, with a fountain view."
+    },
+    {
+      "id": "pier-7",
+      "category": "Food",
+      "icon": "🍽️",
+      "where": "Dubai Marina",
+      "what": "Pick a floor, pick a cuisine.",
+      "why": "Seven floors of restaurants over the Marina."
+    },
+    {
+      "id": "the-guild",
+      "category": "Food",
+      "icon": "🎹",
+      "where": "Downtown Dubai",
+      "what": "Lunch, drinks, dinner and a nightcap by the piano.",
+      "why": "One building for your whole evening."
+    },
+    {
+      "id": "zuma-difc",
+      "category": "Food",
+      "icon": "🍣",
+      "where": "Gate Village, DIFC",
+      "what": "Sushi and robata at the city's buzziest Japanese spot.",
+      "why": "An award-winner that's always packed."
+    },
+    {
+      "id": "amazonico-difc",
+      "category": "Food",
+      "icon": "🌿",
+      "where": "DIFC",
+      "what": "Dine in a three-storey rainforest.",
+      "why": "Latin American food in a jungle setting."
+    },
+    {
+      "id": "lpm-difc",
+      "category": "Food",
+      "icon": "🍅",
+      "where": "Gate Village, DIFC",
+      "what": "French Riviera bistro classics.",
+      "why": "A taste of the Mediterranean in DIFC."
+    },
+    {
+      "id": "club-vista-mare",
+      "category": "Food",
+      "icon": "🏝️",
+      "where": "Palm Jumeirah trunk",
+      "what": "Beachfront restaurants with sand underfoot.",
+      "why": "Lunch by the sea."
+    },
+    {
+      "id": "kite-beach",
+      "category": "Beaches & parks",
+      "icon": "🪁",
+      "where": "Jumeirah",
+      "what": "Work out, skate and watch the kitesurfers.",
+      "why": "Free, lively and great for your wellbeing."
+    },
+    {
+      "id": "sunset-beach",
+      "category": "Beaches & parks",
+      "icon": "🌅",
+      "where": "Umm Suqeim",
+      "what": "Catch the sunset behind the Burj Al Arab.",
+      "why": "The classic Dubai photo, for free."
+    },
+    {
+      "id": "jbr-the-beach",
+      "category": "Beaches & parks",
+      "icon": "🏝️",
+      "where": "Jumeirah Beach Residence",
+      "what": "Swim, sunbathe and grab a snack on The Walk.",
+      "why": "The Marina skyline from the sand."
+    },
+    {
+      "id": "palm-west-beach",
+      "category": "Beaches & parks",
+      "icon": "🏄",
+      "where": "Palm Jumeirah west shore",
+      "what": "Hop between beach clubs.",
+      "why": "A 1.6 km strip of beach life with Ain Dubai views."
+    },
+    {
+      "id": "jumeirah-public-beach",
+      "category": "Beaches & parks",
+      "icon": "🌊",
+      "where": "Jumeirah Road",
+      "what": "A free swim with lifeguards on duty.",
+      "why": "Easy, relaxed beach time."
+    },
+    {
+      "id": "jumeirah-beach-1",
+      "category": "Beaches & parks",
+      "icon": "🚶",
+      "where": "Jumeirah 1",
+      "what": "Walk the new boardwalk.",
+      "why": "Reopened in 2026 and beautiful at sunrise."
+    },
+    {
+      "id": "burj-park",
+      "category": "Beaches & parks",
+      "icon": "🧺",
+      "where": "Beside Burj Khalifa",
+      "what": "Picnic, work out or catch an event on the lawns.",
+      "why": "Green space with the best view in Downtown."
+    },
+    {
+      "id": "al-ittihad-park",
+      "category": "Beaches & parks",
+      "icon": "🏃",
+      "where": "Palm Jumeirah trunk",
+      "what": "Run the track or use the outdoor gym.",
+      "why": "A free way to boost your wellbeing."
+    },
+    {
+      "id": "address-downtown",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Downtown",
+      "what": "Have a drink at Neos on level 63.",
+      "why": "Classic Downtown luxury next to the Burj."
+    },
+    {
+      "id": "palace-downtown",
+      "category": "Hotels & pools",
+      "icon": "🏰",
+      "where": "Downtown",
+      "what": "Dine with a fountain view.",
+      "why": "Arabian palace style right on the lake."
+    },
+    {
+      "id": "atlantis-the-royal",
+      "category": "Hotels & pools",
+      "icon": "💎",
+      "where": "Palm Jumeirah",
+      "what": "Swim in the Cloud 22 sky pool.",
+      "why": "The Palm's newest and most daring resort."
+    },
+    {
+      "id": "one-and-only-the-palm",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Palm Jumeirah",
+      "what": "Relax at the pool facing the Marina.",
+      "why": "A quiet, Moorish-style escape."
+    },
+    {
+      "id": "w-dubai-the-palm",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Palm Jumeirah",
+      "what": "Join a pool party at WET Deck.",
+      "why": "The Palm's most playful hotel."
+    },
+    {
+      "id": "raffles-the-palm",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Palm Jumeirah",
+      "what": "Lounge on the long private beach.",
+      "why": "Palatial and peaceful."
+    },
+    {
+      "id": "jumeirah-zabeel-saray",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Palm Jumeirah",
+      "what": "Unwind at the Talise Ottoman Spa.",
+      "why": "Ottoman-palace grandeur by the sea."
+    },
+    {
+      "id": "kempinski-palm-jumeirah",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Palm Jumeirah",
+      "what": "Beach and pool near Atlantis.",
+      "why": "Contemporary and close to the fun."
+    },
+    {
+      "id": "six-senses-the-palm",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Palm Jumeirah",
+      "what": "A wellness day by the sea.",
+      "why": "Recharge and hit Peak Performer."
+    },
+    {
+      "id": "waldorf-astoria-palm",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Palm Jumeirah",
+      "what": "A grand beach day.",
+      "why": "Old-school luxury on the east crescent."
+    },
+    {
+      "id": "anantara-the-palm",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Palm Jumeirah",
+      "what": "See the over-water villas.",
+      "why": "A Thai-inspired resort."
+    },
+    {
+      "id": "taj-exotica-the-palm",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Palm Jumeirah",
+      "what": "Lounge at the palace pool.",
+      "why": "Indian-palace style on the Palm."
+    },
+    {
+      "id": "sofitel-the-palm",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Palm Jumeirah",
+      "what": "A Polynesian-style beach day.",
+      "why": "Tropical vibes on the east crescent."
+    },
+    {
+      "id": "rixos-the-palm",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Palm Jumeirah",
+      "what": "Eat, swim and repeat.",
+      "why": "An easy all-inclusive beach day."
+    },
+    {
+      "id": "five-palm-jumeirah",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Palm Jumeirah",
+      "what": "Beach club by day, rooftop by night.",
+      "why": "The Palm's party hotel."
+    },
+    {
+      "id": "fairmont-the-palm",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Palm Jumeirah",
+      "what": "A family day at the pool.",
+      "why": "Relaxed and easy on the trunk."
+    },
+    {
+      "id": "jumeirah-beach-hotel",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Umm Suqeim",
+      "what": "Beach and pool next to Wild Wadi.",
+      "why": "The wave-shaped classic."
+    },
+    {
+      "id": "shangri-la-dubai",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Sheikh Zayed Road",
+      "what": "Swim in the rooftop pool, then head to The Avenue.",
+      "why": "Skyline views from every angle."
+    },
+    {
+      "id": "voco-dubai",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Sheikh Zayed Road",
+      "what": "Rooftop pool above the strip.",
+      "why": "Stylish and central."
+    },
+    {
+      "id": "conrad-dubai",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Sheikh Zayed Road",
+      "what": "Rooftop pool opposite the Trade Centre.",
+      "why": "A luxury tower right in the action."
+    },
+    {
+      "id": "fairmont-dubai",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Sheikh Zayed Road",
+      "what": "Swim on the roof, then dance at Vibz.",
+      "why": "The tower with the lit pyramids."
+    },
+    {
+      "id": "sheraton-grand-dubai",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Sheikh Zayed Road",
+      "what": "Rooftop pool and city views.",
+      "why": "Easy luxury on the strip."
+    },
+    {
+      "id": "the-h-dubai",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "Sheikh Zayed Road",
+      "what": "Eat at Enish, party at Gambachi.",
+      "why": "One building, a whole night out."
+    },
+    {
+      "id": "ritz-carlton-difc",
+      "category": "Hotels & pools",
+      "icon": "🏨",
+      "where": "DIFC",
+      "what": "Afternoon tea in the courtyard.",
+      "why": "Classic luxury in the financial district."
+    }
+  ]
+}

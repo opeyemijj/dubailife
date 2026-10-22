@@ -11,6 +11,7 @@ import { PushCoach } from "@/components/pwa/PushCoach";
 import { AgeGate } from "@/components/safety/AgeGate";
 import { FirstDay } from "@/components/life/FirstDay";
 import { ScamPhone } from "@/components/safety/ScamPhone";
+import { DiscoverHost } from "@/components/guide/Discover";
 import { Suspense } from "react";
 import { SITE } from "@/lib/site";
 import { ServiceWorker } from "@/components/pwa/ServiceWorker";
@@ -210,6 +211,7 @@ export default function RootLayout({
         <AgeGate />
         <FirstDay />
         <ScamPhone />
+        <DiscoverHost />
         {children}
         <KeyboardShortcuts />
         <LifeHub />
