@@ -3,6 +3,8 @@
 // Direct messages between citizens, saved for 7 days (public.messages). The phone lists the
 // conversations; rooms in venues and homes use the same table for their chat.
 
+import { chatRefused } from "@/lib/safety";
+import { askForPush } from "@/lib/push/engage";
 import { supabase } from "@/lib/supabase/client";
 import { gainSkill, lifeEvent } from "@/lib/life";
 import type { AvatarLookProps } from "@/components/avatar/roster";
@@ -80,9 +82,11 @@ export async function loadConversation(me: string, other: string): Promise<Messa
 export async function sendMessage(me: string, to: string, body: string, place: string | null = null): Promise<Message | null> {
   const row = { id: crypto.randomUUID(), from_id: me, to_id: to, body, place };
   const { error } = await supabase().from("messages").insert(row);
+  if (error) chatRefused(error);
   if (!error) {
     lifeEvent("chat", to);
     gainSkill("charisma", 6);
+    setTimeout(() => askForPush({ icon: "💬", title: "Know when they reply", text: "Turn on notifications to see replies the moment they arrive, even when the app is closed." }), 1200);
     void (async () => {
       try {
         const { data: myProf } = await supabase().from("profiles").select("username").eq("id", me).maybeSingle();

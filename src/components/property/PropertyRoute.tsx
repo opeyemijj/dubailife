@@ -3,6 +3,7 @@
 // A flat or home: travel there, get through the door (access rules / knocking), then see the saved
 // interior. Residents and editors can furnish it; owners manage access, guests and listings.
 
+import { askForPush } from "@/lib/push/engage";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -121,7 +122,10 @@ function DoorStep({ flat, door, setDoor, onEnter, buildingName }: { flat: FlatVi
     if (!res.ok) return setError(res.error);
     if (res.data.status === "approved") onEnter();
     else if (res.data.status === "denied") setDoor({ state: "denied" });
-    else setDoor({ state: "knocking", requestId: res.data.id });
+    else {
+      setDoor({ state: "knocking", requestId: res.data.id });
+      setTimeout(() => askForPush({ icon: "🚪", title: `You knocked on ${resident}'s door`, text: "Turn on notifications to know the moment they let you in, even if you leave this screen." }), 1500);
+    }
   };
 
   const reason = door.state === "closed" ? door.reason : null;
@@ -348,7 +352,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
           onFriend={async () => {
             const r = await befriend(me, peer);
             if (r === "sent") room.emit({ type: "friend" }, peer.userId);
-            return r === "friends" ? `You and @${peer.username} are now friends 🤝` : r === "sent" ? "Friend request sent" : "Couldn't send the request — try again.";
+            return r === "friends" ? `You and @${peer.username} are now friends 🤝` : r === "sent" ? "Friend request sent" : r === "blocked" ? "You can't add them." : "Couldn't send the request — try again.";
           }}
         />
       )}

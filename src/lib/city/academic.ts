@@ -1,7 +1,6 @@
-"use client";
-
 // Academic City: Dubai's premier higher education and skills ecosystem.
-// Combines elite academic institutions (AUD, UD, Dubai College, GEMS Wellington)
+// Combines fictional in-game institutions (Crescent University, Falcon University, Desert Rose College and the
+// Foundation Academy; ids kept from earlier names so enrolments still match)
 // with Brain University — the high-impact new-economy accelerator for AI, Crypto, Forex and Coding, and its
 // library of best-selling motivational books, each chapter summarised as a module.
 // Course content is strictly separated from the database and loaded from dedicated JSON files in @/data/courses/.
@@ -185,37 +184,37 @@ export const ACADEMIC_CAMPUSES: Record<string, AcademicInstitution> = {
   },
   aud: {
     id: "aud",
-    name: "American University in Dubai",
-    shortName: "AUD",
+    name: "Crescent University",
+    shortName: "Crescent U",
     tier: "university",
     crestIcon: "🦅",
-    badge: "Ranked #1 University in Dubai (QS 2026)",
-    tagline: "Global leadership, American liberal arts excellence, and Dubai innovation.",
+    badge: "Top-rated university in Academic City",
+    tagline: "Global leadership, liberal arts excellence, and Dubai innovation.",
     motto: "Excellence in Education, Leadership in Society",
     color: "#d97706",
     accentBg: "from-amber-950/80 via-slate-900 to-slate-950",
     tuitionStandard: 25000,
     location: "Academic City · West Quad",
     dean: {
-      name: "Dr. Lance de Masi",
-      title: "President Emeritus & Dean of Business",
+      name: "Dr. Amira Haddad",
+      title: "President & Dean of Business",
       avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
-      quote: "AUD is where the leaders of Dubai's iconic enterprises cut their teeth and turn vision into sustainable industry.",
+      quote: "Crescent is where tomorrow's business leaders cut their teeth and turn vision into sustainable industry.",
     },
     features: [
-      "Accredited by SACSCOC (USA) and UAE Ministry of Education",
-      "DLD Real Estate Investment Clinic",
+      "In-game certificates (not an accredited qualification)",
+      "Real Estate Investment Clinic",
       "Media City Integrated Digital Studio",
       "Sustainable Architecture & Desert Urbanism Pavilion",
     ],
   },
   ud: {
     id: "ud",
-    name: "University of Dubai",
-    shortName: "UD",
+    name: "Falcon University",
+    shortName: "Falcon U",
     tier: "university",
     crestIcon: "🏛️",
-    badge: "Established by Dubai Chamber of Commerce",
+    badge: "Founded by the city's business community",
     tagline: "Pioneering business acumen, enterprise cybersecurity, and global trade corridors.",
     motto: "Advancing Knowledge, Driving Dubai's Economy",
     color: "#0284c7",
@@ -223,10 +222,10 @@ export const ACADEMIC_CAMPUSES: Record<string, AcademicInstitution> = {
     tuitionStandard: 25000,
     location: "Academic City · South Quad",
     dean: {
-      name: "Dr. Eesa Bastaki",
+      name: "Dr. Omar Nasser",
       title: "President & Professor of Engineering",
       avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
-      quote: "Rooted in Dubai Chamber, we connect academia directly with the titans of international commerce and cybersecurity.",
+      quote: "We connect the classroom directly with the leaders of international commerce and cybersecurity.",
     },
     features: [
       "Center for Executive Development & Sovereign Wealth",
@@ -237,25 +236,25 @@ export const ACADEMIC_CAMPUSES: Record<string, AcademicInstitution> = {
   },
   dc: {
     id: "dc",
-    name: "Dubai College",
-    shortName: "Dubai College",
+    name: "Desert Rose College",
+    shortName: "Desert Rose",
     tier: "secondary",
     crestIcon: "🦁",
-    badge: "KHDA Outstanding (15+ Consecutive Years)",
-    tagline: "Pure academic excellence and holistic British secondary education.",
+    badge: "Outstanding foundation results",
+    tagline: "Academic excellence in a British-style foundation programme for adults.",
     motto: "Excellence, Integrity, Community",
     color: "#15803d",
     accentBg: "from-emerald-950/80 via-slate-900 to-slate-950",
     tuitionStandard: 5000,
     location: "Academic City · Heritage Green",
     dean: {
-      name: "Michael Lambert",
-      title: "Headmaster & Fellow of the College",
+      name: "Mr. James Whitfield",
+      title: "Head of College",
       avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80",
-      quote: "Dubai College graduates embody rigor, deep understanding of our host nation's history, and the highest standards of scholarship.",
+      quote: "Our graduates leave with rigour, a deep understanding of our host nation's history, and the highest standards of scholarship.",
     },
     features: [
-      "Top British A-Level examination results globally",
+      "Top exam results in Academic City",
       "Comprehensive UAE Heritage & Trucial History Archives",
       "Championship STEM Olympiad & Desert Ecology Team",
       "20% University Scholarship Voucher awarded to all graduates",
@@ -263,12 +262,12 @@ export const ACADEMIC_CAMPUSES: Record<string, AcademicInstitution> = {
   },
   "gems-wellington": {
     id: "gems-wellington",
-    name: "GEMS Wellington International School",
-    shortName: "GEMS Wellington",
+    name: "Foundation Academy",
+    shortName: "Foundation Academy",
     tier: "secondary",
     crestIcon: "👑",
-    badge: "KHDA Outstanding Flagship Academy",
-    tagline: "Empowering global citizens through world-class IB & British dual pathways.",
+    badge: "Foundation programme for new arrivals",
+    tagline: "Foundation skills for new arrivals: culture, Arabic, maths, science and English.",
     motto: "Knowledge Through Integrity",
     color: "#2563eb",
     accentBg: "from-blue-950/80 via-slate-900 to-slate-950",
@@ -277,7 +276,7 @@ export const ACADEMIC_CAMPUSES: Record<string, AcademicInstitution> = {
     dean: {
       name: "Laura",
       title: "Principal & CEO",
-      avatar: "/academics/laura.png",
+      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
       quote: "From fluent Arabic communication to financial independence, we instill skills that make our students thrive across the globe.",
     },
     features: [
@@ -285,7 +284,6 @@ export const ACADEMIC_CAMPUSES: Record<string, AcademicInstitution> = {
       "Applied Mathematics, Financial Numeracy & Logic Studio",
       "Sustainable Physics, Clean Energy & Desalination Labs",
       "World Geography, Global Trade Corridors & Diplomatic Protocol",
-      "International Baccalaureate World School Accreditation",
       "20% University Scholarship Voucher awarded to all graduates",
     ],
   },
@@ -426,14 +424,14 @@ export const ACADEMIC_COURSES: AcademicCourse[] = [
   mapCourseJson(onebrainDataJson),
   mapCourseJson(onebrainSalesJson),
 
-  // American University in Dubai (AUD) Degrees
+  // Crescent University degrees
   mapCourseJson(audBusinessJson),
   mapCourseJson(audRealEstateJson),
 
-  // University of Dubai (UD) Degree
+  // Falcon University degree
   mapCourseJson(udCybersecurityJson),
 
-  // Secondary School Diplomas
+  // Foundation diplomas (Desert Rose College, Foundation Academy)
   mapCourseJson(dcUaeStudiesJson),
   mapCourseJson(gemsArabicJson),
   mapCourseJson(gemsMathsJson),
@@ -454,7 +452,7 @@ export const ACADEMIC_TILES = [
   // --- 3D Higher Education & Skills Institutions ---
   {
     id: "academic-aud",
-    name: "American University in Dubai (AUD)",
+    name: "Crescent University",
     type: "academic-tile",
     campus: "aud",
     virtualX: ACADEMIC_MAP_CENTER.x - 300,
@@ -478,7 +476,7 @@ export const ACADEMIC_TILES = [
   },
   {
     id: "academic-ud",
-    name: "University of Dubai (UD)",
+    name: "Falcon University",
     type: "academic-tile",
     campus: "ud",
     virtualX: ACADEMIC_MAP_CENTER.x - 60,
@@ -490,7 +488,7 @@ export const ACADEMIC_TILES = [
   },
   {
     id: "academic-dc",
-    name: "Dubai College (DC)",
+    name: "Desert Rose College",
     type: "academic-tile",
     campus: "dc",
     virtualX: ACADEMIC_MAP_CENTER.x - 310,
@@ -502,13 +500,26 @@ export const ACADEMIC_TILES = [
   },
   {
     id: "academic-gems",
-    name: "GEMS Wellington International School",
+    name: "Foundation Academy",
     type: "academic-tile",
     campus: "gems-wellington",
     virtualX: ACADEMIC_MAP_CENTER.x + 180,
     virtualY: ACADEMIC_MAP_CENTER.y - 180,
     width: 280,
     height: 200,
+    generated: true as const,
+    interactive: true,
+  },
+
+  {
+    id: "academic-driving",
+    name: "Driving Academy",
+    type: "academic-tile",
+    campus: "driving",
+    virtualX: ACADEMIC_MAP_CENTER.x + 220,
+    virtualY: ACADEMIC_MAP_CENTER.y + 10,
+    width: 260,
+    height: 190,
     generated: true as const,
     interactive: true,
   },

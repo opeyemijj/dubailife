@@ -3,10 +3,18 @@
 // The citizen's life at a glance, opened from the needs dock at home (or S on a keyboard): Profile,
 // Needs and feelings, Goals (wishes, certificates, perks), Skills, People, Career and Settings.
 
+import { InviteFriends } from "@/components/share/InviteFriends";
+import { Roommates } from "./Roommates";
+import { openPushCoach, pushStatus } from "@/lib/push/engage";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { LogOut, RefreshCw, Volume2, VolumeX, X } from "lucide-react";
+import { Ban, Bell, LogOut, RefreshCw, Volume2, VolumeX, X } from "lucide-react";
+import { deleteMyAccount, myBlocks, unblockUser } from "@/lib/safety";
+import { VisaBudgetTab } from "./VisaBudgetTab";
+import { LeagueTab } from "./LeagueTab";
+import { SeasonTab } from "./SeasonTab";
+import { MyStyle } from "./MyStyle";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { boostNeed, DEFAULT_NEEDS, signOut, updateCitizen, useCitizen, type Citizen, type NeedKey } from "@/lib/citizenStore";
@@ -23,10 +31,10 @@ import { supabase } from "@/lib/supabase/client";
 import { contacts, listConversations, type Contact } from "@/lib/messages";
 import { gameAudio } from "@/utils/gameAudio";
 
-export type LifeTab = "profile" | "needs" | "goals" | "skills" | "people" | "career" | "settings";
+export type LifeTab = "profile" | "visa" | "league" | "season" | "needs" | "goals" | "skills" | "people" | "career" | "settings";
 
 const TABS: Array<{ id: LifeTab; label: string }> = [
-  { id: "profile", label: "✏️ Profile" }, { id: "needs", label: "Needs" }, { id: "goals", label: "Goals" }, { id: "skills", label: "Skills" },
+  { id: "profile", label: "✏️ Profile" }, { id: "visa", label: "🛂 Visa & budget" }, { id: "league", label: "🏆 League" }, { id: "season", label: "🎟️ Season" }, { id: "needs", label: "Needs" }, { id: "goals", label: "Goals" }, { id: "skills", label: "Skills" },
   { id: "people", label: "People" }, { id: "career", label: "Career" }, { id: "settings", label: "⚙️ Settings" },
 ];
 
@@ -73,6 +81,7 @@ export function LifePanel({ open, tab, onTab, onClose }: { open: boolean; tab: L
             <div className="min-w-0">
               <h2 className="text-xl sm:text-2xl font-black truncate">{citizen.username}</h2>
               <p className="text-sm sm:text-base text-slate-500 truncate"><span className={mood.tone}>{mood.label}</span>{mood.top ? ` · ${mood.top.name}` : ""}</p>
+              <MyStyle onOpen={() => onTab("season")} />
             </div>
           </header>
 
@@ -87,6 +96,9 @@ export function LifePanel({ open, tab, onTab, onClose }: { open: boolean; tab: L
 
           <div className="flex-1 overflow-y-auto overscroll-contain px-5 sm:px-6 pb-6">
             {tab === "profile" && <ProfileTab c={citizen} onClose={onClose} />}
+            {tab === "visa" && <VisaBudgetTab onClose={onClose} />}
+            {tab === "league" && <LeagueTab onClose={onClose} />}
+            {tab === "season" && <SeasonTab />}
             {tab === "needs" && <NeedsTab c={citizen} feelings={feelings} onClose={onClose} />}
             {tab === "goals" && <GoalsTab c={citizen} onClose={onClose} />}
             {tab === "skills" && <SkillsTab c={citizen} />}
@@ -435,6 +447,8 @@ function PeopleTab({ c, onClose }: { c: Citizen; onClose: () => void }) {
   if (friends === null) return <p className="text-sm text-slate-500 pt-2">Loading…</p>;
   return (
     <div className="pt-1">
+      <InviteFriends username={c.username} />
+      <Roommates me={c.id} onClose={onClose} />
       <Section title={`Friends · ${friends.length}`}>
         {friends.length === 0 ? <p className="text-sm text-slate-500">No friends yet. Say hi to people at venues and add them, or find them on your phone.</p>
           : <div className="space-y-2">{friends.map((p) => <Row key={p.id} p={p} tag="Friend" />)}</div>}
@@ -459,6 +473,10 @@ function CareerTab({ c, onClose }: { c: Citizen; onClose: () => void }) {
   const hustle = skillLevel(skillXp(lifeOf(c).skills.hustle, now)).level;
   return (
     <div className="pt-1">
+      <div className="grid grid-cols-2 gap-2 mb-1">
+        <Link href="/jobs" onClick={onClose} className="rounded-2xl bg-sky-50 p-3 text-sm font-black text-sky-800">💼 Job Board<span className="block text-[11px] font-bold text-sky-700/70">Work for player ventures</span></Link>
+        <Link href="/ventures" onClick={onClose} className="rounded-2xl bg-emerald-50 p-3 text-sm font-black text-emerald-800">🏢 My ventures<span className="block text-[11px] font-bold text-emerald-700/70">Start a business, hire</span></Link>
+      </div>
       <Section title="Job">
         {job ? (
           <Card>
@@ -499,8 +517,16 @@ function CareerTab({ c, onClose }: { c: Citizen; onClose: () => void }) {
 
 function SettingsTab({ onClose, onProfile }: { onClose: () => void; onProfile: () => void }) {
   const [muted, setMuted] = useState(() => gameAudio.getIsMuted());
+  const [push] = useState(() => pushStatus());
   return (
     <div className="space-y-2.5 pt-1">
+      <button onClick={() => { onClose(); setTimeout(() => openPushCoach(), 150); }} className="w-full flex items-center gap-3 rounded-3xl bg-slate-100/80 p-4 text-left">
+        <Bell className={`w-5 h-5 ${push === "on" ? "text-emerald-600" : "text-amber-500"}`} />
+        <span className="flex-1 font-bold">Notifications</span>
+        <span className={`text-xs font-black px-2.5 py-1 rounded-full ${push === "on" ? "bg-emerald-100 text-emerald-700" : push === "blocked" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-800"}`}>
+          {push === "on" ? "On" : push === "blocked" ? "Blocked · fix" : push === "install-first" ? "Install app" : push === "unsupported" ? "Not supported" : "Turn on"}
+        </span>
+      </button>
       <button onClick={() => setMuted(gameAudio.toggleMute())} className="w-full flex items-center gap-3 rounded-3xl bg-slate-100/80 p-4 text-left">
         {muted ? <VolumeX className="w-5 h-5 text-rose-500" /> : <Volume2 className="w-5 h-5 text-emerald-600" />}
         <span className="flex-1 font-bold">Sound & music</span>
@@ -509,7 +535,66 @@ function SettingsTab({ onClose, onProfile }: { onClose: () => void; onProfile: (
       <button onClick={() => onProfile()} className="w-full text-left flex items-center gap-3 rounded-3xl bg-slate-100/80 p-4 font-bold">👤 <span className="flex-1">Profile & look</span>›</button>
       <Link href="/wallet" onClick={onClose} className="flex items-center gap-3 rounded-3xl bg-slate-100/80 p-4 font-bold">💳 <span className="flex-1">Wallet</span>›</Link>
       <div className="hidden sm:flex items-center gap-3 rounded-3xl bg-slate-100/80 p-4 text-sm text-slate-600">⌨️ <span className="flex-1">Press <kbd className="px-1.5 py-0.5 rounded bg-white font-mono font-bold">S</kbd> anywhere to open this panel, <kbd className="px-1.5 py-0.5 rounded bg-white font-mono font-bold">?</kbd> for all shortcuts.</span></div>
+      <BlockedPlayers />
       <button onClick={() => { onClose(); void signOut(); }} className="w-full flex items-center justify-center gap-2 h-12 rounded-2xl bg-rose-50 text-rose-600 font-black text-sm mt-3"><LogOut className="w-4 h-4" /> Log out</button>
+      <DeleteAccount />
+    </div>
+  );
+}
+
+function BlockedPlayers() {
+  const [open, setOpen] = useState(false);
+  const [people, setPeople] = useState<{ id: string; username: string }[] | null>(null);
+  const load = async () => {
+    const ids = [...(await myBlocks())];
+    if (!ids.length) return setPeople([]);
+    const { data } = await supabase().from("profiles").select("id, username").in("id", ids);
+    setPeople((data ?? []) as { id: string; username: string }[]);
+  };
+  return (
+    <div className="rounded-3xl bg-slate-100/80">
+      <button onClick={() => { setOpen(!open); if (!people) void load(); }} className="w-full flex items-center gap-3 p-4 text-left font-bold">
+        <Ban className="w-5 h-5 text-slate-500" /><span className="flex-1">Blocked players</span><span className="text-slate-400">{open ? "⌄" : "›"}</span>
+      </button>
+      {open && (
+        <div className="px-4 pb-4 space-y-2">
+          {people === null ? <p className="text-xs text-slate-500">Loading…</p>
+            : people.length === 0 ? <p className="text-xs text-slate-500">You haven&apos;t blocked anyone. Block someone from their panel: tap them, then <b>Report or block</b>.</p>
+            : people.map((p) => (
+              <div key={p.id} className="flex items-center gap-2 rounded-2xl bg-white p-2.5">
+                <span className="flex-1 text-sm font-bold">@{p.username}</span>
+                <button onClick={async () => { if (!(await unblockUser(p.id))) setPeople(people.filter((x) => x.id !== p.id)); }} className="text-xs font-black px-3 py-1.5 rounded-full bg-slate-900 text-white">Unblock</button>
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DeleteAccount() {
+  const [step, setStep] = useState<"idle" | "confirm">("idle");
+  const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (step === "idle") {
+    return <button onClick={() => setStep("confirm")} className="w-full text-center text-xs font-bold text-slate-400 hover:text-rose-600 pt-2">Delete my account</button>;
+  }
+  return (
+    <div className="rounded-3xl border border-rose-200 bg-rose-50 p-4 space-y-2.5">
+      <p className="font-black text-rose-800">Delete your account?</p>
+      <p className="text-xs text-rose-900/80">This permanently deletes your citizen, AED, homes, businesses, friends, messages and progress. It can&apos;t be undone. Homes you own or rent go back on the market.</p>
+      <input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="Type DELETE to confirm" className="w-full h-11 rounded-xl border border-rose-200 px-3 text-base bg-white" />
+      {error && <p className="text-xs font-bold text-rose-700">{error}</p>}
+      <div className="flex gap-2">
+        <button onClick={() => { setStep("idle"); setTyped(""); setError(null); }} className="flex-1 h-11 rounded-xl bg-white text-sm font-black">Keep my account</button>
+        <button disabled={typed.trim().toUpperCase() !== "DELETE" || busy} onClick={async () => {
+          setBusy(true);
+          const e = await deleteMyAccount();
+          setBusy(false);
+          if (e) setError(e); else window.location.replace("/");
+        }} className="flex-1 h-11 rounded-xl bg-rose-600 disabled:opacity-40 text-white text-sm font-black">{busy ? "Deleting…" : "Delete forever"}</button>
+      </div>
     </div>
   );
 }

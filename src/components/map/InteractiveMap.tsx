@@ -1,5 +1,6 @@
 "use client";
 
+import { ACADEMIC_MAP_CENTER } from "@/lib/city/academic";
 import { memo, useCallback, useState, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { TransformWrapper, TransformComponent, type ReactZoomPanPinchRef } from "react-zoom-pan-pinch";
@@ -524,7 +525,8 @@ export function InteractiveMap({
     // Academic City: each campus tile opens its hub.
     if (loc.type === 'academic-tile') {
       gameAudio.playClickSound();
-      router.push(loc.campus ? `/academics/${loc.campus}` : '/academics');
+      // The Driving Academy has its own page; every other campus opens its Academic City hub.
+      router.push(loc.campus === 'driving' ? '/driving' : loc.campus ? `/academics/${loc.campus}` : '/academics');
       return;
     }
     // Game City: each tile opens its game's room.
@@ -1145,49 +1147,56 @@ export function InteractiveMap({
 
       {/* Mobile-Friendly District Quick-Jumper Bar (Safely above BottomNav) */}
       {!interactionDisabled && (
-        <div className="hidden sm:flex absolute bottom-24 sm:bottom-28 left-3 sm:left-6 z-30 items-center gap-1.5 pointer-events-auto overflow-x-auto max-w-[calc(100vw-130px)] sm:max-w-none scrollbar-hide py-1">
+        <div className="flex absolute bottom-24 sm:bottom-28 left-3 sm:left-6 z-30 items-center gap-1.5 pointer-events-auto overflow-x-auto max-w-[calc(100vw-130px)] sm:max-w-none scrollbar-hide py-1">
           <div className="flex items-center gap-1.5 bg-slate-950/80 backdrop-blur-xl border border-white/20 p-1 rounded-2xl shadow-2xl">
             <button
               onClick={() => jumpToDistrict(1871, 743, 'Downtown Dubai')}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 text-white font-bold text-xs whitespace-nowrap transition-all"
             >
               <span>🗼</span>
-              <span className="hidden xs:inline sm:inline">Downtown</span>
+              <span>Downtown</span>
             </button>
             <button
               onClick={() => jumpToDistrict(PALM_VIEW.x, PALM_VIEW.y, 'Palm Jumeirah')}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 text-white font-bold text-xs whitespace-nowrap transition-all"
             >
               <span>🌴</span>
-              <span className="hidden xs:inline sm:inline">Palm</span>
+              <span>Palm</span>
             </button>
             <button
               onClick={() => jumpToDistrict(720, 2280, 'Dubai Marina')}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 text-white font-bold text-xs whitespace-nowrap transition-all"
             >
               <span>⛵</span>
-              <span className="hidden xs:inline sm:inline">Marina</span>
+              <span>Marina</span>
             </button>
             <button
               onClick={() => jumpToDistrict(1980, 1180, 'Business Bay')}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 text-white font-bold text-xs whitespace-nowrap transition-all"
             >
               <span>🏢</span>
-              <span className="hidden xs:inline sm:inline">Bay</span>
+              <span>Bay</span>
             </button>
             <button
               onClick={() => jumpToDistrict(GAME_CITY.x, GAME_CITY.y, 'Game City')}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 text-white font-bold text-xs whitespace-nowrap transition-all"
             >
               <span>🎮</span>
-              <span className="hidden xs:inline sm:inline">Games</span>
+              <span>Games</span>
+            </button>
+            <button
+              onClick={() => jumpToDistrict(ACADEMIC_MAP_CENTER.x + 100, ACADEMIC_MAP_CENTER.y, 'Academic City')}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 text-white font-bold text-xs whitespace-nowrap transition-all"
+            >
+              <span>🎓</span>
+              <span>Academic</span>
             </button>
             <button
               onClick={() => jumpToDistrict(4638, 159, 'Dubai Int Airport (DXB)')}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 text-white font-bold text-xs whitespace-nowrap transition-all"
             >
               <span>✈️</span>
-              <span className="hidden xs:inline sm:inline">DXB</span>
+              <span>DXB</span>
             </button>
           </div>
         </div>

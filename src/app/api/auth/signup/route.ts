@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { ageFrom, MIN_AGE } from "@/lib/age";
 
 // Creates an account that is already confirmed, so sign-up never sends an email (and never hits
 // Supabase's email rate limit). Needs SUPABASE_SERVICE_ROLE_KEY — a server-only secret.
@@ -11,7 +12,7 @@ export async function POST(request: Request) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!serviceKey || !url) return Response.json({ error: "not_configured" }, { status: 501 });
 
-  let body: { email?: string; password?: string; username?: string; display_name?: string };
+  let body: { email?: string; password?: string; username?: string; display_name?: string; dob?: string };
   try {
     body = await request.json();
   } catch {
@@ -25,6 +26,10 @@ export async function POST(request: Request) {
   if (password.length < 8) return Response.json({ error: "Password must be at least 8 characters." }, { status: 400 });
   if (!USERNAME.test(username)) return Response.json({ error: "Username needs 3–24 letters, numbers or underscores." }, { status: 400 });
   if (!displayName || displayName.length > 60) return Response.json({ error: "Enter your name." }, { status: 400 });
+  // Come To Dubai is 21+.
+  const dob = body.dob ?? "";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dob) || Number.isNaN(Date.parse(dob)) || dob < "1900-01-01" || ageFrom(dob) < MIN_AGE)
+    return Response.json({ error: "Come To Dubai is for players aged 21 and over." }, { status: 403 });
 
   const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 
@@ -35,7 +40,7 @@ export async function POST(request: Request) {
     email,
     password,
     email_confirm: true,
-    user_metadata: { username, display_name: displayName },
+    user_metadata: { username, display_name: displayName, date_of_birth: dob },
   });
   if (error) {
     const exists = /already.*(registered|exists)/i.test(error.message);

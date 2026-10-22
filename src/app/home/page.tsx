@@ -1,5 +1,6 @@
 "use client";
 
+import { useFirstDayActive } from "@/components/life/FirstDay";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { compact, useSiteStats } from "@/lib/siteStats";
@@ -14,14 +15,13 @@ import {
 import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { gameAudio } from "@/utils/gameAudio";
-import { useRequireCitizen, adjustBalance, buyFurniture, setFurniturePlacement, signOut, updateCitizen, DEFAULT_NEEDS, type Needs } from "@/lib/citizenStore";
+import { isNewCitizen, useRequireCitizen, adjustBalance, buyFurniture, setFurniturePlacement, signOut, updateCitizen, DEFAULT_NEEDS, type Needs } from "@/lib/citizenStore";
 import { CATALOG, getCatalogItem, withHomeItems, type CatalogItem, type Placement, type Rotation } from "@/lib/furniture";
 import { useOnlineCount, formatOnline } from "@/lib/presence";
 import { WardrobeModal } from "@/components/avatar/WardrobeModal";
 import { getPendingVenue } from "@/components/city/VenueDressCodeModal";
 import { NeedsDock } from "@/components/life/NeedsDock";
 import { gainSkill, lifeEvent } from "@/lib/life";
-import { getNotificationPermission, subscribeToPush } from "@/lib/push/client";
 
 export default function HomePage() {
   const router = useRouter();
@@ -39,22 +39,18 @@ export default function HomePage() {
       setWardrobeModalOpen(true);
     }
   }, [searchParams]);
+  const firstDayActive = useFirstDayActive();
   // The welcome only appears the first time this citizen opens their home.
   const [welcomeModalOpen, setWelcomeModalOpenState] = useState(false);
-  const [homePushEnabled, setHomePushEnabled] = useState(false);
-  const [homePushLoading, setHomePushLoading] = useState(false);
   const welcomeKey = `welcome-seen:${citizen?.id ?? ""}`;
-  useEffect(() => {
-    setHomePushEnabled(getNotificationPermission() === "granted");
-  }, []);
   useEffect(() => {
     if (!citizen?.id) return;
     let seen = false;
     try { seen = localStorage.getItem(welcomeKey) === "1"; } catch { /* storage blocked */ }
     // Reads browser storage once the citizen is known.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!seen) setWelcomeModalOpenState(true);
-  }, [citizen?.id, welcomeKey]);
+    if (!seen && isNewCitizen(citizen)) setWelcomeModalOpenState(true);
+  }, [citizen?.id, welcomeKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const setWelcomeModalOpen = (open: boolean) => {
     setWelcomeModalOpenState(open);
     if (!open) { try { localStorage.setItem(welcomeKey, "1"); } catch { /* storage blocked */ } }
@@ -305,6 +301,8 @@ export default function HomePage() {
       {/* TOP LEFT QUESTS & OBJECTIVES (Image 2) */}
       {!cleanScreen && (
         <div className="absolute top-[4.75rem] sm:top-24 left-3 sm:left-6 z-30 pointer-events-auto space-y-1.5">
+          {/* Quiet while the first-day checklist is running, so new players see one clear set of goals. */}
+          {!firstDayActive && <>
           <div className="flex items-center gap-2 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg border border-slate-100 text-xs font-bold text-slate-800 max-w-[280px]">
             <span className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-xs shrink-0">🍎</span>
             <div className="truncate">
@@ -320,6 +318,7 @@ export default function HomePage() {
               <div className="text-[10px] text-slate-400 font-semibold">7758 found · next prize AED 3,000</div>
             </div>
           </div>
+          </>}
 
           <button
             onClick={() => setCleanScreen(!cleanScreen)}
@@ -435,7 +434,7 @@ export default function HomePage() {
           </div>
 
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-            Your starter residence in <strong>{citizen?.home || "Dubai"}</strong> is ready and your initial starter grant of <strong>AED {walletBalance.toLocaleString()}</strong> has been credited to your account!
+            Your starter residence in <strong>{citizen?.home || "Dubai"}</strong> is ready, and you have <strong>AED {walletBalance.toLocaleString()}</strong> in your wallet to get started.
           </p>
 
           <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-xs font-semibold text-slate-700 leading-relaxed">
@@ -449,36 +448,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* App Installation & Push Notifications Callout */}
-          <div className="bg-gradient-to-r from-sky-50 to-indigo-50 p-3.5 rounded-2xl border border-sky-200/80 space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">📱</span>
-                <span className="font-black text-slate-900">Add to Home Screen & Push</span>
-              </div>
-              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-sky-200/60 text-sky-800">
-                Essential
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-600 leading-snug">
-              Add cometodubai.app to your phone&apos;s Home Screen (Share → Add to Home Screen on iPhone) and turn on notifications so friend requests and messages pop up even when the game is closed!
-            </p>
-            {!homePushEnabled && (
-              <button
-                onClick={async () => {
-                  setHomePushLoading(true);
-                  const res = await subscribeToPush(citizen?.id);
-                  setHomePushLoading(false);
-                  if (res.ok) setHomePushEnabled(true);
-                  else alert(res.error || "Please allow notifications when prompted by your browser.");
-                }}
-                disabled={homePushLoading}
-                className="w-full py-2 px-3 bg-sky-500 hover:bg-sky-600 text-white font-black text-xs rounded-xl shadow transition active:scale-95 flex items-center justify-center gap-1.5"
-              >
-                <Bell className="w-3.5 h-3.5" />
-                <span>{homePushLoading ? "Enabling…" : "Turn on Push Notifications"}</span>
-              </button>
-            )}
+          <div className="bg-amber-50 p-3.5 rounded-2xl border border-amber-200 text-xs font-semibold text-amber-900 leading-relaxed">
+            🌅 <strong>Your first day:</strong> plan your budget, work a shift, pass a lesson and add a friend. The checklist in the corner pays a bonus when you finish.
           </div>
 
           <div className="space-y-2 pt-2">

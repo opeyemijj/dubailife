@@ -1,5 +1,6 @@
 "use client";
 
+import { askForPush } from "@/lib/push/engage";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UserCheck, UserPlus, X } from "lucide-react";
@@ -53,6 +54,8 @@ export function FriendRequestListener() {
           };
 
           setAlerts((list) => [...list.filter((a) => a.senderId !== row.user_id), alertItem]);
+          // A helpful moment to ask for notifications (shown after the alert, rate-limited).
+          setTimeout(() => askForPush({ icon: "🤝", title: `@${username} wants to be friends`, text: "Turn on notifications so you never miss a friend request, even when the app is closed." }), 4000);
           setTimeout(() => {
             setAlerts((list) => list.filter((a) => a.id !== alertItem.id));
           }, 10000);

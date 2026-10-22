@@ -1,0 +1,20 @@
+{
+  "_note": "Player ventures (design spec sections 10 and 19.4, Phase 4). Cost and base daily revenue are mirrored in public.venture_rule() (migration *_economy.sql) and checked by scripts/check-life-config.mjs.",
+  "maxPartners": 5,
+  "multiplier": { "perQualifiedStaff": 0.5, "max": 3.0 },
+  "payroll": { "weekday": "Friday", "hourGst": 17 },
+  "types": [
+    { "id": "karak_cafe", "label": "Karak café", "icon": "☕", "area": "Al Karama", "cost": 50000, "daily": 1200, "roles": ["Barista", "Cashier"] },
+    { "id": "food_truck", "label": "Food truck", "icon": "🚚", "area": "Kite Beach", "cost": 80000, "daily": 1800, "roles": ["Chef", "Server"] },
+    { "id": "barbershop", "label": "Barbershop", "icon": "💈", "area": "JLT", "cost": 120000, "daily": 2600, "roles": ["Barber", "Receptionist"] },
+    { "id": "bistro", "label": "Downtown bistro", "icon": "🍝", "area": "Downtown", "cost": 400000, "daily": 7500, "roles": ["Chef", "Host", "Server", "Manager"] },
+    { "id": "tech_agency", "label": "Tech agency", "icon": "💻", "area": "DIFC", "cost": 1000000, "daily": 18000, "roles": ["Developer", "Designer", "Sales lead", "Project manager"] },
+    { "id": "yacht_charter", "label": "Marina yacht charter", "icon": "🛥️", "area": "Dubai Marina", "cost": 2500000, "daily": 42000, "roles": ["Captain", "Deckhand", "Concierge", "Bookings manager"] }
+  ],
+  "requirements": {
+    "none": "No requirements",
+    "course": "Any Academic City graduate",
+    "degree": "A university or accelerator graduate",
+    "licence": "A driving licence"
+  }
+}

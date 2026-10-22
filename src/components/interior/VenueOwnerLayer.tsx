@@ -91,7 +91,7 @@ export function VenueAbout({ venueName, pub, onClose }: { venueName: string; pub
           {/* eslint-disable-next-line @next/next/no-img-element */}
           {c.logo_url && <img src={c.logo_url} alt="" className="w-12 h-12 rounded-xl object-cover bg-slate-100" />}
           <div className="flex-1 min-w-0">
-            <h3 className="font-black leading-tight flex items-center gap-1">{venueName} {pub.claimed && <BadgeCheck className="w-4 h-4 text-sky-500" aria-label="Verified business" />}</h3>
+            <h3 className="font-black leading-tight flex items-center gap-1">{venueName} {pub.claimed && <BadgeCheck className="w-4 h-4 text-sky-500" aria-label="Partner venue" />}</h3>
             {c.tagline && <p className="text-xs text-slate-500">{c.tagline}</p>}
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center" aria-label="Close"><X className="w-4 h-4" /></button>

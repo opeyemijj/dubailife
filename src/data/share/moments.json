@@ -1,0 +1,17 @@
+{
+  "_note": "Share cards (design spec 19.3, US-7.1). Fixed templates only: {u} is a validated username, {v} a bounded number. No personal data on cards.",
+  "moments": {
+    "visa": { "emoji": "🛂", "title": "@{u} just moved up the visa ladder", "sub": "New status: {label}", "from": "#0ea5e9", "to": "#1e3a8a" },
+    "licence": { "emoji": "🚗", "title": "@{u} passed the Dubai driving test", "sub": "Theory {v}% · Smart Yard cleared", "from": "#0284c7", "to": "#312e81" },
+    "graduate": { "emoji": "🎓", "title": "@{u} just graduated in Academic City", "sub": "Final exam: {v}%", "from": "#7c3aed", "to": "#1e1b4b" },
+    "scam-caught": { "emoji": "🛡️", "title": "@{u} caught a scammer", "sub": "Reported to e-Crime · +AED {v} bounty", "from": "#059669", "to": "#064e3b" },
+    "scam-fell": { "emoji": "😬", "title": "@{u} fell for a scam (in the game!)", "sub": "Lost AED {v}. Would you have spotted it?", "from": "#e11d48", "to": "#4c0519" },
+    "league-up": { "emoji": "🏆", "title": "@{u} was promoted this week", "sub": "Now in the {label} league", "from": "#f59e0b", "to": "#7c2d12" },
+    "first-day": { "emoji": "🌅", "title": "@{u} survived their first day in Dubai", "sub": "Budget set, first shift worked, first lesson passed", "from": "#f97316", "to": "#831843" },
+    "runway": { "emoji": "📈", "title": "@{u} has {v} days of runway", "sub": "Sustainability before luxury", "from": "#16a34a", "to": "#14532d" }
+  },
+  "labels": {
+    "visa": { "STUDENT": "Student residence visa", "EMPLOYMENT": "Employment visa", "FREELANCE": "Freelance residence visa", "GOLDEN": "10-year Golden Visa" },
+    "league-up": { "2": "Silver", "3": "Gold", "4": "Platinum", "5": "Diamond" }
+  }
+}

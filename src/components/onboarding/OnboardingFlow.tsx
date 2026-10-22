@@ -14,16 +14,24 @@ import { ROSTER, defaultPreset } from "@/components/avatar/roster";
 import { LookPicker } from "@/components/avatar/LookPicker";
 import { AvaturnCreator, type CreatedAvatar } from "@/components/avatar/AvaturnCreator";
 import { createProfile, useCitizen } from "@/lib/citizenStore";
+import { BLUEPRINT, dailyBurn, saveBlueprint, type Blueprint } from "@/lib/lifeLoop";
 import { clearSignupDraft, updateSignupDraft, useSignupDraft } from "@/lib/signupDraft";
 import { ONBOARDING_STEPS, type OnboardingStep } from "@/lib/onboardingSteps";
-import { promptInstall, useInstallState } from "@/lib/install";
-import { getNotificationPermission, isStandalonePwa, subscribeToPush } from "@/lib/push/client";
 
 
 const DEFAULT_LOOK: AvatarLookProps = { gender: "woman", preset: defaultPreset("woman"), bodyType: "Hourglass" };
 const DEFAULT_TRAITS = ["Hustler"];
 const DEFAULT_DREAM = "Corporate Titan";
-const DEFAULT_HOME = "Business Bay Studio";
+const DEFAULT_HOME = "studio";
+/** A metro card and a basic phone plan, added to rent for the runway shown on each home. */
+const BASE_MONTHLY = 350 + 75;
+const HOME_TAGS: Record<string, { label: string; cls: string }> = {
+  bed_space: { label: "Smart start · roommates", cls: "bg-blue-100 text-blue-700" },
+  studio: { label: "Balanced (recommended)", cls: "bg-emerald-100 text-emerald-800 font-black" },
+  one_bedroom: { label: "Comfortable", cls: "bg-slate-100 text-slate-700" },
+  penthouse: { label: "Big spender", cls: "bg-purple-100 text-purple-700" },
+  villa: { label: "Expat Trap ⚠️", cls: "bg-rose-100 text-rose-700" },
+};
 
 type Updater<T> = T | ((prev: T) => T);
 const resolve = <T,>(u: Updater<T>, prev: T): T => (typeof u === "function" ? (u as (p: T) => T)(prev) : u);
@@ -36,15 +44,6 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
   const [finishing, setFinishing] = useState(false);
   const [finishError, setFinishError] = useState<string | null>(null);
   const [completionData, setCompletionData] = useState<{ userId: string; username: string } | null>(null);
-  const [pushEnabled, setPushEnabled] = useState(false);
-  const [pushLoading, setPushLoading] = useState(false);
-  const installState = useInstallState();
-  const [isInstalled, setIsInstalled] = useState(false);
-
-  useEffect(() => {
-    setIsInstalled(isStandalonePwa() || installState === "installed");
-    setPushEnabled(getNotificationPermission() === "granted");
-  }, [installState]);
   const currentStep = ONBOARDING_STEPS.indexOf(step) + 1; // 1: Look, 2: Personality, 3: Dream, 4: Birth Lottery, 5: Home
   const setCurrentStep = (n: number) => router.push(`/onboarding/${ONBOARDING_STEPS[n - 1]}`);
   // From the draft, or — if the confirmation link opened elsewhere — from the account itself.
@@ -61,7 +60,8 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
   const setSelectedTraits = (u: Updater<string[]>) => updateSignupDraft((d) => ({ traits: resolve(u, d.traits ?? DEFAULT_TRAITS) }));
   const selectedDream = draft?.dream ?? DEFAULT_DREAM;
   const setSelectedDream = (dream: string) => updateSignupDraft({ dream });
-  const selectedHome = draft?.home ?? DEFAULT_HOME;
+  // The home step is the Blueprint housing choice (src/data/life/blueprint.json).
+  const selectedHome = BLUEPRINT.housing.some((h) => h.id === draft?.home) ? draft!.home! : DEFAULT_HOME;
   const setSelectedHome = (home: string) => updateSignupDraft({ home });
 
   // The selfie creator has its own URL too (/onboarding/look?selfie=open).
@@ -108,20 +108,22 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
     if (!account) return;
     setFinishing(true);
     setFinishError(null);
+    const home = BLUEPRINT.housing.find((h) => h.id === selectedHome) ?? BLUEPRINT.housing[1];
+    // Everyone arrives with AED 50,000 (design spec, Act I); the home choice sets the Blueprint, not the cash.
     const result = await createProfile({
       username: account.username,
       name: account.name,
-      balance: selectedHome.includes("Marina") ? 100000 : selectedHome.includes("Business Bay") ? 50000 : 30000,
-      game: { look, traits: selectedTraits, dream: selectedDream, home: selectedHome },
+      balance: 50000,
+      game: { look, traits: selectedTraits, dream: selectedDream, home: `${home.label}, ${home.area.split(" · ")[0]}` },
     });
     if (!result.ok) {
       setFinishing(false);
       setFinishError(result.error);
       return;
     }
+    await saveBlueprint({ ...(BLUEPRINT.default as Blueprint), housing: home.id });
     clearSignupDraft();
     setFinishing(false);
-    // Show post-registration modal instructing user to install app and enable push
     setCompletionData({ userId: session?.userId || "", username: account.username });
   };
 
@@ -479,7 +481,7 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
               </>
             )}
 
-            {/* STEP 5: HOME (STARTER APARTMENT) */}
+            {/* STEP 5: HOME = the Blueprint housing choice (design spec section 5.1) */}
             {currentStep === 5 && (
               <>
                 <div>
@@ -487,86 +489,44 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
                     Where will @{username} live?
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Rent is paid every week.
+                    Everyone arrives with AED 50,000. Rent and living costs are taken each morning at 09:00 GST on days you play. You can change this later in your Blueprint.
                   </p>
                 </div>
 
                 <div className="space-y-2.5">
-                  {[
-                    {
-                      id: "Academic City Dorm",
-                      icon: "🎓",
-                      badge: "Student life",
-                      badgeColor: "bg-blue-100 text-blue-700",
-                      title: "Academic City Dorm",
-                      desc: "Shared room, campus study perks, very cheap rent.",
-                      startCapital: "AED 15,000",
-                      rent: "AED 1,200/wk",
-                    },
-                    {
-                      id: "Deira Studio",
-                      icon: "🏢",
-                      badge: "Hard start",
-                      badgeColor: "bg-slate-100 text-slate-700",
-                      title: "Deira Old Town Studio",
-                      desc: "Lively street souks, classic vibes, budget living with big dreams.",
-                      startCapital: "AED 30,000",
-                      rent: "AED 2,500/wk",
-                    },
-                    {
-                      id: "Business Bay Studio",
-                      icon: "🏙️",
-                      badge: "Balanced (Recommended)",
-                      badgeColor: "bg-emerald-100 text-emerald-800 font-black",
-                      title: "Business Bay Modern Studio",
-                      desc: "Your own balcony near the canal, pool, gym, minutes from Downtown.",
-                      startCapital: "AED 50,000",
-                      rent: "AED 4,500/wk",
-                    },
-                    {
-                      id: "Dubai Marina 1-Bed",
-                      icon: "🏝️",
-                      badge: "Big spender",
-                      badgeColor: "bg-purple-100 text-purple-700",
-                      title: "Dubai Marina 1-Bedroom",
-                      desc: "High-floor marina view, infinity pool, vibrant waterfront luxury.",
-                      startCapital: "AED 100,000",
-                      rent: "AED 8,000/wk",
-                    },
-                  ].map(res => {
-                    const isSelected = selectedHome === res.id;
+                  {BLUEPRINT.housing.map((h) => {
+                    const tag = HOME_TAGS[h.id];
+                    const monthly = h.monthly + BASE_MONTHLY;
+                    const daily = dailyBurn(monthly);
+                    const runway = Math.floor(50000 / daily);
+                    const isSelected = selectedHome === h.id;
                     return (
                       <button
-                        key={res.id}
-                        onClick={() => setSelectedHome(res.id)}
+                        key={h.id}
+                        onClick={() => setSelectedHome(h.id)}
                         className={`w-full text-left p-3.5 rounded-2xl border-2 transition-all flex flex-col justify-between ${
                           isSelected
                             ? "border-emerald-500 bg-emerald-50/50 shadow-md ring-2 ring-emerald-500/20"
                             : "border-slate-100 bg-slate-50 hover:bg-slate-100/80"
                         }`}
                       >
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xl">{res.icon}</span>
-                            <span className="font-black text-xs sm:text-sm text-slate-900">{res.title}</span>
+                        <div className="flex items-center justify-between mb-1 gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-xl">{h.icon}</span>
+                            <span className="font-black text-xs sm:text-sm text-slate-900">{h.label}</span>
                           </div>
-                          <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${res.badgeColor}`}>
-                            {res.badge}
-                          </span>
+                          <span className={`shrink-0 text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${tag.cls}`}>{tag.label}</span>
                         </div>
-
-                        <p className="text-[11px] text-slate-500 leading-snug pl-7 mb-2">
-                          {res.desc}
-                        </p>
-
+                        <p className="text-[11px] text-slate-500 leading-snug pl-7 mb-2">{h.area}</p>
                         <div className="flex items-center justify-between pl-7 pt-2 border-t border-slate-200/50 text-[10px] sm:text-xs font-black">
-                          <span className="text-emerald-700">Start with {res.startCapital}</span>
-                          <span className="text-slate-500 font-mono">Rent: {res.rent}</span>
+                          <span className="text-slate-600">AED {h.monthly.toLocaleString()}/month · AED {daily.toLocaleString()}/day living</span>
+                          <span className={runway < 45 ? "text-rose-600" : "text-emerald-700"}>Lasts {runway} days</span>
                         </div>
                       </button>
                     );
                   })}
                 </div>
+                <p className="text-[11px] text-slate-500 text-center">&ldquo;Lasts&rdquo; = how long AED 50,000 covers rent, a metro card and a basic phone plan with no income. Sustainability before luxury.</p>
 
                 {finishError && <p role="alert" className="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">{finishError}</p>}
                 <button
@@ -597,93 +557,17 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
               </p>
             </div>
 
-            <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-xs text-amber-900 font-semibold leading-relaxed">
-              ⚡ <b>Important:</b> To get pop-up alerts for friend requests, direct messages, and knocks even when your phone is closed, complete these 2 quick steps:
-            </div>
-
-            {/* Step 1: Install to Home Screen */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-2xl">📱</span>
-                  <div>
-                    <h4 className="text-xs font-black text-slate-900">Step 1: Add to Home Screen</h4>
-                    <p className="text-[11px] text-slate-500">Play full screen like a real app</p>
-                  </div>
+            <div className="space-y-2 text-sm">
+              {[
+                ["🛬", "Visit visa: 30 days", "The clock runs on days you play. Study or get a job to stay."],
+                ["💰", "AED 50,000 in your wallet", "Living costs come out at 09:00 GST. Watch your runway."],
+                ["🌅", "Your first day", "Plan your budget, work a shift, pass a lesson, add a friend: AED 10,000 bonus."],
+              ].map(([icon, title, text]) => (
+                <div key={title} className="flex items-start gap-3 rounded-2xl bg-slate-50 p-3">
+                  <span className="text-2xl">{icon}</span>
+                  <span><span className="block font-black text-slate-900">{title}</span><span className="block text-xs text-slate-500">{text}</span></span>
                 </div>
-                {isInstalled && (
-                  <span className="text-[10px] font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                    Installed ✓
-                  </span>
-                )}
-              </div>
-
-              {!isInstalled && (
-                installState === "ios" ? (
-                  <div className="p-3 bg-sky-50 border border-sky-100 rounded-xl space-y-2 text-xs text-slate-700">
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-7 h-7 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
-                        <Share className="w-3.5 h-3.5" />
-                      </span>
-                      <span>1. Tap the <b>Share</b> button in Safari browser bar</span>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-7 h-7 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
-                        <SquarePlus className="w-3.5 h-3.5" />
-                      </span>
-                      <span>2. Select <b>Add to Home Screen</b>, then tap <b>Add</b></span>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={async () => {
-                      const ok = await promptInstall();
-                      if (ok) setIsInstalled(true);
-                    }}
-                    className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 shadow active:scale-95 transition"
-                  >
-                    <Download className="w-3.5 h-3.5" /> Install cometodubai.app App
-                  </button>
-                )
-              )}
-            </div>
-
-            {/* Step 2: Enable Push Notifications */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-2xl">🔔</span>
-                  <div>
-                    <h4 className="text-xs font-black text-slate-900">Step 2: Turn on Push Notifications</h4>
-                    <p className="text-[11px] text-slate-500">Instant friend request & message pop-ups</p>
-                  </div>
-                </div>
-                {pushEnabled && (
-                  <span className="text-[10px] font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                    Enabled ✓
-                  </span>
-                )}
-              </div>
-
-              {!pushEnabled ? (
-                <button
-                  onClick={async () => {
-                    setPushLoading(true);
-                    const res = await subscribeToPush(completionData.userId);
-                    setPushLoading(false);
-                    if (res.ok) setPushEnabled(true);
-                    else alert(res.error || "Please allow notifications when prompted by your browser.");
-                  }}
-                  disabled={pushLoading}
-                  className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 rounded-xl text-xs font-black flex items-center justify-center gap-2 shadow active:scale-95 transition disabled:opacity-50"
-                >
-                  <Bell className="w-3.5 h-3.5" /> {pushLoading ? "Enabling…" : "Turn on Notifications"}
-                </button>
-              ) : (
-                <p className="text-[11px] text-emerald-600 font-bold">
-                  ✓ Push notifications are active! You will receive pop-ups on your phone.
-                </p>
-              )}
+              ))}
             </div>
 
             {/* Proceed to Home */}
@@ -691,7 +575,7 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
               onClick={() => router.push("/home")}
               className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm shadow-lg shadow-emerald-500/25 transition-all active:scale-98 flex items-center justify-center gap-1.5"
             >
-              <span>Enter My Apartment & Play</span>
+              <span>Start my first day</span>
               <span>›</span>
             </button>
           </div>

@@ -656,6 +656,123 @@ const ENISH = outlet("Enish Dubai", "Nigerian restaurant & lounge · The H, leve
 });
 const GAMBACHI = { ...lounge("Gambachi Social Club", "Nightclub & social club · The H", { ...AFRO_BRAND, accent: "#facc15" }, "Nightclub and social club at The H Dubai: international DJs, live shows, VIP tables and fine dining."), activities: DANCE() };
 
+// ---------------------------------------------------------------- Dubai Marina and JBR standalone venues
+// Dubai Marina Mall's tenants (Waitrose, Reel Cinemas, H&M, Mango…) and Pier 7's dining tower are as listed
+// by Bayut and Emaar (2025–26); the clubs and restaurants are well-known Marina/JBR names in 2026 guides.
+
+const DANCE_HERE = [{ id: "dance", label: "Dance", icon: "💃", animation: "dance" as const }];
+const clubVenue = (name: string, category: string, blurb: string, accent: string, light: string) => ({
+  ...lounge(name, category, { floor: "#0b0b12", wall: "#12121c", accent, light }, blurb), activities: DANCE_HERE,
+});
+
+const MARINA_PLACES: Place[] = [
+  {
+    id: "dubai-marina-mall", name: "Dubai Marina Mall", kind: "mall",
+    blurb: "Waterside mall on the marina with Waitrose, Reel Cinemas and Pier 7's dining tower next door.",
+    categories: ["Supermarket", "Fashion", "Footwear", "Jewellery & watches", "Café", "Restaurant", "Entertainment"],
+    venues: [
+      venue("Waitrose", "Supermarket", "supermarket", { zone: "Level P" }),
+      venue("H&M", "Fashion", "fashion"), venue("Mango", "Fashion", "fashion"), venue("River Island", "Fashion", "fashion"),
+      venue("Charles & Keith", "Footwear", "fashion"), venue("Aldo", "Footwear", "fashion"),
+      venue("Pandora", "Jewellery & watches", "jewellery"),
+      venue("Starbucks", "Café", "cafe"), venue("Caffè Nero", "Café", "cafe"), venue("Le Pain Quotidien", "Café", "cafe"),
+      venue("Shakespeare and Co.", "Restaurant", "restaurant", { zone: "Level P", blurb: "All-day café-restaurant with a marina-view breakfast." }),
+      venue("Five Guys", "Restaurant", "restaurant"),
+      venue("Reel Cinemas", "Entertainment", "club", {
+        role: "Cinema host", noJob: true, layout: "lobby", palette: PALETTES.night, feature: "stage", blurb: "Multiplex on the top level, including a Dolby Cinema screen.",
+        products: [ticket("reel-marina:standard", "Standard movie ticket", 45, "Tonight's film in 2D."), ticket("reel-marina:dolby", "Dolby Cinema ticket", 75, "Dolby Vision and Atmos.", "🎬"),
+          { id: "reel-marina:popcorn", name: "Large popcorn", price: 39, icon: "🍿", station: "counter", desc: "Salted or caramel.", consumable: { need: "fun", amount: 8 } }],
+      }),
+    ],
+  },
+  {
+    id: "pier-7", name: "Pier 7", kind: "food-hall",
+    blurb: "Seven floors of restaurants and lounges in a glass tower on the marina, by Dubai Marina Mall.",
+    venues: [
+      outlet("Asia Asia", "Pan-Asian restaurant & lounge · 6th floor", "japanese", { floor: "#1c1917", wall: "#292524", accent: "#dc2626", light: "#f59e0b" }, { blurb: "Pan-Asian dining with marina views on the sixth floor." }),
+      outlet("Mama Zonia", "African-inspired restaurant & lounge", "nigerian", { floor: "#14532d", wall: "#1c1917", accent: "#facc15", light: "#22c55e" }, { blurb: "Jungle-themed dining room with African-inspired plates.", activities: DANCE_HERE }),
+      lounge("Pier 7 · Rooftop Lounge", "Rooftop lounge", { floor: "#0b0b12", wall: "#12121c", accent: "#38bdf8", light: "#38bdf8" }, "Cocktails over the marina at the top of Pier 7."),
+    ],
+  },
+  single("buddha-bar", "Buddha-Bar · Grosvenor House", "club", clubVenue("Buddha-Bar", "Asian restaurant & lounge · Grosvenor House", "Dimly lit Asian dining room and lounge with a giant Buddha and resident DJs.", "#dc2626", "#fbbf24")),
+  single("hurricanes-grill", "Hurricane's Grill & Bar", "club", outlet("Hurricane's Grill & Bar", "Steakhouse & bar · opposite JBR", "steak", { floor: "#292524", wall: "#e7e5e4", accent: "#f97316" }, { blurb: "Ribs, steaks and sports on the screens, across from JBR." })),
+  single("lock-stock-barrel-jbr", "Lock, Stock & Barrel JBR", "club", clubVenue("Lock, Stock & Barrel JBR", "Party bar & live music", "Big-energy bar with live bands and DJs, packed on weekends.", "#facc15", "#dc2626")),
+  single("bla-bla-dubai", "Bla Bla Dubai", "club", clubVenue("Bla Bla Dubai", "Beach club & bars · JBR", "Beachfront venue with several bars, live bands and a pool.", "#22d3ee", "#f472b6")),
+  single("barasti", "Barasti Beach Bar", "club", clubVenue("Barasti", "Beach club & sports bar · Mina Seyahi", "Dubai's classic beach bar: sundowners, live sport and DJs on the sand.", "#f59e0b", "#0ea5e9")),
+];
+
+// ---------------------------------------------------------------- JBR and Bluewaters
+// JBR: the residences on the beach west of Dubai Harbour, with The Walk promenade and its beach hotels.
+// Bluewaters: the island just offshore, joined to JBR by a footbridge, home to Ain Dubai (the 250 m
+// observation wheel), Madame Tussauds Dubai and Banyan Tree Dubai (formerly Caesars Palace, rebranded
+// in 2023). Named outlets are ones reported at each place in 2025–26 guides; others are labelled by cuisine.
+
+const JBR_PLACES: Place[] = [
+  {
+    id: "jbr", name: "JBR · The Walk", kind: "mall",
+    blurb: "Jumeirah Beach Residence: 40 beachfront towers with The Walk, a 1.7 km promenade of cafés, shops and beach hotels.",
+    categories: ["Hotels", "Restaurant", "Café", "Entertainment"],
+    venues: [
+      ...palmHotel({
+        id: "address-beach-resort", name: "Address Beach Resort", short: "Address Beach", blurb: "",
+        brand: { floor: "#e7e5e4", wall: "#fafaf9", accent: "#0f766e" }, room: 1400, suite: "Sea-view suite", suitePrice: 4800,
+        pool: "Zeta Seventy Seven · Infinity Pool", poolPrice: 600, spa: "The Spa at Address Beach Resort",
+        outlets: [outlet("Address Beach · Japanese Restaurant", "Japanese restaurant", "japanese", { floor: "#1c1917", wall: "#f5f5f4", accent: "#0f766e" })],
+      }).venues,
+      ...palmHotel({
+        id: "rixos-premium-jbr", name: "Rixos Premium Dubai JBR", short: "Rixos Premium", blurb: "",
+        brand: { floor: "#efe6d8", wall: "#fbf7f0", accent: "#b45309" }, room: 1100, suite: "Premium suite", suitePrice: 3600,
+        spa: "Anjana Spa", beach: "Rixos Beach",
+        outlets: [outlet("Rixos Premium · Turkish Restaurant", "Turkish restaurant", "turkish", { floor: "#7c2d12", wall: "#fef3c7", accent: "#b45309" })],
+      }).venues,
+      ...palmHotel({
+        id: "sofitel-jbr", name: "Sofitel Dubai Jumeirah Beach", short: "Sofitel JBR", blurb: "",
+        brand: { floor: "#e2e8f0", wall: "#f8fafc", accent: "#1e3a8a" }, room: 850, suite: "Prestige suite", suitePrice: 2800,
+        spa: "Sofitel Spa",
+        outlets: [outlet("Sofitel JBR · French Brasserie", "French brasserie", "french", { floor: "#1e293b", wall: "#f8fafc", accent: "#1e3a8a" })],
+      }).venues,
+      outlet("The Walk · Lebanese Grill", "Lebanese restaurant · The Walk", "lebanese", { floor: "#7c2d12", wall: "#fef3c7", accent: "#16a34a" }),
+      outlet("The Walk · Burger & Shakes", "Burger joint · The Walk", "gastropub", { floor: "#1f2937", wall: "#fef3c7", accent: "#dc2626" }),
+      outlet("The Walk · Seafood Terrace", "Seafood restaurant · The Walk", "seafood", { floor: "#0c4a6e", wall: "#f0f9ff", accent: "#0284c7" }),
+      outlet("The Walk · Gelato Bar", "Gelato · The Walk", "gelato", { floor: "#fdf2f8", wall: "#fff7ed", accent: "#db2777" }),
+      outlet("The Walk · Seaside Café", "Café · The Walk", "cafe", { floor: "#a47148", wall: "#efe3d0", accent: "#0f766e" }),
+      venue("The Beach · Open-air Cinema", "Outdoor cinema", "club", {
+        role: "Cinema host", noJob: true, feature: "stage", palette: PALETTES.night, blurb: "Films on a big screen under the stars at The Beach.",
+        products: [ticket("jbr-cinema:ticket", "Open-air cinema ticket", 60, "Tonight's film on beanbags by the sea.", "🎬"), { id: "jbr-cinema:popcorn", name: "Popcorn", price: 25, icon: "🍿", station: "bar", desc: "Salted or caramel.", consumable: { need: "fun", amount: 8 } }],
+      }),
+    ],
+  },
+  {
+    id: "bluewaters", name: "Bluewaters", kind: "mall",
+    blurb: "The island off JBR, joined by a footbridge: Ain Dubai, Madame Tussauds, beachfront dining and Banyan Tree Dubai.",
+    categories: ["Attraction", "Restaurant", "Hotels"],
+    venues: [
+      attraction("Ain Dubai", "The world's tallest observation wheel, about 250 m, with 48 cabins and views over JBR, the Marina and the Palm.", "skyline", [
+        ticket("ain-dubai:standard", "Ain Dubai · shared cabin", 145, "One rotation (about 38 minutes) in a shared cabin."),
+        ticket("ain-dubai:sunset", "Ain Dubai · sunset cabin", 210, "Shared cabin timed for sunset.", "🌅"),
+        ticket("ain-dubai:private", "Ain Dubai · private cabin", 1800, "A cabin for your group of up to 10.", "🥂"),
+      ], [{ id: "view", label: "Take in the view", icon: "🎡", animation: "wave", reward: 0 }]),
+      attraction("Madame Tussauds Dubai", "Wax figures of global and Arab stars, from film and music to sport.", "exhibits", [
+        ticket("tussauds:entry", "Madame Tussauds entry", 150, "All zones, take as many photos as you like."),
+      ], [{ id: "selfie", label: "Selfie with a star", icon: "🤳", animation: "wave", reward: 10 }]),
+      outlet("The London Project", "British restaurant & bar", "british", { floor: "#14532d", wall: "#f0fdf4", accent: "#15803d" }, { blurb: "Greenhouse-style dining room with British plates and cocktails." }),
+      outlet("Alici", "Italian seafood restaurant", "italian", { floor: "#0c4a6e", wall: "#f0f9ff", accent: "#0369a1" }, { blurb: "Amalfi-coast seafood by the water." }),
+      venue("Brass Monkey", "Bowling, games & bar", "club", {
+        role: "Lane host", noJob: true, feature: "stage", palette: { floor: "#1c1917", wall: "#292524", accent: "#d97706", light: "#f59e0b" },
+        blurb: "Bowling lanes, arcade games, karaoke and a bar.",
+        products: [ticket("brass-monkey:bowling", "Bowling lane, 1 game", 60, "Shoes included.", "🎳"), ...menu("brass-monkey", "gastropub")],
+        activities: [{ id: "bowl", label: "Bowl a frame", icon: "🎳", animation: "clap", reward: 15 }, { id: "karaoke", label: "Sing karaoke", icon: "🎤", animation: "dance" }],
+      }),
+      ...palmHotel({
+        id: "banyan-tree-dubai", name: "Banyan Tree Dubai", short: "Banyan Tree", blurb: "",
+        brand: { floor: "#3f2a1e", wall: "#f5efe3", accent: "#78350f" }, room: 1500, suite: "Sea-view suite", suitePrice: 5200,
+        spa: "Banyan Tree Spa", beach: "Banyan Tree Beach",
+        outlets: [outlet("Banyan Tree · Mediterranean Kitchen", "Mediterranean restaurant", "greek", { floor: "#3f2a1e", wall: "#f5efe3", accent: "#78350f" })],
+      }).venues,
+    ],
+  },
+];
+
 const SZR_PLACES: Place[] = [
   cityHotel({
     id: "shangri-la-dubai", name: "Shangri-La Dubai", short: "Shangri-La", blurb: "Five-star tower on Sheikh Zayed Road with Shang Palace, Hoi An and The Avenue on the 42nd floor.",
@@ -1095,6 +1212,8 @@ export const PLACES: Place[] = [
   ...PALM_PLACES,
   ...COAST_PLACES,
   ...SZR_PLACES,
+  ...JBR_PLACES,
+  ...MARINA_PLACES,
 ];
 
 const BY_ID = new Map(PLACES.map((p) => [p.id, p]));

@@ -4,6 +4,7 @@
 // compare products, try accessories on, buy (with confirmation), talk to staff, apply for a job,
 // work shifts and join activities.
 
+import { askForPush } from "@/lib/push/engage";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Briefcase, Check, HelpCircle, LogOut, Megaphone, MessageCircle, MessagesSquare, Search, Shirt, ShoppingBag, Sparkles, X } from "lucide-react";
@@ -74,12 +75,12 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   const [vipCelebration, setVipCelebration] = useState<{ username: string; mine: boolean } | null>(null);
   const [peerConsumptions, setPeerConsumptions] = useState<Record<string, { action: "drink" | "eat"; prop: string; tint?: string }>>({});
 
-  // Automatically check if venue guide has been seen on first entry
+  // The venue guide opens by itself once: the first time a player walks into any venue. After that it's
+  // behind the guide button.
   useEffect(() => {
-    const guideSeenKey = `venue_guide_seen_${venue.layout}`;
     let seen = false;
     try {
-      seen = localStorage.getItem(guideSeenKey) === "true";
+      seen = localStorage.getItem("venue_guide_seen") === "true" || Object.keys(localStorage).some((k) => k.startsWith("venue_guide_seen_"));
     } catch {}
     if (!seen) {
       const timer = setTimeout(() => setGuideOpen(true), 1200);
@@ -683,6 +684,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       updateCitizen((c) => ({ ...c, job: { storeId: venue.id, storeName: venue.name, role: job.role, wage: job.wage } }));
       gameAudio.playCoinSound();
       say(`🎉 You're hired as ${job.role} at ${venue.name}! Wage AED ${job.wage} per shift.`);
+      setTimeout(() => askForPush({ icon: "💼", title: "Your next shift", text: `Turn on notifications and we'll tell you when your next shift at ${venue.name} is ready.` }), 2500);
     } else {
       say("Thanks for coming in — not this time. You can apply again later.");
     }
@@ -1024,9 +1026,9 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         <div className="pointer-events-auto bg-white/95 rounded-2xl shadow-lg px-3 py-1.5 min-w-0">
           <div className="font-black text-sm text-slate-900 truncate flex items-center gap-1">
             {venue.name}
-            {pub?.claimed && <button onClick={() => setAboutOpen(true)} className="text-[10px] font-black text-sky-600 bg-sky-50 rounded-full px-1.5 py-0.5" aria-label="About this verified business">✓ Verified · About</button>}
+            {pub?.claimed && <button onClick={() => setAboutOpen(true)} className="text-[10px] font-black text-sky-600 bg-sky-50 rounded-full px-1.5 py-0.5" aria-label="About this partner venue">✓ Partner · About</button>}
           </div>
-          <div className="text-[11px] text-slate-500 truncate">{venue.category}{venue.zone ? ` · ${venue.zone}` : ""} · {place.name}</div>
+          <div className="text-[11px] text-slate-500 truncate">{venue.category}{venue.zone ? ` · ${venue.zone}` : ""} · {place.name}{pub && !pub.claimed ? " · not affiliated" : ""}</div>
         </div>
         <div className="flex-1" />
         {/* Phones show the balance short (2.2M) so the header fits on one line. */}
@@ -1167,7 +1169,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
             if (!myId) return "Log in to add friends.";
             const r = await befriend(myId, peerPanel);
             if (r === "sent") emit({ type: "friend" }, peerPanel.userId);
-            return r === "friends" ? `You and @${peerPanel.username} are now friends 🤝` : r === "sent" ? "Friend request sent" : "Couldn't send the request — try again.";
+            return r === "friends" ? `You and @${peerPanel.username} are now friends 🤝` : r === "sent" ? "Friend request sent" : r === "blocked" ? "You can't add them." : "Couldn't send the request — try again.";
           }}
         />
       )}

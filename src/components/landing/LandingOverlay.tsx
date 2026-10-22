@@ -3,7 +3,7 @@
 import { InstallApp } from "@/components/pwa/InstallApp";
 import { compact, useSiteStats } from "@/lib/siteStats";
 import { PLACES } from "@/lib/city/places";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
   Users, Eye, EyeOff, X, Calendar as CalendarIcon, 
@@ -13,6 +13,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useOnlineCount, formatOnline } from "@/lib/presence";
 import { getCitizenState, isUsernameTaken, logIn, resendConfirmation, signUpWithEmail, type Citizen } from "@/lib/citizenStore";
 import { useSignupDraft, updateSignupDraft, type SignupForm } from "@/lib/signupDraft";
+import { ageFrom, dobIso, MIN_AGE } from "@/lib/age";
 
 interface LandingOverlayProps {
   isLoggedIn?: boolean;
@@ -30,8 +31,13 @@ export function LandingOverlay({
 }: LandingOverlayProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  // An invite (?ref=username) is remembered until the new citizen exists, then redeemed (LifeHub).
+  const ref = searchParams.get("ref");
+  useEffect(() => {
+    if (ref && /^[a-z0-9_]{3,24}$/.test(ref)) { try { localStorage.setItem("dl_ref", ref); } catch { /* storage blocked */ } }
+  }, [ref]);
   const onlineCount = useOnlineCount();
-  const { visits, homes } = useSiteStats();
+  const { visits } = useSiteStats();
   const placeCount = PLACES.reduce((n, p) => n + p.venues.filter((v) => !v.comingSoon).length, 0);
   const draft = useSignupDraft();
 
@@ -61,7 +67,7 @@ export function LandingOverlay({
   const setDobMonth = setField("dobMonth");
   const dobYear = form.dobYear ?? "1997";
   const setDobYear = setField("dobYear");
-  const agree18 = form.agree18 ?? true;
+  const agree18 = form.agree18 ?? false;
   const setAgree18 = setField("agree18");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -92,6 +98,9 @@ export function LandingOverlay({
     if (cleanUsername.length < 3) return setAuthError("Username needs at least 3 letters, numbers or underscores.");
     if (!/^\S+@\S+\.\S+$/.test(email.trim())) return setAuthError("Enter a valid email — you'll use it to log in.");
     if (password.length < 8) return setAuthError("Password must be at least 8 characters.");
+    const dob = dobIso({ day: dobDay, month: dobMonth, year: dobYear });
+    if (!dob) return setAuthError("That date of birth isn't a real date — please check it.");
+    if (ageFrom(dob) < MIN_AGE) return setAuthError("Come To Dubai is for players aged 21 and over.");
     router.push("/?signup=true&confirm=age", { scroll: false });
   };
 
@@ -110,7 +119,13 @@ export function LandingOverlay({
         setAuthError(`@${cleanUsername} is taken — pick another username.`);
         return;
       }
-      const result = await signUpWithEmail(email.trim(), password, { username: cleanUsername, display_name: name.trim() });
+      const dob = dobIso({ day: dobDay, month: dobMonth, year: dobYear });
+      if (!dob || ageFrom(dob) < MIN_AGE) {
+        router.replace("/?signup=true", { scroll: false });
+        setAuthError("Come To Dubai is for players aged 21 and over.");
+        return;
+      }
+      const result = await signUpWithEmail(email.trim(), password, { username: cleanUsername, display_name: name.trim(), dob });
       if (!result.ok) {
         router.replace("/?signup=true", { scroll: false });
         setAuthError(result.error);
@@ -147,7 +162,7 @@ export function LandingOverlay({
 
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const days = Array.from({ length: 31 }, (_, i) => String(i + 1));
-  const years = Array.from({ length: 65 }, (_, i) => String(2008 - i));
+  const years = Array.from({ length: 80 }, (_, i) => String(new Date().getFullYear() - MIN_AGE - i));
 
   return (
     <>
@@ -183,10 +198,6 @@ export function LandingOverlay({
               <div className="flex items-center gap-1 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-slate-700 shadow-sm border border-slate-100">
                 <span>🏛️</span>
                 <span>{placeCount} places to visit</span>
-              </div>
-              <div className="flex items-center gap-1 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-slate-700 shadow-sm border border-slate-100">
-                <span>🏘️</span>
-                <span>{homes === null ? "…" : homes.toLocaleString()} homes</span>
               </div>
             </div>
 
@@ -420,7 +431,7 @@ export function LandingOverlay({
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full h-11 px-4 bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-2xl text-sm font-bold text-slate-900 outline-none transition-all"
                 />
-                <p className="text-xs text-slate-400 mt-1">You&apos;ll log in with it. We&apos;ll email you a link to confirm your account.</p>
+                <p className="text-xs text-slate-400 mt-1">You&apos;ll log in with it.</p>
               </div>
 
               {/* Date of birth */}
@@ -451,7 +462,7 @@ export function LandingOverlay({
                 </div>
               </div>
 
-              {/* 18+ Checkbox */}
+              {/* 21+ Checkbox */}
               <div className="pt-2">
                 <label className="flex items-start gap-2.5 cursor-pointer bg-slate-50 p-3 rounded-2xl border border-slate-100">
                   <input
@@ -461,7 +472,7 @@ export function LandingOverlay({
                     className="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                   />
                   <span className="text-xs text-slate-600 leading-snug">
-                    I'm <strong>18+</strong> and I agree to the <span className="text-blue-600 underline">Terms</span>, <span className="text-blue-600 underline">Privacy Policy</span> and <span className="text-blue-600 underline">Disclaimer</span>.
+                    I'm <strong>21+</strong> and I agree to the <span className="text-blue-600 underline">Terms</span>, <span className="text-blue-600 underline">Privacy Policy</span> and <span className="text-blue-600 underline">Disclaimer</span>.
                   </span>
                 </label>
               </div>
@@ -534,7 +545,7 @@ export function LandingOverlay({
           <div>
             <h3 className="text-xl font-black text-slate-900 tracking-tight">Are you sure?</h3>
             <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-              You're confirming you were born on <strong className="text-slate-900">{dobDay} {dobMonth} {dobYear}</strong> and are 18 or older.
+              You're confirming you were born on <strong className="text-slate-900">{dobDay} {dobMonth} {dobYear}</strong> and are 21 or older.
             </p>
           </div>
 

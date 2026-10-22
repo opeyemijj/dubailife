@@ -42,6 +42,7 @@ import {
 } from './DIFCZaabeelAmenities';
 import { DXBAirportBlock } from './DXBAirport';
 import { CocaColaArena, SZRLounge, SZRTower } from './SZRLandmarks';
+import { BluewatersSprite, JBRSprite, MarinaMallSprite, Pier7Sprite } from './JBRBluewaters';
 import { MirrorX } from './mirror';
 export { DXBAirportBlock };
 export {
@@ -4309,6 +4310,11 @@ export {
 };
 
 export const getBuildingSprite = (id: string, type: string, seed?: number, title?: string, loc?: any, onUnitClick?: any) => {
+  // JBR and Bluewaters
+  if (type === 'jbr-district') return <JBRSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'marina-mall') return <MarinaMallSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'pier-7') return <Pier7Sprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'bluewaters-island') return <BluewatersSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
   // Sheikh Zayed Road landmarks on the floor-ad strip
   if (type === 'szr-tower') return <SZRTower width={loc?.width} height={loc?.height} name={title || loc?.name} sign={loc?.sign} glass={loc?.glass} frame={loc?.frame} accent={loc?.accent} crown={loc?.crown} />;
   if (type === 'coca-cola-arena') return <CocaColaArena width={loc?.width} height={loc?.height} name={title || loc?.name} />;

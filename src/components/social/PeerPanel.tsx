@@ -4,9 +4,10 @@
 // place (buy them a drink at a club, treat them at a café).
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, HandCoins, MessageCircle, Send, X } from "lucide-react";
+import { ArrowLeft, Ban, Flag, HandCoins, MessageCircle, Send, X } from "lucide-react";
 import type { ChatMessage, Peer } from "@/lib/room";
 import type { Product } from "@/lib/city/types";
+import { blockUser, REPORT_REASONS, reportUser, type ReportReason } from "@/lib/safety";
 
 export type SocialContext = "club" | "dining" | "home" | "venue";
 
@@ -40,7 +41,10 @@ export function PeerPanel({
   onTreat?: () => void;
   onFriend: () => Promise<string>;
 }) {
-  const [mode, setMode] = useState<"menu" | "chat" | "money">(startIn);
+  const [mode, setMode] = useState<"menu" | "chat" | "money" | "safety">(startIn);
+  const [reason, setReason] = useState<ReportReason | null>(null);
+  const [details, setDetails] = useState("");
+  const [confirmBlock, setConfirmBlock] = useState(false);
   const thread = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (mode !== "chat") return;
@@ -74,6 +78,21 @@ export function PeerPanel({
     else { setNote(null); setMode("menu"); }
   };
 
+  const report = async () => {
+    if (!reason) return;
+    setBusy(true);
+    const error = await reportUser(peer.userId, reason, context, details);
+    setBusy(false);
+    setNote(error ?? "Thanks. Our team will review it within 24 hours.");
+    if (!error) { setReason(null); setDetails(""); }
+  };
+  const block = async () => {
+    setBusy(true);
+    const error = await blockUser(peer.userId);
+    setBusy(false);
+    if (error) setNote(error); else onClose();
+  };
+
   return (
     <div className="absolute inset-x-0 bottom-0 sm:inset-auto sm:right-4 sm:top-20 sm:w-[360px] z-40 pointer-events-auto">
       <div className="bg-white/95 backdrop-blur-xl sm:rounded-3xl rounded-t-3xl shadow-2xl max-h-[62vh] sm:max-h-[80vh] flex flex-col text-slate-900">
@@ -100,6 +119,42 @@ export function PeerPanel({
               {action("👋", "Wave", onWave)}
               {action("🤝", "Add friend", async () => setNote(await onFriend()), "Friends can visit each other's homes")}
               {note && <p className="text-xs font-bold text-emerald-700 text-center">{note}</p>}
+              <button onClick={() => { setMode("safety"); setNote(null); }} className="flex items-center justify-center gap-1.5 w-full pt-1 text-[11px] font-bold text-slate-400 hover:text-rose-600">
+                <Flag className="w-3 h-3" /> Report or block @{peer.username}
+              </button>
+            </>
+          )}
+
+          {mode === "safety" && (
+            <>
+              <p className="text-xs font-black text-slate-700">What&apos;s wrong?</p>
+              <div className="space-y-1.5">
+                {REPORT_REASONS.map((r) => (
+                  <button key={r.id} onClick={() => setReason(r.id)}
+                    className={`w-full text-left px-3 py-2.5 rounded-xl text-sm font-bold border ${reason === r.id ? "bg-rose-50 border-rose-300 text-rose-800" : "bg-slate-50 border-slate-100"}`}>{r.label}</button>
+                ))}
+              </div>
+              {reason && (
+                <textarea value={details} onChange={(e) => setDetails(e.target.value)} maxLength={500} rows={2}
+                  placeholder="Anything we should know? (optional)" className="w-full rounded-xl border border-slate-200 p-2.5 text-base" />
+              )}
+              <button disabled={!reason || busy} onClick={report} className="w-full h-11 rounded-xl bg-rose-600 disabled:opacity-40 text-white font-black flex items-center justify-center gap-2">
+                <Flag className="w-4 h-4" /> Send report
+              </button>
+              {note && <p className="text-xs font-bold text-slate-600 text-center">{note}</p>}
+              <div className="border-t border-slate-100 pt-2">
+                {confirmBlock ? (
+                  <div className="space-y-2">
+                    <p className="text-xs text-slate-600">@{peer.username} won&apos;t be able to message you, add you, send you money or knock on your door. They aren&apos;t told.</p>
+                    <div className="flex gap-2">
+                      <button onClick={() => setConfirmBlock(false)} className="flex-1 h-10 rounded-xl bg-slate-100 text-sm font-black">Cancel</button>
+                      <button disabled={busy} onClick={block} className="flex-1 h-10 rounded-xl bg-slate-900 text-white text-sm font-black">Block</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => setConfirmBlock(true)} className="w-full h-10 rounded-xl bg-slate-100 text-sm font-black flex items-center justify-center gap-2"><Ban className="w-4 h-4" /> Block @{peer.username}</button>
+                )}
+              </div>
             </>
           )}
 

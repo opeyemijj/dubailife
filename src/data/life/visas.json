@@ -1,0 +1,53 @@
+{
+  "_note": "Five-tier visa ladder (design spec section 11). Fictional in-game statuses, not immigration advice. Lengths and fines are mirrored in public.visa_days() / life_sync().",
+  "overstayFinePerDay": 50,
+  "tiers": [
+    {
+      "id": "VISIT",
+      "tier": 1,
+      "label": "Visit visa",
+      "days": 30,
+      "icon": "🛬",
+      "howTo": "Start of the game",
+      "overstay": true
+    },
+    {
+      "id": "STUDENT",
+      "tier": 2,
+      "label": "Student residence visa",
+      "days": 90,
+      "icon": "🎓",
+      "howTo": "Graduate from a course in Academic City",
+      "overstay": true,
+      "renewable": true
+    },
+    {
+      "id": "EMPLOYMENT",
+      "tier": 3,
+      "label": "Employment visa",
+      "days": 730,
+      "icon": "💼",
+      "howTo": "Get hired by a business in the city",
+      "overstay": false,
+      "graceDays": 30
+    },
+    {
+      "id": "FREELANCE",
+      "tier": 4,
+      "label": "Freelance residence visa",
+      "days": 1825,
+      "icon": "🧑‍💻",
+      "howTo": "Earn AED 360,000 and hold a degree",
+      "overstay": false
+    },
+    {
+      "id": "GOLDEN",
+      "tier": 5,
+      "label": "10-year Golden Visa",
+      "days": 3650,
+      "icon": "🌟",
+      "howTo": "AED 2,000,000 in property bought with earned AED, or honours plus a running venture",
+      "overstay": false
+    }
+  ]
+}

@@ -7,6 +7,7 @@ import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { DEFAULT_NEEDS, useCitizen, type NeedKey } from "@/lib/citizenStore";
 import { gameAudio } from "@/utils/gameAudio";
 import { openLife } from "./LifeHub";
+import { useLifeLoop, visaInfo } from "@/lib/lifeLoop";
 
 const METERS: Array<[NeedKey, string]> = [["hunger", "🍩"], ["energy", "⚡"], ["fun", "🎉"], ["social", "💬"], ["hygiene", "🧼"], ["bladder", "🚽"]];
 
@@ -16,6 +17,8 @@ const tone = (v: number) => (v >= 50 ? "bg-emerald-500" : v >= 25 ? "bg-amber-40
 export function NeedsDock({ dark = false, className = "" }: { dark?: boolean; className?: string }) {
   const { citizen } = useCitizen();
   const needs = { ...DEFAULT_NEEDS, ...citizen?.needs };
+  const life = useLifeLoop();
+  const visa = life && life.visaTier !== "GOLDEN" ? visaInfo(life.visaTier) : null;
   return (
     <button
       onClick={() => { gameAudio.playClickSound(); openLife("needs"); }}
@@ -36,6 +39,15 @@ export function NeedsDock({ dark = false, className = "" }: { dark?: boolean; cl
           </span>
         ))}
       </span>
+      {visa && life && (
+        <span
+          onClick={(e) => { e.stopPropagation(); gameAudio.playClickSound(); openLife("visa"); }}
+          title={`${visa.label}: ${life.visaDaysLeft} days left`}
+          className={`ml-0.5 shrink-0 rounded-full px-1.5 py-0.5 text-[9px] sm:text-[10px] font-black leading-none ${life.visaDaysLeft <= 5 ? "bg-rose-500 text-white" : dark ? "bg-white/15 text-white" : "bg-sky-100 text-sky-700"}`}
+        >
+          {visa.icon} {life.visaDaysLeft}d
+        </span>
+      )}
     </button>
   );
 }

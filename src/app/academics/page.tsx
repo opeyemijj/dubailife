@@ -55,7 +55,16 @@ export default function AcademicDistrictPage() {
           </div>
         </header>
 
-        {/* 20% Scholarship Notice Banner if Secondary Diploma Owned */}
+        <Link href="/driving" className="flex items-center gap-3 rounded-2xl p-4 bg-gradient-to-r from-sky-900/60 to-indigo-900/60 border border-sky-500/30">
+          <span className="text-3xl">🚗</span>
+          <span className="flex-1">
+            <span className="block text-sm font-black text-white">Driving Academy</span>
+            <span className="block text-xs text-slate-300">Eye test, theory and Smart Yard. A licence unlocks cars in your Blueprint.</span>
+          </span>
+          <span className="text-xs font-black text-sky-300">Start ›</span>
+        </Link>
+
+        {/* 20% scholarship notice once a foundation diploma is earned */}
         {hasScholarship ? (
           <div className="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-r from-emerald-900/60 via-teal-900/60 to-slate-900 border border-emerald-500/40 shadow-lg">
             <div className="flex items-start gap-3">
@@ -68,7 +77,7 @@ export default function AcademicDistrictPage() {
                   <span className="text-[10px] bg-emerald-500 text-slate-950 font-black px-2 py-0.2 rounded-full">VOUCHER</span>
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  As an Outstanding Secondary School graduate, you receive a guaranteed 20% tuition discount on all Brain University Accelerator and University degrees!
+                  As a foundation diploma graduate, you receive a guaranteed 20% tuition discount on all Brain University Accelerator and University degrees!
                 </p>
               </div>
             </div>
@@ -82,7 +91,7 @@ export default function AcademicDistrictPage() {
               <div>
                 <div className="text-xs font-black text-purple-300 uppercase tracking-wider">Academic Pathway Tip</div>
                 <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">
-                  Complete a secondary diploma at Dubai College or GEMS Wellington first to unlock a permanent <strong className="text-white">20% scholarship</strong> on all university and accelerator courses!
+                  Complete a foundation diploma at Desert Rose College or the Foundation Academy first to unlock a permanent <strong className="text-white">20% scholarship</strong> on all university and accelerator courses!
                 </p>
               </div>
             </div>
@@ -151,7 +160,7 @@ export default function AcademicDistrictPage() {
               filter === "secondary" ? "bg-emerald-600 text-white" : "text-slate-400 hover:text-white"
             }`}
           >
-            🎓 Secondary Schools
+            🎓 Foundation Colleges
           </button>
         </div>
 

@@ -19,12 +19,12 @@ export function VenueGuideModal({ venue, open, onOpenChange }: VenueGuideModalPr
   const layout = venue.layout;
   const storageKey = `venue_guide_seen_${layout}`;
 
+  // Closing it counts as seen: it won't open by itself again (the guide button still opens it).
   const handleClose = () => {
-    if (dontShowAgain && typeof window !== "undefined") {
-      try {
-        localStorage.setItem(storageKey, "true");
-      } catch {}
-    }
+    try {
+      localStorage.setItem("venue_guide_seen", "true");
+      if (dontShowAgain) localStorage.setItem(storageKey, "true");
+    } catch {}
     onOpenChange(false);
   };
 

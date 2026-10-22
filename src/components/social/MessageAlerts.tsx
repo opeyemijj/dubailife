@@ -3,6 +3,7 @@
 // A flashing alert when someone messages you, anywhere in the app (venues and homes show their
 // own, so this stays out of the way there). Tap it to open the conversation.
 
+import { askForPush } from "@/lib/push/engage";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MessageCircle } from "lucide-react";
@@ -26,6 +27,7 @@ export function MessageAlerts() {
     const who = (await contacts([m.from_id])).get(m.from_id);
     try { navigator.vibrate?.([60, 40, 60]); } catch { /* not supported */ }
     setAlert({ id: m.id, from: m.from_id, username: who?.username ?? "someone", text: m.body });
+    setTimeout(() => askForPush({ icon: "💬", title: `@${who?.username ?? "someone"} messaged you`, text: "Turn on notifications to see messages the moment they arrive, even when the app is closed." }), 7500);
     setTimeout(() => setAlert((a) => (a?.id === m.id ? null : a)), 7000);
   }), [path, params]);
 

@@ -1,0 +1,84 @@
+{
+  "_note": "Season pass (design spec 19.5, US-7.4). Season XP = league points scored during the season. Dates and reward ids are mirrored in public.season_window() / public.season_reward() (migration *_seasons_plus.sql) and checked by scripts/check-life-config.mjs. Paid rewards are cosmetic only.",
+  "xpPerLevel": 150,
+  "levels": 20,
+  "seasons": [
+    {
+      "id": "s1",
+      "name": "Season 1 · City of Lights",
+      "theme": "National Day, the first cool nights and Global Village opening",
+      "starts": "2026-10-19T05:00:00Z",
+      "ends": "2026-12-14T05:00:00Z",
+      "accent": "#f59e0b",
+      "titles": [
+        "New Arrival",
+        "Night Owl",
+        "Souk Regular",
+        "Skyline Chaser",
+        "City of Lights",
+        "Desert Rose",
+        "Marina Insider",
+        "Lantern Bearer",
+        "Creek Captain",
+        "Falcon Spirit",
+        "Legend of Lights",
+        "Gold Souk Royal",
+        "Burj Dreamer",
+        "Palm Pioneer"
+      ],
+      "frames": [
+        "Lantern gold",
+        "Dune sunset",
+        "Marina blue",
+        "Neon night",
+        "Falcon silver",
+        "Pearl white",
+        "Fireworks",
+        "Global Village",
+        "Dhow wood"
+      ],
+      "badge": "City of Lights finisher"
+    },
+    {
+      "id": "s2",
+      "name": "Season 2 · Shopping Festival",
+      "theme": "Dubai Shopping Festival, New Year's Eve and winter markets",
+      "starts": "2026-12-14T05:00:00Z",
+      "ends": "2027-02-08T05:00:00Z",
+      "accent": "#ec4899",
+      "titles": [
+        "Bargain Hunter",
+        "Mall Walker",
+        "Fireworks Fan",
+        "Raffle Winner",
+        "Festival Star",
+        "Gold Rush",
+        "Countdown King",
+        "Shopping Legend",
+        "Market Maven",
+        "Deal Maker",
+        "Big Spender",
+        "Fashion Icon",
+        "Festival Royalty",
+        "Grand Prize"
+      ],
+      "frames": [
+        "Confetti",
+        "Gift wrap",
+        "Midnight gold",
+        "Shopping neon",
+        "Winter frost",
+        "Ribbon red",
+        "Grand finale",
+        "Snow globe",
+        "Golden ticket"
+      ],
+      "badge": "Shopping Festival finisher"
+    }
+  ],
+  "plus": {
+    "badge": "Dubai Plus member",
+    "monthlyFrame": "Plus monthly frame"
+  },
+  "rewardRules": "Free track: every 5th level a title (titles 1-4), other levels AED 300. Premium: even levels a frame (frames 1-9), odd levels a title (titles 5-14), level 20 the season badge."
+}

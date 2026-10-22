@@ -3,6 +3,7 @@
 // The citizen's phone: real conversations (kept 7 days), friends and people to find, and alerts
 // for money, knocks and friend requests — all live from the database.
 
+import { askForPush } from "@/lib/push/engage";
 import { useCitizen } from "@/lib/citizenStore";
 import { getPlace } from "@/lib/city/places";
 import { sendMoney } from "@/lib/room";
@@ -302,6 +303,7 @@ function People({ me, online, open }: { me: string; online: ReadonlySet<string>;
   const add = async (c: Contact) => {
     const { error } = await supabase().from("friendships").insert({ user_id: me, friend_id: c.id });
     if (!error) {
+      setTimeout(() => askForPush({ icon: "🤝", title: "Friend request sent", text: `Turn on notifications to know the moment @${c.username} accepts.` }), 1500);
       void sendPushNotification(
         c.id,
         {
@@ -312,6 +314,8 @@ function People({ me, online, open }: { me: string; online: ReadonlySet<string>;
         },
         me
       );
+    } else if (/\bblocked\b/.test(error.message)) {
+      window.dispatchEvent(new CustomEvent("dubai:toast", { detail: "You can't add them." }));
     }
     void refresh();
   };

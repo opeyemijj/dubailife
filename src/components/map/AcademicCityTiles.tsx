@@ -212,7 +212,7 @@ export const OneBrain3DCampus: React.FC<AcademicCampus3DProps> = ({
 };
 
 // ============================================================================
-// 2. AMERICAN UNIVERSITY IN DUBAI (AUD) — 3D NEOCLASSICAL CAMPUS
+// 2. CRESCENT UNIVERSITY (id aud) — 3D NEOCLASSICAL CAMPUS
 // ============================================================================
 export const AUD3DCampus: React.FC<AcademicCampus3DProps> = ({
   width = 280,
@@ -346,7 +346,7 @@ export const AUD3DCampus: React.FC<AcademicCampus3DProps> = ({
 
         {/* Triangular Neoclassical Pediment (Gable) */}
         <polygon points="96,85 184,85.8 140,58" fill="#fef3c7" stroke="#b45309" strokeWidth="1.2" />
-        {/* AUD Eagle Crest in Pediment Tympanum */}
+        {/* Eagle crest in the pediment */}
         <circle cx="140" cy="74" r="6" fill="#d97706" />
         <text x="140" y="76.5" fill="#ffffff" fontSize="6" fontWeight="bold" textAnchor="middle">🦅</text>
 
@@ -388,7 +388,7 @@ export const AUD3DCampus: React.FC<AcademicCampus3DProps> = ({
       <g transform="translate(140, 186)">
         <rect x="-95" y="-10" width="190" height="18" rx="9" fill="#451a03" stroke="#f59e0b" strokeWidth="1.5" />
         <text x="0" y="2.5" fill="#fef08a" fontSize="8" fontWeight="900" letterSpacing="0.8" textAnchor="middle">
-          🦅 AMERICAN UNIVERSITY IN DUBAI (AUD)
+          🦅 CRESCENT UNIVERSITY
         </text>
       </g>
     </svg>
@@ -396,7 +396,7 @@ export const AUD3DCampus: React.FC<AcademicCampus3DProps> = ({
 };
 
 // ============================================================================
-// 3. UNIVERSITY OF DUBAI (UD) — 3D CYBER & TRADE TOWER CAMPUS
+// 3. FALCON UNIVERSITY (id ud) — 3D CYBER & TRADE TOWER CAMPUS
 // ============================================================================
 export const UD3DCampus: React.FC<AcademicCampus3DProps> = ({
   width = 280,
@@ -527,7 +527,7 @@ export const UD3DCampus: React.FC<AcademicCampus3DProps> = ({
       <g transform="translate(140, 186)">
         <rect x="-95" y="-10" width="190" height="18" rx="9" fill="#082f49" stroke="#0284c7" strokeWidth="1.5" />
         <text x="0" y="2.5" fill="#38bdf8" fontSize="8" fontWeight="900" letterSpacing="0.8" textAnchor="middle">
-          🏛️ UNIVERSITY OF DUBAI (UD) · CYBER & TRADE
+          🏛️ FALCON UNIVERSITY · CYBER & TRADE
         </text>
       </g>
     </svg>
@@ -535,7 +535,7 @@ export const UD3DCampus: React.FC<AcademicCampus3DProps> = ({
 };
 
 // ============================================================================
-// 4. DUBAI COLLEGE (DC) — 3D BRITISH COLLEGIATE CLOCK TOWER
+// 4. DESERT ROSE COLLEGE (id dc) — 3D BRITISH COLLEGIATE CLOCK TOWER
 // ============================================================================
 export const DubaiCollege3DCampus: React.FC<AcademicCampus3DProps> = ({
   width = 280,
@@ -677,7 +677,7 @@ export const DubaiCollege3DCampus: React.FC<AcademicCampus3DProps> = ({
       <g transform="translate(140, 186)">
         <rect x="-95" y="-10" width="190" height="18" rx="9" fill="#14532d" stroke="#22c55e" strokeWidth="1.5" />
         <text x="0" y="2.5" fill="#86efac" fontSize="8" fontWeight="900" letterSpacing="0.8" textAnchor="middle">
-          🦁 DUBAI COLLEGE (DC) · KHDA OUTSTANDING
+          🦁 DESERT ROSE COLLEGE
         </text>
       </g>
     </svg>
@@ -685,7 +685,7 @@ export const DubaiCollege3DCampus: React.FC<AcademicCampus3DProps> = ({
 };
 
 // ============================================================================
-// 5. GEMS WELLINGTON INTERNATIONAL SCHOOL — 3D ROYAL ACADEMY PAVILION
+// 5. FOUNDATION ACADEMY (id gems-wellington) — 3D ROYAL ACADEMY PAVILION
 // ============================================================================
 export const GEMSWellington3DCampus: React.FC<AcademicCampus3DProps> = ({
   width = 280,
@@ -812,7 +812,96 @@ export const GEMSWellington3DCampus: React.FC<AcademicCampus3DProps> = ({
       <g transform="translate(140, 186)">
         <rect x="-95" y="-10" width="190" height="18" rx="9" fill="#172554" stroke="#3b82f6" strokeWidth="1.5" />
         <text x="0" y="2.5" fill="#93c5fd" fontSize="8" fontWeight="900" letterSpacing="0.8" textAnchor="middle">
-          👑 GEMS WELLINGTON · KHDA OUTSTANDING IB
+          👑 FOUNDATION ACADEMY
+        </text>
+      </g>
+    </svg>
+  );
+};
+
+
+// ============================================================================
+// 6. DRIVING ACADEMY — SMART YARD, PARKING BAYS AND TEST OFFICE (opens /driving)
+// ============================================================================
+export const DrivingAcademy3DCampus: React.FC<AcademicCampus3DProps> = ({ width = 240, height = 180, className = "" }) => {
+  return (
+    <svg
+      viewBox="0 0 280 200"
+      preserveAspectRatio="none"
+      style={{ width: `${width}px`, height: `${height}px` }}
+      className={`drop-shadow-2xl cursor-pointer hover:scale-[1.04] transition-transform origin-bottom select-none ${className}`}
+    >
+      <defs>
+        <linearGradient id="dlAsphalt" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#475569" />
+          <stop offset="100%" stopColor="#334155" />
+        </linearGradient>
+        <linearGradient id="dlOffice" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="100%" stopColor="#e2e8f0" />
+        </linearGradient>
+      </defs>
+
+      {/* Yard slab: front and right faces, same slant as the other campuses */}
+      <polygon points="20,172 260,174 278,98 38,96" fill="url(#dlAsphalt)" stroke="#0ea5e9" strokeWidth="1.5" />
+      <polygon points="20,172 260,174 260,181 20,179" fill="#1e293b" />
+      <polygon points="260,174 278,98 278,105 260,181" fill="#0f172a" />
+
+      {/* Driving lane with dashed centre line */}
+      <polygon points="28,166 252,167.8 256,152 32,150.2" fill="#3f4b5e" />
+      {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+        <line key={i} x1={44 + i * 30} y1={158.4} x2={58 + i * 30} y2={158.5} stroke="#facc15" strokeWidth="1.6" />
+      ))}
+
+      {/* Parking bays (the Smart Yard) */}
+      {[0, 1, 2, 3].map((i) => (
+        <polygon key={i} points={`${120 + i * 32},146 ${148 + i * 32},146.2 ${159 + i * 32},104.2 ${131 + i * 32},104`} fill="none" stroke="#f8fafc" strokeWidth="1.2" />
+      ))}
+      {/* Target bay highlighted */}
+      <polygon points="184,146.4 212,146.6 223,104.6 195,104.4" fill="#22c55e44" stroke="#22c55e" strokeWidth="1.4" />
+
+      {/* Cones */}
+      {[[118, 148], [186, 149], [214, 149], [228, 102], [196, 101]].map(([x, y], i) => (
+        <g key={i} transform={`translate(${x}, ${y})`}>
+          <polygon points="-3,0 3,0 0.8,-7 -0.8,-7" fill="#f97316" />
+          <rect x="-2" y="-4.5" width="4" height="1.2" fill="#ffffff" />
+        </g>
+      ))}
+
+      {/* Learner car in a bay */}
+      <g transform="translate(140, 128)">
+        <polygon points="-11,8 11,8.2 15,-8 -7,-8.2" fill="#0ea5e9" stroke="#0369a1" strokeWidth="0.8" />
+        <polygon points="-6,1 7,1.1 9.5,-6 -3.5,-6.1" fill="#e0f2fe" />
+        <rect x="-4" y="-12" width="9" height="4" rx="1" fill="#ef4444" />
+        <text x="0.5" y="-9" fill="#ffffff" fontSize="3.5" fontWeight="900" textAnchor="middle">L</text>
+      </g>
+
+      {/* Test office: front and right faces */}
+      <polygon points="42,140 104,140.4 104,92 42,91.6" fill="url(#dlOffice)" stroke="#0ea5e9" strokeWidth="1" />
+      <polygon points="104,140.4 104,92 115,70 115,118" fill="#94a3b8" stroke="#64748b" strokeWidth="1" />
+      <polygon points="42,91.6 104,92 115,70 53,69.6" fill="#0369a1" stroke="#0284c7" strokeWidth="0.8" />
+      <polygon points="50,132 96,132.3 96,104 50,103.7" fill="#38bdf8" stroke="#ffffff" strokeWidth="0.8" />
+      <rect x="66" y="118" width="14" height="22" fill="#0f172a" />
+      {/* Roof sign */}
+      <g transform="translate(78, 64)">
+        <rect x="-26" y="-9" width="52" height="11" rx="2" fill="#0f172a" stroke="#38bdf8" strokeWidth="0.8" />
+        <text x="0" y="-1.5" fill="#7dd3fc" fontSize="6" fontWeight="900" textAnchor="middle">DRIVING</text>
+      </g>
+
+      {/* Traffic light */}
+      <g transform="translate(244, 140)">
+        <rect x="-1" y="-30" width="2" height="30" fill="#334155" />
+        <rect x="-4" y="-44" width="8" height="16" rx="2" fill="#0f172a" />
+        <circle cx="0" cy="-40" r="2" fill="#ef4444" />
+        <circle cx="0" cy="-35" r="2" fill="#facc15" opacity="0.35" />
+        <circle cx="0" cy="-30.5" r="2" fill="#22c55e" opacity="0.35" />
+      </g>
+
+      {/* Floating status badge */}
+      <g transform="translate(140, 186)">
+        <rect x="-80" y="-10" width="160" height="18" rx="9" fill="#082f49" stroke="#38bdf8" strokeWidth="1.5" />
+        <text x="0" y="2.5" fill="#7dd3fc" fontSize="8" fontWeight="900" letterSpacing="0.8" textAnchor="middle">
+          🚗 DRIVING ACADEMY
         </text>
       </g>
     </svg>
@@ -836,6 +925,9 @@ export function AcademicCampusTile({ loc, width = 280, height = 200 }: { loc: an
   }
   if (campusId === 'dc') {
     return <DubaiCollege3DCampus width={width} height={height} />;
+  }
+  if (campusId === 'driving') {
+    return <DrivingAcademy3DCampus width={width} height={height} />;
   }
   if (campusId === 'gems-wellington') {
     return <GEMSWellington3DCampus width={width} height={height} />;

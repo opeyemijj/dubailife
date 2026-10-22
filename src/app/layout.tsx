@@ -7,6 +7,10 @@ import { MoneyListener } from "@/components/social/MoneyListener";
 import { MessageAlerts } from "@/components/social/MessageAlerts";
 import { FriendRequestListener } from "@/components/social/FriendRequestListener";
 import { NotificationPrompt } from "@/components/pwa/NotificationPrompt";
+import { PushCoach } from "@/components/pwa/PushCoach";
+import { AgeGate } from "@/components/safety/AgeGate";
+import { FirstDay } from "@/components/life/FirstDay";
+import { ScamPhone } from "@/components/safety/ScamPhone";
 import { Suspense } from "react";
 import { SITE } from "@/lib/site";
 import { ServiceWorker } from "@/components/pwa/ServiceWorker";
@@ -202,6 +206,10 @@ export default function RootLayout({
         <FriendRequestListener />
         <Suspense fallback={null}><MessageAlerts /></Suspense>
         <NotificationPrompt />
+        <PushCoach />
+        <AgeGate />
+        <FirstDay />
+        <ScamPhone />
         {children}
         <KeyboardShortcuts />
         <LifeHub />

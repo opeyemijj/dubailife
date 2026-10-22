@@ -2,6 +2,7 @@
 
 // Lets residents answer knocks wherever they are in the app.
 
+import { askForPush } from "@/lib/push/engage";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { useCitizen } from "@/lib/citizenStore";
@@ -24,7 +25,10 @@ export function KnockListener() {
       .channel(`knocks-${citizen.id}-${Math.random().toString(36).slice(2, 7)}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "entry_requests" }, (payload) => {
         const k = payload.new as Knock & { status: string; visitor_id: string };
-        if (k.status === "pending" && k.visitor_id !== citizen.id) setKnocks((list) => [...list.filter((x) => x.id !== k.id), k]);
+        if (k.status === "pending" && k.visitor_id !== citizen.id) {
+          setKnocks((list) => [...list.filter((x) => x.id !== k.id), k]);
+          setTimeout(() => askForPush({ icon: "🚪", title: "Someone's at your door", text: "Turn on notifications so you hear every knock, even when the app is closed." }), 6000);
+        }
       })
       .subscribe();
     return () => { supabase().removeChannel(channel); };

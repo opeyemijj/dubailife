@@ -1,5 +1,7 @@
 "use client";
 
+import { ShareButton } from "@/components/share/ShareButton";
+import { askForPush } from "@/lib/push/engage";
 import { gainSkill, skillForCourse } from "@/lib/life";
 import { use, useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -24,6 +26,8 @@ import {
 } from "lucide-react";
 import { useCitizen, enrollInCourse, completeLesson, graduateCourse } from "@/lib/citizenStore";
 import { getCourse, getCampus, calculateTuition } from "@/lib/city/academic";
+import { academyProgress, submitStep, unlockAt, untilText, type AcademyProgress } from "@/lib/academy/progress";
+import { honorsFor } from "@/lib/academy/grade";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { gameAudio } from "@/utils/gameAudio";
 
@@ -54,6 +58,12 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
     passed: boolean;
     honors: "Pass" | "Cum Laude" | "Magna Cum Laude" | "Summa Cum Laude";
   } | null>(null);
+
+  // Progress recorded on the server: lessons in order, one new lesson (or the exam) a day.
+  const [progress, setProgress] = useState<AcademyProgress | null | undefined>(undefined);
+  const [stepNote, setStepNote] = useState<string | null>(null);
+  const submitting = useRef(false);
+  useEffect(() => { void academyProgress(courseId).then(setProgress); }, [courseId]);
 
   // Certificate Modal State
   const [showCertificate, setShowCertificate] = useState(false);
@@ -92,7 +102,16 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
   const tuition = calculateTuition(course, citizen);
 
   const activeLesson = course.lessons[selectedLessonIdx] ?? course.lessons[0];
-  const allLessonsCompleted = course.lessons.every((l) => completedLessons.includes(l.lessonNumber));
+  // Before anything is recorded on the server, progress made earlier in the app counts once.
+  const serverPassed = progress ? progress.passed : completedLessons.length;
+  const nextStep = serverPassed + 1;
+  const lockedUntil = unlockAt(progress ?? null);
+  const allLessonsCompleted = serverPassed >= course.lessons.length;
+  const lessonGate = (n: number): string | null =>
+    n <= serverPassed || completedLessons.includes(n) ? null
+      : n > nextStep ? `Pass ${unit} ${nextStep} first. ${unit}s go in order.`
+      : lockedUntil ? `Your next ${unit.toLowerCase()} unlocks in ${untilText(lockedUntil)}. One new ${unit.toLowerCase()} a day.`
+      : null;
 
   // Timer countdown for exam
   useEffect(() => {
@@ -115,27 +134,34 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
     gameAudio.playCoinSound();
     const ok = enrollInCourse(course.id, tuition.final);
     if (ok) {
+      setTimeout(() => askForPush({ icon: "📚", title: "Don't miss tomorrow's lesson", text: "Turn on notifications and we'll remind you when your next lesson unlocks." }), 1500);
       setActiveTab("lesson");
       setSelectedLessonIdx(0);
       setCurrentSlideIdx(0);
     }
   };
 
-  const handleLessonQuizSubmit = () => {
-    let correctCount = 0;
-    activeLesson.quiz.forEach((q, idx) => {
-      if (quizAnswers[idx] === q.correctIndex) {
-        correctCount++;
-      }
-    });
-    const percentage = (correctCount / activeLesson.quiz.length) * 100;
-    setQuizSubmitted(true);
-
-    if (percentage >= 70) {
-      gameAudio.playClickSound();
-      completeLesson(course.id, activeLesson.lessonNumber);
-      gainSkill(skillForCourse(course.category), 25);
+  const handleLessonQuizSubmit = async () => {
+    if (submitting.current) return;
+    submitting.current = true;
+    setStepNote(null);
+    const answers = activeLesson.quiz.map((_, idx) => quizAnswers[idx] ?? null);
+    const r = await submitStep(course, activeLesson.lessonNumber, answers, completedLessons.length);
+    submitting.current = false;
+    if ("error" in r) { setStepNote(r.error); return; }
+    if (r.status === "locked" || r.status === "out_of_order") {
+      setStepNote(r.status === "locked" && r.unlockAt ? `Saved for later: your next ${unit.toLowerCase()} unlocks in ${untilText(new Date(r.unlockAt))}.` : `Pass ${unit} ${r.next} first.`);
+      return;
     }
+    setQuizSubmitted(true);
+    if (r.status !== "failed") {
+      gameAudio.playClickSound();
+      if (!completedLessons.includes(activeLesson.lessonNumber)) {
+        completeLesson(course.id, activeLesson.lessonNumber);
+        gainSkill(skillForCourse(course.category), 25);
+      }
+    }
+    void academyProgress(course.id).then(setProgress);
   };
 
   const handleStartExam = () => {
@@ -146,22 +172,21 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
     setExamResult(null);
   };
 
-  const handleFinishExam = () => {
-    let correct = 0;
-    course.finalExam.questions.forEach((q, idx) => {
-      if (examAnswers[idx] === q.correctIndex) {
-        correct++;
-      }
-    });
-
-    const score = Math.round((correct / course.finalExam.questions.length) * 100);
-    const passed = score >= course.finalExam.passingScore;
-
-    let honors: "Pass" | "Cum Laude" | "Magna Cum Laude" | "Summa Cum Laude" = "Pass";
-    if (score >= 95) honors = "Summa Cum Laude";
-    else if (score >= 85) honors = "Magna Cum Laude";
-    else if (score >= 70) honors = "Cum Laude";
-
+  const handleFinishExam = async () => {
+    if (submitting.current) return;
+    submitting.current = true;
+    const answers = course.finalExam.questions.map((_, idx) => examAnswers[idx] ?? null);
+    const r = await submitStep(course, course.lessons.length + 1, answers, completedLessons.length);
+    submitting.current = false;
+    if ("error" in r) { setStepNote(r.error); setExamStarted(false); return; }
+    if (r.status === "locked" || r.status === "out_of_order") {
+      setStepNote(r.status === "locked" && r.unlockAt ? `The exam unlocks in ${untilText(new Date(r.unlockAt))}.` : `Pass ${unit} ${r.next} first.`);
+      setExamStarted(false);
+      return;
+    }
+    const score = r.score;
+    const passed = r.status === "graduated_now" || r.status === "graduated";
+    const honors = honorsFor(score);
     setExamResult({ score, passed, honors });
 
     if (passed) {
@@ -169,6 +194,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
       graduateCourse(course.id, score, honors, course.superpower.id, course.level === "secondary_diploma");
       setShowCertificate(true);
     }
+    void academyProgress(course.id).then(setProgress);
   };
 
   return (
@@ -434,7 +460,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
                 className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 font-black text-sm flex items-center justify-center gap-2"
               >
                 <Award className="w-4 h-4" />
-                <span>View Official Verified Certificate</span>
+                <span>View Certificate</span>
               </button>
             )}
           </section>
@@ -743,7 +769,12 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
                 ))}
               </div>
 
-              {!quizSubmitted ? (
+              {stepNote && <p className="p-3 rounded-xl bg-amber-950/50 border border-amber-500/40 text-xs font-bold text-amber-200">{stepNote}</p>}
+              {!quizSubmitted && lessonGate(activeLesson.lessonNumber) ? (
+                <p className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-slate-300 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-amber-400 shrink-0" /> {lessonGate(activeLesson.lessonNumber)} You can still read it now.
+                </p>
+              ) : !quizSubmitted ? (
                 <button
                   disabled={Object.keys(quizAnswers).length < activeLesson.quiz.length}
                   onClick={handleLessonQuizSubmit}
@@ -826,7 +857,13 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
                   </div>
                 </div>
 
-                {allLessonsCompleted ? (
+                {stepNote && <p className="text-xs font-bold text-amber-300">{stepNote}</p>}
+                {allLessonsCompleted && lockedUntil ? (
+                  <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-300 flex items-center justify-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-400" />
+                    <span>The final exam unlocks in {untilText(lockedUntil)}. One new step a day.</span>
+                  </div>
+                ) : allLessonsCompleted ? (
                   <button
                     onClick={handleStartExam}
                     className="w-full py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-sm tracking-wide shadow-lg transition-transform hover:scale-[1.01]"
@@ -908,7 +945,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
                           onClick={() => setShowCertificate(true)}
                           className="mt-3 px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs"
                         >
-                          View Official Diploma & Honors
+                          View Certificate & Honors
                         </button>
                       </div>
                     ) : (
@@ -941,12 +978,12 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
               <div className="text-3xl sm:text-4xl">{campus?.crestIcon}</div>
               <div className="text-xs font-black uppercase tracking-widest text-amber-800">{campus?.name}</div>
               <div className="text-[10px] uppercase font-bold tracking-widest text-slate-600">
-                Official Degree of Completion
+                Come To Dubai in-game certificate
               </div>
             </div>
 
             <div className="text-center py-2 space-y-1 border-y border-amber-300">
-              <div className="text-xs text-slate-600">This officially certifies that</div>
+              <div className="text-xs text-slate-600">This certifies that</div>
               <div className="text-lg sm:text-xl font-black text-slate-900 tracking-tight underline decoration-amber-500 underline-offset-4">
                 {citizen?.name || "Distinguished Citizen"}
               </div>
@@ -978,6 +1015,9 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
                 <div className="text-[10px] text-slate-500">{new Date().toLocaleDateString()}</div>
               </div>
             </div>
+
+            <p className="text-[10px] text-center text-slate-500">An in-game achievement from a fictional institution. Not an accredited qualification.</p>
+            <ShareButton moment="graduate" v={enrollment?.examScore ?? examResult?.score ?? 0} text={`I just graduated from ${course.title} in Come To Dubai 🎓`} className="w-full h-11 rounded-xl bg-amber-500 text-slate-950 text-xs" label="Share my graduation" />
 
             <button
               onClick={() => setShowCertificate(false)}

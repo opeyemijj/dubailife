@@ -6,7 +6,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
+        // Share-card images must stay reachable for link previews.
+        allow: ["/", "/api/share-image"],
         // Signed-in and private areas.
         disallow: ["/admin", "/business/edit", "/api/", "/auth/", "/onboarding", "/phone", "/wallet", "/profile", "/home", "/property/"],
       },

@@ -24,6 +24,24 @@ export function shoreAt(x: number): number {
   return (1 - t) ** 2 * 1485 + 2 * (1 - t) * t * 1505 + t * t * 1412;
 }
 
+/** Virtual y of the water's edge west of x = -200, where the shore curves north towards the Marina. */
+export function westShore(x: number): number {
+  // Matches "M -1500,2600 C -1100,1950 -600,1481 -200,1485" in MapBackground.
+  const P = [[-1500, 2600], [-1100, 1950], [-600, 1481], [-200, 1485]];
+  const at = (t: number) => { const u = 1 - t; return [0, 1].map((k) => u * u * u * P[0][k] + 3 * u * u * t * P[1][k] + 3 * u * t * t * P[2][k] + t * t * t * P[3][k]); };
+  let lo = 0, hi = 1;
+  for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (at(m)[0] < x) lo = m; else hi = m; }
+  return at(lo)[1];
+}
+
+/** A standalone club or restaurant: the lit lounge building with its name on the sign. */
+const venueSpot = (id: string, name: string, x: number, y: number, marquee: string, colors: string[]): CoastEntity => ({
+  id, name, type: "szr-club", marquee, colors, virtualX: x, virtualY: y, width: 130, height: 96, generated: true, interactive: true,
+});
+
+/** The water's edge anywhere along the coast: the curved western shore, then the gentle main curve. */
+const shoreY = (x: number) => (x < -200 ? westShore(x) : shoreAt(x));
+
 export interface CoastEntity {
   id: string;
   name: string;
@@ -43,7 +61,7 @@ export interface CoastEntity {
  */
 const beach = (id: string, name: string, x: number, variant: string, width = 300): CoastEntity => {
   const height = Math.round(width * 0.36);
-  return { id, name, type: "coast-beach", variant, virtualX: x, virtualY: Math.round(shoreAt(x) - 0.7 * height), width, height, generated: true, interactive: true };
+  return { id, name, type: "coast-beach", variant, virtualX: x, virtualY: Math.round(shoreY(x) - 0.7 * height), width, height, generated: true, interactive: true };
 };
 
 /** A billboard standing in the water just off the beach, facing the shore. */
@@ -53,7 +71,21 @@ const billboard = (id: string, name: string, x: number, billboardStyle: string):
 
 export const COAST_ENTITIES: CoastEntity[] = [
   // West of the Palm
-  beach("jbr-the-beach", "JBR · The Beach", -420, "jbr", 320),
+  // Just behind JBR's towers (its sand starts where they end), with its water strip on the shore.
+  { ...beach("jbr-the-beach", "JBR · The Beach", -420, "jbr", 320), virtualY: 1466 },
+  // Dubai Marina and JBR, laid out as they really are from the city side: Sheikh Zayed Road · the Marina
+  // (Dubai Marina Mall and Pier 7 on the canal) · the road behind JBR · JBR's towers with The Walk at
+  // their feet · JBR Beach · the sea, with Bluewaters offshore opposite JBR and joined by its footbridge.
+  // Mina Seyahi (Barasti) and Grosvenor House (Buddha-Bar) are at the north-east end, by Dubai Harbour.
+  { id: "dubai-marina-mall", name: "Dubai Marina Mall", type: "marina-mall", virtualX: -800, virtualY: 1092, width: 250, height: 140, generated: true, interactive: true },
+  { id: "pier-7", name: "Pier 7", type: "pier-7", virtualX: -1000, virtualY: 1098, width: 80, height: 165, generated: true, interactive: true },
+  { id: "jbr", name: "JBR · The Walk", type: "jbr-district", virtualX: -430, virtualY: 1292, width: 360, height: 180, generated: true, interactive: true },
+  venueSpot("lock-stock-barrel-jbr", "Lock, Stock & Barrel JBR", -705, 1318, "LSB", ["#facc15", "#a16207", "#dc2626"]),
+  venueSpot("hurricanes-grill", "Hurricane's Grill & Bar", -180, 1314, "HURRICANE'S", ["#f97316", "#fde68a", "#0ea5e9"]),
+  venueSpot("bla-bla-dubai", "Bla Bla Dubai", -660, 1478, "BLA BLA", ["#22d3ee", "#f472b6", "#facc15"]),
+  venueSpot("buddha-bar", "Buddha-Bar · Grosvenor House", -50, 1306, "BUDDHA-BAR", ["#dc2626", "#fbbf24", "#7f1d1d"]),
+  venueSpot("barasti", "Barasti Beach Bar", 80, Math.round(shoreAt(80) - 75), "BARASTI", ["#f59e0b", "#0ea5e9", "#16a34a"]),
+  { id: "bluewaters", name: "Bluewaters · Ain Dubai", type: "bluewaters-island", virtualX: -470, virtualY: Math.round(westShore(-470) + 215), width: 320, height: 300, generated: true, interactive: true },
 
   // Umm Suqeim's landmarks
   { id: "madinat-jumeirah", name: "Madinat Jumeirah", type: "madinat-jumeirah", virtualX: 1420, virtualY: Math.round(shoreAt(1420) - 95), width: 240, height: 150, generated: true, interactive: true },

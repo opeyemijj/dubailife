@@ -1,0 +1,35 @@
+{
+  "_note": "Sustainability Blueprint options (design spec section 5.1). Prices are AED per month. The database copy of these prices lives in public.blueprint_monthly() (migration 20261027000000_life_loop.sql); scripts/check-life-config.mjs checks the two match.",
+  "housing": [
+    { "id": "bed_space", "label": "Shared bed space", "area": "Deira / Bur Dubai · comes with roommates", "monthly": 800, "icon": "🛏️" },
+    { "id": "studio", "label": "Studio apartment", "area": "Al Barsha / JVC", "monthly": 2500, "icon": "🏢" },
+    { "id": "one_bedroom", "label": "1-bedroom apartment", "area": "Dubai Marina / JBR", "monthly": 7000, "icon": "🌇" },
+    { "id": "penthouse", "label": "Downtown luxury penthouse", "area": "Downtown", "monthly": 18000, "icon": "🏙️" },
+    { "id": "villa", "label": "Palm Jumeirah signature villa", "area": "Palm Jumeirah", "monthly": 45000, "icon": "🌴" }
+  ],
+  "commute": [
+    { "id": "metro_card", "label": "Metro card", "detail": "Metro, bus and tram, unlimited", "monthly": 350, "icon": "🚇" },
+    { "id": "economy_rental", "label": "Economy car rental", "detail": "Compact sedan", "monthly": 1500, "icon": "🚗", "needsLicence": true },
+    { "id": "leased_sedan", "label": "Premium sedan lease", "detail": "Electric or executive sedan", "monthly": 4500, "icon": "🚘", "needsLicence": true },
+    { "id": "supercar", "label": "Owned luxury supercar", "detail": "Depreciation and insurance", "monthly": 8000, "icon": "🏎️", "needsLicence": true }
+  ],
+  "telecom": [
+    { "id": "prepaid", "label": "Prepaid flexi SIM", "detail": "Local calls, minimal data", "monthly": 75, "icon": "📱" },
+    { "id": "postpaid_5g", "label": "Postpaid unlimited 5G", "detail": "VIP plan", "monthly": 450, "icon": "📶" }
+  ],
+  "fitness": [
+    { "id": "calisthenics", "label": "Free outdoor calisthenics", "detail": "Kite Beach / JLT Park", "monthly": 0, "icon": "🤸" },
+    { "id": "gym", "label": "Commercial gym", "detail": "Any city gym", "monthly": 350, "icon": "🏋️" },
+    { "id": "spa", "label": "Luxury wellness club and spa", "detail": "The Palm / DIFC", "monthly": 1200, "icon": "🧖" }
+  ],
+  "remittance": { "min": 0, "max": 10000, "step": 500 },
+  "default": { "housing": "studio", "commute": "metro_card", "telecom": "prepaid", "fitness": "calisthenics", "remittance": 0 },
+  "rules": {
+    "awayDaysCharged": 3,
+    "expatTrapDays": 14,
+    "disciplineYieldDays": 90,
+    "disciplineYieldYearlyRate": 0.10,
+    "disciplineYieldWeeklyCap": 5000,
+    "autoBlueprintAfterDays": 3
+  }
+}

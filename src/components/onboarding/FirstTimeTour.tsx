@@ -3,18 +3,15 @@
 // A short tour for new citizens, shown once on the map after they move in.
 
 import { useEffect, useState } from "react";
-import { useCitizen } from "@/lib/citizenStore";
+import { isNewCitizen, useCitizen } from "@/lib/citizenStore";
 import { ModalPortal } from "@/components/ui/modal-portal";
 
+// Four short steps; everything else is learned by playing (the first-day checklist guides what to do).
 const STEPS = [
-  { icon: "👋", title: "Welcome to cometodubai.app", text: "You're now a citizen of Downtown Dubai. Everyone you see in venues is a real player." },
-  { icon: "📱", title: "Install App & Notifications", text: "Add cometodubai.app to your Home Screen (Share → Add to Home Screen on iPhone) and turn on notifications so friend requests and messages pop up even when the game is closed!" },
-  { icon: "🗺️", title: "Go anywhere", text: "Pinch and drag the map, then tap a building to go inside — malls, clubs, restaurants, hotels and pools. Walk there or take a taxi." },
-  { icon: "🚶", title: "Move around inside", text: "In a venue, tap the floor to walk, tap counters to shop or order, and tap people to chat. Clubs have a live DJ and a dance floor." },
-  { icon: "🛍️", title: "Shop, eat and work", text: "Buy food, clothes and furniture with virtual AED. Talk to staff to get a job and earn wages every shift." },
-  { icon: "🍾", title: "Meet people", text: "Chat, wave, dance together, buy someone a drink or send money. Order bottle service and the whole club will know." },
-  { icon: "🏠", title: "Your home", text: "Decorate your apartment, invite friends over, or rent and buy flats around the city." },
-  { icon: "📱", title: "Phone & wallet", text: "Your phone has messages, friends and the ideas board. The red badge means someone wrote to you. Top up virtual AED in your wallet." },
+  { icon: "👋", title: "Welcome to Dubai", text: "Players and Locals (our hosts, tagged Local) fill the city. Your visa clock and wallet are at the top." },
+  { icon: "🗺️", title: "Go anywhere", text: "Pinch and drag the map, then tap a building to go inside: malls, clubs, restaurants, hotels and Academic City." },
+  { icon: "🚶", title: "Inside a venue", text: "Tap the floor to walk, counters to shop or order, staff to ask for a job, and people to chat." },
+  { icon: "🌅", title: "Your first day", text: "Follow the checklist in the corner: plan your budget, work a shift, pass a lesson and add a friend for an AED 10,000 bonus." },
 ];
 
 export function FirstTimeTour() {
@@ -29,8 +26,8 @@ export function FirstTimeTour() {
     try { done = localStorage.getItem(key) === "1"; } catch { /* storage blocked */ }
     // Reads browser storage once the citizen is known.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!done) setOpen(true);
-  }, [citizen?.id, key]);
+    if (!done && isNewCitizen(citizen)) setOpen(true);
+  }, [citizen?.id, key]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const finish = () => {
     setOpen(false);

@@ -215,7 +215,7 @@ export async function isUsernameTaken(username: string) {
  * then we log straight in. Without the server key, falls back to Supabase sign-up, which emails a
  * confirmation link and only gives a session once it's clicked.
  */
-export async function signUpWithEmail(email: string, password: string, meta: { username: string; display_name: string }): Promise<AuthResult> {
+export async function signUpWithEmail(email: string, password: string, meta: { username: string; display_name: string; dob: string }): Promise<AuthResult> {
   const res = await fetch("/api/auth/signup", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -227,12 +227,13 @@ export async function signUpWithEmail(email: string, password: string, meta: { u
     return logIn(email, password);
   }
   // Instant sign-up: the account is created already confirmed, then signed in — no email step.
-  const { error } = await supabase().rpc("register_account", { p_email: email, p_password: password, p_username: meta.username, p_display_name: meta.display_name });
+  const { error } = await supabase().rpc("register_account", { p_email: email, p_password: password, p_username: meta.username, p_display_name: meta.display_name, p_dob: meta.dob });
   if (error) {
     const m = error.message;
     return {
       ok: false,
       error: /already_registered/.test(m) ? "An account with this email already exists. Log in instead."
+        : /too_young/.test(m) ? "Come To Dubai is for players aged 21 and over."
         : /username_taken/.test(m) ? `@${meta.username} is taken — pick another username.`
         : /invalid_email/.test(m) ? "That email address doesn't look right — please check it."
         : /weak_password/.test(m) ? "Password must be at least 8 characters."
@@ -470,3 +471,10 @@ export function graduateCourse(
   });
 }
 
+/** A citizen who joined in the last two days: first-run welcomes and tours are only for them. */
+export const isNewCitizen = (c: Citizen | null | undefined) =>
+  !!c?.createdAt && Date.now() - Date.parse(c.createdAt) < 2 * 86_400_000;
+
+/** True while any dialog is on screen, so prompts don't stack on top of each other. */
+export const dialogOpen = () =>
+  typeof document !== "undefined" && !!document.querySelector('[role="dialog"], [aria-modal="true"]');

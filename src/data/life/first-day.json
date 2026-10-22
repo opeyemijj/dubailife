@@ -1,0 +1,42 @@
+{
+  "_note": "The first-day checklist (design spec section 19.4). The server checks each step in public.first_day_status() and pays the reward set in app_settings.app_bonus.first_day.",
+  "title": "Your first day in Dubai",
+  "steps": [
+    {
+      "id": "blueprint",
+      "icon": "🧾",
+      "title": "Plan your budget",
+      "text": "Choose where you live and how you get around.",
+      "action": "visa"
+    },
+    {
+      "id": "shift",
+      "icon": "💼",
+      "title": "Work your first shift",
+      "text": "Get a job on the Job Board (City Metro hires on the spot) or ask shop staff, then work a shift.",
+      "href": "/jobs"
+    },
+    {
+      "id": "lesson",
+      "icon": "🎓",
+      "title": "Pass your first lesson",
+      "text": "Enrol in Academic City and pass a lesson quiz.",
+      "href": "/academics"
+    },
+    {
+      "id": "friend",
+      "icon": "🤝",
+      "title": "Add a friend",
+      "text": "Tap someone in a venue or find them in your phone, then add them.",
+      "href": "/phone"
+    },
+    {
+      "id": "push",
+      "icon": "🔔",
+      "title": "Turn on notifications",
+      "text": "Know when friends message, knock or pay you. Has its own bonus.",
+      "action": "push",
+      "optional": true
+    }
+  ]
+}

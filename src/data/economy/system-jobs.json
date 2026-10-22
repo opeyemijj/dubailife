@@ -1,0 +1,11 @@
+{
+  "_note": "Jobs at fictional city companies (design spec section 11, tier 3: 'a player-owned business or a system company'). Always open, hired on applying, paid every Friday 17:00 GST by the game. Mirrored in migration *_system_jobs.sql; checked by scripts/check-life-config.mjs.",
+  "companies": [
+    { "name": "City Metro", "icon": "🚇", "title": "Station assistant", "weeklyWage": 1500, "shiftsPerWeek": 3, "requirement": "none" },
+    { "name": "Marina Mall Group", "icon": "🛍️", "title": "Retail associate", "weeklyWage": 1800, "shiftsPerWeek": 4, "requirement": "none" },
+    { "name": "Gulf Hotels", "icon": "🏨", "title": "Front desk host", "weeklyWage": 2200, "shiftsPerWeek": 4, "requirement": "course" },
+    { "name": "Desert Tours", "icon": "🐪", "title": "Tour guide", "weeklyWage": 2000, "shiftsPerWeek": 3, "requirement": "course" },
+    { "name": "Swift Delivery", "icon": "🛵", "title": "Delivery driver", "weeklyWage": 2500, "shiftsPerWeek": 4, "requirement": "licence" },
+    { "name": "Falcon Analytics", "icon": "📊", "title": "Junior analyst", "weeklyWage": 3500, "shiftsPerWeek": 5, "requirement": "degree" }
+  ]
+}

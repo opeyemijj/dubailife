@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Bell, BellRing, Check, Share, SquarePlus, Smartphone, X } from "lucide-react";
-import { useCitizen } from "@/lib/citizenStore";
+import { dialogOpen, isNewCitizen, useCitizen } from "@/lib/citizenStore";
 import {
   getNotificationPermission,
   isPushSupported,
@@ -13,8 +13,10 @@ import {
 import { gameAudio } from "@/utils/gameAudio";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { useInstallState } from "@/lib/install";
+import { bonusAmounts, enablePush, openPushCoach } from "@/lib/push/engage";
 
 const DISMISSED_KEY = "dl_push_prompt_dismissed_at";
+const SESSION_KEY = "dl_push_prompt_shown";
 
 export function NotificationPrompt() {
   const { citizen } = useCitizen();
@@ -22,6 +24,9 @@ export function NotificationPrompt() {
   const [subscribing, setSubscribing] = useState(false);
   const [status, setStatus] = useState<"prompt" | "success" | "denied">("prompt");
   const [iosModal, setIosModal] = useState(false);
+  const [paid, setPaid] = useState(0);
+  const [pushBonus, setPushBonus] = useState(0);
+  useEffect(() => { void bonusAmounts().then((b) => setPushBonus(b.push)); }, []);
   const installState = useInstallState();
 
   const isIosBrowser = typeof navigator !== "undefined" &&
@@ -32,23 +37,31 @@ export function NotificationPrompt() {
     if (!citizen?.id) return;
 
     const perm = getNotificationPermission();
-    if (perm === "granted") return;
+    if (perm === "granted" || perm === "unsupported" && !isIosBrowser) return;
 
     try {
       const dismissed = localStorage.getItem(DISMISSED_KEY);
       if (dismissed) {
         const diff = Date.now() - parseInt(dismissed, 10);
-        // Prompt again after 3 days if dismissed
-        if (diff < 3 * 24 * 60 * 60 * 1000) return;
+        // Prompt again a week after it was dismissed
+        if (diff < 7 * 24 * 60 * 60 * 1000) return;
       }
     } catch {}
 
-    const timer = setTimeout(() => {
+    // Not on a player's first day (the home welcome asks then), at most once per visit, only on the map or
+    // at home, and never on top of another dialog: it waits until the screen is clear.
+    if (isNewCitizen(citizen)) return;
+    try { if (sessionStorage.getItem(SESSION_KEY)) return; } catch {}
+    const timer = setInterval(() => {
+      if (!/^\/(explore|home)\b/.test(window.location.pathname) || dialogOpen()) return;
+      clearInterval(timer);
+      try { sessionStorage.setItem(SESSION_KEY, "1"); } catch {}
+      if (getNotificationPermission() === "denied") setStatus("denied");
       setVisible(true);
-    }, 3500);
+    }, 4000);
 
-    return () => clearTimeout(timer);
-  }, [citizen?.id]);
+    return () => clearInterval(timer);
+  }, [citizen?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!visible) return null;
 
@@ -60,22 +73,17 @@ export function NotificationPrompt() {
 
     setSubscribing(true);
     gameAudio.playClickSound();
-
-    const res = await subscribeToPush(citizen?.id);
+    const res = await enablePush(citizen?.id);
     setSubscribing(false);
 
     if (res.ok) {
       setStatus("success");
+      setPaid(res.bonus);
       gameAudio.playConfirmSound();
       void testPushNotification(citizen?.id);
-      setTimeout(() => {
-        setVisible(false);
-      }, 3500);
+      setTimeout(() => setVisible(false), 3500);
     } else {
       setStatus("denied");
-      setTimeout(() => {
-        setVisible(false);
-      }, 4000);
     }
   };
 
@@ -106,17 +114,22 @@ export function NotificationPrompt() {
             <div className="flex-1 min-w-0">
               {status === "success" ? (
                 <>
-                  <h4 className="text-sm font-black text-emerald-400">Push notifications enabled!</h4>
+                  <h4 className="text-sm font-black text-emerald-400">Push notifications enabled!{paid > 0 ? ` +AED ${paid.toLocaleString()}` : ""}</h4>
                   <p className="text-xs text-slate-300 mt-0.5">
                     You&apos;ll now get instant pop-ups for friend requests and messages on your phone.
                   </p>
                 </>
               ) : status === "denied" ? (
                 <>
-                  <h4 className="text-sm font-black text-rose-300">Notifications are blocked</h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-black text-rose-300">Notifications are blocked</h4>
+                    <button onClick={handleDismiss} className="text-white/40 hover:text-white p-1 -mr-1" aria-label="Close"><X className="w-4 h-4" /></button>
+                  </div>
                   <p className="text-xs text-slate-300 mt-0.5">
-                    You can enable notifications anytime in your phone system settings.
+                    They&apos;re switched off for this site in your settings. It takes a few taps to turn them back on.
                   </p>
+                  <button onClick={() => { setVisible(false); openPushCoach({ icon: "🔔", title: "Turn notifications back on", text: "Follow these steps, then come back here." }); }}
+                    className="mt-3 w-full py-2 px-3 bg-white text-slate-900 text-xs font-black rounded-xl active:scale-95 transition">Show me how</button>
                 </>
               ) : isIosBrowser ? (
                 <>
@@ -161,7 +174,7 @@ export function NotificationPrompt() {
                     </button>
                   </div>
                   <p className="text-xs text-slate-300 mt-0.5">
-                    Get notified when friends message you, send friend requests, or knock on your apartment door!
+                    Get notified when friends message you, send friend requests, or knock on your apartment door!{pushBonus > 0 ? ` Plus a one-time AED ${pushBonus.toLocaleString()} bonus.` : ""}
                   </p>
                   <div className="flex items-center gap-2 mt-3">
                     <button

@@ -7,6 +7,8 @@
 // Chat is also saved (public.messages, kept for 7 days): the broadcast is the instant copy and
 // shares the saved message's id, so history and live lines never double up.
 
+import { BLOCKED_TEXT, chatRefused, isBlockedError } from "@/lib/safety";
+import { askForPush } from "@/lib/push/engage";
 import { markRead } from "@/lib/unread";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -253,9 +255,16 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
     if (!myId) return;
     const id = newId();
     setMessages((m) => merge(m, [{ id, with: to, mine: true, text, at: Date.now() }]));
-    emit({ type: "chat", text }, to, id);
-    supabase().from("messages").insert({ id, from_id: myId, to_id: to, body: text, place: place ?? null }).then(({ error }) => {
-      if (error) setMessages((m) => m.map((x) => (x.id === id ? { ...x, failed: true } : x)));
+    // Sent live only once the database accepts it: blocks and mutes apply, and contact details come back masked.
+    supabase().from("messages").insert({ id, from_id: myId, to_id: to, body: text, place: place ?? null }).select("body").single().then(({ data, error }) => {
+      if (error) {
+        setMessages((m) => m.map((x) => (x.id === id ? { ...x, failed: true } : x)));
+        chatRefused(error);
+        return;
+      }
+      const body = (data as { body: string }).body;
+      if (body !== text) setMessages((m) => m.map((x) => (x.id === id ? { ...x, text: body } : x)));
+      emit({ type: "chat", text: body }, to, id);
     });
   };
 
@@ -302,6 +311,7 @@ export async function sendMoney(to: Peer, amount: number, place: string): Promis
   const { error } = await supabase().rpc("send_money", { p_to: to.userId, p_amount: amount, p_place: place });
   refreshCitizen();
   if (!error) {
+    setTimeout(() => askForPush({ icon: "💸", title: `AED ${amount.toLocaleString()} sent to @${to.username}`, text: "Turn on notifications so you know the moment friends send you money or thank you back." }), 1500);
     void (async () => {
       try {
         const { data: { user } } = await supabase().auth.getUser();
@@ -322,14 +332,16 @@ export async function sendMoney(to: Peer, amount: number, place: string): Promis
     })();
     return null;
   }
-  return /insufficient_funds/.test(error.message) ? "You don't have enough AED for that."
+  return /\bblocked\b/.test(error.message) ? BLOCKED_TEXT
+    : /transfers_frozen/.test(error.message) ? "🔒 Your bank froze transfers for an hour after the scam. Try again later."
+    : /insufficient_funds/.test(error.message) ? "You don't have enough AED for that."
     : /too_many/.test(error.message) ? "Slow down — try again in a minute."
     : /amount_out_of_range/.test(error.message) ? "Send between 1 and AED 1,000,000."
     : "The transfer didn't go through. Please try again.";
 }
 
 /** Sends (or accepts) a friend request. */
-export async function befriend(myId: string, other: Peer): Promise<"sent" | "friends" | "error"> {
+export async function befriend(myId: string, other: Peer): Promise<"sent" | "friends" | "blocked" | "error"> {
   const db = supabase();
   // Get sender profile for push notifications
   const { data: myProf } = await db.from("profiles").select("username").eq("id", myId).maybeSingle();
@@ -355,6 +367,7 @@ export async function befriend(myId: string, other: Peer): Promise<"sent" | "fri
   }
   const { error } = await db.from("friendships").insert({ user_id: myId, friend_id: other.userId });
   if (!error) {
+    setTimeout(() => askForPush({ icon: "🤝", title: "Friend request sent", text: `Turn on notifications to know the moment @${other.username} accepts.` }), 1500);
     void sendPushNotification(
       other.userId,
       {
@@ -366,5 +379,6 @@ export async function befriend(myId: string, other: Peer): Promise<"sent" | "fri
       myId
     );
   }
+  if (isBlockedError(error)) return "blocked";
   return error && !/duplicate/.test(error.message) ? "error" : "sent";
 }

@@ -1,0 +1,79 @@
+{
+  "_note": "Anti-scam phone simulator (design spec section 7). Senders are fictional; every screen is labelled SIMULATION. Loss and bounty amounts are mirrored in public.scam_rule() (migration *_scam_simulator.sql) and checked by scripts/check-life-config.mjs. Losses are always capped at 10% of the balance and AED 5,000.",
+  "schedule": { "hourGst": 15, "graceDays": 3, "daysOfWeek": [1, 2, 4, 5] },
+  "lossCap": { "pct": 10, "max": 5000 },
+  "points": { "reported": 50, "avoided": 20 },
+  "scams": [
+    {
+      "id": "police_otp",
+      "channel": "call",
+      "sender": "Captain Mansoor · Dubai Life Police",
+      "number": "+971 4 •••• 8800",
+      "preview": "Incoming call: Dubai Life Police",
+      "lines": [
+        "This is Captain Mansoor from the Dubai Life Police.",
+        "Your Resident Card has been linked to a money-laundering ring.",
+        "We've sent a 6-digit code to your phone. Read it back now to clear your record, or we issue a warrant today."
+      ],
+      "comply": "Read the code back",
+      "loss": { "pctOfBalance": 10, "fixed": null },
+      "effect": { "freezeTransfersHours": 1 },
+      "bounty": 1000,
+      "redFlags": ["Police never ask for codes over the phone", "Threats and a deadline to rush you", "A code sent to you is for you only"],
+      "realWorld": "In the UAE, real police never call to ask for an OTP or bank details. Hang up and report it through the official police app or website."
+    },
+    {
+      "id": "toll_sms",
+      "channel": "sms",
+      "sender": "RoadPass",
+      "number": "RoadPass-Info",
+      "preview": "RoadPass: your tag has a negative balance",
+      "lines": ["Your RoadPass tag has a negative balance (-14.00 AED). Pay within 2 hours to avoid a 400 AED fine: roadpass-tag-pay.cc"],
+      "comply": "Open the link and pay",
+      "loss": { "pctOfBalance": null, "fixed": 1800 },
+      "bounty": 500,
+      "redFlags": ["An odd web address (.cc)", "A tiny amount with a big fine", "A 2-hour deadline"],
+      "realWorld": "Toll operators send balance alerts from their official sender and you top up in their official app, never through a link in a text."
+    },
+    {
+      "id": "parcel_sms",
+      "channel": "sms",
+      "sender": "City Post",
+      "number": "CityPost",
+      "preview": "City Post: your package is on hold",
+      "lines": ["Package AE-9941 is held at the sorting centre. Pay 13.50 AED customs fee: citypost-secure.top"],
+      "comply": "Pay the customs fee",
+      "loss": { "pctOfBalance": null, "fixed": 2500 },
+      "bounty": 500,
+      "redFlags": ["You weren't expecting a parcel", "A look-alike web address (.top)", "Card details for a tiny fee"],
+      "realWorld": "Fake delivery-fee texts are among the most common scams. Check deliveries in the courier's official app, and never enter card details from a text link."
+    },
+    {
+      "id": "chat_code",
+      "channel": "chat",
+      "sender": "Sam (a contact)",
+      "number": "ChatApp",
+      "preview": "Sam: hey, quick favour?",
+      "lines": ["Hey! I accidentally sent my ChatApp 6-digit PIN to your number by mistake.", "Can you send it back to me? 🙏"],
+      "comply": "Send the code",
+      "loss": { "pctOfBalance": null, "fixed": 0 },
+      "effect": { "phoneHackedHours": 2 },
+      "bounty": 750,
+      "redFlags": ["A code sent to your number is for your account", "A 'friend' asking for codes may already be hacked", "Pressure to act quickly"],
+      "realWorld": "Sharing a verification code lets scammers take over your messaging account and message your friends. Never forward codes, even to friends."
+    },
+    {
+      "id": "review_task",
+      "channel": "telegram",
+      "sender": "Mia · Remote Jobs",
+      "number": "Telegram",
+      "preview": "Earn AED 500 a day from your phone?",
+      "lines": ["Earn 500 AED a day by just liking 5 restaurants on maps!", "To unlock your first task batch, send a 200 AED deposit. Bigger batches pay more."],
+      "comply": "Send the deposit",
+      "loss": { "pctOfBalance": null, "fixed": 2000 },
+      "bounty": 500,
+      "redFlags": ["Paying to get paid", "Returns that are too good to be true", "Deposits that keep growing"],
+      "realWorld": "Task scams start with small payouts to win your trust, then ask for bigger and bigger deposits. Real jobs never ask you to pay to work."
+    }
+  ]
+}

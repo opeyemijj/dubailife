@@ -166,7 +166,7 @@ export function useRoomChat(roomId: string | null) {
     if (!text || !roomId) return null;
     const { data, error } = await supabase().from("game_messages").insert({ room_id: roomId, user_id: userId, username, body: text }).select("id, user_id, username, body, created_at").single();
     if (data) setLines((cur) => merge(cur, [data as ChatLine]));
-    return error ? "Couldn't send — slow down a little." : null;
+    return !error ? null : /\bmuted\b/.test(error.message) ? "You're muted for 7 days for breaking the community rules." : "Couldn't send — slow down a little.";
   }, [roomId]);
   return { lines, send };
 }
