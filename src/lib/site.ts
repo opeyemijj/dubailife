@@ -3,17 +3,17 @@
 export const SITE = {
   name: "Dubai Life",
   shortName: "Dubai Life",
-  domain: "cometodubai.app",
-  url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://cometodubai.app").replace(/\/$/, ""),
+  domain: "mydubailife.app",
+  url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://mydubailife.app").replace(/\/$/, ""),
   tagline: "Live your Dubai life online — Free 3D Virtual City & Games",
   description:
-    "Dubai Life (cometodubai.app) is the premier free 3D virtual Dubai life simulator and multiplayer browser game. Create your 3D avatar, explore Downtown Dubai, Burj Khalifa & Dubai Mall, decorate luxury apartments, play 17 multiplayer games, meet real players, and live the Dubai life online.",
+    "Dubai Life (mydubailife.app) is the premier free 3D virtual Dubai life simulator and multiplayer browser game. Create your 3D avatar, explore Downtown Dubai, Burj Khalifa & Dubai Mall, decorate luxury apartments, play 17 multiplayer games, meet real players, and live the Dubai life online.",
   themeColor: "#1e1b4b",
   backgroundColor: "#0f0a2e",
   keywords: [
     "Dubai Life",
     "Come To Dubai",
-    "cometodubai.app",
+    "mydubailife.app",
     "Dubai life simulator",
     "virtual Dubai 3D",
     "Dubai online game",

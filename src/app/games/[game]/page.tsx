@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const info = gameInfo(game);
   if (!info) return { title: "Game Not Found", robots: { index: false } };
   const title = `Play ${info.name} Online Free`;
-  const description = `${info.tagline}. Play ${info.name} free against friends or computer in Dubai Life (cometodubai.app). ${info.rules}`.slice(0, 300);
+  const description = `${info.tagline}. Play ${info.name} free against friends or computer in Dubai Life (mydubailife.app). ${info.rules}`.slice(0, 300);
   return {
     title,
     description,

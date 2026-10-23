@@ -67,7 +67,7 @@ export default function WalletPage() {
               </button>
             ))}
           </div>
-          <p className="text-[11px] text-white/40">Paid with real money. Your virtual AED arrives once payment is confirmed. Digital items are non-refundable once used; unused purchases can be refunded within 14 days by contacting billing@cometodubai.app.</p>
+          <p className="text-[11px] text-white/40">Paid with real money. Your virtual AED arrives once payment is confirmed. Digital items are non-refundable once used; unused purchases can be refunded within 14 days by contacting billing@mydubailife.app.</p>
         </section>
 
         {orders.length > 0 && (

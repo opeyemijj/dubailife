@@ -67,7 +67,7 @@ begin
   <p style="font-size:15px;line-height:1.5;color:#334155">Someone (hopefully you) asked to reset the password for your Dubai Life account. Tap the button to choose a new one.</p>
   <p style="margin:24px 0"><a href="%s" style="background:#059669;color:#ffffff;text-decoration:none;font-weight:bold;padding:14px 22px;border-radius:12px;display:inline-block">Choose a new password</a></p>
   <p style="font-size:13px;color:#64748b">This link works once, for 1 hour. If you didn't ask for this, ignore this email: your password stays the same.</p>
-  <p style="font-size:12px;color:#94a3b8;margin-top:24px">Dubai Life · cometodubai.app</p>
+  <p style="font-size:12px;color:#94a3b8;margin-top:24px">Dubai Life · mydubailife.app</p>
 </div>$h$, case when who is null then '' else ', ' || who end, link);
   req := public.postmark_send(addr, 'Reset your Dubai Life password', html,
     'Reset your Dubai Life password: ' || link || E'\n\nThis link works once, for 1 hour. If you didn''t ask for this, ignore this email.', 'password-reset');

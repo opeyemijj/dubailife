@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     }
 
     const result = await sendPushToUser(targetUserId, {
-      title: "cometodubai.app 🏙️",
+      title: "mydubailife.app 🏙️",
       body: "Push notifications are working! Friend requests and messages will pop up right here.",
       url: "/phone",
       tag: "test-notification",

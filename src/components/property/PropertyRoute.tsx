@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, DoorClosed, KeyRound, Loader2, LogOut, MapPin, Navigation, Settings2, ShoppingBag, UserPlus, X, Zap } from "lucide-react";
 import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoom";
-import { CATALOG, getCatalogItem, withHomeItems, type CatalogItem, type OwnedFurniture, type Placement, type Rotation } from "@/lib/furniture";
+import { CATALOG, getCatalogItem, withHomeItems, HOUSING_CONFIGS, type CatalogItem, type OwnedFurniture, type Placement, type Rotation, type HousingTier } from "@/lib/furniture";
 import { adjustBalance, updateCitizen, useCitizen, useRequireCitizen } from "@/lib/citizenStore";
 import { entranceOf, getEntity } from "@/lib/city/geo";
 import {
@@ -255,6 +255,26 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
     : canEdit ? `🛠️ ${flat.residentName ?? "The owner"} lets you redecorate here.`
     : `👋 You're visiting ${flat.residentName ?? "someone"}'s home. Look around — you can't change anything.`;
 
+  const housingTier: HousingTier = 
+    (flat.bedrooms && flat.bedrooms >= 3) || flat.property_type?.toLowerCase().includes("3-bedroom") || flat.property_type?.toLowerCase().includes("3 bedroom") ? "three_bedroom"
+    : (flat.bedrooms && flat.bedrooms === 2) || flat.property_type?.toLowerCase().includes("2-bedroom") || flat.property_type?.toLowerCase().includes("2 bedroom") ? "two_bedroom"
+    : (flat.bedrooms && flat.bedrooms === 1) || flat.property_type?.toLowerCase().includes("1-bedroom") || flat.property_type?.toLowerCase().includes("1 bedroom") ? "one_bedroom"
+    : flat.property_type?.toLowerCase().includes("penthouse") ? "penthouse"
+    : flat.property_type?.toLowerCase().includes("villa") ? "villa"
+    : "studio";
+
+  const housingConfig = HOUSING_CONFIGS[housingTier] ?? HOUSING_CONFIGS.studio;
+  const isMultiRoom = housingTier === "one_bedroom" || housingTier === "two_bedroom" || housingTier === "three_bedroom";
+  const [upView, setUpView] = useState(isMultiRoom);
+  const [activeRoomId, setActiveRoomId] = useState<string>(housingTier === "one_bedroom" ? "bedroom" : "living");
+
+  useEffect(() => {
+    if (isMultiRoom) {
+      setUpView(true);
+      setActiveRoomId(housingTier === "one_bedroom" ? "bedroom" : "living");
+    }
+  }, [housingTier, isMultiRoom]);
+
   return (
     <main className="fixed inset-0 w-screen h-[100dvh] overflow-hidden overscroll-none bg-[#788e6e] text-slate-900 select-none">
       <ApartmentRoom
@@ -265,8 +285,12 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         decorating={decorating}
         turns={turns}
         people={people}
+        housingTier={housingTier}
+        upView={upView}
+        activeRoomId={activeRoomId}
+        onSelectRoom={setActiveRoomId}
         onPlace={(uid, p) => place(uid, p)}
-        onPickUp={(uid) => { const f = withHomeItems(furniture).find((x) => x.uid === uid); if (f) setPlacing({ uid, itemId: f.itemId, rot: f.placement?.kind === "floor" ? f.placement.rot : 0 }); }}
+        onPickUp={(uid) => { const f = withHomeItems(furniture, housingTier).find((x) => x.uid === uid); if (f) setPlacing({ uid, itemId: f.itemId, rot: f.placement?.kind === "floor" ? f.placement.rot : 0 }); }}
         onPlaceBlocked={() => say("🚫 It doesn't fit there.")}
       />
 
@@ -280,6 +304,41 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         {isManager && <button onClick={() => setManageOpen(true)} className="h-10 px-3 rounded-full bg-white shadow-lg flex items-center gap-1.5 text-xs font-black"><Settings2 className="w-4 h-4" /> Manage</button>}
         <button onClick={onExit} className="h-10 px-3 rounded-full bg-slate-900 text-white shadow-lg flex items-center gap-1.5 text-xs font-black"><LogOut className="w-3.5 h-3.5" /> Exit</button>
       </header>
+
+      {/* Multi-Room Navigation & Cutaway View Pills */}
+      {housingConfig.rooms && housingConfig.rooms.length > 0 && (
+        <div className="absolute top-[4.65rem] left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-full shadow-lg border border-slate-200 overflow-x-auto max-w-[94vw]">
+          <button
+            onClick={() => setUpView(!upView)}
+            className={`px-2.5 py-0.5 rounded-full text-[10px] font-black transition-all ${
+              upView ? "bg-emerald-500 text-white shadow-sm" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            }`}
+          >
+            {upView ? "📐 All Rooms" : "🔍 Room Focus"}
+          </button>
+          <div className="w-[1px] h-3 bg-slate-200" />
+          {housingConfig.rooms.map((r) => {
+            const isSelected = activeRoomId === r.id;
+            return (
+              <button
+                key={r.id}
+                onClick={() => {
+                  setActiveRoomId(r.id);
+                  gameAudio.playClickSound();
+                }}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-black whitespace-nowrap transition-all flex items-center gap-1 ${
+                  isSelected
+                    ? "bg-slate-900 text-white shadow-sm scale-105"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                }`}
+              >
+                <span>{r.icon}</span>
+                <span>{r.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {banner && <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 bg-slate-950/85 text-white text-xs font-bold px-4 py-2 rounded-full shadow-xl max-w-[92vw] text-center">{banner}</div>}
 

@@ -10,7 +10,7 @@ create extension if not exists pg_net with schema extensions;
 
 insert into public.app_settings (key, value) values ('email', jsonb_build_object(
   'from', 'Dubai Life <noreply@mydubailife.app>',
-  'app_url', 'https://cometodubai.app',
+  'app_url', 'https://mydubailife.app',
   'stream', 'outbound'))
 on conflict (key) do nothing;
 
@@ -65,7 +65,7 @@ begin
   <p style="font-size:15px;line-height:1.5;color:#334155">Tap the button to verify your email for Dubai Life. It keeps your account safe and makes you eligible for tournament prizes and invite rewards.</p>
   <p style="margin:24px 0"><a href="%s" style="background:#059669;color:#ffffff;text-decoration:none;font-weight:bold;padding:14px 22px;border-radius:12px;display:inline-block">Verify my email</a></p>
   <p style="font-size:13px;color:#64748b">This link works for 24 hours. If you didn't sign up for Dubai Life, you can ignore this email.</p>
-  <p style="font-size:12px;color:#94a3b8;margin-top:24px">Dubai Life · cometodubai.app · a game for players aged 21+</p>
+  <p style="font-size:12px;color:#94a3b8;margin-top:24px">Dubai Life · mydubailife.app · a game for players aged 21+</p>
 </div>$h$, who, link);
 
   select net.http_post(

@@ -16,12 +16,14 @@ import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoo
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { gameAudio } from "@/utils/gameAudio";
 import { isNewCitizen, useRequireCitizen, adjustBalance, buyFurniture, setFurniturePlacement, signOut, updateCitizen, DEFAULT_NEEDS, type Needs } from "@/lib/citizenStore";
-import { CATALOG, getCatalogItem, withHomeItems, type CatalogItem, type Placement, type Rotation } from "@/lib/furniture";
+import { CATALOG, getCatalogItem, withHomeItems, HOUSING_CONFIGS, type CatalogItem, type Placement, type Rotation, type HousingTier, type HomeActivityDef } from "@/lib/furniture";
 import { useOnlineCount, formatOnline } from "@/lib/presence";
+import { useLifeLoop } from "@/lib/lifeLoop";
 import { WardrobeModal } from "@/components/avatar/WardrobeModal";
 import { getPendingVenue } from "@/components/city/VenueDressCodeModal";
 import { NeedsDock } from "@/components/life/NeedsDock";
 import { gainSkill, lifeEvent } from "@/lib/life";
+import BLUEPRINT from "@/data/life/blueprint.json";
 
 export default function HomePage() {
   const router = useRouter();
@@ -71,14 +73,57 @@ export default function HomePage() {
   const [decorating, setDecorating] = useState(false);
   const [turns, setTurns] = useState(0);
 
+  const life = useLifeLoop();
+  const rawTier = (life?.blueprint?.housing || citizen?.home || "studio").toLowerCase();
+  const housingTier: HousingTier = 
+    rawTier.includes("bed_space") || rawTier.includes("bed space") || rawTier.includes("shared") ? "bed_space"
+    : rawTier.includes("three_bedroom") || rawTier.includes("3-bedroom") || rawTier.includes("3 bedroom") ? "three_bedroom"
+    : rawTier.includes("two_bedroom") || rawTier.includes("2-bedroom") || rawTier.includes("2 bedroom") ? "two_bedroom"
+    : rawTier.includes("one_bedroom") || rawTier.includes("1-bedroom") || rawTier.includes("1 bedroom") ? "one_bedroom"
+    : rawTier.includes("penthouse") ? "penthouse"
+    : rawTier.includes("villa") ? "villa"
+    : "studio";
+
+  const housingConfig = HOUSING_CONFIGS[housingTier] ?? HOUSING_CONFIGS.studio;
+  const isMultiRoom = housingTier === "one_bedroom" || housingTier === "two_bedroom" || housingTier === "three_bedroom";
+  const [upView, setUpView] = useState(isMultiRoom);
+  const [activeRoomId, setActiveRoomId] = useState<string>(housingTier === "one_bedroom" ? "bedroom" : "living");
+  const [tierModalOpen, setTierModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (isMultiRoom) {
+      setUpView(true);
+      setActiveRoomId(housingTier === "one_bedroom" ? "bedroom" : "living");
+    }
+  }, [housingTier, isMultiRoom]);
+
   const furniture = citizen?.furniture ?? [];
-  const stored = withHomeItems(furniture).filter((f) => !f.placement);
+  const stored = withHomeItems(furniture, housingTier).filter((f) => !f.placement);
   const placingItem = placing ? getCatalogItem(placing.itemId) : undefined;
   const placingIsPlaced = !!(placing && furniture.find((f) => f.uid === placing.uid)?.placement);
 
   // Wellbeing meters live on the citizen, so food bought around the city counts here too.
   const needs = { ...DEFAULT_NEEDS, ...citizen?.needs };
   const setNeeds = (fn: (n: Needs) => Needs) => updateCitizen((c) => ({ ...c, needs: fn({ ...DEFAULT_NEEDS, ...c.needs }) }));
+
+  const handleTriggerHomeActivity = (act: HomeActivityDef) => {
+    if (act.cost && walletBalance < act.cost) {
+      showToast("⚠️ Not enough AED in your wallet!");
+      return;
+    }
+    if (act.cost) {
+      adjustBalance(-act.cost);
+    }
+    gameAudio.playClickSound();
+    setNeeds((prev) => ({
+      ...prev,
+      [act.need.kind]: Math.min(100, (prev[act.need.kind] ?? 70) + act.need.amount),
+    }));
+    if (act.statBoost) {
+      gainSkill(act.statBoost.name as any, act.statBoost.amount);
+    }
+    showToast(`${act.icon} ${act.label} · +${act.need.amount} ${act.need.kind.toUpperCase()}`);
+  };
 
 
   useEffect(() => {
@@ -169,6 +214,10 @@ export default function HomePage() {
         placing={placing}
         decorating={decorating}
         turns={turns}
+        housingTier={housingTier}
+        upView={upView}
+        activeRoomId={activeRoomId}
+        onSelectRoom={setActiveRoomId}
         onPlace={handlePlace}
         onPickUp={handlePickUp}
         onPlaceBlocked={() => showToast("🚫 It doesn't fit there. Try a green spot.")}
@@ -298,6 +347,67 @@ export default function HomePage() {
         </header>
       )}
 
+      {/* TOP HOUSING STATUS & MULTI-ROOM PILLS */}
+      {!cleanScreen && (
+        <div className="absolute top-[4.5rem] sm:top-20 left-1/2 -translate-x-1/2 z-30 pointer-events-auto flex flex-col items-center gap-1.5 max-w-[96vw] px-2">
+          <div className="flex items-center gap-1.5 bg-slate-950/90 backdrop-blur-xl text-white pl-3.5 pr-2 py-1.5 rounded-full shadow-2xl border border-white/10 text-xs font-bold">
+            <button
+              onClick={() => {
+                setTierModalOpen(true);
+                gameAudio.playClickSound();
+              }}
+              className="flex items-center gap-2 hover:opacity-90 transition-opacity active:scale-95"
+              title="Change or inspect housing tier"
+            >
+              <span className="text-sm">{housingConfig.icon}</span>
+              <span className="font-extrabold text-amber-300">{housingConfig.label}</span>
+              <span className="text-slate-400 text-[10px] hidden xs:inline">• {housingConfig.area}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-amber-400/80 ml-0.5" />
+            </button>
+            {housingConfig.hasDollhouseUpView && (
+              <button
+                onClick={() => {
+                  setUpView(!upView);
+                  gameAudio.playClickSound();
+                }}
+                className={`ml-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black transition-all ${
+                  upView ? "bg-emerald-500 text-white shadow-sm" : "bg-white/20 text-slate-200 hover:bg-white/30"
+                }`}
+              >
+                {upView ? "📐 Up-View (All Rooms)" : "🔍 In-Room Focus"}
+              </button>
+            )}
+          </div>
+
+          {/* Room Pills for Multi-Room Layouts (1-Bed, 2-Bed, 3-Bed) */}
+          {housingConfig.rooms && housingConfig.rooms.length > 0 && (
+            <div className="flex items-center gap-1 bg-white/95 backdrop-blur-md px-2 py-1 rounded-full shadow-lg border border-slate-200 overflow-x-auto max-w-[92vw]">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-1.5 pr-0.5">Rooms:</span>
+              {housingConfig.rooms.map((r) => {
+                const isSelected = activeRoomId === r.id;
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => {
+                      setActiveRoomId(r.id);
+                      gameAudio.playClickSound();
+                    }}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-black whitespace-nowrap transition-all flex items-center gap-1 ${
+                      isSelected
+                        ? "bg-slate-900 text-white shadow-sm scale-105"
+                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    }`}
+                  >
+                    <span>{r.icon}</span>
+                    <span>{r.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* TOP LEFT QUESTS & OBJECTIVES (Image 2) */}
       {!cleanScreen && (
         <div className="absolute top-[4.75rem] sm:top-24 left-3 sm:left-6 z-30 pointer-events-auto space-y-1.5">
@@ -345,6 +455,45 @@ export default function HomePage() {
         <div className="absolute bottom-20 sm:bottom-24 left-3 sm:left-6 z-30 pointer-events-auto">
           {/* The dock opens your needs, goals, skills, people and career. */}
           <NeedsDock />
+        </div>
+      )}
+
+      {/* RELATABLE HOME ACTIVITIES DOCK */}
+      {!cleanScreen && !placing && (
+        <div className="fixed bottom-[4.85rem] sm:bottom-24 left-1/2 -translate-x-1/2 z-30 pointer-events-auto max-w-[94vw] sm:max-w-xl w-full px-2">
+          <div className="bg-white/95 backdrop-blur-2xl border border-white shadow-[0_12px_40px_rgba(0,0,0,0.18)] rounded-2xl p-2 sm:p-2.5">
+            <div className="flex items-center justify-between mb-1.5 px-1">
+              <div className="flex items-center gap-1.5 text-[11px] font-black text-slate-800">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>Home Rituals & Activities</span>
+                {housingConfig.rooms && (
+                  <span className="text-[10px] text-slate-400 font-semibold">({housingConfig.rooms?.find(r => r.id === activeRoomId)?.label ?? "All"})</span>
+                )}
+              </div>
+              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Replenish Vitals</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+              {(housingConfig.rooms
+                ? housingConfig.activities.filter((a) => !a.room || a.room === activeRoomId || a.room === "living" || a.room === "bedroom")
+                : housingConfig.activities
+              ).slice(0, 4).map((act) => (
+                <button
+                  key={act.id}
+                  onClick={() => handleTriggerHomeActivity(act)}
+                  className="flex flex-col items-start p-2 rounded-xl bg-slate-50 hover:bg-amber-50 border border-slate-100 hover:border-amber-200 text-left transition-all active:scale-95 group"
+                >
+                  <div className="flex items-center justify-between w-full mb-1">
+                    <span className="text-xl group-hover:scale-110 transition-transform">{act.icon}</span>
+                    <span className="text-[9px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-100/60 px-1 py-0.5 rounded">
+                      +{act.need.amount} {act.need.kind}
+                    </span>
+                  </div>
+                  <div className="text-[11px] font-black text-slate-800 leading-tight truncate w-full">{act.label}</div>
+                  <div className="text-[9px] text-slate-400 font-medium truncate w-full">{act.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -417,7 +566,7 @@ export default function HomePage() {
       {/* First visit only. A plain card (not a dialog) so nothing is left covering the screen once it's closed. */}
       {welcomeModalOpen && (
         <ModalPortal>
-          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Welcome to cometodubai.app">
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Welcome to mydubailife.app">
             <div className="absolute inset-0 bg-black/30" onClick={() => setWelcomeModalOpen(false)} aria-hidden />
             <div className="relative bg-white text-slate-900 shadow-2xl w-[92vw] max-w-md rounded-3xl p-6 sm:p-7 text-left space-y-4">
               <button onClick={() => setWelcomeModalOpen(false)} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600" aria-label="Close">✕</button>
@@ -427,9 +576,9 @@ export default function HomePage() {
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                Welcome to cometodubai.app!
+                Welcome to mydubailife.app!
               </h3>
-              <p className="text-xs text-slate-400 font-semibold">From the cometodubai.app team</p>
+              <p className="text-xs text-slate-400 font-semibold">From the mydubailife.app team</p>
             </div>
           </div>
 
@@ -535,6 +684,70 @@ export default function HomePage() {
               })}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* 3. HOUSING TIER SELECTOR & PREVIEW MODAL */}
+      <Dialog open={tierModalOpen} onOpenChange={setTierModalOpen}>
+        <DialogContent className="bg-white text-slate-900 border-none shadow-2xl w-[92vw] max-w-md max-h-[85dvh] overflow-y-auto z-50 rounded-3xl p-6">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+              <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                <span>🏙️</span> Dubai Housing Tiers
+              </h3>
+              <p className="text-xs text-slate-500">Select your residence type to explore its 3D layout & rooms</p>
+            </div>
+            <button onClick={() => setTierModalOpen(false)} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="space-y-2.5 pt-3">
+            {BLUEPRINT.housing.map((h) => {
+              const isCurrent = h.id === housingTier;
+              return (
+                <button
+                  key={h.id}
+                  onClick={() => {
+                    updateCitizen((c) => ({ ...c, home: `${h.label}, ${h.area.split(" · ")[0]}` }));
+                    if (h.id === "one_bedroom" || h.id === "two_bedroom" || h.id === "three_bedroom") {
+                      setUpView(true);
+                      setActiveRoomId(h.id === "one_bedroom" ? "bedroom" : "living");
+                    } else {
+                      setUpView(false);
+                    }
+                    setTierModalOpen(false);
+                    showToast(`Switched home to ${h.label}!`);
+                    gameAudio.playConfirmSound();
+                  }}
+                  className={`w-full p-3.5 rounded-2xl border text-left transition-all flex items-center justify-between group ${
+                    isCurrent
+                      ? "border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20 shadow-sm"
+                      : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl group-hover:scale-110 transition-transform">{h.icon}</span>
+                    <div>
+                      <div className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1.5">
+                        <span>{h.label}</span>
+                        {isCurrent && (
+                          <span className="text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-200/60 px-1.5 py-0.5 rounded-full">
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-slate-500">{h.area}</div>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-xs font-black text-slate-900">AED {h.monthly.toLocaleString()}</div>
+                    <div className="text-[10px] text-slate-400">/month</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </DialogContent>
       </Dialog>
 

@@ -46,6 +46,17 @@ export interface Palette {
   light?: string;
 }
 
+export interface VenueActivity {
+  id: string;
+  label: string;
+  icon: string;
+  animation?: "dance" | "sit" | "clap" | "wave" | "talk" | "idle";
+  reward?: number;
+  need?: { kind: "hunger" | "energy" | "fun" | "social" | "hygiene"; amount: number };
+  desc?: string;
+  price?: number;
+}
+
 export interface Venue {
   id: string;
   name: string;
@@ -62,8 +73,8 @@ export interface Venue {
   job?: JobDef;
   /** Signature feature of the room: big windows on the skyline, an aquarium wall, a stage… */
   feature?: "skyline" | "aquarium" | "exhibits" | "stage" | "pool" | "spa" | "frame";
-  /** Extra things you can do here besides buying (dance, sit, explore exhibits…). */
-  activities?: Array<{ id: string; label: string; icon: string; animation?: "dance" | "sit" | "clap" | "wave"; reward?: number }>;
+  /** Extra things you can do here besides buying (dance, sit, explore exhibits, local rituals…). */
+  activities?: VenueActivity[];
 }
 
 export type PlaceKind = "mall" | "food-hall" | "hotel" | "club" | "attraction" | "park" | "residential" | "home";

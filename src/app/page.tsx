@@ -38,7 +38,7 @@ function HomeContent() {
       <header className="sr-only">
         <h1>Dubai Life — Free 3D Virtual Dubai Simulator & Browser Game</h1>
         <p>
-          Welcome to Dubai Life (cometodubai.app), the premier free 3D virtual Dubai life simulator.
+          Welcome to Dubai Life (mydubailife.app), the premier free 3D virtual Dubai life simulator.
           Explore Downtown Dubai, Burj Khalifa, and The Dubai Mall in interactive 3D. Decorate luxury penthouses,
           play 17 multiplayer games like Ludo, Chess, and Pool, meet real players, and advertise your business in virtual Dubai.
         </p>

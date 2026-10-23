@@ -17,6 +17,15 @@ import { floorTexture, signTexture, wallAdScreenTexture } from "./materials";
 import { getVenueWallAd, WALL_PANELS, type WallPanelId } from "@/lib/venueAds";
 import { ChampagneBottle, HandHeldProp, ServedItem, type ServeKind, type ServedDef } from "./served";
 import type { Peer } from "@/lib/room";
+import { ActivityStageFX } from "./ActivityStageFX";
+import type { ActivityCategory } from "./ActivityExperienceOverlay";
+
+export interface Activity3DFX {
+  active: boolean;
+  type: ActivityCategory;
+  combo: number;
+  burstKey: number;
+}
 
 const WALL_H = 4.4;
 const WALK_SPEED = 1.6; // m/s
@@ -88,6 +97,8 @@ interface Props {
   vipTables?: VipTableReservation[];
   /** Tapped an in-venue wall advertisement screen */
   onWallAdClick?: (panelId: WallPanelId) => void;
+  /** Active 3D stage visual effects for venue activities (spotlight, floor rings, confetti) */
+  activityFX?: Activity3DFX;
 }
 
 const NATURAL_FLOOR: Partial<Record<string, string>> = { sand: "#f3dfae", deck: "#ece7df", ice: "#e0f2fe" };
@@ -629,6 +640,27 @@ function Player({
   );
 }
 
+function ActivityFXLayer({ activityFX, follow }: { activityFX?: Activity3DFX; follow: Follow }) {
+  const [pos, setPos] = useState<[number, number]>([0, 0]);
+  useFrame(() => {
+    if (!activityFX?.active) return;
+    const playerObj = follow.current.get("me");
+    if (playerObj) {
+      setPos([playerObj.position.x, playerObj.position.z]);
+    }
+  });
+  if (!activityFX?.active) return null;
+  return (
+    <ActivityStageFX
+      active={activityFX.active}
+      type={activityFX.type}
+      playerPos={pos}
+      combo={activityFX.combo}
+      burstKey={activityFX.burstKey}
+    />
+  );
+}
+
 export function InteriorScene({
   venue,
   plan,
@@ -658,6 +690,7 @@ export function InteriorScene({
   carrying,
   peerConsumptions,
   vipTables = [],
+  activityFX,
 }: Props) {
   const quality = useMemo(() => canvasQuality(), []);
   const [w, d] = plan.size;
@@ -774,6 +807,7 @@ export function InteriorScene({
           followKey="me"
         />
       </Suspense>
+      <ActivityFXLayer activityFX={activityFX} follow={followNodes} />
       <LabelTracker labels={labels} nodes={labelNodes} follow={followNodes} />
       <FitCamera width={w} depth={d} />
       <OrbitControls

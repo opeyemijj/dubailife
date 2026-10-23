@@ -4,6 +4,8 @@
     { "id": "bed_space", "label": "Shared bed space", "area": "Deira / Bur Dubai · comes with roommates", "monthly": 800, "icon": "🛏️" },
     { "id": "studio", "label": "Studio apartment", "area": "Al Barsha / JVC", "monthly": 2500, "icon": "🏢" },
     { "id": "one_bedroom", "label": "1-bedroom apartment", "area": "Dubai Marina / JBR", "monthly": 7000, "icon": "🌇" },
+    { "id": "two_bedroom", "label": "2-bedroom apartment", "area": "Downtown / Creek · dollhouse up-view", "monthly": 11500, "icon": "🏙️" },
+    { "id": "three_bedroom", "label": "3-bedroom apartment", "area": "Dubai Hills / Downtown · multi-suite", "monthly": 15500, "icon": "🏰" },
     { "id": "penthouse", "label": "Downtown luxury penthouse", "area": "Downtown", "monthly": 18000, "icon": "🏙️" },
     { "id": "villa", "label": "Palm Jumeirah signature villa", "area": "Palm Jumeirah", "monthly": 45000, "icon": "🌴" }
   ],

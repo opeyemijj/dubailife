@@ -110,7 +110,7 @@ const STRUCTURED_DATA = {
       "@id": `${SITE.url}/#website`,
       url: SITE.url,
       name: "Dubai Life",
-      alternateName: ["cometodubai.app", "Come To Dubai"],
+      alternateName: ["mydubailife.app", "Come To Dubai"],
       description: SITE.description,
       inLanguage: ["en", "ar"],
       potentialAction: {
@@ -138,7 +138,7 @@ const STRUCTURED_DATA = {
       "@type": ["VideoGame", "SoftwareApplication", "WebApplication"],
       "@id": `${SITE.url}/#app`,
       name: "Dubai Life",
-      alternateName: ["cometodubai.app", "Come To Dubai", "Dubai Life Simulator"],
+      alternateName: ["mydubailife.app", "Come To Dubai", "Dubai Life Simulator"],
       url: SITE.url,
       description: SITE.description,
       image: `${SITE.url}/brand/icon-512.png`,

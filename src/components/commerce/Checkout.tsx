@@ -64,7 +64,7 @@ export function Checkout({ title, lines, amount, note, onConfirm, onClose }: {
               <h3 className="font-black text-lg">Payment gateway coming soon</h3>
               <p className="text-sm text-slate-600 mt-1">Card payments aren&apos;t live yet, so <strong>you haven&apos;t been charged</strong>. Your order is saved and waiting for payment.</p>
             </div>
-            <p className="text-xs text-slate-500">To pay now, email <a className="font-bold text-emerald-700" href="mailto:billing@cometodubai.app">billing@cometodubai.app</a> with your username. Once payment is confirmed, your purchase is activated automatically and shows in your history.</p>
+            <p className="text-xs text-slate-500">To pay now, email <a className="font-bold text-emerald-700" href="mailto:billing@mydubailife.app">billing@mydubailife.app</a> with your username. Once payment is confirmed, your purchase is activated automatically and shows in your history.</p>
             <button onClick={onClose} className="w-full h-12 rounded-2xl bg-slate-900 text-white font-black">Done</button>
           </div>
         )}

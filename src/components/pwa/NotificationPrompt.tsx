@@ -144,7 +144,7 @@ export function NotificationPrompt() {
                     </button>
                   </div>
                   <p className="text-xs text-slate-300 mt-0.5">
-                    Add cometodubai.app to your Home Screen to unlock push notifications for friend requests & messages!
+                    Add mydubailife.app to your Home Screen to unlock push notifications for friend requests & messages!
                   </p>
                   <div className="flex items-center gap-2 mt-3">
                     <button

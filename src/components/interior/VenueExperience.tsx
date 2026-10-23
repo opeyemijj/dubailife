@@ -30,6 +30,8 @@ import { claimGift, elsewhere, GIFT_AMOUNT, giftStatus, greeting, chatLine, invi
 import { approachPoint, buildPlan, seatsAt, servingSpot, toRoom, type StationDef } from "./layouts";
 import { acquirePurchaseLock, releasePurchaseLock } from "@/lib/commerce";
 import type { WallPanelId } from "@/lib/venueAds";
+import { ActivityExperienceOverlay, detectActivityCategory, type ActivityCategory } from "./ActivityExperienceOverlay";
+import type { Activity3DFX } from "./InteriorScene";
 
 const SHIFT_COOLDOWN_MS = 10 * 60 * 1000;
 const aed = (n: number) => (n === 0 ? "Free" : `AED ${n.toLocaleString()}`);
@@ -39,6 +41,7 @@ type Panel =
   | { kind: "product"; product: Product; compareWith?: Product }
   | { kind: "confirm"; product: Product }
   | { kind: "staff" }
+  | { kind: "activities" }
   | { kind: "search" }
   | { kind: "interview"; step: number; score: number }
   | { kind: "shift"; step: number; correct: number }
@@ -74,6 +77,8 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   const [vipReservations, setVipReservations] = useState<VipTableReservation[]>([]);
   const [vipCelebration, setVipCelebration] = useState<{ username: string; mine: boolean } | null>(null);
   const [peerConsumptions, setPeerConsumptions] = useState<Record<string, { action: "drink" | "eat"; prop: string; tint?: string }>>({});
+  const [activeActivity, setActiveActivity] = useState<NonNullable<Venue["activities"]>[number] | null>(null);
+  const [activityFX, setActivityFX] = useState<Activity3DFX>({ active: false, type: "dance", combo: 0, burstKey: 0 });
 
   // The venue guide opens by itself once: the first time a player walks into any venue. After that it's
   // behind the guide button.
@@ -704,27 +709,109 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     setPanel(null);
   };
 
-  // ---------------------------------------------------------------- activities
+  // ---------------------------------------------------------------- activities (Live 3D Animated Experiences)
 
   const startActivity = (a: NonNullable<Venue["activities"]>[number], at?: StationDef) => {
     setPanel(null);
-    // Sitting means going to the seat first, not sitting down on the spot.
-    if (a.animation === "sit" && at && seatsAt(venue, at).length) sitAt(at);
-    else setPlayerAnimation(a.animation ?? "idle");
+    if (a.price && (citizen?.balance ?? 0) < a.price) {
+      say(`⚠️ Not enough AED in your wallet! (Needs AED ${a.price})`);
+      return;
+    }
+    if (a.price) {
+      adjustBalance(-a.price);
+    }
+
+    const cat = detectActivityCategory(a);
+    let propKind: ServeKind | undefined = undefined;
+    if (cat === "taste") {
+      if (/karak|coffee|tea|gahwa|brew/i.test(a.label)) propKind = "coffee";
+      else if (/cocktail|spritz|drink|lemonade|shake/i.test(a.label)) propKind = "mocktail";
+      else propKind = "plate";
+    }
+
+    // Determine target location in venue for the 3D activity
+    let targetPos: [number, number] = [0, 0];
+    if (cat === "dance") {
+      const df = plan.stations.find((s) => s.kind === "dancefloor");
+      targetPos = df ? df.position : [0, 0];
+    } else if (cat === "workout") {
+      targetPos = [Math.min(plan.size[0] * 0.25, 2.0), 0];
+    } else if (cat === "taste") {
+      const bar = plan.stations.find((s) => s.kind === "bar" || s.kind === "counter" || s.kind === "menu");
+      targetPos = at?.position ?? (bar ? bar.position : [0, 0]);
+    } else {
+      targetPos = at?.position ?? [0, 0];
+    }
+
+    // Sitting means going to the seat first, not sitting down on the spot
+    if (a.animation === "sit" && at && seatsAt(venue, at).length) {
+      sitAt(at);
+      setActiveActivity(a);
+      setActivityFX({ active: true, type: cat, combo: 0, burstKey: 0 });
+      if (propKind) {
+        setActiveConsumption({ kind: propKind === "plate" ? "eat" : "drink", propKind });
+      }
+    } else {
+      walkThen(targetPos, () => {
+        setActiveActivity(a);
+        setActivityFX({ active: true, type: cat, combo: 0, burstKey: 0 });
+        if (propKind) {
+          setActiveConsumption({ kind: propKind === "plate" ? "eat" : "drink", propKind });
+        }
+        setPlayerAnimation(a.animation ?? (cat === "dance" ? "dance" : cat === "workout" ? "clap" : "idle"));
+        say(`${a.icon} ${a.label} — Live 3D Experience started!`);
+      });
+    }
+  };
+
+  const handleActivityActionHit = (cat: ActivityCategory, rating: "perfect" | "great" | "good") => {
+    setActivityFX((prev) => ({
+      ...prev,
+      combo: rating === "perfect" || rating === "great" ? prev.combo + 1 : 0,
+      burstKey: rating === "perfect" ? prev.burstKey + 1 : prev.burstKey,
+    }));
+
+    if (rating === "perfect") {
+      bubble("me", cat === "dance" ? "🔥 Perfect Rhythm!" : cat === "workout" ? "💪 Power Rep!" : "✨ Delicious!");
+      if (localsShown && localPeers.length > 0 && Math.random() > 0.6) {
+        bubble(localPeers[0].userId, "Look at those moves! 👏🔥");
+      }
+    }
+  };
+
+  const handleActivityFinish = (stats: { score: number; maxCombo: number; stars: number }) => {
+    if (!activeActivity) return;
+    const a = activeActivity;
+
     if (a.reward && !rewarded.has(a.id)) {
       adjustBalance(a.reward);
       setRewarded(new Set(rewarded).add(a.id));
-      say(`${a.icon} ${a.label} — challenge complete! +AED ${a.reward}`);
+      say(`${a.icon} ${a.label} — Challenge completed! +AED ${a.reward}`);
     } else {
-      say(`${a.icon} ${a.label}`);
+      say(`${a.icon} ${a.label} completed!`);
     }
-    boostNeed("fun", 8);
-    // Practice: dancing, sport and swimming, the stage, landmarks.
-    if (a.animation === "dance") { lifeEvent("dance"); gainSkill("dance", 15); }
-    else if (["pooldeck", "beach", "waterpark", "rink"].includes(venue.layout) || /swim|skate|surf|ski|yoga|gym|work ?out|run|tennis|padel|golf|kayak|paddle|dive/i.test(a.label)) { lifeEvent("workout"); gainSkill("fitness", 15); }
-    else if (venue.layout === "theatre" || /sing|karaoke|dj|music|piano|concert|show/i.test(a.label)) gainSkill("music", 12);
-    else if (venue.layout === "mosque" || place.kind === "attraction") gainSkill("culture", 10);
-    if (a.animation !== "dance" && a.animation !== "sit") setTimeout(() => setPlayerAnimation("idle"), 4000);
+
+    if (a.need) {
+      boostNeed(a.need.kind, a.need.amount);
+    } else {
+      boostNeed("fun", 20);
+    }
+
+    const cat = detectActivityCategory(a);
+    if (cat === "dance") { lifeEvent("dance"); gainSkill("dance", 25); }
+    else if (cat === "workout") { lifeEvent("workout"); gainSkill("fitness", 25); }
+    else if (cat === "taste") { gainSkill("culture", 15); }
+    else { gainSkill("culture", 20); }
+
+    setActivityFX((prev) => ({ ...prev, burstKey: prev.burstKey + 1 }));
+    gameAudio.playCoinSound();
+  };
+
+  const handleActivityClose = () => {
+    setActiveActivity(null);
+    setActivityFX({ active: false, type: "dance", combo: 0, burstKey: 0 });
+    setActiveConsumption(null);
+    setPlayerAnimation("idle");
   };
 
   // ---------------------------------------------------------------- render helpers
@@ -832,6 +919,50 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         )}
         {!job && <p className="text-xs text-slate-500 px-1">No vacancies here at the moment.</p>}
         <button onClick={() => setPanel(null)} className="w-full p-2.5 rounded-2xl bg-slate-100 text-sm font-bold text-slate-600">👋 Thanks, bye</button>
+      </Sheet>
+    );
+  } else if (panel?.kind === "activities") {
+    const list = venue.activities ?? [];
+    sheet = (
+      <Sheet onClose={closeAll} title="Venue Activities & Experiences" subtitle={venue.name} onBack={() => setPanel(null)}>
+        <p className="text-xs text-slate-500 mb-3">Participate in authentic Dubai activities, local rituals, and recreational experiences to boost your vitals and skills.</p>
+        <div className="space-y-2">
+          {list.map((a) => (
+            <button
+              key={a.id}
+              onClick={() => startActivity(a)}
+              className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-amber-50/70 hover:bg-amber-100/70 border border-amber-200/80 text-left transition-all active:scale-[0.98]"
+            >
+              <span className="text-3xl p-1 bg-white rounded-xl shadow-sm">{a.icon}</span>
+              <div className="flex-1 min-w-0">
+                <div className="font-black text-sm text-slate-900 leading-tight">{a.label}</div>
+                {a.desc && <div className="text-[11px] text-slate-500 truncate mt-0.5">{a.desc}</div>}
+                <div className="flex items-center gap-2 mt-1">
+                  {a.need && (
+                    <span className="text-[10px] font-black uppercase text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded">
+                      +{a.need.amount} {a.need.kind}
+                    </span>
+                  )}
+                  {a.price && (
+                    <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
+                      Cost: AED {a.price}
+                    </span>
+                  )}
+                  {a.reward && !rewarded.has(a.id) && (
+                    <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                      Bonus: +AED {a.reward}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </button>
+          ))}
+          {list.length === 0 && (
+            <div className="text-center py-8 text-slate-400 text-xs">
+              No special activities scheduled here right now. Check out the counter or menu!
+            </div>
+          )}
+        </div>
       </Sheet>
     );
   } else if (panel?.kind === "search") {
@@ -987,7 +1118,19 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         carrying={carryingState}
         peerConsumptions={peerConsumptions}
         vipTables={vipReservations}
+        activityFX={activityFX}
       />
+
+      {/* Live 3D Interactive Venue Activity Experience Overlay */}
+      {activeActivity && (
+        <ActivityExperienceOverlay
+          activity={activeActivity}
+          venueName={venue.name}
+          onActionHit={handleActivityActionHit}
+          onFinish={handleActivityFinish}
+          onClose={handleActivityClose}
+        />
+      )}
 
       <SceneLoadingOverlay label={`Entering ${venue.name}`} />
       <VenueLoadingCard venueKey={key} venueName={venue.name} pub={pub} paused={!!offer || !!panel} />
@@ -1048,6 +1191,17 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       {/* Quick actions */}
       {!panel && (
         <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-30 flex flex-wrap justify-center gap-2 w-[min(96vw,560px)] pointer-events-auto">
+          {(venue.activities ?? []).length > 0 && (
+            <button
+              onClick={() => {
+                gameAudio.playClickSound();
+                setPanel({ kind: "activities" });
+              }}
+              className="h-11 px-4 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black shadow-xl text-xs flex items-center gap-1.5 active:scale-95 transition-all"
+            >
+              <Sparkles className="w-4 h-4 fill-slate-950" /> Activities & Experiences ({(venue.activities ?? []).length})
+            </button>
+          )}
           {(venue.layout === "boutique" || venue.category.toLowerCase().includes("fashion")) && (
             <button onClick={() => setClothingStoreOpen(true)} className="h-11 px-4 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-xl text-xs flex items-center gap-1.5 active:scale-95 transition-all">
               <Shirt className="w-4 h-4" /> 3D Fitting Room

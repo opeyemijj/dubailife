@@ -28,7 +28,7 @@ export default function TournamentRules() {
         </header>
 
         <Section n={1} title="Sponsor">
-          <p>The tournament is run and paid for by the operator of Dubai Life (cometodubai.app), the “Sponsor”. Apple, Google and any other app store or platform are not sponsors and are not involved in any way.</p>
+          <p>The tournament is run and paid for by the operator of Dubai Life (mydubailife.app), the “Sponsor”. Apple, Google and any other app store or platform are not sponsors and are not involved in any way.</p>
         </Section>
         <Section n={2} title="Free to enter">
           <p>No purchase or payment is needed to enter or to win. Buying virtual AED, a season pass or Dubai Plus does not add points or improve your chances.</p>

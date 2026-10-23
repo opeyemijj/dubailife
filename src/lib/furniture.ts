@@ -83,6 +83,174 @@ export interface BuiltIn {
   yaw?: number;
 }
 
+export type HousingTier = "bed_space" | "studio" | "one_bedroom" | "two_bedroom" | "three_bedroom" | "penthouse" | "villa";
+
+export interface HomeActivityDef {
+  id: string;
+  label: string;
+  icon: string;
+  desc: string;
+  room?: string;
+  animation: "drink" | "eat" | "sit" | "talk" | "wave" | "idle";
+  need: { kind: "hunger" | "energy" | "fun" | "social" | "hygiene"; amount: number };
+  statBoost?: { name: string; amount: number };
+  cost?: number;
+}
+
+export interface RoomZone {
+  id: string;
+  label: string;
+  icon: string;
+  desc: string;
+  bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
+  center: [number, number, number];
+}
+
+export interface HousingConfig {
+  id: HousingTier;
+  label: string;
+  area: string;
+  monthly: number;
+  icon: string;
+  wallColor: string;
+  skirtingColor: string;
+  floorTint?: string;
+  hasDollhouseUpView?: boolean;
+  rooms?: RoomZone[];
+  activities: HomeActivityDef[];
+}
+
+export const HOUSING_CONFIGS: Record<HousingTier, HousingConfig> = {
+  bed_space: {
+    id: "bed_space",
+    label: "Shared Bed Space",
+    area: "Deira / Bur Dubai",
+    monthly: 800,
+    icon: "🛏️",
+    wallColor: "#e2dcd2",
+    skirtingColor: "#c4b5a0",
+    floorTint: "#d5c9b6",
+    activities: [
+      { id: "brew_karak", label: "Brew Instant Karak", icon: "☕", desc: "Boil water, mix evaporated milk & cardamom tea.", animation: "drink", need: { kind: "energy", amount: 20 }, cost: 1 },
+      { id: "rest_bunk", label: "Rest in Bunk Bed", icon: "🛏️", desc: "Pull the privacy curtain for a restorative nap.", animation: "sit", need: { kind: "energy", amount: 45 } },
+      { id: "suitcase_check", label: "Check Suitcase Locker", icon: "🧳", desc: "Organize cash reserve, passport and visa documents.", animation: "talk", need: { kind: "fun", amount: 15 } },
+      { id: "send_remittance", label: "Send Remittance Home", icon: "📱", desc: "Send family financial support via mobile exchange app.", animation: "wave", need: { kind: "social", amount: 30 } },
+    ],
+  },
+  studio: {
+    id: "studio",
+    label: "Studio Apartment",
+    area: "Al Barsha / JVC",
+    monthly: 2500,
+    icon: "🏢",
+    wallColor: "#f7f5f1",
+    skirtingColor: "#e7d5b8",
+    activities: [
+      { id: "cook_indomie", label: "Cook Indomie on Stove", icon: "🍜", desc: "Prepare a hot bowl of spicy noodles on the induction stove.", animation: "eat", need: { kind: "hunger", amount: 35 } },
+      { id: "laptop_work", label: "Freelance at Work Desk", icon: "💻", desc: "Work on remote client tasks and academic studies.", animation: "sit", need: { kind: "fun", amount: 20 }, statBoost: { name: "focus", amount: 15 } },
+      { id: "balcony_coffee", label: "JVC Balcony Coffee", icon: "☕", desc: "Enjoy a fresh cup of coffee overlooking suburban rooftops.", animation: "drink", need: { kind: "energy", amount: 25 } },
+      { id: "shower_groom", label: "Morning Shower", icon: "🚿", desc: "Freshen up before heading out into the city.", animation: "wave", need: { kind: "hygiene", amount: 60 } },
+    ],
+  },
+  one_bedroom: {
+    id: "one_bedroom",
+    label: "1-Bedroom Apartment",
+    area: "Dubai Marina / JBR · Multi-Room",
+    monthly: 7000,
+    icon: "🌇",
+    wallColor: "#efe6d8",
+    skirtingColor: "#d6c2a5",
+    hasDollhouseUpView: true,
+    rooms: [
+      { id: "bedroom", label: "Master Bedroom", icon: "🛏️", desc: "Private queen suite with fitted wardrobe", center: [-1.6, 0, -1.8], bounds: { minX: -3.5, maxX: 3.5, minZ: -3.5, maxZ: -0.2 } },
+      { id: "living", label: "Living & Kitchen", icon: "🛋️", desc: "L-sofa, coffee table & breakfast island", center: [-1.4, 0, 1.8], bounds: { minX: -3.5, maxX: 3.5, minZ: 0.2, maxZ: 3.5 } },
+      { id: "balcony", label: "Marina Balcony", icon: "🌇", desc: "Outdoor balcony with marina canal views", center: [0, 0, 4.1], bounds: { minX: -2.5, maxX: 2.5, minZ: 3.5, maxZ: 4.8 } },
+    ],
+    activities: [
+      { id: "master_sleep", room: "bedroom", label: "Master Bedroom Deep Sleep", icon: "🛏️", desc: "Uninterrupted restorative sleep in your private bedroom.", animation: "sit", need: { kind: "energy", amount: 60 } },
+      { id: "nespresso_shot", room: "living", label: "Double Nespresso Shot", icon: "☕", desc: "Pull a rich espresso capsule at the kitchen counter.", animation: "drink", need: { kind: "energy", amount: 30 } },
+      { id: "host_friend", room: "living", label: "Host Dinner for Peer", icon: "🍽️", desc: "Invite a fellow resident or colleague over for dinner.", animation: "talk", need: { kind: "social", amount: 45 } },
+      { id: "marina_balcony", room: "balcony", label: "Marina Balcony Chill", icon: "🌇", desc: "Watch yachts cruise the canal with sea breeze.", animation: "wave", need: { kind: "fun", amount: 35 } },
+    ],
+  },
+  two_bedroom: {
+    id: "two_bedroom",
+    label: "2-Bedroom Apartment",
+    area: "Downtown / Creek · Dollhouse Up-View",
+    monthly: 11500,
+    icon: "🏙️",
+    wallColor: "#ece6dc",
+    skirtingColor: "#c9b79c",
+    hasDollhouseUpView: true,
+    rooms: [
+      { id: "master", label: "Master Suite", icon: "🛏️", desc: "King bed, walk-in wardrobe & en-suite", center: [-2.2, 0, -1.8], bounds: { minX: -3.5, maxX: -0.2, minZ: -3.5, maxZ: 0 } },
+      { id: "study", label: "Study & Bed 2", icon: "💻", desc: "Dual monitor desk & guest twin bed", center: [1.8, 0, -1.8], bounds: { minX: 0.2, maxX: 3.5, minZ: -3.5, maxZ: 0 } },
+      { id: "living", label: "Living & Dining", icon: "🛋️", desc: "L-sofa, 65\" 4K TV & dining table", center: [-1.2, 0, 1.8], bounds: { minX: -3.5, maxX: 1.0, minZ: 0, maxZ: 3.5 } },
+      { id: "kitchen", label: "Open Kitchen", icon: "🍳", desc: "Granite breakfast island & espresso bar", center: [2.2, 0, 1.8], bounds: { minX: 1.0, maxX: 3.5, minZ: 0, maxZ: 3.5 } },
+      { id: "balcony", label: "Skyline Balcony", icon: "🌇", desc: "Outdoor loungers overlooking Downtown", center: [0, 0, 4.1], bounds: { minX: -2.0, maxX: 2.0, minZ: 3.5, maxZ: 4.8 } },
+    ],
+    activities: [
+      { id: "master_deep_sleep", room: "master", label: "Master Suite Deep Sleep", icon: "🛏️", desc: "Restful 8-hour sleep in the master quarters.", animation: "sit", need: { kind: "energy", amount: 65 } },
+      { id: "study_workstation", room: "study", label: "Dual-Monitor Workstation", icon: "💻", desc: "Analyze markets, code freelance projects and study.", animation: "sit", need: { kind: "fun", amount: 25 }, statBoost: { name: "focus", amount: 25 } },
+      { id: "living_dinner", room: "living", label: "6-Person Dinner Party", icon: "🍽️", desc: "Host a full dinner party around the dining table.", animation: "talk", need: { kind: "social", amount: 50 } },
+      { id: "kitchen_salmon", room: "kitchen", label: "Gourmet Salmon & Saffron", icon: "🍳", desc: "Cook fresh salmon and saffron rice in open kitchen.", animation: "eat", need: { kind: "hunger", amount: 55 } },
+      { id: "balcony_sunset", room: "balcony", label: "Skyline Sunset Meditation", icon: "🌇", desc: "Watch the sun set over the skyline from balcony loungers.", animation: "wave", need: { kind: "fun", amount: 40 } },
+    ],
+  },
+  three_bedroom: {
+    id: "three_bedroom",
+    label: "3-Bedroom Residence",
+    area: "Dubai Hills / Downtown · Multi-Suite",
+    monthly: 15500,
+    icon: "🏰",
+    wallColor: "#f1ede6",
+    skirtingColor: "#bfae95",
+    hasDollhouseUpView: true,
+    rooms: [
+      { id: "master", label: "Master Suite", icon: "👑", desc: "King bed, walk-in dressing niche & en-suite", center: [-2.2, 0, -1.8], bounds: { minX: -3.5, maxX: -0.2, minZ: -3.5, maxZ: 0 } },
+      { id: "bed2", label: "Bedroom 2 (Guest)", icon: "🛏️", desc: "Plush twin bed & vanity desk", center: [2.0, 0, -1.8], bounds: { minX: 0.2, maxX: 3.5, minZ: -3.5, maxZ: 0 } },
+      { id: "bed3", label: "Bedroom 3 / Studio", icon: "💻", desc: "Executive study desk & creative workspace", center: [2.0, 0, 1.8], bounds: { minX: 0.8, maxX: 3.5, minZ: 0.2, maxZ: 3.5 } },
+      { id: "living", label: "Grand Living Salon", icon: "🛋️", desc: "Italian sectional sofa & 75\" entertainment wall", center: [-1.6, 0, 1.8], bounds: { minX: -3.5, maxX: 0.6, minZ: 0.2, maxZ: 3.5 } },
+      { id: "balcony", label: "Panoramic Terrace", icon: "🌅", desc: "Spacious outdoor terrace overlooking the park", center: [0, 0, 4.1], bounds: { minX: -2.5, maxX: 2.5, minZ: 3.5, maxZ: 4.8 } },
+    ],
+    activities: [
+      { id: "master_spa_sleep", room: "master", label: "Master Suite Rest", icon: "👑", desc: "Deep sleep in Egyptian cotton sheets.", animation: "sit", need: { kind: "energy", amount: 75 } },
+      { id: "bed2_guest_welcome", room: "bed2", label: "Host Guest in Bed 2", icon: "🛏️", desc: "Welcome visiting family or friends into the guest bedroom.", animation: "wave", need: { kind: "social", amount: 40 } },
+      { id: "bed3_creative_session", room: "bed3", label: "Studio Creative Sprint", icon: "💻", desc: "Deep work session in your dedicated 3rd bedroom studio.", animation: "sit", need: { kind: "fun", amount: 35 }, statBoost: { name: "focus", amount: 30 } },
+      { id: "salon_family_gathering", room: "living", label: "Grand Salon Gathering", icon: "🛋️", desc: "Gather with family or friends for game night.", animation: "talk", need: { kind: "social", amount: 55 } },
+      { id: "terrace_sunset_tea", room: "balcony", label: "Terrace Sunset Tea", icon: "🌅", desc: "Sip hot Moroccan mint tea with a panoramic sunset.", animation: "drink", need: { kind: "energy", amount: 40 } },
+    ],
+  },
+  penthouse: {
+    id: "penthouse",
+    label: "Downtown Luxury Penthouse",
+    area: "Downtown Dubai",
+    monthly: 18000,
+    icon: "🏙️",
+    wallColor: "#1a1e24",
+    skirtingColor: "#d4af37",
+    activities: [
+      { id: "skyline_jacuzzi", label: "Skyline Jacuzzi Soak", icon: "🧖", desc: "Heated outdoor plunge jacuzzi overlooking Burj Khalifa.", animation: "sit", need: { kind: "energy", amount: 50 } },
+      { id: "artisanal_mocktail", label: "Artisanal Mocktail", icon: "🍸", desc: "Craft refreshing drinks at the marble wet bar.", animation: "drink", need: { kind: "social", amount: 35 } },
+      { id: "butler_service", label: "Private Butler Dining", icon: "🛎️", desc: "Order 5-star room service straight from Downtown chefs.", animation: "eat", need: { kind: "hunger", amount: 60 } },
+    ],
+  },
+  villa: {
+    id: "villa",
+    label: "Palm Jumeirah Signature Villa",
+    area: "Palm Jumeirah",
+    monthly: 45000,
+    icon: "🌴",
+    wallColor: "#faf8f5",
+    skirtingColor: "#b8860b",
+    activities: [
+      { id: "private_beach_swim", label: "Private Beach Swim", icon: "🏖️", desc: "Swim in the calm waters of your private Palm beach.", animation: "wave", need: { kind: "energy", amount: 60 } },
+      { id: "majlis_gahwa", label: "Majlis Gahwa & Dates", icon: "🫖", desc: "Serve cardamom Arabic coffee and dates to distinguished guests.", animation: "talk", need: { kind: "social", amount: 55 } },
+      { id: "supercar_garage", label: "Inspect Supercar Fleet", icon: "🏎️", desc: "Check out your dream garage before taking a highway cruise.", animation: "sit", need: { kind: "fun", amount: 50 } },
+    ],
+  },
+};
+
 export const BUILT_INS: BuiltIn[] = [
   { id: "bed", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 2, row: 0, rot: 0 }, interaction: "bed" },
   { id: "bedside", model: "/models/furniture/side-table.glb", size: [1, 1], placement: { kind: "floor", col: 6, row: 0, rot: 0 } },
@@ -90,12 +258,87 @@ export const BUILT_INS: BuiltIn[] = [
   { id: "chair", model: "/models/furniture/chair.glb", size: [2, 2], placement: { kind: "floor", col: 9, row: 5, rot: 2 }, interaction: "chair" },
 ];
 
-const HOME_NAMES: Record<string, [string, string]> = {
-  bed: ["Bed", "🛏️"], bedside: ["Bedside table", "🟫"], fridge: ["Fridge", "🧊"], chair: ["Armchair", "🪑"],
+export const BUILT_INS_BY_TIER: Record<HousingTier, BuiltIn[]> = {
+  bed_space: [
+    { id: "bunk_bed", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 1, row: 0, rot: 0 }, interaction: "bed" },
+    { id: "locker", model: "/models/furniture/side-table.glb", size: [1, 1], placement: { kind: "floor", col: 5, row: 0, rot: 0 } },
+    { id: "mini_kettle", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 11, row: 0, rot: 0 }, interaction: "cooler" },
+    { id: "stool", model: "/models/furniture/chair.glb", size: [2, 2], placement: { kind: "floor", col: 8, row: 4, rot: 2 }, interaction: "chair" },
+  ],
+  studio: BUILT_INS,
+  one_bedroom: [
+    { id: "master_bed", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 1, row: 0, rot: 0 }, interaction: "bed" },
+    { id: "nightstand", model: "/models/furniture/side-table.glb", size: [1, 1], placement: { kind: "floor", col: 5, row: 0, rot: 0 } },
+    { id: "lounge_sofa", model: "/models/furniture/couch.glb", size: [4, 2], placement: { kind: "floor", col: 7, row: 6, rot: 2 }, interaction: "chair" },
+    { id: "tv_table", model: "/models/furniture/tv.glb", size: [4, 1], placement: { kind: "floor", col: 7, row: 10, rot: 0 } },
+    { id: "kitchen_fridge", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 12, row: 0, rot: 0 }, interaction: "cooler" },
+  ],
+  two_bedroom: [
+    { id: "master_bed", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 1, row: 0, rot: 0 }, interaction: "bed" },
+    { id: "nightstand", model: "/models/furniture/side-table.glb", size: [1, 1], placement: { kind: "floor", col: 5, row: 0, rot: 0 } },
+    { id: "study_desk", model: "/models/furniture/desk.glb", size: [3, 2], placement: { kind: "floor", col: 9, row: 0, rot: 0 }, interaction: "chair" },
+    { id: "study_chair", model: "/models/furniture/desk-chair.glb", size: [1, 1], placement: { kind: "floor", col: 10, row: 2, rot: 2 }, interaction: "chair" },
+    { id: "bookcase", model: "/models/furniture/bookcase.glb", size: [2, 1], placement: { kind: "floor", col: 12, row: 0, rot: 0 } },
+    { id: "guest_bed", model: "/models/furniture/couch.glb", size: [4, 2], placement: { kind: "floor", col: 8, row: 4, rot: 0 }, interaction: "bed" },
+    { id: "living_couch", model: "/models/furniture/couch.glb", size: [4, 2], placement: { kind: "floor", col: 1, row: 7, rot: 2 }, interaction: "chair" },
+    { id: "living_table", model: "/models/furniture/coffee-table.glb", size: [3, 2], placement: { kind: "floor", col: 1, row: 9, rot: 0 } },
+    { id: "living_tv", model: "/models/furniture/tv.glb", size: [4, 1], placement: { kind: "floor", col: 1, row: 12, rot: 0 } },
+    { id: "kitchen_fridge", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 12, row: 7, rot: 0 }, interaction: "cooler" },
+    { id: "balcony_chair", model: "/models/furniture/lounge-chair.glb", size: [2, 2], placement: { kind: "floor", col: 6, row: 12, rot: 0 }, interaction: "chair" },
+  ],
+  three_bedroom: [
+    { id: "master_bed", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 1, row: 0, rot: 0 }, interaction: "bed" },
+    { id: "nightstand", model: "/models/furniture/side-table.glb", size: [1, 1], placement: { kind: "floor", col: 5, row: 0, rot: 0 } },
+    { id: "bed2_bed", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 9, row: 0, rot: 0 }, interaction: "bed" },
+    { id: "study_desk", model: "/models/furniture/desk.glb", size: [3, 2], placement: { kind: "floor", col: 9, row: 6, rot: 0 }, interaction: "chair" },
+    { id: "study_chair", model: "/models/furniture/desk-chair.glb", size: [1, 1], placement: { kind: "floor", col: 10, row: 8, rot: 2 }, interaction: "chair" },
+    { id: "bookcase", model: "/models/furniture/bookcase.glb", size: [2, 1], placement: { kind: "floor", col: 12, row: 6, rot: 0 } },
+    { id: "living_couch", model: "/models/furniture/couch.glb", size: [4, 2], placement: { kind: "floor", col: 1, row: 7, rot: 2 }, interaction: "chair" },
+    { id: "living_table", model: "/models/furniture/coffee-table.glb", size: [3, 2], placement: { kind: "floor", col: 1, row: 9, rot: 0 } },
+    { id: "living_tv", model: "/models/furniture/tv.glb", size: [4, 1], placement: { kind: "floor", col: 1, row: 12, rot: 0 } },
+    { id: "kitchen_fridge", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 7, row: 12, rot: 0 }, interaction: "cooler" },
+    { id: "balcony_chair", model: "/models/furniture/lounge-chair.glb", size: [2, 2], placement: { kind: "floor", col: 4, row: 13, rot: 0 }, interaction: "chair" },
+  ],
+  penthouse: [
+    { id: "pent_bed", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 1, row: 0, rot: 0 }, interaction: "bed" },
+    { id: "pent_sofa", model: "/models/furniture/l-couch.glb", size: [4, 4], placement: { kind: "floor", col: 7, row: 5, rot: 2 }, interaction: "chair" },
+    { id: "pent_tv", model: "/models/furniture/tv.glb", size: [4, 1], placement: { kind: "floor", col: 7, row: 11, rot: 0 } },
+    { id: "pent_fridge", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 12, row: 0, rot: 0 }, interaction: "cooler" },
+    { id: "pent_lamp", model: "/models/furniture/floor-lamp.glb", size: [1, 1], placement: { kind: "floor", col: 6, row: 5, rot: 0 } },
+  ],
+  villa: [
+    { id: "villa_bed", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 1, row: 0, rot: 0 }, interaction: "bed" },
+    { id: "villa_couch", model: "/models/furniture/couch.glb", size: [4, 2], placement: { kind: "floor", col: 7, row: 6, rot: 2 }, interaction: "chair" },
+    { id: "villa_table", model: "/models/furniture/coffee-table.glb", size: [3, 2], placement: { kind: "floor", col: 7, row: 9, rot: 0 } },
+    { id: "villa_fridge", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 12, row: 0, rot: 0 }, interaction: "cooler" },
+    { id: "villa_plant", model: "/models/furniture/houseplant.glb", size: [1, 1], placement: { kind: "floor", col: 12, row: 4, rot: 0 } },
+  ],
 };
 
+const HOME_NAMES: Record<string, [string, string]> = {
+  bed: ["Bed", "🛏️"], bedside: ["Bedside table", "🟫"], fridge: ["Fridge", "🧊"], chair: ["Armchair", "🪑"],
+  bunk_bed: ["Bunk Bed", "🛏️"], locker: ["Suitcase Stand", "🧳"], mini_kettle: ["Kettle & Mini-Fridge", "☕"], stool: ["Stool", "🪑"],
+  master_bed: ["Master Bed", "🛏️"], nightstand: ["Nightstand", "🟫"], lounge_sofa: ["Lounge Sofa", "🛋️"], tv_table: ["65\" 4K TV", "📺"], kitchen_fridge: ["Kitchen Fridge", "🧊"],
+  study_desk: ["Executive Work Desk", "🖥️"], study_chair: ["Ergonomic Chair", "🪑"], bookcase: ["Oak Bookcase", "📚"], guest_bed: ["Guest Daybed", "🛏️"], bed2_bed: ["Guest Bedroom Bed", "🛏️"],
+  living_couch: ["Sectional Sofa", "🛋️"], living_table: ["Glass Coffee Table", "☕"], living_tv: ["4K Smart TV", "📺"], balcony_chair: ["Balcony Lounge Chair", "💺"],
+  pent_bed: ["King Suite Bed", "🛏️"], pent_sofa: ["L-Shaped Velvet Lounge", "🛋️"], pent_tv: ["OLED Entertainment Wall", "📺"], pent_fridge: ["Wet Bar Fridge", "🧊"], pent_lamp: ["Arc Designer Lamp", "💡"],
+  villa_bed: ["Palatial Suite Bed", "🛏️"], villa_couch: ["Majlis Sofa", "🛋️"], villa_table: ["Glass Coffee Table", "☕"], villa_fridge: ["Gourmet Fridge", "🧊"], villa_plant: ["Fiddle Leaf Plant", "🪴"],
+};
+
+/** All potential built-ins across tiers as catalog items */
+const ALL_BUILT_IN_LIST = [
+  ...BUILT_INS,
+  ...BUILT_INS_BY_TIER.bed_space,
+  ...BUILT_INS_BY_TIER.one_bedroom,
+  ...BUILT_INS_BY_TIER.two_bedroom,
+  ...BUILT_INS_BY_TIER.three_bedroom,
+  ...BUILT_INS_BY_TIER.penthouse,
+  ...BUILT_INS_BY_TIER.villa,
+];
+const DEDUPED_BUILT_INS = Array.from(new Map(ALL_BUILT_IN_LIST.map((b) => [b.id, b])).values());
+
 /** The built-ins as furniture items (so they can be moved, rotated and stored). */
-export const HOME_ITEMS: CatalogItem[] = BUILT_INS.map((b) => ({
+export const HOME_ITEMS: CatalogItem[] = DEDUPED_BUILT_INS.map((b) => ({
   id: `home-${b.id}`,
   name: HOME_NAMES[b.id]?.[0] ?? b.id,
   icon: HOME_NAMES[b.id]?.[1] ?? "📦",
@@ -109,11 +352,19 @@ export const HOME_ITEMS: CatalogItem[] = BUILT_INS.map((b) => ({
   interaction: b.interaction,
 }));
 
-/** A home's furniture including the built-ins (in their starting place until they're moved). */
-export function withHomeItems(furniture: OwnedFurniture[]): OwnedFurniture[] {
-  const missing = BUILT_INS.filter((b) => !furniture.some((f) => f.uid === `builtin:${b.id}`))
+/** A home's furniture including the built-ins for that tier (in their starting place until they're moved). */
+export function withHomeItems(furniture: OwnedFurniture[], tier: HousingTier = "studio"): OwnedFurniture[] {
+  const tierBuiltIns = BUILT_INS_BY_TIER[tier] ?? BUILT_INS;
+  const validBuiltInUids = new Set(tierBuiltIns.map((b) => `builtin:${b.id}`));
+  
+  // Clean out built-ins that belonged to another housing tier
+  const cleanedFurniture = furniture.filter((f) => !f.uid.startsWith("builtin:") || validBuiltInUids.has(f.uid));
+
+  const missing = tierBuiltIns
+    .filter((b) => !cleanedFurniture.some((f) => f.uid === `builtin:${b.id}`))
     .map((b) => ({ uid: `builtin:${b.id}`, itemId: `home-${b.id}`, placement: b.placement as Placement }));
-  return missing.length ? [...furniture, ...missing] : furniture;
+
+  return [...cleanedFurniture, ...missing];
 }
 
 /** Door and window spans on the walls, in cells. */

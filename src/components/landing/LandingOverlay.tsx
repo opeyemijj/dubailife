@@ -407,7 +407,7 @@ export function LandingOverlay({
                   onChange={(e) => setUsername(e.target.value.startsWith("@") ? e.target.value : "@" + e.target.value)}
                   className="w-full h-11 px-4 bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-2xl text-sm font-bold text-slate-900 outline-none transition-all font-mono"
                 />
-                <p className="text-xs text-slate-400 mt-1">This is your Citizen&apos;s name in cometodubai.app.</p>
+                <p className="text-xs text-slate-400 mt-1">This is your Citizen&apos;s name in mydubailife.app.</p>
               </div>
 
               {/* Password */}

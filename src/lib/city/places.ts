@@ -3,7 +3,7 @@
 // treat them as representative. Store names are used to identify real places; product names are generic.
 
 import { catalog, jobFor, type CatalogKey } from "./catalog";
-import type { JobDef, Layout, Palette, Place, Product, Venue } from "./types";
+import type { JobDef, Layout, Palette, Place, Product, Venue, VenueActivity } from "./types";
 import { menu, menuJob, type Cuisine } from "./menus";
 
 const PALETTES = {
@@ -146,8 +146,23 @@ const DUBAI_MALL: Venue[] = [
   // Department stores, grocery, books, toys, home, eyewear, pharmacy
   venue("Galeries Lafayette", "Department store", "fashion", { blurb: "Parisian department store — fashion, beauty and gourmet.", extraProducts: catalog("beauty", "galeries-lafayette-beauty").slice(0, 4) }),
   venue("Bloomingdale's", "Department store", "fashion", { blurb: "American department store with fashion and home.", extraProducts: catalog("home", "bloomingdales-home") }),
-  venue("Waitrose", "Supermarket", "supermarket", { zone: "Lower Ground", blurb: "British supermarket — groceries, bakery and fresh food." }),
-  venue("Kinokuniya", "Books", "books", { zone: "Level 2", blurb: "Huge bookstore with Arabic, English and Japanese titles." }),
+  venue("Waitrose", "Supermarket", "supermarket", {
+    zone: "Lower Ground",
+    blurb: "British supermarket — groceries, bakery and fresh food.",
+    activities: [
+      { id: "waitrose:croissant", label: "Bakery Warm Za'atar Croissant & Juice", icon: "🥐", animation: "sit", price: 18, need: { kind: "hunger", amount: 25 }, desc: "Fresh flaky croissant with savory za'atar herbs." },
+      { id: "waitrose:groceries", label: "Weekly Healthy Pantry Restock", icon: "🛒", animation: "sit", price: 65, need: { kind: "hunger", amount: 50 }, desc: "Fresh berries, labneh, organic sourdough and fresh greens." },
+      { id: "waitrose:scan", label: "Express Self-Checkout Quick Scan", icon: "⚡", animation: "clap", price: 0, reward: 15, need: { kind: "energy", amount: 10 }, desc: "Scan groceries and pack eco tote bag." },
+    ],
+  }),
+  venue("Kinokuniya", "Books", "books", {
+    zone: "Level 2",
+    blurb: "Huge bookstore with Arabic, English and Japanese titles.",
+    activities: [
+      { id: "kino:browse", label: "Browse Architecture & Design Books", icon: "📚", animation: "sit", price: 0, need: { kind: "fun", amount: 20 }, desc: "Peruse rare art tomes, architecture monographs and Japanese manga." },
+      { id: "kino:stationery", label: "Curate Japanese Stationery Haul", icon: "✏️", animation: "clap", price: 35, need: { kind: "fun", amount: 25 }, desc: "Minimalist gel pens, grid notebooks and washi tape." },
+    ],
+  }),
   ...["Hamleys"].map((n) => venue(n, "Toys", "toys", { blurb: "Legendary toy shop with live demos." })),
   venue("Pottery Barn", "Home", "home"),
   ...["Sunglass Hut", "Magrabi Optical"].map((n) => venue(n, "Eyewear", "eyewear")),
@@ -160,17 +175,28 @@ const DUBAI_MALL: Venue[] = [
     role: "Rink attendant", noJob: true,
     zone: "Ground Floor", layout: "lobby", palette: PALETTES.night, blurb: "Olympic-size ice rink with public skating sessions.",
     products: [ticket("dubai-ice-rink:session", "Public skating session (incl. skates)", 105, "90 minutes on the ice.", "⛸️")],
-    activities: [{ id: "skate", label: "Skate a lap", icon: "⛸️", animation: "dance", reward: 0 }],
+    activities: [
+      { id: "skate", label: "Public Ice Skating Session", icon: "⛸️", animation: "dance", price: 105, need: { kind: "fun", amount: 35 }, desc: "Glide across the Olympic-size indoor ice sheet under snowfall FX." },
+      { id: "skate:spin", label: "Figure 8 Ice Spin Challenge", icon: "❄️", animation: "dance", price: 0, reward: 30, need: { kind: "fun", amount: 25 }, desc: "Show off ice skating technique and balance." },
+    ],
   }),
   venue("Reel Cinemas", "Entertainment", "club", {
     role: "Cinema host", noJob: true,
     zone: "Level 2", layout: "lobby", palette: PALETTES.night, feature: "stage", blurb: "Multi-screen cinema with a premium Dine-in option.",
     products: [ticket("reel-cinemas:standard", "Standard movie ticket", 55, "Tonight's blockbuster."), ticket("reel-cinemas:dine-in", "Dine-in recliner ticket", 165, "Recliner seat with food service.", "🍿"), { id: "reel-cinemas:popcorn", name: "Large popcorn", price: 39, icon: "🍿", station: "counter", desc: "Salted or caramel.", consumable: { need: "fun", amount: 8 } }],
+    activities: [
+      { id: "reel:blockbuster", label: "Watch IMAX 3D Blockbuster Premiere", icon: "🎬", animation: "sit", price: 75, need: { kind: "fun", amount: 50 }, desc: "Sink into premium theater seats with surround sound and warm popcorn." },
+      { id: "reel:dine-in", label: "VIP Dine-In Recliner Experience", icon: "🍿", animation: "sit", price: 165, need: { kind: "hunger", amount: 40 }, desc: "Gourmet hot sliders, truffle popcorn and butler service in plush leather recliner." },
+    ],
   }),
   venue("VR Park", "Entertainment", "club", {
     role: "Ride operator", noJob: true,
     zone: "Level 2", layout: "lobby", palette: PALETTES.night, blurb: "Virtual-reality rides and arcade games.",
     products: [ticket("vr-park:day", "All-day VR pass", 300, "Unlimited rides and games.", "🥽"), ticket("vr-park:single", "Single VR ride", 45, "One ride of your choice.", "🎢")],
+    activities: [
+      { id: "vr:drone", label: "Dubai Drone 2071 Hyper-Chase", icon: "🥽", animation: "clap", price: 45, need: { kind: "fun", amount: 40 }, desc: "Fly a supersonic drone between futuristic Burj Khalifa spires." },
+      { id: "vr:burj-drop", label: "Burj Drop 828m VR Freefall", icon: "🎢", animation: "wave", price: 40, need: { kind: "fun", amount: 45 }, desc: "Heart-pounding simulated parachute leap off the world's tallest tower." },
+    ],
   }),
   venue("KidZania", "Entertainment", "toys", { zone: "Level 2", comingSoon: true, blurb: "Kids' city of role-play jobs." }),
   venue("Emirates NBD", "Bank", "fashion", { comingSoon: true, blurb: "Branch and ATMs. Virtual banking features are planned." }),
@@ -179,21 +205,53 @@ const DUBAI_MALL: Venue[] = [
 // ---------------------------------------------------------------- Souk Al Bahar
 
 const SOUK: Venue[] = [
-  venue("Karma Kafé", "Restaurant & lounge", "restaurant", { blurb: "Pan-Asian lounge with a fountain-facing terrace." }),
-  venue("Abd El Wahab", "Lebanese restaurant", "restaurant", { blurb: "Classic Lebanese mezze and grills." }),
+  venue("Karma Kafé", "Restaurant & lounge", "restaurant", {
+    blurb: "Pan-Asian lounge with a fountain-facing terrace.",
+    activities: [
+      { id: "karma:terrace", label: "Fountain Show Terrace Dining", icon: "🍱", animation: "sit", price: 180, need: { kind: "hunger", amount: 45 }, desc: "Dine on dragon rolls right as the Dubai Fountain dances." },
+      { id: "karma:mocktail", label: "Toast Asian Lychee Mocktail", icon: "🍹", animation: "wave", price: 45, need: { kind: "fun", amount: 20 }, desc: "Chilled mocktail under the lantern-lit terrace." },
+    ],
+  }),
+  venue("Abd El Wahab", "Lebanese restaurant", "restaurant", {
+    blurb: "Classic Lebanese mezze and grills.",
+    activities: [
+      { id: "abdelwahab:mezze", label: "Grand Mezze Feast on Lake Terrace", icon: "🧆", animation: "sit", price: 140, need: { kind: "hunger", amount: 50 }, desc: "Creamy hummus, piping hot falafel, tabouleh and fresh saj bread." },
+    ],
+  }),
   venue("Mango Tree Bistro", "Thai restaurant", "restaurant"),
   venue("Rivington Grill", "British grill", "restaurant"),
-  venue("Souk Arts & Crafts", "Souvenirs", "fragrance", { blurb: "Arabian lanterns, oud, textiles and souvenirs from the souk's stalls." }),
+  venue("Souk Arts & Crafts", "Souvenirs", "fragrance", {
+    blurb: "Arabian lanterns, oud, textiles and souvenirs from the souk's stalls.",
+    activities: [
+      { id: "souk:haggle", label: "Haggle for Brass Lantern & Incense Burner", icon: "🏮", animation: "clap", price: 65, need: { kind: "fun", amount: 25 }, desc: "Bargain with local merchant over handcrafted Arabian brassware." },
+      { id: "souk:frankincense", label: "Sample Frankincense & Bukhoor Aromas", icon: "✨", animation: "wave", price: 0, reward: 15, need: { kind: "energy", amount: 15 }, desc: "Breathe in sweet warm burning frankincense and rich amber resins." },
+    ],
+  }),
 ];
 
 // ---------------------------------------------------------------- Time Out Market (opening line-up; vendors rotate)
 
-const tom = (n: string, cuisine: string, key: CatalogKey = "restaurant") => venue(n, cuisine, key, { layout: "dining", blurb: `${cuisine} counter at Time Out Market Dubai.` });
+const tom = (n: string, cuisine: string, key: CatalogKey = "restaurant", activities?: VenueActivity[]) =>
+  venue(n, cuisine, key, { layout: "dining", blurb: `${cuisine} counter at Time Out Market Dubai.`, activities });
+
 const TIME_OUT: Venue[] = [
   tom("Masti", "Modern Indian"), tom("BB Social Dining", "Asian small plates"), tom("Vietnamese Foodies", "Vietnamese"),
-  tom("Pickl", "Burgers"), tom("Pitfire Pizza", "Pizza"), tom("Brix", "Desserts", "cafe"), tom("Nightjar Coffee", "Coffee roasters", "cafe"),
+  tom("Pickl", "Burgers", "restaurant", [
+    { id: "pickl:reaper", label: "Nashville Hot Chicken Sando", icon: "🍔", animation: "sit", price: 52, need: { kind: "hunger", amount: 50 }, desc: "Crispy fried chicken breast dipped in house secret spice with dill pickles." },
+  ]),
+  tom("Pitfire Pizza", "Pizza", "restaurant", [
+    { id: "pitfire:slice", label: "Bills Truffle & Spianata Sourdough Slice", icon: "🍕", animation: "sit", price: 48, need: { kind: "hunger", amount: 45 }, desc: "Blistered 72-hour fermented crust with fragrant black truffle." },
+  ]),
+  tom("Brix", "Desserts", "cafe"),
+  tom("Nightjar Coffee", "Coffee roasters", "cafe", [
+    { id: "nightjar:nitro", label: "Signature Nitro Cold Brew Draft", icon: "☕", animation: "sit", price: 28, need: { kind: "energy", amount: 35 }, desc: "Cold draft coffee pulled like a stout with thick velvety crema." },
+  ]),
   tom("Reif Japanese Kushiyaki", "Japanese skewers"), tom("Little Erth", "Healthy bowls"), tom("Scoopi Café", "Ice cream", "cafe"),
-  tom("Long Teng", "Chinese"), tom("Al Fanar", "Emirati"),
+  tom("Long Teng", "Chinese"),
+  tom("Al Fanar", "Emirati", "restaurant", [
+    { id: "fanar:luqaimat", label: "Luqaimat with Cardamom Gahwa", icon: "☕", animation: "sit", price: 35, need: { kind: "hunger", amount: 35 }, desc: "Crispy golden dough balls drizzled in date molasses with Emirati spiced coffee." },
+    { id: "fanar:machboos", label: "Machboos Deyay Spiced Rice Pot", icon: "🍲", animation: "sit", price: 65, need: { kind: "hunger", amount: 55 }, desc: "Slow-simmered chicken with fragrant saffron rice and black dried lime." },
+  ]),
 ];
 
 // ---------------------------------------------------------------- The Guild
@@ -661,8 +719,8 @@ const GAMBACHI = { ...lounge("Gambachi Social Club", "Nightclub & social club ·
 // by Bayut and Emaar (2025–26); the clubs and restaurants are well-known Marina/JBR names in 2026 guides.
 
 const DANCE_HERE = [{ id: "dance", label: "Dance", icon: "💃", animation: "dance" as const }];
-const clubVenue = (name: string, category: string, blurb: string, accent: string, light: string) => ({
-  ...lounge(name, category, { floor: "#0b0b12", wall: "#12121c", accent, light }, blurb), activities: DANCE_HERE,
+const clubVenue = (name: string, category: string, blurb: string, accent: string, light: string, activities: VenueActivity[] = DANCE_HERE) => ({
+  ...lounge(name, category, { floor: "#0b0b12", wall: "#12121c", accent, light }, blurb), activities,
 });
 
 const MARINA_PLACES: Place[] = [
@@ -671,7 +729,14 @@ const MARINA_PLACES: Place[] = [
     blurb: "Waterside mall on the marina with Waitrose, Reel Cinemas and Pier 7's dining tower next door.",
     categories: ["Supermarket", "Fashion", "Footwear", "Jewellery & watches", "Café", "Restaurant", "Entertainment"],
     venues: [
-      venue("Waitrose", "Supermarket", "supermarket", { zone: "Level P" }),
+      venue("Waitrose", "Supermarket", "supermarket", {
+        zone: "Level P",
+        blurb: "British supermarket on the promenade level — fresh bakery, sandwiches and British groceries.",
+        activities: [
+          { id: "waitrose-marina:snack", label: "Grab Marina Boardwalk Meal Deal", icon: "🥪", animation: "sit", price: 22, need: { kind: "hunger", amount: 25 }, desc: "Chilled sandwich, crisps and fresh juice for a marina stroll." },
+          { id: "waitrose-marina:groceries", label: "Restock Apartment Kitchen Supplies", icon: "🛒", animation: "sit", price: 65, need: { kind: "hunger", amount: 45 }, desc: "Essential groceries for home cooking in Marina." },
+        ],
+      }),
       venue("H&M", "Fashion", "fashion"), venue("Mango", "Fashion", "fashion"), venue("River Island", "Fashion", "fashion"),
       venue("Charles & Keith", "Footwear", "fashion"), venue("Aldo", "Footwear", "fashion"),
       venue("Pandora", "Jewellery & watches", "jewellery"),
@@ -682,6 +747,9 @@ const MARINA_PLACES: Place[] = [
         role: "Cinema host", noJob: true, layout: "lobby", palette: PALETTES.night, feature: "stage", blurb: "Multiplex on the top level, including a Dolby Cinema screen.",
         products: [ticket("reel-marina:standard", "Standard movie ticket", 45, "Tonight's film in 2D."), ticket("reel-marina:dolby", "Dolby Cinema ticket", 75, "Dolby Vision and Atmos.", "🎬"),
           { id: "reel-marina:popcorn", name: "Large popcorn", price: 39, icon: "🍿", station: "counter", desc: "Salted or caramel.", consumable: { need: "fun", amount: 8 } }],
+        activities: [
+          { id: "reel-marina:dolby-show", label: "Watch Dolby Atmos Blockbuster", icon: "🎬", animation: "sit", price: 75, need: { kind: "fun", amount: 45 }, desc: "Crystal clear projection and immersive audio." },
+        ],
       }),
     ],
   },
@@ -697,8 +765,16 @@ const MARINA_PLACES: Place[] = [
   single("buddha-bar", "Buddha-Bar · Grosvenor House", "club", clubVenue("Buddha-Bar", "Asian restaurant & lounge · Grosvenor House", "Dimly lit Asian dining room and lounge with a giant Buddha and resident DJs.", "#dc2626", "#fbbf24")),
   single("hurricanes-grill", "Hurricane's Grill & Bar", "club", outlet("Hurricane's Grill & Bar", "Steakhouse & bar · opposite JBR", "steak", { floor: "#292524", wall: "#e7e5e4", accent: "#f97316" }, { blurb: "Ribs, steaks and sports on the screens, across from JBR." })),
   single("lock-stock-barrel-jbr", "Lock, Stock & Barrel JBR", "club", clubVenue("Lock, Stock & Barrel JBR", "Party bar & live music", "Big-energy bar with live bands and DJs, packed on weekends.", "#facc15", "#dc2626")),
-  single("bla-bla-dubai", "Bla Bla Dubai", "club", clubVenue("Bla Bla Dubai", "Beach club & bars · JBR", "Beachfront venue with several bars, live bands and a pool.", "#22d3ee", "#f472b6")),
-  single("barasti", "Barasti Beach Bar", "club", clubVenue("Barasti", "Beach club & sports bar · Mina Seyahi", "Dubai's classic beach bar: sundowners, live sport and DJs on the sand.", "#f59e0b", "#0ea5e9")),
+  single("bla-bla-dubai", "Bla Bla Dubai", "club", clubVenue("Bla Bla Dubai", "Beach club & bars · JBR", "Beachfront venue with several bars, live bands and a pool.", "#22d3ee", "#f472b6", [
+    { id: "blabla:dance", label: "Poolside DJ Beat Drop", icon: "🎧", animation: "dance", need: { kind: "fun", amount: 35 }, desc: "Dance on the sun deck to the house DJ set." },
+    { id: "blabla:cocktail", label: "Sunset Spritz & Mediterranean Bites", price: 65, icon: "🍹", animation: "sit", need: { kind: "hunger", amount: 20 }, desc: "Refreshing beach spritz and tapas by the cabana." },
+    { id: "blabla:swim", label: "Beach Club Pool Dip", price: 100, icon: "🏊", animation: "clap", need: { kind: "hygiene", amount: 25 }, desc: "Cool off in the turquoise day-club infinity pool." },
+  ])),
+  single("barasti", "Barasti Beach Bar", "club", clubVenue("Barasti", "Beach club & sports bar · Mina Seyahi", "Dubai's classic beach bar: sundowners, live sport and DJs on the sand.", "#f59e0b", "#0ea5e9", [
+    { id: "barasti:cheer", label: "Cheer Live Sports on Giant Screen", icon: "⚽", animation: "clap", reward: 15, need: { kind: "social", amount: 25 }, desc: "Chant along with football fans right on the sand." },
+    { id: "barasti:dance", label: "Barefoot Sand Dance Party", icon: "💃", animation: "dance", need: { kind: "fun", amount: 35 }, desc: "Dance under the stars with sand beneath your feet." },
+    { id: "barasti:burger", label: "Barasti Loaded Beach Burger", price: 58, icon: "🍔", animation: "sit", need: { kind: "hunger", amount: 40 }, desc: "Classic beach club pub burger and seasoned chips." },
+  ])),
 ];
 
 // ---------------------------------------------------------------- JBR and Bluewaters
@@ -857,13 +933,15 @@ const COAST_PLACES: Place[] = [
     ticket("wild-wadi:day", "Wild Wadi day pass", 299, "All slides and pools for the day.", "🌊"),
   ], [{ id: "sceirah", label: "Ride the Jumeirah Sceirah", icon: "🌊", animation: "clap", reward: 50 }])),
   publicBeach("sunset-beach", "Sunset Beach, Umm Suqeim", "The free beach with the classic Burj Al Arab view, best at sunset.", [], [
-    { id: "photo", label: "Photograph Burj Al Arab at sunset", icon: "📸", animation: "wave", reward: 25 },
+    { id: "photo", label: "Photograph Burj Al Arab at Golden Hour", icon: "📸", animation: "wave", reward: 30, need: { kind: "fun", amount: 25 }, desc: "Snap iconic photos with pink and golden skies behind the 7-star sail." },
+    { id: "sunset:swim", label: "Sunset Arabian Gulf Ocean Dip", icon: "🌊", animation: "clap", reward: 15, need: { kind: "hygiene", amount: 25 }, desc: "Wash off the sand and stress in the warm Gulf waters." },
+    { id: "sunset:yoga", label: "Beachfront Sunset Meditation & Yoga", icon: "🧘", animation: "sit", reward: 20, need: { kind: "energy", amount: 25 }, desc: "Unwind on the shore as the sun dips below the horizon." },
   ]),
   publicBeach("kite-beach", "Kite Beach", "Free beach for kitesurfing and beach sports, with a running track, skate park and food trucks.", [
     attraction("Kite Beach Kitesurf School", "Kitesurf and paddleboard lessons off Kite Beach.", "pool", [
       ticket("kite-beach:kitesurf", "Kitesurf lesson (1 hour)", 400, "With an instructor and all the gear.", "🪁"),
       ticket("kite-beach:sup", "Paddleboard hire (1 hour)", 100, "Board, paddle and life vest.", "🏄"),
-    ], [{ id: "kite", label: "Kitesurf", icon: "🪁", animation: "clap", reward: 40 }]),
+    ], [{ id: "kite", label: "Kitesurf", icon: "🪁", animation: "clap", reward: 40, need: { kind: "fun", amount: 35 }, desc: "Harness the sea breeze and catch air over the waves." }]),
     venue("SALT", "Burger truck", "restaurant", {
       layout: "outdoor", palette: PALETTES.lobby, noJob: true, blurb: "The Kite Beach food truck famous for its sliders.",
       products: [
@@ -872,8 +950,16 @@ const COAST_PLACES: Place[] = [
         { id: "salt:ice-cream", name: "Soft-serve ice cream", price: 20, icon: "🍦", station: "bar", desc: "", consumable: { need: "fun", amount: 10 } },
         { id: "salt:lemonade", name: "Fresh lemonade", price: 18, icon: "🥤", station: "bar", desc: "", consumable: { need: "energy", amount: 8 } },
       ],
+      activities: [
+        { id: "salt:order", label: "Order Double Wagyu Sliders & Truffle Fries", icon: "🍔", animation: "sit", price: 55, need: { kind: "hunger", amount: 45 }, desc: "Hot off the grill sliders under the beach umbrellas." },
+        { id: "salt:shake", label: "Soft-Serve Lotus Shake in the Sun", icon: "🍦", animation: "sit", price: 25, need: { kind: "fun", amount: 20 }, desc: "Creamy iced shake looking out onto the waves." },
+      ],
     }),
-  ], [{ id: "run", label: "Run the beach track", icon: "🏃", animation: "clap", reward: 30 }]),
+  ], [
+    { id: "run", label: "Tartan Track 5K Oceanfront Jog", icon: "🏃", animation: "clap", reward: 25, need: { kind: "energy", amount: 25 }, desc: "Run on the rubberized track with Burj Al Arab on the horizon." },
+    { id: "muscle-beach", label: "Calisthenics Workout at Muscle Beach Rig", icon: "💪", animation: "clap", reward: 20, need: { kind: "energy", amount: 30 }, desc: "Dips, muscle-ups and pull-ups under the Dubai sunshine." },
+    { id: "swim", label: "Arabian Gulf Sea Swim", icon: "🌊", animation: "clap", reward: 15, need: { kind: "hygiene", amount: 25 }, desc: "Cool off in the azure waters of the Arabian Gulf." },
+  ]),
   publicBeach("jumeirah-public-beach", "Jumeirah Public Beach", "Free, open beach on Jumeirah Road with lifeguards and Burj Al Arab views."),
   publicBeach("jumeirah-beach-1", "Jumeirah Beach 1", "The 1.4 km stretch of Jumeirah 1 beach, redeveloped and reopened in 2026, with a boardwalk and cafés.", [
     outlet("Jumeirah Beach 1 · Boardwalk Café", "Café", "cafe", { floor: "#d6a76c", wall: "#fdf6e3", accent: "#0f766e" }),
@@ -1091,28 +1177,39 @@ export const PLACES: Place[] = [
   })),
   single("motf", "Museum of the Future", "attraction", attraction("Museum of the Future", "Immersive exhibitions imagining life in 2071.", "exhibits", [
     ticket("motf:entry", "General admission", 149, "Timed entry to all floors.", "🔮"),
-  ], [{ id: "explore", label: "Complete the discovery trail", icon: "🧭", animation: "clap", reward: 100 }])),
+  ], [
+    { id: "explore", label: "Complete the Discovery Trail", icon: "🧭", animation: "clap", reward: 100, need: { kind: "fun", amount: 40 }, desc: "Interactive journey through future sustainability, space and AI." },
+    { id: "motf:dna", label: "Heal Institute Digital DNA Vault", icon: "🧬", animation: "sit", reward: 35, need: { kind: "fun", amount: 30 }, desc: "Explore thousands of illuminated specimen jars cataloging Earth's ecology." },
+  ])),
   single("dubai-frame", "Dubai Frame", "attraction", attraction("Dubai Frame", "150 m picture frame with a glass-floored sky bridge between old and new Dubai.", "frame", [
     ticket("dubai-frame:entry", "Dubai Frame entry", 50, "Sky deck and the glass bridge.", "🖼️"),
-  ], [{ id: "glass-floor", label: "Step onto the glass floor", icon: "😱", animation: "clap", reward: 25 }])),
+  ], [
+    { id: "glass-floor", label: "Step onto 150m Glass Bridge", icon: "😱", animation: "clap", reward: 25, need: { kind: "fun", amount: 30 }, desc: "Liquid crystal panels turn transparent beneath your feet 150m high." },
+    { id: "frame:contrast", label: "Compare Old Deira vs Futuristic Skyline", icon: "🔭", animation: "wave", reward: 20, need: { kind: "fun", amount: 20 }, desc: "Look north to the historic Creek, and south to the soaring towers of SZR." },
+  ])),
   single("dubai-opera", "Dubai Opera", "attraction", attraction("Dubai Opera", "Dhow-shaped performing-arts venue for opera, ballet and concerts.", "stage", [
     ticket("opera:stalls", "Show ticket — Stalls", 450, "Tonight's performance.", "🎭"),
     ticket("opera:balcony", "Show ticket — Balcony", 250, "Great view from above.", "🎭"),
     ticket("opera:tour", "Backstage architectural tour", 120, "Behind the scenes of the dhow.", "🏛️"),
-  ], [{ id: "applaud", label: "Give a standing ovation", icon: "👏", animation: "clap" }])),
+  ], [{ id: "applaud", label: "Give a standing ovation", icon: "👏", animation: "clap", reward: 15, need: { kind: "fun", amount: 35 }, desc: "Applaud world-class orchestral and theatrical headliners." }])),
   single("dubai-fountain", "The Dubai Fountain", "park", venue("The Dubai Fountain", "Attraction", "hotel", {
     role: "Boardwalk guide", noJob: true,
     layout: "outdoor", palette: PALETTES.park, feature: "pool", blurb: "World's largest choreographed fountain — shows every 30 minutes in the evening.",
     products: [ticket("fountain:abra", "Lake abra ride", 68, "Traditional boat ride during the show.", "🛶"), ticket("fountain:boardwalk", "Fountain Boardwalk", 20, "Walk out onto the lake, metres from the jets.", "🌊")],
-    activities: [{ id: "watch", label: "Watch the fountain show (free)", icon: "⛲", animation: "clap", reward: 0 }],
+    activities: [
+      { id: "watch", label: "Watch the fountain show (free)", icon: "⛲", animation: "clap", reward: 10, need: { kind: "fun", amount: 20 }, desc: "Choreographed lights and music soaring 140m into the sky." },
+      { id: "fountain:abra", label: "Lake Abra Traditional Crossing", icon: "🛶", animation: "sit", price: 68, need: { kind: "fun", amount: 35 }, desc: "Float across Burj Lake right beside the soaring illuminated water jets." },
+      { id: "fountain:boardwalk", label: "Fountain Boardwalk Water Spray Selfie", icon: "📸", animation: "clap", price: 20, need: { kind: "fun", amount: 25 }, desc: "Get misted by the water shooters from the floating boardwalk." },
+    ],
   })),
   single("burj-park", "Burj Park", "park", venue("Burj Park", "Park", "hotel", {
     role: "Park ranger", noJob: true,
     layout: "outdoor", palette: PALETTES.park, blurb: "Lawns beside Burj Khalifa — picnics, fitness and events.",
     products: [ticket("burj-park:bike", "Bike rental (1 hour)", 50, "Cycle the boulevard loop.", "🚲")],
     activities: [
-      { id: "picnic", label: "Have a picnic", icon: "🧺", animation: "sit" },
-      { id: "workout", label: "Fitness challenge", icon: "🏋️", animation: "clap", reward: 40 },
+      { id: "picnic", label: "Lawn Picnic under Burj Khalifa", icon: "🧺", animation: "sit", price: 30, need: { kind: "hunger", amount: 30 }, desc: "Relax on the green grass overlooking the world's tallest skyscraper." },
+      { id: "workout", label: "Burj Boulevard Cycling Loop", icon: "🚲", animation: "clap", price: 50, reward: 35, need: { kind: "energy", amount: 30 }, desc: "Pedal the illuminated 3.5km boulevard loop around Downtown." },
+      { id: "park:stretch", label: "Calisthenics & Stretching on the Green", icon: "🧘", animation: "clap", price: 0, reward: 20, need: { kind: "energy", amount: 20 }, desc: "Push-ups and core workout on the park lawn." },
     ],
   })),
   single("dxb-terminal-1", "DXB Terminal 1 (Concourse D)", "attraction", venue("DXB Terminal 1 (Sheikh Rashid Concourse)", "Airport Terminal", "hotel", {
