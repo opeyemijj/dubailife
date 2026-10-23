@@ -714,6 +714,7 @@ function OneBedroomPartitions({
   activeRoomId,
   onSelectRoom,
   onFloorClick,
+  placingItem,
   wallColor = "#efe6d8",
   skirtingColor = "#d6c2a5",
 }: {
@@ -721,6 +722,8 @@ function OneBedroomPartitions({
   activeRoomId?: string;
   onSelectRoom?: (id: string) => void;
   onFloorClick?: (point: THREE.Vector3) => void;
+  /** True while furniture is being placed: taps go to the main floor so the item can be dropped. */
+  placingItem?: boolean;
   wallColor?: string;
   skirtingColor?: string;
 }) {
@@ -734,7 +737,7 @@ function OneBedroomPartitions({
         position={[0, 0.005, -1.75]}
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
-        onClick={(e) => { e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("bedroom"); }}
+        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("bedroom"); }}
       >
         <planeGeometry args={[6.92, 3.46]} />
         <meshStandardMaterial color="#dfd8cb" roughness={0.9} />
@@ -749,7 +752,7 @@ function OneBedroomPartitions({
         position={[0, 0.005, 1.75]}
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
-        onClick={(e) => { e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("living"); }}
+        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("living"); }}
       >
         <planeGeometry args={[6.92, 3.46]} />
         <meshStandardMaterial color="#cbb08c" roughness={0.65} />
@@ -764,7 +767,7 @@ function OneBedroomPartitions({
         position={[0, 0.005, 4.15]}
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
-        onClick={(e) => { e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("balcony"); }}
+        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("balcony"); }}
       >
         <planeGeometry args={[5.0, 1.3]} />
         <meshStandardMaterial color="#854d27" roughness={0.7} />
@@ -828,6 +831,7 @@ function OneBedroomPartitions({
             key={r.id}
             position={[r.center[0], 0.06, r.center[2]]}
             onClick={(e) => {
+              if (placingItem) return;
               e.stopPropagation();
               onFloorClick?.(new THREE.Vector3(r.center[0], 0, r.center[2]));
               onSelectRoom?.(r.id);
@@ -851,6 +855,7 @@ function TwoBedroomPartitions({
   activeRoomId,
   onSelectRoom,
   onFloorClick,
+  placingItem,
   wallColor = "#ece6dc",
   skirtingColor = "#c9b79c",
 }: {
@@ -858,6 +863,8 @@ function TwoBedroomPartitions({
   activeRoomId?: string;
   onSelectRoom?: (id: string) => void;
   onFloorClick?: (point: THREE.Vector3) => void;
+  /** True while furniture is being placed: taps go to the main floor so the item can be dropped. */
+  placingItem?: boolean;
   wallColor?: string;
   skirtingColor?: string;
 }) {
@@ -871,7 +878,7 @@ function TwoBedroomPartitions({
         position={[-1.75, 0.005, -1.75]}
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
-        onClick={(e) => { e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("master"); }}
+        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("master"); }}
       >
         <planeGeometry args={[3.46, 3.46]} />
         <meshStandardMaterial color="#dfd8cb" roughness={0.9} />
@@ -887,7 +894,7 @@ function TwoBedroomPartitions({
         position={[1.75, 0.005, -1.75]}
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
-        onClick={(e) => { e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("study"); }}
+        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("study"); }}
       >
         <planeGeometry args={[3.46, 3.46]} />
         <meshStandardMaterial color="#cbb08c" roughness={0.65} />
@@ -903,7 +910,7 @@ function TwoBedroomPartitions({
         position={[-1.35, 0.005, 1.75]}
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
-        onClick={(e) => { e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("living"); }}
+        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("living"); }}
       >
         <planeGeometry args={[4.26, 3.46]} />
         <meshStandardMaterial color="#f3eee5" roughness={0.3} metalness={0.15} />
@@ -919,7 +926,7 @@ function TwoBedroomPartitions({
         position={[2.15, 0.005, 1.75]}
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
-        onClick={(e) => { e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("kitchen"); }}
+        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("kitchen"); }}
       >
         <planeGeometry args={[2.66, 3.46]} />
         <meshStandardMaterial color="#334155" roughness={0.5} />
@@ -935,7 +942,7 @@ function TwoBedroomPartitions({
         position={[0, 0.005, 4.15]}
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
-        onClick={(e) => { e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("balcony"); }}
+        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("balcony"); }}
       >
         <planeGeometry args={[5.0, 1.3]} />
         <meshStandardMaterial color="#854d27" roughness={0.7} />
@@ -1028,6 +1035,7 @@ function TwoBedroomPartitions({
             key={r.id}
             position={[r.center[0], 0.06, r.center[2]]}
             onClick={(e) => {
+              if (placingItem) return;
               e.stopPropagation();
               onFloorClick?.(new THREE.Vector3(r.center[0], 0, r.center[2]));
               onSelectRoom?.(r.id);
@@ -1052,6 +1060,7 @@ function ThreeBedroomPartitions({
   activeRoomId,
   onSelectRoom,
   onFloorClick,
+  placingItem,
   wallColor = "#f1ede6",
   skirtingColor = "#bfae95",
 }: {
@@ -1059,6 +1068,8 @@ function ThreeBedroomPartitions({
   activeRoomId?: string;
   onSelectRoom?: (id: string) => void;
   onFloorClick?: (point: THREE.Vector3) => void;
+  /** True while furniture is being placed: taps go to the main floor so the item can be dropped. */
+  placingItem?: boolean;
   wallColor?: string;
   skirtingColor?: string;
 }) {
@@ -1072,7 +1083,7 @@ function ThreeBedroomPartitions({
         position={[-1.85, 0.005, -1.75]}
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
-        onClick={(e) => { e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("master"); }}
+        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("master"); }}
       >
         <planeGeometry args={[3.26, 3.46]} />
         <meshStandardMaterial color="#ded6c9" roughness={0.9} />
@@ -1087,7 +1098,7 @@ function ThreeBedroomPartitions({
         position={[1.85, 0.005, -1.75]}
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
-        onClick={(e) => { e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("bed2"); }}
+        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("bed2"); }}
       >
         <planeGeometry args={[3.26, 3.46]} />
         <meshStandardMaterial color="#cbb08c" roughness={0.65} />
@@ -1102,7 +1113,7 @@ function ThreeBedroomPartitions({
         position={[2.15, 0.005, 1.1]}
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
-        onClick={(e) => { e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("bed3"); }}
+        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("bed3"); }}
       >
         <planeGeometry args={[2.66, 2.16]} />
         <meshStandardMaterial color="#b89f82" roughness={0.6} />
@@ -1117,7 +1128,7 @@ function ThreeBedroomPartitions({
         position={[-1.4, 0.005, 1.75]}
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
-        onClick={(e) => { e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("living"); }}
+        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("living"); }}
       >
         <planeGeometry args={[4.16, 3.46]} />
         <meshStandardMaterial color="#f5efe6" roughness={0.3} metalness={0.15} />
@@ -1132,7 +1143,7 @@ function ThreeBedroomPartitions({
         position={[2.15, 0.005, 2.85]}
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
-        onClick={(e) => { e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("kitchen"); }}
+        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("kitchen"); }}
       >
         <planeGeometry args={[2.66, 1.26]} />
         <meshStandardMaterial color="#334155" roughness={0.5} />
@@ -1143,7 +1154,7 @@ function ThreeBedroomPartitions({
         position={[0, 0.005, 4.15]}
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
-        onClick={(e) => { e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("balcony"); }}
+        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("balcony"); }}
       >
         <planeGeometry args={[5.0, 1.3]} />
         <meshStandardMaterial color="#854d27" roughness={0.7} />
@@ -1249,6 +1260,7 @@ function ThreeBedroomPartitions({
             key={r.id}
             position={[r.center[0], 0.06, r.center[2]]}
             onClick={(e) => {
+              if (placingItem) return;
               e.stopPropagation();
               onFloorClick?.(new THREE.Vector3(r.center[0], 0, r.center[2]));
               onSelectRoom?.(r.id);
@@ -1632,6 +1644,7 @@ function RoomScene({
           activeRoomId={activeRoomId ?? "bedroom"}
           onSelectRoom={onSelectRoom}
           onFloorClick={handleFloorLocomotion}
+          placingItem={!!placing}
           wallColor={config.wallColor}
           skirtingColor={config.skirtingColor}
         />
@@ -1644,6 +1657,7 @@ function RoomScene({
           activeRoomId={activeRoomId ?? "living"}
           onSelectRoom={onSelectRoom}
           onFloorClick={handleFloorLocomotion}
+          placingItem={!!placing}
           wallColor={config.wallColor}
           skirtingColor={config.skirtingColor}
         />
@@ -1656,6 +1670,7 @@ function RoomScene({
           activeRoomId={activeRoomId ?? "living"}
           onSelectRoom={onSelectRoom}
           onFloorClick={handleFloorLocomotion}
+          placingItem={!!placing}
           wallColor={config.wallColor}
           skirtingColor={config.skirtingColor}
         />
