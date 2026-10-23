@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { BarChart3, CreditCard, Building2, Megaphone, Users, Settings, ScrollText, Map, LogOut, Menu, X, Lightbulb, Flag, Trophy } from "lucide-react";
+import { BarChart3, CreditCard, Building2, Megaphone, Users, Settings, ScrollText, Map, LogOut, Menu, X, Lightbulb, Flag, Trophy, ShieldCheck, KeyRound } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 
 const NAV = [
@@ -17,6 +17,7 @@ const NAV = [
   { href: "/admin/ideas", label: "Community ideas", icon: Lightbulb },
   { href: "/admin/settings", label: "Prices & features", icon: Settings },
   { href: "/admin/audit", label: "Audit log", icon: ScrollText },
+  { href: "/admin/admins", label: "Admins", icon: ShieldCheck, superOnly: true },
 ];
 
 export function AdminShell({ email, role, children }: { email: string; role: string; children: React.ReactNode }) {
@@ -30,7 +31,7 @@ export function AdminShell({ email, role, children }: { email: string; role: str
   };
   const nav = (
     <nav className="space-y-1">
-      {NAV.map(({ href, label, icon: Icon }) => {
+      {NAV.filter((n) => !("superOnly" in n) || role === "super_admin").map(({ href, label, icon: Icon }) => {
         const active = href === "/admin" ? path === "/admin" : path.startsWith(href);
         return (
           <Link key={href} href={href} onClick={() => setOpen(false)} className={`flex items-center gap-3 px-3 h-10 rounded-xl text-sm font-bold transition-colors ${active ? "bg-white/10 text-white" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
@@ -57,6 +58,9 @@ export function AdminShell({ email, role, children }: { email: string; role: str
         </div>
         {nav}
         <div className="mt-auto space-y-2">
+          <Link href="/admin/account" onClick={() => setOpen(false)} className={`flex items-center gap-3 px-3 h-10 rounded-xl text-sm font-bold transition-colors ${path.startsWith("/admin/account") ? "bg-white/10 text-white" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
+            <KeyRound className="w-4 h-4" /> My account
+          </Link>
           <div className="px-3 text-[11px] text-slate-500">Role: <span className="text-slate-300 font-bold">{role.replace("_", " ")}</span></div>
           <button onClick={signOut} className="w-full flex items-center gap-3 px-3 h-10 rounded-xl text-sm font-bold text-rose-300 hover:bg-white/5"><LogOut className="w-4 h-4" /> Sign out</button>
         </div>

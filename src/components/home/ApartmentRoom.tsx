@@ -7,6 +7,7 @@ import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import type { AvatarLookProps } from "../onboarding/AvatarCanvas";
+import { restPose, type RestPose } from "./restPose";
 import { CitizenAvatar, StudioEnvironment, type AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 import { SceneLoadingOverlay } from "@/components/GameLoadingScreen";
 import {
@@ -22,32 +23,9 @@ import {
 const HALF = ROOM_SIZE / 2;
 
 /** Where the citizen stands, and where they sit when using the chair or bed. */
-type Pose = { position: [number, number, number]; yaw: number };
+// While sitting or asleep the pose carries the spot to stand up at (RestPose.stand).
+type Pose = { position: [number, number, number]; yaw: number; lie?: boolean; stand?: [number, number] };
 const STAND: Pose = { position: [AVATAR_SPOT.x, 0, AVATAR_SPOT.z], yaw: Math.PI / 4 };
-function seatFor(id: string, yawOffset: number, inset: [number, number] = [0, 0]): Pose {
-  const b = BUILT_INS.find((x) => x.id === id)!;
-  const c = floorCenter(b.size, b.placement);
-  return { position: [c.x + inset[0], 0, c.z + inset[1]], yaw: -b.placement.rot * (Math.PI / 2) + yawOffset };
-}
-// The chair faces the way it is turned; on the bed the citizen sits on the side edge facing into the room.
-const SEATS: Partial<Record<Interaction, Pose>> = {
-  chair: seatFor("chair", Math.PI, [0, -0.05]),
-  bed: { position: [-0.75, 0, -2.2], yaw: Math.PI / 2 },
-};
-const HOME_ID: Partial<Record<Interaction, string>> = { chair: "chair", bed: "bed" };
-
-/** Where to sit on a chair or bed wherever it has been moved to (the starting pose, carried along). */
-function seatPose(type: Interaction, placement: Placement | null | undefined): Pose | undefined {
-  const base = SEATS[type];
-  const b = BUILT_INS.find((x) => x.id === HOME_ID[type]);
-  if (!base || !b || !placement || placement.kind !== "floor") return base;
-  const c0 = floorCenter(b.size, b.placement);
-  const c = floorCenter(b.size, placement);
-  const turn = -(placement.rot - b.placement.rot) * (Math.PI / 2);
-  const dx = base.position[0] - c0.x, dz = base.position[2] - c0.z;
-  const cos = Math.cos(turn), sin = Math.sin(turn);
-  return { position: [c.x + dx * cos + dz * sin, 0, c.z - dx * sin + dz * cos], yaw: base.yaw + turn };
-}
 const WALL_THICKNESS = 0.16;
 const DRAG_THRESHOLD = 6; // px; anything more is a camera drag, not a tap
 
@@ -1429,7 +1407,10 @@ function RoomScene({
   const [pose, setPose] = useState<Pose>(STAND);
   const [walkTarget, setWalkTarget] = useState<[number, number] | null>(null);
   const [clickBeacon, setClickBeacon] = useState<{ x: number; z: number; time: number } | null>(null);
-  const [pendingAction, setPendingAction] = useState<{ type: Interaction; placement?: Placement | null } | null>(null);
+  const [pendingAction, setPendingAction] = useState<{ type: Interaction; rest?: RestPose } | null>(null);
+  const avatarHeight = look?.gender === "man" ? 1.8 : 1.68;
+  /** Gets up from a seat or bed (to its stand spot) before walking anywhere. */
+  const getUp = () => setPose((p) => (p.stand ? { position: [p.stand[0], 0, p.stand[1]], yaw: p.yaw } : p));
   const animTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentRoom = useMemo(() => {
@@ -1456,6 +1437,7 @@ function RoomScene({
       animTimer.current = null;
     }
     setPendingAction(null);
+    getUp();
     setWalkTarget([clampedX, clampedZ]);
     setClickBeacon({ x: clampedX, z: clampedZ, time: performance.now() });
 
@@ -1512,14 +1494,17 @@ function RoomScene({
         if (pendingAction) {
           const act = pendingAction;
           setPendingAction(null);
-          const targetSeat = seatPose(act.type, act.placement);
-          setPose(targetSeat ?? { position: [finalX, 0, finalZ], yaw: pose.yaw });
-          const anim: AvatarAnimation = act.type === "bed" || act.type === "chair" ? "sit" : "wave";
-          setAnimation(anim);
           if (animTimer.current) clearTimeout(animTimer.current);
-          animTimer.current = setTimeout(() => {
-            setAnimation("idle");
-          }, anim === "sit" ? 6000 : 3500);
+          if (act.rest) {
+            // Sit down or lie down, and stay there until the player taps somewhere else.
+            const r = act.rest;
+            setPose({ position: r.position, yaw: r.yaw, lie: r.lie, stand: r.stand });
+            setAnimation(r.lie ? "sleep" : "sit");
+          } else {
+            setPose({ position: [finalX, 0, finalZ], yaw: pose.yaw });
+            setAnimation("wave");
+            animTimer.current = setTimeout(() => setAnimation("idle"), 3500);
+          }
         } else {
           setPose({ position: [finalX, 0, finalZ], yaw: pose.yaw });
           setAnimation("idle");
@@ -1578,23 +1563,22 @@ function RoomScene({
     }
   };
 
-  const interact = (type: Interaction, placement?: Placement | null) => {
+  const interact = (type: Interaction, item?: CatalogItem, placement?: Placement | null) => {
     onInteractObject?.(type);
-    const targetSeat = seatPose(type, placement);
-    if (targetSeat) {
-      if (animTimer.current) {
-        clearTimeout(animTimer.current);
-        animTimer.current = null;
-      }
-      setWalkTarget([targetSeat.position[0], targetSeat.position[2]]);
-      setPendingAction({ type, placement });
+    if (animTimer.current) {
+      clearTimeout(animTimer.current);
+      animTimer.current = null;
+    }
+    getUp();
+    const rest = item ? restPose(item, placement, type, avatarHeight) : undefined;
+    if (rest) {
+      // Walk to the side of the bed or the front of the seat, then lie down or sit.
+      setWalkTarget(rest.stand);
+      setPendingAction({ type, rest });
     } else {
-      const anim: AvatarAnimation = type === "bed" || type === "chair" ? "sit" : type === "cooler" ? "wave" : "talk";
-      setAnimation(anim);
-      if (animTimer.current) clearTimeout(animTimer.current);
-      animTimer.current = setTimeout(() => {
-        setAnimation("idle");
-      }, 3500);
+      setPendingAction(null);
+      setAnimation(type === "cooler" ? "wave" : "talk");
+      animTimer.current = setTimeout(() => setAnimation("idle"), 3500);
     }
   };
   useEffect(() => () => { if (animTimer.current) clearTimeout(animTimer.current); }, []);
@@ -1704,7 +1688,7 @@ function RoomScene({
                   if (placing || e.delta > DRAG_THRESHOLD) return;
                   // Decorating: pick it up to move. Otherwise: use it (sit, sleep, open the fridge).
                   if (decorating) { e.stopPropagation(); onPickUp?.(f.uid); return; }
-                  if (item.interaction) { e.stopPropagation(); interact(item.interaction, f.placement); }
+                  if (item.interaction) { e.stopPropagation(); interact(item.interaction, item, f.placement); }
                 }}
                 onPointerOver={(decorating && !placing) || (item.interaction && !busy) ? hoverCursor(true) : undefined}
                 onPointerOut={hoverCursor(false)}
@@ -1730,7 +1714,10 @@ function RoomScene({
       )}
 
       <Suspense fallback={null}>
-        <CitizenAvatar look={look} animation={animation} position={pose.position} rotation={[0, pose.yaw, 0]} />
+        <group position={pose.position} rotation={[0, pose.yaw, 0]}>
+          {/* Asleep: laid flat on the back, head along the bed. */}
+          <CitizenAvatar look={look} animation={animation} rotation={pose.lie ? [-Math.PI / 2, 0, 0] : [0, 0, 0]} />
+        </group>
         {people.map((p, i) => <PersonAvatar key={i} p={p} id={`p${i}`} labels={labels} />)}
       </Suspense>
     </>

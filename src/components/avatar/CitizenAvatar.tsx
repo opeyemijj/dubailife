@@ -20,12 +20,13 @@ import { attachAccessories, buildAccessoryRig } from "./accessories";
 import type { Accessory } from "@/lib/city/types";
 
 export type { AvatarLookProps } from "./roster";
-export type AvatarAnimation = "idle" | "sit" | "wave" | "clap" | "walk" | "dance" | "talk";
+/** "sleep" has no clip of its own: it is the idle clip slowed to a sleeper's breathing (the scene lays the body down). */
+export type AvatarAnimation = "idle" | "sit" | "wave" | "clap" | "walk" | "dance" | "talk" | "sleep";
 
 export const DEFAULT_LOOK: AvatarLookProps = { gender: "woman", bodyType: "Hourglass" };
 
 const HEIGHT: Record<Gender, number> = { woman: 1.68, man: 1.8 };
-const CLIPS: AvatarAnimation[] = ["idle", "sit", "wave", "clap", "walk", "dance", "talk"];
+const CLIPS: Exclude<AvatarAnimation, "sleep">[] = ["idle", "sit", "wave", "clap", "walk", "dance", "talk"];
 
 /** Soft studio lighting for realistic skin, generated in code (no HDR download). */
 export function StudioEnvironment({ intensity = 0.6 }: { intensity?: number }) {
@@ -132,8 +133,9 @@ function Framed({ model, gender, placement, children }: { model: { height: numbe
 
 function usePlay(actions: Record<string, THREE.AnimationAction | null>, animation: AvatarAnimation) {
   useEffect(() => {
-    const action = actions[animation] ?? actions.idle;
+    const action = actions[animation === "sleep" ? "idle" : animation] ?? actions.idle;
     if (!action) return;
+    action.setEffectiveTimeScale(animation === "sleep" ? 0.3 : 1);
     action.reset().fadeIn(0.35).play();
     return () => {
       action.fadeOut(0.35);
