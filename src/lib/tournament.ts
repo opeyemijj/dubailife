@@ -32,5 +32,6 @@ export async function submitPrizeDetails(month: string, fullName: string, countr
   const up = await supabase().storage.from("claim-docs").upload(path, idFile, { contentType: idFile.type, upsert: false });
   if (up.error) return "Couldn't upload the ID photo. Use a JPG, PNG or PDF under 10 MB.";
   const { error } = await supabase().rpc("submit_prize_details", { p_month: month, p_full_name: fullName, p_country: country, p_payout: payout, p_id_ref: `claim-docs:${path}` });
-  return error ? "Couldn't send your details. Try again." : null;
+  if (error) return /email_not_verified/.test(error.message) ? "Verify your email first (Settings → Verify your email)." : "Couldn't send your details. Try again.";
+  return null;
 }

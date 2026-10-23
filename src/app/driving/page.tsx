@@ -50,11 +50,11 @@ export default function DrivingAcademyPage() {
 
         {p?.issued_at && (
           <div className="rounded-3xl bg-gradient-to-br from-sky-600 to-indigo-700 p-4 shadow-xl">
-            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-white/70"><span>Come To Dubai · Driving licence</span><span>Provisional</span></div>
+            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-white/70"><span>Dubai Life · Driving licence</span><span>Provisional</span></div>
             <p className="text-2xl font-black mt-2 tracking-wider">{p.licence_no}</p>
             <p className="text-xs text-white/80 mt-1">Issued {new Date(p.issued_at).toLocaleDateString()} · theory {p.theory_score}%</p>
             <p className="text-[10px] text-white/60 mt-2">An in-game licence only. Not a real driving licence or government document.</p>
-            <ShareButton moment="licence" v={p.theory_score ?? 0} text="I passed my driving test in Come To Dubai 🚗" className="mt-3 h-9 px-4 rounded-full bg-white/20 text-white text-xs" />
+            <ShareButton moment="licence" v={p.theory_score ?? 0} text="I passed my driving test in Dubai Life 🚗" className="mt-3 h-9 px-4 rounded-full bg-white/20 text-white text-xs" />
           </div>
         )}
 

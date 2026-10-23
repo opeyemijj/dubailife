@@ -3763,13 +3763,13 @@ export const IsometricBillboard: React.FC<IsometricBillboardProps> = ({
     if (campaigns && campaigns.length) {
       return campaigns.map((c) => ({
         id: c.id, brand: c.title.toUpperCase(), tagline: (c.subtitle || '').toUpperCase(), badge: 'SPONSORED', badgeBg: '#0f172a',
-        color1: '#0f172a', color2: '#020617', accent: '#38bdf8', category: 'SPONSORED', location: 'COME TO DUBAI', iconType: 'custom', imageHref: c.creative_url,
+        color1: '#0f172a', color2: '#020617', accent: '#38bdf8', category: 'SPONSORED', location: 'DUBAI LIFE', iconType: 'custom', imageHref: c.creative_url,
       }));
     }
     // No paid ads: one house slide inviting advertisers (plus any creative set in the map studio).
     const list: BillboardCampaignItem[] = [{
       id: `house-${safeId}`, brand: 'YOUR AD HERE', tagline: 'TAP TO ADVERTISE · 10 SLOTS', badge: 'ADVERTISE', badgeBg: '#059669',
-      color1: '#064e3b', color2: '#020617', accent: '#34d399', category: 'AVAILABLE', location: 'COME TO DUBAI', iconType: 'custom',
+      color1: '#064e3b', color2: '#020617', accent: '#34d399', category: 'AVAILABLE', location: 'DUBAI LIFE', iconType: 'custom',
     }];
     // If the billboard is rented or has custom ad creative, include it in the rotation
     if (activeImage || isRented || adTitle || text1) {

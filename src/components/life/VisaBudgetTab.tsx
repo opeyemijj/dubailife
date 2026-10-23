@@ -214,7 +214,7 @@ export function VisaBudgetTab({ onClose }: { onClose: () => void }) {
         )}
       </section>
       {note && <p className={`text-sm font-bold text-center ${note.ok ? "text-emerald-700" : "text-rose-600"}`}>{note.text}</p>}
-      {granted && <div className="text-center"><ShareButton moment="visa" l={granted} text={`I just got my ${visaInfo(granted).label} in Come To Dubai 🛂`} /></div>}
+      {granted && <div className="text-center"><ShareButton moment="visa" l={granted} text={`I just got my ${visaInfo(granted).label} in Dubai Life 🛂`} /></div>}
     </div>
   );
 }

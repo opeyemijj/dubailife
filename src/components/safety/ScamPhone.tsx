@@ -113,7 +113,7 @@ export function ScamPhone() {
                   {s.channel === "call" ? <PhoneOff className="w-4 h-4" /> : null} {ch.ignore}
                 </button>
               </div>
-              <p className="text-[10px] text-center text-white/40">A training simulation inside Come To Dubai. No real money, codes or personal details are ever involved.</p>
+              <p className="text-[10px] text-center text-white/40">A training simulation inside Dubai Life. No real money, codes or personal details are ever involved.</p>
             </>
           ) : result && (
             <>
@@ -143,7 +143,7 @@ export function ScamPhone() {
               </div>
               {result.outcome !== "avoided" && (
                 <ShareButton moment={result.outcome === "fell" ? "scam-fell" : "scam-caught"} v={result.outcome === "fell" ? result.loss : result.bounty}
-                  text={result.outcome === "fell" ? "I just fell for a scam in Come To Dubai 😬 Would you have spotted it?" : "I just caught a scammer in Come To Dubai 🛡️"}
+                  text={result.outcome === "fell" ? "I just fell for a scam in Dubai Life 😬 Would you have spotted it?" : "I just caught a scammer in Dubai Life 🛡️"}
                   className="w-full h-11 rounded-2xl bg-white/10 text-sm" label="Share this" />
               )}
               <button onClick={done} className="w-full h-12 rounded-2xl bg-emerald-600 font-black">Got it</button>

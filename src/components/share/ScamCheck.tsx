@@ -35,7 +35,7 @@ export function ScamCheck({ start, referrer }: { start: string; referrer: string
     <main className="min-h-[100dvh] bg-slate-950 text-white px-4 py-[max(1.5rem,env(safe-area-inset-top))]">
       <div className="max-w-md mx-auto space-y-4">
         <header className="text-center space-y-1">
-          <p className="text-xs font-black uppercase tracking-widest text-amber-300">Come To Dubai · Scam check</p>
+          <p className="text-xs font-black uppercase tracking-widest text-amber-300">Dubai Life · Scam check</p>
           <h1 className="text-2xl font-black">Would you fall for it?</h1>
           <p className="text-sm text-slate-400">Real scam patterns, fake senders. Nothing you tap here is real or saved.</p>
           {score.seen > 0 && <p className="text-xs font-bold text-emerald-300">You stayed safe {score.safe} of {score.seen}</p>}

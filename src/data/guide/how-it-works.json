@@ -1,5 +1,5 @@
 {
-  "_note": "How life in Come To Dubai works. Shown as cards in onboarding (the 'Your Dubai' step) and in full on /guide. Keep in step with the design spec and the game's rules.",
+  "_note": "How life in Dubai Life works. Shown as cards in onboarding (the 'Your Dubai' step) and in full on /guide. Keep in step with the design spec and the game's rules.",
   "intro": "You've just landed at DXB with AED 50,000 and a 30-day visit visa. Here's how to build a life here.",
   "tournament": { "cashFrom": "2027-01-01T00:00:00+04:00", "cashAed": 5000, "nonCash": "a Dubai experience for two" },
   "sections": [

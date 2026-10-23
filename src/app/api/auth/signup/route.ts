@@ -26,10 +26,10 @@ export async function POST(request: Request) {
   if (password.length < 8) return Response.json({ error: "Password must be at least 8 characters." }, { status: 400 });
   if (!USERNAME.test(username)) return Response.json({ error: "Username needs 3–24 letters, numbers or underscores." }, { status: 400 });
   if (!displayName || displayName.length > 60) return Response.json({ error: "Enter your name." }, { status: 400 });
-  // Come To Dubai is 21+.
+  // Dubai Life is 21+.
   const dob = body.dob ?? "";
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dob) || Number.isNaN(Date.parse(dob)) || dob < "1900-01-01" || ageFrom(dob) < MIN_AGE)
-    return Response.json({ error: "Come To Dubai is for players aged 21 and over." }, { status: 403 });
+    return Response.json({ error: "Dubai Life is for players aged 21 and over." }, { status: 403 });
 
   const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 

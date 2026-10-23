@@ -61,7 +61,7 @@ export function LeagueTab({ onClose }: { onClose: () => void }) {
           <div className="text-right"><p className="text-xs font-bold text-amber-800/70">Ends in</p><p className="font-black">{endsIn(league.endsAt, now)}</p></div>
         </div>
         {league.lastResult && <p className="mt-2 text-sm font-bold text-amber-900">Last week: {league.lastResult === "up" ? "promoted ⬆️" : league.lastResult === "down" ? "moved down ⬇️" : "held your place"}</p>}
-        {league.lastResult === "up" && <ShareButton moment="league-up" l={String(league.tier)} text={`Promoted to the ${TIERS[league.tier]} league in Come To Dubai 🏆`} className="mt-2 h-9 px-4 rounded-full bg-amber-500 text-white text-xs" />}
+        {league.lastResult === "up" && <ShareButton moment="league-up" l={String(league.tier)} text={`Promoted to the ${TIERS[league.tier]} league in Dubai Life 🏆`} className="mt-2 h-9 px-4 rounded-full bg-amber-500 text-white text-xs" />}
         <p className="mt-1 text-[11px] text-amber-900/70">Top 7 move up, bottom 5 move down. Points come from what you do, never from buying.</p>
       </section>
 

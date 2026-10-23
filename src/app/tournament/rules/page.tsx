@@ -6,7 +6,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Monthly tournament · Official rules",
-  description: "Free to enter, skill-based monthly tournament in Come To Dubai. Eligibility, scoring, prizes and verification.",
+  description: "Free to enter, skill-based monthly tournament in Dubai Life. Eligibility, scoring, prizes and verification.",
   alternates: { canonical: "/tournament/rules" },
 };
 
@@ -28,13 +28,13 @@ export default function TournamentRules() {
         </header>
 
         <Section n={1} title="Sponsor">
-          <p>The tournament is run and paid for by the operator of Come To Dubai (cometodubai.app), the “Sponsor”. Apple, Google and any other app store or platform are not sponsors and are not involved in any way.</p>
+          <p>The tournament is run and paid for by the operator of Dubai Life (cometodubai.app), the “Sponsor”. Apple, Google and any other app store or platform are not sponsors and are not involved in any way.</p>
         </Section>
         <Section n={2} title="Free to enter">
           <p>No purchase or payment is needed to enter or to win. Buying virtual AED, a season pass or Dubai Plus does not add points or improve your chances.</p>
         </Section>
         <Section n={3} title="Who can take part">
-          <p>Players aged 21 or older with one Come To Dubai account. Staff and admins of Come To Dubai cannot win. Where local law doesn&apos;t allow this kind of contest, players there can play but cannot win a prize.</p>
+          <p>Players aged 21 or older with one Dubai Life account. Staff and admins of Dubai Life cannot win. Where local law doesn&apos;t allow this kind of contest, players there can play but cannot win a prize.</p>
         </Section>
         <Section n={4} title="Tournament period">
           <p>Each tournament runs for one calendar month, from 00:00:00 to 23:59:59 Gulf Standard Time (GST, UTC+4) on the last day of the month. The leaderboard freezes at that moment.</p>

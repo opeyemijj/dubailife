@@ -2,6 +2,7 @@
 
 // The monthly tournament (design spec section 13): free to enter, skill only, points from what you do.
 
+import { emailStatus, sendVerification } from "@/lib/email";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, Trophy } from "lucide-react";
@@ -95,6 +96,8 @@ function WinnerClaim({ w, onDone }: { w: NonNullable<TournamentView["lastWinner"
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [verified, setVerified] = useState<boolean | null>(null);
+  useEffect(() => { void emailStatus().then((s) => setVerified(s?.verified ?? false)); }, []);
   const cash = w.prize === "cash";
 
   if (w.status !== "awaiting_details") {
@@ -109,6 +112,12 @@ function WinnerClaim({ w, onDone }: { w: NonNullable<TournamentView["lastWinner"
     <section className="rounded-3xl bg-emerald-600 p-4 space-y-2.5">
       <p className="font-black text-lg">🏆 You won {monthName(w.month)}!</p>
       <p className="text-sm text-white/90">To receive your {cash ? `AED ${Number(w.aed).toLocaleString()} prize` : "prize"}, confirm who you are. Your ID is stored privately and only used for this check.</p>
+      {verified === false && (
+        <div className="rounded-xl bg-white/15 p-3 text-sm">
+          <b>First, verify your email.</b> Prizes are only paid to verified accounts.
+          <button onClick={async () => setErr((await sendVerification()).text)} className="block mt-2 h-9 px-4 rounded-full bg-white text-emerald-800 font-black text-xs">Send me the link</button>
+        </div>
+      )}
       <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name exactly as on your ID" className="w-full h-11 rounded-xl px-3 text-base text-slate-900" />
       <input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="Country of residence" className="w-full h-11 rounded-xl px-3 text-base text-slate-900" />
       <textarea value={payout} onChange={(e) => setPayout(e.target.value)} rows={2} placeholder={cash ? "Bank name and IBAN for the transfer" : "Phone number or email so we can arrange your prize"} className="w-full rounded-xl px-3 py-2 text-base text-slate-900" />

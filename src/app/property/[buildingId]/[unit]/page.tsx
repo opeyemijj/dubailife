@@ -6,12 +6,12 @@ export async function generateMetadata({ params }: { params: Promise<{ buildingI
   const decodedUnit = decodeURIComponent(unit);
   const buildingName = buildingId.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   const title = `${buildingName} Unit ${decodedUnit} — Virtual Property`;
-  const description = `Tour ${buildingName} Unit ${decodedUnit} inside Come To Dubai (cometodubai.app). Explore luxury apartments, meet citizens, and customize virtual homes in 3D.`;
+  const description = `Tour ${buildingName} Unit ${decodedUnit} inside Dubai Life (cometodubai.app). Explore luxury apartments, meet citizens, and customize virtual homes in 3D.`;
   return {
     title,
     description,
-    openGraph: { title: `${title} - Come To Dubai`, description },
-    twitter: { title: `${title} - Come To Dubai`, description },
+    openGraph: { title: `${title} - Dubai Life`, description },
+    twitter: { title: `${title} - Dubai Life`, description },
   };
 }
 

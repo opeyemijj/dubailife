@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { SITE } from "@/lib/site";
 
-// Lets people install Come To Dubai to their home screen like an app.
+// Lets people install Dubai Life to their home screen like an app.
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",

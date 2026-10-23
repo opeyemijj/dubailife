@@ -233,7 +233,7 @@ export async function signUpWithEmail(email: string, password: string, meta: { u
     return {
       ok: false,
       error: /already_registered/.test(m) ? "An account with this email already exists. Log in instead."
-        : /too_young/.test(m) ? "Come To Dubai is for players aged 21 and over."
+        : /too_young/.test(m) ? "Dubai Life is for players aged 21 and over."
         : /username_taken/.test(m) ? `@${meta.username} is taken — pick another username.`
         : /invalid_email/.test(m) ? "That email address doesn't look right — please check it."
         : /weak_password/.test(m) ? "Password must be at least 8 characters."

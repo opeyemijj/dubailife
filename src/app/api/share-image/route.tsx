@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   return new ImageResponse(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 72, background: `linear-gradient(150deg, ${t.from} 0%, ${t.to} 100%)`, color: "white", fontFamily: "sans-serif" }}>
-        <div style={{ display: "flex", alignItems: "center", fontSize: 30, fontWeight: 800, opacity: 0.85 }}>Come To Dubai · cometodubai.app</div>
+        <div style={{ display: "flex", alignItems: "center", fontSize: 30, fontWeight: 800, opacity: 0.85 }}>Dubai Life · cometodubai.app</div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ fontSize: 120 }}>{t.emoji}</div>
           <div style={{ fontSize: 66, fontWeight: 900, lineHeight: 1.1, marginTop: 12 }}>{t.title}</div>

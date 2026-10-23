@@ -12,14 +12,14 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   if (!place || !venue) return { title: "Place not found", robots: { index: false } };
   const where = place.venues.length > 1 ? ` at ${place.name}` : "";
   const title = `${venue.name}${where} — Virtual Dubai 3D`;
-  const description = `Walk into ${venue.name}${where} in 3D: ${venue.blurb} Shop, meet real players and hang out on Come To Dubai (cometodubai.app), the free virtual Dubai browser game.`.slice(0, 300);
+  const description = `Walk into ${venue.name}${where} in 3D: ${venue.blurb} Shop, meet real players and hang out on Dubai Life (cometodubai.app), the free virtual Dubai browser game.`.slice(0, 300);
   const url = `/place/${placeId}/${venueId}`;
   return {
     title,
     description,
     alternates: { canonical: url },
-    openGraph: { title: `${title} - Come To Dubai`, description, url },
-    twitter: { title: `${title} - Come To Dubai`, description },
+    openGraph: { title: `${title} - Dubai Life`, description, url },
+    twitter: { title: `${title} - Dubai Life`, description },
   };
 }
 

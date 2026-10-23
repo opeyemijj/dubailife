@@ -298,7 +298,7 @@ function RoomGame({ info, initial, myId, myUsername, onPlaying, onExit }: { info
   if (room.status === "lobby") {
     const link = typeof window !== "undefined" ? `${window.location.origin}/games/${info.id}?room=${room.code}` : "";
     const share = async () => {
-      try { await navigator.share?.({ title: `Play ${info.name} with me in Come To Dubai`, url: link }); } catch { /* cancelled */ }
+      try { await navigator.share?.({ title: `Play ${info.name} with me in Dubai Life`, url: link }); } catch { /* cancelled */ }
     };
     return (
       <section className="rounded-3xl bg-white border border-slate-200 p-5 space-y-4 text-center">

@@ -10,13 +10,13 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const info = gameInfo(game);
   if (!info) return { title: "Game Not Found", robots: { index: false } };
   const title = `Play ${info.name} Online Free`;
-  const description = `${info.tagline}. Play ${info.name} free against friends or computer in Come To Dubai (cometodubai.app). ${info.rules}`.slice(0, 300);
+  const description = `${info.tagline}. Play ${info.name} free against friends or computer in Dubai Life (cometodubai.app). ${info.rules}`.slice(0, 300);
   return {
     title,
     description,
     alternates: { canonical: `/games/${game}` },
-    openGraph: { title: `${title} - Come To Dubai`, description, url: `/games/${game}` },
-    twitter: { title: `${title} - Come To Dubai`, description },
+    openGraph: { title: `${title} - Dubai Life`, description, url: `/games/${game}` },
+    twitter: { title: `${title} - Dubai Life`, description },
   };
 }
 

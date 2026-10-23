@@ -3,6 +3,7 @@
 // The citizen's life at a glance, opened from the needs dock at home (or S on a keyboard): Profile,
 // Needs and feelings, Goals (wishes, certificates, perks), Skills, People, Career and Settings.
 
+import { emailStatus, sendVerification, type EmailStatus } from "@/lib/email";
 import { InviteFriends } from "@/components/share/InviteFriends";
 import { Roommates } from "./Roommates";
 import { openPushCoach, pushStatus } from "@/lib/push/engage";
@@ -536,9 +537,31 @@ function SettingsTab({ onClose, onProfile }: { onClose: () => void; onProfile: (
       <Link href="/wallet" onClick={onClose} className="flex items-center gap-3 rounded-3xl bg-slate-100/80 p-4 font-bold">💳 <span className="flex-1">Wallet</span>›</Link>
       <Link href="/guide" onClick={onClose} className="flex items-center gap-3 rounded-3xl bg-amber-50 p-4 font-bold">📖 <span className="flex-1">How Dubai works<span className="block text-xs font-semibold text-slate-500">Visas, money, jobs, prizes and more</span></span>›</Link>
       <div className="hidden sm:flex items-center gap-3 rounded-3xl bg-slate-100/80 p-4 text-sm text-slate-600">⌨️ <span className="flex-1">Press <kbd className="px-1.5 py-0.5 rounded bg-white font-mono font-bold">S</kbd> anywhere to open this panel, <kbd className="px-1.5 py-0.5 rounded bg-white font-mono font-bold">?</kbd> for all shortcuts.</span></div>
+      <EmailRow />
       <BlockedPlayers />
       <button onClick={() => { onClose(); void signOut(); }} className="w-full flex items-center justify-center gap-2 h-12 rounded-2xl bg-rose-50 text-rose-600 font-black text-sm mt-3"><LogOut className="w-4 h-4" /> Log out</button>
       <DeleteAccount />
+    </div>
+  );
+}
+
+function EmailRow() {
+  const [st, setSt] = useState<EmailStatus | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  useEffect(() => { void emailStatus().then(setSt); }, []);
+  if (!st) return null;
+  return (
+    <div className={`rounded-3xl p-4 ${st.verified ? "bg-slate-100/80" : "bg-amber-50 border border-amber-200"}`}>
+      <div className="flex items-center gap-3">
+        <span className="text-xl">📧</span>
+        <span className="flex-1 min-w-0">
+          <span className="block font-bold">{st.verified ? "Email verified" : "Verify your email"}</span>
+          <span className="block text-xs text-slate-500 truncate">{st.email}{st.verified ? "" : " · needed for prizes and invite rewards"}</span>
+        </span>
+        {st.verified ? <span className="text-xs font-black px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">✓</span>
+          : <button onClick={async () => setNote((await sendVerification()).text)} className="text-xs font-black px-3 py-1.5 rounded-full bg-amber-500 text-white">{st.sentAt ? "Resend" : "Send link"}</button>}
+      </div>
+      {note && <p className="text-xs font-bold text-slate-600 mt-2">{note}</p>}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { requestPasswordReset } from "@/lib/email";
 import { InstallApp } from "@/components/pwa/InstallApp";
 import { compact, useSiteStats } from "@/lib/siteStats";
 import { PLACES } from "@/lib/city/places";
@@ -89,6 +90,19 @@ export function LandingOverlay({
   const handleOpenSignUp = () => router.push("/?signup=true", { scroll: false });
   const handleOpenLogIn = () => router.push("/?login=true", { scroll: false });
 
+  // Forgot password (/?login=true&forgot=1): emails a reset link; never says whether the account exists.
+  const forgot = searchParams.get("forgot") === "1";
+  const [resetSent, setResetSent] = useState<string | null>(null);
+  const handleForgotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loginIdentifier.trim()) return;
+    setBusy(true); setAuthError(null);
+    const err = await requestPasswordReset(loginIdentifier.trim());
+    setBusy(false);
+    if (err) setAuthError(err);
+    else setResetSent(loginIdentifier.trim());
+  };
+
   const cleanUsername = (username.trim().replace(/^@/, "") || name.trim().replace(/\s+/g, "_")).toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 24);
 
   const handleSignUpSubmit = (e: React.FormEvent) => {
@@ -100,7 +114,7 @@ export function LandingOverlay({
     if (password.length < 8) return setAuthError("Password must be at least 8 characters.");
     const dob = dobIso({ day: dobDay, month: dobMonth, year: dobYear });
     if (!dob) return setAuthError("That date of birth isn't a real date — please check it.");
-    if (ageFrom(dob) < MIN_AGE) return setAuthError("Come To Dubai is for players aged 21 and over.");
+    if (ageFrom(dob) < MIN_AGE) return setAuthError("Dubai Life is for players aged 21 and over.");
     router.push("/?signup=true&confirm=age", { scroll: false });
   };
 
@@ -122,7 +136,7 @@ export function LandingOverlay({
       const dob = dobIso({ day: dobDay, month: dobMonth, year: dobYear });
       if (!dob || ageFrom(dob) < MIN_AGE) {
         router.replace("/?signup=true", { scroll: false });
-        setAuthError("Come To Dubai is for players aged 21 and over.");
+        setAuthError("Dubai Life is for players aged 21 and over.");
         return;
       }
       const result = await signUpWithEmail(email.trim(), password, { username: cleanUsername, display_name: name.trim(), dob });
@@ -177,7 +191,7 @@ export function LandingOverlay({
               <div className="flex items-center gap-1.5 font-black text-slate-900 text-xs sm:text-sm">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/brand/icon-192.png" alt="" width={22} height={22} className="w-[22px] h-[22px] rounded-md" />
-                <span>Come To Dubai</span>
+                <span>Dubai Life</span>
               </div>
 
               <div className="w-[1px] h-3.5 bg-slate-200" />
@@ -238,7 +252,7 @@ export function LandingOverlay({
           {/* Governor Ticker Banner (As shown in Screenshot 1) */}
           <div className="hidden sm:inline-flex items-center gap-2 bg-emerald-800/90 hover:bg-emerald-800 backdrop-blur-md text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg border border-emerald-600/50 pointer-events-auto transition-transform">
             <span>🏛️</span>
-            <span>Welcome to Come To Dubai! Claim your apartment in Downtown and meet people in the city 🌴</span>
+            <span>Welcome to Dubai Life! Claim your apartment in Downtown and meet people in the city 🌴</span>
           </div>
 
         </div>
@@ -492,6 +506,33 @@ export function LandingOverlay({
               </p>
             </form>
           ) : (
+            forgot ? (
+            /* FORGOT PASSWORD */
+            <form onSubmit={handleForgotSubmit} className="space-y-4 text-left">
+              <div>
+                <h3 className="text-base font-black text-slate-900">Forgot your password?</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Enter your email or @username and we&apos;ll email you a link to choose a new one.</p>
+              </div>
+              {resetSent ? (
+                <p className="text-sm font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-2xl p-3">
+                  📧 If an account matches <b>{resetSent}</b>, a reset link is on its way. It works for 1 hour. Check your spam folder too.
+                </p>
+              ) : (
+                <input
+                  type="text" required autoCapitalize="none" autoCorrect="off" autoComplete="username"
+                  placeholder="you@email.com or @username" value={loginIdentifier} onChange={(e) => setLoginIdentifier(e.target.value)}
+                  className="w-full h-11 px-4 bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-2xl text-sm font-bold text-slate-900 outline-none transition-all"
+                />
+              )}
+              {authError && <p role="alert" className="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">{authError}</p>}
+              {!resetSent && (
+                <button type="submit" disabled={busy} className="w-full py-3.5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-60 text-white font-black text-sm sm:text-base rounded-2xl shadow-lg transition-all">
+                  {busy ? "Sending…" : "Email me a reset link"}
+                </button>
+              )}
+              <button type="button" onClick={() => { setResetSent(null); setAuthError(null); router.replace("/?login=true", { scroll: false }); }} className="w-full text-sm font-bold text-slate-500">← Back to log in</button>
+            </form>
+            ) : (
             /* LOG IN FORM */
             <form onSubmit={handleLoginSubmit} className="space-y-4 text-left">
               <div>
@@ -519,6 +560,7 @@ export function LandingOverlay({
                   onChange={(e) => setLoginPassword(e.target.value)}
                   className="w-full h-11 px-4 bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-2xl text-sm font-bold text-slate-900 outline-none transition-all"
                 />
+                <button type="button" onClick={() => { setAuthError(null); setResetSent(null); router.replace("/?login=true&forgot=1", { scroll: false }); }} className="mt-1.5 text-xs font-bold text-emerald-700 hover:underline">Forgot password?</button>
               </div>
 
               {authError && <p role="alert" className="text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">{authError}</p>}
@@ -530,6 +572,7 @@ export function LandingOverlay({
                 {busy ? "Logging in…" : "Log in"}
               </button>
             </form>
+            )
           )}
 
         </DialogContent>

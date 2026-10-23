@@ -170,7 +170,7 @@ export function KeyboardShortcuts() {
                 Keyboard shortcuts
               </h2>
               <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-0.5">
-                Play Come To Dubai without a mouse
+                Play Dubai Life without a mouse
               </p>
             </div>
           </div>

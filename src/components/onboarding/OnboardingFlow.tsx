@@ -1,5 +1,6 @@
 "use client";
 
+import { sendVerification } from "@/lib/email";
 import React, { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
@@ -123,6 +124,8 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
       return;
     }
     await saveBlueprint({ ...(BLUEPRINT.default as Blueprint), housing: home.id });
+    // Play starts right away; the verification link arrives by email (needed for prizes and invite rewards).
+    void sendVerification();
     clearSignupDraft();
     setFinishing(false);
     setCompletionData({ userId: session?.userId || "", username: account.username });

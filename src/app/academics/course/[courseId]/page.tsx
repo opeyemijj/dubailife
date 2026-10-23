@@ -978,7 +978,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
               <div className="text-3xl sm:text-4xl">{campus?.crestIcon}</div>
               <div className="text-xs font-black uppercase tracking-widest text-amber-800">{campus?.name}</div>
               <div className="text-[10px] uppercase font-bold tracking-widest text-slate-600">
-                Come To Dubai in-game certificate
+                Dubai Life in-game certificate
               </div>
             </div>
 
@@ -1017,7 +1017,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
             </div>
 
             <p className="text-[10px] text-center text-slate-500">An in-game achievement from a fictional institution. Not an accredited qualification.</p>
-            <ShareButton moment="graduate" v={enrollment?.examScore ?? examResult?.score ?? 0} text={`I just graduated from ${course.title} in Come To Dubai 🎓`} className="w-full h-11 rounded-xl bg-amber-500 text-slate-950 text-xs" label="Share my graduation" />
+            <ShareButton moment="graduate" v={enrollment?.examScore ?? examResult?.score ?? 0} text={`I just graduated from ${course.title} in Dubai Life 🎓`} className="w-full h-11 rounded-xl bg-amber-500 text-slate-950 text-xs" label="Share my graduation" />
 
             <button
               onClick={() => setShowCertificate(false)}

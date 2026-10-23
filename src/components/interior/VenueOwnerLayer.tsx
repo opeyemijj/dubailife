@@ -113,7 +113,7 @@ export function VenueAbout({ venueName, pub, onClose }: { venueName: string; pub
             <CalendarCheck className="w-4 h-4" /> Book a real table / visit <ExternalLink className="w-3.5 h-3.5" />
           </a>
         )}
-        {c.reservation_url && <p className="text-[11px] text-slate-400 text-center">Opens the venue&apos;s own booking page outside Come To Dubai.</p>}
+        {c.reservation_url && <p className="text-[11px] text-slate-400 text-center">Opens the venue&apos;s own booking page outside Dubai Life.</p>}
       </div>
     </div>
   );

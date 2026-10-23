@@ -34,8 +34,8 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
   title: {
-    default: "Come To Dubai — Free 3D Virtual Dubai Simulator & City Game",
-    template: "%s - Come To Dubai",
+    default: "Dubai Life — Free 3D Virtual Dubai Simulator & City Game",
+    template: "%s - Dubai Life",
   },
   description: SITE.description,
   applicationName: SITE.name,
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: SITE.name,
-    title: "Come To Dubai — Free 3D Virtual Dubai Simulator & City Game",
+    title: "Dubai Life — Free 3D Virtual Dubai Simulator & City Game",
     description: SITE.description,
     url: "/",
     locale: "en_AE",
@@ -66,13 +66,13 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Come To Dubai — Free 3D Virtual City & Life Simulator",
+        alt: "Dubai Life — Free 3D Virtual City & Life Simulator",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Come To Dubai — Free 3D Virtual Dubai Simulator & City Game",
+    title: "Dubai Life — Free 3D Virtual Dubai Simulator & City Game",
     description: SITE.description,
     images: ["/twitter-image"],
     creator: "@cometodubai",
@@ -109,8 +109,8 @@ const STRUCTURED_DATA = {
       "@type": "WebSite",
       "@id": `${SITE.url}/#website`,
       url: SITE.url,
-      name: "Come To Dubai",
-      alternateName: ["cometodubai.app", "Come to Dubai"],
+      name: "Dubai Life",
+      alternateName: ["cometodubai.app", "Come To Dubai"],
       description: SITE.description,
       inLanguage: ["en", "ar"],
       potentialAction: {
@@ -122,7 +122,7 @@ const STRUCTURED_DATA = {
     {
       "@type": "Organization",
       "@id": `${SITE.url}/#organization`,
-      name: "Come To Dubai",
+      name: "Dubai Life",
       url: SITE.url,
       logo: {
         "@type": "ImageObject",
@@ -137,8 +137,8 @@ const STRUCTURED_DATA = {
     {
       "@type": ["VideoGame", "SoftwareApplication", "WebApplication"],
       "@id": `${SITE.url}/#app`,
-      name: "Come To Dubai",
-      alternateName: ["cometodubai.app", "Come to Dubai Virtual City", "Dubai Life Simulator"],
+      name: "Dubai Life",
+      alternateName: ["cometodubai.app", "Come To Dubai", "Dubai Life Simulator"],
       url: SITE.url,
       description: SITE.description,
       image: `${SITE.url}/brand/icon-512.png`,

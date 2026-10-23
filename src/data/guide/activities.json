@@ -16,6 +16,18 @@
   ],
   "items": [
     {
+      "id": "verify-email",
+      "cat": "Rewards",
+      "icon": "📧",
+      "title": "Verify your email",
+      "where": "Settings → Verify your email (we sent you a link)",
+      "why": "Keeps your account safe and makes you eligible for the tournament prize and invite rewards.",
+      "done": "emailVerified",
+      "go": "Verify now",
+      "action": "settings",
+      "core": true
+    },
+    {
       "id": "student-visa",
       "cat": "Visa & career",
       "icon": "🎓",

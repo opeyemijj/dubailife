@@ -1,4 +1,4 @@
-// Venue dress code definitions, suggestions, and guidelines for Come to Dubai.
+// Venue dress code definitions, suggestions, and guidelines for Dubai Life.
 
 import type { Venue } from "./types";
 

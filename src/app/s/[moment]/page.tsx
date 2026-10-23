@@ -20,8 +20,8 @@ async function read({ params, searchParams }: Props) {
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const r = await read(props);
-  if (!r) return { title: "Come To Dubai", robots: { index: false } };
-  const title = `${r.t.title} · Come To Dubai`;
+  if (!r) return { title: "Dubai Life", robots: { index: false } };
+  const title = `${r.t.title} · Dubai Life`;
   return {
     title, description: r.t.sub, robots: { index: false },
     openGraph: { title, description: r.t.sub, images: [{ url: r.image, width: 1200, height: 630 }] },
@@ -42,7 +42,7 @@ export default async function SharePage(props: Props) {
         <p className="text-slate-300">{r.t.sub}</p>
         <Link href={join} className="block h-14 leading-[3.5rem] rounded-2xl bg-emerald-500 text-slate-950 font-black text-lg">Start your Dubai life, free</Link>
         <Link href="/scam-check" className="block text-sm font-bold text-sky-300">Would you spot a scam? Take the 30-second check →</Link>
-        <p className="text-[11px] text-slate-500">Come To Dubai is a free life simulation game for players aged 21+.</p>
+        <p className="text-[11px] text-slate-500">Dubai Life is a free life simulation game for players aged 21+.</p>
       </div>
     </main>
   );

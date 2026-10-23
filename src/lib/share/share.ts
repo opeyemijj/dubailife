@@ -17,7 +17,7 @@ export function shareUrl(moment: MomentId, extra: { v?: number; l?: string } = {
 export async function shareMoment(moment: MomentId, text: string, extra: { v?: number; l?: string } = {}): Promise<"shared" | "copied" | "cancelled"> {
   const url = shareUrl(moment, extra);
   if (navigator.share) {
-    try { await navigator.share({ title: "Come To Dubai", text, url }); return "shared"; } catch { return "cancelled"; }
+    try { await navigator.share({ title: "Dubai Life", text, url }); return "shared"; } catch { return "cancelled"; }
   }
   try { await navigator.clipboard.writeText(`${text} ${url}`); } catch { /* clipboard blocked */ }
   window.dispatchEvent(new CustomEvent("dubai:toast", { detail: "🔗 Link copied. Paste it anywhere to share." }));

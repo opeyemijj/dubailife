@@ -1,6 +1,6 @@
 "use client";
 
-// Come To Dubai is 21+ (design spec section 4). Accounts made before the age gate are asked for a date of
+// Dubai Life is 21+ (design spec section 4). Accounts made before the age gate are asked for a date of
 // birth once; anyone under 21 sees a closed door with only a log-out button. Admin pages are left alone.
 
 import { useEffect, useState } from "react";
@@ -60,7 +60,7 @@ export function AgeGate() {
           {state === "underage" ? (
             <>
               <div className="text-4xl">🔞</div>
-              <h2 className="text-xl font-black">Come To Dubai is 21+</h2>
+              <h2 className="text-xl font-black">Dubai Life is 21+</h2>
               <p className="text-sm text-slate-600">Sorry, this game is only for players aged 21 and over, so this account can&apos;t be used.</p>
               <button onClick={() => void signOut().then(() => window.location.replace("/"))} className="w-full h-12 rounded-2xl bg-slate-900 text-white font-black">Log out</button>
             </>
@@ -68,7 +68,7 @@ export function AgeGate() {
             <>
               <div className="text-4xl">🗓️</div>
               <h2 className="text-xl font-black">One quick thing</h2>
-              <p className="text-sm text-slate-600">Come To Dubai is now 21+. Please confirm your date of birth to keep playing. You can only set it once.</p>
+              <p className="text-sm text-slate-600">Dubai Life is now 21+. Please confirm your date of birth to keep playing. You can only set it once.</p>
               <div className="grid grid-cols-3 gap-2">
                 <select value={day} onChange={(e) => setDay(e.target.value)} className="h-11 px-2 rounded-2xl bg-slate-100 border border-slate-200 font-bold text-sm">
                   {Array.from({ length: 31 }, (_, i) => String(i + 1)).map((d) => <option key={d}>{d}</option>)}

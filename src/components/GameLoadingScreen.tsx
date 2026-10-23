@@ -75,7 +75,7 @@ export function SceneLoadingOverlay({ label }: { label?: string }) {
  */
 export function FullGameLoadingScreen({ 
   ready = false, 
-  title = "Come To Dubai",
+  title = "Dubai Life",
   subtitle = "Entering the city..." 
 }: { 
   ready?: boolean; 

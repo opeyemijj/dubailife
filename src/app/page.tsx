@@ -36,9 +36,9 @@ function HomeContent() {
     <main className="fixed inset-0 h-[100dvh] w-screen bg-[#d6bc8a] overflow-hidden select-none touch-none overscroll-none font-sans">
       {/* Search Engine & Screen Reader Semantic Indexing for Canvas/3D Game */}
       <header className="sr-only">
-        <h1>Come To Dubai — Free 3D Virtual Dubai Simulator & Browser Game</h1>
+        <h1>Dubai Life — Free 3D Virtual Dubai Simulator & Browser Game</h1>
         <p>
-          Welcome to Come To Dubai (cometodubai.app), the premier free 3D virtual Dubai life simulator.
+          Welcome to Dubai Life (cometodubai.app), the premier free 3D virtual Dubai life simulator.
           Explore Downtown Dubai, Burj Khalifa, and The Dubai Mall in interactive 3D. Decorate luxury penthouses,
           play 17 multiplayer games like Ludo, Chess, and Pool, meet real players, and advertise your business in virtual Dubai.
         </p>
@@ -72,9 +72,9 @@ function HomeContent() {
                 <h2 className="text-xl font-black leading-tight">{guestPlace.billboard ? "Advertise here" : `Go to ${guestPlace.name}`}</h2>
               </div>
               <p className="text-slate-600">{guestPlace.billboard
-                ? "Join Come To Dubai to advertise on this billboard and reach real players exploring the city."
-                : `Join Come To Dubai to hang out at ${guestPlace.name}, meet real players and chat.`}</p>
-              <button onClick={() => { setGuestPlace(null); router.push("/?signup=true", { scroll: false }); }} className="w-full h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-lg shadow-lg shadow-emerald-500/25">Join Come To Dubai · Free</button>
+                ? "Join Dubai Life to advertise on this billboard and reach real players exploring the city."
+                : `Join Dubai Life to hang out at ${guestPlace.name}, meet real players and chat.`}</p>
+              <button onClick={() => { setGuestPlace(null); router.push("/?signup=true", { scroll: false }); }} className="w-full h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-lg shadow-lg shadow-emerald-500/25">Join Dubai Life · Free</button>
               <button onClick={() => { setGuestPlace(null); router.push("/?login=true", { scroll: false }); }} className="w-full h-12 rounded-2xl border border-slate-200 font-bold">I have an account · Log in</button>
             </div>
           </div>

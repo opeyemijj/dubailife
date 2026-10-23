@@ -1,4 +1,4 @@
-// Come To Dubai is 21+: date-of-birth helpers shared by the sign-up form and the sign-up API.
+// Dubai Life is 21+: date-of-birth helpers shared by the sign-up form and the sign-up API.
 
 export const MIN_AGE = 21;
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

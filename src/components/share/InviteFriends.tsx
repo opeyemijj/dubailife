@@ -17,7 +17,7 @@ export function InviteFriends({ username }: { username: string }) {
     gameAudio.playClickSound();
     const url = `${window.location.origin}/?ref=${username}`;
     const text = `Come live in Dubai with me 🏙️ We both get AED ${(mine?.reward ?? 0).toLocaleString()} once you've played 3 days.`;
-    if (navigator.share) { try { await navigator.share({ title: "Come To Dubai", text, url }); } catch { /* cancelled */ } return; }
+    if (navigator.share) { try { await navigator.share({ title: "Dubai Life", text, url }); } catch { /* cancelled */ } return; }
     try { await navigator.clipboard.writeText(`${text} ${url}`); } catch { /* blocked */ }
     window.dispatchEvent(new CustomEvent("dubai:toast", { detail: "🔗 Invite link copied" }));
   };
@@ -28,7 +28,7 @@ export function InviteFriends({ username }: { username: string }) {
         <span className="text-3xl">💌</span>
         <div className="flex-1">
           <p className="font-black leading-tight">Invite friends</p>
-          <p className="text-xs text-slate-600">You both get AED {(mine?.reward ?? 0).toLocaleString()} when they&apos;ve played 3 days.</p>
+          <p className="text-xs text-slate-600">You both get AED {(mine?.reward ?? 0).toLocaleString()} when they&apos;ve played 3 days and verified their email.</p>
         </div>
       </div>
       <button onClick={invite} className="w-full h-11 rounded-2xl bg-sky-500 text-white font-black text-sm flex items-center justify-center gap-2"><Share2 className="w-4 h-4" /> Send my invite link</button>
