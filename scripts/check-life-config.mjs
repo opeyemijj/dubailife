@@ -1,11 +1,13 @@
-// Checks that the Blueprint prices and visa lengths the database charges (supabase/migrations/*life_loop.sql)
+// Checks that the Blueprint prices and visa lengths the database charges (latest blueprint_price/visa_days migrations)
 // match the app's config (src/data/life/*.json). Run: node scripts/check-life-config.mjs
 import { readFileSync, readdirSync } from "node:fs";
 
 const bp = JSON.parse(readFileSync("src/data/life/blueprint.json", "utf8"));
 const visas = JSON.parse(readFileSync("src/data/life/visas.json", "utf8"));
-const file = readdirSync("supabase/migrations").filter((f) => f.endsWith("_life_loop.sql")).sort().pop();
-const sql = readFileSync(`supabase/migrations/${file}`, "utf8");
+// The newest migration that (re)defines a function holds its live definition.
+const latestDef = (fn) => readdirSync("supabase/migrations").filter((f) => f.endsWith(".sql")).sort()
+  .map((f) => readFileSync(`supabase/migrations/${f}`, "utf8")).filter((t) => t.includes(`function public.${fn}(`)).pop() ?? "";
+const sql = latestDef("blueprint_price") + latestDef("visa_days");
 
 let bad = 0;
 for (const kind of ["housing", "commute", "telecom", "fitness"]) {

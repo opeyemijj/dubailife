@@ -31,6 +31,8 @@ const HOME_TAGS: Record<string, { label: string; cls: string }> = {
   bed_space: { label: "Smart start · roommates", cls: "bg-blue-100 text-blue-700" },
   studio: { label: "Balanced (recommended)", cls: "bg-emerald-100 text-emerald-800 font-black" },
   one_bedroom: { label: "Comfortable", cls: "bg-slate-100 text-slate-700" },
+  two_bedroom: { label: "Room to grow", cls: "bg-amber-100 text-amber-800" },
+  three_bedroom: { label: "Big spender", cls: "bg-purple-100 text-purple-700" },
   penthouse: { label: "Big spender", cls: "bg-purple-100 text-purple-700" },
   villa: { label: "Expat Trap ⚠️", cls: "bg-rose-100 text-rose-700" },
 };
@@ -518,7 +520,7 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
 
                 <div className="space-y-2.5">
                   {BLUEPRINT.housing.map((h) => {
-                    const tag = HOME_TAGS[h.id];
+                    const tag = HOME_TAGS[h.id] ?? { label: "Your choice", cls: "bg-slate-100 text-slate-700" };
                     const monthly = h.monthly + BASE_MONTHLY;
                     const daily = dailyBurn(monthly);
                     const runway = Math.floor(50000 / daily);
