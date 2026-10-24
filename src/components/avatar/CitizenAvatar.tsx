@@ -24,21 +24,23 @@ export type { AvatarLookProps } from "./roster";
  * "sleep" and "swim" have no clips of their own: sleep is the idle clip slowed to a sleeper's breathing,
  * swim is the walk clip sped up for the leg kick (the scene lays the body down; BodyPose moves the arms).
  */
-export type AvatarAnimation = "idle" | "sit" | "wave" | "clap" | "walk" | "dance" | "talk" | "sleep" | "swim";
-const CLIP_FOR: Partial<Record<AvatarAnimation, AvatarAnimation>> = { sleep: "idle", swim: "walk" };
-const SPEED_FOR: Partial<Record<AvatarAnimation, number>> = { sleep: 0.3, swim: 1.5 };
+export type AvatarAnimation = "idle" | "sit" | "wave" | "clap" | "walk" | "dance" | "talk" | "sleep" | "swim" | "skate";
+// skate: the walk clip slowed right down, for long gliding strides.
+const CLIP_FOR: Partial<Record<AvatarAnimation, AvatarAnimation>> = { sleep: "idle", swim: "walk", skate: "walk" };
+const SPEED_FOR: Partial<Record<AvatarAnimation, number>> = { sleep: 0.3, swim: 1.5, skate: 0.55 };
 
 /**
  * Arm poses laid over whatever clip is playing, for rides and water: arms crossed on the chest (slides),
  * both arms up (screaming down a drop), freestyle strokes (swimming), arms out for balance (surfing),
- * gripping the handles (rafts and rings) and hugging the knees (cannonball).
+ * gripping the handles (rafts and rings), hugging the knees (cannonball), a mic to the mouth (karaoke)
+ * and the bowling swing.
  */
-export type BodyPose = "armsCrossed" | "armsUp" | "swim" | "balance" | "grip" | "tuck";
+export type BodyPose = "armsCrossed" | "armsUp" | "swim" | "balance" | "grip" | "tuck" | "mic" | "throw";
 
 export const DEFAULT_LOOK: AvatarLookProps = { gender: "woman", bodyType: "Hourglass" };
 
 const HEIGHT: Record<Gender, number> = { woman: 1.68, man: 1.8 };
-const CLIPS: Exclude<AvatarAnimation, "sleep" | "swim">[] = ["idle", "sit", "wave", "clap", "walk", "dance", "talk"];
+const CLIPS: Exclude<AvatarAnimation, "sleep" | "swim" | "skate">[] = ["idle", "sit", "wave", "clap", "walk", "dance", "talk"];
 
 /** Soft studio lighting for realistic skin, generated in code (no HDR download). */
 export function StudioEnvironment({ intensity = 0.6 }: { intensity?: number }) {
@@ -352,6 +354,26 @@ function useBodyPose(model: { scene: THREE.Object3D }, pose: BodyPose | undefine
       } else if (p === "grip") {
         upper = dir(-0.7, 0.35, k * 0.55).clone();
         fore = dir(-0.85, 0.3, k * 0.35).clone();
+      } else if (p === "mic") {
+        if (k === 1) {
+          // Right hand holds the mic at the mouth; the left arm gestures to the crowd.
+          upper = dir(-0.6, 0.5, 0.25).clone();
+          fore = dir(0.85, 0.3, -0.35).clone();
+        } else {
+          const g = Math.sin(time * 2.6);
+          upper = dir(-0.2 + g * 0.35, 0.55, -0.7).clone();
+          fore = dir(0.1 + g * 0.4, 0.7, -0.4).clone();
+        }
+      } else if (p === "throw") {
+        if (k === 1) {
+          // The bowling swing: back, then through and up as the ball goes.
+          const a = Math.min(1, ((time * 1.25) % 1.6)) * 2.6 - 1.3;
+          upper = dir(-Math.cos(a), Math.sin(a), 0.1).clone();
+          fore = upper.clone();
+        } else {
+          upper = dir(-0.1, 0.2, -0.95).clone();
+          fore = upper.clone();
+        }
       } else {
         // tuck: hugging the knees
         upper = dir(-0.35, 0.9, k * 0.2).clone();
@@ -395,8 +417,9 @@ function RosterAvatar({
   usePlay(actions, animation);
   const held = useRef<THREE.Group>(null);
   const effectiveMode: CarryMode | false = carryMode ?? (raiseHand ? "raise" : !!holding ? "hold" : false);
-  useCarry(model, effectiveMode, held);
+  // The pose first, so anything held follows the posed hand.
   useBodyPose(model, pose);
+  useCarry(model, effectiveMode, held);
 
   const bodyType = look.bodyType ?? defaultBodyType(look.gender);
   useEffect(() => {

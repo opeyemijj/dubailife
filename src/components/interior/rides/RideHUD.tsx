@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import type { RideDef } from "@/lib/city/rides";
 import { rideIO, type RideResult, type RideTelemetry } from "./rideIO";
 
-const LEAVABLE = new Set(["river", "float", "waves", "flowrider", "sunbathe", "sandcastle", "jetski", "paddle", "kitesurf"]);
+const LEAVABLE = new Set(["river", "float", "waves", "flowrider", "sunbathe", "sandcastle", "jetski", "paddle", "kitesurf", "skate", "karaoke"]);
 /** Rides steered with ◀ ▶ (and the arrow keys). */
 const STEERED = new Set(["jetski", "paddle"]);
 
@@ -161,6 +161,39 @@ export function RideHUD({ ride, result, isBest, reward, onAgain, onDone }: {
         </div>
       )}
 
+      {/* Skating: lean into the corners, and how wobbly you are */}
+      {ride.kind === "skate" && (
+        <div className="absolute bottom-32 inset-x-0 flex flex-col items-center gap-2">
+          {ride.id !== "skate-penguin" && (
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-black text-white drop-shadow">Wobble</span>
+              <div className="w-48 h-3 rounded-full bg-white/30 overflow-hidden shadow"><div className={`h-full transition-[width] duration-100 ${t.balance > 0.7 ? "bg-rose-500" : t.balance > 0.4 ? "bg-amber-400" : "bg-emerald-400"}`} style={{ width: `${Math.round(t.balance * 100)}%` }} /></div>
+            </div>
+          )}
+          <div className="pointer-events-auto"><HoldButton label="↶ Lean into the bend" onChange={(d) => steer(d ? -1 : 0)} /></div>
+        </div>
+      )}
+
+      {/* Bowling: the aim (left to right) or power meter */}
+      {t.meterLabel && (
+        <div className="absolute bottom-32 inset-x-0 flex flex-col items-center gap-1">
+          <div className="text-[11px] font-black text-white drop-shadow">{t.meterLabel}</div>
+          <div className="relative w-64 h-4 rounded-full bg-white/30 shadow overflow-hidden">
+            {t.meterLabel === "Aim" ? (
+              <>
+                <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-10 bg-emerald-400/60" />
+                <div className="absolute top-0 bottom-0 w-2 rounded bg-white border border-slate-900" style={{ left: `calc(${(t.meter + 1) * 50}% - 4px)` }} />
+              </>
+            ) : (
+              <div className="h-full bg-gradient-to-r from-sky-400 via-amber-300 to-rose-500" style={{ width: `${Math.round(t.meter * 100)}%` }} />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Karaoke: the beat */}
+      {ride.kind === "karaoke" && <BeatRing />}
+
       {/* the action button */}
       {t.prompt && (
         <div className="absolute bottom-8 inset-x-0 flex justify-center">
@@ -175,6 +208,39 @@ export function RideHUD({ ride, result, isBest, reward, onAgain, onDone }: {
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+/** A ring that pulses on every karaoke beat (drawn every frame without re-rendering). */
+function BeatRing() {
+  const ring = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let id = 0;
+    const tick = () => {
+      const { beatStart, beatGap } = rideIO.tele;
+      const el = ring.current;
+      if (el) {
+        const since = performance.now() - beatStart;
+        if (!beatStart || since < -beatGap) el.style.opacity = "0";
+        else {
+          // Shrinks onto the target as the beat lands.
+          const phase = (((since % beatGap) + beatGap) % beatGap) / beatGap;
+          el.style.opacity = "1";
+          el.style.transform = `scale(${1 + (1 - phase) * 0.9})`;
+        }
+      }
+      id = requestAnimationFrame(tick);
+    };
+    id = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(id);
+  }, []);
+  return (
+    <div className="absolute bottom-36 inset-x-0 flex justify-center">
+      <div className="relative w-16 h-16">
+        <div className="absolute inset-0 rounded-full border-4 border-fuchsia-400 bg-fuchsia-400/20" />
+        <div ref={ring} className="absolute inset-0 rounded-full border-4 border-white" style={{ opacity: 0 }} />
+      </div>
     </div>
   );
 }
@@ -206,6 +272,10 @@ function scoreLabel(ride: RideDef, t: RideTelemetry): string | null {
     case "kitesurf": return `🪁 ${t.score} pts · ${t.count} jumps`;
     case "volleyball": return `🏐 You ${t.score} – ${t.count} Them`;
     case "sandcastle": return `🏰 Stage ${t.score}/5`;
+    case "skate": return `🔁 ${t.score} laps · 💥 ${t.count} falls`;
+    case "spin": return `🌀 ${t.score} now · best ${t.count}`;
+    case "bowling": return `🎳 ${t.score} pts · frame ${Math.min(3, t.count + 1)}/3`;
+    case "karaoke": return `🎤 ${t.score}% · streak ${t.count}`;
     default: return null;
   }
 }

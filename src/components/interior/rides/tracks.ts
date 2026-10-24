@@ -6,7 +6,7 @@ import * as THREE from "three";
 import type { Venue } from "@/lib/city/types";
 import type { RideDef } from "@/lib/city/rides";
 import type { StationDef } from "../layouts";
-import { BEACH, isKidsPool, isSkyPool, poolDeckPool, SLIDE_POINTS, SPLASH_POOLS, STAIRS, TWIN_LANE, WATERPARK, type P3 } from "./paths";
+import { BEACH, BOWLING, RINK, isKidsPool, isSkyPool, poolDeckPool, SLIDE_POINTS, SPLASH_POOLS, STAIRS, TWIN_LANE, WATERPARK, type P3 } from "./paths";
 
 export interface Water { at: [number, number]; w: number; d: number }
 
@@ -147,12 +147,39 @@ function beachTrack(ride: RideDef, at?: StationDef): Track | null {
   return null;
 }
 
+function rinkTrack(): Track {
+  const { ice, loop, gate } = RINK;
+  // Anticlockwise round the oval, starting by the gate (where cos θ puts the skater level with it).
+  const t0 = Math.PI - Math.acos(Math.min(1, Math.abs(gate[0] - ice.at[0]) / loop.rx));
+  const pts = Array.from({ length: 36 }, (_, i) => {
+    const a = t0 - (i / 36) * Math.PI * 2;
+    return new THREE.Vector3(ice.at[0] + Math.cos(a) * loop.rx, 0, ice.at[1] + Math.sin(a) * loop.rz);
+  });
+  const outside: [number, number] = [gate[0], gate[1] + 0.8];
+  return { approach: outside, exit: outside, path: curve(pts, true), spots: { me: [gate[0], gate[1] - 0.6], centre: ice.at }, centre: ice.at };
+}
+
+function bowlingTrack(ride: RideDef): Track | null {
+  const { lanes, foulZ, headPinZ, stage } = BOWLING;
+  if (ride.track === "lane") {
+    const stand: [number, number] = [lanes[0], foulZ + 1.9];
+    return { approach: stand, exit: [lanes[0] + 1.2, foulZ + 2.6], spots: { me: stand, centre: [lanes[0], headPinZ] } };
+  }
+  if (ride.track === "stage") {
+    const front: [number, number] = [stage.at[0] - 0.6, stage.at[1] + stage.d / 2 + 0.7];
+    return { approach: front, exit: front, spots: { me: [stage.at[0], stage.at[1] + 0.2], centre: stage.at } };
+  }
+  return null;
+}
+
 /** The track for a ride in this venue, or null when the venue has nowhere to ride it. `at` is the station it
     was started from (which lounger, for sunbathing). */
 export function trackFor(venue: Venue, ride: RideDef, at?: StationDef): Track | null {
   if (venue.layout === "waterpark") return waterparkTrack(ride);
   if (venue.layout === "pooldeck" && ride.track === "pool") return poolTrack(venue);
   if (venue.layout === "beach") return beachTrack(ride, at);
+  if (venue.layout === "rink") return rinkTrack();
+  if (venue.layout === "bowling") return bowlingTrack(ride);
   return null;
 }
 

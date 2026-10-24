@@ -14,18 +14,21 @@ import { CitizenAvatar, type AvatarAnimation, type BodyPose } from "@/components
 import type { AvatarLookProps } from "@/components/avatar/roster";
 import type { Accessory } from "@/lib/city/types";
 import type { RideDef } from "@/lib/city/rides";
-import { CourseBuoy, FlamingoFloat, JetSki, Paddleboard, RingTube, SandCastle, SurfKite } from "../scenery";
-import { BEACH, TOWER_TOP, WATERPARK, waveZ } from "./paths";
+import { BowlingBall, CourseBuoy, FlamingoFloat, JetSki, Microphone, Paddleboard, Pin, RingTube, SandCastle, SkatePenguin, SurfKite } from "../scenery";
+import { BEACH, BOWLING, dubaiEvening, LANE_IN_USE, PIN_SPOTS, TOWER_TOP, WATERPARK, waveZ } from "./paths";
 import { flash, rideIO, type RideResult } from "./rideIO";
 import type { Track } from "./tracks";
 
 /** A ride under way; `start` is where the citizen stood when it began. Remount the rig (key) per ride. */
 export interface ActiveRide { ride: RideDef; track: Track; key: number; start: [number, number] }
 
-type Prop = "ring" | "raft" | "float" | "board" | "jetski" | "sup" | "kiteboard" | null;
-type Look = { anim: AvatarAnimation; pose?: BodyPose; body: "stand" | "lie" | "prone"; prop: Prop; shades?: boolean };
-/** Bits of the scene a ride changes now and then (the next buoy, the castle's stage, the other player's pose). */
-type Ui = { gate: number; castle: number; opp?: Look };
+type Prop = "ring" | "raft" | "float" | "board" | "jetski" | "sup" | "kiteboard" | "penguin" | null;
+type Look = { anim: AvatarAnimation; pose?: BodyPose; body: "stand" | "lie" | "prone"; prop: Prop; shades?: boolean; hold?: "ball" | "mic" };
+/** Bits of the scene a ride changes now and then (the next buoy, the castle's stage, the other player's pose,
+    how the karaoke crowd is reacting). */
+type Ui = { gate: number; castle: number; opp?: Look; crowd?: AvatarAnimation };
+/** A live bowling pin: standing, or falling over (when, and which way). */
+interface LivePin { x: number; z: number; down: boolean; gone: boolean; t: number; dir: number }
 const G = 9.81;
 /** Rides are shown a little slower than life so they can be enjoyed (a 30 m drop is over in seconds). */
 const SLOW = 0.55;
@@ -55,8 +58,10 @@ interface Ctx {
   camAt?: THREE.Vector3;
   camLook?: THREE.Vector3;
   ui: (u: Partial<Ui>) => void;
-  /** The volleyball, when there is one in play. */
+  /** The volleyball or bowling ball, when there is one in play. */
   ball?: THREE.Vector3;
+  /** The pins on the player's bowling lane. */
+  pins?: LivePin[];
   opp?: { pos: THREE.Vector3; quat: THREE.Quaternion; s: number; v: number; done: number };
   data: Record<string, number>;
 }
@@ -552,6 +557,10 @@ function script(ride: RideDef, track: Track, result: (r: RideResult) => void): S
     case "kitesurf": return kitesurf(ride, track, result);
     case "volleyball": return volleyball(ride, track, result);
     case "sandcastle": return sandcastle(ride, track, result);
+    case "skate": return skate(ride, track, result);
+    case "spin": return figureSpin(ride, track, result);
+    case "bowling": return bowling(ride, track, result);
+    case "karaoke": return karaoke(ride, track, result);
   }
 }
 
@@ -896,6 +905,318 @@ function sandcastle(ride: RideDef, track: Track, result: (r: RideResult) => void
   ];
 }
 
+// ---------------------------------------------------------------- ice rink
+
+/** Laps of the rink: tap in rhythm to push, hold Lean through the corners or wobble and fall. */
+function skate(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+  const tele = rideIO.tele;
+  const penguin = ride.id === "skate-penguin";
+  const loop = track.path!;
+  const L = loop.getLength();
+  const DURATION = 45;
+  const onIce = new THREE.Vector3(track.spots!.me[0], 0.02, track.spots!.me[1]);
+  let s = 0, v = 0, taps = 0, lastTap = -1, wobble = 0, falls = 0, downAt = -1;
+  const skating = (): Look => (penguin ? { anim: "skate", pose: "grip", body: "stand", prop: "penguin" } : { anim: "skate", pose: "balance", body: "stand", prop: null });
+  return [
+    walk(() => [onIce.clone(), loop.getPointAt(0).clone().setY(0.02)], 0.9),
+    {
+      enter: (c) => {
+        c.rideStart = c.clock; c.cam = "chase"; c.data.camDist = 5; taps = rideIO.input.taps;
+        tele.phase = penguin ? "Push your penguin round the rink" : "Tap to push · hold Lean in the corners"; tele.prompt = "Tap to push"; tele.holdButton = false;
+        if (dubaiEvening()) flash("🪩 Disco night on the ice!");
+        c.look(skating());
+      },
+      update: (c, dt) => {
+        const time = c.clock - c.rideStart;
+        if (downAt >= 0) {
+          // Picking yourself up off the ice.
+          if (c.clock - downAt > 1.6) { downAt = -1; wobble = 0; c.look(skating()); }
+          tele.time = time;
+          return false;
+        }
+        if (rideIO.input.taps > taps) {
+          taps = rideIO.input.taps;
+          const gap = lastTap < 0 ? 0.7 : c.clock - lastTap;
+          v += gap > 0.4 && gap < 1.1 ? (penguin ? 0.45 : 0.8) : 0.3;
+          lastTap = c.clock;
+        }
+        const lean = rideIO.input.steer !== 0;
+        v = Math.max(0, Math.min(penguin ? 2.4 : 5.5, v - dt * (0.3 + (lean ? 0.3 : 0))));
+        s += v * dt;
+        const u = (s / L) % 1;
+        const tan = loop.getTangentAt(u);
+        const ahead = loop.getTangentAt((u + 0.02) % 1);
+        // How hard the bend is (turn per metre) times speed²: what throws you off balance.
+        const bend = tan.angleTo(ahead) / (0.02 * L);
+        if (!penguin) {
+          const push = bend * v * v * (lean ? 0.12 : 1) * 0.45;
+          wobble = Math.max(0, wobble + (push - 0.45) * dt + (Math.random() - 0.5) * dt * 0.3);
+          if (wobble >= 1) {
+            falls++; downAt = c.clock; v = 0; flash("💥 Down you go!");
+            c.look({ anim: "sleep", body: "lie", prop: null });
+          }
+        }
+        const p = loop.getPointAt(u);
+        c.pos.set(p.x, 0.02, p.z);
+        frame(c.quat, new THREE.Vector3(tan.x, 0, tan.z), UP);
+        // Lean into the bend when leaning; otherwise a gentle side-to-side glide.
+        c.data.lean = lean ? 0.28 : Math.sin(c.clock * 3.2) * 0.07 * Math.min(1, v / 2);
+        c.speed = v * 3.6 * 1.4; c.top = Math.max(c.top, c.speed);
+        tele.balance = Math.min(1, wobble);
+        tele.score = Math.floor(s / L); tele.count = falls; tele.progress = time / DURATION; tele.time = time;
+        return rideIO.input.exit || time >= DURATION;
+      },
+    },
+    { enter: (c) => { c.data.lean = 0; c.speed = 0; tele.prompt = ""; c.look({ anim: "skate", pose: penguin ? "grip" : "balance", body: "stand", prop: penguin ? "penguin" : null }); }, update: () => true },
+    walk(() => [onIce.clone(), new THREE.Vector3(track.exit[0], 0, track.exit[1])], 0.9),
+    { enter: (c) => {
+      const laps = Math.floor(s / L);
+      result({
+        rideId: ride.id, stars: laps >= 3 && falls === 0 ? 3 : laps >= 2 ? 2 : 1,
+        stats: [{ label: "Laps", value: String(laps) }, { label: "Falls", value: String(falls) }, { label: "Top speed", value: `${Math.round(c.top)} km/h` }],
+        best: { value: laps, label: `${laps} laps` },
+      });
+    }, update: () => false },
+  ];
+}
+
+/** Hold to wind up a spin in the middle of the ice; let go before you're dizzy. Best of three. */
+function figureSpin(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+  const tele = rideIO.tele;
+  const onIce = new THREE.Vector3(track.spots!.me[0], 0.02, track.spots!.me[1]);
+  const mid = new THREE.Vector3(track.spots!.centre![0], 0.02, track.spots!.centre![1]);
+  let tries = 0, best = 0, spinning = false, holdFrom = 0, w = 0, angle = 0, pauseUntil = 0, dizzy = false;
+  return [
+    walk(() => [onIce.clone(), mid.clone()], 0.9),
+    {
+      enter: (c) => {
+        c.rideStart = c.clock; yawQ(c.quat, 0);
+        c.cam = "fixed";
+        c.camAt = mid.clone().add(new THREE.Vector3(2.6, 2.3, 4));
+        c.camLook = mid.clone().add(new THREE.Vector3(0, 1, 0));
+        tele.phase = "Spin 1 of 3: hold to spin, let go before you're dizzy"; tele.prompt = "Hold to spin"; tele.holdButton = true;
+        c.look({ anim: "idle", pose: "balance", body: "stand", prop: null });
+      },
+      update: (c, dt) => {
+        if (c.clock < pauseUntil) return false;
+        if (dizzy) { dizzy = false; c.look({ anim: "idle", pose: "balance", body: "stand", prop: null }); }
+        if (tries >= 3) return true;
+        if (!spinning && rideIO.input.down) { spinning = true; holdFrom = c.clock; w = 0; angle = 0; c.look({ anim: "idle", pose: "armsUp", body: "stand", prop: null }); }
+        if (spinning) {
+          w = Math.min(19, w + dt * 9);
+          angle += w * dt;
+          c.spin = angle;
+          const held = c.clock - holdFrom;
+          const revs = Math.floor(angle / (Math.PI * 2));
+          tele.score = revs;
+          if (held > 3.3) {
+            spinning = false; tries++; c.spin = 0; dizzy = true; pauseUntil = c.clock + 1.6;
+            flash("😵 Too dizzy, you fell!");
+            c.look({ anim: "sleep", body: "lie", prop: null });
+          } else if (!rideIO.input.down) {
+            spinning = false; tries++; c.spin = 0; pauseUntil = c.clock + 1.2;
+            best = Math.max(best, revs);
+            flash(revs >= 8 ? `🌟 ${revs} rotations, superb!` : `🌀 ${revs} rotations`);
+            c.look({ anim: "idle", pose: "balance", body: "stand", prop: null });
+          }
+        }
+        tele.phase = tries < 3 ? `Spin ${tries + 1} of 3: hold to spin, let go before you're dizzy` : "Done";
+        tele.count = best; tele.progress = tries / 3;
+        return tries >= 3 && c.clock >= pauseUntil;
+      },
+    },
+    { enter: (c) => { c.cam = "chase"; tele.prompt = ""; c.look({ anim: "skate", pose: "balance", body: "stand", prop: null }); }, update: () => true },
+    walk(() => [onIce.clone(), new THREE.Vector3(track.exit[0], 0, track.exit[1])], 0.9),
+    { enter: () => result({
+      rideId: ride.id, stars: best >= 8 ? 3 : best >= 5 ? 2 : 1, headline: best >= 8 ? "🌟 Olympic spin!" : undefined,
+      stats: [{ label: "Best spin", value: `${best} rotations` }], best: { value: best, label: `${best} rotations` },
+    }), update: () => false },
+  ];
+}
+
+// ---------------------------------------------------------------- Brass Monkey
+
+/** Three frames: lock in your line, then your power; the ball rolls and the pins fly. */
+function bowling(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+  const tele = rideIO.tele;
+  const { foulZ, headPinZ, laneWidth } = BOWLING;
+  const laneX = track.spots!.centre![0];
+  const stand = new THREE.Vector3(track.spots!.me[0], 0, track.spots!.me[1]);
+  const FRAMES = 3;
+  const frames: number[][] = [];
+  let frame_ = 0, ball = 0, phase: "aim" | "power" | "run" | "roll" | "settle" = "aim", taps = 0, aim = 0, power = 0, t0 = 0, bx = 0, rollFrom = 0, target = 0, gutter = false;
+  let strikes = 0, spares = 0;
+  const ballPos = new THREE.Vector3(0, -5, 0);
+  const pins: LivePin[] = PIN_SPOTS.map(([x, z]) => ({ x, z, down: false, gone: false, t: 0, dir: 0 }));
+  const rack = () => pins.forEach((p) => { p.down = false; p.gone = false; p.t = 0; });
+  const knock = (c: Ctx, x: number, pow: number) => {
+    // Pins in the ball's path go down; each one fallen can take out the pins behind it.
+    const pocket = Math.abs(x) >= 0.04 && Math.abs(x) <= 0.16;
+    const chance = 0.35 + pow * 0.45 + (pocket ? 0.25 : 0);
+    const hit = (p: LivePin, dir: number) => { if (!p.down && !p.gone) { p.down = true; p.t = c.clock + Math.random() * 0.25; p.dir = dir; } };
+    pins.forEach((p) => { if (Math.abs(p.x - x) < 0.17) hit(p, Math.sign(p.x - x) || (Math.random() < 0.5 ? -1 : 1)); });
+    for (let pass = 0; pass < 3; pass++) {
+      pins.forEach((a) => { if (!a.down) return; pins.forEach((b) => { if (b.z < a.z - 0.05 && Math.abs(b.x - a.x) <= 0.2 && Math.random() < chance) hit(b, Math.sign(b.x - a.x) || a.dir); }); });
+    }
+    if (pocket && pow > 0.75 && Math.random() < 0.5) pins.forEach((p) => hit(p, Math.sign(p.x) || 1));
+  };
+  const total = () => {
+    // Strikes and spares earn the next balls' pins on top (within these three frames).
+    const balls = frames.flat();
+    let sum = 0, i = 0;
+    for (const f of frames) {
+      if (f[0] === 10) { sum += 10 + (balls[i + 1] ?? 0) + (balls[i + 2] ?? 0); i += 1; }
+      else if ((f[0] ?? 0) + (f[1] ?? 0) === 10) { sum += 10 + (balls[i + 2] ?? 0); i += 2; }
+      else { sum += (f[0] ?? 0) + (f[1] ?? 0); i += f.length; }
+    }
+    return sum;
+  };
+  return [
+    walk(() => [stand.clone()], 1.2),
+    {
+      enter: (c) => {
+        c.rideStart = c.clock; taps = rideIO.input.taps; c.ball = ballPos; c.pins = pins; LANE_IN_USE.current = true;
+        yawQ(c.quat, Math.PI);
+        c.cam = "fixed";
+        // High and to the right of the bowler: the whole lane down to the pins stays in view.
+        c.camAt = new THREE.Vector3(laneX + 1.4, 3.1, foulZ + 5.4);
+        c.camLook = new THREE.Vector3(laneX - 0.1, 0.2, headPinZ + 1.4);
+        c.look({ anim: "idle", body: "stand", prop: null, hold: "ball" });
+      },
+      update: (c, dt) => {
+        const tapped = rideIO.input.taps > taps;
+        if (tapped) taps = rideIO.input.taps;
+        const time = c.clock;
+        if (phase === "aim") {
+          aim = Math.sin(time * 2.4);
+          tele.meterLabel = "Aim"; tele.meter = aim; tele.prompt = "Tap to lock your line"; tele.phase = `Frame ${frame_ + 1} · ball ${ball + 1}`;
+          if (tapped) { phase = "power"; t0 = time; }
+        } else if (phase === "power") {
+          power = (Math.sin((time - t0) * 3.6 - Math.PI / 2) + 1) / 2;
+          tele.meterLabel = "Power"; tele.meter = power; tele.prompt = "Tap for power";
+          if (tapped) { phase = "run"; t0 = time; tele.prompt = ""; tele.meterLabel = ""; c.look({ anim: "walk", pose: "throw", body: "stand", prop: null, hold: "ball" }); }
+        } else if (phase === "run") {
+          // The approach: a few steps up to the foul line, swinging the ball through.
+          const k = Math.min(1, (time - t0) / 0.8);
+          c.pos.z = stand.z - k * 1.3;
+          if (k >= 1) {
+            phase = "roll"; t0 = time; rollFrom = laneX + 0.15;
+            target = aim * 0.42 + (power > 0.85 ? -0.05 : 0);
+            gutter = Math.abs(target) > laneWidth / 2 - 0.05;
+            bx = target;
+            c.look({ anim: "idle", pose: "throw", body: "stand", prop: null });
+          }
+        } else if (phase === "roll") {
+          const speed = 6 + power * 3;
+          const dist = foulZ - headPinZ + 1.4;
+          const k = Math.min(1, ((time - t0) * speed) / dist);
+          const x = gutter ? laneX + Math.sign(target) * (laneWidth / 2 + 0.12) : rollFrom + (laneX + target - rollFrom) * k;
+          ballPos.set(gutter && k > 0.3 ? x : rollFrom + (x - rollFrom) * Math.min(1, k / 0.3), 0.11, foulZ - 0.1 - k * dist);
+          if (!gutter && !c.data.knocked && ballPos.z <= headPinZ + 0.1) { c.data.knocked = 1; knock(c, bx, power); }
+          c.speed = speed * 3.6; c.top = Math.max(c.top, c.speed);
+          if (k >= 1) { phase = "settle"; t0 = time; ballPos.set(0, -5, 0); c.speed = 0; }
+        } else if (phase === "settle" && time - t0 > 1.4) {
+          c.data.knocked = 0;
+          const downNow = pins.filter((p) => p.down && !p.gone).length;
+          const f = frames[frame_] ?? (frames[frame_] = []);
+          f.push(downNow);
+          const strike = ball === 0 && downNow === 10;
+          const spare = ball === 1 && f[0] + downNow === 10;
+          if (strike) { strikes++; flash("💥 STRIKE!"); } else if (spare) { spares++; flash("🎯 SPARE!"); } else flash(gutter ? "😬 Gutter ball" : downNow === 0 ? "Missed them all…" : `${downNow} pin${downNow > 1 ? "s" : ""}`);
+          // The fallen pins are swept away; a new rack after a strike or the second ball.
+          pins.forEach((p) => { if (p.down) p.gone = true; });
+          if (strike || ball === 1) { frame_++; ball = 0; rack(); } else ball++;
+          tele.score = total(); tele.count = frame_; tele.progress = frame_ / FRAMES;
+          c.pos.copy(stand);
+          if (frame_ >= FRAMES) return true;
+          phase = "aim";
+          c.look({ anim: "idle", body: "stand", prop: null, hold: "ball" });
+        }
+        return false;
+      },
+    },
+    { enter: (c) => { LANE_IN_USE.current = false; c.cam = "chase"; tele.meterLabel = ""; tele.prompt = ""; c.look({ anim: total() >= 50 ? "dance" : "idle", body: "stand", prop: null }); }, update: (c) => c.t > 1.2 },
+    walk(() => [new THREE.Vector3(track.exit[0], 0, track.exit[1])]),
+    { enter: () => {
+      const score = total();
+      result({
+        rideId: ride.id, headline: strikes ? `💥 ${strikes} strike${strikes > 1 ? "s" : ""}!` : undefined,
+        stars: score >= 60 ? 3 : score >= 35 ? 2 : 1,
+        stats: [{ label: "Score", value: String(score) }, { label: "Strikes", value: String(strikes) }, { label: "Spares", value: String(spares) }],
+        best: { value: score, label: `${score} points` },
+      });
+    }, update: () => false },
+  ];
+}
+
+const SONGS = ["Marina Lights", "Midnight on Sheikh Zayed Road", "Sand & Neon", "Golden Hour Groove", "Dhow Cruise Disco", "Desert Stars"];
+
+/** Take the mic: tap on every beat. A streak gets the crowd clapping, then dancing. */
+function karaoke(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+  const tele = rideIO.tele;
+  const { stage } = BOWLING;
+  const spot = new THREE.Vector3(track.spots!.me[0], stage.h, track.spots!.me[1]);
+  const BEATS = 24, GAP = 600;
+  const song = SONGS[Math.floor(Math.random() * SONGS.length)];
+  let taps = 0, points = 0, streak = 0, bestStreak = 0, perfect = 0, crowd: AvatarAnimation = "idle";
+  const judged = new Set<number>();
+  const cheer = (c: Ctx) => {
+    const next: AvatarAnimation = streak >= 8 ? "dance" : streak >= 3 ? "clap" : "idle";
+    if (next !== crowd) { crowd = next; c.ui({ crowd }); }
+  };
+  return [
+    walk(() => [new THREE.Vector3(stage.at[0] - 0.6, 0, stage.at[1] + stage.d / 2 + 0.2), spot.clone()], 1.1),
+    {
+      enter: (c) => {
+        c.rideStart = c.clock; taps = rideIO.input.taps; yawQ(c.quat, 0);
+        c.cam = "fixed";
+        c.camAt = spot.clone().add(new THREE.Vector3(-1.4, 1.5, 4.6));
+        c.camLook = spot.clone().add(new THREE.Vector3(0, 1.1, 0));
+        tele.phase = `🎵 ${song}`; tele.prompt = "Tap on the beat"; tele.holdButton = false;
+        tele.beatStart = performance.now() + 2000; tele.beatGap = GAP;
+        c.look({ anim: "talk", pose: "mic", body: "stand", prop: null, hold: "mic" });
+        c.ui({ crowd: "idle" });
+      },
+      update: (c) => {
+        const now = performance.now();
+        const beatAt = (i: number) => tele.beatStart + i * GAP;
+        const count = Math.ceil((tele.beatStart - now) / 1000);
+        tele.countdown = now < tele.beatStart ? Math.max(1, count) : 0;
+        if (rideIO.input.taps > taps) {
+          taps = rideIO.input.taps;
+          // Judge against the nearest beat not yet sung.
+          const i = Math.round((now - tele.beatStart) / GAP);
+          if (i >= 0 && i < BEATS && !judged.has(i)) {
+            judged.add(i);
+            const off = Math.abs(now - beatAt(i));
+            if (off < 100) { points += 100; streak++; perfect++; if (streak % 4 === 0) flash(`🔥 ${streak} in a row!`); }
+            else if (off < 200) { points += 60; streak++; }
+            else { streak = 0; flash("🎶 Off-beat"); }
+            bestStreak = Math.max(bestStreak, streak);
+            cheer(c);
+          }
+        }
+        // A beat that went by unsung breaks the streak.
+        const passed = Math.floor((now - tele.beatStart - 250) / GAP);
+        for (let i = 0; i <= Math.min(passed, BEATS - 1); i++) if (!judged.has(i)) { judged.add(i); streak = 0; cheer(c); }
+        tele.score = Math.round((points / (BEATS * 100)) * 100); tele.count = streak; tele.progress = Math.max(0, (now - tele.beatStart) / (BEATS * GAP));
+        return now > beatAt(BEATS - 1) + 600 || rideIO.input.exit;
+      },
+    },
+    { enter: (c) => { tele.prompt = ""; tele.beatStart = 0; c.look({ anim: tele.score >= 60 ? "wave" : "idle", body: "stand", prop: null, hold: "mic" }); c.ui({ crowd: tele.score >= 60 ? "clap" : "idle" }); }, update: (c) => c.t > 1.4 },
+    walk(() => [new THREE.Vector3(stage.at[0] - 0.6, 0, stage.at[1] + stage.d / 2 + 0.2), new THREE.Vector3(track.exit[0], 0, track.exit[1])], 1.1),
+    { enter: () => {
+      const acc = tele.score;
+      result({
+        rideId: ride.id, headline: acc >= 85 ? "🎤 The crowd loved it!" : acc >= 60 ? "👏 Solid performance" : "🙈 Maybe next time…",
+        stars: acc >= 85 ? 3 : acc >= 60 ? 2 : 1,
+        stats: [{ label: "Song", value: song }, { label: "Accuracy", value: `${acc}%` }, { label: "Perfect beats", value: String(perfect) }, { label: "Best streak", value: String(bestStreak) }],
+        best: { value: acc, label: `${acc}%` },
+      });
+    }, update: () => false },
+  ];
+}
+
 // The context is read by result builders in the scripts (created once per ride).
 const ctxRef: { current: Ctx | null } = { current: null };
 
@@ -963,6 +1284,46 @@ function Ripples({ target, on }: { target: React.RefObject<THREE.Group | null>; 
   );
 }
 
+/** The player's lane pins: standing, toppling the way they were hit, then swept away. */
+function LivePins({ at }: { at: [number, number, number] }) {
+  const group = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    const pins = ctxRef.current?.pins;
+    const g = group.current;
+    if (!g || !pins) return;
+    g.children.forEach((child, i) => {
+      const p = pins[i];
+      if (!p) return;
+      child.visible = !p.gone;
+      const k = p.down ? Math.min(1, Math.max(0, (clock.getElapsedTime() - p.t) / 0.35)) : 0;
+      child.position.set(p.x + p.dir * k * 0.18, 0, p.z - k * 0.12);
+      child.rotation.set(-k * 0.5, 0, -p.dir * k * (Math.PI / 2));
+    });
+  });
+  return <group ref={group} position={at}>{PIN_SPOTS.map((_, i) => <group key={i}><Pin /></group>)}</group>;
+}
+
+/** Guests in front of the karaoke stage, reacting to the singer, under a spotlight. */
+function KaraokeCrowd({ anim }: { anim: AvatarAnimation }) {
+  const { stage } = BOWLING;
+  const people = [
+    { gender: "woman" as const, preset: "Female_Adult_01", x: -1.1 },
+    { gender: "man" as const, preset: "Male_Adult_08", x: 0 },
+    { gender: "woman" as const, preset: "Female_Adult_05", x: 1.1 },
+  ];
+  return (
+    <group position={[stage.at[0], 0, stage.at[1] + stage.d / 2 + 1.6]}>
+      {people.map((p, i) => (
+        <group key={i} position={[p.x, 0, (i % 2) * 0.4]} rotation={[0, Math.PI, 0]}>
+          <Suspense fallback={null}><CitizenAvatar look={{ gender: p.gender, preset: p.preset }} animation={anim} /></Suspense>
+        </group>
+      ))}
+      {/* the spotlight on the singer */}
+      <mesh position={[0, 2.4, -stage.d / 2 - 1.4]}><coneGeometry args={[0.8, 3.6, 24, 1, true]} /><meshBasicMaterial color="#fde68a" transparent opacity={0.12} depthWrite={false} side={THREE.DoubleSide} /></mesh>
+    </group>
+  );
+}
+
 // ---------------------------------------------------------------- the rig
 
 export function RideRig({ active, look, worn, onEnd }: {
@@ -1000,7 +1361,7 @@ export function RideRig({ active, look, worn, onEnd }: {
     // The script reports its result once; the camera glides back before it's shown.
     const steps = script(ride, track, (r) => { if (!ended.current) { ended.current = true; camBack.current = 0; pendingResult.current = r; } });
     state.current = { ctx, steps, i: -1 };
-    return () => { if (ctxRef.current === ctx) ctxRef.current = null; state.current = null; };
+    return () => { if (ctxRef.current === ctx) ctxRef.current = null; state.current = null; LANE_IN_USE.current = false; };
   }, [ride, track, start, clock]);
 
   // The chase camera: remembers the player's view and gives it back when the ride ends.
@@ -1112,7 +1473,14 @@ export function RideRig({ active, look, worn, onEnd }: {
       <group ref={body}>
         <group ref={spinner}>
           <Suspense fallback={null}>
-            <CitizenAvatar look={look} accessories={lk.shades && !worn?.includes("sunglasses") ? [...(worn ?? []), "sunglasses"] : worn} animation={lk.anim} pose={lk.pose} rotation={bodyRot} />
+            <CitizenAvatar
+              look={look}
+              accessories={lk.shades && !worn?.includes("sunglasses") ? [...(worn ?? []), "sunglasses"] : worn}
+              animation={lk.anim}
+              pose={lk.pose}
+              rotation={bodyRot}
+              holding={lk.hold === "ball" ? <BowlingBall /> : lk.hold === "mic" ? <Microphone /> : undefined}
+            />
           </Suspense>
           {lk.prop === "ring" && <group position={[0, 0.38, -0.12]}><RingTube color={ride.kind === "river" ? "#f97316" : "#0ea5e9"} /></group>}
           {lk.prop === "raft" && (
@@ -1136,6 +1504,7 @@ export function RideRig({ active, look, worn, onEnd }: {
           {/* Sitting astride the jet ski (its seat is under the hips). */}
           {lk.prop === "jetski" && <group position={[0, -0.3, -0.05]}><JetSki color="#e11d48" /></group>}
           {lk.prop === "sup" && <group position={[0, -0.04, 0.15]}><Paddleboard /></group>}
+          {lk.prop === "penguin" && <group position={[0, 0, 0.62]}><SkatePenguin /></group>}
           {lk.prop === "kiteboard" && (
             <group>
               <mesh position={[0, -0.06, 0]}><boxGeometry args={[1.3, 0.04, 0.42]} /><meshStandardMaterial color="#facc15" /></mesh>
@@ -1157,6 +1526,13 @@ export function RideRig({ active, look, worn, onEnd }: {
         </group>
       )}
       {ride.kind === "volleyball" && <mesh ref={ballRef} visible={false}><sphereGeometry args={[0.12, 16, 12]} /><meshStandardMaterial color="#fde047" /></mesh>}
+      {ride.kind === "bowling" && (
+        <>
+          <mesh ref={ballRef} visible={false} castShadow><sphereGeometry args={[0.11, 20, 16]} /><meshStandardMaterial color="#7c3aed" roughness={0.15} metalness={0.3} /></mesh>
+          <LivePins at={[BOWLING.lanes[0], 0.02, BOWLING.headPinZ]} />
+        </>
+      )}
+      {ride.kind === "karaoke" && <KaraokeCrowd anim={ui.crowd ?? "idle"} />}
       {/* Course buoys (jet ski, paddleboard): the next one glows */}
       {track.gates?.map(([x, z], i) => (
         <group key={i} position={[x, 0, z]}><CourseBuoy next={i === ui.gate} done={i < ui.gate} /></group>

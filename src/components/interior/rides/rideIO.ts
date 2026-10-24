@@ -41,6 +41,12 @@ export interface RideTelemetry {
   /** A short message to flash ("Perfect stroke!", "Wipeout!"). */
   flash: string;
   flashAt: number;
+  /** A meter the HUD shows (bowling aim -1..1 or power 0..1), with its label; empty label hides it. */
+  meter: number;
+  meterLabel: string;
+  /** Karaoke: when the first beat lands (performance.now()) and the gap between beats (ms). */
+  beatStart: number;
+  beatGap: number;
 }
 
 export interface RideResult {
@@ -63,7 +69,7 @@ export const rideIO: { input: RideInput; tele: RideTelemetry } = {
 };
 
 function freshTelemetry(): RideTelemetry {
-  return { phase: "", prompt: "", holdButton: false, countdown: 0, speedKmh: 0, topKmh: 0, time: 0, progress: 0, score: 0, balance: 0, bpm: 0, count: 0, flash: "", flashAt: 0 };
+  return { phase: "", prompt: "", holdButton: false, countdown: 0, speedKmh: 0, topKmh: 0, time: 0, progress: 0, score: 0, balance: 0, bpm: 0, count: 0, flash: "", flashAt: 0, meter: 0, meterLabel: "", beatStart: 0, beatGap: 0 };
 }
 
 export function resetRideIO() {

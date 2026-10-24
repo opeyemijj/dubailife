@@ -6,7 +6,7 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { RAFT_RADIUS, SLIDE_POINTS, SLIDE_RADIUS, STAIRS_X, TWIN_LANE, waveZ, WAVE_COUNT, type P3 } from "./rides/paths";
+import { BOWLING, LANE_IN_USE, PIN_SPOTS, RAFT_RADIUS, SLIDE_POINTS, SLIDE_RADIUS, STAIRS_X, TWIN_LANE, waveZ, WAVE_COUNT, type P3 } from "./rides/paths";
 
 const Box = ({ args, position, color, rotation, emissive }: { args: [number, number, number]; position: [number, number, number]; color: string; rotation?: [number, number, number]; emissive?: string }) => (
   <mesh position={position} rotation={rotation} castShadow receiveShadow>
@@ -272,7 +272,14 @@ export function RingChandelier({ radius = 1.6 }: { radius?: number }) {
 // ---------------------------------------------------------------- ice rink
 
 /** An ice rink: the ice surface with boards and a glass top around it. */
-export function IceRink({ w, d }: { w: number; d: number }) {
+export function IceRink({ w, d, gateX }: { w: number; d: number; gateX?: number }) {
+  // The boards round the ice, with a 1.2 m gap at the front where skaters step on.
+  const gap = 1.2;
+  const front: Array<[number, number]> = gateX === undefined ? [[-w / 2, w / 2]] : [[-w / 2, gateX - gap / 2], [gateX + gap / 2, w / 2]];
+  const boards: Array<[number, number, number, number]> = [
+    [0, -d / 2, w, 0.1], [-w / 2, 0, 0.1, d], [w / 2, 0, 0.1, d],
+    ...front.map(([a, b]) => [(a + b) / 2, d / 2, b - a, 0.1] as [number, number, number, number]),
+  ];
   return (
     <group>
       <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -281,10 +288,10 @@ export function IceRink({ w, d }: { w: number; d: number }) {
       </mesh>
       <mesh position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.9, 1, 32]} /><meshStandardMaterial color="#ef4444" /></mesh>
       <Box args={[w, 0.03, 0.08]} position={[0, 0.03, 0]} color="#ef4444" />
-      {[[0, -d / 2, w, 0.1], [0, d / 2, w, 0.1], [-w / 2, 0, 0.1, d], [w / 2, 0, 0.1, d]].map(([x, z, bw, bd], i) => (
+      {boards.map(([x, z, bw, bd], i) => (
         <group key={i}>
-          <Box args={[bw as number, 0.9, bd as number]} position={[x as number, 0.45, z as number]} color="#ffffff" />
-          <mesh position={[x as number, 1.3, z as number]}><boxGeometry args={[bw as number, 0.8, bd as number]} /><meshStandardMaterial color="#bae6fd" transparent opacity={0.3} /></mesh>
+          <Box args={[bw, 0.9, bd]} position={[x, 0.45, z]} color="#ffffff" />
+          <mesh position={[x, 1.3, z]}><boxGeometry args={[bw, 0.8, bd]} /><meshStandardMaterial color="#bae6fd" transparent opacity={0.3} /></mesh>
         </group>
       ))}
     </group>
@@ -686,6 +693,146 @@ export function CourseBuoy({ next, done }: { next: boolean; done: boolean }) {
     <group ref={ref}>
       <mesh><sphereGeometry args={[0.32, 14, 10]} /><meshStandardMaterial color={done ? "#22c55e" : next ? "#facc15" : "#f97316"} emissive={next ? "#facc15" : "#000000"} emissiveIntensity={next ? 0.6 : 0} /></mesh>
       {next && <mesh position={[0, 1.4, 0]} rotation={[Math.PI, 0, 0]}><coneGeometry args={[0.22, 0.5, 4]} /><meshStandardMaterial color="#facc15" emissive="#facc15" emissiveIntensity={0.6} /></mesh>}
+    </group>
+  );
+}
+
+// ---------------------------------------------------------------- bowling and karaoke
+
+/** One bowling pin (12-inch spacing, ~38 cm tall): white with red neck stripes. */
+export function Pin() {
+  const geo = useMemo(() => new THREE.LatheGeometry([[0, 0], [0.03, 0], [0.055, 0.08], [0.06, 0.14], [0.04, 0.24], [0.022, 0.28], [0.032, 0.33], [0.03, 0.37], [0, 0.38]].map(([x, y]) => new THREE.Vector2(x, y)), 14), []);
+  return (
+    <group>
+      <mesh geometry={geo} castShadow><meshStandardMaterial color="#f8fafc" roughness={0.3} /></mesh>
+      {[0.255, 0.285].map((y) => <mesh key={y} position={[0, y, 0]}><cylinderGeometry args={[0.024, 0.026, 0.012, 12]} /><meshStandardMaterial color="#dc2626" /></mesh>)}
+    </group>
+  );
+}
+
+/** A bowling ball. */
+export function BowlingBall({ color = "#7c3aed" }: { color?: string }) {
+  return <mesh castShadow><sphereGeometry args={[0.11, 20, 16]} /><meshStandardMaterial color={color} roughness={0.15} metalness={0.3} /></mesh>;
+}
+
+/** The lane's pins at rest; lane 1 hides them while the player bowls (the ride draws live ones). */
+function RestingPins({ live }: { live: boolean }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame(() => { if (ref.current) ref.current.visible = !(live && LANE_IN_USE.current); });
+  return <group ref={ref}>{PIN_SPOTS.map(([x, z], i) => <group key={i} position={[x, 0, z]}><Pin /></group>)}</group>;
+}
+
+/** The lanes: polished wood with arrows, gutters, the pin deck, ball return and the score screen above. */
+export function BowlingLanes({ accent = "#d97706" }: { accent?: string }) {
+  const { lanes, laneWidth: w, foulZ, headPinZ } = BOWLING;
+  const len = foulZ - headPinZ + 1.6;
+  const mid = (foulZ + headPinZ - 1.6) / 2;
+  return (
+    <group>
+      {lanes.map((x, li) => (
+        <group key={li} position={[x, 0, 0]}>
+          <mesh position={[0, 0.02, mid]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[w, len]} /><meshStandardMaterial color="#e0b47a" roughness={0.18} metalness={0.05} /></mesh>
+          {/* guide arrows and the foul line */}
+          {[-2, -1, 0, 1, 2].map((k) => <mesh key={k} position={[k * 0.17, 0.025, foulZ - 4.6]} rotation={[-Math.PI / 2, 0, Math.PI]}><circleGeometry args={[0.05, 3]} /><meshBasicMaterial color="#7c2d12" /></mesh>)}
+          <mesh position={[0, 0.025, foulZ]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[w, 0.03]} /><meshBasicMaterial color="#111827" /></mesh>
+          {/* gutters */}
+          {[-1, 1].map((k) => <mesh key={k} position={[k * (w / 2 + 0.12), 0.01, mid]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[0.24, len]} /><meshStandardMaterial color="#6b7280" metalness={0.4} roughness={0.3} /></mesh>)}
+          <group position={[0, 0.02, headPinZ]}><RestingPins live={li === 0} /></group>
+          {/* the dark pit behind the pins and the hood over it */}
+          <mesh position={[0, 0.6, headPinZ - 1.5]}><boxGeometry args={[w + 0.5, 1.2, 0.1]} /><meshStandardMaterial color="#111827" /></mesh>
+          <mesh position={[0, 1.35, headPinZ - 0.9]}><boxGeometry args={[w + 0.5, 0.3, 1.3]} /><meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.3} /></mesh>
+          {/* ball return between the lanes, and the score screen */}
+          <mesh position={[w / 2 + 0.55, 0.3, foulZ + 1.6]}><boxGeometry args={[0.35, 0.6, 1]} /><meshStandardMaterial color="#1f2937" /></mesh>
+          {[0, 1].map((b) => <mesh key={b} position={[w / 2 + 0.55, 0.68, foulZ + 1.35 + b * 0.25]}><sphereGeometry args={[0.1, 14, 10]} /><meshStandardMaterial color={["#2563eb", "#16a34a"][b]} roughness={0.2} /></mesh>)}
+          <mesh position={[0, 2.6, foulZ - 0.6]} rotation={[0.25, 0, 0]}><planeGeometry args={[0.9, 0.5]} /><meshStandardMaterial color="#0f172a" emissive="#38bdf8" emissiveIntensity={0.35} /></mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+/** The karaoke stage: a low platform, a screen behind and a mic on its stand. */
+export function KaraokeStage({ accent = "#d97706" }: { accent?: string }) {
+  const { w, d, h } = BOWLING.stage;
+  const screen = useMemo(() => {
+    const c = document.createElement("canvas");
+    c.width = 512; c.height = 256;
+    const g = c.getContext("2d")!;
+    const grad = g.createLinearGradient(0, 0, 512, 256); grad.addColorStop(0, "#4c1d95"); grad.addColorStop(1, "#be185d");
+    g.fillStyle = grad; g.fillRect(0, 0, 512, 256);
+    g.fillStyle = "#ffffff"; g.font = "bold 54px sans-serif"; g.textAlign = "center"; g.fillText("🎤 KARAOKE", 256, 110);
+    g.font = "32px sans-serif"; g.fillStyle = "#fde68a"; g.fillText("♪  sing along  ♪", 256, 170);
+    return new THREE.CanvasTexture(c);
+  }, []);
+  return (
+    <group>
+      <Box args={[w, h, d]} position={[0, h / 2, 0]} color="#1c1917" />
+      <mesh position={[0, h + 0.005, 0]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[w - 0.1, d - 0.1]} /><meshStandardMaterial color="#292524" roughness={0.4} /></mesh>
+      <mesh position={[0, h + 1.6, -d / 2 + 0.05]}><planeGeometry args={[2.6, 1.3]} /><meshStandardMaterial map={screen} emissive="#ffffff" emissiveMap={screen} emissiveIntensity={0.5} /></mesh>
+      {/* the edge of the stage glows */}
+      <mesh position={[0, h, d / 2]}><boxGeometry args={[w, 0.04, 0.04]} /><meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={1} /></mesh>
+      <group position={[0, h, d / 2 - 0.7]}><MicStand /></group>
+    </group>
+  );
+}
+
+export function Microphone() {
+  return (
+    <group>
+      <mesh position={[0, 0.06, 0]}><cylinderGeometry args={[0.018, 0.014, 0.14, 10]} /><meshStandardMaterial color="#111827" metalness={0.5} /></mesh>
+      <mesh position={[0, 0.15, 0]}><sphereGeometry args={[0.03, 12, 10]} /><meshStandardMaterial color="#9ca3af" metalness={0.8} roughness={0.3} /></mesh>
+    </group>
+  );
+}
+
+function MicStand() {
+  return (
+    <group>
+      <mesh position={[0, 0.75, 0]}><cylinderGeometry args={[0.012, 0.012, 1.5, 8]} /><meshStandardMaterial color="#111827" metalness={0.6} /></mesh>
+      <mesh position={[0, 0.02, 0]}><cylinderGeometry args={[0.18, 0.18, 0.03, 16]} /><meshStandardMaterial color="#111827" /></mesh>
+      <group position={[0, 1.42, 0.03]} rotation={[0.5, 0, 0]}><Microphone /></group>
+    </group>
+  );
+}
+
+// ---------------------------------------------------------------- ice rink
+
+/** A penguin skating aid (the kind beginners push round the rink). */
+export function SkatePenguin() {
+  return (
+    <group>
+      <mesh position={[0, 0.45, 0]} scale={[1, 1.35, 0.9]}><sphereGeometry args={[0.28, 16, 12]} /><meshStandardMaterial color="#111827" /></mesh>
+      <mesh position={[0, 0.42, 0.13]} scale={[0.8, 1.15, 0.6]}><sphereGeometry args={[0.24, 16, 12]} /><meshStandardMaterial color="#f8fafc" /></mesh>
+      <mesh position={[0, 0.88, 0]}><sphereGeometry args={[0.17, 14, 12]} /><meshStandardMaterial color="#111827" /></mesh>
+      <mesh position={[0, 0.86, 0.17]} rotation={[Math.PI / 2, 0, 0]}><coneGeometry args={[0.04, 0.1, 8]} /><meshStandardMaterial color="#f59e0b" /></mesh>
+      {[-0.07, 0.07].map((x) => <mesh key={x} position={[x, 0.92, 0.14]}><sphereGeometry args={[0.025, 8, 6]} /><meshStandardMaterial color="#ffffff" /></mesh>)}
+      {/* the handle bar skaters hold */}
+      <mesh position={[0, 0.95, -0.22]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.02, 0.02, 0.5, 8]} /><meshStandardMaterial color="#ef4444" /></mesh>
+      {[-0.2, 0.2].map((x) => <mesh key={x} position={[x, 0.8, -0.18]}><cylinderGeometry args={[0.015, 0.015, 0.3, 6]} /><meshStandardMaterial color="#ef4444" /></mesh>)}
+    </group>
+  );
+}
+
+/** Disco night on the ice: a mirror ball and coloured lights sweeping the rink. */
+export function DiscoLights({ w, d }: { w: number; d: number }) {
+  const ball = useRef<THREE.Mesh>(null);
+  const spots = useRef<THREE.Group>(null);
+  useFrame((s) => {
+    const t = s.clock.elapsedTime;
+    if (ball.current) ball.current.rotation.y = t * 0.6;
+    spots.current?.children.forEach((c, i) => {
+      const a = t * (0.5 + i * 0.13) + i * 1.7;
+      c.position.set(Math.cos(a) * w * 0.35, 0.035, Math.sin(a * 1.3) * d * 0.35);
+    });
+  });
+  return (
+    <group>
+      <mesh ref={ball} position={[0, 5, 0]}><icosahedronGeometry args={[0.45, 1]} /><meshStandardMaterial color="#e5e7eb" metalness={1} roughness={0.15} flatShading /></mesh>
+      <group ref={spots}>
+        {["#f43f5e", "#22d3ee", "#a855f7", "#facc15", "#22c55e"].map((c) => (
+          <mesh key={c} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.9, 24]} /><meshBasicMaterial color={c} transparent opacity={0.45} depthWrite={false} /></mesh>
+        ))}
+      </group>
     </group>
   );
 }

@@ -4,8 +4,8 @@
 import data from "@/data/venues/rides.json";
 import type { Venue, VenueActivity } from "./types";
 
-export type RideKind = "drop" | "capsule" | "raft" | "race" | "tube" | "river" | "waves" | "flowrider" | "swim" | "cannonball" | "float" | "sunbathe" | "jetski" | "paddle" | "kitesurf" | "volleyball" | "sandcastle";
-export type TrackId = "drop" | "twistA" | "twistB" | "river" | "waves" | "flowrider" | "pool" | "sea" | "lounger" | "seacourse" | "net" | "sand";
+export type RideKind = "drop" | "capsule" | "raft" | "race" | "tube" | "river" | "waves" | "flowrider" | "swim" | "cannonball" | "float" | "sunbathe" | "jetski" | "paddle" | "kitesurf" | "volleyball" | "sandcastle" | "skate" | "spin" | "bowling" | "karaoke";
+export type TrackId = "drop" | "twistA" | "twistB" | "river" | "waves" | "flowrider" | "pool" | "sea" | "lounger" | "seacourse" | "net" | "sand" | "rink" | "lane" | "stage";
 type Need = NonNullable<VenueActivity["need"]>;
 
 export interface RideDef {
@@ -41,6 +41,8 @@ export function rideActivities(layout: Venue["layout"], venue: Pick<Venue, "name
   let ids: string[] = [];
   if (layout === "waterpark") ids = data.venues[parkOf(venue)];
   else if (layout === "pooldeck" && !/kids/i.test(venue.name)) ids = data.venues.pooldeck;
+  else if (layout === "rink") ids = data.venues.rink;
+  else if (layout === "bowling") ids = data.venues.bowling;
   else if (layout === "beach") {
     if (/kitesurf/i.test(venue.name)) ids = data.venues.kitesurf;
     // The abra ride and food trucks are on the beach but aren't beaches to swim from.

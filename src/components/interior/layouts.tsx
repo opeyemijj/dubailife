@@ -8,8 +8,8 @@ import type { ReactNode } from "react";
 import type { Product, StationKind, Venue } from "@/lib/city/types";
 import type { FloorKind } from "./materials";
 import { signTexture } from "./materials";
-import { BuoyLine, EntranceArch, FlowRider, JetSki, OpenSea, SharkLagoon, SlideMountain, Slides, ThatchRoof, VolleyballNet, WavePool } from "./scenery";
-import { BEACH, isKidsPool, isSkyPool, poolDeckPool, SPLASH_POOLS, WATERPARK } from "./rides/paths";
+import { BowlingLanes, BuoyLine, DiscoLights, EntranceArch, FlowRider, JetSki, KaraokeStage, OpenSea, SharkLagoon, SlideMountain, Slides, ThatchRoof, VolleyballNet, WavePool } from "./scenery";
+import { BEACH, BOWLING, dubaiEvening, RINK, isKidsPool, isSkyPool, poolDeckPool, SPLASH_POOLS, WATERPARK } from "./rides/paths";
 import { hasVolleyball, parkOf, RIDES } from "@/lib/city/rides";
 import { Cabana, CinemaScreen, DockWithAbra, FoodTruck, IceRink, Kites, LazyRiver, LifeguardTower, Lounger, LoungerSet, Mihrab, Pool, RingChandelier, Candle, Sea, Seating, SignPost, SlideTower, TreatmentBed, } from "./scenery";
 import {
@@ -450,15 +450,37 @@ export function buildPlan(venue: Venue): Plan {
     }
 
     case "rink": {
-      // An ice rink with boards and glass, skate hire and a café.
-      const D = 14, Wd = 18;
+      // An ice rink with boards and glass, skate hire and a café. Skating is acted out in 3D (rides/),
+      // from the gate in the boards; evenings are disco nights with a mirror ball.
+      const [Wd, D] = RINK.size;
+      const { ice, gate } = RINK;
       return plan(venue, [Wd, D], "concrete", [
-        { kind: "exhibit", position: [0, -1], label: "Skate", visual: () => null },
+        { kind: "exhibit", position: [gate[0] - 0.2, gate[1] + 1.1], label: "⛸️ Get on the ice", rides: ["skate", "skate-penguin", "skate-spin"], visual: () => null },
         { kind: "tickets", position: [-7.6, 5], rotation: Math.PI / 2, label: "Skate hire", visual: () => <TicketKiosk accent={accent} /> },
         { kind: "bar", position: [7.6, 4.6], rotation: -Math.PI / 2, label: "Café", visual: () => <Bar glow="#38bdf8" width={3} /> },
         { kind: "booth", position: [0, 5.6], rotation: Math.PI, visual: () => <Model url={PROP("bench")} size={[1.8, 0.6]} height={0.9} /> },
       ], <>
-        <group position={[0, 0, -1]}><IceRink w={13} d={7} /></group>
+        <group position={[ice.at[0], 0, ice.at[1]]}><IceRink w={ice.w} d={ice.d} gateX={gate[0] - ice.at[0]} /></group>
+        {dubaiEvening() && <group position={[ice.at[0], 0, ice.at[1]]}><DiscoLights w={ice.w} d={ice.d} /></group>}
+      </>);
+    }
+
+    case "bowling": {
+      // Brass Monkey: three bowling lanes, a karaoke stage, the lane desk and the bar. Bowling and karaoke
+      // are acted out in 3D (rides/); positions are in rides/paths.ts (BOWLING).
+      const [Wd, D] = BOWLING.size;
+      const { lanes, foulZ, stage } = BOWLING;
+      return plan(venue, [Wd, D], "wood", [
+        { kind: "exhibit", position: [lanes[0] + 0.9, foulZ + 2.4], label: "🎳 Lane 1", rides: ["bowling"], visual: () => null },
+        { kind: "exhibit", position: [stage.at[0] - 0.6, stage.at[1] + stage.d / 2 + 1.4], label: "🎤 Karaoke", rides: ["karaoke"], visual: () => null },
+        { kind: "tickets", position: [-6.9, 6], rotation: Math.PI / 2, label: "Lane desk", visual: () => <TicketKiosk accent={accent} /> },
+        { kind: "bar", position: [6.9, 4.6], rotation: -Math.PI / 2, label: "Bar", visual: () => <Bar glow={light ?? accent} width={3} /> },
+        ...([[2.4, 5.6], [4.4, 5.6]] as Array<[number, number]>).map(([x, z]) => ({
+          kind: "booth" as StationKind, position: [x, z] as [number, number], rotation: Math.PI, visual: () => <Booth tint={accent} />,
+        })),
+      ], <>
+        <BowlingLanes accent={accent} />
+        <group position={[stage.at[0], 0, stage.at[1]]}><KaraokeStage accent={accent} /></group>
       </>);
     }
 

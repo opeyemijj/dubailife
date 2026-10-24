@@ -88,6 +88,7 @@ export default function HomePage() {
   const isMultiRoom = housingTier === "one_bedroom" || housingTier === "two_bedroom" || housingTier === "three_bedroom";
   const [upView, setUpView] = useState(isMultiRoom);
   const [activeRoomId, setActiveRoomId] = useState<string>(housingTier === "one_bedroom" ? "bedroom" : "living");
+  const [ritualsExpanded, setRitualsExpanded] = useState(false);
   const [tierModalOpen, setTierModalOpen] = useState(false);
 
   useEffect(() => {
@@ -458,42 +459,80 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* RELATABLE HOME ACTIVITIES DOCK */}
+      {/* RELATABLE HOME ACTIVITIES DOCK (Collapsible Floating Pill / Expanded Drawer) */}
       {!cleanScreen && !placing && (
-        <div className="fixed bottom-[4.85rem] sm:bottom-24 left-1/2 -translate-x-1/2 z-30 pointer-events-auto max-w-[94vw] sm:max-w-xl w-full px-2">
-          <div className="bg-white/95 backdrop-blur-2xl border border-white shadow-[0_12px_40px_rgba(0,0,0,0.18)] rounded-2xl p-2 sm:p-2.5">
-            <div className="flex items-center justify-between mb-1.5 px-1">
-              <div className="flex items-center gap-1.5 text-[11px] font-black text-slate-800">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>Home Rituals & Activities</span>
-                {housingConfig.rooms && (
-                  <span className="text-[10px] text-slate-400 font-semibold">({housingConfig.rooms?.find(r => r.id === activeRoomId)?.label ?? "All"})</span>
-                )}
+        <div className="fixed bottom-[4.85rem] sm:bottom-24 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
+          {!ritualsExpanded ? (
+            <button
+              onClick={() => {
+                gameAudio.playClickSound();
+                setRitualsExpanded(true);
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 sm:py-2 rounded-full bg-slate-900/90 hover:bg-slate-900 text-white shadow-[0_8px_30px_rgba(0,0,0,0.35)] backdrop-blur-2xl border border-white/20 hover:border-amber-400/60 transition-all active:scale-95 group hover:shadow-amber-500/10 cursor-pointer"
+              title="Open Home Rituals & Activities (Tap to expand)"
+              aria-label="Open Home Rituals & Activities"
+            >
+              <div className="relative flex items-center justify-center">
+                <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
               </div>
-              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Replenish Vitals</span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-              {(housingConfig.rooms
-                ? housingConfig.activities.filter((a) => !a.room || a.room === activeRoomId || a.room === "living" || a.room === "bedroom")
-                : housingConfig.activities
-              ).slice(0, 4).map((act) => (
-                <button
-                  key={act.id}
-                  onClick={() => handleTriggerHomeActivity(act)}
-                  className="flex flex-col items-start p-2 rounded-xl bg-slate-50 hover:bg-amber-50 border border-slate-100 hover:border-amber-200 text-left transition-all active:scale-95 group"
-                >
-                  <div className="flex items-center justify-between w-full mb-1">
-                    <span className="text-xl group-hover:scale-110 transition-transform">{act.icon}</span>
-                    <span className="text-[9px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-100/60 px-1 py-0.5 rounded">
-                      +{act.need.amount} {act.need.kind}
-                    </span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-12 transition-transform" />
+              <span className="text-[11px] font-black tracking-wide text-white">Rituals</span>
+              <span className="text-[9px] font-black text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded-full border border-amber-400/30">
+                +{housingConfig.activities.length}
+              </span>
+              <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-colors" />
+            </button>
+          ) : (
+            <div className="max-w-[94vw] sm:max-w-xl w-[94vw] sm:w-[32rem] px-1 animate-in fade-in zoom-in-95 duration-150">
+              <div className="bg-white/95 backdrop-blur-2xl border border-white shadow-[0_16px_48px_rgba(0,0,0,0.22)] rounded-2xl p-2.5 sm:p-3">
+                <div className="flex items-center justify-between mb-2 px-1">
+                  <div className="flex items-center gap-1.5 text-[11px] font-black text-slate-800">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Home Rituals & Activities</span>
+                    {housingConfig.rooms && (
+                      <span className="text-[10px] text-slate-400 font-semibold">({housingConfig.rooms?.find(r => r.id === activeRoomId)?.label ?? "All"})</span>
+                    )}
                   </div>
-                  <div className="text-[11px] font-black text-slate-800 leading-tight truncate w-full">{act.label}</div>
-                  <div className="text-[9px] text-slate-400 font-medium truncate w-full">{act.desc}</div>
-                </button>
-              ))}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Replenish Vitals</span>
+                    <button
+                      onClick={() => {
+                        gameAudio.playClickSound();
+                        setRitualsExpanded(false);
+                      }}
+                      className="w-6 h-6 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer"
+                      title="Collapse Rituals"
+                      aria-label="Collapse Rituals"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  {(housingConfig.rooms
+                    ? housingConfig.activities.filter((a) => !a.room || a.room === activeRoomId || a.room === "living" || a.room === "bedroom")
+                    : housingConfig.activities
+                  ).slice(0, 4).map((act) => (
+                    <button
+                      key={act.id}
+                      onClick={() => handleTriggerHomeActivity(act)}
+                      className="flex flex-col items-start p-2 rounded-xl bg-slate-50 hover:bg-amber-50 border border-slate-100 hover:border-amber-200 text-left transition-all active:scale-95 group"
+                    >
+                      <div className="flex items-center justify-between w-full mb-1">
+                        <span className="text-xl group-hover:scale-110 transition-transform">{act.icon}</span>
+                        <span className="text-[9px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-100/60 px-1 py-0.5 rounded">
+                          +{act.need.amount} {act.need.kind}
+                        </span>
+                      </div>
+                      <div className="text-[11px] font-black text-slate-800 leading-tight truncate w-full">{act.label}</div>
+                      <div className="text-[9px] text-slate-400 font-medium truncate w-full">{act.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 

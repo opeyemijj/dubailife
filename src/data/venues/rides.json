@@ -273,6 +273,71 @@
         "kind": "fun",
         "amount": 20
       }
+    },
+    "skate": {
+      "label": "Public skating session",
+      "icon": "⛸️",
+      "kind": "skate",
+      "track": "rink",
+      "desc": "Skate laps of the rink: tap in rhythm to push, hold Lean through the corners. Too fast into a bend and down you go. Evenings are disco nights.",
+      "fact": "Dubai Ice Rink is Olympic-size, right inside The Dubai Mall.",
+      "price": 105,
+      "reward": 20,
+      "need": {
+        "kind": "fun",
+        "amount": 35
+      }
+    },
+    "skate-penguin": {
+      "label": "Skate with a penguin aid",
+      "icon": "🐧",
+      "kind": "skate",
+      "track": "rink",
+      "desc": "New to the ice? Push a penguin skating aid round the rink: slower, but you won't fall.",
+      "fact": "The rink hires out penguin, seal and snowman skating aids for beginners.",
+      "price": 125,
+      "reward": 15,
+      "need": {
+        "kind": "fun",
+        "amount": 30
+      }
+    },
+    "skate-spin": {
+      "label": "Figure spin challenge",
+      "icon": "🌀",
+      "kind": "spin",
+      "track": "rink",
+      "desc": "Glide to the centre, hold to wind up a spin and let go before you get dizzy. Three tries: best spin counts.",
+      "reward": 30,
+      "need": {
+        "kind": "fun",
+        "amount": 25
+      }
+    },
+    "bowling": {
+      "label": "Bowl three frames",
+      "icon": "🎳",
+      "kind": "bowling",
+      "track": "lane",
+      "desc": "Pick your line, then your power: strikes and spares count double. Shoes included.",
+      "price": 60,
+      "reward": 15,
+      "need": {
+        "kind": "fun",
+        "amount": 30
+      }
+    },
+    "karaoke": {
+      "label": "Sing karaoke",
+      "icon": "🎤",
+      "kind": "karaoke",
+      "track": "stage",
+      "desc": "Take the mic on stage and hit every beat: keep a streak and the crowd goes wild.",
+      "reward": 20,
+      "need": {
+        "kind": "social",
+        "amount": 30
+      }
     }
   },
   "venues": {
@@ -309,6 +374,15 @@
     "kitesurf": [
       "kitesurf",
       "sea-swim"
+    ],
+    "rink": [
+      "skate",
+      "skate-penguin",
+      "skate-spin"
+    ],
+    "bowling": [
+      "bowling",
+      "karaoke"
     ]
   }
 }

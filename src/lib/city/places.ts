@@ -91,10 +91,11 @@ function sceneFor(name: string, category: string, layout: Layout, feature: Venue
   if (/beach|truck/i.test(category) || /abra|kitesurf/i.test(name)) return { layout: "beach", feature: "pool" };
   if (/^spa$/i.test(category) || /\bspa\b/i.test(category)) return { layout: "spa", feature: "spa" };
   if (/kids club/i.test(name) || (/pool/i.test(text) && layout === "outdoor")) return { layout: "pooldeck", feature: /sky/i.test(text) ? "skyline" : "pool" };
+  // A bowling alley (with its karaoke stage) before theatres, which also have stages.
+  if (/bowling/i.test(category)) return { layout: "bowling", feature };
   if (feature === "stage" || /theatre|theater|cinema|opera/i.test(name)) return { layout: "theatre", feature: "stage" };
   if (/mosque/i.test(name)) return { layout: "mosque", feature };
   if (/ice rink/i.test(name)) return { layout: "rink", feature };
-  if (/bowling/i.test(category)) return { layout: "bowling", feature };
   // Cocktail and sky bars are bars, not nightclubs.
   if (layout === "club" && /\bbar\b|tiki/i.test(category) && !/nightclub|\bclub\b/i.test(category)) return { layout: "bar", feature: feature ?? "skyline" };
   // Waterfront dining is a restaurant with a view, not a lawn.
@@ -128,7 +129,8 @@ function withRides(layout: Layout, name: string, category: string, opts: VenueOp
   const rides = rideActivities(layout, { name, category, blurb: opts.blurb ?? "" });
   if (!rides.length) return opts.activities;
   // The 3D versions replace the old one-tap swim, sunbathe, lounger, kitesurf, volleyball and slide entries.
-  const replaced = layout === "beach" ? /(^|:)(swim|sunbathe|lounge|kite|volleyball)$/ : /^(swim|leap|sceirah)$/;
+  const replaced = layout === "beach" ? /(^|:)(swim|sunbathe|lounge|kite|volleyball)$/
+    : layout === "rink" ? /^skate/ : layout === "bowling" ? /^(bowl|karaoke)$/ : /^(swim|leap|sceirah)$/;
   const kept = (opts.activities ?? []).filter((a) => !replaced.test(a.id));
   return [...rides, ...kept];
 }

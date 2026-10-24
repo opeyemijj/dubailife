@@ -21,7 +21,13 @@ export default function TournamentRules() {
   return (
     <main className="min-h-[100dvh] bg-slate-950 text-white px-4 py-[max(1.5rem,env(safe-area-inset-top))] pb-16">
       <article className="max-w-2xl mx-auto space-y-5">
-        <Link href="/tournament" className="text-sm font-bold text-sky-300">← Tournament</Link>
+        <div className="flex items-center justify-between">
+          <Link href="/tournament" className="text-sm font-bold text-sky-300 hover:underline">← Back to Tournament</Link>
+          <div className="flex items-center gap-2">
+            <Link href="/explore" className="text-xs font-bold px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-slate-300">City Map</Link>
+            <Link href="/home" className="text-xs font-bold px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-slate-300">Home</Link>
+          </div>
+        </div>
         <header>
           <h1 className="text-3xl font-black">Monthly tournament: official rules</h1>
           <p className="text-sm text-slate-400 mt-1">Effective 22 October 2026. The cash prize applies from the January 2027 tournament.</p>
@@ -66,6 +72,15 @@ export default function TournamentRules() {
         <Section n={10} title="Changes and contact">
           <p>The Sponsor may change or cancel a tournament if required by law or if something outside its control affects fairness; any change is announced in the game before it applies. Questions: support@cometodubai.com.</p>
         </Section>
+
+        <div className="pt-6 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
+          <Link href="/tournament" className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm transition-all active:scale-95">
+            🏆 Enter Tournament
+          </Link>
+          <Link href="/explore" className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-sm transition-all active:scale-95">
+            Return to City Map →
+          </Link>
+        </div>
       </article>
     </main>
   );

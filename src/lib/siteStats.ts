@@ -8,6 +8,9 @@ import { supabase } from "@/lib/supabase/client";
 
 let visitCounted = false;
 
+// Starting baseline offset for site visits counter
+export const BASE_VISITS_OFFSET = 1231;
+
 export function useSiteStats() {
   const [visits, setVisits] = useState<number | null>(null);
   const [homes, setHomes] = useState<number | null>(null);
@@ -25,7 +28,7 @@ export function useSiteStats() {
         db.rpc("site_visits_total"),
         db.from("flats").select("id", { count: "exact", head: true }),
       ]);
-      setVisits(Number(total ?? 0));
+      setVisits(BASE_VISITS_OFFSET + Number(total ?? 0));
       setHomes(count ?? null);
     })();
   }, []);

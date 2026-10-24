@@ -40,8 +40,11 @@ export default async function SharePage(props: Props) {
         <img src={r.image} alt={r.t.title} className="w-full rounded-3xl shadow-2xl" />
         <h1 className="text-2xl font-black">{r.t.title}</h1>
         <p className="text-slate-300">{r.t.sub}</p>
-        <Link href={join} className="block h-14 leading-[3.5rem] rounded-2xl bg-emerald-500 text-slate-950 font-black text-lg">Start your Dubai life, free</Link>
-        <Link href="/scam-check" className="block text-sm font-bold text-sky-300">Would you spot a scam? Take the 30-second check →</Link>
+        <Link href={join} className="block h-14 leading-[3.5rem] rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-lg transition-all active:scale-98">Start your Dubai life, free</Link>
+        <div className="flex flex-col gap-2 pt-1">
+          <Link href="/explore" className="block text-sm font-bold text-slate-300 hover:text-white transition-colors">🗺️ Explore Dubai City Map →</Link>
+          <Link href="/scam-check" className="block text-sm font-bold text-sky-300 hover:text-sky-200 transition-colors">Would you spot a scam? Take the 30-second check →</Link>
+        </div>
         <p className="text-[11px] text-slate-500">Dubai Life is a free life simulation game for players aged 21+.</p>
       </div>
     </main>
