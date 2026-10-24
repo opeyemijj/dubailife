@@ -85,6 +85,17 @@ export interface BuiltIn {
 
 export type HousingTier = "bed_space" | "studio" | "one_bedroom" | "two_bedroom" | "three_bedroom" | "penthouse" | "villa";
 
+export function getHousingTierFromText(text?: string | null): HousingTier {
+  const raw = (text || "studio").toLowerCase();
+  if (raw.includes("bed_space") || raw.includes("bed space") || raw.includes("shared")) return "bed_space";
+  if (raw.includes("three_bedroom") || raw.includes("3-bedroom") || raw.includes("3 bedroom")) return "three_bedroom";
+  if (raw.includes("two_bedroom") || raw.includes("2-bedroom") || raw.includes("2 bedroom")) return "two_bedroom";
+  if (raw.includes("one_bedroom") || raw.includes("1-bedroom") || raw.includes("1 bedroom")) return "one_bedroom";
+  if (raw.includes("penthouse")) return "penthouse";
+  if (raw.includes("villa")) return "villa";
+  return "studio";
+}
+
 export interface HomeActivityDef {
   id: string;
   label: string;

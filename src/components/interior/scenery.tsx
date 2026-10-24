@@ -6,6 +6,7 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { RAFT_RADIUS, SLIDE_POINTS, SLIDE_RADIUS, STAIRS_X, TWIN_LANE, waveZ, WAVE_COUNT, type P3 } from "./rides/paths";
 
 const Box = ({ args, position, color, rotation, emissive }: { args: [number, number, number]; position: [number, number, number]; color: string; rotation?: [number, number, number]; emissive?: string }) => (
   <mesh position={position} rotation={rotation} castShadow receiveShadow>
@@ -368,6 +369,8 @@ export function SlideMountain({ kind = "ziggurat" }: { kind?: "ziggurat" | "rock
           <mesh key={i} position={[x, y, z]} castShadow receiveShadow><dodecahedronGeometry args={[r, 0]} /><meshStandardMaterial color={["#b45309", "#c2410c", "#d97706"][i]} roughness={0.95} flatShading /></mesh>
         ))}
         <Box args={[2, 0.2, 2]} position={[0, 7.7, 0]} color="#d6bc8a" />
+        {/* the stairs riders climb */}
+        <Box args={[1.2, 0.2, 6.4]} position={[STAIRS_X, 3.6, 3.2]} rotation={[-1.05, 0, 0]} color="#92400e" />
       </group>
     );
   }
@@ -390,29 +393,44 @@ export function SlideMountain({ kind = "ziggurat" }: { kind?: "ziggurat" | "rock
       <Box args={[1.6, 1, 1.6]} position={[0, y + 0.5, 0]} color="#f2e2bf" />
       <mesh position={[0, y + 1.4, 0]} castShadow><coneGeometry args={[1.3, 0.9, 4]} /><meshStandardMaterial color="#0e7490" /></mesh>
       {/* the stairs up the front */}
-      <Box args={[1.2, 0.2, 6.4]} position={[0, 3.6, 3.2]} rotation={[-1.05, 0, 0]} color="#c08a52" />
+      <Box args={[1.2, 0.2, 6.4]} position={[STAIRS_X, 3.6, 3.2]} rotation={[-1.05, 0, 0]} color="#c08a52" />
     </group>
   );
 }
 
-/** Slides from the top of the tower: two twisting tubes and the near-vertical drop slide. */
+/**
+ * Slides from the top of the tower (shapes in rides/paths.ts, so riders follow them exactly): two twisting
+ * tubes and the near-vertical drop slide. Aquaventure's second tube is the wide raft slide and its first
+ * starts in a clear launch capsule; Wild Wadi's drop slide has a twin lane for racing.
+ */
 export function Slides({ through = false }: { through?: boolean }) {
   const slides = useMemo(() => {
-    const make = (pts: Array<[number, number, number]>) => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p))), 90, 0.34, 10, false);
-    return [
-      { geo: make([[0.7, 7.8, 0], [3, 6.8, 0.6], [3.8, 5, -1.4], [2.2, 3.4, -2.6], [3.6, 1.6, -1.2], [5.4, 0.45, 0.8]]), color: "#f97316" },
-      { geo: make([[-0.7, 7.8, 0], [-3, 6.6, -0.8], [-3.8, 4.6, 1.2], [-2.2, 3, 2.6], [-3.8, 1.4, 3.4], [-5.4, 0.45, 4.4]]), color: "#facc15" },
-      // the drop slide: almost straight down, then out through the shark lagoon
-      { geo: make([[0, 7.8, 0.8], [0, 7.2, 1.6], [0, 3, 3.4], [0, 0.9, 5.2], [0, 0.45, 7.6]]), color: through ? "#bae6fd" : "#ec4899" },
+    const make = (pts: P3[], r = SLIDE_RADIUS) => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p))), 90, r, 12, false);
+    const list = [
+      { geo: make(SLIDE_POINTS.twistA), color: "#f97316", clear: false },
+      { geo: make(SLIDE_POINTS.twistB, through ? RAFT_RADIUS : SLIDE_RADIUS), color: "#facc15", clear: false },
+      { geo: make(SLIDE_POINTS.drop), color: through ? "#bae6fd" : "#ec4899", clear: through },
     ];
+    if (!through) list.push({ geo: make(SLIDE_POINTS.drop.map(([x, y, z]) => [x + TWIN_LANE, y, z] as P3)), color: "#a855f7", clear: false });
+    return list;
   }, [through]);
+  const [cx, cy, cz] = SLIDE_POINTS.twistA[0];
   return (
     <group>
       {slides.map((s, i) => (
+        // Tinted, see-through plastic, so riders can be watched all the way down.
         <mesh key={i} geometry={s.geo} castShadow>
-          <meshStandardMaterial color={s.color} roughness={0.3} side={THREE.DoubleSide} transparent opacity={i === 2 && through ? 0.45 : 0.95} />
+          <meshStandardMaterial color={s.color} roughness={0.25} side={THREE.DoubleSide} transparent opacity={s.clear ? 0.4 : 0.62} depthWrite={false} />
         </mesh>
       ))}
+      {through && (
+        // Poseidon's Revenge: the clear capsule riders stand in before the floor drops.
+        <group position={[cx + 0.35, cy, cz + 0.55]}>
+          <mesh position={[0, 1.1, 0]}><cylinderGeometry args={[0.45, 0.45, 2.2, 20, 1, true]} /><meshStandardMaterial color="#e0f2fe" transparent opacity={0.3} side={THREE.DoubleSide} roughness={0.05} /></mesh>
+          <mesh position={[0, 2.25, 0]}><cylinderGeometry args={[0.5, 0.5, 0.12, 20]} /><meshStandardMaterial color="#0e7490" /></mesh>
+          <mesh position={[0, 0.03, 0]}><cylinderGeometry args={[0.5, 0.5, 0.06, 20]} /><meshStandardMaterial color="#0e7490" /></mesh>
+        </group>
+      )}
     </group>
   );
 }
@@ -448,7 +466,7 @@ export function WavePool({ w, d }: { w: number; d: number }) {
   const waves = useRef<THREE.Group>(null);
   useFrame((s) => {
     waves.current?.children.forEach((c, i) => {
-      const z = ((s.clock.elapsedTime * 1.2 + i * (d / 3)) % d) - d / 2;
+      const z = waveZ(s.clock.elapsedTime, i, d);
       c.position.z = z;
       ((c as THREE.Mesh).material as THREE.MeshStandardMaterial).opacity = 0.75 * (1 - (z + d / 2) / d);
     });
@@ -458,7 +476,7 @@ export function WavePool({ w, d }: { w: number; d: number }) {
       <Pool w={w} d={d} color="#0891b2" />
       <mesh position={[0, 0.035, d / 2 - 0.6]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[w, 1.2]} /><meshStandardMaterial color="#5eead4" transparent opacity={0.8} /></mesh>
       <group ref={waves}>
-        {[0, 1, 2].map((i) => (
+        {Array.from({ length: WAVE_COUNT }, (_, i) => (
           <mesh key={i} position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[w - 0.2, 0.3]} /><meshStandardMaterial color="#ffffff" transparent opacity={0.6} /></mesh>
         ))}
       </group>
@@ -533,10 +551,141 @@ export function JetSki({ color = "#e11d48" }: { color?: string }) {
 export function VolleyballNet() {
   return (
     <group>
-      <Box args={[0.08, 2.4, 0.08]} position={[-3, 1.2, 0]} color="#e5e7eb" />
-      <Box args={[0.08, 2.4, 0.08]} position={[3, 1.2, 0]} color="#e5e7eb" />
-      <mesh position={[0, 2, 0]}><planeGeometry args={[6, 0.9]} /><meshStandardMaterial color="#f8fafc" transparent opacity={0.55} side={THREE.DoubleSide} wireframe /></mesh>
-      <mesh position={[1, 0.15, 1.6]}><sphereGeometry args={[0.15, 12, 10]} /><meshStandardMaterial color="#fde047" /></mesh>
+      {[-3, 3].map((x) => <Box key={x} args={[0.1, 2.5, 0.1]} position={[x, 1.25, 0]} color="#e5e7eb" />)}
+      {/* white tape along the top, dark netting below it */}
+      <Box args={[6, 0.08, 0.03]} position={[0, 2.4, 0]} color="#f8fafc" />
+      <mesh position={[0, 2.0, 0]}><planeGeometry args={[6, 0.75]} /><meshStandardMaterial color="#1e293b" transparent opacity={0.45} side={THREE.DoubleSide} /></mesh>
+      <mesh position={[0, 2.0, 0.001]}><planeGeometry args={[6, 0.75, 30, 4]} /><meshBasicMaterial color="#e2e8f0" wireframe side={THREE.DoubleSide} /></mesh>
+      {/* court lines in the sand */}
+      {[[-3, 0, 0.05, 8], [3, 0, 0.05, 8], [0, -4, 6, 0.05], [0, 4, 6, 0.05]].map(([x, z, w, d], i) => (
+        <mesh key={i} position={[x, 0.014, z]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[w, d]} /><meshBasicMaterial color="#38bdf8" /></mesh>
+      ))}
+    </group>
+  );
+}
+
+/** A FlowRider surf machine: a curved foam slope with a sheet of water racing up it, and a deck at the top. */
+export function FlowRider({ w, d }: { w: number; d: number }) {
+  const sheet = useRef<THREE.Mesh>(null);
+  const tex = useMemo(() => {
+    const c = document.createElement("canvas");
+    c.width = 64; c.height = 256;
+    const g = c.getContext("2d")!;
+    g.fillStyle = "#0ea5e9"; g.fillRect(0, 0, 64, 256);
+    for (let i = 0; i < 26; i++) { g.fillStyle = `rgba(255,255,255,${0.25 + (i % 3) * 0.15})`; g.fillRect((i * 23) % 64, (i * 37) % 256, 2 + (i % 4) * 3, 14 + (i % 5) * 6); }
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(2, 2);
+    return t;
+  }, []);
+  // The water races up the slope (the texture scrolls; reached through the mesh, not the memo).
+  useFrame((_, dt) => {
+    const map = (sheet.current?.material as THREE.MeshStandardMaterial | undefined)?.map;
+    if (map) map.offset.y -= dt * 1.6;
+  });
+  // The slope rises from the front (+z) to the back (-z) along a quarter curve.
+  const geo = useMemo(() => {
+    const g = new THREE.PlaneGeometry(w, d, 1, 24);
+    const pos = g.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const v = THREE.MathUtils.clamp((pos.getY(i) + d / 2) / d, 0, 1); // 0 at the front, 1 at the back
+      pos.setXYZ(i, pos.getX(i), 0.15 + Math.pow(v, 2.2) * 1.6, d / 2 - v * d);
+    }
+    g.computeVertexNormals();
+    return g;
+  }, [w, d]);
+  return (
+    <group>
+      <mesh ref={sheet} geometry={geo} receiveShadow><meshStandardMaterial map={tex} color="#7dd3fc" emissive="#0284c7" emissiveIntensity={0.25} roughness={0.15} side={THREE.DoubleSide} /></mesh>
+      {/* padded side walls and the deck riders drop in from */}
+      {[-1, 1].map((k) => <Box key={k} args={[0.25, 1.9, d]} position={[k * (w / 2 + 0.12), 0.95, 0]} color="#1e3a8a" />)}
+      <Box args={[w + 0.5, 0.2, 1]} position={[0, 1.85, -d / 2 - 0.5]} color="#e2e8f0" />
+      <Box args={[w + 0.5, 0.14, 0.6]} position={[0, 0.07, d / 2 + 0.3]} color="#e2e8f0" />
+    </group>
+  );
+}
+
+/** A flamingo pool float (the one riders lie back on). */
+export function FlamingoFloat() {
+  return (
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.12, 0]} scale={[1, 1.45, 1]}><torusGeometry args={[0.55, 0.2, 10, 24]} /><meshStandardMaterial color="#f472b6" roughness={0.35} /></mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.1, 0]} scale={[1, 1.45, 1]}><circleGeometry args={[0.55, 24]} /><meshStandardMaterial color="#fbcfe8" roughness={0.4} /></mesh>
+      {/* neck and head at the back */}
+      <mesh position={[0, 0.55, -0.85]} rotation={[0.35, 0, 0]}><cylinderGeometry args={[0.07, 0.11, 0.8, 10]} /><meshStandardMaterial color="#f472b6" /></mesh>
+      <mesh position={[0, 0.95, -0.72]}><sphereGeometry args={[0.13, 12, 10]} /><meshStandardMaterial color="#f472b6" /></mesh>
+      <mesh position={[0, 0.92, -0.56]} rotation={[Math.PI / 2, 0, 0]}><coneGeometry args={[0.05, 0.16, 8]} /><meshStandardMaterial color="#1f2937" /></mesh>
+    </group>
+  );
+}
+
+/** A ring tube for lazy rivers and ring slides. */
+export function RingTube({ color = "#f97316", radius = 0.42 }: { color?: string; radius?: number }) {
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]}><torusGeometry args={[radius, 0.15, 10, 24]} /><meshStandardMaterial color={color} roughness={0.35} /></mesh>
+  );
+}
+
+/** A sandcastle built up in stages: 1 mound, 2 walls, 3 towers, 4 moat, 5 flag. */
+export function SandCastle({ stage }: { stage: number }) {
+  const sand = "#e8c88a", dark = "#d4b06f";
+  return (
+    <group>
+      {stage >= 1 && <mesh position={[0, 0.12, 0]} castShadow receiveShadow><cylinderGeometry args={[0.5, 0.62, 0.24, 14]} /><meshStandardMaterial color={sand} roughness={1} /></mesh>}
+      {stage >= 2 && (
+        <group position={[0, 0.24, 0]}>
+          {[[0, -0.34, 0.6, 0.08], [0, 0.34, 0.6, 0.08], [-0.34, 0, 0.08, 0.6], [0.34, 0, 0.08, 0.6]].map(([x, z, w, d], i) => (
+            <mesh key={i} position={[x, 0.09, z]} castShadow><boxGeometry args={[w, 0.18, d]} /><meshStandardMaterial color={dark} roughness={1} /></mesh>
+          ))}
+          <mesh position={[0, 0.16, 0]} castShadow><boxGeometry args={[0.36, 0.32, 0.36]} /><meshStandardMaterial color={sand} roughness={1} /></mesh>
+        </group>
+      )}
+      {stage >= 3 && [[-0.34, -0.34], [0.34, -0.34], [-0.34, 0.34], [0.34, 0.34]].map(([x, z], i) => (
+        <group key={i} position={[x, 0.24, z]}>
+          <mesh position={[0, 0.17, 0]} castShadow><cylinderGeometry args={[0.08, 0.1, 0.34, 10]} /><meshStandardMaterial color={sand} roughness={1} /></mesh>
+          <mesh position={[0, 0.39, 0]} castShadow><coneGeometry args={[0.1, 0.12, 10]} /><meshStandardMaterial color={dark} roughness={1} /></mesh>
+        </group>
+      ))}
+      {stage >= 4 && <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.66, 0.84, 28]} /><meshStandardMaterial color="#38bdf8" emissive="#0ea5e9" emissiveIntensity={0.2} roughness={0.1} /></mesh>}
+      {stage >= 5 && (
+        <group position={[0, 0.56, 0]}>
+          <mesh position={[0, 0.2, 0]}><cylinderGeometry args={[0.01, 0.01, 0.4, 6]} /><meshStandardMaterial color="#78350f" /></mesh>
+          <mesh position={[0.09, 0.34, 0]}><planeGeometry args={[0.18, 0.11]} /><meshStandardMaterial color="#ef4444" side={THREE.DoubleSide} /></mesh>
+        </group>
+      )}
+    </group>
+  );
+}
+
+/** A stand-up paddleboard (length along z) with the paddle. */
+export function Paddleboard() {
+  return (
+    <group>
+      <mesh position={[0, 0.05, 0]} scale={[0.36, 0.06, 1.5]}><sphereGeometry args={[1, 16, 8]} /><meshStandardMaterial color="#f8fafc" roughness={0.4} /></mesh>
+      <mesh position={[0, 0.085, 0.2]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[0.4, 1.4]} /><meshStandardMaterial color="#0ea5e9" /></mesh>
+    </group>
+  );
+}
+
+/** A kite with its two lines down to the rider's hands (the rig places it: lines run to the origin). */
+export function SurfKite({ to }: { to: [number, number, number] }) {
+  const lines = useMemo(() => new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-0.6, 0, 0), new THREE.Vector3(...to), new THREE.Vector3(0.6, 0, 0), new THREE.Vector3(...to)]), [to]);
+  return (
+    <group>
+      <mesh rotation={[0.25, 0, 0]}><torusGeometry args={[1.6, 0.22, 6, 18, Math.PI]} /><meshStandardMaterial color="#f43f5e" side={THREE.DoubleSide} /></mesh>
+      <lineSegments geometry={lines}><lineBasicMaterial color="#1f2937" /></lineSegments>
+    </group>
+  );
+}
+
+/** A floating buoy marking a course gate; the next one to reach glows and bobs higher. */
+export function CourseBuoy({ next, done }: { next: boolean; done: boolean }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame((s) => { if (ref.current) ref.current.position.y = (next ? 0.25 : 0.12) + Math.sin(s.clock.elapsedTime * 2.4) * 0.05; });
+  return (
+    <group ref={ref}>
+      <mesh><sphereGeometry args={[0.32, 14, 10]} /><meshStandardMaterial color={done ? "#22c55e" : next ? "#facc15" : "#f97316"} emissive={next ? "#facc15" : "#000000"} emissiveIntensity={next ? 0.6 : 0} /></mesh>
+      {next && <mesh position={[0, 1.4, 0]} rotation={[Math.PI, 0, 0]}><coneGeometry args={[0.22, 0.5, 4]} /><meshStandardMaterial color="#facc15" emissive="#facc15" emissiveIntensity={0.6} /></mesh>}
     </group>
   );
 }

@@ -195,7 +195,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   };
 
   const place = (uid: string, placement: Placement | null) => {
-    commit(withHomeItems(furniture).map((f) => (f.uid === uid ? { ...f, placement } : f)));
+    commit(withHomeItems(furniture, housingTier).map((f) => (f.uid === uid ? { ...f, placement } : f)));
     setPlacing(null);
   };
 
@@ -366,7 +366,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
 
       {shopOpen && (
         <Modal title="Furniture for this home" onClose={() => setShopOpen(false)}>
-          {withHomeItems(furniture).filter((f) => !f.placement).map((f) => {
+          {withHomeItems(furniture, housingTier).filter((f) => !f.placement).map((f) => {
             const item = getCatalogItem(f.itemId);
             return item ? (
               <div key={f.uid} className="flex items-center gap-3 p-2.5 rounded-2xl bg-amber-50 border border-amber-100">

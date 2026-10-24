@@ -1,0 +1,314 @@
+{
+  "_comment": "Rides and water activities acted out in 3D (components/interior/rides). kind = how it plays; track = which piece of the venue it uses (see rides/tracks.ts). realHeight (m) scales the speed shown to the real ride's.",
+  "rides": {
+    "leap-of-faith": {
+      "label": "Ride the Leap of Faith",
+      "icon": "🦈",
+      "kind": "drop",
+      "track": "drop",
+      "desc": "Climb the Tower of Neptune and drop near-vertically through a clear tube in the shark lagoon.",
+      "fact": "A near-vertical plunge through a shark-filled lagoon at Aquaventure.",
+      "realHeight": 27.5,
+      "reward": 60,
+      "need": {
+        "kind": "fun",
+        "amount": 40
+      }
+    },
+    "poseidons-revenge": {
+      "label": "Ride Poseidon's Revenge",
+      "icon": "🔱",
+      "kind": "capsule",
+      "track": "twistA",
+      "desc": "Stand in the clear launch capsule, hear the countdown… then the floor drops away.",
+      "fact": "Riders stand in a capsule until a trapdoor opens beneath them.",
+      "realHeight": 30,
+      "reward": 50,
+      "need": {
+        "kind": "fun",
+        "amount": 40
+      }
+    },
+    "aquaconda": {
+      "label": "Raft down the Aquaconda",
+      "icon": "🐍",
+      "kind": "raft",
+      "track": "twistB",
+      "desc": "Pile into the big raft with other guests and spin down the giant tube together.",
+      "fact": "A giant raft slide that carries up to six riders at a time.",
+      "realHeight": 20,
+      "reward": 40,
+      "need": {
+        "kind": "social",
+        "amount": 30
+      }
+    },
+    "aquaventure-river": {
+      "label": "Float the lazy river",
+      "icon": "🛟",
+      "kind": "river",
+      "track": "river",
+      "desc": "Sit back in a ring and drift around the island of palms. Pure chill.",
+      "fact": "Aquaventure's river runs for over 2 km of rapids and calm water.",
+      "reward": 15,
+      "need": {
+        "kind": "energy",
+        "amount": 30
+      }
+    },
+    "aquaventure-waves": {
+      "label": "Jump the waves",
+      "icon": "🌊",
+      "kind": "waves",
+      "track": "waves",
+      "desc": "Wade into the wave pool and jump each wave as it rolls in.",
+      "reward": 20,
+      "need": {
+        "kind": "fun",
+        "amount": 25
+      }
+    },
+    "jumeirah-sceirah": {
+      "label": "Race the Jumeirah Sceirah",
+      "icon": "🏁",
+      "kind": "race",
+      "track": "drop",
+      "desc": "Twin free-fall slides side by side: push off fast and beat the guest in the other lane.",
+      "fact": "Dubai's tallest free-fall slide: about 32 m up and close to 80 km/h.",
+      "realHeight": 32,
+      "reward": 50,
+      "need": {
+        "kind": "fun",
+        "amount": 40
+      }
+    },
+    "tantrum-alley": {
+      "label": "Ride Tantrum Alley",
+      "icon": "🌀",
+      "kind": "tube",
+      "track": "twistA",
+      "desc": "Spin through the tornado basins on a ring tube.",
+      "fact": "Riders on rings whirl through three tornado-like funnels.",
+      "realHeight": 18,
+      "reward": 35,
+      "need": {
+        "kind": "fun",
+        "amount": 30
+      }
+    },
+    "burj-surj": {
+      "label": "Ride Burj Surj",
+      "icon": "🌪️",
+      "kind": "tube",
+      "track": "twistB",
+      "desc": "A family ring ride that swirls round a giant bowl before the splash.",
+      "realHeight": 15,
+      "reward": 30,
+      "need": {
+        "kind": "fun",
+        "amount": 25
+      }
+    },
+    "juhas-journey": {
+      "label": "Float Juha's Journey",
+      "icon": "🛟",
+      "kind": "river",
+      "track": "river",
+      "desc": "Wild Wadi's lazy river: sit in a ring and drift around the park.",
+      "fact": "About 360 m of gentle river looping the park.",
+      "reward": 15,
+      "need": {
+        "kind": "energy",
+        "amount": 30
+      }
+    },
+    "breakers-bay": {
+      "label": "Jump the waves in Breakers Bay",
+      "icon": "🌊",
+      "kind": "waves",
+      "track": "waves",
+      "desc": "The region's biggest wave pool: time your jumps as the waves roll in.",
+      "reward": 20,
+      "need": {
+        "kind": "fun",
+        "amount": 25
+      }
+    },
+    "wipeout-flowrider": {
+      "label": "Surf the Wipeout FlowRider",
+      "icon": "🏄",
+      "kind": "flowrider",
+      "track": "flowrider",
+      "desc": "Ride the surf machine: keep your balance, land tricks, try not to wipe out.",
+      "fact": "A surf simulator pumping tonnes of water a second over a foam slope.",
+      "reward": 40,
+      "need": {
+        "kind": "fun",
+        "amount": 35
+      }
+    },
+    "pool-swim": {
+      "label": "Swim laps",
+      "icon": "🏊",
+      "kind": "swim",
+      "track": "pool",
+      "desc": "Jump in and swim a lap there and back. Tap in rhythm to stroke faster.",
+      "reward": 15,
+      "need": {
+        "kind": "hygiene",
+        "amount": 20
+      }
+    },
+    "pool-cannonball": {
+      "label": "Do a cannonball",
+      "icon": "💦",
+      "kind": "cannonball",
+      "track": "pool",
+      "desc": "Run, jump, tuck at the top and make the biggest splash you can.",
+      "reward": 10,
+      "need": {
+        "kind": "fun",
+        "amount": 20
+      }
+    },
+    "pool-float": {
+      "label": "Float on an inflatable",
+      "icon": "🦩",
+      "kind": "float",
+      "track": "pool",
+      "desc": "Lie back on a flamingo float and drift around the pool.",
+      "reward": 10,
+      "need": {
+        "kind": "energy",
+        "amount": 25
+      }
+    },
+    "sea-swim": {
+      "label": "Swim out to the buoys",
+      "icon": "🌊",
+      "kind": "swim",
+      "track": "sea",
+      "desc": "Wade into the Arabian Gulf and swim out to the buoy line and back. Tap in rhythm to stroke.",
+      "fact": "The Gulf is warm all year: around 23 °C in winter and over 32 °C in summer.",
+      "reward": 15,
+      "need": {
+        "kind": "hygiene",
+        "amount": 25
+      }
+    },
+    "sunbathe": {
+      "label": "Sunbathe on a lounger",
+      "icon": "😎",
+      "kind": "sunbathe",
+      "track": "lounger",
+      "station": "booth",
+      "desc": "Shades on, lie back and work on your tan. Turn over halfway, or you'll burn!",
+      "reward": 10,
+      "need": {
+        "kind": "energy",
+        "amount": 30
+      }
+    },
+    "jet-ski": {
+      "label": "Ride a jet ski",
+      "icon": "🚤",
+      "kind": "jetski",
+      "track": "seacourse",
+      "desc": "Hire a jet ski and race the buoy slalom out at sea. Steer through every gate.",
+      "fact": "Jet skis must stay in marked zones off Dubai's beaches, away from swimmers.",
+      "price": 120,
+      "reward": 30,
+      "need": {
+        "kind": "fun",
+        "amount": 45
+      }
+    },
+    "paddleboard": {
+      "label": "Stand-up paddleboard",
+      "icon": "🏄",
+      "kind": "paddle",
+      "track": "seacourse",
+      "desc": "Stand up, tap to paddle and keep your balance round the three buoys.",
+      "price": 50,
+      "reward": 20,
+      "need": {
+        "kind": "fun",
+        "amount": 30
+      }
+    },
+    "kitesurf": {
+      "label": "Kitesurf lesson",
+      "icon": "🪁",
+      "kind": "kitesurf",
+      "track": "seacourse",
+      "desc": "Ride under the kite, time your pops for big jumps and tap again in the air to spin.",
+      "fact": "Kite Beach gets steady afternoon sea breezes, which is how it got its name.",
+      "price": 150,
+      "reward": 40,
+      "need": {
+        "kind": "fun",
+        "amount": 45
+      }
+    },
+    "beach-volleyball": {
+      "label": "Play beach volleyball",
+      "icon": "🏐",
+      "kind": "volleyball",
+      "track": "net",
+      "desc": "A rally match against a guest: first to 5. Tap just as the ball reaches you; perfect timing spikes it.",
+      "reward": 25,
+      "need": {
+        "kind": "social",
+        "amount": 30
+      }
+    },
+    "sandcastle": {
+      "label": "Build a sandcastle",
+      "icon": "🏰",
+      "kind": "sandcastle",
+      "track": "sand",
+      "desc": "Pat the sand in a steady rhythm to build walls, towers, a moat and a flag. It stays on the beach while you're here.",
+      "reward": 10,
+      "need": {
+        "kind": "fun",
+        "amount": 20
+      }
+    }
+  },
+  "venues": {
+    "aquaventure": [
+      "leap-of-faith",
+      "poseidons-revenge",
+      "aquaconda",
+      "aquaventure-river",
+      "aquaventure-waves"
+    ],
+    "wildwadi": [
+      "jumeirah-sceirah",
+      "tantrum-alley",
+      "burj-surj",
+      "wipeout-flowrider",
+      "juhas-journey",
+      "breakers-bay"
+    ],
+    "pooldeck": [
+      "pool-swim",
+      "pool-cannonball",
+      "pool-float"
+    ],
+    "beach": [
+      "sea-swim",
+      "sunbathe",
+      "jet-ski",
+      "paddleboard",
+      "sandcastle"
+    ],
+    "beachVolleyball": [
+      "beach-volleyball"
+    ],
+    "kitesurf": [
+      "kitesurf",
+      "sea-swim"
+    ]
+  }
+}

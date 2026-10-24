@@ -32,6 +32,12 @@ import { acquirePurchaseLock, releasePurchaseLock } from "@/lib/commerce";
 import type { WallPanelId } from "@/lib/venueAds";
 import { ActivityExperienceOverlay, detectActivityCategory, type ActivityCategory } from "./ActivityExperienceOverlay";
 import type { Activity3DFX } from "./InteriorScene";
+import { rideFor, type RideDef } from "@/lib/city/rides";
+import { trackFor } from "./rides/tracks";
+import { resetRideIO, type RideResult } from "./rides/rideIO";
+import { RideHUD } from "./rides/RideHUD";
+import { SandCastle } from "./scenery";
+import type { ActiveRide } from "./rides/RideRig";
 
 const SHIFT_COOLDOWN_MS = 10 * 60 * 1000;
 const aed = (n: number) => (n === 0 ? "Free" : `AED ${n.toLocaleString()}`);
@@ -128,7 +134,63 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   const productsAt = (s: StationDef) =>
     venue.products.filter((p) => p.station === s.kind || (s.id === anchorId && !stationKinds.has(p.station)));
   const activitiesAt = (s: StationDef) =>
-    (venue.activities ?? []).filter((a) => (a.animation === "dance" ? "dancefloor" : a.animation === "sit" ? "booth" : "exhibit") === s.kind);
+    (venue.activities ?? []).filter((a) =>
+      s.rides ? !!a.ride && s.rides.includes(a.ride)
+        // Rides have their own stations where the venue has them.
+        : (a.animation === "dance" ? "dancefloor" : a.animation === "sit" ? "booth" : "exhibit") === s.kind && !(a.ride && plan.stations.some((x) => x.rides?.includes(a.ride!))));
+
+  // ---------------------------------------------------------------- rides (slides, swimming…) in 3D
+  const [ride, setRide] = useState<ActiveRide | null>(null);
+  const [rideResult, setRideResult] = useState<{ result: RideResult; isBest: boolean; reward: string | null } | null>(null);
+  const [placeAt, setPlaceAt] = useState<{ point: [number, number]; key: number } | null>(null);
+  // Sandcastles built this visit stay on the beach.
+  const rideAt = useRef<StationDef | undefined>(undefined);
+  const [castles, setCastles] = useState<Array<{ at: [number, number]; stage: number }>>([]);
+  const beginRide = (def: RideDef, a: NonNullable<Venue["activities"]>[number], at?: StationDef) => {
+    const track = trackFor(venue, def, at);
+    rideAt.current = at;
+    if (!track) return false;
+    setPanel(null);
+    setRideResult(null);
+    // Space drives the ride, so no page button may keep focus (it would be pressed too).
+    (document.activeElement as HTMLElement | null)?.blur?.();
+    walkThen(track.approach, () => {
+      resetRideIO();
+      setRide({ ride: def, track, key: Date.now(), start: track.approach });
+      say(`${a.icon} ${def.label}`);
+    });
+    return true;
+  };
+  const onRideEnd = (r: RideResult) => {
+    if (!ride) return;
+    const def = ride.ride;
+    const activity = (venue.activities ?? []).find((x) => x.ride === def.id);
+    setPlaceAt({ point: ride.track.exit, key: Date.now() });
+    // Paid once per visit, like other venue activities; the need boost every time.
+    let reward: string | null = null;
+    if (activity?.reward && !rewarded.has(activity.id)) {
+      adjustBalance(activity.reward);
+      setRewarded(new Set(rewarded).add(activity.id));
+      reward = `+AED ${activity.reward}`;
+    }
+    if (def.need) { boostNeed(def.need.kind, def.need.amount); reward = `${reward ? `${reward} · ` : ""}${def.need.kind} +${def.need.amount}`; }
+    if (["swim", "flowrider"].includes(def.kind)) { lifeEvent("workout"); gainSkill("fitness", 20); } else gainSkill("culture", 10);
+    // Personal bests live in this browser (a convenience; nothing depends on them).
+    let isBest = false;
+    if (r.best) {
+      try {
+        const k = `ride_best:${def.id}`;
+        const prev = Number(localStorage.getItem(k));
+        isBest = !localStorage.getItem(k) || (r.best.lowerIsBetter ? r.best.value < prev : r.best.value > prev);
+        if (isBest) localStorage.setItem(k, String(r.best.value));
+      } catch {}
+    }
+    const castle = r.keep?.castle;
+    if (castle) setCastles((list) => [...list.filter((x) => x.at[0] !== castle.at[0] || x.at[1] !== castle.at[1]), castle]);
+    gameAudio.playCoinSound();
+    setRideResult({ result: r, isBest, reward });
+  };
+  const closeRide = () => { setRide(null); setRideResult(null); setPlayerAnimation("idle"); };
 
   // Accessories the citizen is wearing, plus anything being tried on.
   const inventory = useMemo(() => citizen?.inventory ?? [], [citizen?.inventory]);
@@ -720,6 +782,9 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     if (a.price) {
       adjustBalance(-a.price);
     }
+    // Rides and water activities are acted out in 3D (hire paid above).
+    const def = rideFor(a);
+    if (def && !ride && beginRide(def, a, at)) return;
 
     const cat = detectActivityCategory(a);
     let propKind: ServeKind | undefined = undefined;
@@ -1087,6 +1152,10 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   return (
     <main className="fixed inset-0 w-screen h-[100dvh] overflow-hidden select-none font-sans bg-black text-slate-900 overscroll-none">
       <InteriorScene
+        ride={ride}
+        onRideEnd={onRideEnd}
+        extras={castles.length ? <>{castles.map((c) => <group key={`${c.at[0]},${c.at[1]}`} position={[c.at[0], 0, c.at[1]]}><SandCastle stage={c.stage} /></group>)}</> : null}
+        placeAt={placeAt}
         venue={venue}
         plan={plan}
         look={citizen?.look}
@@ -1121,6 +1190,23 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         activityFX={activityFX}
       />
 
+      {ride && (
+        <RideHUD
+          key={ride.key}
+          ride={ride.ride}
+          result={rideResult?.result ?? null}
+          isBest={!!rideResult?.isBest}
+          reward={rideResult?.reward ?? null}
+          onDone={closeRide}
+          onAgain={() => {
+            const def = ride.ride;
+            const a = (venue.activities ?? []).find((x) => x.ride === def.id);
+            setRide(null); setRideResult(null);
+            if (a) setTimeout(() => beginRide(def, a, rideAt.current), 0);
+          }}
+        />
+      )}
+
       {/* Live 3D Interactive Venue Activity Experience Overlay */}
       {activeActivity && (
         <ActivityExperienceOverlay
@@ -1138,7 +1224,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       <VenueWallAdModal venueId={venue.id} venueName={venue.name} open={wallAdOpen} onOpenChange={setWallAdOpen} initialPanelId={selectedAdPanel} />
       <VenueGuideModal venue={venue} open={guideOpen} onOpenChange={setGuideOpen} />
       <ClothingStoreModal open={clothingStoreOpen} onOpenChange={setClothingStoreOpen} storeName={venue.name} />
-      <VenueRadio venue={venue} compact={!!panel} />
+      {!ride && <VenueRadio venue={venue} compact={!!panel} />}
 
       {/* Item 7: Celebratory Bottle Service Announcement Banner */}
       {vipCelebration && (
@@ -1188,8 +1274,8 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         </button>
       </header>
 
-      {/* Quick actions */}
-      {!panel && (
+      {/* Quick actions (hidden during a ride: the ride's own controls are there) */}
+      {!panel && !ride && (
         <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-30 flex flex-wrap justify-center gap-2 w-[min(96vw,560px)] pointer-events-auto">
           {(venue.activities ?? []).length > 0 && (
             <button
@@ -1246,7 +1332,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       )}
 
       {/* A Local's offer: a gift, or come along somewhere else */}
-      {offer && !panel && (
+      {offer && !panel && !ride && (
         <div className="absolute bottom-[calc(max(1rem,env(safe-area-inset-bottom))+6.5rem)] sm:bottom-[calc(max(1rem,env(safe-area-inset-bottom))+3.75rem)] left-1/2 -translate-x-1/2 z-30 w-[min(92vw,400px)] pointer-events-auto">
           <div className="rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 shadow-2xl p-3 flex items-center gap-3 animate-in slide-in-from-bottom-4 fade-in duration-300">
             <span className="text-2xl">{offer.kind === "invite" ? "🎉" : "🎁"}</span>

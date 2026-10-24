@@ -20,13 +20,25 @@ import { attachAccessories, buildAccessoryRig } from "./accessories";
 import type { Accessory } from "@/lib/city/types";
 
 export type { AvatarLookProps } from "./roster";
-/** "sleep" has no clip of its own: it is the idle clip slowed to a sleeper's breathing (the scene lays the body down). */
-export type AvatarAnimation = "idle" | "sit" | "wave" | "clap" | "walk" | "dance" | "talk" | "sleep";
+/**
+ * "sleep" and "swim" have no clips of their own: sleep is the idle clip slowed to a sleeper's breathing,
+ * swim is the walk clip sped up for the leg kick (the scene lays the body down; BodyPose moves the arms).
+ */
+export type AvatarAnimation = "idle" | "sit" | "wave" | "clap" | "walk" | "dance" | "talk" | "sleep" | "swim";
+const CLIP_FOR: Partial<Record<AvatarAnimation, AvatarAnimation>> = { sleep: "idle", swim: "walk" };
+const SPEED_FOR: Partial<Record<AvatarAnimation, number>> = { sleep: 0.3, swim: 1.5 };
+
+/**
+ * Arm poses laid over whatever clip is playing, for rides and water: arms crossed on the chest (slides),
+ * both arms up (screaming down a drop), freestyle strokes (swimming), arms out for balance (surfing),
+ * gripping the handles (rafts and rings) and hugging the knees (cannonball).
+ */
+export type BodyPose = "armsCrossed" | "armsUp" | "swim" | "balance" | "grip" | "tuck";
 
 export const DEFAULT_LOOK: AvatarLookProps = { gender: "woman", bodyType: "Hourglass" };
 
 const HEIGHT: Record<Gender, number> = { woman: 1.68, man: 1.8 };
-const CLIPS: Exclude<AvatarAnimation, "sleep">[] = ["idle", "sit", "wave", "clap", "walk", "dance", "talk"];
+const CLIPS: Exclude<AvatarAnimation, "sleep" | "swim">[] = ["idle", "sit", "wave", "clap", "walk", "dance", "talk"];
 
 /** Soft studio lighting for realistic skin, generated in code (no HDR download). */
 export function StudioEnvironment({ intensity = 0.6 }: { intensity?: number }) {
@@ -133,9 +145,9 @@ function Framed({ model, gender, placement, children }: { model: { height: numbe
 
 function usePlay(actions: Record<string, THREE.AnimationAction | null>, animation: AvatarAnimation) {
   useEffect(() => {
-    const action = actions[animation === "sleep" ? "idle" : animation] ?? actions.idle;
+    const action = actions[CLIP_FOR[animation] ?? animation] ?? actions.idle;
     if (!action) return;
-    action.setEffectiveTimeScale(animation === "sleep" ? 0.3 : 1);
+    action.setEffectiveTimeScale(SPEED_FOR[animation] ?? 1);
     action.reset().fadeIn(0.35).play();
     return () => {
       action.fadeOut(0.35);
@@ -276,6 +288,81 @@ function useCarry(model: { scene: THREE.Object3D }, mode: CarryMode | false, hel
   });
 }
 
+/** Points `bone` so the line from it to `child` runs along `dir` (world space), blended by `w`. */
+function aimBone(bone: THREE.Object3D, child: THREE.Object3D, dir: THREE.Vector3, w: number, t: { a: THREE.Vector3; b: THREE.Vector3; q: THREE.Quaternion; q2: THREE.Quaternion; id: THREE.Quaternion }) {
+  if (!bone.parent) return;
+  const from = child.getWorldPosition(t.b).sub(bone.getWorldPosition(t.a)).normalize();
+  // The turn from where the bone points now to `dir`, eased in by the pose's weight.
+  t.id.setFromUnitVectors(from, dir);
+  t.q.identity().slerp(t.id, w);
+  bone.getWorldQuaternion(t.q2).premultiply(t.q);
+  bone.quaternion.copy(bone.parent.getWorldQuaternion(t.q).invert().multiply(t.q2));
+  bone.updateWorldMatrix(false, true);
+}
+
+/** Lays a BodyPose over the playing clip. Works on both skeletons (Rocketbox and custom avatars). */
+function useBodyPose(model: { scene: THREE.Object3D }, pose: BodyPose | undefined) {
+  const bones = useMemo(() => {
+    const named = (...names: string[]) => names.map((n) => model.scene.getObjectByName(n)).find(Boolean);
+    const side = (s: "L" | "R", full: "Left" | "Right") => ({
+      upper: named(`Bip01_${s}_UpperArm`, `${full}Arm`),
+      fore: named(`Bip01_${s}_Forearm`, `${full}ForeArm`),
+      hand: named(`Bip01_${s}_Hand`, `${full}Hand`),
+    });
+    return { L: side("L", "Left"), R: side("R", "Right"), pelvis: named("Bip01_Pelvis", "Hips"), neck: named("Bip01_Neck", "Neck") };
+  }, [model]);
+  const t = useMemo(() => ({ a: new THREE.Vector3(), b: new THREE.Vector3(), q: new THREE.Quaternion(), q2: new THREE.Quaternion(), id: new THREE.Quaternion(), up: new THREE.Vector3(), right: new THREE.Vector3(), fwd: new THREE.Vector3(), d: new THREE.Vector3() }), []);
+  const weight = useRef(0);
+  const last = useRef<BodyPose | undefined>(undefined);
+
+  useFrame(({ clock }, dt) => {
+    if (pose) last.current = pose;
+    weight.current = THREE.MathUtils.damp(weight.current, pose ? 1 : 0, 6, dt);
+    const p = last.current;
+    const { L, R, pelvis, neck } = bones;
+    if (!p || weight.current < 0.01 || !L.upper || !R.upper || !L.fore || !R.fore || !L.hand || !R.hand || !pelvis || !neck) return;
+    model.scene.updateWorldMatrix(true, true);
+    // The body's own frame, from the skeleton: up the spine, across the shoulders, and the way it faces.
+    const up = neck.getWorldPosition(t.up).sub(pelvis.getWorldPosition(t.a)).normalize();
+    const right = R.upper.getWorldPosition(t.right).sub(L.upper.getWorldPosition(t.a)).normalize();
+    const fwd = t.fwd.crossVectors(up, right).normalize();
+    const time = clock.getElapsedTime();
+    const w = weight.current;
+    const dir = (u: number, f: number, r: number) => t.d.set(0, 0, 0).addScaledVector(up, u).addScaledVector(fwd, f).addScaledVector(right, r).normalize();
+
+    for (const [arm, k] of [[R, 1], [L, -1]] as const) {
+      // k: +1 right arm, -1 left arm (mirrors the sideways parts)
+      let upper: THREE.Vector3, fore: THREE.Vector3;
+      if (p === "armsCrossed") {
+        upper = dir(-0.75, 0.55, k * 0.15).clone();
+        fore = dir(0.3, 0.35, -k * 0.9).clone();
+      } else if (p === "armsUp") {
+        const shake = Math.sin(time * 9 + k) * 0.08;
+        upper = dir(0.92, 0.15, k * (0.35 + shake)).clone();
+        fore = upper.clone();
+      } else if (p === "swim") {
+        // Freestyle: each arm windmills over the head and pulls through the water, half a stroke apart.
+        const a = time * 4.4 + (k === 1 ? 0 : Math.PI);
+        upper = dir(Math.cos(a), Math.sin(a) * 0.9, k * 0.25).clone();
+        fore = upper.clone();
+      } else if (p === "balance") {
+        const sway = Math.sin(time * 2.2) * 0.15;
+        upper = dir(0.05 + k * sway, 0.15, k * 0.95).clone();
+        fore = dir(0.2 + k * sway, 0.25, k * 0.9).clone();
+      } else if (p === "grip") {
+        upper = dir(-0.7, 0.35, k * 0.55).clone();
+        fore = dir(-0.85, 0.3, k * 0.35).clone();
+      } else {
+        // tuck: hugging the knees
+        upper = dir(-0.35, 0.9, k * 0.2).clone();
+        fore = dir(-0.75, 0.2, -k * 0.6).clone();
+      }
+      aimBone(arm.upper!, arm.fore!, upper, w, t);
+      aimBone(arm.fore!, arm.hand!, fore, w, t);
+    }
+  });
+}
+
 function RosterAvatar({
   look,
   animation,
@@ -284,6 +371,7 @@ function RosterAvatar({
   holding,
   carryMode,
   raiseHand = false,
+  pose,
 }: {
   look: AvatarLookProps;
   animation: AvatarAnimation;
@@ -292,6 +380,7 @@ function RosterAvatar({
   holding?: React.ReactNode;
   carryMode?: CarryMode;
   raiseHand?: boolean;
+  pose?: BodyPose;
 }) {
   const gltf = useGLTF(rosterModel(presetFor(look)));
   // The chosen outfit: this face on another roster citizen's clothes.
@@ -307,6 +396,7 @@ function RosterAvatar({
   const held = useRef<THREE.Group>(null);
   const effectiveMode: CarryMode | false = carryMode ?? (raiseHand ? "raise" : !!holding ? "hold" : false);
   useCarry(model, effectiveMode, held);
+  useBodyPose(model, pose);
 
   const bodyType = look.bodyType ?? defaultBodyType(look.gender);
   useEffect(() => {
@@ -334,6 +424,7 @@ function CustomAvatar({
   holding,
   carryMode,
   raiseHand = false,
+  pose,
 }: {
   look: AvatarLookProps;
   url: string;
@@ -343,6 +434,7 @@ function CustomAvatar({
   holding?: React.ReactNode;
   carryMode?: CarryMode;
   raiseHand?: boolean;
+  pose?: BodyPose;
 }) {
   const gltf = useGLTF(url);
   const model = usePreparedModel(gltf.scene, false);
@@ -366,6 +458,7 @@ function CustomAvatar({
 
   // Registered after useAnimations, so it runs once the source has been posed for this frame.
   useFrame(() => retargeter?.update());
+  useBodyPose(model, pose);
 
   return (
     <>
@@ -390,6 +483,8 @@ interface CitizenAvatarProps {
   raiseHand?: boolean;
   /** Active arm gesture mode for drinking, dining, or holding props */
   carryMode?: CarryMode;
+  /** Arm pose for rides and water (laid over the clip). */
+  pose?: BodyPose;
 }
 
 export function CitizenAvatar({
@@ -401,6 +496,7 @@ export function CitizenAvatar({
   holding,
   raiseHand,
   carryMode,
+  pose,
 }: CitizenAvatarProps) {
   const customUrl = useAvatarUrl(look.custom?.url);
   const placement = { position, rotation };
@@ -415,6 +511,7 @@ export function CitizenAvatar({
       holding={holding}
       raiseHand={raiseHand}
       carryMode={carryMode}
+      pose={pose}
     />
   );
   if (!look.custom || !customUrl) return roster;
@@ -430,6 +527,7 @@ export function CitizenAvatar({
         holding={holding}
         raiseHand={raiseHand}
         carryMode={carryMode}
+        pose={pose}
       />
     </Suspense>
   );

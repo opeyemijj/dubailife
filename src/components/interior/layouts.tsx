@@ -8,7 +8,9 @@ import type { ReactNode } from "react";
 import type { Product, StationKind, Venue } from "@/lib/city/types";
 import type { FloorKind } from "./materials";
 import { signTexture } from "./materials";
-import { BuoyLine, EntranceArch, JetSki, OpenSea, SharkLagoon, SlideMountain, Slides, ThatchRoof, VolleyballNet, WavePool } from "./scenery";
+import { BuoyLine, EntranceArch, FlowRider, JetSki, OpenSea, SharkLagoon, SlideMountain, Slides, ThatchRoof, VolleyballNet, WavePool } from "./scenery";
+import { BEACH, isKidsPool, isSkyPool, poolDeckPool, SPLASH_POOLS, WATERPARK } from "./rides/paths";
+import { hasVolleyball, parkOf, RIDES } from "@/lib/city/rides";
 import { Cabana, CinemaScreen, DockWithAbra, FoodTruck, IceRink, Kites, LazyRiver, LifeguardTower, Lounger, LoungerSet, Mihrab, Pool, RingChandelier, Candle, Sea, Seating, SignPost, SlideTower, TreatmentBed, } from "./scenery";
 import {
   AquariumWall, Bar, Booth, DJBooth, DanceFloor, DiningSet, DisplayTable, Exhibit, FittingRoom, FountainJets, GlassCase, Gondola,
@@ -23,6 +25,8 @@ export interface StationDef {
   position: [number, number];
   rotation: number;
   visual: ReactNode;
+  /** Rides started from here (their activities are listed at this station). */
+  rides?: string[];
 }
 
 export interface Plan {
@@ -111,17 +115,29 @@ export function servingSpot(venue: Venue, s: StationDef, n: number, seatIndex = 
 /** Station kinds a venue needs, from its products and activities. */
 export function stationKindsFor(venue: Venue): Set<StationKind> {
   const kinds = new Set<StationKind>(venue.products.map((p: Product) => p.station));
-  for (const a of venue.activities ?? []) kinds.add(a.animation === "dance" ? "dancefloor" : a.animation === "sit" ? "booth" : "exhibit");
+  for (const a of venue.activities ?? []) {
+    // Rides bring their own stations (see plan()); one ridden from a lounger still needs the loungers.
+    if (a.ride) { const st = RIDES[a.ride]?.station; if (st) kinds.add(st); continue; }
+    kinds.add(a.animation === "dance" ? "dancefloor" : a.animation === "sit" ? "booth" : "exhibit");
+  }
   if (venue.layout === "boutique" && venue.products.some((p) => !p.service)) kinds.add("fitting");
   if (venue.layout === "dining") kinds.add("booth");
   return kinds;
 }
 
-type Slot = { kind: StationKind; position: [number, number]; rotation?: number; label?: string; visual: (i: number) => ReactNode };
+type Slot = { kind: StationKind; position: [number, number]; rotation?: number; label?: string; visual: (i: number) => ReactNode; rides?: string[] };
 
 function plan(venue: Venue, size: [number, number], floor: FloorKind, slots: Slot[], decor: ReactNode, walls = true): Plan {
   const kinds = stationKindsFor(venue);
-  const used = slots.filter((s) => kinds.has(s.kind));
+  const offered = new Set((venue.activities ?? []).map((a) => a.ride).filter(Boolean));
+  // A ride station (an "exhibit" spot for rides) appears only when the venue offers one of its rides, and
+  // lists just those; other stations (loungers) keep their rides only when offered.
+  const used = slots
+    .map((s) => {
+      const rides = s.rides?.filter((r) => offered.has(r));
+      return { ...s, rides: rides?.length ? rides : undefined, rideSpot: !!s.rides && s.kind === "exhibit" };
+    })
+    .filter((s) => (s.rideSpot ? !!s.rides : kinds.has(s.kind)));
   // Anything offered at a station this layout has no slot for is sold at the till/counter instead.
   const stations: StationDef[] = used.map((s, i) => ({
     id: `${s.kind}-${i}`,
@@ -130,6 +146,7 @@ function plan(venue: Venue, size: [number, number], floor: FloorKind, slots: Slo
     position: s.position,
     rotation: s.rotation ?? 0,
     visual: s.visual(i),
+    rides: s.rides,
   }));
   const anchor = stations.find((s) => ["till", "reception", "menu", "counter", "bar", "tickets"].includes(s.kind)) ?? stations[0];
   const behind: [number, number] = anchor ? [anchor.position[0] - Math.sin(anchor.rotation) * 0.9, anchor.position[1] - Math.cos(anchor.rotation) * 0.9] : [0, -size[1] / 2 + 1.5];
@@ -248,15 +265,21 @@ export function buildPlan(venue: Venue): Plan {
     case "beach": {
       // Sand sloping down to the sea, which runs out to the horizon. Loungers face the water; the bar is
       // a thatched beach hut. Clubs add a DJ and a dance spot on the sand.
-      const D = 20, Wd = 22;
+      // Swimming, water sports, sunbathing, volleyball and sandcastles are acted out in 3D (rides/); where
+      // they happen is in rides/paths.ts (BEACH).
+      const [Wd, D] = BEACH.size;
       const name = `${venue.name} ${venue.category}`;
-      const club = /club/i.test(venue.category);
       const colors = ["#f43f5e", "#0ea5e9", "#f59e0b", "#10b981", accent];
       const sign = signTexture(venue.name, "#ffffff", null);
-      const shore = -D / 2 + 7; // sea beyond this line
+      const shore = BEACH.shore; // sea beyond this line
       return plan(venue, [Wd, D], "sand", [
         // The swim spot is on the sand by the lifeguard (staff stand by the first station if there's no bar).
-        { kind: "exhibit", position: [7.2, shore + 2.2], label: "Swim", visual: () => null },
+        // Other things to do here (a jog, a workout, a photo…): only when the venue has some.
+        { kind: "exhibit", position: [BEACH.swimX - 1.4, shore + 5], label: "✨ Things to do", visual: () => null },
+        { kind: "exhibit", position: [BEACH.swimX, shore + 2.2], label: "🏊 Sea", rides: ["sea-swim"], visual: () => null },
+        { kind: "exhibit", position: [BEACH.sportsX, shore + 1.3], label: "🚤 Water sports", rides: ["jet-ski", "paddleboard", "kitesurf"], visual: () => null },
+        { kind: "exhibit", position: [BEACH.castle[0] + 1.3, BEACH.castle[1] + 0.9], label: "🏰 Sandcastle", rides: ["sandcastle"], visual: () => null },
+        { kind: "exhibit", position: [BEACH.net[0] - 3.9, BEACH.net[1] + 1.6], label: "🏐 Volleyball", rides: ["beach-volleyball"], visual: () => null },
         { kind: "bar", position: [-8.4, 3], rotation: Math.PI / 2, label: "Beach bar", visual: () => <><Bar glow={light ?? "#f59e0b"} width={3} /><group position={[0.4, 0, 0]}><ThatchRoof width={2.4} depth={4} /></group></> },
         { kind: "menu", position: [-8.4, 7], rotation: Math.PI / 2, label: "Order here", visual: () => <MenuCounter title={venue.name} items={venue.products.filter((p) => !p.service).map((p) => ({ name: p.name, price: p.price }))} color={accent} /> },
         { kind: "tickets", position: [8.4, 6.4], rotation: -Math.PI / 2, label: "Daybeds & hire", visual: () => <TicketKiosk accent={accent} /> },
@@ -264,21 +287,21 @@ export function buildPlan(venue: Venue): Plan {
         { kind: "dancefloor", position: [-2.8, 6.2], visual: () => <DanceFloor colors={[accent, "#22d3ee", "#facc15"]} size={3.4} /> },
         { kind: "dj", position: [-2.8, 8.6], rotation: Math.PI, visual: () => <><DJBooth glow={light ?? accent} /><group position={[0, 0, 0.2]}><ThatchRoof width={3} depth={2} /></group></> },
         // loungers in a row along the sand, facing the sea
-        ...([[-5.6, 0.6], [-2.4, 0.4], [0.8, 0.4], [4, 0.6], [6.8, 1.6]] as Array<[number, number]>).map(([x, z], i) => ({
-          kind: "booth" as StationKind, position: [x, z] as [number, number], rotation: 0, visual: () => <LoungerSet color={colors[i % colors.length]} />,
+        ...BEACH.loungers.map(([x, z], i) => ({
+          kind: "booth" as StationKind, position: [x, z] as [number, number], rotation: 0, rides: ["sunbathe"], visual: () => <LoungerSet color={colors[i % colors.length]} />,
         })),
       ], <>
         {/* wet sand at the waterline, then the sea out to the horizon */}
         <mesh position={[0, 0.012, shore + 0.8]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[Wd, 1.6]} /><meshStandardMaterial color="#d9b77a" roughness={0.4} /></mesh>
         <group position={[0, 0, shore - (D / 2 + shore) / 2]}><Sea width={Wd} depth={D / 2 + shore} /></group>
         <OpenSea z={-D / 2} />
-        <group position={[0, 0, shore - 5.5]}><BuoyLine width={Wd - 2} /></group>
+        <group position={[0, 0, BEACH.buoyZ]}><BuoyLine width={Wd - 2} /></group>
         <group position={[-6, 0, shore - 8]} rotation={[0, 0.6, 0]}><JetSki /></group>
         <group position={[7, 0, shore - 9.5]} rotation={[0, -0.4, 0]}><JetSki color="#2563eb" /></group>
         <group position={[9.4, 0, shore + 1.6]} rotation={[0, -Math.PI / 2, 0]}><LifeguardTower /></group>
         {([[-10.2, 9], [-10.4, -0.4], [10.4, 9.2], [5.6, 9.4], [-6.2, 9.6]] as Array<[number, number]>).map(([x, z], i) => <group key={i} position={[x, 0, z]}><Palm height={4.4 + (i % 2) * 0.7} /></group>)}
         <group position={[3.6, 0, 9]}><SignPost map={sign} /></group>
-        {!club && /public|jbr|beach 1/i.test(name) && <group position={[3.6, 0, 5.4]}><VolleyballNet /></group>}
+        {hasVolleyball(venue) && <group position={[BEACH.net[0], 0, BEACH.net[1]]}><VolleyballNet /></group>}
         {/kite/i.test(name) && <group position={[0, 0, shore - 7]}><Kites /></group>}
         {/truck/i.test(name) && <group position={[-3.4, 0, 7.2]}><FoodTruck color="#ffffff" accent={accent} /></group>}
         {/abra/i.test(name) && <group position={[5, 0, shore - 2]} rotation={[0, Math.PI / 2, 0]}><DockWithAbra /></group>}
@@ -288,12 +311,14 @@ export function buildPlan(venue: Venue): Plan {
     case "pooldeck": {
       // A stone deck around a big pool, loungers, cabanas and the pool bar. Sky pools look out over the city.
       const D = 15, Wd = 18;
-      const kids = /kids/i.test(venue.name);
-      const sky = venue.feature === "skyline" || /sky|cloud|aura|terrace/i.test(venue.name);
+      const kids = isKidsPool(venue);
+      const sky = isSkyPool(venue);
+      const pool = poolDeckPool(sky, kids);
       const colors = ["#f43f5e", "#0ea5e9", "#f59e0b", "#10b981", accent];
       const sign = signTexture(venue.name, "#ffffff", null);
       return plan(venue, [Wd, D], "deck", [
         { kind: "exhibit", position: [0, 1.2], label: kids ? "Splash pool" : "Swim", visual: () => <mesh position={[0, 0.15, 0]}><torusGeometry args={[0.3, 0.1, 8, 16]} /><meshStandardMaterial color="#f97316" /></mesh> },
+        ...(kids ? [] : [{ kind: "exhibit" as StationKind, position: [-pool.w / 2 + 1.2, pool.at[1] + pool.d / 2 + 1.1] as [number, number], label: "🏊 Pool", rides: ["pool-swim", "pool-cannonball", "pool-float"], visual: () => null }]),
         { kind: "bar", position: [7.2, -0.8], rotation: -Math.PI / 2, label: "Pool bar", visual: () => <Bar glow={light ?? "#38bdf8"} width={3} /> },
         { kind: "menu", position: [7.2, 3.2], rotation: -Math.PI / 2, label: "Order here", visual: () => <MenuCounter title={venue.name} items={venue.products.filter((p) => !p.service).map((p) => ({ name: p.name, price: p.price }))} color={accent} /> },
         { kind: "tickets", position: [-7.2, 4.4], rotation: Math.PI / 2, label: kids ? "Sign up" : "Day pass & cabanas", visual: () => <TicketKiosk accent={accent} /> },
@@ -303,7 +328,7 @@ export function buildPlan(venue: Venue): Plan {
           kind: "booth" as StationKind, position: [x, z] as [number, number], rotation: Math.PI, visual: () => <LoungerSet color={colors[i % colors.length]} />,
         })),
       ], <>
-        <group position={[0, 0, sky ? -4.2 : -2.2]}><Pool w={kids ? 7 : 10} d={kids ? 3.2 : 4.6} color={kids ? "#22d3ee" : "#0ea5e9"} /></group>
+        <group position={[0, 0, pool.at[1]]}><Pool w={pool.w} d={pool.d} color={kids ? "#22d3ee" : "#0ea5e9"} /></group>
         {kids && <group position={[4.4, 0, -4.6]} scale={0.4}><SlideTower /></group>}
         {!sky && ([[-7.4, -5.6], [7.4, -5.6]] as Array<[number, number]>).map(([x, z], i) => <group key={i} position={[x, 0, z]}><Cabana color={i ? accent : "#f5f5f4"} /></group>)}
         {sky
@@ -316,13 +341,20 @@ export function buildPlan(venue: Venue): Plan {
     case "waterpark": {
       // The slide tower (Aquaventure's stepped temple, or Wild Wadi's rock), its slides landing in
       // splash pools, the drop slide's clear tube through a shark lagoon, a wave pool and a lazy river,
-      // all on sand like the real parks, behind an entrance arch with the park's name.
-      const D = 26, Wd = 28;
-      const atlantis = /aquaventure|atlantis/i.test(`${venue.name} ${venue.blurb}`);
+      // all on sand like the real parks, behind an entrance arch with the park's name. Every ride is
+      // ridden in 3D (rides/), starting from the station at its entrance. Shapes are in rides/paths.ts.
+      const [Wd, D] = WATERPARK.size;
+      const atlantis = parkOf(venue) === "aquaventure";
       const sign = signTexture(venue.name.toUpperCase(), "#ffffff", null);
-      const T: [number, number] = [3, -6]; // the tower
+      const T = WATERPARK.tower;
+      const { wavePool: wp, river, smallRiver, flowRider: fr } = WATERPARK;
+      const towerRides = Object.values(RIDES).filter((r) => ["drop", "twistA", "twistB"].includes(r.track)).map((r) => r.id);
+      const ridesOn = (track: string) => Object.values(RIDES).filter((r) => r.track === track).map((r) => r.id);
       return plan(venue, [Wd, D], "sand", [
-        { kind: "exhibit", position: [T[0], T[1] + 4.6], label: atlantis ? "Leap of Faith" : "Slides", visual: () => null },
+        { kind: "exhibit", position: [T[0] - 2.6, T[1] + 6.6], label: atlantis ? "🗼 Tower of Neptune" : "🗼 Slide tower", rides: towerRides, visual: () => null },
+        { kind: "exhibit", position: [river.at[0] + river.radius + 0.5, river.at[1]], rotation: Math.PI / 2, label: "🛟 Lazy river", rides: ridesOn("river"), visual: () => null },
+        { kind: "exhibit", position: [wp.at[0], wp.at[1] + wp.d / 2 + 1], label: "🌊 Wave pool", rides: ridesOn("waves"), visual: () => null },
+        { kind: "exhibit", position: [fr.at[0], fr.at[1] + fr.d / 2 + 1.4], label: "🏄 FlowRider", rides: ridesOn("flowrider"), visual: () => null },
         { kind: "tickets", position: [-12.4, 10], rotation: Math.PI / 2, label: "Tickets", visual: () => <TicketKiosk accent={accent} /> },
         { kind: "bar", position: [12.4, 8], rotation: -Math.PI / 2, label: "Snack bar", visual: () => <><Bar glow="#f59e0b" width={3} /><group position={[-0.4, 0, 0]}><ThatchRoof width={2.4} depth={4} /></group></> },
         ...([[-3, 9.4], [0.4, 9.6], [3.8, 9.4]] as Array<[number, number]>).map(([x, z], i) => ({
@@ -334,15 +366,14 @@ export function buildPlan(venue: Venue): Plan {
           <Slides through={atlantis} />
           {atlantis && <group position={[0, 0, 4.6]}><SharkLagoon /></group>}
           {/* splash pools where the slides come out */}
-          <group position={[5.6, 0, 1.4]}><Pool w={3.4} d={2.6} color="#22d3ee" /></group>
-          <group position={[-5.8, 0, 5]}><Pool w={3.4} d={2.6} color="#22d3ee" /></group>
-          <group position={[0, 0, 8.4]}><Pool w={3} d={2.2} color="#22d3ee" /></group>
+          {Object.values(SPLASH_POOLS).map((p, i) => <group key={i} position={[p.at[0], 0, p.at[1]]}><Pool w={p.w} d={p.d} color="#22d3ee" /></group>)}
         </group>
-        {/* wave pool and lazy river */}
-        <group position={[-7.6, 0, -6.4]}><WavePool w={9} d={7} /></group>
-        <group position={[-8.2, 0, 4.4]}><LazyRiver radius={3.4} /></group>
-        <group position={[-8.2, 0, 4.4]}><Palm height={4.8} /></group>
-        <group position={[9.6, 0, 2.6]}><LazyRiver radius={2.4} /></group>
+        {/* wave pool, lazy river and (at Wild Wadi) the FlowRider */}
+        <group position={[wp.at[0], 0, wp.at[1]]}><WavePool w={wp.w} d={wp.d} /></group>
+        <group position={[river.at[0], 0, river.at[1]]}><LazyRiver radius={river.radius} /></group>
+        <group position={[river.at[0], 0, river.at[1]]}><Palm height={4.8} /></group>
+        <group position={[smallRiver.at[0], 0, smallRiver.at[1]]}><LazyRiver radius={smallRiver.radius} /></group>
+        {!atlantis && <group position={[fr.at[0], 0, fr.at[1]]}><FlowRider w={fr.w} d={fr.d} /></group>}
         {([[-13, -12], [13, -12], [13, -2], [-13, -1], [13, 12], [-13, 12]] as Array<[number, number]>).map(([x, z], i) => <group key={i} position={[x, 0, z]}><Palm height={4.6} /></group>)}
         {/* the entrance arch on the side, so it doesn't hide the slides */}
         <group position={[-12.6, 0, 9.6]} rotation={[0, Math.PI / 2, 0]}><EntranceArch map={sign} color={atlantis ? "#e11d48" : "#b45309"} /></group>

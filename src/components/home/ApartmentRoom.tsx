@@ -526,7 +526,7 @@ function FlatScreenTVOnStand({ size, ghost }: { size: [number, number]; ghost?: 
 
 
 function ItemVisual({ item, ghost }: { item: CatalogItem; ghost?: "valid" | "invalid" }) {
-  if (item.id === "tv") return <FlatScreenTVOnStand size={item.size} ghost={ghost} />;
+  if (item.id === "tv" || item.id.includes("tv")) return <FlatScreenTVOnStand size={item.size} ghost={ghost} />;
   if (item.kind === "wall") return <SunsetPainting size={item.size} ghost={ghost} />;
   return <FurnitureModel url={item.model!} size={item.size} yaw={item.yaw} ghost={ghost} />;
 }
@@ -1674,7 +1674,7 @@ function RoomScene({
         </group>
       )}
 
-      {/* Owned furniture (the one being moved is shown as a ghost instead) */}
+      {/* Owned and built-in furniture (the one being moved is shown as a ghost instead) */}
       {furniture.map((f) => {
         const item = getCatalogItem(f.itemId);
         if (!item || !f.placement || f.uid === placing?.uid) return null;
@@ -1694,6 +1694,27 @@ function RoomScene({
                 onPointerOut={hoverCursor(false)}
               >
                 <ItemVisual item={item} />
+
+                {/* Tactile Decorate-mode hit plate and visual highlight for every movable item */}
+                {decorating && !placing && f.placement.kind === "floor" && (
+                  <group>
+                    <mesh
+                      rotation={[-Math.PI / 2, 0, 0]}
+                      position={[0, 0.015, 0]}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onPickUp?.(f.uid);
+                      }}
+                    >
+                      <planeGeometry args={[item.size[0] * CELL - 0.02, item.size[1] * CELL - 0.02]} />
+                      <meshBasicMaterial color="#10b981" transparent opacity={0.35} depthWrite={false} />
+                    </mesh>
+                    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.018, 0]} raycast={() => null}>
+                      <ringGeometry args={[0.18, 0.24, 16]} />
+                      <meshBasicMaterial color="#34d399" transparent opacity={0.8} />
+                    </mesh>
+                  </group>
+                )}
               </group>
             </Suspense>
           </PlacedTransform>

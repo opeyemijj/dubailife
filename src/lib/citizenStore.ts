@@ -8,7 +8,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import type { AvatarLookProps } from "@/components/avatar/roster";
-import { withHomeItems, type OwnedFurniture, type Placement } from "@/lib/furniture";
+import { withHomeItems, getHousingTierFromText, type HousingTier, type OwnedFurniture, type Placement } from "@/lib/furniture";
 import type { Accessory } from "@/lib/city/types";
 import { supabase } from "@/lib/supabase/client";
 import type { LifeState } from "@/lib/life";
@@ -336,12 +336,15 @@ export function buyFurniture(itemId: string, price: number): string | null {
 }
 
 /** Places, moves, or (with null) stores an owned item. */
-export function setFurniturePlacement(uid: string, placement: Placement | null) {
-  updateCitizen((c) => ({
-    ...c,
-    // Includes what came with the home, so those can be moved and stored too.
-    furniture: withHomeItems(c.furniture ?? []).map((f) => (f.uid === uid ? { ...f, placement } : f)),
-  }));
+export function setFurniturePlacement(uid: string, placement: Placement | null, tier?: HousingTier) {
+  updateCitizen((c) => {
+    const activeTier = tier ?? getHousingTierFromText(c.home);
+    return {
+      ...c,
+      // Includes what came with the home, so those can be moved and stored too.
+      furniture: withHomeItems(c.furniture ?? [], activeTier).map((f) => (f.uid === uid ? { ...f, placement } : f)),
+    };
+  });
 }
 
 /** Raises (or lowers) a need, clamped to 0–100. */

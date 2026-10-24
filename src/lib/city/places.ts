@@ -5,6 +5,7 @@
 import { catalog, jobFor, type CatalogKey } from "./catalog";
 import type { JobDef, Layout, Palette, Place, Product, Venue, VenueActivity } from "./types";
 import { menu, menuJob, type Cuisine } from "./menus";
+import { rideActivities } from "./rides";
 
 const PALETTES = {
   minimal: { floor: "#e7e2da", wall: "#f7f5f1", accent: "#111111" },
@@ -93,6 +94,7 @@ function sceneFor(name: string, category: string, layout: Layout, feature: Venue
   if (feature === "stage" || /theatre|theater|cinema|opera/i.test(name)) return { layout: "theatre", feature: "stage" };
   if (/mosque/i.test(name)) return { layout: "mosque", feature };
   if (/ice rink/i.test(name)) return { layout: "rink", feature };
+  if (/bowling/i.test(category)) return { layout: "bowling", feature };
   // Cocktail and sky bars are bars, not nightclubs.
   if (layout === "club" && /\bbar\b|tiki/i.test(category) && !/nightclub|\bclub\b/i.test(category)) return { layout: "bar", feature: feature ?? "skyline" };
   // Waterfront dining is a restaurant with a view, not a lawn.
@@ -117,8 +119,18 @@ function venue(name: string, category: string, key: CatalogKey, opts: VenueOpts 
     products: [...(opts.products ?? catalog(key, id)), ...(opts.extraProducts ?? [])],
     staff: staffFor(opts.role ?? ROLE[key] ?? "Staff", opts.role ? "Welcome! Tickets and information are with me." : greeting),
     job: opts.comingSoon || opts.noJob ? undefined : opts.job ?? jobFor(key, id),
-    activities: opts.activities,
+    activities: withRides(scene.layout, name, category, opts),
   };
+}
+
+/** Waterparks, pools and beaches get their rides and water activities, acted out in 3D. */
+function withRides(layout: Layout, name: string, category: string, opts: VenueOpts): Venue["activities"] {
+  const rides = rideActivities(layout, { name, category, blurb: opts.blurb ?? "" });
+  if (!rides.length) return opts.activities;
+  // The 3D versions replace the old one-tap swim, sunbathe, lounger, kitesurf, volleyball and slide entries.
+  const replaced = layout === "beach" ? /(^|:)(swim|sunbathe|lounge|kite|volleyball)$/ : /^(swim|leap|sceirah)$/;
+  const kept = (opts.activities ?? []).filter((a) => !replaced.test(a.id));
+  return [...rides, ...kept];
 }
 
 const ticket = (id: string, name: string, price: number, desc: string, icon = "🎟️"): Product => ({ id, name, price, icon, desc, station: "tickets", service: true, consumable: { need: "fun", amount: 25 } });

@@ -42,7 +42,7 @@ const TABS: Array<{ id: LifeTab; label: string }> = [
 /** Venues worth a "visit X" wish: clubs, restaurants, beaches, shows, rinks and waterparks that are open. */
 const WISH_VENUES: WishVenue[] = PLACES.flatMap((p) =>
   ["mall", "hotel", "club", "attraction", "food-hall", "park"].includes(p.kind)
-    ? p.venues.filter((v) => !v.comingSoon && ["club", "dining", "theatre", "beach", "waterpark", "rink", "bar", "pooldeck"].includes(v.layout)).map((v) => ({ key: `${p.id}/${v.id}`, name: v.name, placeId: p.id }))
+    ? p.venues.filter((v) => !v.comingSoon && ["club", "dining", "theatre", "beach", "waterpark", "rink", "bowling", "bar", "pooldeck"].includes(v.layout)).map((v) => ({ key: `${p.id}/${v.id}`, name: v.name, placeId: p.id }))
     : []);
 
 export function LifePanel({ open, tab, onTab, onClose }: { open: boolean; tab: LifeTab; onTab: (t: LifeTab) => void; onClose: () => void }) {

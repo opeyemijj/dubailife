@@ -4,7 +4,7 @@
 export type Layout =
   | "boutique" | "tech" | "beauty" | "jewellery" | "market" | "dining" | "club" | "lobby" | "outdoor"
   // Places that aren't rooms: what the venue really is, built in 3D (see components/interior/layouts).
-  | "beach" | "pooldeck" | "waterpark" | "spa" | "theatre" | "bar" | "mosque" | "rink";
+  | "beach" | "pooldeck" | "waterpark" | "spa" | "theatre" | "bar" | "mosque" | "rink" | "bowling";
 
 /** Interactive spots inside an interior. Products and services are grouped by these. */
 export type StationKind =
@@ -55,6 +55,8 @@ export interface VenueActivity {
   need?: { kind: "hunger" | "energy" | "fun" | "social" | "hygiene"; amount: number };
   desc?: string;
   price?: number;
+  /** Acted out in 3D as a ride or water activity (src/data/venues/rides.json). */
+  ride?: string;
 }
 
 export interface Venue {

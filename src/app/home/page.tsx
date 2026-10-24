@@ -152,13 +152,13 @@ export default function HomePage() {
   };
 
   const handlePlace = (uid: string, placement: Placement) => {
-    setFurniturePlacement(uid, placement);
+    setFurniturePlacement(uid, placement, housingTier);
     setPlacing(null);
     gameAudio.playClickSound();
   };
 
   const handlePickUp = (uid: string) => {
-    const f = withHomeItems(furniture).find((x) => x.uid === uid);
+    const f = withHomeItems(furniture, housingTier).find((x) => x.uid === uid);
     if (!f) return;
     gameAudio.playClickSound();
     setPlacing({ uid, itemId: f.itemId, rot: f.placement?.kind === "floor" ? f.placement.rot : 0 });
@@ -168,7 +168,7 @@ export default function HomePage() {
 
   const storePlacing = () => {
     if (!placing) return;
-    setFurniturePlacement(placing.uid, null);
+    setFurniturePlacement(placing.uid, null, housingTier);
     setPlacing(null);
     showToast("📦 Moved to storage. Open Buy → Storage to place it again.");
   };
@@ -249,7 +249,7 @@ export default function HomePage() {
       {decorating && !placing && (
         <div className="absolute top-16 sm:top-20 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 bg-slate-950/90 backdrop-blur-md text-white text-xs sm:text-sm font-bold pl-4 pr-1.5 py-1.5 rounded-full shadow-2xl">
           <Move className="w-4 h-4 text-emerald-400" />
-          <span>{furniture.some((f) => f.placement) ? "Tap any furniture you bought to move it" : "Buy furniture first, then tap it here to move it"}</span>
+          <span>Tap any item in your home (bed, chair, sofa, table, fridge) to move or rotate it</span>
           <button onClick={() => setDecorating(false)} className="px-3 py-1 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-black">Done</button>
         </div>
       )}

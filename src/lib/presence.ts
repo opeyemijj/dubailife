@@ -50,9 +50,15 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
-/** Number of people with the app open right now, or null while connecting. */
-export function useOnlineCount(): number | null {
-  return useSyncExternalStore(subscribe, () => count, () => null);
+export const BASE_ONLINE_PLAYERS = 1231;
+
+/** Number of people with the app open right now: starts from 1231 + actual live players. */
+export function useOnlineCount(): number {
+  return useSyncExternalStore(
+    subscribe,
+    () => BASE_ONLINE_PLAYERS + (count ?? 1),
+    () => BASE_ONLINE_PLAYERS + 1
+  );
 }
 
 const EMPTY: ReadonlySet<string> = new Set();
@@ -76,6 +82,6 @@ export function usePresenceIdentity() {
 
 export function formatOnline(n: number | null): string {
   if (n === null) return "…";
-  if (n >= 1000) return `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k`;
+  if (n >= 10000) return `${(n / 1000).toFixed(0)}k`;
   return n.toLocaleString();
 }

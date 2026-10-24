@@ -19,6 +19,8 @@ import { ChampagneBottle, HandHeldProp, ServedItem, type ServeKind, type ServedD
 import type { Peer } from "@/lib/room";
 import { ActivityStageFX } from "./ActivityStageFX";
 import type { ActivityCategory } from "./ActivityExperienceOverlay";
+import { RideRig, type ActiveRide } from "./rides/RideRig";
+import type { RideResult } from "./rides/rideIO";
 
 export interface Activity3DFX {
   active: boolean;
@@ -57,6 +59,13 @@ export interface DeliveryDef {
 }
 
 interface Props {
+  /** A ride under way (water slides, swimming…): the rig plays it and the walking citizen steps aside. */
+  ride?: ActiveRide | null;
+  onRideEnd?: (r: RideResult) => void;
+  /** Things left in the venue this visit (a sandcastle). */
+  extras?: React.ReactNode;
+  /** Puts the citizen at a spot (after a ride); a new key moves them again. */
+  placeAt?: { point: [number, number]; key: number } | null;
   venue: Venue;
   plan: Plan;
   look?: AvatarLookProps;
@@ -578,7 +587,11 @@ function Player({
   carrying,
   follow,
   followKey,
+  hidden = false,
+  placeAt,
 }: {
+  hidden?: boolean;
+  placeAt?: { point: [number, number]; key: number } | null;
   look?: AvatarLookProps;
   worn?: Accessory[];
   start: [number, number];
@@ -602,6 +615,12 @@ function Player({
     target.current = walkTo;
     facing.current = walkTo?.face ?? null;
   }, [walkTo]);
+  // Moved straight to a spot (stepping out of a ride).
+  useEffect(() => {
+    if (!placeAt || !group.current) return;
+    group.current.position.set(placeAt.point[0], 0, placeAt.point[1]);
+    target.current = null;
+  }, [placeAt]);
 
   useFrame((_, dt) => {
     const g = group.current;
@@ -627,7 +646,7 @@ function Player({
   });
 
   return (
-    <group ref={group} position={[start[0], 0, start[1]]} rotation={[0, Math.PI, 0]}>
+    <group ref={group} position={[start[0], 0, start[1]]} rotation={[0, Math.PI, 0]} visible={!hidden}>
       <CitizenAvatar
         look={look}
         animation={walking ? "walk" : animation}
@@ -662,6 +681,10 @@ function ActivityFXLayer({ activityFX, follow }: { activityFX?: Activity3DFX; fo
 }
 
 export function InteriorScene({
+  extras,
+  ride,
+  onRideEnd,
+  placeAt,
   venue,
   plan,
   look,
@@ -751,6 +774,7 @@ export function InteriorScene({
       {/* The room appears at once; everything with a model streams in on its own as it arrives. */}
       <Room venue={venue} plan={plan} onFloor={onFloor} onWallAdClick={onWallAdClick} />
       <Suspense fallback={null}>{plan.decor}</Suspense>
+      {extras}
       {plan.stations.map((s) => (
         <Station key={s.id} s={s} active={highlight === s.id} hover={hovered === s.id} onHover={(on) => setHovered((h) => (on ? s.id : h === s.id ? null : h))} onClick={clickStation(s)} />
       ))}
@@ -805,8 +829,11 @@ export function InteriorScene({
           carrying={carrying}
           follow={followNodes}
           followKey="me"
+          hidden={!!ride}
+          placeAt={placeAt}
         />
       </Suspense>
+      {ride && onRideEnd && <RideRig key={ride.key} active={ride} look={look} worn={worn} onEnd={onRideEnd} />}
       <ActivityFXLayer activityFX={activityFX} follow={followNodes} />
       <LabelTracker labels={labels} nodes={labelNodes} follow={followNodes} />
       <FitCamera width={w} depth={d} />
