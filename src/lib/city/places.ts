@@ -130,7 +130,10 @@ function withRides(layout: Layout, name: string, category: string, opts: VenueOp
   if (!rides.length) return opts.activities;
   // The 3D versions replace the old one-tap swim, sunbathe, lounger, kitesurf, volleyball and slide entries.
   const replaced = layout === "beach" ? /(^|:)(swim|sunbathe|lounge|kite|volleyball)$/
-    : layout === "rink" ? /^skate/ : layout === "bowling" ? /^(bowl|karaoke)$/ : /^(swim|leap|sceirah)$/;
+    : layout === "rink" ? /^skate/ : layout === "bowling" ? /^(bowl|karaoke)$/
+    // Attractions: the one-tap version of what's now played in 3D.
+    : layout === "lobby" ? /^(telescope|spot-ray|vr:burj-drop|glass-floor|selfie|photo|view|spot-shark)$/
+    : /^(swim|leap|sceirah)$/;
   const kept = (opts.activities ?? []).filter((a) => !replaced.test(a.id));
   return [...rides, ...kept];
 }

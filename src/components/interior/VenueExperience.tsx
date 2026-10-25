@@ -156,7 +156,11 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     (document.activeElement as HTMLElement | null)?.blur?.();
     walkThen(track.approach, () => {
       resetRideIO();
-      setRide({ ride: def, track, key: Date.now(), start: track.approach });
+      // A meal is ordered from what's on the menu here (food and drinks, not services or bottles).
+      const menu = def.kind === "meal" ? venue.products.filter((p) => { const k = serveKindOf(p); return k && k !== "bottle"; })
+        // Shop games use what the shop sells.
+        : ["trolley", "jewelguess"].includes(def.kind) ? venue.products : undefined;
+      setRide({ ride: def, track, key: Date.now(), start: track.approach, menu });
       say(`${a.icon} ${def.label}`);
     });
     return true;
@@ -174,6 +178,10 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       reward = `+AED ${activity.reward}`;
     }
     if (def.need) { boostNeed(def.need.kind, def.need.amount); reward = `${reward ? `${reward} · ` : ""}${def.need.kind} +${def.need.amount}`; }
+    // A meal's bill, and the food and drink feeding the citizen.
+    if (r.charge) { adjustBalance(-r.charge); reward = `${reward ? `${reward} · ` : ""}bill −AED ${r.charge}`; }
+    for (const id of r.ate ?? []) { const p = venue.products.find((x) => x.id === id); if (p?.consumable) boostNeed(p.consumable.need, p.consumable.amount); }
+    if (r.ate?.length) lifeEvent("meal");
     if (["swim", "flowrider"].includes(def.kind)) { lifeEvent("workout"); gainSkill("fitness", 20); } else gainSkill("culture", 10);
     // Personal bests live in this browser (a convenience; nothing depends on them).
     let isBest = false;
@@ -1198,6 +1206,8 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
           isBest={!!rideResult?.isBest}
           reward={rideResult?.reward ?? null}
           onDone={closeRide}
+          menu={ride.menu}
+          balance={citizen?.balance ?? 0}
           onAgain={() => {
             const def = ride.ride;
             const a = (venue.activities ?? []).find((x) => x.ride === def.id);

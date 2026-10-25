@@ -104,3 +104,62 @@ export function dubaiEvening(now = new Date()) {
   const h = (now.getUTCHours() + 4) % 24;
   return h >= 18 || h < 2;
 }
+
+/** A nightclub (venue coordinates): the DJ booth at the back, the dance floor in front of it. */
+export const CLUB = {
+  dj: [0, -5] as [number, number],
+  floor: { at: [0, -0.6] as [number, number], size: 5 },
+};
+
+/** A restaurant or café: the host's desk by the door, the menu counter (the pass) at the back, the
+    tables, and the teppanyaki grill where a venue has one. */
+export const DINING = {
+  reception: [4.8, 3.9] as [number, number],
+  menu: [0, -4.1] as [number, number],
+  tables: [[-2.6, 0.2], [0.4, 0.2], [3.4, 0.2], [-2.6, 2.6], [0.4, 2.6]] as Array<[number, number]>,
+  /** Tables are turned a quarter (chairs either side along x). */
+  tableTurn: Math.PI / 2,
+  grill: [-2.3, -3.6] as [number, number],
+};
+/** Restaurants with a chef cooking in front of you: Japanese grills, teppanyaki, steak and grill houses. */
+export const hasChefGrill = (v: { name: string; category: string; blurb?: string }) => /japanese|teppan|robata|grill|steak|sushi/i.test(`${v.name} ${v.category} ${v.blurb ?? ""}`);
+
+/** A spa (venue coordinates): treatment beds (heads towards -x), the plunge pool, sauna, jacuzzi, loungers. */
+export const SPA = {
+  beds: [[4.2, -2.6], [4.2, 1]] as Array<[number, number]>,
+  /** Bed top height and length. */
+  bedTop: 0.81,
+  bedLength: 2,
+  plunge: { at: [-0.6, -2.4] as [number, number], w: 4.2, d: 2.2 },
+  sauna: { at: [-5.5, -0.8] as [number, number], w: 2.2, d: 2 },
+  jacuzzi: { at: [1.8, 0.9] as [number, number], r: 0.95 },
+  loungers: [[-1.6, 3.2], [1.6, 3.2]] as Array<[number, number]>,
+};
+
+/** Attractions (the lobby scene): the lift up to the deck, the tunnel behind the back wall, wax figures,
+    the VR corner, and where the VR world is (far away, so the venue is out of sight). */
+export const LOBBY = {
+  lift: [-6.3, -4.6] as [number, number],
+  /** How high the lift (or wheel cabin) climbs, in scene metres. */
+  liftTop: 40,
+  /** The glass bridge runs out from the lift top this far, towards -x. */
+  bridge: 11,
+  tunnel: { door: [0, -5.7] as [number, number], start: [0, -8.6] as [number, number], end: [0, -21] as [number, number], centre: [0, -15] as [number, number] },
+  wax: [[-4.6, -1.2], [4.6, -1.2], [0, -5.0]] as Array<[number, number]>,
+  vrSpot: [-4.6, 4.6] as [number, number],
+  vrWorld: [0, -420] as [number, number],
+  vrTower: 90,
+};
+/** Set while a ride uses the lobby's lift or wax figures, so the ones standing in the room step aside. */
+export const LIFT_IN_USE = { current: false };
+export const WAX_IN_USE = { current: false };
+
+/** Shops (venue coordinates): where each shop game happens. */
+export const SHOPS = {
+  boutique: { fitting: [5.9, 2.6] as [number, number], door: [4.9, 2.6] as [number, number], runway: [0, 2.5] as [number, number], stylist: [1.6, 3.2] as [number, number] },
+  /** Market shelves (aisles 1–5, in order) and the till; you stand in front of a shelf (+z). */
+  market: { aisles: [[-4.5, -2.2], [0, -2.2], [4.5, -2.2], [-4.5, 1.2], [4.5, 1.2]] as Array<[number, number]>, till: [5.4, 4.6] as [number, number], start: [-2.2, 4.6] as [number, number] },
+  beauty: { counter: [3.4, -3.3] as [number, number] },
+  jewellery: { counter: [0, -3.2] as [number, number] },
+  tech: { table: [0, 0.4] as [number, number] },
+};

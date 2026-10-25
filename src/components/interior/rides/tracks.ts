@@ -6,7 +6,7 @@ import * as THREE from "three";
 import type { Venue } from "@/lib/city/types";
 import type { RideDef } from "@/lib/city/rides";
 import type { StationDef } from "../layouts";
-import { BEACH, BOWLING, RINK, isKidsPool, isSkyPool, poolDeckPool, SLIDE_POINTS, SPLASH_POOLS, STAIRS, TWIN_LANE, WATERPARK, type P3 } from "./paths";
+import { BEACH, BOWLING, CLUB, DINING, LOBBY, RINK, SHOPS, SPA, isKidsPool, isSkyPool, poolDeckPool, SLIDE_POINTS, SPLASH_POOLS, STAIRS, TWIN_LANE, WATERPARK, type P3 } from "./paths";
 
 export interface Water { at: [number, number]; w: number; d: number }
 
@@ -38,6 +38,10 @@ export interface Track {
   lie?: { feet: P3; yaw: number };
   /** Volleyball: my side and the other side of the net; the sandcastle's spot. */
   spots?: { me: [number, number]; them?: [number, number]; centre?: [number, number] };
+  /** A seat: where to sit (the sit clip's feet point) and which way to face; the table it's at. */
+  seat?: { at: [number, number]; yaw: number; table: [number, number] };
+  /** Where staff come from (the host's desk, the kitchen pass, behind the grill or the decks). */
+  staffFrom?: [number, number];
 }
 
 /** Half the width of the temple on top of the tower (plus a margin). */
@@ -172,6 +176,90 @@ function bowlingTrack(ride: RideDef): Track | null {
   return null;
 }
 
+function clubTrack(ride: RideDef): Track | null {
+  const { floor, dj } = CLUB;
+  if (ride.track === "dancefloor") {
+    const me: [number, number] = [floor.at[0] + 0.9, floor.at[1]];
+    return { approach: [floor.at[0] + 0.9, floor.at[1] + floor.size / 2 + 0.4], exit: [floor.at[0] - 1.6, floor.at[1] + floor.size / 2 + 1.4], spots: { me, them: [floor.at[0] - 0.9, floor.at[1]], centre: floor.at } };
+  }
+  if (ride.track === "decks") {
+    // Behind the booth, facing the floor.
+    return { approach: [dj[0] + 1.6, dj[1] + 0.9], exit: [dj[0] + 2.3, dj[1] + 1.6], spots: { me: [dj[0], dj[1] - 0.65], centre: floor.at } };
+  }
+  return null;
+}
+
+function diningTrack(ride: RideDef): Track | null {
+  if (ride.track === "table") {
+    // The middle table; the chair on its far side, facing the table.
+    const [tx, tz] = DINING.tables[1];
+    const r = DINING.tableTurn;
+    const at: [number, number] = [tx + Math.sin(r) * 0.86, tz + Math.cos(r) * 0.86];
+    return {
+      approach: [DINING.reception[0] - 1.2, DINING.reception[1]], exit: [DINING.reception[0] - 1.6, DINING.reception[1] + 0.6],
+      seat: { at, yaw: r + Math.PI, table: [tx, tz] }, staffFrom: [DINING.menu[0], DINING.menu[1] + 1],
+    };
+  }
+  if (ride.track === "grill") {
+    const [gx, gz] = DINING.grill;
+    return { approach: [gx, gz + 1.1], exit: [gx + 0.9, gz + 1.6], spots: { me: [gx, gz + 0.85], centre: [gx, gz] }, staffFrom: [gx, gz - 0.65] };
+  }
+  return null;
+}
+
+function spaTrack(ride: RideDef, at?: StationDef): Track | null {
+  const { beds, bedTop, bedLength, plunge, sauna, jacuzzi, loungers } = SPA;
+  switch (ride.track) {
+    case "bed1":
+    case "bed2": {
+      const [bx, bz] = beds[ride.track === "bed1" ? 0 : 1];
+      // Face down, head on the pillow end (-x), feet towards +x; the therapist stands on the near side.
+      const head = bx - bedLength / 2 + 0.1;
+      return {
+        approach: [bx, bz + 0.85], exit: [bx - 0.4, bz + 1.1],
+        lie: { feet: [head + 1.72, bedTop + 0.1, bz], yaw: -Math.PI / 2 }, staffFrom: [bx + 0.2, bz + 0.75], centre: [bx, bz],
+      };
+    }
+    case "sauna":
+      return { approach: [sauna.at[0], sauna.at[1] + sauna.d / 2 + 0.6], exit: [sauna.at[0] + 0.3, sauna.at[1] + sauna.d / 2 + 0.9], spots: { me: [sauna.at[0] - 0.3, sauna.at[1] - sauna.d / 2 + 0.55], centre: sauna.at } };
+    case "plunge": {
+      const water: Water = { at: plunge.at, w: plunge.w, d: plunge.d };
+      return { approach: [plunge.at[0] + 1.3, plunge.at[1] + plunge.d / 2 + 0.55], water, exit: [plunge.at[0] + 1.3, plunge.at[1] + plunge.d / 2 + 0.55] };
+    }
+    case "jacuzzi":
+      return { approach: [jacuzzi.at[0] - jacuzzi.r - 0.5, jacuzzi.at[1]], exit: [jacuzzi.at[0] - jacuzzi.r - 0.5, jacuzzi.at[1] + 0.4], spots: { me: [jacuzzi.at[0] - 0.35, jacuzzi.at[1]], centre: jacuzzi.at } };
+    case "spalounger": {
+      // Spa loungers face the room (rotation π): lie with the head on the backrest.
+      const [x, z] = at?.kind === "booth" ? at.position : loungers[0];
+      return { approach: [x + 0.9, z - 0.4], exit: [x + 0.9, z - 0.4], lie: { feet: [x, 0.47, z - 0.85], yaw: Math.PI } };
+    }
+  }
+  return null;
+}
+
+function attractionTrack(ride: RideDef): Track | null {
+  const { lift, tunnel, wax, vrSpot } = LOBBY;
+  switch (ride.track) {
+    case "lift": return { approach: [lift[0] + 1.2, lift[1] + 0.4], exit: [lift[0] + 1.3, lift[1] + 1], spots: { me: lift } };
+    case "tunnel": return { approach: tunnel.door, exit: [tunnel.door[0] + 1, tunnel.door[1] + 1.2], spots: { me: tunnel.start, them: tunnel.end, centre: tunnel.centre } };
+    case "wax": return { approach: [wax[0][0] + 1, wax[0][1] + 0.8], exit: [wax[2][0] + 1, wax[2][1] + 1.6] };
+    case "vr": return { approach: vrSpot, exit: [vrSpot[0] + 0.8, vrSpot[1]], spots: { me: vrSpot } };
+  }
+  return null;
+}
+
+function shopTrack(ride: RideDef): Track | null {
+  switch (ride.track) {
+    case "boutique": { const b = SHOPS.boutique; return { approach: [b.runway[0] + 0.8, b.runway[1]], exit: [b.runway[0] + 1, b.runway[1] + 0.8], spots: { me: b.runway, them: b.door, centre: b.fitting }, staffFrom: b.stylist }; }
+    case "market": { const m = SHOPS.market; return { approach: m.start, exit: [m.till[0] - 1.2, m.till[1] - 0.4], spots: { me: m.start, centre: m.till } }; }
+    // The beauty advisor stands at the end of the counter (the shop's own staff are behind the till).
+    case "beauty": { const c = SHOPS.beauty.counter; return { approach: [c[0], c[1] + 1], exit: [c[0] - 1, c[1] + 1.6], spots: { me: [c[0], c[1] + 0.95], centre: c }, staffFrom: [c[0] - 1.15, c[1] + 0.25] }; }
+    case "jewellery": { const c = SHOPS.jewellery.counter; return { approach: [c[0] + 0.6, c[1] + 1.4], exit: [c[0] + 1, c[1] + 1.8], spots: { me: [c[0], c[1] + 1.15], centre: c }, staffFrom: [c[0], c[1] - 0.8] }; }
+    case "tech": { const t = SHOPS.tech.table; return { approach: [t[0], t[1] + 1.4], exit: [t[0] + 1, t[1] + 1.8], spots: { me: [t[0], t[1] + 0.9], centre: t } }; }
+  }
+  return null;
+}
+
 /** The track for a ride in this venue, or null when the venue has nowhere to ride it. `at` is the station it
     was started from (which lounger, for sunbathing). */
 export function trackFor(venue: Venue, ride: RideDef, at?: StationDef): Track | null {
@@ -180,6 +268,11 @@ export function trackFor(venue: Venue, ride: RideDef, at?: StationDef): Track | 
   if (venue.layout === "beach") return beachTrack(ride, at);
   if (venue.layout === "rink") return rinkTrack();
   if (venue.layout === "bowling") return bowlingTrack(ride);
+  if (venue.layout === "club") return clubTrack(ride);
+  if (venue.layout === "dining") return diningTrack(ride);
+  if (venue.layout === "spa") return spaTrack(ride, at);
+  if (venue.layout === "lobby") return attractionTrack(ride);
+  if (["boutique", "market", "beauty", "jewellery", "tech"].includes(venue.layout)) return shopTrack(ride);
   return null;
 }
 

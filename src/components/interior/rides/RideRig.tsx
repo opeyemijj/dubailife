@@ -10,23 +10,36 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import { CitizenAvatar, type AvatarAnimation, type BodyPose } from "@/components/avatar/CitizenAvatar";
-import type { AvatarLookProps } from "@/components/avatar/roster";
-import type { Accessory } from "@/lib/city/types";
+import { CitizenAvatar, DEFAULT_LOOK, type AvatarAnimation, type BodyPose } from "@/components/avatar/CitizenAvatar";
+import { OUTFITS, type AvatarLookProps } from "@/components/avatar/roster";
+import type { Accessory, Product } from "@/lib/city/types";
+import { HandHeldProp, ServedItem, serveKindOf, type ServeKind } from "../served";
 import type { RideDef } from "@/lib/city/rides";
-import { BowlingBall, CourseBuoy, FlamingoFloat, JetSki, Microphone, Paddleboard, Pin, RingTube, SandCastle, SkatePenguin, SurfKite } from "../scenery";
-import { BEACH, BOWLING, dubaiEvening, LANE_IN_USE, PIN_SPOTS, TOWER_TOP, WATERPARK, waveZ } from "./paths";
-import { flash, rideIO, type RideResult } from "./rideIO";
+import { AquariumTunnel, BowlingBall, CityBelow, CourseBuoy, FlamingoFloat, GlassBridge, GlassCrack, GlassLift, Plinth, Steam, tunnelCreatureAt, JetSki, Microphone, Paddleboard, Pin, RingTube, SandCastle, SkatePenguin, SurfKite } from "../scenery";
+import { BEACH, BOWLING, CLUB, DINING, LIFT_IN_USE, LOBBY, SHOPS, SPA, WAX_IN_USE, dubaiEvening, LANE_IN_USE, PIN_SPOTS, TOWER_TOP, WATERPARK, waveZ } from "./paths";
+import { flash, rideIO, type Arrow, type RideResult } from "./rideIO";
 import type { Track } from "./tracks";
 
-/** A ride under way; `start` is where the citizen stood when it began. Remount the rig (key) per ride. */
-export interface ActiveRide { ride: RideDef; track: Track; key: number; start: [number, number] }
+/** A ride under way; `start` is where the citizen stood when it began. Remount the rig (key) per ride.
+    `menu` is what a meal can be ordered from (what the citizen can afford). */
+export interface ActiveRide { ride: RideDef; track: Track; key: number; start: [number, number]; menu?: Product[] }
 
 type Prop = "ring" | "raft" | "float" | "board" | "jetski" | "sup" | "kiteboard" | "penguin" | null;
-type Look = { anim: AvatarAnimation; pose?: BodyPose; body: "stand" | "lie" | "prone"; prop: Prop; shades?: boolean; hold?: "ball" | "mic" };
+type Look = { anim: AvatarAnimation; pose?: BodyPose; body: "stand" | "lie" | "prone"; prop: Prop; shades?: boolean; hold?: "ball" | "mic"; carry?: "eat" | "drink"; mask?: boolean; recline?: number; headset?: boolean;
+  /** Wearing an outfit other than their own (trying one on), or extra pieces (jewellery being tried). */
+  wear?: string; acc?: Accessory[]; trolley?: number };
+/** Someone else in the scene for a ride (a host, waiter, chef, dancer or fan): looks and what they do. */
+type CastMember = { id: string; gender: "woman" | "man"; preset: string; anim: AvatarAnimation; pose?: BodyPose; hold?: ServeKind };
 /** Bits of the scene a ride changes now and then (the next buoy, the castle's stage, the other player's pose,
     how the karaoke crowd is reacting). */
-type Ui = { gate: number; castle: number; opp?: Look; crowd?: AvatarAnimation };
+type Ui = {
+  gate: number; castle: number; opp?: Look; crowd?: AvatarAnimation; cast?: CastMember[]; steamAt?: [number, number, number];
+  /** Rides that go up: the lift's height, the city below (centred where), the bridge and its cracks. */
+  liftY?: number; city?: [number, number]; bridge?: boolean; crackAt?: [number, number, number] | null;
+  /** Shops: aisle signs, the demo screen's colour. */
+  aisles?: boolean; screen?: string;
+  /** The aquarium tunnel, the wax figures' plinths, and the VR world. */
+  tunnel?: boolean; plinths?: Array<[number, number]>; vr?: boolean; dishes?: Array<{ id: string; kind: ServeKind; at: [number, number, number] }>; strobeAt?: number; shrimp?: boolean };
 /** A live bowling pin: standing, or falling over (when, and which way). */
 interface LivePin { x: number; z: number; down: boolean; gone: boolean; t: number; dir: number }
 const G = 9.81;
@@ -51,7 +64,7 @@ interface Ctx {
   speed: number;
   top: number;
   look: (l: Look) => void;
-  splash: (at: THREE.Vector3, size: number) => void;
+  splash: (at: THREE.Vector3, size: number, color?: string) => void;
   /** "side": from the side, away from the tower (riding and waiting at the top); "chase": from behind;
       "fixed": from `camAt` looking at `camLook` (a TV view of a court). */
   cam: "chase" | "side" | "fixed";
@@ -62,10 +75,42 @@ interface Ctx {
   ball?: THREE.Vector3;
   /** The pins on the player's bowling lane. */
   pins?: LivePin[];
+  /** Where each cast member is (moved every frame), and the cast as shown. */
+  actors: Record<string, { pos: THREE.Vector3; yaw: number }>;
+  cast: CastMember[];
+  /** Things that carry on alongside the script (a waiter walking back to the kitchen); done when they return true. */
+  tasks: Array<(c: Ctx, dt: number) => boolean>;
   opp?: { pos: THREE.Vector3; quat: THREE.Quaternion; s: number; v: number; done: number };
   data: Record<string, number>;
 }
 interface Step { enter?: (c: Ctx) => void; update: (c: Ctx, dt: number) => boolean }
+
+// ---------------------------------------------------------------- the cast (other people in a ride)
+
+/** Adds or updates a cast member (where they are, how they look). */
+function setCast(c: Ctx, m: CastMember, at?: THREE.Vector3, yaw?: number) {
+  if (at) c.actors[m.id] = { pos: at.clone(), yaw: yaw ?? c.actors[m.id]?.yaw ?? 0 };
+  else if (yaw !== undefined && c.actors[m.id]) c.actors[m.id].yaw = yaw;
+  const i = c.cast.findIndex((x) => x.id === m.id);
+  c.cast = i < 0 ? [...c.cast, m] : c.cast.map((x, k) => (k === i ? m : x));
+  c.ui({ cast: c.cast });
+}
+const castLook = (c: Ctx, id: string, change: Partial<CastMember>) => {
+  const m = c.cast.find((x) => x.id === id);
+  if (m && (Object.keys(change) as Array<keyof CastMember>).some((k) => m[k] !== change[k])) setCast(c, { ...m, ...change });
+};
+/** Walks a cast member towards a point; true once there. */
+function stepActor(c: Ctx, id: string, to: THREE.Vector3, speed: number, dt: number): boolean {
+  const a = c.actors[id];
+  if (!a) return true;
+  const d = Math.hypot(to.x - a.pos.x, to.z - a.pos.z);
+  if (d < 0.04) { castLook(c, id, { anim: "idle" }); return true; }
+  castLook(c, id, { anim: "walk" });
+  a.yaw = Math.atan2(to.x - a.pos.x, to.z - a.pos.z);
+  const k = Math.min(1, (speed * dt) / d);
+  a.pos.x += (to.x - a.pos.x) * k; a.pos.z += (to.z - a.pos.z) * k;
+  return false;
+}
 
 // ---------------------------------------------------------------- frames and helpers
 
@@ -224,7 +269,7 @@ function jump(to: () => THREE.Vector3, apex: number, seconds: number, tuck: bool
 
 // ---------------------------------------------------------------- the scripts
 
-function script(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+function script(ride: RideDef, track: Track, result: (r: RideResult) => void, menu: Product[] = [], gender: "woman" | "man" = "woman"): Step[] {
   const tele = rideIO.tele;
   const climb: Step[] = track.climb ? [
     { enter: (c) => { tele.phase = "Climbing the tower"; tele.prompt = ""; c.look({ anim: "walk", body: "stand", prop: null }); }, update: () => true },
@@ -561,12 +606,33 @@ function script(ride: RideDef, track: Track, result: (r: RideResult) => void): S
     case "spin": return figureSpin(ride, track, result);
     case "bowling": return bowling(ride, track, result);
     case "karaoke": return karaoke(ride, track, result);
+    case "danceoff": return danceOff(ride, track, result);
+    case "dj": return djSet(ride, track, result);
+    case "meal": return meal(ride, track, result, menu);
+    case "chefshow": return chefShow(ride, track, result);
+    case "treatment": return treatment(ride, track, result);
+    case "sauna": return sauna(ride, track, result);
+    case "plunge": return plunge(ride, track, result);
+    case "jacuzzi": return jacuzzi(ride, track, result);
+    case "facemask": return faceMask(ride, track, result);
+    case "observe": return observe(ride, track, result);
+    case "glassbridge": return glassBridge(ride, track, result);
+    case "tunnel": return aquariumTunnel(ride, track, result);
+    case "waxselfie": return waxSelfies(ride, track, result);
+    case "vrdrop": return vrDrop(ride, track, result);
+    case "stylist": return styleChallenge(ride, track, result, gender);
+    case "trolley": return trolleyDash(ride, track, result, menu);
+    case "perfume": return perfumeTest(ride, track, result);
+    case "jewelguess": return jewelGuess(ride, track, result, menu);
+    case "techdemo": return techDemo(ride, track, result);
   }
 }
 
 // ---------------------------------------------------------------- beach scripts
 
 const secs = (s: number) => `${s.toFixed(1)} s`;
+/** How far a lounger's sunbather is tilted head-up, onto the backrest (radians). */
+const LOUNGER_RECLINE = 0.22;
 
 /** Shades on, lie back on the lounger; turn over halfway or burn. */
 function sunbathe(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
@@ -580,7 +646,7 @@ function sunbathe(ride: RideDef, track: Track, result: (r: RideResult) => void):
       enter: (c) => {
         c.pos.copy(feet); yawQ(c.quat, lie.yaw); c.rideStart = c.clock; taps = rideIO.input.taps;
         tele.phase = "Soaking up the sun…"; tele.prompt = ""; tele.holdButton = false;
-        c.look({ anim: "sleep", body: "lie", prop: null, shades: true });
+        c.look({ anim: "sleep", body: "lie", prop: null, shades: true, recline: LOUNGER_RECLINE });
       },
       update: (c, dt) => {
         tan = Math.min(100, tan + dt * 5);
@@ -1217,17 +1283,1233 @@ function karaoke(ride: RideDef, track: Track, result: (r: RideResult) => void): 
   ];
 }
 
+// ---------------------------------------------------------------- nightclubs
+
+const MOVE_POSE: Record<Arrow, BodyPose> = { up: "armsUp", left: "balance", right: "armsCrossed", down: "grip" };
+const ARROWS: Arrow[] = ["left", "up", "right", "down"];
+const FANS = [
+  { gender: "woman" as const, preset: "Female_Adult_01" }, { gender: "man" as const, preset: "Male_Adult_08" },
+  { gender: "woman" as const, preset: "Female_Adult_05" }, { gender: "man" as const, preset: "Male_Adult_10" },
+];
+
+/** Face off on the dance floor: hit each move on the beat; a fan circle cheers the better dancer. */
+function danceOff(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+  const tele = rideIO.tele;
+  const me = new THREE.Vector3(track.spots!.me[0], 0, track.spots!.me[1]);
+  const them = new THREE.Vector3(track.spots!.them![0], 0, track.spots!.them![1]);
+  const mid = new THREE.Vector3(track.spots!.centre![0], 0, track.spots!.centre![1]);
+  const BEATS = 16, GAP = 560;
+  const moves = Array.from({ length: BEATS }, () => ARROWS[Math.floor(Math.random() * 4)]);
+  const judged = new Set<number>(), oppDone = new Set<number>();
+  let seen = 0, mine = 0, theirs = 0, streak = 0, best = 0, fans: AvatarAnimation = "clap";
+  return [
+    walk(() => [me.clone()], 1.3),
+    {
+      enter: (c) => {
+        c.rideStart = c.clock; seen = rideIO.input.moves;
+        yawQ(c.quat, flatYaw(me, them));
+        c.cam = "fixed";
+        c.camAt = mid.clone().add(new THREE.Vector3(0.6, 3.2, 5.4));
+        c.camLook = mid.clone().add(new THREE.Vector3(0, 1, 0));
+        setCast(c, { id: "rival", gender: "man", preset: "Male_Adult_04", anim: "dance" }, them, flatYaw(them, me));
+        FANS.forEach((f, i) => {
+          const a = Math.PI * 0.15 + (i / FANS.length) * Math.PI * 0.7 + Math.PI;
+          const at = mid.clone().add(new THREE.Vector3(Math.cos(a) * 2.6, 0, -Math.sin(a) * 2.6));
+          setCast(c, { id: `fan${i}`, ...f, anim: "clap" }, at, flatYaw(at, mid));
+        });
+        tele.phase = "Hit each move on the beat!"; tele.prompt = ""; tele.beatStart = performance.now() + 2200; tele.beatGap = GAP;
+        c.look({ anim: "dance", body: "stand", prop: null });
+      },
+      update: (c) => {
+        const now = performance.now();
+        const at = (i: number) => tele.beatStart + i * GAP;
+        tele.countdown = now < tele.beatStart ? Math.max(1, Math.ceil((tele.beatStart - now) / 1000)) : 0;
+        const next = Math.max(0, Math.ceil((now - tele.beatStart - 160) / GAP));
+        tele.arrow = next < BEATS ? moves[next] : "";
+        if (rideIO.input.moves > seen) {
+          seen = rideIO.input.moves;
+          const i = Math.round((now - tele.beatStart) / GAP);
+          if (i >= 0 && i < BEATS && !judged.has(i)) {
+            judged.add(i);
+            const off = Math.abs(now - at(i));
+            if (rideIO.input.moveDir === moves[i] && off < 160) {
+              mine += off < 80 ? 100 : 60; streak++; best = Math.max(best, streak);
+              if (streak % 4 === 0) flash(`🔥 ${streak} combo!`);
+              c.look({ anim: "dance", pose: MOVE_POSE[moves[i]], body: "stand", prop: null });
+            } else { streak = 0; flash(rideIO.input.moveDir === moves[i] ? "⏱ Off the beat" : "❌ Wrong move"); }
+          }
+        }
+        // Beats gone by: missed ones break your combo; the rival hits most of theirs.
+        for (let i = 0; i < BEATS; i++) {
+          if (now < at(i) + 200) break;
+          if (!judged.has(i)) { judged.add(i); streak = 0; }
+          if (!oppDone.has(i)) {
+            oppDone.add(i);
+            if (Math.random() < 0.74) { theirs += Math.random() < 0.5 ? 100 : 60; castLook(c, "rival", { pose: MOVE_POSE[ARROWS[Math.floor(Math.random() * 4)]] }); }
+          }
+        }
+        const lead: AvatarAnimation = streak >= 5 ? "dance" : "clap";
+        if (lead !== fans) { fans = lead; FANS.forEach((_, i) => castLook(c, `fan${i}`, { anim: fans })); }
+        tele.score = Math.round((mine / (BEATS * 100)) * 100); tele.count = Math.round((theirs / (BEATS * 100)) * 100);
+        tele.progress = Math.max(0, (now - tele.beatStart) / (BEATS * GAP));
+        return now > at(BEATS - 1) + 700 || rideIO.input.exit;
+      },
+    },
+    {
+      enter: (c) => {
+        tele.arrow = ""; tele.beatStart = 0;
+        const won = mine >= theirs;
+        c.look({ anim: won ? "dance" : "idle", pose: won ? "armsUp" : undefined, body: "stand", prop: null });
+        castLook(c, "rival", { anim: won ? "clap" : "dance", pose: won ? undefined : "armsUp" });
+        FANS.forEach((_, i) => castLook(c, `fan${i}`, { anim: won ? "dance" : "clap" }));
+        flash(won ? "🏆 The crowd picks you!" : "😤 The crowd picks your rival");
+      },
+      update: (c) => c.t > 1.8,
+    },
+    walk(() => [new THREE.Vector3(track.exit[0], 0, track.exit[1])]),
+    { enter: () => {
+      const me_ = tele.score, them_ = tele.count, won = me_ >= them_;
+      result({
+        rideId: ride.id, headline: won ? "🏆 You won the dance-off!" : "😤 So close!",
+        stars: won ? (me_ >= 80 ? 3 : 2) : 1,
+        stats: [{ label: "You", value: `${me_}%` }, { label: "Rival", value: `${them_}%` }, { label: "Best combo", value: String(best) }],
+        best: { value: me_, label: `${me_}%` },
+      });
+    }, update: () => false },
+  ];
+}
+
+/** Take the decks: build each track up and drop it at the peak. Four drops. */
+function djSet(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+  const tele = rideIO.tele;
+  const me = new THREE.Vector3(track.spots!.me[0], 0, track.spots!.me[1]);
+  const floor = new THREE.Vector3(CLUB.floor.at[0], 0, CLUB.floor.at[1]);
+  const DROPS = 4, BUILD = 3.4;
+  let drop = 0, buildFrom = 0, taps = 0, hype = 20, perfect = 0, pauseUntil = 0;
+  const crowd = (c: Ctx, pose?: BodyPose) => Array.from({ length: 6 }, (_, i) => castLook(c, `clubber${i}`, { anim: "dance", pose }));
+  return [
+    walk(() => [new THREE.Vector3(track.approach[0], 0, me.z), me.clone()], 1.2),
+    {
+      enter: (c) => {
+        c.rideStart = c.clock; taps = rideIO.input.taps; buildFrom = c.clock + 1.2;
+        yawQ(c.quat, flatYaw(me, floor));
+        c.cam = "fixed";
+        c.camAt = floor.clone().add(new THREE.Vector3(2, 2.6, 4.4));
+        c.camLook = new THREE.Vector3(CLUB.dj[0], 1.3, CLUB.dj[1]);
+        const looks = [...FANS, { gender: "woman" as const, preset: "Female_Adult_06" }, { gender: "man" as const, preset: "Male_Adult_04" }];
+        looks.forEach((f, i) => {
+          const at = floor.clone().add(new THREE.Vector3(((i % 3) - 1) * 1.3 + (Math.floor(i / 3) ? 0.6 : 0), 0, Math.floor(i / 3) * 1.3 - 0.4));
+          setCast(c, { id: `clubber${i}`, ...f, anim: "dance" }, at, flatYaw(at, me));
+        });
+        tele.phase = `🎧 Track 1 of ${DROPS}: wait for the peak…`; tele.prompt = "DROP IT!"; tele.holdButton = false;
+        c.look({ anim: "dance", pose: "grip", body: "stand", prop: null });
+      },
+      update: (c) => {
+        const tapped = rideIO.input.taps > taps;
+        if (tapped) taps = rideIO.input.taps;
+        if (c.clock < pauseUntil) { tele.meterLabel = ""; return false; }
+        if (drop >= DROPS) return true;
+        const k = (c.clock - buildFrom) / BUILD;
+        tele.meterLabel = "Build-up"; tele.meter = Math.max(0, Math.min(1, k));
+        const fire = (q: number) => {
+          drop++; pauseUntil = c.clock + 1.8; buildFrom = pauseUntil + 0.4;
+          const gain = q >= 0.93 ? 25 : q >= 0.75 ? 15 : q > 0 ? 5 : -10;
+          hype = Math.max(0, Math.min(100, hype + gain));
+          if (q >= 0.93) { perfect++; flash("💥 PERFECT DROP!"); } else if (q >= 0.75) flash("🔊 Big drop!"); else if (q > 0) flash("😬 Too early…"); else flash("🙉 Missed the drop!");
+          if (q >= 0.75) { c.ui({ strobeAt: c.clock }); crowd(c, "armsUp"); c.look({ anim: "dance", pose: "armsUp", body: "stand", prop: null }); }
+          tele.phase = drop < DROPS ? `🎧 Track ${drop + 1} of ${DROPS}: wait for the peak…` : "🎧 Last tune…";
+        };
+        if (tapped && k > 0) fire(Math.min(1, k));
+        else if (k > 1.15) fire(0);
+        if (c.clock > pauseUntil - 0.2 && c.clock < pauseUntil) { crowd(c); c.look({ anim: "dance", pose: "grip", body: "stand", prop: null }); }
+        tele.score = Math.round(hype); tele.count = drop; tele.progress = drop / DROPS;
+        return false;
+      },
+    },
+    { enter: (c) => { tele.meterLabel = ""; tele.prompt = ""; c.look({ anim: "wave", body: "stand", prop: null }); }, update: (c) => c.t > 1.4 },
+    walk(() => [new THREE.Vector3(track.approach[0], 0, me.z), new THREE.Vector3(track.exit[0], 0, track.exit[1])]),
+    { enter: () => result({
+      rideId: ride.id, headline: hype >= 85 ? "🔥 The floor went wild!" : hype >= 55 ? "🎶 Good set!" : "🦗 Tough crowd…",
+      stars: hype >= 85 ? 3 : hype >= 55 ? 2 : 1,
+      stats: [{ label: "Crowd hype", value: `${Math.round(hype)}%` }, { label: "Perfect drops", value: `${perfect}/${DROPS}` }],
+      best: { value: Math.round(hype), label: `${Math.round(hype)}% hype` },
+    }), update: () => false },
+  ];
+}
+
+// ---------------------------------------------------------------- restaurants
+
+/** A sit-down meal: shown to a table, order, the waiter brings it, eat (photo optional), pay the bill. */
+function meal(ride: RideDef, track: Track, result: (r: RideResult) => void, menu: Product[]): Step[] {
+  const tele = rideIO.tele;
+  const seat = track.seat!;
+  const chair = new THREE.Vector3(seat.at[0], 0, seat.at[1]);
+  const table = new THREE.Vector3(seat.table[0], 0, seat.table[1]);
+  const desk = new THREE.Vector3(DINING.reception[0], 0, DINING.reception[1] - 0.6);
+  const pass = new THREE.Vector3(track.staffFrom![0], 0, track.staffFrom![1]);
+  const toSeat = chair.clone().sub(table).setY(0).normalize();
+  const side = new THREE.Vector3(toSeat.z, 0, -toSeat.x);
+  const beside = table.clone().addScaledVector(side, 0.85);
+  let ordered: Product[] = [];
+  let photoAt = -1;
+  const bill = () => ordered.reduce((s, p) => s + p.price, 0);
+  return [
+    walk(() => [new THREE.Vector3(track.approach[0], 0, track.approach[1])]),
+    {
+      enter: (c) => {
+        setCast(c, { id: "host", gender: "woman", preset: "Female_Adult_05", anim: "talk" }, desk, flatYaw(desk, c.pos));
+        tele.phase = "“Welcome! Table for one? Right this way.”"; tele.prompt = "";
+      },
+      update: (c) => c.t > 1.4,
+    },
+    {
+      // The host leads the way; you follow.
+      enter: (c) => { c.look({ anim: "walk", body: "stand", prop: null }); },
+      update: (c, dt) => {
+        const hostThere = stepActor(c, "host", chair.clone().addScaledVector(side, 0.9).addScaledVector(toSeat, 0.4), 1.4, dt);
+        const d = Math.hypot(chair.x - c.pos.x, chair.z - c.pos.z);
+        if (c.t > 0.6 && d > 0.04) {
+          yawQ(c.quat, flatYaw(c.pos, chair));
+          const k = Math.min(1, (1.3 * dt) / d);
+          c.pos.x += (chair.x - c.pos.x) * k; c.pos.z += (chair.z - c.pos.z) * k;
+        }
+        return hostThere && d <= 0.04;
+      },
+    },
+    {
+      enter: (c) => {
+        c.pos.copy(chair); yawQ(c.quat, seat.yaw);
+        c.look({ anim: "sit", body: "stand", prop: null });
+        castLook(c, "host", { anim: "talk" });
+        c.cam = "fixed";
+        c.camAt = table.clone().addScaledVector(side, -2.4).addScaledVector(toSeat, 1.6).add(new THREE.Vector3(0, 2.2, 0));
+        c.camLook = table.clone().add(new THREE.Vector3(0, 0.9, 0));
+        // The host heads back to the desk while you read the menu.
+        c.tasks.push((cc, dt) => cc.t > 1 && stepActor(cc, "host", desk, 1.4, dt));
+        tele.phase = "What would you like?"; tele.panel = "menu"; rideIO.input.order = null;
+      },
+      update: () => rideIO.input.order !== null,
+    },
+    {
+      enter: (c) => {
+        ordered = (rideIO.input.order ?? []).map((id) => menu.find((p) => p.id === id)).filter((p): p is Product => !!p);
+        tele.panel = ""; tele.bill = bill();
+        tele.phase = ordered.length ? "Your order's on its way…" : "Just water? Coming right up.";
+        const first = ordered.map(serveKindOf).find((k): k is ServeKind => !!k) ?? "soda";
+        setCast(c, { id: "waiter", gender: "man", preset: "Male_Adult_08", anim: "walk", hold: first }, pass, flatYaw(pass, beside));
+      },
+      update: (c, dt) => stepActor(c, "waiter", beside, 1.3, dt),
+    },
+    {
+      enter: (c) => {
+        // Plates go down in front of you; drinks to the side.
+        let n = 0;
+        const dishes = (ordered.length ? ordered : [{ id: "water" } as Product]).map((p) => {
+          const kind = (p.id === "water" ? "soda" : serveKindOf(p)) ?? "plate";
+          const drink = !["plate", "dessert", "pastry", "teaset"].includes(kind);
+          const at = table.clone().addScaledVector(toSeat, drink ? 0.18 : 0.2).addScaledVector(side, drink ? 0.22 : (n++ - 0.5) * 0.12).setY(0.78);
+          return { id: p.id, kind, at: [at.x, at.y, at.z] as [number, number, number] };
+        });
+        c.ui({ dishes });
+        castLook(c, "waiter", { anim: "talk", hold: undefined, pose: undefined });
+        flash("🍽️ Enjoy your meal!");
+        c.tasks.push((cc, dt) => cc.t > 1.2 && stepActor(cc, "waiter", pass, 1.3, dt));
+      },
+      update: (c) => c.t > 1.2,
+    },
+    {
+      enter: (c) => {
+        c.rideStart = c.clock; photoAt = -1;
+        tele.phase = "Bon appétit! Snap a photo for your story?"; tele.panel = "photo"; rideIO.input.photos = 0;
+        const eating = ordered.some((p) => ["plate", "dessert", "pastry"].includes(serveKindOf(p) ?? ""));
+        c.look({ anim: "sit", body: "stand", prop: null, carry: eating ? "eat" : "drink" });
+      },
+      update: (c) => {
+        if (rideIO.input.photos > 0 && photoAt < 0) { photoAt = c.clock; flash("📸 Posted to your story!"); }
+        tele.progress = Math.min(1, c.t / 10); tele.time = c.t;
+        return c.t > 10;
+      },
+    },
+    {
+      enter: (c) => {
+        c.look({ anim: "sit", body: "stand", prop: null });
+        c.ui({ dishes: [] });
+        tele.phase = "Ready for the bill?"; tele.panel = "bill"; tele.prompt = "Pay the bill"; tele.holdButton = false;
+        c.data.taps = rideIO.input.taps;
+        setCast(c, { id: "waiter", gender: "man", preset: "Male_Adult_08", anim: "walk" }, c.actors.waiter?.pos ?? pass);
+      },
+      update: (c, dt) => { stepActor(c, "waiter", beside, 1.3, dt); return rideIO.input.taps > c.data.taps; },
+    },
+    {
+      enter: (c) => {
+        tele.panel = ""; tele.prompt = "";
+        flash(rideIO.input.tip ? "🙏 “Thank you so much!”" : "“Thank you, see you again!”");
+        castLook(c, "waiter", { anim: rideIO.input.tip ? "wave" : "talk" });
+        c.look({ anim: "idle", body: "stand", prop: null });
+        c.pos.addScaledVector(toSeat, 0.4);
+      },
+      update: (c) => c.t > 1.2,
+    },
+    walk(() => [new THREE.Vector3(track.exit[0], 0, track.exit[1])]),
+    { enter: () => {
+      const total = Math.round(bill() * (rideIO.input.tip ? 1.1 : 1));
+      result({
+        rideId: ride.id, headline: rideIO.input.tip ? "🙏 The staff loved you" : "😋 Lovely meal",
+        stars: ordered.length ? (rideIO.input.tip ? 3 : 2) : 1,
+        stats: [
+          { label: "You had", value: ordered.length ? ordered.map((p) => p.name).join(", ") : "Water" },
+          { label: "Bill", value: `AED ${total}${rideIO.input.tip ? " (tip incl.)" : ""}` },
+          { label: "Food photo", value: photoAt >= 0 ? "Posted 📸" : "None" },
+        ],
+        charge: total, ate: ordered.map((p) => p.id),
+      });
+    }, update: () => false },
+  ];
+}
+
+/** Front-row seat at the grill: the chef flips, flames roar, and shrimp come flying. Catch them! */
+function chefShow(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+  const tele = rideIO.tele;
+  const me = new THREE.Vector3(track.spots!.me[0], 0, track.spots!.me[1]);
+  const grill = new THREE.Vector3(track.spots!.centre![0], 0.95, track.spots!.centre![1]);
+  const chefAt = new THREE.Vector3(track.staffFrom![0], 0, track.staffFrom![1]);
+  const TOSSES = 6, EVERY = 2.6, FLIGHT = 0.95;
+  const shrimp = new THREE.Vector3(0, -5, 0);
+  let toss = -1, tossAt = 0, taps = 0, caught = 0, judged = true, falling = false;
+  return [
+    walk(() => [me.clone()]),
+    {
+      enter: (c) => {
+        c.rideStart = c.clock; taps = rideIO.input.taps; c.ball = shrimp;
+        yawQ(c.quat, flatYaw(me, grill));
+        setCast(c, { id: "chef", gender: "man", preset: "Male_Adult_10", anim: "talk" }, chefAt, flatYaw(chefAt, me));
+        c.cam = "fixed";
+        c.camAt = grill.clone().add(new THREE.Vector3(2.3, 1, 2.2));
+        c.camLook = grill.clone().add(new THREE.Vector3(0, 0.2, 0.4));
+        tele.phase = "🔥 Onion volcano!"; tele.prompt = ""; c.ui({ shrimp: true });
+        c.splash(grill.clone(), 2.2, "#f97316");
+        c.look({ anim: "clap", body: "stand", prop: null });
+      },
+      update: (c) => {
+        const tapped = rideIO.input.taps > taps;
+        if (tapped) taps = rideIO.input.taps;
+        const t = c.clock - c.rideStart - 1.6;
+        const n = Math.floor(t / EVERY);
+        if (n > toss && n < TOSSES) {
+          // The chef flips a shrimp your way, with a burst of flame.
+          toss = n; tossAt = c.clock; judged = false; falling = false;
+          castLook(c, "chef", { anim: "idle", pose: "armsUp" });
+          c.splash(grill.clone(), 1.2, "#f97316");
+          tele.phase = `🍤 Shrimp ${toss + 1} of ${TOSSES}: catch it!`; tele.prompt = "Catch it!";
+          c.look({ anim: "idle", body: "stand", prop: null });
+        }
+        if (toss >= 0 && !judged) {
+          const k = (c.clock - tossAt) / FLIGHT;
+          const mouth = me.clone().add(new THREE.Vector3(0, 1.5, 0)).addScaledVector(grill.clone().setY(0).sub(me.clone().setY(0)).normalize(), 0.25);
+          shrimp.lerpVectors(grill, mouth, Math.min(k, 1));
+          shrimp.y = grill.y + (mouth.y - grill.y) * Math.min(k, 1) + 0.9 * 4 * k * (1 - k);
+          if (k > 0.4) castLook(c, "chef", { anim: "talk", pose: undefined });
+          if (tapped) {
+            judged = true;
+            if (k > 0.72 && k < 1.12) { caught++; flash("😋 Caught it!"); shrimp.set(0, -5, 0); c.look({ anim: "clap", body: "stand", prop: null }); }
+            else { flash(k <= 0.72 ? "Too early!" : "Too late!"); falling = true; }
+          } else if (k > 1.15) { judged = true; falling = true; flash("🫣 Dropped it!"); }
+          tele.prompt = judged ? "" : "Catch it!";
+        }
+        if (falling) { shrimp.y -= 0.05; if (shrimp.y < 0) { falling = false; shrimp.set(0, -5, 0); } }
+        tele.score = caught; tele.count = Math.max(0, toss + 1); tele.progress = (toss + 1) / TOSSES;
+        return toss >= TOSSES - 1 && judged && !falling && c.clock - tossAt > FLIGHT + 0.8;
+      },
+    },
+    { enter: (c) => { tele.prompt = ""; c.ui({ shrimp: false }); castLook(c, "chef", { anim: "wave", pose: undefined }); c.look({ anim: "clap", body: "stand", prop: null }); }, update: (c) => c.t > 1.4 },
+    walk(() => [new THREE.Vector3(track.exit[0], 0, track.exit[1])]),
+    { enter: () => result({
+      rideId: ride.id, headline: caught >= 5 ? "🍤 Shrimp-catching champion!" : undefined,
+      stars: caught >= 5 ? 3 : caught >= 3 ? 2 : 1,
+      stats: [{ label: "Caught", value: `${caught}/${TOSSES}` }], best: { value: caught, label: `${caught} caught` },
+    }), update: () => false },
+  ];
+}
+
+// ---------------------------------------------------------------- spa
+
+/** Breathing with the guide: hold while it grows, let go while it shrinks. Returns calm gained this frame. */
+function breathe(c: Ctx, dt: number, period = 6): number {
+  const t = c.clock - c.rideStart;
+  const b = (Math.sin((t / period) * Math.PI * 2 - Math.PI / 2) + 1) / 2;
+  const rising = Math.cos((t / period) * Math.PI * 2 - Math.PI / 2) > 0;
+  rideIO.tele.breath = b;
+  // Near the turn-around either way is fine.
+  const ok = b < 0.08 || b > 0.92 || rideIO.input.down === rising;
+  return ok ? dt : 0;
+}
+
+/** Massage or hammam scrub: face down on the bed while the therapist works; breathe with the guide. */
+function treatment(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+  const tele = rideIO.tele;
+  const lie = track.lie!;
+  const hammam = ride.track === "bed2";
+  const LEN = 30;
+  let calm = 0;
+  const bed = new THREE.Vector3(track.centre![0], 0, track.centre![1]);
+  const by = new THREE.Vector3(track.staffFrom![0], 0, track.staffFrom![1]);
+  return [
+    walk(() => [new THREE.Vector3(track.approach[0], 0, track.approach[1])]),
+    {
+      enter: (c) => {
+        c.rideStart = c.clock;
+        c.pos.set(...lie.feet); yawQ(c.quat, lie.yaw);
+        c.look({ anim: "sleep", body: "prone", prop: null });
+        setCast(c, { id: "therapist", gender: "woman", preset: "Female_Adult_05", anim: "talk", pose: "grip" }, by, flatYaw(by, bed));
+        c.cam = "fixed";
+        c.camAt = bed.clone().add(new THREE.Vector3(-0.6, 2.4, 2.8));
+        c.camLook = bed.clone().add(new THREE.Vector3(0, 0.7, 0));
+        if (hammam) c.ui({ steamAt: [bed.x, SPA.bedTop, bed.z] });
+        tele.phase = hammam ? "Steam, black soap, the kessa glove… breathe slowly" : "Breathe with the circle"; tele.prompt = "Hold to breathe in"; tele.holdButton = true;
+      },
+      update: (c, dt) => {
+        calm += breathe(c, dt);
+        const t = c.clock - c.rideStart;
+        // The therapist kneads: hands press, then lift.
+        castLook(c, "therapist", { pose: Math.floor(t / 1.4) % 2 ? "tuck" : "grip" });
+        // Their hands work down your back.
+        const a = c.actors.therapist;
+        if (a) a.pos.x = by.x - 0.5 + Math.sin(t * 0.4) * 0.5;
+        tele.score = Math.round((calm / Math.max(1, t)) * 100); tele.progress = t / LEN; tele.time = t;
+        return t >= LEN || rideIO.input.exit;
+      },
+    },
+    { enter: (c) => { tele.breath = -1; tele.prompt = ""; c.ui({ steamAt: undefined }); castLook(c, "therapist", { anim: "wave", pose: undefined }); c.pos.set(track.exit[0], 0, track.exit[1]); c.look({ anim: "idle", body: "stand", prop: null }); flash("✨ You feel brand new"); }, update: (c) => c.t > 1.2 },
+    { enter: () => {
+      const pct = tele.score;
+      result({
+        rideId: ride.id, headline: pct >= 80 ? "🧘 Total bliss" : pct >= 50 ? "😌 Nicely relaxed" : "😬 Still a bit tense…",
+        stars: pct >= 80 ? 3 : pct >= 50 ? 2 : 1, stats: [{ label: "Calm", value: `${pct}%` }],
+        best: { value: pct, label: `${pct}% calm` },
+      });
+    }, update: () => false },
+  ];
+}
+
+/** The sauna: the heat climbs; leave in the green zone, not before, not after. */
+function sauna(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+  const tele = rideIO.tele;
+  const { at, d } = SPA.sauna;
+  const door = new THREE.Vector3(at[0], 0, at[1] + d / 2 + 0.1);
+  const bench = new THREE.Vector3(track.spots!.me[0], 0, track.spots!.me[1]);
+  const FULL = 32;
+  let heat = 0, taps = 0, fainted = false;
+  return [
+    walk(() => [new THREE.Vector3(track.approach[0], 0, track.approach[1]), door.clone(), bench.clone()]),
+    {
+      enter: (c) => {
+        c.rideStart = c.clock; taps = rideIO.input.taps; yawQ(c.quat, 0);
+        c.look({ anim: "sit", body: "stand", prop: null });
+        c.cam = "fixed";
+        c.camAt = new THREE.Vector3(at[0] + 0.55, 1.7, at[1] + d / 2 - 0.15);
+        c.camLook = bench.clone().add(new THREE.Vector3(0, 0.8, 0));
+        c.ui({ steamAt: [at[0] + 0.7, 0.7, at[1] + d / 2 - 0.4] });
+        tele.phase = "Feel the heat… leave in the green zone"; tele.prompt = "Leave now"; tele.holdButton = false;
+      },
+      update: (c, dt) => {
+        heat = Math.min(1, heat + dt / FULL);
+        tele.meterLabel = "Heat"; tele.meter = heat;
+        tele.progress = heat; tele.time = c.clock - c.rideStart;
+        if (heat > 0.85 && Math.floor(c.clock * 2) % 2) c.look({ anim: "sit", pose: "armsCrossed", body: "stand", prop: null });
+        if (heat >= 1) { fainted = true; flash("🥵 Too hot! Out you go!"); return true; }
+        return rideIO.input.taps > taps;
+      },
+    },
+    { enter: (c) => { tele.meterLabel = ""; tele.prompt = ""; c.ui({ steamAt: undefined }); c.look({ anim: "walk", body: "stand", prop: null }); }, update: () => true },
+    walk(() => [door.clone(), new THREE.Vector3(track.exit[0], 0, track.exit[1])]),
+    { enter: () => {
+      const pct = Math.round(heat * 100);
+      const zone = !fainted && heat >= 0.7 && heat <= 0.9;
+      result({
+        rideId: ride.id, headline: fainted ? "🥵 Overheated!" : zone ? "🔥 Perfectly cooked" : heat < 0.7 ? "🥶 Barely warmed up" : "😅 Just in time",
+        stars: zone ? 3 : fainted || heat < 0.45 ? 1 : 2, stats: [{ label: "Heat", value: `${pct}%` }, { label: "Time inside", value: secs(heat * FULL) }],
+      });
+    }, update: () => false },
+  ];
+}
+
+/** The cold plunge: in you go, and tap to keep breathing for ten seconds. */
+function plunge(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+  const tele = rideIO.tele;
+  const water = track.water!;
+  const into = new THREE.Vector3(water.at[0] + 1.3, -0.8, water.at[1]);
+  const LEN = 10;
+  let air = 1, taps = 0, lasted = 0, gaveUp = false;
+  return [
+    walk(() => [new THREE.Vector3(track.approach[0], 0, track.approach[1])]),
+    jump(() => into.clone(), 0.6, 0.6, false),
+    {
+      enter: (c) => {
+        c.rideStart = c.clock; taps = rideIO.input.taps; yawQ(c.quat, 0);
+        c.splash(into.clone().setY(0.35), 1.6);
+        c.look({ anim: "idle", pose: "armsCrossed", body: "stand", prop: null });
+        c.cam = "fixed";
+        c.camAt = into.clone().add(new THREE.Vector3(0.4, 2.2, 2.8));
+        c.camLook = into.clone().add(new THREE.Vector3(0, 1.2, 0));
+        tele.phase = "🥶 SO COLD! Keep breathing!"; tele.prompt = "Tap to breathe"; tele.holdButton = false;
+        flash("🧊 Brrrr!");
+      },
+      update: (c, dt) => {
+        const t = c.clock - c.rideStart;
+        if (rideIO.input.taps > taps) { taps = rideIO.input.taps; air = Math.min(1, air + 0.12); }
+        air = Math.max(0, air - dt * 0.45);
+        // Shivering.
+        c.data.lean = Math.sin(c.clock * 40) * 0.04;
+        tele.meterLabel = "Breath"; tele.meter = air;
+        lasted = t; tele.progress = t / LEN; tele.time = t;
+        if (air <= 0) { gaveUp = true; flash("😵 Out you get!"); return true; }
+        return t >= LEN;
+      },
+    },
+    { enter: (c) => { c.data.lean = 0; tele.meterLabel = ""; tele.prompt = ""; c.pos.set(track.exit[0], 0, track.exit[1]); c.look({ anim: gaveUp ? "idle" : "clap", body: "stand", prop: null }); }, update: (c) => c.t > 0.8 },
+    { enter: () => result({
+      rideId: ride.id, headline: gaveUp ? "🥶 Too cold for you!" : "💪 Ice-cold warrior",
+      stars: gaveUp ? 1 : air > 0.4 ? 3 : 2, stats: [{ label: "Lasted", value: `${Math.min(LEN, lasted).toFixed(1)} s` }],
+      best: { value: Math.round(Math.min(LEN, lasted) * 10) / 10, label: `${Math.min(LEN, lasted).toFixed(1)} s` },
+    }), update: () => false },
+  ];
+}
+
+/** Sink into the bubbles; get out whenever you like. */
+function jacuzzi(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+  const tele = rideIO.tele;
+  const { at } = SPA.jacuzzi;
+  const seat = new THREE.Vector3(track.spots!.me[0], -0.22, track.spots!.me[1]);
+  const LEN = 30;
+  return [
+    walk(() => [new THREE.Vector3(track.approach[0], 0, track.approach[1])]),
+    jump(() => seat.clone(), 0.35, 0.5, false),
+    {
+      enter: (c) => {
+        c.rideStart = c.clock; yawQ(c.quat, Math.PI / 2);
+        c.look({ anim: "sit", body: "stand", prop: null });
+        c.cam = "fixed";
+        c.camAt = new THREE.Vector3(at[0] + 2.2, 1.9, at[1] + 2);
+        c.camLook = new THREE.Vector3(at[0], 0.6, at[1]);
+        tele.phase = "🫧 Aaaah… pure relaxation"; tele.prompt = "";
+      },
+      update: (c) => {
+        const t = c.clock - c.rideStart;
+        tele.progress = t / LEN; tele.time = t;
+        return t >= LEN || rideIO.input.exit;
+      },
+    },
+    { enter: (c) => { c.pos.set(track.exit[0], 0, track.exit[1]); c.look({ anim: "idle", body: "stand", prop: null }); }, update: (c) => c.t > 0.5 },
+    { enter: (c) => {
+      const t = Math.min(LEN, c.clock - c.rideStart);
+      result({ rideId: ride.id, stars: t >= 25 ? 3 : t >= 12 ? 2 : 1, stats: [{ label: "Soaked for", value: secs(t) }] });
+    }, update: () => false },
+  ];
+}
+
+/** Lie back with a face mask and cucumbers on your eyes; take a selfie for your story. */
+function faceMask(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+  const tele = rideIO.tele;
+  const lie = track.lie!;
+  const LEN = 20;
+  let selfie = false;
+  return [
+    walk(() => [new THREE.Vector3(track.approach[0], 0, track.approach[1])]),
+    {
+      enter: (c) => {
+        c.rideStart = c.clock; rideIO.input.photos = 0;
+        c.pos.set(...lie.feet); yawQ(c.quat, lie.yaw);
+        c.look({ anim: "sleep", body: "lie", prop: null, mask: true, recline: LOUNGER_RECLINE });
+        // Filmed from beside the lounger, looking at the face.
+        c.cam = "fixed";
+        const headDir = new THREE.Vector3(-Math.sin(lie.yaw), 0, -Math.cos(lie.yaw));
+        const side = new THREE.Vector3(headDir.z, 0, -headDir.x);
+        const head = c.pos.clone().addScaledVector(headDir, 1.5).setY(c.pos.y + 0.5);
+        c.camAt = head.clone().addScaledVector(headDir, -0.5).addScaledVector(side, 1.3).add(new THREE.Vector3(0, 0.9, 0));
+        c.camLook = head.clone();
+        tele.phase = "🥒 Cucumbers on… relax"; tele.panel = "photo"; tele.prompt = "";
+      },
+      update: (c) => {
+        const t = c.clock - c.rideStart;
+        if (rideIO.input.photos > 0 && !selfie) { selfie = true; flash("🤳 Selfie posted to your story!"); }
+        tele.progress = t / LEN; tele.time = t;
+        return t >= LEN || rideIO.input.exit;
+      },
+    },
+    { enter: (c) => { tele.panel = ""; c.pos.set(track.exit[0], 0, track.exit[1]); c.look({ anim: "idle", body: "stand", prop: null }); flash("✨ Glowing!"); }, update: (c) => c.t > 1 },
+    { enter: () => result({ rideId: ride.id, headline: "✨ Skin: glowing", stars: selfie ? 3 : 2, stats: [{ label: "Selfie", value: selfie ? "Posted 🤳" : "None" }] }), update: () => false },
+  ];
+}
+
+// ---------------------------------------------------------------- attractions
+
+/** The lift (or wheel cabin) up: rises with the floor count, shows the city as it clears the roof. */
+function liftUp(ride: RideDef, track: Track, up = true): Step {
+  const top = LOBBY.liftTop;
+  const [lx, lz] = track.spots!.me;
+  return {
+    enter: (c) => {
+      c.cam = "fixed"; c.data.snap = 0;
+      rideIO.tele.phase = up ? (ride.floors ? "Going up…" : "The cabin climbs…") : "Going back down…"; rideIO.tele.prompt = "";
+      c.look({ anim: "idle", body: "stand", prop: null });
+      yawQ(c.quat, Math.PI / 4);
+    },
+    update: (c) => {
+      const k = Math.min(1, c.t / (up ? 7 : 4.5));
+      const y = up ? top * ease(k) : top * (1 - ease(k));
+      c.pos.set(lx, y, lz);
+      c.ui({ liftY: y });
+      if (ride.floors) rideIO.tele.score = Math.round((y / top) * ride.floors);
+      c.camAt = new THREE.Vector3(lx + 4.5, y + 2.6, lz + 5.5);
+      c.camLook = new THREE.Vector3(lx, y + 1, lz);
+      return k >= 1;
+    },
+  };
+}
+
+/** Up to the deck, then a telescope that pans the horizon: tap when a landmark is in the crosshair. */
+function observe(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+  const tele = rideIO.tele;
+  const marks = ride.landmarks ?? [];
+  const [lx, lz] = track.spots!.me;
+  const LIMIT = 50, PAN = 22; // seconds, degrees a second
+  let found = 0, idx = 0, taps = 0, view = 0, misses = 0;
+  const bearingOf = (yawDeg: number) => ((yawDeg % 360) + 360) % 360;
+  return [
+    walk(() => [new THREE.Vector3(track.approach[0], 0, track.approach[1]), new THREE.Vector3(lx, 0, lz)]),
+    { enter: (c) => c.ui({ city: [lx, lz], liftY: 0 }), update: () => true },
+    liftUp(ride, track, true),
+    {
+      enter: (c) => {
+        c.rideStart = c.clock; taps = rideIO.input.taps; view = marks[0] ? marks[0].bearing - 150 : 0;
+        c.data.snap = 1; tele.panel = "photo"; tele.prompt = "";
+        tele.phase = marks[0] ? `🔭 Find: ${marks[0].name}` : "Enjoy the view";
+        c.look({ anim: "idle", body: "stand", prop: null });
+      },
+      update: (c, dt) => {
+        view += PAN * dt;
+        const yaw = (view * Math.PI) / 180;
+        const eye = new THREE.Vector3(lx, LOBBY.liftTop + 1.65, lz);
+        const fwd = new THREE.Vector3(Math.sin(yaw), -0.22, -Math.cos(yaw)).normalize();
+        // Just in front of the face (looking through the telescope, not the back of the head).
+        c.camAt = eye.clone().addScaledVector(fwd, 0.5);
+        c.camLook = eye.clone().addScaledVector(fwd, 10);
+        yawQ(c.quat, Math.atan2(fwd.x, fwd.z));
+        // A tap (the camera button) checks the crosshair against the landmark being looked for.
+        if (rideIO.input.photos > taps) {
+          taps = rideIO.input.photos;
+          const m = marks[idx];
+          if (m) {
+            const off = Math.abs(((bearingOf(view) - m.bearing + 540) % 360) - 180);
+            if (off < 9) {
+              found++; idx++; flash(`🎯 Found ${m.name}!`);
+              tele.phase = marks[idx] ? `🔭 Find: ${marks[idx].name}` : "🔭 All found — enjoy the view!";
+            } else { misses++; flash(off < 25 ? "Close — a little more…" : "Not that one"); }
+          }
+        }
+        tele.score = found; tele.count = marks.length; tele.progress = (c.clock - c.rideStart) / LIMIT; tele.time = c.clock - c.rideStart;
+        // All found: enjoy the view a moment longer, then head down.
+        if (idx >= marks.length) {
+          if (c.data.doneAt === undefined) c.data.doneAt = c.clock - c.rideStart;
+          return c.clock - c.rideStart - c.data.doneAt > 2.5;
+        }
+        return c.clock - c.rideStart >= LIMIT || rideIO.input.exit;
+      },
+    },
+    { enter: (c) => { c.data.snap = 0; tele.panel = ""; }, update: () => true },
+    liftUp(ride, track, false),
+    { enter: (c) => c.ui({ city: undefined, liftY: undefined }), update: () => true },
+    walk(() => [new THREE.Vector3(track.exit[0], 0, track.exit[1])]),
+    { enter: (c) => result({
+      rideId: ride.id, headline: found === marks.length ? "🔭 Spotted them all!" : undefined,
+      stars: found === marks.length ? (misses <= 1 ? 3 : 2) : found ? 2 : 1,
+      stats: [{ label: "Landmarks", value: `${found}/${marks.length}` }, { label: "Time", value: secs(Math.min(LIMIT, c.data.doneAt ?? LIMIT)) }],
+      best: found === marks.length ? { value: Math.round(c.data.doneAt ?? LIMIT), label: secs(c.data.doneAt ?? LIMIT), lowerIsBetter: true } : undefined,
+    }), update: () => false },
+  ];
+}
+
+/** Up to the top of the Frame and across the glass bridge: hold to walk; when the glass cracks, let go! */
+function glassBridge(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+  const tele = rideIO.tele;
+  const [lx, lz] = track.spots!.me;
+  const top = LOBBY.liftTop, LEN = LOBBY.bridge;
+  let x = 0, crackAt = -1, freezeOk = false, cracks = 0, frozen = 0, screamed = 0, nextCrack = 2.5, walking = false;
+  return [
+    walk(() => [new THREE.Vector3(track.approach[0], 0, track.approach[1]), new THREE.Vector3(lx, 0, lz)]),
+    { enter: (c) => c.ui({ city: [lx, lz], liftY: 0, bridge: true }), update: () => true },
+    liftUp(ride, track, true),
+    {
+      enter: (c) => {
+        c.rideStart = c.clock; x = 0; yawQ(c.quat, -Math.PI / 2);
+        tele.phase = "Hold to walk across… freeze if the glass cracks!"; tele.prompt = "Hold to walk"; tele.holdButton = true;
+        c.cam = "fixed";
+      },
+      update: (c, dt) => {
+        const now = c.clock - c.rideStart;
+        if (crackAt >= 0) {
+          // You have 0.7 s to stop dead.
+          if (!rideIO.input.down) freezeOk = true;
+          if (c.clock - crackAt > 0.7) {
+            if (freezeOk) { frozen++; flash("😮‍💨 Phew… it's just an effect!"); }
+            else { screamed++; flash("😱 AAAH!"); c.look({ anim: "idle", pose: "armsUp", body: "stand", prop: null }); }
+            crackAt = -1; c.ui({ crackAt: null }); nextCrack = now + 2 + Math.random() * 2.5;
+          }
+        } else {
+          walking = rideIO.input.down;
+          if (walking) x = Math.min(LEN - 0.6, x + dt * 0.9);
+          c.look(walking ? { anim: "walk", body: "stand", prop: null } : { anim: "idle", body: "stand", prop: null });
+          if (walking && now >= nextCrack && x < LEN - 1.5) {
+            crackAt = c.clock; freezeOk = false; cracks++;
+            flash("💥 CRACK!");
+            c.ui({ crackAt: [lx - x - 0.5, top + 0.01, lz] });
+          }
+        }
+        c.pos.set(lx - x - 0.8, top, lz);
+        c.camAt = new THREE.Vector3(c.pos.x + 3.4, top + 2.2, lz + 3.6);
+        c.camLook = c.pos.clone().add(new THREE.Vector3(-1, -0.3, 0));
+        tele.progress = x / (LEN - 0.6); tele.score = frozen; tele.count = cracks; tele.time = now;
+        return x >= LEN - 0.6;
+      },
+    },
+    { enter: (c) => { tele.prompt = ""; c.ui({ crackAt: null }); flash("🎉 Made it across!"); c.look({ anim: "clap", body: "stand", prop: null }); }, update: (c) => c.t > 1.2 },
+    {
+      // Back along the bridge to the lift.
+      enter: (c) => { c.look({ anim: "walk", body: "stand", prop: null }); yawQ(c.quat, Math.PI / 2); },
+      update: (c, dt) => { c.pos.x = Math.min(lx, c.pos.x + dt * 2.2); c.camAt = new THREE.Vector3(c.pos.x + 3.4, top + 2.2, lz + 3.6); c.camLook = c.pos.clone(); return c.pos.x >= lx; },
+    },
+    liftUp(ride, track, false),
+    { enter: (c) => c.ui({ city: undefined, liftY: undefined, bridge: false }), update: () => true },
+    walk(() => [new THREE.Vector3(track.exit[0], 0, track.exit[1])]),
+    { enter: () => {
+      const calm = cracks ? Math.round((frozen / cracks) * 100) : 100;
+      result({
+        rideId: ride.id, headline: screamed ? "😱 Nerves of… jelly" : "🧊 Nerves of steel",
+        stars: screamed === 0 ? 3 : calm >= 50 ? 2 : 1,
+        stats: [{ label: "Cracks", value: String(cracks) }, { label: "Kept your cool", value: `${calm}%` }],
+        best: { value: calm, label: `${calm}% calm` },
+      });
+    }, update: () => false },
+  ];
+}
+
+/** Through the tunnel: snap the star creature when it's right in your viewfinder. */
+function aquariumTunnel(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+  const tele = rideIO.tele;
+  const door = new THREE.Vector3(track.approach[0], 0, track.approach[1]);
+  const start = new THREE.Vector3(track.spots!.me[0], 0, track.spots!.me[1]);
+  const end = new THREE.Vector3(track.spots!.them![0], 0, track.spots!.them![1]);
+  const centre = new THREE.Vector3(track.spots!.centre![0], 0, track.spots!.centre![1]);
+  const L = 14;
+  const MAX = 3;
+  let shots = 0, best = 0, seen = 0;
+  const target = ride.target ?? "shark";
+  return [
+    walk(() => [door.clone()]),
+    { enter: (c) => { tele.fadeAt = performance.now(); c.ui({ tunnel: true }); }, update: (c) => c.t > 0.45 },
+    {
+      enter: (c) => {
+        c.pos.copy(start); yawQ(c.quat, Math.PI); c.rideStart = c.clock; seen = rideIO.input.photos;
+        c.cam = "fixed"; c.data.snap = 0;
+        tele.phase = `📸 Snap the ${target} when it's in the frame (${MAX} shots)`; tele.panel = "photo";
+        c.look({ anim: "walk", body: "stand", prop: null });
+      },
+      update: (c, dt) => {
+        const d = c.pos.z - end.z;
+        if (d > 0.05) c.pos.z -= Math.min(d, dt * 0.55);
+        // Behind and above you, looking up the tunnel: the creatures pass overhead.
+        const eye = c.pos.clone().add(new THREE.Vector3(0.35, 1.35, 2.6));
+        const look = c.pos.clone().add(new THREE.Vector3(0, 2.3, -5));
+        c.camAt = eye; c.camLook = look;
+        if (rideIO.input.photos > seen && shots < MAX) {
+          seen = rideIO.input.photos; shots++;
+          const who = tunnelCreatureAt(c.clock, L).add(centre);
+          const fwd = look.clone().sub(eye).normalize();
+          const to = who.clone().sub(eye);
+          const angle = (fwd.angleTo(to) * 180) / Math.PI;
+          const q = to.length() < 10 && angle < 16 ? 1 - angle / 16 : 0;
+          best = Math.max(best, q);
+          flash(q > 0.7 ? `📸 Amazing ${target} shot!` : q > 0.3 ? `📸 Got the ${target}!` : q > 0 ? "📸 Just the tail…" : "📸 Missed it — just fish");
+          if (shots >= MAX) tele.panel = "";
+        }
+        tele.score = Math.round(best * 100); tele.count = MAX - shots; tele.progress = 1 - d / (start.z - end.z); tele.time = c.clock - c.rideStart;
+        return d <= 0.05 || rideIO.input.exit;
+      },
+    },
+    { enter: (c) => { tele.panel = ""; tele.fadeAt = performance.now(); c.look({ anim: "idle", body: "stand", prop: null }); }, update: (c) => c.t > 0.45 },
+    { enter: (c) => { c.ui({ tunnel: false }); c.pos.copy(door); }, update: () => true },
+    walk(() => [new THREE.Vector3(track.exit[0], 0, track.exit[1])]),
+    { enter: () => {
+      const pct = Math.round(best * 100);
+      result({
+        rideId: ride.id, headline: pct >= 70 ? `📸 Postcard-perfect ${target}!` : pct > 0 ? `📸 You got the ${target}` : `🐟 The ${target} got away`,
+        stars: pct >= 70 ? 3 : pct > 0 ? 2 : 1, stats: [{ label: "Best photo", value: `${pct}%` }, { label: "Photos taken", value: String(shots) }],
+        best: { value: pct, label: `${pct}%` },
+      });
+    }, update: () => false },
+  ];
+}
+
+const WAX_POSES: Array<{ label: string; pose: BodyPose }> = [
+  { label: "🙌 Arms up", pose: "armsUp" }, { label: "🙅 Arms crossed", pose: "armsCrossed" },
+  { label: "🤸 Arms out", pose: "balance" }, { label: "🎤 Mic in hand", pose: "mic" },
+];
+const WAX_FIGURES = [
+  { title: "Pop star", gender: "woman" as const, preset: "Female_Adult_01" },
+  { title: "Football legend", gender: "man" as const, preset: "Male_Adult_08" },
+  { title: "Movie star", gender: "man" as const, preset: "Male_Adult_04" },
+];
+
+/** Strike the wax figure's pose before the flash: three figures, three selfies. */
+function waxSelfies(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+  const tele = rideIO.tele;
+  const spots = LOBBY.wax;
+  let matched = 0;
+  const poses = WAX_FIGURES.map(() => WAX_POSES[Math.floor(Math.random() * WAX_POSES.length)]);
+  const steps: Step[] = [{
+    enter: (c) => {
+      c.ui({ plinths: spots });
+      WAX_FIGURES.forEach((f, i) => {
+        const at = new THREE.Vector3(spots[i][0], 0.39, spots[i][1]);
+        setCast(c, { id: `wax${i}`, gender: f.gender, preset: f.preset, anim: "idle", pose: poses[i].pose }, at, 0);
+      });
+    },
+    update: () => true,
+  }];
+  WAX_FIGURES.forEach((f, i) => {
+    const fig = new THREE.Vector3(spots[i][0], 0, spots[i][1]);
+    const stand = fig.clone().add(new THREE.Vector3(0.75, 0, 0.6));
+    let deadline = 0;
+    steps.push(
+      walk(() => [stand.clone()]),
+      {
+        enter: (c) => {
+          yawQ(c.quat, 0);
+          // Both face the camera, out in front of them.
+          if (c.actors[`wax${i}`]) c.actors[`wax${i}`].yaw = 0;
+          c.cam = "fixed";
+          c.camAt = fig.clone().add(new THREE.Vector3(0.4, 1.7, 3.6));
+          c.camLook = fig.clone().add(new THREE.Vector3(0.4, 1.2, 0));
+          tele.options = WAX_POSES.map((p) => p.label); rideIO.input.choice = -1;
+          tele.phase = `🤳 The ${f.title}: copy the pose!`; deadline = c.clock + 3.5;
+          c.look({ anim: "idle", body: "stand", prop: null });
+        },
+        update: (c) => {
+          tele.countdown = Math.max(0, Math.ceil(deadline - c.clock));
+          if (rideIO.input.choice >= 0 && tele.options.length) {
+            const pick = WAX_POSES[rideIO.input.choice];
+            tele.options = [];
+            c.look({ anim: "idle", pose: pick.pose, body: "stand", prop: null });
+            if (pick.pose === poses[i].pose) { matched++; flash("📸 Twinning!"); } else flash("📸 …not quite the same pose");
+            c.data.shotAt = c.clock;
+          }
+          if (c.clock >= deadline && tele.options.length) { tele.options = []; flash("📸 Too slow — caught mid-pose!"); c.data.shotAt = c.clock; }
+          return !tele.options.length && c.clock - (c.data.shotAt ?? c.clock) > 1.3;
+        },
+      },
+      {
+        // On to the next figure, the camera following again.
+        enter: (c) => { tele.countdown = 0; c.cam = "chase"; tele.phase = i < WAX_FIGURES.length - 1 ? "🚶 On to the next figure…" : "📸 That's the set!"; c.look({ anim: "idle", body: "stand", prop: null }); },
+        update: () => true,
+      },
+    );
+  });
+  steps.push(
+    { enter: (c) => { c.cam = "chase"; c.ui({ plinths: [] }); WAX_FIGURES.forEach((_, i) => { c.cast = c.cast.filter((m) => m.id !== `wax${i}`); }); c.ui({ cast: c.cast }); }, update: () => true },
+    walk(() => [new THREE.Vector3(track.exit[0], 0, track.exit[1])]),
+    { enter: () => result({
+      rideId: ride.id, headline: matched === 3 ? "🤳 Three perfect twins!" : undefined,
+      stars: matched === 3 ? 3 : matched >= 1 ? 2 : 1, stats: [{ label: "Poses matched", value: `${matched}/3` }, { label: "Selfies", value: "3 posted 🤳" }],
+      best: { value: matched, label: `${matched}/3` },
+    }), update: () => false },
+  );
+  return steps;
+}
+
+/** Headset on, step off a supertall tower in VR, and hold Brake to stop just above the ground. */
+function vrDrop(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+  const tele = rideIO.tele;
+  const [wx, wz] = LOBBY.vrWorld;
+  const H = LOBBY.vrTower;
+  const SHOWN = 828 / H; // the height shown as the real tower's metres
+  const spot = new THREE.Vector3(track.spots!.me[0], 0, track.spots!.me[1]);
+  let y = H, v = 0, crashed = false, stopAt = -1;
+  const g = 9.81 * 0.6, brake = g * 3.2;
+  return [
+    walk(() => [spot.clone()]),
+    { enter: (c) => { c.look({ anim: "idle", body: "stand", prop: null, headset: true }); tele.phase = "Headset on…"; }, update: (c) => c.t > 1.2 },
+    { enter: (c) => { tele.fadeAt = performance.now(); c.ui({ vr: true, city: [wx, wz] }); }, update: (c) => c.t > 0.45 },
+    {
+      enter: (c) => {
+        c.pos.set(wx, H, wz + 3); yawQ(c.quat, 0); c.data.snap = 1;
+        c.cam = "fixed";
+        tele.phase = "🥽 828 m up. Step off when you're ready…"; tele.prompt = "Jump!"; tele.holdButton = false; c.data.taps = rideIO.input.taps;
+        c.look({ anim: "idle", pose: "balance", body: "stand", prop: null, headset: true });
+      },
+      update: (c) => {
+        c.camAt = c.pos.clone().add(new THREE.Vector3(2.5, 2.5, 5)); c.camLook = c.pos.clone().add(new THREE.Vector3(0, -6, -2));
+        return rideIO.input.taps > c.data.taps;
+      },
+    },
+    {
+      enter: (c) => {
+        c.rideStart = c.clock; tele.phase = "FALLING! Hold Brake to stop just above the ground"; tele.prompt = "Hold to brake"; tele.holdButton = true;
+        c.look({ anim: "idle", pose: "balance", body: "prone", prop: null, headset: true });
+      },
+      update: (c, dt) => {
+        v += (g - (rideIO.input.down ? brake : 0)) * dt;
+        if (v < 0) { v = 0; if (stopAt < 0) stopAt = y; }
+        if (stopAt >= 0) { y = Math.max(0, y - dt * 2); } else y -= v * dt;
+        c.pos.set(wx, Math.max(0.1, y) + 0.3, wz + 3);
+        c.camAt = c.pos.clone().add(new THREE.Vector3(0, 4, 3)); c.camLook = c.pos.clone().add(new THREE.Vector3(0, -8, -1));
+        c.speed = v * 3.6 * SHOWN * 0.35; c.top = Math.max(c.top, c.speed);
+        tele.score = Math.max(0, Math.round(y * SHOWN)); tele.progress = 1 - y / H;
+        if (y <= 0 && stopAt < 0) { crashed = v > 2.5; if (!crashed) stopAt = 0; return true; }
+        return stopAt >= 0 && y <= 0;
+      },
+    },
+    { enter: (c) => { flash(crashed ? "💥 SPLAT! (Good thing it's VR)" : stopAt * SHOWN <= 40 ? "🎯 Perfect landing!" : "🪂 Safe… but you stopped way up high"); c.look({ anim: crashed ? "idle" : "clap", body: "stand", prop: null, headset: true }); c.pos.y = 0; c.speed = 0; tele.prompt = ""; }, update: (c) => c.t > 1.6 },
+    { enter: () => { tele.fadeAt = performance.now(); }, update: (c) => c.t > 0.45 },
+    { enter: (c) => { c.data.snap = 0; c.cam = "chase"; c.ui({ vr: false, city: undefined }); c.pos.copy(spot); c.look({ anim: "idle", body: "stand", prop: null }); }, update: (c) => c.t > 0.6 },
+    walk(() => [new THREE.Vector3(track.exit[0], 0, track.exit[1])]),
+    { enter: (c) => {
+      const stopM = Math.round(Math.max(0, stopAt) * SHOWN);
+      result({
+        rideId: ride.id, headline: crashed ? "💥 Splat! (only VR)" : stopM <= 40 ? "🎯 Inch-perfect stop!" : "🪂 You lived!",
+        stars: crashed ? 1 : stopM <= 40 ? 3 : stopM <= 150 ? 2 : 1,
+        stats: [{ label: "Stopped at", value: crashed ? "The ground 😬" : `${stopM} m up` }, { label: "Top speed", value: `${Math.round(c.top)} km/h` }],
+        best: crashed ? undefined : { value: stopM, label: `${stopM} m`, lowerIsBetter: true },
+      });
+    }, update: () => false },
+  ];
+}
+
+// ---------------------------------------------------------------- shops
+
+const OCCASION_BRIEF: Record<string, string> = {
+  work: "a big meeting in DIFC", night: "a night out at a rooftop club", formal: "a wedding at the Burj Al Arab",
+  beach: "a day at the beach club", sport: "a morning run on Kite Beach", traditional: "Eid with the family", everyday: "brunch in the Marina",
+};
+
+/** The stylist names an occasion; pick an outfit, change, and walk it to the mirror. Three looks. */
+function styleChallenge(ride: RideDef, track: Track, result: (r: RideResult) => void, gender: "woman" | "man"): Step[] {
+  const tele = rideIO.tele;
+  const runway = new THREE.Vector3(track.spots!.me[0], 0, track.spots!.me[1]);
+  const door = new THREE.Vector3(track.spots!.them![0], 0, track.spots!.them![1]);
+  const stylistAt = new THREE.Vector3(track.staffFrom![0], 0, track.staffFrom![1]);
+  const mine = OUTFITS.filter((o) => o.gender === gender && o.occasion !== "uniform");
+  const occasions = [...new Set(mine.map((o) => o.occasion))].filter((o) => OCCASION_BRIEF[o]).sort(() => Math.random() - 0.5).slice(0, 3);
+  let right = 0;
+  const steps: Step[] = [
+    walk(() => [runway.clone()]),
+    { enter: (c) => { setCast(c, { id: "stylist", gender: "woman", preset: "Female_Adult_05", anim: "talk" }, stylistAt, flatYaw(stylistAt, runway)); }, update: () => true },
+  ];
+  occasions.forEach((occ, round) => {
+    // One outfit that fits the occasion and two that don't, shuffled.
+    const good = mine.filter((o) => o.occasion === occ);
+    const bad = mine.filter((o) => o.occasion !== occ).sort(() => Math.random() - 0.5).slice(0, 2);
+    const choices = [good[Math.floor(Math.random() * good.length)], ...bad].sort(() => Math.random() - 0.5);
+    let picked = -1;
+    steps.push(
+      {
+        enter: (c) => {
+          c.cam = "fixed";
+          c.camAt = runway.clone().add(new THREE.Vector3(0.6, 1.7, 3.6));
+          c.camLook = runway.clone().add(new THREE.Vector3(0.5, 1.1, 0));
+          tele.phase = `👗 Look ${round + 1}/3: "Something for ${OCCASION_BRIEF[occ]}"`;
+          tele.options = choices.map((o) => o.label); rideIO.input.choice = -1;
+          castLook(c, "stylist", { anim: "talk" });
+        },
+        update: () => { if (rideIO.input.choice >= 0) { picked = rideIO.input.choice; tele.options = []; return true; } return false; },
+      },
+      walk(() => [door.clone()]),
+      { enter: (c) => { tele.fadeAt = performance.now(); tele.phase = "Changing…"; c.data.changeAt = c.clock; }, update: (c) => c.t > 0.45 },
+      { enter: (c) => { tele.phase = `👠 Walk the ${choices[picked].label.toLowerCase()} to the mirror`; c.look({ anim: "walk", body: "stand", prop: null, wear: choices[picked].id }); }, update: (c) => c.t > 0.5 },
+      walk(() => [runway.clone()], 1.2),
+      {
+        // The runway turn in front of the mirror.
+        enter: (c) => { yawQ(c.quat, 0); c.look({ anim: "idle", pose: "balance", body: "stand", prop: null, wear: choices[picked].id }); },
+        update: (c) => {
+          c.spin = Math.PI * 2 * ease(Math.min(1, c.t / 1.2));
+          if (c.t >= 1.2 && !c.data[`judged${round}`]) {
+            c.data[`judged${round}`] = 1; c.spin = 0;
+            const ok = choices[picked].occasion === occ;
+            if (ok) right++;
+            flash(ok ? "😍 “Perfect for it!”" : "🤔 “Hmm… not quite the vibe”");
+            castLook(c, "stylist", { anim: ok ? "clap" : "talk" });
+          }
+          return c.t > 2.4;
+        },
+      },
+    );
+  });
+  steps.push(
+    { enter: (c) => { tele.phase = "Back into your own clothes…"; tele.fadeAt = performance.now(); }, update: (c) => c.t > 0.45 },
+    { enter: (c) => { c.look({ anim: "idle", body: "stand", prop: null }); c.cam = "chase"; castLook(c, "stylist", { anim: "wave" }); }, update: (c) => c.t > 0.6 },
+    walk(() => [new THREE.Vector3(track.exit[0], 0, track.exit[1])]),
+    { enter: () => result({
+      rideId: ride.id, headline: right === 3 ? "💅 Style icon!" : right >= 2 ? "👌 Great eye" : "🙈 Fashion is hard",
+      stars: right === 3 ? 3 : right >= 1 ? 2 : 1, stats: [{ label: "Looks nailed", value: `${right}/3` }], best: { value: right, label: `${right}/3` },
+    }), update: () => false },
+  );
+  return steps;
+}
+
+const PRODUCT_EMOJI = (p: Product) => p.icon || "🛍️";
+
+/** Memorise the list (with aisles), then push the trolley to each aisle from memory; scan it all at the till. */
+function trolleyDash(ride: RideDef, track: Track, result: (r: RideResult) => void, products: Product[]): Step[] {
+  const tele = rideIO.tele;
+  const { aisles, till } = SHOPS.market;
+  const pool = products.filter((p) => !p.service).sort(() => Math.random() - 0.5);
+  const list = pool.slice(0, Math.min(4, pool.length)).map((p) => ({ p, aisle: Math.floor(Math.random() * aisles.length) }));
+  const front = (i: number) => new THREE.Vector3(aisles[i][0], 0, aisles[i][1] + 1.0);
+  let wrong = 0, got = 0;
+  const steps: Step[] = [
+    walk(() => [new THREE.Vector3(track.approach[0], 0, track.approach[1])]),
+    {
+      enter: (c) => {
+        c.rideStart = c.clock; c.ui({ aisles: true });
+        c.look({ anim: "idle", pose: "grip", body: "stand", prop: null, trolley: 0 });
+        tele.phase = "📝 Remember: " + list.map((x) => `${PRODUCT_EMOJI(x.p)} ${x.p.name} → aisle ${x.aisle + 1}`).join(" · ");
+        tele.countdown = 5;
+      },
+      update: (c) => { tele.countdown = Math.max(0, Math.ceil(5 - c.t)); return c.t >= 5; },
+    },
+  ];
+  list.forEach((item, k) => {
+    let target = -1;
+    steps.push(
+      {
+        enter: () => { tele.countdown = 0; tele.phase = `🛒 Which aisle for ${PRODUCT_EMOJI(item.p)} ${item.p.name}?`; tele.options = aisles.map((_, i) => `Aisle ${i + 1}`); rideIO.input.choice = -1; },
+        update: () => { if (rideIO.input.choice >= 0) { target = rideIO.input.choice; tele.options = []; return true; } return false; },
+      },
+      walk(() => [front(target)], 1.7, "walk"),
+      {
+        enter: (c) => {
+          yawQ(c.quat, Math.PI);
+          if (target === item.aisle) { got++; flash(`✅ ${item.p.name} in the trolley`); c.look({ anim: "idle", pose: "armsUp", body: "stand", prop: null, trolley: got }); }
+          else { wrong++; flash(`❌ Not in aisle ${target + 1}! It was aisle ${item.aisle + 1}`); }
+        },
+        update: (c) => c.t > 0.8,
+      },
+      // A wrong guess means a trip to the right aisle too.
+      { enter: () => {}, update: () => true },
+      walk(() => (target === item.aisle ? [] : [front(item.aisle)]), 1.7),
+      {
+        enter: (c) => { if (target !== item.aisle) { got++; c.look({ anim: "idle", pose: "armsUp", body: "stand", prop: null, trolley: got }); } tele.progress = (k + 1) / (list.length + 1); },
+        update: (c) => c.t > (target === item.aisle ? 0 : 0.6),
+      },
+    );
+  });
+  let scanned = 0, taps = 0;
+  steps.push(
+    walk(() => [new THREE.Vector3(till[0] - 1, 0, till[1] - 0.2)], 1.7),
+    {
+      enter: (c) => { yawQ(c.quat, Math.PI / 2); taps = rideIO.input.taps; tele.phase = "🧾 Self-checkout: scan everything!"; tele.prompt = "Tap to scan"; tele.holdButton = false; c.look({ anim: "idle", pose: "grip", body: "stand", prop: null, trolley: got }); },
+      update: (c) => {
+        if (rideIO.input.taps > taps) { taps = rideIO.input.taps; scanned++; flash(`📟 Beep! ${scanned}/${list.length}`); c.look({ anim: "idle", pose: "grip", body: "stand", prop: null, trolley: Math.max(0, got - scanned) }); }
+        tele.progress = (list.length + scanned / list.length) / (list.length + 1);
+        return scanned >= list.length;
+      },
+    },
+    { enter: (c) => { c.data.endAt = c.clock; tele.prompt = ""; c.ui({ aisles: false }); flash("🛍️ All paid!"); c.look({ anim: "idle", body: "stand", prop: null }); }, update: (c) => c.t > 0.8 },
+    walk(() => [new THREE.Vector3(track.exit[0], 0, track.exit[1])]),
+    { enter: (c) => {
+      const t = c.data.endAt - c.rideStart;
+      result({
+        rideId: ride.id, headline: wrong === 0 ? "🧠 Memory of an elephant!" : undefined,
+        stars: wrong === 0 ? 3 : wrong <= 1 ? 2 : 1,
+        stats: [{ label: "Right first time", value: `${list.length - wrong}/${list.length}` }, { label: "Time", value: secs(t) }],
+        best: wrong === 0 ? { value: t, label: secs(t), lowerIsBetter: true } : undefined,
+      });
+    }, update: () => false },
+  );
+  return steps;
+}
+
+const SCENTS = [
+  { label: "🪵 Oud", hint: "Warm, smoky and woody: the soul of Arabian perfume", mist: "#b45309" },
+  { label: "🌹 Rose", hint: "Sweet, soft and deeply floral", mist: "#f472b6" },
+  { label: "🍋 Citrus", hint: "Fresh, zesty and bright, like a lemon grove", mist: "#facc15" },
+  { label: "🌸 Jasmine", hint: "Heady white flowers on a summer night", mist: "#f8fafc" },
+];
+
+/** Spray three testers and name each scent family from its description. */
+function perfumeTest(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+  const tele = rideIO.tele;
+  const me = new THREE.Vector3(track.spots!.me[0], 0, track.spots!.me[1]);
+  const adv = new THREE.Vector3(track.staffFrom![0], 0, track.staffFrom![1]);
+  const rounds = [...SCENTS].sort(() => Math.random() - 0.5).slice(0, 3);
+  let right = 0;
+  const steps: Step[] = [
+    walk(() => [me.clone()]),
+    {
+      enter: (c) => {
+        yawQ(c.quat, Math.PI);
+        setCast(c, { id: "advisor", gender: "woman", preset: "Female_Adult_01", anim: "talk" }, adv, flatYaw(adv, me));
+        c.cam = "fixed";
+        c.camAt = me.clone().add(new THREE.Vector3(-1.5, 1.8, 2));
+        c.camLook = me.clone().add(new THREE.Vector3(0, 1.3, -0.7));
+      },
+      update: () => true,
+    },
+  ];
+  rounds.forEach((sc, i) => {
+    steps.push(
+      {
+        enter: (c) => {
+          c.look({ anim: "idle", pose: "mic", body: "stand", prop: null });
+          c.splash(me.clone().add(new THREE.Vector3(0.25, 1.45, -0.35)), 0.7, sc.mist);
+          tele.phase = `🌸 Tester ${i + 1}/3: "${sc.hint}"`;
+          tele.options = SCENTS.map((x) => x.label); rideIO.input.choice = -1;
+        },
+        update: (c) => {
+          if (rideIO.input.choice >= 0 && tele.options.length) {
+            tele.options = [];
+            const ok = SCENTS[rideIO.input.choice].label === sc.label;
+            if (ok) right++;
+            flash(ok ? `👃 Yes, ${sc.label}!` : `👃 That was ${sc.label}`);
+            castLook(c, "advisor", { anim: ok ? "clap" : "talk" });
+            c.look({ anim: "idle", body: "stand", prop: null });
+            c.data.answered = c.clock;
+          }
+          return !tele.options.length && c.clock - c.data.answered > 1.4;
+        },
+      },
+    );
+  });
+  steps.push(
+    { enter: (c) => { c.cam = "chase"; castLook(c, "advisor", { anim: "wave" }); }, update: () => true },
+    walk(() => [new THREE.Vector3(track.exit[0], 0, track.exit[1])]),
+    { enter: () => result({
+      rideId: ride.id, headline: right === 3 ? "👃 A true nose!" : undefined,
+      stars: right === 3 ? 3 : right >= 1 ? 2 : 1, stats: [{ label: "Scents named", value: `${right}/3` }], best: { value: right, label: `${right}/3` },
+    }), update: () => false },
+  );
+  return steps;
+}
+
+/** Try on three pieces in the mirror and guess each one's price. */
+function jewelGuess(ride: RideDef, track: Track, result: (r: RideResult) => void, products: Product[]): Step[] {
+  const tele = rideIO.tele;
+  const me = new THREE.Vector3(track.spots!.me[0], 0, track.spots!.me[1]);
+  const jeweller = new THREE.Vector3(track.staffFrom![0], 0, track.staffFrom![1]);
+  const pieces = products.filter((p) => !p.service && p.price > 0).sort(() => Math.random() - 0.5).slice(0, 3);
+  const round = (n: number) => (n >= 10000 ? Math.round(n / 1000) * 1000 : n >= 1000 ? Math.round(n / 100) * 100 : Math.round(n / 10) * 10);
+  let right = 0;
+  const steps: Step[] = [
+    walk(() => [me.clone()]),
+    {
+      enter: (c) => {
+        yawQ(c.quat, Math.PI);
+        // On the stool at the counter.
+        c.pos.y = 0.29;
+        c.look({ anim: "sit", body: "stand", prop: null });
+        setCast(c, { id: "jeweller", gender: "man", preset: "Male_Adult_08", anim: "talk" }, jeweller, 0);
+        c.cam = "fixed";
+        c.camAt = me.clone().add(new THREE.Vector3(1.4, 1.7, 1.5));
+        c.camLook = me.clone().add(new THREE.Vector3(0, 1.2, -0.4));
+      },
+      update: () => true,
+    },
+  ];
+  pieces.forEach((p, i) => {
+    const prices = [p.price, round(p.price * (0.35 + Math.random() * 0.2)), round(p.price * (2.2 + Math.random() * 1.2))].sort(() => Math.random() - 0.5);
+    steps.push({
+      enter: (c) => {
+        c.look({ anim: "sit", body: "stand", prop: null, acc: p.wearable ? [p.wearable] : undefined });
+        c.splash(me.clone().add(new THREE.Vector3(0, 1.5, 0)), 0.35, "#fde68a");
+        tele.phase = `💎 ${p.icon} ${p.name}: what does it cost?`;
+        tele.options = prices.map((x) => `AED ${x.toLocaleString()}`); rideIO.input.choice = -1;
+      },
+      update: (c) => {
+        if (rideIO.input.choice >= 0 && tele.options.length) {
+          tele.options = [];
+          const ok = prices[rideIO.input.choice] === p.price;
+          if (ok) right++;
+          flash(ok ? "💎 Spot on!" : `💸 It's AED ${p.price.toLocaleString()}`);
+          castLook(c, "jeweller", { anim: ok ? "clap" : "talk" });
+          c.data.answered = c.clock;
+        }
+        return !tele.options.length && c.clock - c.data.answered > 1.5;
+      },
+    });
+  });
+  steps.push(
+    { enter: (c) => { c.pos.y = 0; c.cam = "chase"; c.look({ anim: "idle", body: "stand", prop: null }); castLook(c, "jeweller", { anim: "wave" }); }, update: () => true },
+    walk(() => [new THREE.Vector3(track.exit[0], 0, track.exit[1])]),
+    { enter: () => result({
+      rideId: ride.id, headline: right === pieces.length ? "💎 You know your sparkle!" : undefined,
+      stars: right === pieces.length ? 3 : right >= 1 ? 2 : 1, stats: [{ label: "Prices guessed", value: `${right}/${pieces.length}` }], best: { value: right, label: `${right}/${pieces.length}` },
+    }), update: () => false },
+  );
+  return steps;
+}
+
+/** Tap the instant the demo screen turns green. Five rounds; too early is a foul. */
+function techDemo(ride: RideDef, track: Track, result: (r: RideResult) => void): Step[] {
+  const tele = rideIO.tele;
+  const me = new THREE.Vector3(track.spots!.me[0], 0, track.spots!.me[1]);
+  const ROUNDS = 5;
+  const times: number[] = [];
+  let round = 0, goAt = 0, armedAt = 0, taps = 0, fouls = 0, state: "wait" | "go" | "show" = "show";
+  return [
+    walk(() => [me.clone()]),
+    {
+      enter: (c) => {
+        yawQ(c.quat, Math.PI); taps = rideIO.input.taps;
+        c.look({ anim: "idle", pose: "grip", body: "stand", prop: null });
+        c.cam = "fixed";
+        c.camAt = me.clone().add(new THREE.Vector3(1.1, 1.8, 1.9));
+        c.camLook = me.clone().add(new THREE.Vector3(0, 1.4, -1));
+        tele.prompt = "Tap!"; tele.holdButton = false;
+        armedAt = c.clock + 0.8;
+      },
+      update: (c) => {
+        const tapped = rideIO.input.taps > taps;
+        if (tapped) taps = rideIO.input.taps;
+        if (state === "show") {
+          if (c.clock >= armedAt) { state = "wait"; goAt = c.clock + 1.2 + Math.random() * 2.2; c.ui({ screen: "#dc2626" }); tele.phase = `🎮 Round ${round + 1}/${ROUNDS}: wait for green…`; }
+        } else if (state === "wait") {
+          if (tapped) { fouls++; flash("⛔ Too early!"); c.ui({ screen: "#f97316" }); state = "show"; armedAt = c.clock + 1.2; }
+          else if (c.clock >= goAt) { state = "go"; c.ui({ screen: "#22c55e" }); tele.phase = "🟢 NOW!"; }
+        } else if (state === "go" && tapped) {
+          const ms = Math.round((c.clock - goAt) * 1000);
+          times.push(ms); round++;
+          flash(ms < 250 ? `⚡ ${ms} ms!` : `${ms} ms`);
+          c.ui({ screen: "#1e293b" }); state = "show"; armedAt = c.clock + 1;
+        }
+        tele.progress = round / ROUNDS; tele.score = times.length ? Math.round(times.reduce((a, b) => a + b, 0) / times.length) : 0;
+        return round >= ROUNDS;
+      },
+    },
+    { enter: (c) => { tele.prompt = ""; c.ui({ screen: undefined }); c.cam = "chase"; c.look({ anim: "idle", body: "stand", prop: null }); }, update: () => true },
+    walk(() => [new THREE.Vector3(track.exit[0], 0, track.exit[1])]),
+    { enter: () => {
+      const avg = Math.round(times.reduce((a, b) => a + b, 0) / Math.max(1, times.length));
+      result({
+        rideId: ride.id, headline: avg < 260 ? "⚡ Lightning reflexes!" : undefined,
+        stars: avg < 260 && fouls === 0 ? 3 : avg < 380 ? 2 : 1,
+        stats: [{ label: "Average", value: `${avg} ms` }, { label: "Best", value: `${Math.min(...times)} ms` }, { label: "False starts", value: String(fouls) }],
+        best: { value: avg, label: `${avg} ms`, lowerIsBetter: true },
+      });
+    }, update: () => false },
+  ];
+}
+
 // The context is read by result builders in the scripts (created once per ride).
 const ctxRef: { current: Ctx | null } = { current: null };
 
 // ---------------------------------------------------------------- splash particles
 
-interface Burst { at: THREE.Vector3; size: number; born: number }
+interface Burst { at: THREE.Vector3; size: number; born: number; color?: string }
 function Splashes({ bursts }: { bursts: Burst[] }) {
   const N = 26;
   const mesh = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const seeds = useMemo(() => Array.from({ length: N * 4 }, () => [Math.random(), Math.random(), Math.random()]), []);
+  const tint = useMemo(() => new THREE.Color(), []);
   useFrame(({ clock }) => {
     const m = mesh.current;
     if (!m) return;
@@ -1245,15 +2527,17 @@ function Splashes({ bursts }: { bursts: Burst[] }) {
         dummy.scale.setScalar(alive ? (0.035 + 0.008 * b.size) * (0.6 + r * 0.8) * (1 - t / 1.6) : 0);
         dummy.updateMatrix();
         m.setMatrixAt(k, dummy.matrix);
+        m.setColorAt(k, tint.set(b.color ?? "#e0f2fe"));
       }
     }
     for (; k < N * 4; k++) { dummy.scale.setScalar(0); dummy.updateMatrix(); m.setMatrixAt(k, dummy.matrix); }
     m.instanceMatrix.needsUpdate = true;
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
   });
   return (
     <instancedMesh ref={mesh} args={[undefined, undefined, N * 4]} raycast={() => null}>
       <sphereGeometry args={[1, 6, 5]} />
-      <meshStandardMaterial color="#e0f2fe" transparent opacity={0.85} roughness={0.1} />
+      <meshStandardMaterial color="#ffffff" transparent opacity={0.85} roughness={0.1} />
     </instancedMesh>
   );
 }
@@ -1301,6 +2585,60 @@ function LivePins({ at }: { at: [number, number, number] }) {
     });
   });
   return <group ref={group} position={at}>{PIN_SPOTS.map((_, i) => <group key={i}><Pin /></group>)}</group>;
+}
+
+/** A cast member: placed every frame from the ride's script, dressed and posed by it. */
+function Actor({ m }: { m: CastMember }) {
+  const g = useRef<THREE.Group>(null);
+  useFrame(() => {
+    const a = ctxRef.current?.actors[m.id];
+    if (!g.current || !a) return;
+    g.current.position.copy(a.pos);
+    g.current.rotation.set(0, a.yaw, 0);
+  });
+  return (
+    <group ref={g}>
+      <Suspense fallback={null}>
+        <CitizenAvatar look={{ gender: m.gender, preset: m.preset }} animation={m.anim} pose={m.pose} holding={m.hold ? <HandHeldProp kind={m.hold} /> : undefined} />
+      </Suspense>
+    </group>
+  );
+}
+
+/** A shopping trolley with as many items in it as have been picked up. */
+function Trolley({ items }: { items: number }) {
+  const colors = ["#dc2626", "#16a34a", "#f59e0b", "#2563eb", "#a855f7"];
+  return (
+    <group>
+      <mesh position={[0, 0.65, 0]}><boxGeometry args={[0.55, 0.4, 0.8]} /><meshStandardMaterial color="#94a3b8" metalness={0.8} roughness={0.3} wireframe /></mesh>
+      <mesh position={[0, 0.46, 0]}><boxGeometry args={[0.55, 0.02, 0.8]} /><meshStandardMaterial color="#64748b" metalness={0.7} /></mesh>
+      <mesh position={[0, 0.95, -0.42]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.02, 0.02, 0.6, 8]} /><meshStandardMaterial color="#ef4444" /></mesh>
+      {[[-0.22, -0.32], [0.22, -0.32], [-0.22, 0.32], [0.22, 0.32]].map(([x, z], i) => <mesh key={i} position={[x, 0.06, z]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.06, 0.06, 0.04, 12]} /><meshStandardMaterial color="#111827" /></mesh>)}
+      {Array.from({ length: Math.min(items, 5) }, (_, i) => <mesh key={i} position={[((i % 2) - 0.5) * 0.24, 0.56 + Math.floor(i / 2) * 0.12, (i % 3 - 1) * 0.2]}><boxGeometry args={[0.18, 0.16, 0.14]} /><meshStandardMaterial color={colors[i]} /></mesh>)}
+    </group>
+  );
+}
+
+/** A hanging aisle sign ("Aisle 3"). */
+function AisleSign({ n }: { n: number }) {
+  const tex = useMemo(() => {
+    const c = document.createElement("canvas"); c.width = 256; c.height = 96;
+    const g = c.getContext("2d")!;
+    g.fillStyle = "#0f766e"; g.fillRect(0, 0, 256, 96);
+    g.fillStyle = "#ffffff"; g.font = "bold 52px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(`Aisle ${n}`, 128, 50);
+    return new THREE.CanvasTexture(c);
+  }, [n]);
+  return <mesh><planeGeometry args={[1.1, 0.42]} /><meshStandardMaterial map={tex} side={THREE.DoubleSide} /></mesh>;
+}
+
+/** A white strobe flash over the dance floor when the DJ drops the track. */
+function Strobe({ at }: { at: number }) {
+  const light = useRef<THREE.PointLight>(null);
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime() - at;
+    if (light.current) light.current.intensity = t >= 0 && t < 1.2 ? (Math.floor(t * 12) % 2 ? 0 : 60) : 0;
+  });
+  return <pointLight ref={light} position={[CLUB.floor.at[0], 4, CLUB.floor.at[1]]} color="#ffffff" distance={14} intensity={0} />;
 }
 
 /** Guests in front of the karaoke stage, reacting to the singer, under a spotlight. */
@@ -1351,18 +2689,21 @@ export function RideRig({ active, look, worn, onEnd }: {
     const ctx: Ctx = {
       pos: new THREE.Vector3(start[0], 0, start[1]),
       quat: new THREE.Quaternion(),
-      spin: 0, t: 0, rideStart: -1, clock: 0, speed: 0, top: 0, data: {}, cam: "chase",
+      spin: 0, t: 0, rideStart: -1, clock: 0, speed: 0, top: 0, data: {}, cam: "chase", actors: {}, cast: [], tasks: [],
       look: (l) => setLk(l),
       ui: (u) => setUi((prev) => ({ ...prev, ...u })),
-      splash: (at, size) => setBursts((b) => [...b.slice(-3), { at, size, born: clock.getElapsedTime() }]),
+      splash: (at, size, color) => setBursts((b) => [...b.slice(-3), { at, size, born: clock.getElapsedTime(), color }]),
       opp: ride.kind === "race" && track.lane2 ? { pos: track.lane2.getPointAt(0).clone(), quat: new THREE.Quaternion(), s: 0, v: 0, done: 0 } : undefined,
     };
     ctxRef.current = ctx;
     // The script reports its result once; the camera glides back before it's shown.
-    const steps = script(ride, track, (r) => { if (!ended.current) { ended.current = true; camBack.current = 0; pendingResult.current = r; } });
+    const steps = script(ride, track, (r) => { if (!ended.current) { ended.current = true; camBack.current = 0; pendingResult.current = r; } }, active.menu, (look ?? DEFAULT_LOOK).gender);
     state.current = { ctx, steps, i: -1 };
-    return () => { if (ctxRef.current === ctx) ctxRef.current = null; state.current = null; LANE_IN_USE.current = false; };
-  }, [ride, track, start, clock]);
+    // The lobby's lift and wax figures are the ride's own while it runs.
+    if (ride.kind === "observe" || ride.kind === "glassbridge") LIFT_IN_USE.current = true;
+    if (ride.kind === "waxselfie") WAX_IN_USE.current = true;
+    return () => { if (ctxRef.current === ctx) ctxRef.current = null; state.current = null; LANE_IN_USE.current = false; LIFT_IN_USE.current = false; WAX_IN_USE.current = false; };
+  }, [ride, track, start, clock, active.menu, look?.gender]);
 
   // The chase camera: remembers the player's view and gives it back when the ride ends.
   const saved = useRef<{ pos: THREE.Vector3; target: THREE.Vector3; limits: number[] } | null>(null);
@@ -1403,6 +2744,7 @@ export function RideRig({ active, look, worn, onEnd }: {
         run.i++; c.t = 0; run.steps[run.i].enter?.(c);
       }
     }
+    if (c.tasks.length) c.tasks = c.tasks.filter((task) => !task(c, dt));
     if (c.rideStart >= 0 && !ended.current) rideIO.tele.time = c.clock - c.rideStart;
     rideIO.tele.speedKmh = c.speed;
     rideIO.tele.topKmh = c.top;
@@ -1455,6 +2797,10 @@ export function RideRig({ active, look, worn, onEnd }: {
           pendingResult.current = null;
           onEnd(r);
         }
+      } else if (c.data.snap) {
+        // Driven directly (a telescope, a free-fall): no smoothing.
+        camPos.current.copy(want);
+        camLook.current.copy(lookAt);
       } else {
         const k = 1 - Math.exp(-dt * (riding ? 5 : 2.5));
         camPos.current.lerp(want, k);
@@ -1467,19 +2813,24 @@ export function RideRig({ active, look, worn, onEnd }: {
   });
   /* eslint-enable react-hooks/immutability */
 
-  const bodyRot: [number, number, number] = lk.body === "lie" ? [-Math.PI / 2, 0, 0] : lk.body === "prone" ? [Math.PI / 2, 0, 0] : [0, 0, 0];
+  // How far the face is from the feet (along the body), for the face mask.
+  const faceAt = look?.gender === "man" ? 1.6 : 1.5;
+  // Lying flat; `recline` lifts the head end (on a lounger's backrest).
+  const rec = lk.recline ?? 0;
+  const bodyRot: [number, number, number] = lk.body === "lie" ? [-Math.PI / 2 + rec, 0, 0] : lk.body === "prone" ? [Math.PI / 2, 0, 0] : [0, 0, 0];
   return (
     <>
       <group ref={body}>
         <group ref={spinner}>
           <Suspense fallback={null}>
             <CitizenAvatar
-              look={look}
-              accessories={lk.shades && !worn?.includes("sunglasses") ? [...(worn ?? []), "sunglasses"] : worn}
+              look={lk.wear ? { ...(look ?? DEFAULT_LOOK), wear: lk.wear } : look}
+              accessories={[...new Set([...(worn ?? []), ...(lk.shades ? ["sunglasses" as const] : []), ...(lk.acc ?? [])])]}
               animation={lk.anim}
               pose={lk.pose}
               rotation={bodyRot}
               holding={lk.hold === "ball" ? <BowlingBall /> : lk.hold === "mic" ? <Microphone /> : undefined}
+              carryMode={lk.carry}
             />
           </Suspense>
           {lk.prop === "ring" && <group position={[0, 0.38, -0.12]}><RingTube color={ride.kind === "river" ? "#f97316" : "#0ea5e9"} /></group>}
@@ -1505,6 +2856,22 @@ export function RideRig({ active, look, worn, onEnd }: {
           {lk.prop === "jetski" && <group position={[0, -0.3, -0.05]}><JetSki color="#e11d48" /></group>}
           {lk.prop === "sup" && <group position={[0, -0.04, 0.15]}><Paddleboard /></group>}
           {lk.prop === "penguin" && <group position={[0, 0, 0.62]}><SkatePenguin /></group>}
+          {lk.trolley !== undefined && <group position={[0, 0, 0.75]}><Trolley items={lk.trolley} /></group>}
+          {/* VR headset on the face */}
+          {lk.headset && (
+            <mesh position={lk.body === "prone" ? [0, -0.12, faceAt] : [0, faceAt + 0.02, 0.1]} rotation={lk.body === "prone" ? [Math.PI / 2, 0, 0] : [0, 0, 0]}>
+              <boxGeometry args={[0.2, 0.1, 0.11]} /><meshStandardMaterial color="#111827" />
+            </mesh>
+          )}
+          {/* Face mask and cucumber slices on the face (lying face up, perhaps reclined) */}
+          {lk.mask && (
+            <group position={[0, faceAt * Math.sin(rec) + 0.1 * Math.cos(rec), -faceAt * Math.cos(rec) + 0.1 * Math.sin(rec)]} rotation={[rec, 0, 0]}>
+              <mesh rotation={[-Math.PI / 2, 0, 0]} scale={[1, 1.25, 1]}><circleGeometry args={[0.085, 20]} /><meshStandardMaterial color="#86efac" roughness={0.9} /></mesh>
+              {[-0.035, 0.035].map((x) => (
+                <mesh key={x} position={[x, 0.008, -0.02]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.028, 16]} /><meshStandardMaterial color="#4ade80" /></mesh>
+              ))}
+            </group>
+          )}
           {lk.prop === "kiteboard" && (
             <group>
               <mesh position={[0, -0.06, 0]}><boxGeometry args={[1.3, 0.04, 0.42]} /><meshStandardMaterial color="#facc15" /></mesh>
@@ -1533,6 +2900,34 @@ export function RideRig({ active, look, worn, onEnd }: {
         </>
       )}
       {ride.kind === "karaoke" && <KaraokeCrowd anim={ui.crowd ?? "idle"} />}
+      {ui.cast?.map((m) => <Actor key={m.id} m={m} />)}
+      {ui.dishes?.map((d) => <ServedItem key={d.id} def={{ id: d.id, kind: d.kind, position: d.at, rotation: 0 }} />)}
+      {ride.kind === "chefshow" && ui.shrimp && (
+        <mesh ref={ballRef} rotation={[0, 0, Math.PI / 2]}><torusGeometry args={[0.05, 0.022, 8, 12, Math.PI * 1.4]} /><meshStandardMaterial color="#fb923c" /></mesh>
+      )}
+      {ui.strobeAt !== undefined && <Strobe at={ui.strobeAt} />}
+      {ui.steamAt && <group position={ui.steamAt}><Steam w={1.2} d={1} rate={1.4} /></group>}
+      {/* Rides that go up: the lift or cabin, the city around, the Frame's glass bridge */}
+      {ui.liftY !== undefined && track.spots && (
+        <group position={[track.spots.me[0], ui.liftY, track.spots.me[1]]}><GlassLift capsule={ride.id === "ain-dubai"} /></group>
+      )}
+      {ui.city && (
+        <group position={[ui.city[0], 0, ui.city[1]]}>
+          <CityBelow landmarks={ui.vr ? [] : ride.landmarks} seaBearing={ride.id === "view-palm" || ride.id === "ain-dubai" ? 0 : 300} />
+          {/* VR: the supertall tower you jump from */}
+          {ui.vr && <mesh position={[0, LOBBY.vrTower / 2, 0]}><boxGeometry args={[5, LOBBY.vrTower, 5]} /><meshStandardMaterial color="#cbd5e1" metalness={0.6} roughness={0.25} /></mesh>}
+        </group>
+      )}
+      {ui.bridge && track.spots && (
+        <group position={[track.spots.me[0] - 0.75, LOBBY.liftTop, track.spots.me[1]]}><GlassBridge length={LOBBY.bridge} cracks={ui.crackAt ? 1 : 0} /></group>
+      )}
+      {ui.crackAt && <group position={ui.crackAt}><GlassCrack /></group>}
+      {ui.tunnel && <group position={[LOBBY.tunnel.centre[0], 0, LOBBY.tunnel.centre[1]]}><AquariumTunnel length={14} target={ride.target ?? "shark"} /></group>}
+      {ui.plinths?.map(([x, z], i) => <group key={i} position={[x, 0, z]}><Plinth /></group>)}
+      {ui.aisles && SHOPS.market.aisles.map(([x, z], i) => <group key={i} position={[x, 2.5, z + 0.4]}><AisleSign n={i + 1} /></group>)}
+      {ui.screen && (
+        <mesh position={[SHOPS.tech.table[0], 1.55, SHOPS.tech.table[1] - 0.2]}><planeGeometry args={[1.2, 0.7]} /><meshStandardMaterial color={ui.screen} emissive={ui.screen} emissiveIntensity={0.9} /></mesh>
+      )}
       {/* Course buoys (jet ski, paddleboard): the next one glows */}
       {track.gates?.map(([x, z], i) => (
         <group key={i} position={[x, 0, z]}><CourseBuoy next={i === ui.gate} done={i < ui.gate} /></group>

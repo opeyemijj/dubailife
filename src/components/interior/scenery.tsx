@@ -3,10 +3,11 @@
 // Scenery for open-air and special venues: beaches, pool decks, waterparks, spas, theatres, mosques
 // and the ice rink. Built from simple geometry at real-world scale (metres), like fixtures.tsx.
 
-import { useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
+import { CitizenAvatar } from "@/components/avatar/CitizenAvatar";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { BOWLING, LANE_IN_USE, PIN_SPOTS, RAFT_RADIUS, SLIDE_POINTS, SLIDE_RADIUS, STAIRS_X, TWIN_LANE, waveZ, WAVE_COUNT, type P3 } from "./rides/paths";
+import { BOWLING, LANE_IN_USE, LIFT_IN_USE, LOBBY, PIN_SPOTS, WAX_IN_USE, RAFT_RADIUS, SLIDE_POINTS, SLIDE_RADIUS, STAIRS_X, TWIN_LANE, waveZ, WAVE_COUNT, type P3 } from "./rides/paths";
 
 const Box = ({ args, position, color, rotation, emissive }: { args: [number, number, number]; position: [number, number, number]; color: string; rotation?: [number, number, number]; emissive?: string }) => (
   <mesh position={position} rotation={rotation} castShadow receiveShadow>
@@ -833,6 +834,304 @@ export function DiscoLights({ w, d }: { w: number; d: number }) {
           <mesh key={c} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.9, 24]} /><meshBasicMaterial color={c} transparent opacity={0.45} depthWrite={false} /></mesh>
         ))}
       </group>
+    </group>
+  );
+}
+
+// ---------------------------------------------------------------- restaurants
+
+/** A teppanyaki grill counter: a steel hotplate the chef cooks on, facing the diners. */
+export function GrillCounter() {
+  const plate = useRef<THREE.Mesh>(null);
+  useFrame((s) => {
+    if (plate.current) (plate.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.15 + Math.sin(s.clock.elapsedTime * 3) * 0.05;
+  });
+  return (
+    <group>
+      <Box args={[1.9, 0.86, 0.8]} position={[0, 0.43, 0]} color="#292524" />
+      <mesh ref={plate} position={[0, 0.875, 0]}><boxGeometry args={[1.7, 0.03, 0.6]} /><meshStandardMaterial color="#9ca3af" metalness={0.9} roughness={0.3} emissive="#f97316" emissiveIntensity={0.15} /></mesh>
+      {/* the diners' ledge */}
+      <Box args={[1.9, 0.05, 0.3]} position={[0, 0.9, 0.52]} color="#a16207" />
+      <mesh position={[0, 1.95, -0.1]}><boxGeometry args={[2, 0.25, 0.9]} /><meshStandardMaterial color="#44403c" metalness={0.6} /></mesh>
+    </group>
+  );
+}
+
+// ---------------------------------------------------------------- spa
+
+/** A steady pseudo-random number in 0..1 for particle i (the same every render). */
+const hash = (i: number, k: number) => { const x = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return x - Math.floor(x); };
+
+/** A wooden sauna cabin with benches, hot stones and a glass door on its front (+z). */
+export function SaunaCabin({ w, d }: { w: number; d: number }) {
+  const stones = useRef<THREE.Mesh>(null);
+  useFrame((s) => {
+    if (stones.current) (stones.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.5 + Math.sin(s.clock.elapsedTime * 2) * 0.2;
+  });
+  const wood = "#b7793f", dark = "#8a5a2b", h = 2.3;
+  return (
+    <group>
+      {/* back and side walls */}
+      <Box args={[w, h, 0.08]} position={[0, h / 2, -d / 2]} color={wood} />
+      {[-1, 1].map((k) => <Box key={k} args={[0.08, h, d]} position={[k * w / 2, h / 2, 0]} color={wood} />)}
+      <Box args={[w, 0.08, d]} position={[0, h, 0]} color={dark} />
+      {/* the front: wood either side of a glass door */}
+      {[-1, 1].map((k) => <Box key={k} args={[w / 2 - 0.45, h, 0.08]} position={[k * (w / 4 + 0.225), h / 2, d / 2]} color={wood} />)}
+      <mesh position={[0, h / 2, d / 2]}><boxGeometry args={[0.9, h, 0.03]} /><meshStandardMaterial color="#fde68a" transparent opacity={0.25} /></mesh>
+      {/* two tiers of bench along the back, and the heater */}
+      <Box args={[w - 0.2, 0.08, 0.5]} position={[0, 0.45, -d / 2 + 0.3]} color={dark} />
+      <Box args={[w - 0.2, 0.08, 0.45]} position={[0, 0.85, -d / 2 + 0.27]} color={dark} />
+      <Box args={[0.45, 0.6, 0.45]} position={[w / 2 - 0.35, 0.3, d / 2 - 0.4]} color="#374151" />
+      <mesh ref={stones} position={[w / 2 - 0.35, 0.65, d / 2 - 0.4]}><dodecahedronGeometry args={[0.2, 0]} /><meshStandardMaterial color="#57534e" emissive="#ea580c" emissiveIntensity={0.5} flatShading /></mesh>
+      <pointLight position={[0, 1.8, 0]} intensity={2} distance={3} color="#fdba74" />
+    </group>
+  );
+}
+
+/** A round jacuzzi with bubbling water. */
+export function Jacuzzi({ r }: { r: number }) {
+  const bubbles = useRef<THREE.Group>(null);
+  const seeds = useMemo(() => Array.from({ length: 22 }, (_, i) => [hash(i, 1) * Math.PI * 2, hash(i, 2) * r * 0.85, hash(i, 3)]), [r]);
+  useFrame((s) => {
+    bubbles.current?.children.forEach((c, i) => {
+      const [a, rad, ph] = seeds[i];
+      const k = (s.clock.elapsedTime * 0.9 + ph) % 1;
+      c.position.set(Math.cos(a) * rad, 0.45 + k * 0.06, Math.sin(a) * rad);
+      c.scale.setScalar(0.4 + k);
+    });
+  });
+  return (
+    <group>
+      <mesh position={[0, 0.25, 0]}><cylinderGeometry args={[r + 0.18, r + 0.22, 0.5, 32, 1, true]} /><meshStandardMaterial color="#e7e5e4" side={THREE.DoubleSide} /></mesh>
+      <mesh position={[0, 0.5, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[r, r + 0.2, 32]} /><meshStandardMaterial color="#f5f5f4" /></mesh>
+      <mesh position={[0, 0.44, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[r, 32]} /><meshStandardMaterial color="#5eead4" emissive="#14b8a6" emissiveIntensity={0.35} transparent opacity={0.85} /></mesh>
+      <group ref={bubbles}>{seeds.map((_, i) => <mesh key={i}><sphereGeometry args={[0.035, 6, 5]} /><meshStandardMaterial color="#ffffff" transparent opacity={0.7} /></mesh>)}</group>
+    </group>
+  );
+}
+
+/** Steam rising (sauna, hammam, jacuzzi). */
+export function Steam({ w = 1, d = 1, rate = 1 }: { w?: number; d?: number; rate?: number }) {
+  const ref = useRef<THREE.Group>(null);
+  const seeds = useMemo(() => Array.from({ length: 14 }, (_, i) => [hash(i, 4) - 0.5, hash(i, 5) - 0.5, hash(i, 6)]), []);
+  useFrame((s) => {
+    ref.current?.children.forEach((c, i) => {
+      const [x, z, ph] = seeds[i];
+      const k = (s.clock.elapsedTime * 0.25 * rate + ph) % 1;
+      c.position.set(x * w + Math.sin(k * 6 + i) * 0.1, k * 2, z * d);
+      c.scale.setScalar(0.15 + k * 0.45);
+      ((c as THREE.Mesh).material as THREE.MeshStandardMaterial).opacity = 0.35 * (1 - k);
+    });
+  });
+  return <group ref={ref}>{seeds.map((_, i) => <mesh key={i} raycast={() => null}><sphereGeometry args={[1, 8, 6]} /><meshStandardMaterial color="#ffffff" transparent opacity={0.3} depthWrite={false} /></mesh>)}</group>;
+}
+
+// ---------------------------------------------------------------- attractions
+
+const LANDMARK_GOLD = "#fbbf24";
+
+/** One landmark as seen from an observation deck, in a recognisable silhouette, with a glowing beacon. */
+export function LandmarkModel({ shape, height }: { shape: string; height: number }) {
+  const glass = <meshStandardMaterial color="#94a3b8" metalness={0.6} roughness={0.25} />;
+  return (
+    <group>
+      {shape === "fountain" && <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[9, 32]} /><meshStandardMaterial color="#38bdf8" emissive="#0ea5e9" emissiveIntensity={0.5} /></mesh>}
+      {shape === "fountain" && Array.from({ length: 7 }, (_, i) => <mesh key={i} position={[(i - 3) * 2, 3, 0]}><cylinderGeometry args={[0.15, 0.5, 6, 8]} /><meshStandardMaterial color="#e0f2fe" transparent opacity={0.8} /></mesh>)}
+      {shape === "dhow" && <mesh position={[0, height / 2, 0]} rotation={[0, 0, 0.3]}><coneGeometry args={[6, height, 4]} />{glass}</mesh>}
+      {shape === "ring" && <mesh position={[0, height / 2 + 2, 0]}><torusGeometry args={[height / 2, height / 5, 12, 32]} /><meshStandardMaterial color="#e2e8f0" metalness={0.8} roughness={0.2} /></mesh>}
+      {shape === "spire" && <><mesh position={[0, height * 0.35, 0]}><cylinderGeometry args={[3, 6, height * 0.7, 6]} />{glass}</mesh><mesh position={[0, height * 0.85, 0]}><cylinderGeometry args={[0.3, 2.5, height * 0.3, 6]} />{glass}</mesh></>}
+      {shape === "frame" && <><mesh position={[-6, height / 2, 0]}><boxGeometry args={[3, height, 3]} /><meshStandardMaterial color={LANDMARK_GOLD} metalness={1} roughness={0.3} /></mesh><mesh position={[6, height / 2, 0]}><boxGeometry args={[3, height, 3]} /><meshStandardMaterial color={LANDMARK_GOLD} metalness={1} roughness={0.3} /></mesh><mesh position={[0, height - 1.5, 0]}><boxGeometry args={[15, 3, 3]} /><meshStandardMaterial color={LANDMARK_GOLD} metalness={1} roughness={0.3} /></mesh></>}
+      {shape === "arch" && <><mesh position={[-7, height / 2, 0]}><boxGeometry args={[6, height, 6]} /><meshStandardMaterial color="#fda4af" /></mesh><mesh position={[7, height / 2, 0]}><boxGeometry args={[6, height, 6]} /><meshStandardMaterial color="#fda4af" /></mesh><mesh position={[0, height - 3, 0]}><boxGeometry args={[20, 6, 6]} /><meshStandardMaterial color="#fb7185" /></mesh></>}
+      {shape === "wheel" && <><mesh position={[0, height / 2 + 4, 0]}><torusGeometry args={[height / 2, 0.8, 8, 40]} /><meshStandardMaterial color="#e2e8f0" metalness={0.8} /></mesh>{[-1, 1].map((k) => <mesh key={k} position={[k * 4, height / 4 + 2, 0]} rotation={[0, 0, k * 0.25]}><boxGeometry args={[1, height / 2 + 4, 1]} /><meshStandardMaterial color="#cbd5e1" /></mesh>)}</>}
+      {shape === "sail" && <mesh position={[0, height / 2, 0]} scale={[1, 1, 0.35]}><coneGeometry args={[8, height, 3]} /><meshStandardMaterial color="#f8fafc" /></mesh>}
+      {shape === "palm" && <>{Array.from({ length: 8 }, (_, i) => <mesh key={i} position={[(i - 3.5) * 5, 0.1, -10]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[2.5, 26]} /><meshStandardMaterial color="#fde68a" /></mesh>)}<mesh position={[0, 0.1, 6]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[6, 20]} /><meshStandardMaterial color="#fde68a" /></mesh></>}
+      {/* the beacon marking it */}
+      <mesh position={[0, Math.max(height, 4) + 5, 0]}><sphereGeometry args={[1.6, 14, 10]} /><meshStandardMaterial color={LANDMARK_GOLD} emissive={LANDMARK_GOLD} emissiveIntensity={1.4} /></mesh>
+    </group>
+  );
+}
+
+/** A city spread out around a point, seen from high up: towers, roads, the sea on one side, and named
+    landmarks. Only drawn during rides that go up (it's far bigger than any room). */
+export function CityBelow({ landmarks = [], seaBearing = 300 }: { landmarks?: Array<{ name: string; bearing: number; dist: number; height: number; shape: string }>; seaBearing?: number }) {
+  const towers = useRef<THREE.InstancedMesh>(null);
+  const N = 170;
+  const spots = useMemo(() => {
+    const out: Array<[number, number, number, number]> = [];
+    for (let i = 0; out.length < N && i < N * 4; i++) {
+      const a = hash(i, 11) * Math.PI * 2, r = 32 + hash(i, 12) * 150;
+      const x = Math.sin(a) * r, z = -Math.cos(a) * r;
+      // Not in the sea, and not on top of a landmark.
+      const bearing = ((a * 180) / Math.PI + 360) % 360;
+      if (Math.abs(((bearing - seaBearing + 540) % 360) - 180) < 50 && r > 60) continue;
+      if (landmarks.some((l) => Math.hypot(x - Math.sin((l.bearing * Math.PI) / 180) * l.dist, z + Math.cos((l.bearing * Math.PI) / 180) * l.dist) < 16)) continue;
+      // Towers get taller further out, so nothing nearby rises past the deck and blocks the view.
+      out.push([x, z, Math.min(6 + hash(i, 13) ** 2 * 60, 4 + (r - 32) * 0.45), 3 + hash(i, 14) * 5]);
+    }
+    return out;
+  }, [landmarks, seaBearing]);
+  useEffect(() => {
+    const m = towers.current;
+    if (!m) return;
+    const d = new THREE.Object3D();
+    const col = new THREE.Color();
+    spots.forEach(([x, z, h, w], i) => {
+      d.position.set(x, h / 2, z); d.scale.set(w, h, w); d.updateMatrix();
+      m.setMatrixAt(i, d.matrix);
+      m.setColorAt(i, col.set(["#94a3b8", "#cbd5e1", "#64748b", "#a5b4fc", "#e2e8f0"][i % 5]));
+    });
+    m.instanceMatrix.needsUpdate = true;
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+  }, [spots]);
+  const sea = ((seaBearing * Math.PI) / 180);
+  return (
+    <group>
+      <mesh position={[0, -0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[240, 48]} /><meshStandardMaterial color="#d6c7a8" roughness={1} /></mesh>
+      <mesh position={[Math.sin(sea) * 210, -0.04, -Math.cos(sea) * 210]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[160, 48]} /><meshStandardMaterial color="#0369a1" emissive="#0ea5e9" emissiveIntensity={0.15} /></mesh>
+      {/* a couple of big roads */}
+      {[0, Math.PI / 2].map((r) => <mesh key={r} position={[0, -0.03, 0]} rotation={[-Math.PI / 2, 0, r]}><planeGeometry args={[6, 460]} /><meshStandardMaterial color="#475569" /></mesh>)}
+      <instancedMesh ref={towers} args={[undefined, undefined, spots.length]} raycast={() => null}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#ffffff" metalness={0.35} roughness={0.4} />
+      </instancedMesh>
+      {landmarks.map((l) => {
+        const b = (l.bearing * Math.PI) / 180;
+        return <group key={l.name} position={[Math.sin(b) * l.dist, 0, -Math.cos(b) * l.dist]}><LandmarkModel shape={l.shape} height={l.height} /></group>;
+      })}
+    </group>
+  );
+}
+
+/** A glass lift cabin (or an observation-wheel capsule). */
+export function GlassLift({ capsule = false }: { capsule?: boolean }) {
+  return capsule ? (
+    <group>
+      <mesh position={[0, 1.2, 0]} scale={[1, 0.75, 1]}><sphereGeometry args={[1.5, 24, 16]} /><meshStandardMaterial color="#bae6fd" transparent opacity={0.28} roughness={0.05} side={THREE.DoubleSide} depthWrite={false} /></mesh>
+      <mesh position={[0, 0.03, 0]}><cylinderGeometry args={[1.35, 1.35, 0.06, 24]} /><meshStandardMaterial color="#e2e8f0" /></mesh>
+    </group>
+  ) : (
+    <group>
+      <mesh position={[0, 1.25, 0]}><boxGeometry args={[1.5, 2.5, 1.5]} /><meshStandardMaterial color="#bae6fd" transparent opacity={0.22} roughness={0.05} side={THREE.DoubleSide} depthWrite={false} /></mesh>
+      <mesh position={[0, 0.03, 0]}><boxGeometry args={[1.5, 0.06, 1.5]} /><meshStandardMaterial color="#cbd5e1" metalness={0.7} /></mesh>
+      <mesh position={[0, 2.52, 0]}><boxGeometry args={[1.55, 0.06, 1.55]} /><meshStandardMaterial color="#cbd5e1" metalness={0.7} /></mesh>
+    </group>
+  );
+}
+
+/** The Dubai Frame's glass bridge: a walkway with a see-through floor and rails (runs along -x). */
+export function GlassBridge({ length, cracks = 0 }: { length: number; cracks?: number }) {
+  return (
+    <group>
+      <mesh position={[-length / 2, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[length, 2.2]} /><meshStandardMaterial color="#e0f2fe" transparent opacity={cracks ? 0.55 : 0.18} roughness={0.05} side={THREE.DoubleSide} depthWrite={false} /></mesh>
+      {[-1.1, 1.1].map((z) => <mesh key={z} position={[-length / 2, 1, z]}><boxGeometry args={[length, 0.05, 0.05]} /><meshStandardMaterial color={LANDMARK_GOLD} metalness={1} /></mesh>)}
+      {[-1.1, 1.1].map((z) => <mesh key={`g${z}`} position={[-length / 2, 0.5, z]}><planeGeometry args={[length, 1]} /><meshStandardMaterial color="#bae6fd" transparent opacity={0.15} side={THREE.DoubleSide} depthWrite={false} /></mesh>)}
+    </group>
+  );
+}
+
+/** A glass crack under the feet (the bridge's cracking effect). */
+export function GlassCrack() {
+  const geo = useMemo(() => {
+    const pts: THREE.Vector3[] = [];
+    for (let i = 0; i < 9; i++) {
+      const a = (i / 9) * Math.PI * 2 + hash(i, 21);
+      let x = 0, z = 0;
+      for (let k = 0; k < 4; k++) {
+        pts.push(new THREE.Vector3(x, 0, z));
+        x += Math.cos(a + (hash(i, k) - 0.5) * 0.8) * 0.18; z += Math.sin(a + (hash(i, k + 5) - 0.5) * 0.8) * 0.18;
+        pts.push(new THREE.Vector3(x, 0, z));
+      }
+    }
+    return new THREE.BufferGeometry().setFromPoints(pts);
+  }, []);
+  return <lineSegments geometry={geo} position={[0, 0.02, 0]}><lineBasicMaterial color="#ffffff" /></lineSegments>;
+}
+
+/** An aquarium tunnel: an acrylic arch through a big tank, fish schools, and the star creature. */
+export function AquariumTunnel({ length, target }: { length: number; target: "shark" | "manta" }) {
+  const fish = useRef<THREE.Group>(null);
+  const star = useRef<THREE.Group>(null);
+  useFrame((s) => {
+    const t = s.clock.elapsedTime;
+    fish.current?.children.forEach((c, i) => {
+      const a = t * (0.3 + hash(i, 31) * 0.3) + i;
+      c.position.set(Math.sin(a) * (2.6 + hash(i, 32) * 2), 1 + hash(i, 33) * 4, ((hash(i, 34) - 0.5) * length) + Math.cos(a) * 2);
+      c.rotation.y = a + Math.PI / 2;
+    });
+    if (star.current) {
+      // Nose first along its loop (the models' noses point -x); a manta's wings flap.
+      star.current.position.copy(tunnelCreatureAt(t, length));
+      const a = t * 0.32, vx = Math.cos(a) * 2.2, vz = -Math.sin(a) * (length / 2 - 1.5);
+      star.current.rotation.set(0, Math.atan2(vz, -vx), target === "manta" ? Math.sin(t * 2) * 0.2 : 0);
+    }
+  });
+  return (
+    <group>
+      {/* the tank, lit blue, seen from inside */}
+      <mesh position={[0, 3.5, 0]}><boxGeometry args={[11, 7, length + 2]} /><meshStandardMaterial color="#0c4a6e" side={THREE.BackSide} emissive="#075985" emissiveIntensity={0.5} /></mesh>
+      <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[11, length + 2]} /><meshStandardMaterial color="#c2b280" /></mesh>
+      {/* the acrylic arch and its walkway */}
+      <mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[1.7, 1.7, length, 32, 1, true, -Math.PI / 2, Math.PI]} /><meshStandardMaterial color="#e0f2fe" transparent opacity={0.12} side={THREE.DoubleSide} depthWrite={false} /></mesh>
+      <mesh position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[1.8, length]} /><meshStandardMaterial color="#334155" /></mesh>
+      <group ref={fish}>
+        {Array.from({ length: 30 }, (_, i) => (
+          <mesh key={i} rotation={[0, 0, Math.PI / 2]}><coneGeometry args={[0.08, 0.32, 6]} /><meshStandardMaterial color={["#fbbf24", "#f97316", "#38bdf8", "#e2e8f0"][i % 4]} /></mesh>
+        ))}
+      </group>
+      <group ref={star}>
+        {target === "shark" ? (
+          <group>
+            <mesh rotation={[0, 0, Math.PI / 2]} scale={[1, 1, 0.7]}><coneGeometry args={[0.32, 2.3, 10]} /><meshStandardMaterial color="#64748b" /></mesh>
+            <mesh position={[0.1, 0.32, 0]}><coneGeometry args={[0.12, 0.45, 4]} /><meshStandardMaterial color="#475569" /></mesh>
+            <mesh position={[1.2, 0, 0]} rotation={[0, 0, -Math.PI / 2]}><coneGeometry args={[0.18, 0.55, 4]} /><meshStandardMaterial color="#475569" /></mesh>
+          </group>
+        ) : (
+          <group>
+            <mesh rotation={[-Math.PI / 2, 0, Math.PI / 4]}><planeGeometry args={[1.9, 1.9]} /><meshStandardMaterial color="#1e293b" side={THREE.DoubleSide} /></mesh>
+            <mesh position={[1.3, 0, 0]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.02, 0.02, 1.2, 4]} /><meshStandardMaterial color="#1e293b" /></mesh>
+          </group>
+        )}
+      </group>
+      <pointLight position={[0, 4, 0]} intensity={8} distance={18} color="#7dd3fc" />
+    </group>
+  );
+}
+
+/** Where the star creature is at time t (matches AquariumTunnel), relative to the tunnel's centre. */
+export function tunnelCreatureAt(t: number, length: number) {
+  const a = t * 0.32;
+  return new THREE.Vector3(Math.sin(a) * 2.2, 2.7 + Math.sin(t * 0.6) * 0.35, Math.cos(a) * (length / 2 - 1.5));
+}
+
+/** A marble plinth for a wax figure. */
+export function Plinth() {
+  return <group><Box args={[0.9, 0.35, 0.9]} position={[0, 0.175, 0]} color="#f5f5f4" /><Box args={[0.95, 0.04, 0.95]} position={[0, 0.37, 0]} color={LANDMARK_GOLD} /></group>;
+}
+
+/** The lobby's lift waiting at the ground floor (hidden while a ride is using it). */
+export function WaitingLift({ capsule = false }: { capsule?: boolean }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame(() => { if (ref.current) ref.current.visible = !LIFT_IN_USE.current; });
+  return <group ref={ref}><GlassLift capsule={capsule} /></group>;
+}
+
+/** Wax figures on their plinths (they step aside while the selfie game uses its own). */
+export function WaxGallery() {
+  const ref = useRef<THREE.Group>(null);
+  useFrame(() => { if (ref.current) ref.current.visible = !WAX_IN_USE.current; });
+  const figures = [
+    { gender: "woman" as const, preset: "Female_Adult_01", pose: "armsUp" as const },
+    { gender: "man" as const, preset: "Male_Adult_08", pose: "armsCrossed" as const },
+    { gender: "man" as const, preset: "Male_Adult_04", pose: "balance" as const },
+  ];
+  return (
+    <group ref={ref}>
+      {LOBBY.wax.map(([x, z], i) => (
+        <group key={i} position={[x, 0, z]}>
+          <Plinth />
+          <group position={[0, 0.39, 0]}><Suspense fallback={null}><CitizenAvatar look={{ gender: figures[i].gender, preset: figures[i].preset }} animation="idle" pose={figures[i].pose} /></Suspense></group>
+        </group>
+      ))}
     </group>
   );
 }

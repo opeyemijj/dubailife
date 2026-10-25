@@ -338,6 +338,407 @@
         "kind": "social",
         "amount": 30
       }
+    },
+    "dance-off": {
+      "label": "Dance-off",
+      "icon": "🕺",
+      "kind": "danceoff",
+      "track": "dancefloor",
+      "desc": "Face off on the dance floor: hit each move (← ↑ → ↓) on the beat. The crowd picks the winner.",
+      "reward": 25,
+      "need": {
+        "kind": "fun",
+        "amount": 30
+      }
+    },
+    "dj-set": {
+      "label": "Play a set on the decks",
+      "icon": "🎧",
+      "kind": "dj",
+      "track": "decks",
+      "desc": "Take over the decks: build the track up and drop it right at the peak. Nail the drops and the floor goes wild.",
+      "reward": 30,
+      "need": {
+        "kind": "social",
+        "amount": 30
+      }
+    },
+    "full-meal": {
+      "label": "Have a sit-down meal",
+      "icon": "🍽️",
+      "kind": "meal",
+      "track": "table",
+      "desc": "The host shows you to a table, you order from the menu and the waiter brings it over. Snap a food photo, then ask for the bill.",
+      "reward": 10,
+      "need": {
+        "kind": "social",
+        "amount": 15
+      }
+    },
+    "chef-show": {
+      "label": "Watch the chef's grill show",
+      "icon": "🔥",
+      "kind": "chefshow",
+      "track": "grill",
+      "desc": "Take a seat at the grill: flames, flips and a shrimp tossed your way. Catch it!",
+      "reward": 20,
+      "need": {
+        "kind": "hunger",
+        "amount": 30
+      }
+    },
+    "spa-massage": {
+      "label": "60-minute massage",
+      "icon": "💆",
+      "kind": "treatment",
+      "track": "bed1",
+      "desc": "Lie face down while the therapist works out the knots. Breathe with the circle: hold as it grows, let go as it shrinks.",
+      "price": 450,
+      "reward": 15,
+      "need": {
+        "kind": "energy",
+        "amount": 45
+      }
+    },
+    "spa-hammam": {
+      "label": "Hammam scrub",
+      "icon": "🧖",
+      "kind": "treatment",
+      "track": "bed2",
+      "desc": "The traditional steam-and-scrub ritual on a warm slab. Keep breathing slow and steady.",
+      "fact": "The hammam is a centuries-old bathing ritual across the Arab world: steam, black soap and a kessa-glove scrub.",
+      "price": 350,
+      "reward": 15,
+      "need": {
+        "kind": "hygiene",
+        "amount": 45
+      }
+    },
+    "spa-sauna": {
+      "label": "Sit in the sauna",
+      "icon": "🔥",
+      "kind": "sauna",
+      "track": "sauna",
+      "desc": "The heat builds… leave when it's just right (the green zone). Stay too long and you'll overheat!",
+      "reward": 10,
+      "need": {
+        "kind": "hygiene",
+        "amount": 25
+      }
+    },
+    "spa-plunge": {
+      "label": "Cold plunge",
+      "icon": "🧊",
+      "kind": "plunge",
+      "track": "plunge",
+      "desc": "Jump into the icy plunge pool and tap to keep breathing for 10 seconds. Brrr!",
+      "fact": "Swapping a hot sauna for a cold plunge is a classic contrast-therapy ritual.",
+      "reward": 15,
+      "need": {
+        "kind": "energy",
+        "amount": 30
+      }
+    },
+    "spa-jacuzzi": {
+      "label": "Soak in the jacuzzi",
+      "icon": "🫧",
+      "kind": "jacuzzi",
+      "track": "jacuzzi",
+      "desc": "Sink into the bubbles and let the warm water do the work. Get out whenever you like.",
+      "reward": 10,
+      "need": {
+        "kind": "energy",
+        "amount": 35
+      }
+    },
+    "spa-facemask": {
+      "label": "Face mask & cucumbers",
+      "icon": "🥒",
+      "kind": "facemask",
+      "track": "spalounger",
+      "station": "booth",
+      "desc": "Lie back on a lounger with a cooling mask and cucumber slices on your eyes. Take a selfie for your story!",
+      "price": 120,
+      "reward": 10,
+      "need": {
+        "kind": "hygiene",
+        "amount": 25
+      }
+    },
+    "at-the-top": {
+      "label": "Ride up & spot the landmarks",
+      "icon": "🔭",
+      "kind": "observe",
+      "track": "lift",
+      "desc": "Shoot up the world's fastest lifts, then find Dubai's landmarks through the telescope.",
+      "fact": "At the Top's lifts climb at about 10 m a second; the observation decks are on levels 124, 125 and 148.",
+      "floors": 148,
+      "landmarks": [
+        {
+          "name": "The Dubai Fountain",
+          "bearing": 20,
+          "dist": 70,
+          "height": 2,
+          "shape": "fountain"
+        },
+        {
+          "name": "Dubai Opera",
+          "bearing": 95,
+          "dist": 85,
+          "height": 14,
+          "shape": "dhow"
+        },
+        {
+          "name": "Museum of the Future",
+          "bearing": 200,
+          "dist": 110,
+          "height": 24,
+          "shape": "ring"
+        }
+      ],
+      "reward": 30,
+      "need": {
+        "kind": "fun",
+        "amount": 35
+      }
+    },
+    "sky-views": {
+      "label": "Ride up & spot the landmarks",
+      "icon": "🔭",
+      "kind": "observe",
+      "track": "lift",
+      "desc": "Up to the 52nd floor of Address Sky View, then spot the sights from the glass deck.",
+      "floors": 52,
+      "landmarks": [
+        {
+          "name": "Burj Khalifa",
+          "bearing": 350,
+          "dist": 60,
+          "height": 110,
+          "shape": "spire"
+        },
+        {
+          "name": "Dubai Frame",
+          "bearing": 120,
+          "dist": 110,
+          "height": 30,
+          "shape": "frame"
+        },
+        {
+          "name": "Dubai Opera",
+          "bearing": 230,
+          "dist": 80,
+          "height": 14,
+          "shape": "dhow"
+        }
+      ],
+      "reward": 25,
+      "need": {
+        "kind": "fun",
+        "amount": 30
+      }
+    },
+    "view-palm": {
+      "label": "Ride up & spot the landmarks",
+      "icon": "🔭",
+      "kind": "observe",
+      "track": "lift",
+      "desc": "Up to level 52 of The Palm Tower: the whole Palm Jumeirah laid out below.",
+      "fact": "The View at The Palm is 240 m up, with the Palm's fronds and crescent spread out below.",
+      "floors": 52,
+      "landmarks": [
+        {
+          "name": "Atlantis, The Palm",
+          "bearing": 10,
+          "dist": 120,
+          "height": 30,
+          "shape": "arch"
+        },
+        {
+          "name": "Ain Dubai",
+          "bearing": 250,
+          "dist": 130,
+          "height": 40,
+          "shape": "wheel"
+        },
+        {
+          "name": "Burj Al Arab",
+          "bearing": 160,
+          "dist": 140,
+          "height": 45,
+          "shape": "sail"
+        }
+      ],
+      "reward": 25,
+      "need": {
+        "kind": "fun",
+        "amount": 30
+      }
+    },
+    "ain-dubai": {
+      "label": "Ride a cabin & spot the landmarks",
+      "icon": "🎡",
+      "kind": "observe",
+      "track": "lift",
+      "desc": "Climb aboard a cabin of the world's biggest observation wheel and spot the sights from the top.",
+      "fact": "Ain Dubai is about 250 m tall, and one full turn takes around 38 minutes.",
+      "floors": 0,
+      "landmarks": [
+        {
+          "name": "Dubai Marina",
+          "bearing": 120,
+          "dist": 90,
+          "height": 50,
+          "shape": "spire"
+        },
+        {
+          "name": "Burj Al Arab",
+          "bearing": 40,
+          "dist": 150,
+          "height": 45,
+          "shape": "sail"
+        },
+        {
+          "name": "Palm Jumeirah",
+          "bearing": 300,
+          "dist": 120,
+          "height": 3,
+          "shape": "palm"
+        }
+      ],
+      "reward": 25,
+      "need": {
+        "kind": "fun",
+        "amount": 35
+      }
+    },
+    "frame-bridge": {
+      "label": "Walk the glass bridge",
+      "icon": "🌉",
+      "kind": "glassbridge",
+      "track": "lift",
+      "desc": "Ride up 150 m and walk the glass floor between the towers. When the glass 'cracks' under you, freeze!",
+      "fact": "The Dubai Frame's glass bridge goes cloudy and plays a cracking effect as you walk across.",
+      "floors": 48,
+      "reward": 30,
+      "need": {
+        "kind": "fun",
+        "amount": 35
+      }
+    },
+    "aquarium-shark": {
+      "label": "Walk the shark tunnel",
+      "icon": "🦈",
+      "kind": "tunnel",
+      "track": "tunnel",
+      "desc": "Walk through the acrylic tunnel and snap the sand tiger shark as it glides overhead.",
+      "fact": "Dubai Aquarium's tank holds around 10 million litres of water and hundreds of sharks and rays.",
+      "target": "shark",
+      "reward": 25,
+      "need": {
+        "kind": "fun",
+        "amount": 30
+      }
+    },
+    "lost-chambers-manta": {
+      "label": "Walk the ruins tunnel",
+      "icon": "🐟",
+      "kind": "tunnel",
+      "track": "tunnel",
+      "desc": "Through the Lost Chambers' underwater ruins: snap the giant manta as it flies past.",
+      "fact": "The Lost Chambers is home to around 65,000 marine animals.",
+      "target": "manta",
+      "reward": 25,
+      "need": {
+        "kind": "fun",
+        "amount": 30
+      }
+    },
+    "wax-selfies": {
+      "label": "Selfies with the wax figures",
+      "icon": "🤳",
+      "kind": "waxselfie",
+      "track": "wax",
+      "desc": "Strike the same pose as each wax figure before the flash goes off. (Our figures are generic lookalikes, not real people.)",
+      "reward": 20,
+      "need": {
+        "kind": "social",
+        "amount": 25
+      }
+    },
+    "vr-burj-drop": {
+      "label": "VR tower freefall",
+      "icon": "🥽",
+      "kind": "vrdrop",
+      "track": "vr",
+      "desc": "Headset on: step off the top of a supertall tower and hold Brake at the last moment to land softly.",
+      "price": 40,
+      "reward": 25,
+      "need": {
+        "kind": "fun",
+        "amount": 45
+      }
+    },
+    "style-challenge": {
+      "label": "Style challenge",
+      "icon": "👗",
+      "kind": "stylist",
+      "track": "boutique",
+      "desc": "The stylist names an occasion: pick the right outfit, change in the fitting room and walk it to the mirror. Three looks.",
+      "reward": 20,
+      "need": {
+        "kind": "fun",
+        "amount": 25
+      }
+    },
+    "trolley-dash": {
+      "label": "Trolley dash",
+      "icon": "🛒",
+      "kind": "trolley",
+      "track": "market",
+      "desc": "Memorise the shopping list and its aisles, then push your trolley to each one from memory, and scan it all at self-checkout.",
+      "reward": 15,
+      "need": {
+        "kind": "fun",
+        "amount": 20
+      }
+    },
+    "perfume-test": {
+      "label": "Find your scent",
+      "icon": "🌸",
+      "kind": "perfume",
+      "track": "beauty",
+      "desc": "Spray three testers and name each scent family from its description: oud, rose, citrus or jasmine.",
+      "fact": "Oud, from agarwood, is the signature note of Arabian perfumery.",
+      "reward": 15,
+      "need": {
+        "kind": "fun",
+        "amount": 20
+      }
+    },
+    "jewel-guess": {
+      "label": "Try it on & guess the price",
+      "icon": "💎",
+      "kind": "jewelguess",
+      "track": "jewellery",
+      "desc": "The jeweller lets you try three pieces in the mirror. Guess what each one costs!",
+      "reward": 20,
+      "need": {
+        "kind": "fun",
+        "amount": 25
+      }
+    },
+    "tech-demo": {
+      "label": "Reaction test at the demo",
+      "icon": "🎮",
+      "kind": "techdemo",
+      "track": "tech",
+      "desc": "Grab the controller at the demo station: tap the instant the screen turns green. Five rounds, average reaction time.",
+      "reward": 15,
+      "need": {
+        "kind": "fun",
+        "amount": 25
+      }
     }
   },
   "venues": {
@@ -383,6 +784,70 @@
     "bowling": [
       "bowling",
       "karaoke"
-    ]
+    ],
+    "club": [
+      "dance-off",
+      "dj-set"
+    ],
+    "dining": [
+      "full-meal"
+    ],
+    "diningGrill": [
+      "chef-show"
+    ],
+    "spa": [
+      "spa-massage",
+      "spa-hammam",
+      "spa-sauna",
+      "spa-plunge",
+      "spa-jacuzzi",
+      "spa-facemask"
+    ],
+    "attractions": {
+      "at the top": [
+        "at-the-top"
+      ],
+      "sky views": [
+        "sky-views"
+      ],
+      "view at the palm": [
+        "view-palm"
+      ],
+      "ain dubai": [
+        "ain-dubai"
+      ],
+      "dubai frame": [
+        "frame-bridge"
+      ],
+      "dubai aquarium": [
+        "aquarium-shark"
+      ],
+      "lost chambers": [
+        "lost-chambers-manta"
+      ],
+      "tussauds": [
+        "wax-selfies"
+      ],
+      "vr park": [
+        "vr-burj-drop"
+      ]
+    },
+    "shops": {
+      "boutique": [
+        "style-challenge"
+      ],
+      "market": [
+        "trolley-dash"
+      ],
+      "beauty": [
+        "perfume-test"
+      ],
+      "jewellery": [
+        "jewel-guess"
+      ],
+      "tech": [
+        "tech-demo"
+      ]
+    }
   }
 }

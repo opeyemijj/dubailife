@@ -8,8 +8,8 @@ import type { ReactNode } from "react";
 import type { Product, StationKind, Venue } from "@/lib/city/types";
 import type { FloorKind } from "./materials";
 import { signTexture } from "./materials";
-import { BowlingLanes, BuoyLine, DiscoLights, EntranceArch, FlowRider, JetSki, KaraokeStage, OpenSea, SharkLagoon, SlideMountain, Slides, ThatchRoof, VolleyballNet, WavePool } from "./scenery";
-import { BEACH, BOWLING, dubaiEvening, RINK, isKidsPool, isSkyPool, poolDeckPool, SPLASH_POOLS, WATERPARK } from "./rides/paths";
+import { BowlingLanes, BuoyLine, GrillCounter, Jacuzzi, SaunaCabin, Steam, WaitingLift, WaxGallery, DiscoLights, EntranceArch, FlowRider, JetSki, KaraokeStage, OpenSea, SharkLagoon, SlideMountain, Slides, ThatchRoof, VolleyballNet, WavePool } from "./scenery";
+import { BEACH, BOWLING, CLUB, DINING, LOBBY, SHOPS, SPA, dubaiEvening, hasChefGrill, RINK, isKidsPool, isSkyPool, poolDeckPool, SPLASH_POOLS, WATERPARK } from "./rides/paths";
 import { hasVolleyball, parkOf, RIDES } from "@/lib/city/rides";
 import { Cabana, CinemaScreen, DockWithAbra, FoodTruck, IceRink, Kites, LazyRiver, LifeguardTower, Lounger, LoungerSet, Mihrab, Pool, RingChandelier, Candle, Sea, Seating, SignPost, SlideTower, TreatmentBed, } from "./scenery";
 import {
@@ -175,6 +175,7 @@ export function buildPlan(venue: Venue): Plan {
         { kind: "fitting", position: [5.9, 2.6], rotation: -Math.PI / 2, visual: () => <FittingRoom accent={accent} /> },
         { kind: "till", position: [-3.2, -3.9], visual: () => <Till color={luxury ? "#efe6d8" : accent} /> },
         { kind: "service", position: [4.6, 1.2], rotation: -Math.PI / 2, visual: () => <DisplayTable colors={colors} seed={11} /> },
+        { kind: "exhibit", position: [SHOPS.boutique.runway[0] - 1.4, SHOPS.boutique.runway[1] + 0.6], label: "👗 Style challenge", rides: ["style-challenge"], visual: () => null },
       ], <>
         <group position={[-1.2, 0, D / 2 - 2]}><Mannequin garment={colors[0]} /></group>
         <group position={[1.2, 0, D / 2 - 2]}><Mannequin garment={colors[5]} /></group>
@@ -193,6 +194,7 @@ export function buildPlan(venue: Venue): Plan {
         { kind: "case", position: [-5.2, 2.6], rotation: Math.PI / 2, visual: () => <GlassCase base="#e7e5e4" velvet="#111827" /> },
         { kind: "service", position: [4.4, -3.4], visual: () => <Reception accent={accent} /> },
         { kind: "till", position: [-4.4, -3.6], visual: () => <Till color="#e7e5e4" /> },
+        { kind: "exhibit", position: [SHOPS.tech.table[0] + 1.6, SHOPS.tech.table[1] + 1.3], label: "🎮 Reaction test", rides: ["tech-demo"], visual: () => null },
       ], <>
         <group position={[-6.3, 0, 4.2]}><Plant /></group><group position={[6.3, 0, 4.2]}><Plant /></group>
       </>);
@@ -211,6 +213,7 @@ export function buildPlan(venue: Venue): Plan {
         { kind: "table", position: [0, 2.6], visual: (i) => <DisplayTable colors={bottles} seed={i + 2} top="#fafafa" /> },
         { kind: "service", position: [4.4, 2.4], rotation: -Math.PI / 2, visual: () => <><Model url={PROP("bar-stool")} size={[0.5, 0.5]} height={0.8} /><mesh position={[0, 1.4, -0.5]}><planeGeometry args={[0.7, 0.9]} /><meshStandardMaterial color="#fff" metalness={1} roughness={0.05} /></mesh></> },
         { kind: "till", position: [1.6, -3.9], visual: () => <Till color={accent === "#111111" ? "#111111" : "#5a3e2b"} /> },
+        { kind: "exhibit", position: [SHOPS.beauty.counter[0] - 1.3, SHOPS.beauty.counter[1] + 1.4], label: "🌸 Find your scent", rides: ["perfume-test"], visual: () => null },
       ], <><group position={[-5.4, 0, -3.8]}><Plant /></group></>);
     }
 
@@ -223,6 +226,7 @@ export function buildPlan(venue: Venue): Plan {
         { kind: "case", position: [3.2, 1.4], rotation: -Math.PI / 2, visual: (i) => <GlassCase seed={i + 9} /> },
         { kind: "service", position: [0, -3.2], visual: () => <><GlassCase velvet="#7f1d1d" /><group position={[0, 0, 1]}><Model url={PROP("bar-stool")} size={[0.45, 0.45]} height={0.75} /></group></> },
         { kind: "till", position: [-3.8, -3.9], visual: () => <Till color="#2a2420" /> },
+        { kind: "exhibit", position: [SHOPS.jewellery.counter[0] + 1.5, SHOPS.jewellery.counter[1] + 1.5], label: "💎 Try on & guess", rides: ["jewel-guess"], visual: () => null },
       ], <><group position={[5.2, 0, -3.9]}><Plant /></group><group position={[0, 0, 2.5]}><Booth tint="#d4af37" /></group></>);
     }
 
@@ -239,6 +243,7 @@ export function buildPlan(venue: Venue): Plan {
         { kind: "table", position: [0, 1.4], visual: (i) => grocery ? <ProduceTable seed={i} /> : <DisplayTable colors={colors} seed={i} /> },
         { kind: "service", position: [-6.6, 4.4], rotation: Math.PI / 2, visual: () => <Reception accent={accent} /> },
         { kind: "till", position: [5.4, 4.6], rotation: Math.PI, visual: () => <Till color={accent} /> },
+        { kind: "exhibit", position: [SHOPS.market.start[0] - 1.4, SHOPS.market.start[1]], label: "🛒 Trolley dash", rides: ["trolley-dash"], visual: () => null },
       ], <><group position={[-7.2, 0, -5.6]}><Plant /></group></>);
     }
 
@@ -250,11 +255,15 @@ export function buildPlan(venue: Venue): Plan {
         { kind: "menu", position: [0, -4.1], visual: () => <MenuCounter title={venue.name} items={menu} color={cloth} /> },
         { kind: "counter", position: [2.6, -4.1], visual: () => <PastryCase /> },
         { kind: "bar", position: [-4.6, -3.0], rotation: Math.PI / 2, visual: () => <Bar glow={venue.palette.light ?? "#f59e0b"} width={3} /> },
-        { kind: "reception", position: [4.8, 3.9], rotation: Math.PI, visual: () => <Till color={cloth} /> },
-        ...([[-2.6, 0.2], [0.4, 0.2], [3.4, 0.2], [-2.6, 2.6], [0.4, 2.6]] as Array<[number, number]>).map(([x, z]) => ({
-          kind: "booth" as StationKind, position: [x, z] as [number, number], rotation: Math.PI / 2, visual: () => <DiningSet cloth="#f5f5f4" />,
+        { kind: "reception", position: DINING.reception, rotation: Math.PI, visual: () => <Till color={cloth} /> },
+        ...DINING.tables.map(([x, z]) => ({
+          kind: "booth" as StationKind, position: [x, z] as [number, number], rotation: DINING.tableTurn, visual: () => <DiningSet cloth="#f5f5f4" />,
         })),
+        // Played in 3D (rides/): a full sit-down meal from the host's desk, and the chef's grill show.
+        { kind: "exhibit", position: [DINING.reception[0] - 1.7, DINING.reception[1] + 0.5], label: "🍽️ Get a table", rides: ["full-meal"], visual: () => null },
+        { kind: "exhibit", position: [DINING.grill[0], DINING.grill[1] + 1.5], label: "🔥 Chef's grill", rides: ["chef-show"], visual: () => null },
       ], <>
+        {hasChefGrill(venue) && <group position={[DINING.grill[0], 0, DINING.grill[1]]}><GrillCounter /></group>}
         <group position={[5.7, 0, -4.4]}><Plant /></group><group position={[-5.7, 0, 4.1]}><Plant /></group>
         {/* Restaurants known for their view: the aquarium (Ossiano, Al Mahara) or the sea and skyline. */}
         {venue.feature === "aquarium" && <group position={[0, 0, -D / 2 + 0.06]}><AquariumWall width={Wd - 0.4} /></group>}
@@ -381,19 +390,27 @@ export function buildPlan(venue: Venue): Plan {
     }
 
     case "spa": {
-      // Treatment rooms, a plunge pool and relaxation loungers in candlelight.
+      // Treatment rooms, a plunge pool, a sauna, a jacuzzi and relaxation loungers in candlelight. The
+      // treatments are acted out in 3D (rides/); where everything is lives in rides/paths.ts (SPA).
       const D = 12, Wd = 14;
+      const { beds, plunge, sauna, jacuzzi, loungers } = SPA;
       return plan(venue, [Wd, D], "wood", [
         { kind: "reception", position: [-4.4, -3.6], visual: () => <Reception accent={accent} /> },
-        { kind: "service", position: [4.2, -2.6], rotation: -Math.PI / 2, label: "Treatment room", visual: () => <TreatmentBed /> },
+        { kind: "service", position: beds[0], rotation: -Math.PI / 2, label: "Treatment room", visual: () => <TreatmentBed /> },
         { kind: "bar", position: [-5.6, 2.4], rotation: Math.PI / 2, label: "Tea lounge", visual: () => <Bar glow="#f59e0b" width={2.6} /> },
-        ...([[-1.6, 3.2], [1.6, 3.2]] as Array<[number, number]>).map(([x, z]) => ({
-          kind: "booth" as StationKind, position: [x, z] as [number, number], rotation: Math.PI, visual: () => <Lounger towel="#e7d3a8" />,
+        ...loungers.map(([x, z]) => ({
+          kind: "booth" as StationKind, position: [x, z] as [number, number], rotation: Math.PI, rides: ["spa-facemask"], visual: () => <Lounger towel="#e7d3a8" />,
         })),
+        { kind: "exhibit", position: [beds[1][0] - 1.6, beds[1][1] + 0.9], label: "💆 Treatments", rides: ["spa-massage", "spa-hammam"], visual: () => null },
+        { kind: "exhibit", position: [sauna.at[0] + 0.3, sauna.at[1] + sauna.d / 2 + 0.7], label: "🔥 Sauna", rides: ["spa-sauna"], visual: () => null },
+        { kind: "exhibit", position: [plunge.at[0] + 1.3, plunge.at[1] + plunge.d / 2 + 0.7], label: "🧊 Cold plunge", rides: ["spa-plunge"], visual: () => null },
+        { kind: "exhibit", position: [jacuzzi.at[0] - 1.4, jacuzzi.at[1] + 0.6], label: "🫧 Jacuzzi", rides: ["spa-jacuzzi"], visual: () => null },
       ], <>
-        <group position={[4.2, 0, 1]} rotation={[0, -Math.PI / 2, 0]}><TreatmentBed /></group>
-        <group position={[-0.6, 0, -2.4]}><Water w={4.2} d={2.2} /></group>
-        {([[-6.2, -5], [6.2, -5], [-2.2, -0.6], [1.2, -0.6], [6.2, 4.6]] as Array<[number, number]>).map(([x, z], i) => <Candle key={i} position={[x, 0, z]} />)}
+        <group position={[beds[1][0], 0, beds[1][1]]} rotation={[0, -Math.PI / 2, 0]}><TreatmentBed /></group>
+        <group position={[plunge.at[0], 0, plunge.at[1]]}><Water w={plunge.w} d={plunge.d} /></group>
+        <group position={[sauna.at[0], 0, sauna.at[1]]}><SaunaCabin w={sauna.w} d={sauna.d} /></group>
+        <group position={[jacuzzi.at[0], 0, jacuzzi.at[1]]}><Jacuzzi r={jacuzzi.r} /><group position={[0, 0.5, 0]}><Steam w={1.2} d={1.2} rate={0.6} /></group></group>
+        {([[-6.2, -5], [6.2, -5], [-2.2, 0.2], [6.2, 4.6]] as Array<[number, number]>).map(([x, z], i) => <Candle key={i} position={[x, 0, z]} />)}
         {([[-6.4, -5.2], [6.4, 5.2]] as Array<[number, number]>).map(([x, z], i) => <group key={i} position={[x, 0, z]}><Plant /></group>)}
         <pointLight position={[0, 2.6, 0]} intensity={4} distance={10} color="#fcd9a8" />
       </>);
@@ -489,8 +506,11 @@ export function buildPlan(venue: Venue): Plan {
       const glow = light ?? accent;
       const colors = [accent, glow, "#22d3ee", "#facc15"];
       return plan(venue, [Wd, D], "concrete", [
-        { kind: "dj", position: [0, -5.0], visual: () => <DJBooth glow={glow} /> },
-        { kind: "dancefloor", position: [0, -0.6], visual: () => <DanceFloor colors={colors} size={5} /> },
+        { kind: "dj", position: CLUB.dj, visual: () => <DJBooth glow={glow} /> },
+        { kind: "dancefloor", position: CLUB.floor.at, visual: () => <DanceFloor colors={colors} size={CLUB.floor.size} /> },
+        // Played in 3D (rides/): a dance-off on the floor, and a set on the decks.
+        { kind: "exhibit", position: [CLUB.floor.at[0] - 1.6, CLUB.floor.at[1] + CLUB.floor.size / 2 + 1.1], label: "🕺 Dance-off", rides: ["dance-off"], visual: () => null },
+        { kind: "exhibit", position: [CLUB.dj[0] + 2.3, CLUB.dj[1] + 0.9], label: "🎧 Play a set", rides: ["dj-set"], visual: () => null },
         { kind: "bar", position: [-6.3, -0.6], rotation: Math.PI / 2, visual: () => <Bar glow={glow} width={4} /> },
         // VIP booths along both side walls and the back corners, all with a view of the dance floor.
         ...([
@@ -542,8 +562,17 @@ export function buildPlan(venue: Venue): Plan {
         { kind: "bar", position: [6.6, 1.2], rotation: -Math.PI / 2, visual: () => <Bar glow={accent} width={3.2} /> },
         { kind: "service", position: [-6.4, 1.2], rotation: Math.PI / 2, visual: () => <Reception accent={accent} /> },
         { kind: "booth", position: [-2.8, 3.4], rotation: Math.PI, visual: () => <Booth tint="#e7dfd3" /> },
+        // Attractions played in 3D (rides/): only the ones this venue offers appear.
+        { kind: "exhibit", position: [LOBBY.lift[0] + 1.7, LOBBY.lift[1] + 1.5], label: "🛗 Up to the deck", rides: ["at-the-top", "sky-views", "view-palm", "ain-dubai", "frame-bridge"], visual: () => null },
+        { kind: "exhibit", position: [LOBBY.tunnel.door[0] + 1.4, LOBBY.tunnel.door[1] + 1.2], label: "🌊 Underwater tunnel", rides: ["aquarium-shark", "lost-chambers-manta"], visual: () => null },
+        { kind: "exhibit", position: [LOBBY.wax[0][0] + 1.4, LOBBY.wax[0][1] + 1.5], label: "🤳 Wax figure selfies", rides: ["wax-selfies"], visual: () => null },
+        { kind: "exhibit", position: [LOBBY.vrSpot[0] + 1.1, LOBBY.vrSpot[1] - 0.8], label: "🥽 VR freefall", rides: ["vr-burj-drop"], visual: () => null },
       ], <>
         {features}
+        {(venue.activities ?? []).some((a) => /^(at-the-top|sky-views|view-palm|ain-dubai|frame-bridge)$/.test(a.ride ?? "")) && (
+          <group position={[LOBBY.lift[0], 0, LOBBY.lift[1]]}><WaitingLift capsule={/ain dubai/i.test(venue.name)} /></group>
+        )}
+        {(venue.activities ?? []).some((a) => a.ride === "wax-selfies") && <WaxGallery />}
         {f === "exhibits" && ([-3.5, 3.5] as number[]).map((x, i) => <group key={x} position={[x, 0, 0.6]}><Exhibit color={exhibitColors[(i + 1) % 3]} shape={i + 1} /></group>)}
         <group position={[2.8, 0, 3.4]} rotation={[0, Math.PI, 0]}><Booth tint="#e7dfd3" /></group>
         {([[-7.2, -5.6], [7.2, -5.6], [-7.2, 5.4], [7.2, 5.4]] as Array<[number, number]>).map(([x, z], i) => <group key={i} position={[x, 0, z]}><Plant /></group>)}

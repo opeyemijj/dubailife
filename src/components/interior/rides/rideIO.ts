@@ -13,7 +13,18 @@ export interface RideInput {
   tricks: number;
   /** Leave the ride now (rivers, floats, wave pool). */
   exit: boolean;
+  /** Dance-off moves pressed (a count) and the last one's direction. */
+  moves: number;
+  moveDir: Arrow | "";
+  /** Meal: the dishes ordered (product ids), once ordered. */
+  order: string[] | null;
+  /** Meal: food photos taken, and whether to leave a tip. */
+  photos: number;
+  tip: boolean;
+  /** Wax figures: the pose picked (index into tele.options), -1 for none yet. */
+  choice: number;
 }
+export type Arrow = "left" | "up" | "right" | "down";
 
 export interface RideTelemetry {
   /** What's happening, for the HUD: climbing, ready, riding, splash, swimming, done… */
@@ -47,6 +58,17 @@ export interface RideTelemetry {
   /** Karaoke: when the first beat lands (performance.now()) and the gap between beats (ms). */
   beatStart: number;
   beatGap: number;
+  /** Dance-off: the move to hit on the next beat. */
+  arrow: Arrow | "";
+  /** Extra controls the HUD shows: the menu, the photo button, the bill. */
+  panel: "" | "menu" | "photo" | "bill";
+  /** Meal: the bill so far (AED). */
+  bill: number;
+  /** Spa breathing guide: 0 (out) to 1 (in), -1 hidden. */
+  breath: number;
+  /** Choices to pick from (wax-figure poses), and a fade to black (performance.now() it started, 0 none). */
+  options: string[];
+  fadeAt: number;
 }
 
 export interface RideResult {
@@ -59,21 +81,25 @@ export interface RideResult {
   best?: { value: number; label: string; lowerIsBetter?: boolean };
   /** Won a race, or similar. */
   headline?: string;
+  /** What the venue charges at the end (the meal's bill, tip included). */
+  charge?: number;
+  /** The dishes eaten (product ids): they feed the citizen's needs. */
+  ate?: string[];
   /** Something the ride leaves behind in the venue for the rest of the visit (a sandcastle). */
   keep?: { castle?: { at: [number, number]; stage: number } };
 }
 
 export const rideIO: { input: RideInput; tele: RideTelemetry } = {
-  input: { down: false, taps: 0, steer: 0, tricks: 0, exit: false },
+  input: { down: false, taps: 0, steer: 0, tricks: 0, exit: false, moves: 0, moveDir: "", order: null, photos: 0, tip: false, choice: -1 },
   tele: freshTelemetry(),
 };
 
 function freshTelemetry(): RideTelemetry {
-  return { phase: "", prompt: "", holdButton: false, countdown: 0, speedKmh: 0, topKmh: 0, time: 0, progress: 0, score: 0, balance: 0, bpm: 0, count: 0, flash: "", flashAt: 0, meter: 0, meterLabel: "", beatStart: 0, beatGap: 0 };
+  return { phase: "", prompt: "", holdButton: false, countdown: 0, speedKmh: 0, topKmh: 0, time: 0, progress: 0, score: 0, balance: 0, bpm: 0, count: 0, flash: "", flashAt: 0, meter: 0, meterLabel: "", beatStart: 0, beatGap: 0, arrow: "", panel: "", bill: 0, breath: -1, options: [], fadeAt: 0 };
 }
 
 export function resetRideIO() {
-  rideIO.input = { down: false, taps: 0, steer: 0, tricks: 0, exit: false };
+  rideIO.input = { down: false, taps: 0, steer: 0, tricks: 0, exit: false, moves: 0, moveDir: "", order: null, photos: 0, tip: false, choice: -1 };
   rideIO.tele = freshTelemetry();
 }
 
