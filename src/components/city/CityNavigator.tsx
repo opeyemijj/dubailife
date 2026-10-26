@@ -441,7 +441,14 @@ function Journey({ destination, playerPos, travelling, onGo, gold, onGold }: {
               </div>
             </>
           ) : (
-            plan && <p className="text-[11px] text-slate-400 px-1">🚇 Both places are nearest {plan.from.en} station, so the metro doesn&apos;t help: walk or take a taxi.</p>
+            // Always listed: greyed out with the reason when it can't help on this trip.
+            <Option
+              icon={<TrainFront className="w-5 h-5" />}
+              title="Nearest metro + walk"
+              note={plan ? `Not for this trip: both places are nearest ${plan.from.en} station` : "No metro station nearby"}
+              onClick={() => {}}
+              disabled
+            />
           )}
         </>
       )}
