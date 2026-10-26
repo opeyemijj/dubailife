@@ -421,20 +421,22 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
                 <path id="metro-path" d="M -3000 1024 L 6600 864" fill="none" stroke="transparent" />
                 <path id="metro-path-rev" d="M 6600 860 L -3000 1020" fill="none" stroke="transparent" />
 
-                {/* Animated Dubai Metro Trains (Forward and Reverse tracks) */}
+                {/* Animated Dubai Metro Trains (Forward and Reverse tracks): silver with the blue band and tinted windows */}
                 <g>
                   <animateMotion dur="36s" repeatCount="indefinite" rotate="auto">
                     <mpath href="#metro-path" />
                   </animateMotion>
-                  <rect x="-40" y="-3.5" width="80" height="7" rx="3.5" fill="#38bdf8" stroke="#0284c7" strokeWidth="0.5" />
-                  <rect x="-30" y="-1.5" width="60" height="3" rx="1" fill="#f8fafc" opacity="0.85" />
+                  <rect x="-40" y="-3.5" width="80" height="7" rx="3.5" fill="#c9ced4" stroke="#8a929c" strokeWidth="0.5" />
+                  <rect x="-36" y="-3.5" width="72" height="1.6" fill="#0a5ea8" />
+                  <rect x="-30" y="-0.8" width="60" height="2.6" rx="1" fill="#16202c" opacity="0.9" />
                 </g>
                 <g>
                   <animateMotion dur="34s" repeatCount="indefinite" rotate="auto">
                     <mpath href="#metro-path-rev" />
                   </animateMotion>
-                  <rect x="-40" y="-3.5" width="80" height="7" rx="3.5" fill="#38bdf8" stroke="#0284c7" strokeWidth="0.5" />
-                  <rect x="-30" y="-1.5" width="60" height="3" rx="1" fill="#f8fafc" opacity="0.85" />
+                  <rect x="-40" y="-3.5" width="80" height="7" rx="3.5" fill="#c9ced4" stroke="#8a929c" strokeWidth="0.5" />
+                  <rect x="-36" y="-3.5" width="72" height="1.6" fill="#0a5ea8" />
+                  <rect x="-30" y="-0.8" width="60" height="2.6" rx="1" fill="#16202c" opacity="0.9" />
                 </g>
 
 

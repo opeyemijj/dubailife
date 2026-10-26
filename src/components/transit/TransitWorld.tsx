@@ -303,6 +303,11 @@ export function Viaduct({ travel }: { travel: Travel }) {
 }
 
 /** One metro car body (length along z), with sliding doors on the right (+x) side that open by `open`. */
+/** The Dubai Metro livery: a silver body with a blue band (the Red Line's red is only on signs and maps). */
+const METRO_SILVER = "#c9ced4";
+const METRO_BLUE = "#0a5ea8";
+const METRO_GLASS = "#16202c";
+
 function MetroCar({ front = false, gold = false, open }: { front?: boolean; gold?: boolean; open: React.RefObject<number> }) {
   const doors = useRef<THREE.Group>(null);
   useFrame(() => {
@@ -312,15 +317,16 @@ function MetroCar({ front = false, gold = false, open }: { front?: boolean; gold
   const L = 16.5;
   return (
     <group>
-      <mesh position={[0, 2.0, 0]}><boxGeometry args={[2.9, 3.0, L]} /><meshStandardMaterial color="#e5e7eb" metalness={0.5} roughness={0.3} /></mesh>
-      {/* the dark window band and the stripe (gold for Gold Class) */}
-      {[-1, 1].map((k) => <mesh key={k} position={[k * 1.46, 2.45, 0]}><boxGeometry args={[0.02, 1.0, L - 1]} /><meshStandardMaterial color="#1f2a44" metalness={0.6} roughness={0.15} /></mesh>)}
-      {[-1, 1].map((k) => <mesh key={`s${k}`} position={[k * 1.461, 1.6, 0]}><boxGeometry args={[0.02, 0.18, L - 1]} /><meshStandardMaterial color={gold ? "#d4a017" : "#b91c1c"} metalness={0.4} /></mesh>)}
+      <mesh position={[0, 2.0, 0]}><boxGeometry args={[2.9, 3.0, L]} /><meshStandardMaterial color={METRO_SILVER} metalness={0.75} roughness={0.28} /></mesh>
+      {/* the tinted window band, the blue band beneath it, and a thin gold line on the Gold Class car */}
+      {[-1, 1].map((k) => <mesh key={k} position={[k * 1.46, 2.45, 0]}><boxGeometry args={[0.02, 1.0, L - 1]} /><meshStandardMaterial color={METRO_GLASS} metalness={0.6} roughness={0.12} /></mesh>)}
+      {[-1, 1].map((k) => <mesh key={`s${k}`} position={[k * 1.461, 1.72, 0]}><boxGeometry args={[0.02, 0.32, L - 1]} /><meshStandardMaterial color={METRO_BLUE} metalness={0.35} roughness={0.35} /></mesh>)}
+      {gold && [-1, 1].map((k) => <mesh key={`g${k}`} position={[k * 1.462, 1.53, 0]}><boxGeometry args={[0.02, 0.05, L - 1]} /><meshStandardMaterial color="#c9a227" metalness={0.8} roughness={0.25} /></mesh>)}
       {front && (
         <group position={[0, 2.0, -L / 2]}>
-          <mesh position={[0, 0, -0.9]} scale={[1, 1, 0.8]}><sphereGeometry args={[1.45, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color="#e5e7eb" metalness={0.5} roughness={0.3} /></mesh>
-          <mesh position={[0, 0.45, -1.55]} rotation={[0.5, 0, 0]}><planeGeometry args={[2.2, 1.0]} /><meshStandardMaterial color="#0f172a" metalness={0.7} roughness={0.1} /></mesh>
-          <mesh position={[0, -0.9, -1.25]}><boxGeometry args={[2.6, 0.2, 0.4]} /><meshStandardMaterial color="#b91c1c" /></mesh>
+          <mesh position={[0, 0, -0.9]} scale={[1, 1, 0.8]}><sphereGeometry args={[1.45, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color={METRO_SILVER} metalness={0.75} roughness={0.28} /></mesh>
+          <mesh position={[0, 0.45, -1.55]} rotation={[0.5, 0, 0]}><planeGeometry args={[2.2, 1.0]} /><meshStandardMaterial color={METRO_GLASS} metalness={0.7} roughness={0.1} /></mesh>
+          <mesh position={[0, -0.6, -1.3]}><boxGeometry args={[2.6, 0.32, 0.4]} /><meshStandardMaterial color={METRO_BLUE} metalness={0.35} roughness={0.35} /></mesh>
         </group>
       )}
       {/* two pairs of doors on the platform side */}
