@@ -6,7 +6,7 @@
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Building2, Car, DoorOpen, Footprints, Home, KeyRound, Loader2, Search, X, Zap } from "lucide-react";
+import { ArrowLeft, Building2, Car, DoorOpen, Footprints, Home, KeyRound, Loader2, Search, TrainFront, X, Zap } from "lucide-react";
 import type { Place, Venue } from "@/lib/city/types";
 import { distanceMetres, entranceOf } from "@/lib/city/geo";
 import { buyFlat, flatRoute, flatTitle, listFlats, rentFlat, type FlatView } from "@/lib/city/flats";
@@ -14,9 +14,10 @@ import { adjustBalance, refreshCitizen, updateCitizen, useCitizen } from "@/lib/
 import { gameAudio } from "@/utils/gameAudio";
 import { VenueDressCodeModal } from "./VenueDressCodeModal";
 import { TaxiJourney } from "@/components/transit/TaxiJourney";
-import { taxiQuote } from "@/lib/transit";
+import { MetroJourney } from "@/components/transit/MetroJourney";
+import { instantFare, metroPlan, stationPoint, taxiQuote } from "@/lib/transit";
 
-export type TravelMode = "walk" | "taxi" | "direct";
+export type TravelMode = "walk" | "taxi" | "metro" | "direct";
 
 export interface Destination {
   place: Place;
@@ -51,6 +52,8 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
   const [travelling, setTravelling] = useState<TravelMode | null>(null);
   // A taxi ride is played out in 3D (TaxiJourney), then the citizen is moved there.
   const [taxi, setTaxi] = useState<{ to: { x: number; y: number }; metres: number } | null>(null);
+  // A metro trip: walk to the station, ride (MetroJourney), walk on to the place.
+  const [metro, setMetro] = useState<{ plan: NonNullable<ReturnType<typeof metroPlan>>; to: { x: number; y: number }; gold: boolean } | null>(null);
   const { citizen } = useCitizen();
   const [dressCodeVenue, setDressCodeVenue] = useState<Venue | null>(null);
 
@@ -59,6 +62,19 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
     const to = entranceOf(place.id) ?? playerPos;
     const metres = distanceMetres(playerPos, to);
     if (mode === "taxi") { gameAudio.playClickSound(); setTaxi({ to, metres }); return; }
+    if (mode === "metro") {
+      const plan = metroPlan(playerPos, to);
+      if (!plan || plan.sameStation) return;
+      gameAudio.playClickSound();
+      // Walk to the station first (shown on the map), then the ride itself.
+      setTravelling("walk");
+      await onTravel(stationPoint(plan.from), "walk", Math.min(6000, Math.max(1500, plan.walkTo * 6)));
+      setTravelling(null);
+      setMetro({ plan, to, gold: metroGold });
+      return;
+    }
+    // Skipping the trip costs a premium; only walking is free.
+    if (mode === "direct" && !adjustBalance(-instantFare(metres))) return;
     gameAudio.playClickSound();
     setTravelling(mode);
     // Real minutes are compressed so the trip plays in a few seconds.
@@ -67,6 +83,31 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
     updateCitizen((c) => ({ ...c, location: { ...to, placeId: place.id } }));
     router.push(destination.route);
   };
+
+  const [metroGold, setMetroGold] = useState(false);
+  const arriveByMetro = async () => {
+    if (!metro || !destination) return;
+    const { plan, to } = metro;
+    setMetro(null);
+    setTravelling("walk");
+    await onTravel(stationPoint(plan.to), "direct", 0);
+    await onTravel(to, "walk", Math.min(6000, Math.max(1500, plan.walkFrom * 6)));
+    updateCitizen((c) => ({ ...c, location: { ...to, placeId: place.id } }));
+    router.push(destination.route);
+  };
+  if (metro && destination) {
+    return (
+      <MetroJourney
+        fromMap={metro.plan.from.map!}
+        toMap={metro.plan.to.map!}
+        gold={metro.gold}
+        look={citizen?.look}
+        onPay={(fare) => adjustBalance(-fare)}
+        onArrive={arriveByMetro}
+        onCancel={() => setMetro(null)}
+      />
+    );
+  }
 
   const arriveByTaxi = async () => {
     if (!taxi || !destination) return;
@@ -121,7 +162,7 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
           </div>
           <div className="overflow-y-auto p-4 space-y-2">
             {destination ? (
-              <Journey destination={destination} playerPos={playerPos} travelling={travelling} onGo={go} />
+              <Journey destination={destination} playerPos={playerPos} travelling={travelling} onGo={go} gold={metroGold} onGold={setMetroGold} />
             ) : place.kind === "residential" || place.kind === "home" ? (
               <FlatsDirectory place={place} onPick={(f) => setDestination({ place, label: flatTitle(f), route: flatRoute(f) })} />
             ) : place.venues.length === 1 ? (
@@ -348,12 +389,20 @@ function Fact({ k, v }: { k: string; v: string }) {
 
 // ---------------------------------------------------------------- journey
 
-function Journey({ destination, playerPos, travelling, onGo }: { destination: Destination; playerPos: { x: number; y: number }; travelling: TravelMode | null; onGo: (m: TravelMode) => void }) {
+function Journey({ destination, playerPos, travelling, onGo, gold, onGold }: {
+  destination: Destination; playerPos: { x: number; y: number }; travelling: TravelMode | null; onGo: (m: TravelMode) => void;
+  gold: boolean; onGold: (g: boolean) => void;
+}) {
   const { citizen } = useCitizen();
   const to = entranceOf(destination.place.id) ?? playerPos;
   const metres = useMemo(() => distanceMetres(playerPos, to), [playerPos, to]);
   const here = metres < 40;
   const fare = taxiFare(metres);
+  const instant = instantFare(metres);
+  const plan = useMemo(() => metroPlan(playerPos, to), [playerPos, to]);
+  const metroCost = plan ? (gold ? plan.gold : plan.silver) : 0;
+  const dist = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m / 10) * 10} m`);
+  const metroMinutes = plan ? Math.round(walkMinutes(plan.walkTo) + plan.stops * 2.5 + 4 + walkMinutes(plan.walkFrom)) : 0;
   const km = metres >= 1000 ? `${(metres / 1000).toFixed(1)} km` : `${Math.round(metres / 10) * 10} m`;
 
   if (travelling) {
@@ -374,10 +423,31 @@ function Journey({ destination, playerPos, travelling, onGo }: { destination: De
         <>
           <Option icon={<Footprints className="w-5 h-5" />} title="Walk" note={`≈ ${walkMinutes(metres)} min · free`} onClick={() => onGo("walk")} primary={metres < 1200} />
           <Option icon={<Car className="w-5 h-5" />} title="Dubai Taxi" note={`≈ ${taxiMinutes(metres)} min · ${aed(fare)} (12 minimum)`} onClick={() => onGo("taxi")} disabled={(citizen?.balance ?? 0) < fare} primary={metres >= 1200} />
-          <p className="text-[11px] text-slate-400 px-1">Dubai Metro doesn&apos;t help for this trip — both places are within Downtown.</p>
+          {plan && !plan.sameStation ? (
+            <>
+              <Option
+                icon={<TrainFront className="w-5 h-5" />}
+                title="Nearest metro + walk"
+                note={`≈ ${metroMinutes} min · walk ${dist(plan.walkTo)} to ${plan.from.en} → ${plan.stops} stop${plan.stops > 1 ? "s" : ""} to ${plan.to.en} → walk ${dist(plan.walkFrom)} · ${aed(metroCost)}`}
+                onClick={() => onGo("metro")}
+                disabled={(citizen?.balance ?? 0) < metroCost}
+              />
+              <div className="flex gap-1.5 pl-14">
+                {([false, true] as const).map((g) => (
+                  <button key={String(g)} onClick={() => onGold(g)} className={`h-7 px-2.5 rounded-lg text-[11px] font-black ${gold === g ? (g ? "bg-amber-400 text-slate-950" : "bg-slate-800 text-white") : "bg-slate-100 text-slate-600"}`}>
+                    {g ? `🥇 Gold · ${aed(plan.gold)}` : `🥈 Silver · ${aed(plan.silver)}`}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            plan && <p className="text-[11px] text-slate-400 px-1">🚇 Both places are nearest {plan.from.en} station, so the metro doesn&apos;t help: walk or take a taxi.</p>
+          )}
         </>
       )}
-      <Option icon={<Zap className="w-5 h-5" />} title="Go directly" note="Skip the trip (shortcut)" onClick={() => onGo("direct")} />
+      {!here && (
+        <Option icon={<Zap className="w-5 h-5" />} title="Go directly" note={`Arrive instantly · ${aed(instant)} premium`} onClick={() => onGo("direct")} disabled={(citizen?.balance ?? 0) < instant} />
+      )}
     </>
   );
 }

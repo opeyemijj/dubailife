@@ -8,6 +8,15 @@ import { COAST_ENTITIES } from "./coast";
 import { DISTRICT_NAMES, GAME_TILES } from "./gameCity";
 import { ACADEMIC_TILES } from "./academic";
 import { SZR_DEFAULTS } from "./szr";
+import transit from "@/data/transit/transit.json";
+
+/** The Red Line stations placed on the map (read straight from the data: lib/transit depends on this file). */
+const METRO_MAP_ENTITIES = (transit.metro.stations as Array<{ en: string; map?: string; mapPos?: number[]; code?: string }>)
+  .filter((s) => s.map && s.mapPos)
+  .map((s) => ({
+    id: s.map!, name: s.en, type: "metro-station", stationCode: s.code, line: "red",
+    virtualX: s.mapPos![0], virtualY: s.mapPos![1], width: 220, height: 130, interactive: true,
+  }));
 
 const SEED_IDS = new Set(mapSeed.map((e) => e.id));
 const PALM_IDS = new Set([...PALM_ENTITIES, ...COAST_ENTITIES, ...GAME_TILES, ...ACADEMIC_TILES].map((e) => e.id));
@@ -18,6 +27,8 @@ export const CITY_ENTITIES: any[] = [
   ...PALM_ENTITIES, ...COAST_ENTITIES, ...GAME_TILES, ...ACADEMIC_TILES,
   // Sheikh Zayed Road hotels and clubs: editable, so a copy saved in the map editor replaces the default.
   ...SZR_DEFAULTS.filter((e) => !SEED_IDS.has(e.id)),
+  // Red Line stations on the viaduct: editable like the Sheikh Zayed Road defaults.
+  ...METRO_MAP_ENTITIES.filter((e) => !SEED_IDS.has(e.id)),
 ];
 
 /** What the map editor saves: the Palm is generated, so it's left out. */

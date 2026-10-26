@@ -11,7 +11,8 @@ import { ArrowLeft, DoorClosed, KeyRound, Loader2, LogOut, MapPin, Navigation, S
 import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoom";
 import { CATALOG, getCatalogItem, withHomeItems, HOUSING_CONFIGS, type CatalogItem, type OwnedFurniture, type Placement, type Rotation, type HousingTier } from "@/lib/furniture";
 import { adjustBalance, updateCitizen, useCitizen, useRequireCitizen } from "@/lib/citizenStore";
-import { entranceOf, getEntity } from "@/lib/city/geo";
+import { distanceMetres, entranceOf, getEntity } from "@/lib/city/geo";
+import { instantFare } from "@/lib/transit";
 import {
   ACCESS_LABEL, addGuest, flatTitle, getFlat, getInterior, listFlat, listGuests, removeGuest, requestEntry, saveInterior, setAccess, watchRequest,
   type Access, type FlatView, type Listing,
@@ -63,8 +64,11 @@ export function PropertyRoute({ buildingId, unit }: { buildingId: string; unit: 
 
   // Travel first (or skip on purpose).
   if (!atBuilding) {
+    // Skipping the trip costs a premium (more than a taxi); only walking is free.
+    const at = entranceOf(buildingId);
+    const premium = instantFare(at && citizen.location ? distanceMetres(citizen.location, at) : 0);
     const goDirectly = () => {
-      const at = entranceOf(buildingId);
+      if (!adjustBalance(-premium)) return;
       updateCitizen((c) => ({ ...c, location: { ...(at ?? c.location ?? { x: 0, y: 0 }), placeId: buildingId } }));
     };
     return (
@@ -73,7 +77,8 @@ export function PropertyRoute({ buildingId, unit }: { buildingId: string; unit: 
         <h1 className="text-xl font-black mt-2">You&apos;re not at {building.name} yet</h1>
         <div className="mt-4 space-y-2">
           <Link href={`/explore?open=${buildingId}`} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-500 text-white font-black"><Navigation className="w-4 h-4" /> Plan the journey</Link>
-          <button onClick={goDirectly} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold"><Zap className="w-4 h-4" /> Go directly (skip travel)</button>
+          <button onClick={goDirectly} disabled={(citizen.balance ?? 0) < premium} className="disabled:opacity-50 w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold"><Zap className="w-4 h-4" /> Go directly · AED {premium}</button>
+          {(citizen.balance ?? 0) < premium && <p className="text-xs text-rose-600 font-bold">You need AED {premium} to skip the trip. Walking is free.</p>}
         </div>
       </Card>
     );

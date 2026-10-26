@@ -2,12 +2,22 @@
 // src/data/transit/transit.json; this types them and works out routes and fares.
 
 import data from "@/data/transit/transit.json";
+import { distanceMetres, WORLD_HEIGHT } from "@/lib/city/geo";
 
-export interface MetroStation { id: string; en: string; ar: string; landmark: "burj" | "towers" | "lowrise" | "mall" | "marina"; map?: string }
+export interface MetroStation {
+  id: string; en: string; ar: string; landmark: "burj" | "towers" | "lowrise" | "mall" | "marina";
+  /** The station on the city map (only some stations are on the map), and where it stands there. */
+  map?: string; mapPos?: [number, number];
+  /** Map stations: the station number shown on the sign, and what's around it. */
+  code?: string; landmarks?: string;
+}
 
 export const METRO = data.metro;
 export const STATIONS = METRO.stations as MetroStation[];
 export const TAXI = data.taxi;
+
+/** "Go directly" (skip the trip): a premium over the taxi fare, never free. */
+export const instantFare = (metres: number) => Math.max(data.instant.minimum, Math.ceil(taxiQuote(metres).total * data.instant.taxiMultiple));
 
 /** The stations from one map station to another, in the order the train calls at them. */
 export function metroRoute(fromMap: string, toMap: string): { stops: MetroStation[]; towards: { en: string; ar: string } } | null {
@@ -39,4 +49,29 @@ export function taxiQuote(metres: number, now = new Date()) {
   const salik = km >= TAXI.salikOverKm ? TAXI.salik : 0;
   const meter = Math.max(TAXI.minimum, Math.round((flag + TAXI.perKm * km) * 2) / 2);
   return { flag, km, salik, meter, total: meter + salik };
+}
+
+/** A map station's position in rendered map coordinates (y flipped, like the player's). */
+export const stationPoint = (st: MetroStation) => ({ x: st.mapPos![0], y: WORLD_HEIGHT - st.mapPos![1] });
+
+/** The map station nearest a point, and how far it is (metres). */
+export function nearestStation(at: { x: number; y: number }) {
+  return STATIONS.filter((s) => s.mapPos)
+    .map((st) => ({ st, metres: distanceMetres(at, stationPoint(st)) }))
+    .sort((a, b) => a.metres - b.metres)[0];
+}
+
+/**
+ * A metro trip for a journey: walk to the nearest station, ride, walk from the station nearest the
+ * destination. `sameStation` is set when both ends are nearest the same station (the metro can't help).
+ */
+export function metroPlan(from: { x: number; y: number }, to: { x: number; y: number }) {
+  const a = nearestStation(from), b = nearestStation(to);
+  if (!a || !b) return null;
+  const route = a.st.id === b.st.id ? null : metroRoute(a.st.map!, b.st.map!);
+  const stops = route ? route.stops.length - 1 : 0;
+  return {
+    from: a.st, to: b.st, walkTo: a.metres, walkFrom: b.metres, stops, sameStation: !route,
+    silver: route ? metroFare(stops, false) : 0, gold: route ? metroFare(stops, true) : 0,
+  };
 }

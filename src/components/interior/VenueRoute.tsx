@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { MapPin, Navigation, Zap } from "lucide-react";
 import { getPlace } from "@/lib/city/places";
-import { entranceOf } from "@/lib/city/geo";
-import { updateCitizen, useRequireCitizen } from "@/lib/citizenStore";
+import { distanceMetres, entranceOf } from "@/lib/city/geo";
+import { adjustBalance, updateCitizen, useRequireCitizen } from "@/lib/citizenStore";
+import { instantFare } from "@/lib/transit";
 import { VenueExperience } from "./VenueExperience";
 import { SmallLoader } from "@/components/GameLoadingScreen";
 import { hopPending } from "@/lib/locals";
@@ -56,8 +57,11 @@ export function VenueRoute({ placeId, venueId }: { placeId: string; venueId?: st
 
   // Travel is part of the world: arrive at the building before going in (or skip on purpose).
   if (citizen.location?.placeId !== place.id) {
+    // Skipping the trip costs a premium (more than a taxi); only walking is free.
+    const at = entranceOf(place.id);
+    const premium = instantFare(at && citizen.location ? distanceMetres(citizen.location, at) : 0);
     const goDirectly = () => {
-      const at = entranceOf(place.id);
+      if (!adjustBalance(-premium)) return;
       updateCitizen((c) => ({ ...c, location: { ...(at ?? c.location ?? { x: 0, y: 0 }), placeId: place.id } }));
     };
     return (
@@ -67,7 +71,8 @@ export function VenueRoute({ placeId, venueId }: { placeId: string; venueId?: st
         <p className="text-sm text-slate-500 mt-1">Head there through the city first, or skip the trip.</p>
         <div className="mt-4 space-y-2">
           <Link href={`/explore?to=${place.id}${venueId ? `&venue=${venueId}` : ""}`} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-500 text-white font-black"><Navigation className="w-4 h-4" /> Plan the journey</Link>
-          <button onClick={goDirectly} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold"><Zap className="w-4 h-4" /> Go directly (skip travel)</button>
+          <button onClick={goDirectly} disabled={(citizen.balance ?? 0) < premium} className="disabled:opacity-50 w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold"><Zap className="w-4 h-4" /> Go directly · AED {premium}</button>
+          {(citizen.balance ?? 0) < premium && <p className="text-xs text-rose-600 font-bold">You need AED {premium} to skip the trip. Walking is free.</p>}
         </div>
       </Shell>
     );

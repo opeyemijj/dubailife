@@ -41,7 +41,7 @@ import { useCitizen, adjustBalance, updateCitizen } from '@/lib/citizenStore';
 import { useIsAdmin, useIsSuperAdmin } from '@/lib/admin/client';
 import { BillboardAds, useLiveAds } from '@/components/commerce/BillboardAds';
 import { MetroJourney } from '@/components/transit/MetroJourney';
-import { metroFare, metroRoute } from '@/lib/transit';
+import { metroFare, metroRoute, STATIONS } from '@/lib/transit';
 
 import { WORLD_WIDTH, WORLD_HEIGHT, EstateBase, ClickableHouseNew, ApartmentBuildingIconNew, RooftopIconNew, NightclubIconNew, RestaurantIconNew, EstateCommunityBlock, SmallHouseIcon, StadiumIcon, HospitalIcon, SchoolIcon, CasinoIcon, ParkIcon, BurjKhalifaIcon, BulgariIslandIcon, AtlantisTheRoyalIcon, BeachClubIconNew, JumeirahBeachHotelIcon, BurjAlArabIcon, MuseumOfTheFutureIcon, DubaiFrameIcon, AtlantisIcon, EmiratesTowersIcon, IndexTowerIcon, AlYaqoubTowerIcon, GevoraIcon, RoseRayhaanIcon, DWTCIcon, SalikGate, RoadSign, SkylineTower, AirportBlock, VillaHouse, ApartmentHouse, TycoonBlock, BluewatersBlock, ArabianRanchesBlock, JBRBlock, EmiratesHillsBlock, BusinessBayBlock, DeiraBlock, MotorCityBlock, PalmCommunityBlock, GenericNeighborhood, BillboardSpace, IsometricBillboard, DubaiMetroStation, MetroStationBlock, categoryColors, BridgeBlock, AdPlacement, initialAds, getBuildingSprite, ActionDef, venueActions } from './Icons';
 
@@ -428,38 +428,10 @@ export function InteractiveMap({
   const [selectedDestination, setSelectedDestination] = useState<string>('metro-station-moe');
   const [selectedCabinClass, setSelectedCabinClass] = useState<'silver' | 'gold'>('silver');
 
-  const metroStationsList = [
-    {
-      id: 'metro-station-burj',
-      name: 'Burj Khalifa / Dubai Mall',
-      code: '25',
-      virtualX: 1100,
-      virtualY: 1615,
-      landmarks: 'Downtown Dubai • Dubai Mall • Burj Khalifa • Dubai Opera',
-      platform1: 'Towards Expo 2020 / UAE Exchange (in 2 min)',
-      platform2: 'Towards Centrepoint / DXB Airport (in 4 min)'
-    },
-    {
-      id: 'metro-station-moe',
-      name: 'Mall of the Emirates',
-      code: '32',
-      virtualX: 2200,
-      virtualY: 1752,
-      landmarks: 'Al Barsha • Ski Dubai • Kempinski • VOX Cinemas',
-      platform1: 'Towards Expo 2020 / UAE Exchange (in 1 min)',
-      platform2: 'Towards Centrepoint / DXB Airport (in 3 min)'
-    },
-    {
-      id: 'metro-station-marina',
-      name: 'DMCC / Dubai Marina',
-      code: '37',
-      virtualX: 3250,
-      virtualY: 1883,
-      landmarks: 'Dubai Marina • JLT • Dubai Tram Interchange • Marina Promenade',
-      platform1: 'Towards UAE Exchange (in 3 min)',
-      platform2: 'Towards Centrepoint / DXB Airport (in 2 min)'
-    }
-  ];
+  // The map's stations, from the metro data (positions match the stations placed on the map).
+  const metroStationsList = STATIONS.filter((st) => st.map && st.mapPos).map((st) => ({
+    id: st.map!, name: st.en, code: st.code ?? '', virtualX: st.mapPos![0], virtualY: st.mapPos![1], landmarks: st.landmarks ?? '',
+  }));
 
   // Boarding opens the ride itself: the platform, the train, every stop on the way (MetroJourney).
   const [metroTrip, setMetroTrip] = useState<{ from: string; to: string; gold: boolean } | null>(null);

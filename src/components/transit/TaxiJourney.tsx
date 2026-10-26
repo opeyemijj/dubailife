@@ -222,15 +222,16 @@ function Rider({ look, taxiRef, directorRef }: { look?: AvatarLookProps; taxiRef
     const kerb = new THREE.Vector3(PAVE_X, 0.16, 1.2);
     const door = new THREE.Vector3(t.x + 0.95, 0, t.z + 0.6);
     let next: "idle" | "walk" | "wave" = "idle";
-    if (d.stage === "kerb") { grp.position.copy(kerb); grp.rotation.y = Math.PI / 2 + 0.6; }
-    else if (d.stage === "pullup") { grp.position.copy(kerb); grp.rotation.y = Math.PI / 2 + 0.6; next = d.t < 2.5 ? "wave" : "idle"; }
+    // Facing the road (it's on the -x side of the pavement), looking a little up the traffic for a taxi.
+    if (d.stage === "kerb") { grp.position.copy(kerb); grp.rotation.y = -Math.PI / 2 + 0.4; }
+    else if (d.stage === "pullup") { grp.position.copy(kerb); grp.rotation.y = -Math.PI / 2 + 0.4; next = d.t < 2.5 ? "wave" : "idle"; }
     else if (d.stage === "board") {
       const k = Math.max(0, Math.min(1, (d.t - 0.6) / 1.4));
       grp.position.lerpVectors(kerb, door, k);
       grp.rotation.y = -Math.PI / 2;
       next = k > 0 && k < 1 ? "walk" : "idle";
     } else if (d.stage === "pay" || d.stage === "done") {
-      grp.position.copy(new THREE.Vector3(PAVE_X, 0.16, t.z + 0.4)); grp.rotation.y = Math.PI / 2;
+      grp.position.copy(new THREE.Vector3(PAVE_X, 0.16, t.z + 0.4)); grp.rotation.y = -Math.PI / 2;
     }
     const show = d.stage === "kerb" || d.stage === "pullup" || (d.stage === "board" && d.t < 2.1) || d.stage === "done";
     if (show !== visible) setVisible(show);

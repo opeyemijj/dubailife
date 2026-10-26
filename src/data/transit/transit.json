@@ -2,20 +2,102 @@
   "_comment": "Dubai Metro and taxi journeys (components/transit). Station names as of Sept 2026 (Onpassive renamed Garmin). Announcement wording follows the usual pattern; it is not RTA's script. Real recordings, if licensed, can be dropped into public/audio/metro/ as <station-id>-next.mp3 and <station-id>-this.mp3 and play instead of the synthesised voice.",
   "metro": {
     "line": "Red Line",
-    "towards": { "en": "Life Pharmacy", "ar": "لايف فارمسي" },
+    "towards": {
+      "en": "Life Pharmacy",
+      "ar": "لايف فارمسي"
+    },
     "stations": [
-      { "id": "burj", "en": "Burj Khalifa/Dubai Mall", "ar": "برج خليفة/دبي مول", "landmark": "burj", "map": "metro-station-burj" },
-      { "id": "business-bay", "en": "Business Bay", "ar": "الخليج التجاري", "landmark": "towers" },
-      { "id": "garmin", "en": "Garmin", "ar": "جارمن", "landmark": "towers" },
-      { "id": "equiti", "en": "Equiti", "ar": "إكويتي", "landmark": "lowrise" },
-      { "id": "moe", "en": "Mall of the Emirates", "ar": "مول الإمارات", "landmark": "mall", "map": "metro-station-moe" },
-      { "id": "insurance-market", "en": "Insurance Market", "ar": "إنشورنس ماركت", "landmark": "lowrise" },
-      { "id": "internet-city", "en": "Dubai Internet City", "ar": "مدينة دبي للإنترنت", "landmark": "towers" },
-      { "id": "al-fardan", "en": "Al Fardan Exchange", "ar": "الفردان للصرافة", "landmark": "lowrise" },
-      { "id": "sobha", "en": "Sobha Realty", "ar": "شوبا العقارية", "landmark": "marina" },
-      { "id": "dmcc", "en": "DMCC", "ar": "مركز دبي للسلع المتعددة", "landmark": "marina", "map": "metro-station-marina" }
+      {
+        "id": "burj",
+        "en": "Burj Khalifa/Dubai Mall",
+        "ar": "برج خليفة/دبي مول",
+        "landmark": "burj",
+        "map": "metro-station-burj",
+        "mapPos": [
+          1720,
+          945
+        ],
+        "code": "25",
+        "landmarks": "Downtown Dubai • Dubai Mall • Burj Khalifa • Dubai Opera"
+      },
+      {
+        "id": "business-bay",
+        "en": "Business Bay",
+        "ar": "الخليج التجاري",
+        "landmark": "towers"
+      },
+      {
+        "id": "garmin",
+        "en": "Garmin",
+        "ar": "جارمن",
+        "landmark": "towers"
+      },
+      {
+        "id": "equiti",
+        "en": "Equiti",
+        "ar": "إكويتي",
+        "landmark": "lowrise"
+      },
+      {
+        "id": "moe",
+        "en": "Mall of the Emirates",
+        "ar": "مول الإمارات",
+        "landmark": "mall",
+        "map": "metro-station-moe",
+        "mapPos": [
+          650,
+          963
+        ],
+        "code": "32",
+        "landmarks": "Al Barsha • Ski Dubai • Mall of the Emirates"
+      },
+      {
+        "id": "insurance-market",
+        "en": "Insurance Market",
+        "ar": "إنشورنس ماركت",
+        "landmark": "lowrise"
+      },
+      {
+        "id": "internet-city",
+        "en": "Dubai Internet City",
+        "ar": "مدينة دبي للإنترنت",
+        "landmark": "towers"
+      },
+      {
+        "id": "al-fardan",
+        "en": "Al Fardan Exchange",
+        "ar": "الفردان للصرافة",
+        "landmark": "lowrise"
+      },
+      {
+        "id": "sobha",
+        "en": "Sobha Realty",
+        "ar": "شوبا العقارية",
+        "landmark": "marina"
+      },
+      {
+        "id": "dmcc",
+        "en": "DMCC",
+        "ar": "مركز دبي للسلع المتعددة",
+        "landmark": "marina",
+        "map": "metro-station-marina",
+        "mapPos": [
+          -560,
+          983
+        ],
+        "code": "37",
+        "landmarks": "Dubai Marina • JLT • Dubai Tram interchange"
+      }
     ],
-    "fares": { "silver": [3, 5, 7.5], "goldMultiplier": 2, "stopsPerZone": 4 },
+    "fares": {
+      "silver": [
+        3,
+        5,
+        7.5
+      ],
+      "goldMultiplier": 2,
+      "stopsPerZone": 4
+    },
     "phrases": {
       "nextEn": "The next station is {en}.",
       "nextAr": "المحطة القادمة {ar}.",
@@ -30,7 +112,8 @@
       "welcomeAr": "مرحباً بكم في مترو دبي.",
       "goldEn": "This is the Gold Class cabin.",
       "womenEn": "This cabin is reserved for women and children."
-    }
+    },
+    "_mapComment": "mapPos is [virtualX, virtualY] on the city map, on the drawn Red Line viaduct (y = 1024 - (x + 3000) / 60). These stations are placed on the map by lib/city/mapEntities.ts."
   },
   "taxi": {
     "flagDay": 5,
@@ -39,8 +122,18 @@
     "minimum": 12,
     "salik": 4,
     "salikOverKm": 4,
-    "roofs": ["#ef4444", "#3b82f6", "#22c55e", "#f59e0b", "#f97316"],
-    "greetings": ["Salam alaikum! Where are we going today?", "Hello, welcome! Where to?", "Marhaba! Please, put your seatbelt on."],
+    "roofs": [
+      "#ef4444",
+      "#3b82f6",
+      "#22c55e",
+      "#f59e0b",
+      "#f97316"
+    ],
+    "greetings": [
+      "Salam alaikum! Where are we going today?",
+      "Hello, welcome! Where to?",
+      "Marhaba! Please, put your seatbelt on."
+    ],
     "smallTalk": [
       "Traffic is good today, inshallah we will be there soon.",
       "You like Dubai? Every year something new is built.",
@@ -48,5 +141,10 @@
       "Have you been to the Dubai Frame? Very nice view.",
       "First time in Dubai? You must try karak chai."
     ]
+  },
+  "instant": {
+    "_comment": "'Go directly' skips the trip: a premium on top of what a taxi would cost. Only walking is free.",
+    "taxiMultiple": 2,
+    "minimum": 25
   }
 }
