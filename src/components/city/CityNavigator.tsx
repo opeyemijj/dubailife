@@ -13,6 +13,8 @@ import { buyFlat, flatRoute, flatTitle, listFlats, rentFlat, type FlatView } fro
 import { adjustBalance, refreshCitizen, updateCitizen, useCitizen } from "@/lib/citizenStore";
 import { gameAudio } from "@/utils/gameAudio";
 import { VenueDressCodeModal } from "./VenueDressCodeModal";
+import { TaxiJourney } from "@/components/transit/TaxiJourney";
+import { taxiQuote } from "@/lib/transit";
 
 export type TravelMode = "walk" | "taxi" | "direct";
 
@@ -34,8 +36,9 @@ interface Props {
 
 const aed = (n: number) => `AED ${n.toLocaleString()}`;
 
-/** Dubai taxi: AED 5 flag-fall, ~AED 2.20/km, AED 12 minimum (RTA, 2025–26). */
-export const taxiFare = (metres: number) => Math.max(12, Math.round((5 + 2.2 * (metres / 1000)) * 2) / 2);
+/** Dubai taxi: flag-fall (AED 5, 5.50 at night), ~AED 2.20/km, AED 12 minimum, plus Salik on longer trips
+    (the tariff lives in src/data/transit/transit.json). */
+export const taxiFare = (metres: number) => taxiQuote(metres).total;
 const walkMinutes = (metres: number) => Math.max(1, Math.round(metres / 1.35 / 60));
 const taxiMinutes = (metres: number) => Math.max(3, Math.round(3 + metres / 1000 / 30 * 60));
 
@@ -46,13 +49,16 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
     initial ? { place, label: initial.name, route: `/place/${place.id}/${initial.id}` } : null,
   );
   const [travelling, setTravelling] = useState<TravelMode | null>(null);
+  // A taxi ride is played out in 3D (TaxiJourney), then the citizen is moved there.
+  const [taxi, setTaxi] = useState<{ to: { x: number; y: number }; metres: number } | null>(null);
+  const { citizen } = useCitizen();
   const [dressCodeVenue, setDressCodeVenue] = useState<Venue | null>(null);
 
   const go = async (mode: TravelMode) => {
     if (!destination) return;
     const to = entranceOf(place.id) ?? playerPos;
     const metres = distanceMetres(playerPos, to);
-    if (mode === "taxi" && !adjustBalance(-taxiFare(metres))) return;
+    if (mode === "taxi") { gameAudio.playClickSound(); setTaxi({ to, metres }); return; }
     gameAudio.playClickSound();
     setTravelling(mode);
     // Real minutes are compressed so the trip plays in a few seconds.
@@ -61,6 +67,28 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
     updateCitizen((c) => ({ ...c, location: { ...to, placeId: place.id } }));
     router.push(destination.route);
   };
+
+  const arriveByTaxi = async () => {
+    if (!taxi || !destination) return;
+    const to = taxi.to;
+    setTaxi(null);
+    setTravelling("taxi");
+    await onTravel(to, "taxi", 500);
+    updateCitizen((c) => ({ ...c, location: { ...to, placeId: place.id } }));
+    router.push(destination.route);
+  };
+  if (taxi && destination) {
+    return (
+      <TaxiJourney
+        metres={taxi.metres}
+        destination={destination.label === place.name ? place.name : `${destination.label}, ${place.name}`}
+        look={citizen?.look}
+        onPay={(amount) => adjustBalance(-amount)}
+        onArrive={arriveByTaxi}
+        onCancel={() => setTaxi(null)}
+      />
+    );
+  }
 
   // While travelling, get out of the way so the trip across the map is visible.
   if (travelling && destination) {

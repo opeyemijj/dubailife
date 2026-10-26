@@ -40,6 +40,8 @@ import type { Place } from '@/lib/city/types';
 import { useCitizen, adjustBalance, updateCitizen } from '@/lib/citizenStore';
 import { useIsAdmin, useIsSuperAdmin } from '@/lib/admin/client';
 import { BillboardAds, useLiveAds } from '@/components/commerce/BillboardAds';
+import { MetroJourney } from '@/components/transit/MetroJourney';
+import { metroFare, metroRoute } from '@/lib/transit';
 
 import { WORLD_WIDTH, WORLD_HEIGHT, EstateBase, ClickableHouseNew, ApartmentBuildingIconNew, RooftopIconNew, NightclubIconNew, RestaurantIconNew, EstateCommunityBlock, SmallHouseIcon, StadiumIcon, HospitalIcon, SchoolIcon, CasinoIcon, ParkIcon, BurjKhalifaIcon, BulgariIslandIcon, AtlantisTheRoyalIcon, BeachClubIconNew, JumeirahBeachHotelIcon, BurjAlArabIcon, MuseumOfTheFutureIcon, DubaiFrameIcon, AtlantisIcon, EmiratesTowersIcon, IndexTowerIcon, AlYaqoubTowerIcon, GevoraIcon, RoseRayhaanIcon, DWTCIcon, SalikGate, RoadSign, SkylineTower, AirportBlock, VillaHouse, ApartmentHouse, TycoonBlock, BluewatersBlock, ArabianRanchesBlock, JBRBlock, EmiratesHillsBlock, BusinessBayBlock, DeiraBlock, MotorCityBlock, PalmCommunityBlock, GenericNeighborhood, BillboardSpace, IsometricBillboard, DubaiMetroStation, MetroStationBlock, categoryColors, BridgeBlock, AdPlacement, initialAds, getBuildingSprite, ActionDef, venueActions } from './Icons';
 
@@ -459,27 +461,28 @@ export function InteractiveMap({
     }
   ];
 
+  // Boarding opens the ride itself: the platform, the train, every stop on the way (MetroJourney).
+  const [metroTrip, setMetroTrip] = useState<{ from: string; to: string; gold: boolean } | null>(null);
+  const metroStops = (from: string, to: string) => Math.max(1, (metroRoute(from, to)?.stops.length ?? 2) - 1);
+  const metroFareFor = (gold: boolean) => (selectedMetroStation ? metroFare(metroStops(selectedMetroStation.id, selectedDestination), gold) : 0);
   const handleBoardMetro = () => {
     if (!selectedMetroStation) return;
-    const dest = metroStationsList.find(s => s.id === selectedDestination) || metroStationsList[0];
-    const fare = selectedCabinClass === 'gold' ? 10 : 5;
-    if (!adjustBalance(-fare)) {
+    if (!metroRoute(selectedMetroStation.id, selectedDestination)) {
+      showToast('Pick a different destination station first.', 'debit');
+      return;
+    }
+    if (walletBalance < metroFareFor(selectedCabinClass === 'gold')) {
       showToast('Insufficient Nol Card balance! Please recharge.', 'debit');
       return;
     }
-
     setMetroModalOpen(false);
-
-    showToast(`🚆 Boarded Dubai Metro Red Line! Fare: AED ${fare} (${selectedCabinClass.toUpperCase()} Class). Doors closing...`, 'credit');
-
-    // Smooth transit animation along the metro viaduct
-    setIsTraveling(true);
+    setMetroTrip({ from: selectedMetroStation.id, to: selectedDestination, gold: selectedCabinClass === 'gold' });
+  };
+  const finishMetroTrip = () => {
+    const dest = metroStationsList.find((s) => s.id === metroTrip?.to) || metroStationsList[0];
+    setMetroTrip(null);
     setPlayerPos({ x: dest.virtualX, y: WORLD_HEIGHT - dest.virtualY });
-
-    setTimeout(() => {
-      setIsTraveling(false);
-      showToast(`📍 Arrived at ${dest.name}! Welcome to Dubai!`, 'credit');
-    }, 1800);
+    showToast(`📍 Arrived at ${dest.name}!`, 'credit');
   };
 
 
@@ -1654,6 +1657,17 @@ export function InteractiveMap({
       {/* ==================================================================== */}
       {/* DUBAI METRO RED LINE BOARDING & TRANSIT MODAL                        */}
       {/* ==================================================================== */}
+      {metroTrip && (
+        <MetroJourney
+          fromMap={metroTrip.from}
+          toMap={metroTrip.to}
+          gold={metroTrip.gold}
+          look={citizen?.look}
+          onPay={(fare) => adjustBalance(-fare)}
+          onArrive={finishMetroTrip}
+          onCancel={() => setMetroTrip(null)}
+        />
+      )}
       <Dialog open={metroModalOpen} onOpenChange={setMetroModalOpen}>
         <DialogContent className="bg-slate-900 text-white border border-red-500/30 shadow-2xl w-[94vw] max-w-xl z-[100] rounded-3xl max-h-[88dvh] overflow-y-auto p-4 sm:p-6 pb-6">
           <div className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto -mt-1 mb-2 sm:hidden shrink-0" />
@@ -1780,7 +1794,7 @@ export function InteractiveMap({
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-black">🥈 Silver Class</span>
-                      <span className="text-xs font-bold text-sky-400 font-mono">AED 5</span>
+                      <span className="text-xs font-bold text-sky-400 font-mono">AED {metroFareFor(false)}</span>
                     </div>
                     <p className="text-[10px] text-slate-400 mt-1">Standard modern air-conditioned carriage with Wi-Fi</p>
                   </button>
@@ -1795,7 +1809,7 @@ export function InteractiveMap({
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-black text-amber-300">🥇 Gold Class VIP</span>
-                      <span className="text-xs font-bold text-amber-400 font-mono">AED 10</span>
+                      <span className="text-xs font-bold text-amber-400 font-mono">AED {metroFareFor(true)}</span>
                     </div>
                     <p className="text-[10px] text-amber-200/70 mt-1">Panoramic front cabin, wide leather seats & skyline views</p>
                   </button>
@@ -1826,7 +1840,7 @@ export function InteractiveMap({
                 >
                   <Train className="w-4 h-4 animate-bounce" />
                   <span>
-                    Tap Nol Card & Board Metro (AED {selectedCabinClass === 'gold' ? '10' : '5'})
+                    Go to the platform (AED {metroFareFor(selectedCabinClass === 'gold')})
                   </span>
                 </Button>
               </div>
