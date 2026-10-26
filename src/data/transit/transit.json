@@ -8,13 +8,39 @@
     },
     "stations": [
       {
+        "id": "emirates-towers",
+        "en": "Emirates Towers",
+        "ar": "أبراج الإمارات",
+        "landmark": "towers",
+        "map": "metro-station-emirates-towers",
+        "mapPos": [
+          3650,
+          913
+        ],
+        "code": "23",
+        "landmarks": "Emirates Towers • Museum of the Future"
+      },
+      {
+        "id": "financial-centre",
+        "en": "Financial Centre",
+        "ar": "المركز المالي",
+        "landmark": "towers",
+        "map": "metro-station-financial-centre",
+        "mapPos": [
+          3420,
+          917
+        ],
+        "code": "24",
+        "landmarks": "DIFC • Gate Village • Ritz-Carlton DIFC"
+      },
+      {
         "id": "burj",
         "en": "Burj Khalifa/Dubai Mall",
         "ar": "برج خليفة/دبي مول",
         "landmark": "burj",
         "map": "metro-station-burj",
         "mapPos": [
-          1720,
+          1765,
           945
         ],
         "code": "25",
@@ -24,19 +50,40 @@
         "id": "business-bay",
         "en": "Business Bay",
         "ar": "الخليج التجاري",
-        "landmark": "towers"
+        "landmark": "towers",
+        "map": "metro-station-business-bay",
+        "mapPos": [
+          1600,
+          947
+        ],
+        "code": "26",
+        "landmarks": "Business Bay • Dubai Canal"
       },
       {
         "id": "garmin",
         "en": "Garmin",
         "ar": "جارمن",
-        "landmark": "towers"
+        "landmark": "towers",
+        "map": "metro-station-garmin",
+        "mapPos": [
+          1185,
+          954
+        ],
+        "code": "27",
+        "landmarks": "Al Quoz • Al Safa"
       },
       {
         "id": "equiti",
         "en": "Equiti",
         "ar": "إكويتي",
-        "landmark": "lowrise"
+        "landmark": "lowrise",
+        "map": "metro-station-equiti",
+        "mapPos": [
+          918,
+          959
+        ],
+        "code": "28",
+        "landmarks": "Al Quoz industrial area"
       },
       {
         "id": "moe",
@@ -48,32 +95,60 @@
           650,
           963
         ],
-        "code": "32",
+        "code": "29",
         "landmarks": "Al Barsha • Ski Dubai • Mall of the Emirates"
       },
       {
         "id": "insurance-market",
         "en": "Insurance Market",
         "ar": "إنشورنس ماركت",
-        "landmark": "lowrise"
+        "landmark": "lowrise",
+        "map": "metro-station-insurance-market",
+        "mapPos": [
+          408,
+          967
+        ],
+        "code": "30",
+        "landmarks": "Al Barsha Heights"
       },
       {
         "id": "internet-city",
         "en": "Dubai Internet City",
         "ar": "مدينة دبي للإنترنت",
-        "landmark": "towers"
+        "landmark": "towers",
+        "map": "metro-station-internet-city",
+        "mapPos": [
+          166,
+          971
+        ],
+        "code": "31",
+        "landmarks": "Dubai Internet City • Dubai Media City"
       },
       {
         "id": "al-fardan",
         "en": "Al Fardan Exchange",
         "ar": "الفردان للصرافة",
-        "landmark": "lowrise"
+        "landmark": "lowrise",
+        "map": "metro-station-al-fardan",
+        "mapPos": [
+          -76,
+          975
+        ],
+        "code": "32",
+        "landmarks": "Al Sufouh • Knowledge Park"
       },
       {
         "id": "sobha",
         "en": "Sobha Realty",
         "ar": "شوبا العقارية",
-        "landmark": "marina"
+        "landmark": "marina",
+        "map": "metro-station-sobha",
+        "mapPos": [
+          -318,
+          979
+        ],
+        "code": "33",
+        "landmarks": "Dubai Marina • Sobha Hartland"
       },
       {
         "id": "dmcc",
@@ -85,7 +160,7 @@
           -560,
           983
         ],
-        "code": "37",
+        "code": "34",
         "landmarks": "Dubai Marina • JLT • Dubai Tram interchange"
       }
     ],
@@ -113,7 +188,7 @@
       "goldEn": "This is the Gold Class cabin.",
       "womenEn": "This cabin is reserved for women and children."
     },
-    "_mapComment": "mapPos is [virtualX, virtualY] on the city map, on the drawn Red Line viaduct (y = 1024 - (x + 3000) / 60). These stations are placed on the map by lib/city/mapEntities.ts."
+    "_mapComment": "All stations sit on the drawn Red Line viaduct, in line order from Emirates Towers (east) to DMCC (west): mapPos is [virtualX, virtualY] with y = 1024 - (x + 3000) / 60. Codes are sequential in line order, not RTA's official numbers."
   },
   "taxi": {
     "flagDay": 5,

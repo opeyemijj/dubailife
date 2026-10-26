@@ -64,7 +64,7 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
     if (mode === "taxi") { gameAudio.playClickSound(); setTaxi({ to, metres }); return; }
     if (mode === "metro") {
       const plan = metroPlan(playerPos, to);
-      if (!plan || plan.sameStation) return;
+      if (!plan) return;
       gameAudio.playClickSound();
       // Walk to the station first (shown on the map), then the ride itself.
       setTravelling("walk");
@@ -423,11 +423,11 @@ function Journey({ destination, playerPos, travelling, onGo, gold, onGold }: {
         <>
           <Option icon={<Footprints className="w-5 h-5" />} title="Walk" note={`≈ ${walkMinutes(metres)} min · free`} onClick={() => onGo("walk")} primary={metres < 1200} />
           <Option icon={<Car className="w-5 h-5" />} title="Dubai Taxi" note={`≈ ${taxiMinutes(metres)} min · ${aed(fare)} (12 minimum)`} onClick={() => onGo("taxi")} disabled={(citizen?.balance ?? 0) < fare} primary={metres >= 1200} />
-          {plan && !plan.sameStation ? (
+          {plan ? (
             <>
               <Option
                 icon={<TrainFront className="w-5 h-5" />}
-                title="Nearest metro + walk"
+                title="Walk to the nearest metro + ride"
                 note={`≈ ${metroMinutes} min · walk ${dist(plan.walkTo)} to ${plan.from.en} → ${plan.stops} stop${plan.stops > 1 ? "s" : ""} to ${plan.to.en} → walk ${dist(plan.walkFrom)} · ${aed(metroCost)}`}
                 onClick={() => onGo("metro")}
                 disabled={(citizen?.balance ?? 0) < metroCost}
@@ -440,16 +440,7 @@ function Journey({ destination, playerPos, travelling, onGo, gold, onGold }: {
                 ))}
               </div>
             </>
-          ) : (
-            // Always listed: greyed out with the reason when it can't help on this trip.
-            <Option
-              icon={<TrainFront className="w-5 h-5" />}
-              title="Nearest metro + walk"
-              note={plan ? `Not for this trip: both places are nearest ${plan.from.en} station` : "No metro station nearby"}
-              onClick={() => {}}
-              disabled
-            />
-          )}
+          ) : null}
         </>
       )}
       {!here && (

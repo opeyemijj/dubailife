@@ -10,12 +10,16 @@ import { ACADEMIC_TILES } from "./academic";
 import { SZR_DEFAULTS } from "./szr";
 import transit from "@/data/transit/transit.json";
 
+/** How far a station sprite's anchor sits above the track line, so its platform lines up with the viaduct. */
+const STATION_LIFT = 8;
+
 /** The Red Line stations placed on the map (read straight from the data: lib/transit depends on this file). */
 const METRO_MAP_ENTITIES = (transit.metro.stations as Array<{ en: string; map?: string; mapPos?: number[]; code?: string }>)
   .filter((s) => s.map && s.mapPos)
   .map((s) => ({
     id: s.map!, name: s.en, type: "metro-station", stationCode: s.code, line: "red",
-    virtualX: s.mapPos![0], virtualY: s.mapPos![1], width: 220, height: 130, interactive: true,
+    // Small, and lifted so the station's platform sits on the drawn viaduct (mapPos is on the track line).
+    virtualX: s.mapPos![0], virtualY: s.mapPos![1] + STATION_LIFT, width: 150, height: 88, interactive: true,
   }));
 
 const SEED_IDS = new Set(mapSeed.map((e) => e.id));

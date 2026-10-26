@@ -63,15 +63,23 @@ export function nearestStation(at: { x: number; y: number }) {
 
 /**
  * A metro trip for a journey: walk to the nearest station, ride, walk from the station nearest the
- * destination. `sameStation` is set when both ends are nearest the same station (the metro can't help).
+ * destination. When both ends are nearest the same station you still ride: one stop, to the neighbouring
+ * station on the destination's side (`oneStop`).
  */
 export function metroPlan(from: { x: number; y: number }, to: { x: number; y: number }) {
-  const a = nearestStation(from), b = nearestStation(to);
+  const a = nearestStation(from);
+  let b = nearestStation(to);
   if (!a || !b) return null;
-  const route = a.st.id === b.st.id ? null : metroRoute(a.st.map!, b.st.map!);
-  const stops = route ? route.stops.length - 1 : 0;
-  return {
-    from: a.st, to: b.st, walkTo: a.metres, walkFrom: b.metres, stops, sameStation: !route,
-    silver: route ? metroFare(stops, false) : 0, gold: route ? metroFare(stops, true) : 0,
-  };
+  let oneStop = false;
+  if (a.st.id === b.st.id) {
+    const i = STATIONS.indexOf(a.st);
+    const neighbours = [STATIONS[i - 1], STATIONS[i + 1]].filter((s): s is MetroStation => !!s?.mapPos);
+    const pick = neighbours.map((st) => ({ st, metres: distanceMetres(to, stationPoint(st)) })).sort((x, y) => x.metres - y.metres)[0];
+    if (!pick) return null;
+    b = pick; oneStop = true;
+  }
+  const route = metroRoute(a.st.map!, b.st.map!);
+  if (!route) return null;
+  const stops = route.stops.length - 1;
+  return { from: a.st, to: b.st, walkTo: a.metres, walkFrom: b.metres, stops, oneStop, silver: metroFare(stops, false), gold: metroFare(stops, true) };
 }
