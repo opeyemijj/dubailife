@@ -32,7 +32,9 @@ const HOME_TAGS: Record<string, { label: string; cls: string }> = {
   studio: { label: "Balanced (recommended)", cls: "bg-emerald-100 text-emerald-800 font-black" },
   one_bedroom: { label: "Comfortable", cls: "bg-slate-100 text-slate-700" },
   two_bedroom: { label: "Room to grow", cls: "bg-amber-100 text-amber-800" },
+  duplex: { label: "Two floors", cls: "bg-amber-100 text-amber-800" },
   three_bedroom: { label: "Big spender", cls: "bg-purple-100 text-purple-700" },
+  townhouse: { label: "Two floors · family", cls: "bg-purple-100 text-purple-700" },
   penthouse: { label: "Big spender", cls: "bg-purple-100 text-purple-700" },
   villa: { label: "Expat Trap ⚠️", cls: "bg-rose-100 text-rose-700" },
 };

@@ -19,7 +19,7 @@ const CLIP_SEAT_BACK = 0.12;
 // How far the back of a lying body is below its feet line once laid flat.
 const LYING_BACK = 0.11;
 
-type Seat = { x: number; z: number; h: number; face: 1 | -1 };
+type Seat = { x: number; z: number; h: number; face: 1 | -1; /** Where to stand (z), when not just in front. */ standZ?: number };
 type Bed = { along: "z" | "x"; h: number; across: number };
 
 /** Seats by model, in the model's own fitted frame (face 1 = looks towards +z). */
@@ -31,11 +31,16 @@ const SEATS: Record<string, Seat> = {
   "/models/furniture/desk-chair.glb": { x: 0, z: -0.02, h: 0.33, face: -1 },
   // Tapping a desk sits the citizen at it, in the chair that stands in front of it.
   "/models/furniture/desk.glb": { x: 0, z: 0.75, h: 0.33, face: -1 },
+  // Pieces drawn in code (LuxuryDecor), keyed by their visual.
+  "visual:armchair": { x: 0, z: 0.04, h: 0.47, face: 1 },
+  "visual:majlis": { x: 0.2, z: -0.62, h: 0.22, face: 1 },
+  "visual:grand-piano": { x: 0, z: 0.95, h: 0.51, face: -1, standZ: 1.35 },
 };
 /** Beds by model: which way the body lies (head at the negative end) and the mattress height. */
 const BEDS: Record<string, Bed> = {
   "/models/furniture/bed.glb": { along: "z", h: 0.42, across: 0 },
   "/models/furniture/couch.glb": { along: "x", h: 0.4, across: 0.12 },
+  "visual:canopy-bed": { along: "z", h: 0.48, across: 0 },
 };
 
 function toRoom(item: CatalogItem, placement: Placement & { kind: "floor" }, x: number, z: number): [number, number] {
@@ -47,11 +52,12 @@ function toRoom(item: CatalogItem, placement: Placement & { kind: "floor" }, x: 
 
 /** The sit or lie pose for a chair- or bed-type item, or undefined when it has none. */
 export function restPose(item: CatalogItem, placement: Placement | null | undefined, kind: Interaction, height = 1.75): RestPose | undefined {
-  if (!placement || placement.kind !== "floor" || !item.model) return undefined;
+  const key = item.model ?? (item.visual ? `visual:${item.visual}` : undefined);
+  if (!placement || placement.kind !== "floor" || !key) return undefined;
   const turn = -placement.rot * (Math.PI / 2);
 
   if (kind === "bed") {
-    const bed = BEDS[item.model] ?? { along: "z", h: 0.42, across: 0 };
+    const bed = BEDS[key] ?? { along: "z", h: 0.42, across: 0 };
     const half = ((bed.along === "z" ? item.size[1] : item.size[0]) * CELL * 0.94) / 2;
     const head = -half + 0.1;                              // top of the head, just short of the headboard
     const feet = Math.min(half - 0.05, head + height);
@@ -64,10 +70,10 @@ export function restPose(item: CatalogItem, placement: Placement | null | undefi
   }
 
   if (kind === "chair") {
-    const seat = SEATS[item.model] ?? { x: 0, z: 0, h: 0.42, face: 1 };
+    const seat = SEATS[key] ?? { x: 0, z: 0, h: 0.42, face: 1 };
     const [sx, sz] = toRoom(item, placement, seat.x, seat.z + seat.face * CLIP_SEAT_BACK);
     const depth = (item.size[1] * CELL) / 2;
-    const stand = toRoom(item, placement, seat.x, seat.face * (depth + 0.35));
+    const stand = toRoom(item, placement, seat.x, seat.standZ ?? seat.face * (depth + 0.35));
     const yaw = turn + (seat.face === 1 ? 0 : Math.PI);
     return { position: [sx, seat.h - CLIP_SEAT_HEIGHT, sz], yaw, stand };
   }

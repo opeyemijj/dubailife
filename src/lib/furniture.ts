@@ -15,13 +15,19 @@ export interface FloorPlacement {
   col: number; // min x cell of the footprint
   row: number; // min z cell of the footprint
   rot: Rotation;
+  /** Which floor of a two-storey home (0 downstairs, 1 upstairs); absent means 0. */
+  level?: number;
 }
 
 export interface WallPlacement {
   kind: "wall";
   wall: Wall;
   offset: number; // first cell along the wall
+  level?: number;
 }
+
+/** The floor a placed item is on (0 when unset: every single-storey home and older saves). */
+export const levelOf = (p?: Placement | null) => p?.level ?? 0;
 
 export type Placement = FloorPlacement | WallPlacement;
 
@@ -38,8 +44,8 @@ export interface CatalogItem {
   desc: string;
   icon: string;
   price: number;
-  /** "rug" items lie flat and may sit under other furniture. */
-  kind: "floor" | "rug" | "wall";
+  /** "rug" items lie flat and may sit under other furniture; "ceiling" items hang overhead (chandeliers). */
+  kind: "floor" | "rug" | "wall" | "ceiling";
   /** Footprint in cells: [width, depth] for floor/rug items, [width, height] for wall items. */
   size: [number, number];
   /** GLB under /public; wall art without a model is drawn in code. */
@@ -50,44 +56,110 @@ export interface CatalogItem {
   builtIn?: boolean;
   /** Tapping it does something (sit, sleep, open the fridge). */
   interaction?: Interaction;
+  /** Drawn in code (components/home/LuxuryDecor) rather than from a model. */
+  visual?: string;
+  /** Shop section. */
+  category?: ShopCategory;
+  /** Part of the building (the staircase): can't be moved or stored. */
+  fixed?: boolean;
 }
 
+export type ShopCategory = "living" | "bedroom" | "dining" | "lighting" | "wall" | "decor";
+export const SHOP_CATEGORIES: Array<{ id: ShopCategory; label: string; icon: string }> = [
+  { id: "living", label: "Living", icon: "🛋️" },
+  { id: "bedroom", label: "Bedroom", icon: "🛏️" },
+  { id: "dining", label: "Dining & kitchen", icon: "🍽️" },
+  { id: "lighting", label: "Lighting", icon: "💡" },
+  { id: "wall", label: "Wall art & mirrors", icon: "🖼️" },
+  { id: "decor", label: "Decor", icon: "🏺" },
+];
+
 export const CATALOG: CatalogItem[] = [
-  { id: "sofa", name: "Modern Velvet Sofa", desc: "Super comfortable for guests.", icon: "🛋️", price: 3500, kind: "floor", size: [4, 2], model: "/models/furniture/couch.glb", interaction: "chair" },
-  { id: "l-sofa", name: "L-Shaped Lounge Sofa", desc: "Room for the whole crew.", icon: "🛋️", price: 6800, kind: "floor", size: [4, 4], model: "/models/furniture/l-couch.glb", interaction: "chair" },
-  { id: "lounge-chair", name: "Designer Lounge Chair", desc: "Mid-century comfort.", icon: "💺", price: 1800, kind: "floor", size: [2, 2], model: "/models/furniture/lounge-chair.glb", interaction: "chair" },
-  { id: "tv", name: '65" Flat Screen TV with Table Stand', desc: "Ultra-thin 65-inch 4K OLED flat screen TV on a modern media table stand.", icon: "📺", price: 4200, kind: "floor", size: [4, 1] },
-  { id: "coffee-table", name: "Glass Coffee Table", desc: "Tempered glass, brushed legs.", icon: "☕", price: 1600, kind: "floor", size: [3, 2], model: "/models/furniture/coffee-table.glb" },
-  { id: "bookcase", name: "Oak Bookcase", desc: "For your growing library.", icon: "📚", price: 2100, kind: "floor", size: [2, 1], model: "/models/furniture/bookcase.glb" },
-  { id: "desk", name: "Work Desk", desc: "Run your empire from home.", icon: "🖥️", price: 1900, kind: "floor", size: [3, 2], model: "/models/furniture/desk.glb" },
-  { id: "desk-chair", name: "Office Chair", desc: "Ergonomic and swivelling.", icon: "🪑", price: 1100, kind: "floor", size: [1, 1], model: "/models/furniture/desk-chair.glb", interaction: "chair" },
-  { id: "side-table", name: "Side Table", desc: "Perfect next to a sofa.", icon: "🟫", price: 600, kind: "floor", size: [1, 1], model: "/models/furniture/side-table.glb" },
-  { id: "floor-lamp", name: "Arc Floor Lamp", desc: "Warm evening glow.", icon: "💡", price: 900, kind: "floor", size: [1, 1], model: "/models/furniture/floor-lamp.glb" },
-  { id: "plant", name: "Fiddle Leaf Plant", desc: "Brings the room to life.", icon: "🪴", price: 450, kind: "floor", size: [1, 1], model: "/models/furniture/houseplant.glb" },
-  { id: "carpet", name: "Silk Persian Carpet", desc: "Luxurious handcrafted weave.", icon: "🧶", price: 2800, kind: "rug", size: [6, 4], model: "/models/furniture/rug.glb" },
-  { id: "round-rug", name: "Round Majlis Rug", desc: "Soft and round.", icon: "⭕", price: 1200, kind: "rug", size: [4, 4], model: "/models/furniture/round-rug.glb" },
-  { id: "artwork", name: "Burj Khalifa Sunset Painting", desc: "Original high-rise acrylic artwork.", icon: "🖼️", price: 1500, kind: "wall", size: [3, 2] },
+  { id: "sofa", name: "Modern Velvet Sofa", desc: "Super comfortable for guests.", icon: "🛋️", price: 3500, kind: "floor", size: [4, 2], model: "/models/furniture/couch.glb", interaction: "chair", category: "living" },
+  { id: "l-sofa", name: "L-Shaped Lounge Sofa", desc: "Room for the whole crew.", icon: "🛋️", price: 6800, kind: "floor", size: [4, 4], model: "/models/furniture/l-couch.glb", interaction: "chair", category: "living" },
+  { id: "lounge-chair", name: "Designer Lounge Chair", desc: "Mid-century comfort.", icon: "💺", price: 1800, kind: "floor", size: [2, 2], model: "/models/furniture/lounge-chair.glb", interaction: "chair", category: "living" },
+  { id: "tv", name: '65" Flat Screen TV with Table Stand', desc: "Ultra-thin 65-inch 4K OLED flat screen TV on a modern media table stand.", icon: "📺", price: 4200, kind: "floor", size: [4, 1], category: "living" },
+  { id: "coffee-table", name: "Glass Coffee Table", desc: "Tempered glass, brushed legs.", icon: "☕", price: 1600, kind: "floor", size: [3, 2], model: "/models/furniture/coffee-table.glb", category: "living" },
+  { id: "bookcase", name: "Oak Bookcase", desc: "For your growing library.", icon: "📚", price: 2100, kind: "floor", size: [2, 1], model: "/models/furniture/bookcase.glb", category: "living" },
+  { id: "desk", name: "Work Desk", desc: "Run your empire from home.", icon: "🖥️", price: 1900, kind: "floor", size: [3, 2], model: "/models/furniture/desk.glb", category: "bedroom" },
+  { id: "desk-chair", name: "Office Chair", desc: "Ergonomic and swivelling.", icon: "🪑", price: 1100, kind: "floor", size: [1, 1], model: "/models/furniture/desk-chair.glb", interaction: "chair", category: "bedroom" },
+  { id: "side-table", name: "Side Table", desc: "Perfect next to a sofa.", icon: "🟫", price: 600, kind: "floor", size: [1, 1], model: "/models/furniture/side-table.glb", category: "living" },
+  { id: "floor-lamp", name: "Arc Floor Lamp", desc: "Warm evening glow.", icon: "💡", price: 900, kind: "floor", size: [1, 1], model: "/models/furniture/floor-lamp.glb", category: "lighting" },
+  { id: "plant", name: "Fiddle Leaf Plant", desc: "Brings the room to life.", icon: "🪴", price: 450, kind: "floor", size: [1, 1], model: "/models/furniture/houseplant.glb", category: "decor" },
+  { id: "carpet", name: "Silk Persian Carpet", desc: "Luxurious handcrafted weave.", icon: "🧶", price: 2800, kind: "rug", size: [6, 4], model: "/models/furniture/rug.glb", category: "decor" },
+  { id: "round-rug", name: "Round Majlis Rug", desc: "Soft and round.", icon: "⭕", price: 1200, kind: "rug", size: [4, 4], model: "/models/furniture/round-rug.glb", category: "decor" },
+  // Luxury decor, drawn in code (components/home/LuxuryDecor.tsx).
+  { id: "chandelier-crystal", name: "Crystal Chandelier", desc: "Tiers of crystal drops that catch the light.", icon: "💎", price: 9500, kind: "ceiling", size: [2, 2], visual: "chandelier-crystal", category: "lighting" },
+  { id: "chandelier-ring", name: "Gold Ring Chandelier", desc: "Three brushed-gold halo rings of warm LED.", icon: "⭕", price: 7200, kind: "ceiling", size: [2, 2], visual: "chandelier-ring", category: "lighting" },
+  { id: "pendant-trio", name: "Smoked Glass Pendant Trio", desc: "Three globe pendants for over an island or table.", icon: "🔮", price: 3400, kind: "ceiling", size: [3, 1], visual: "pendant-trio", category: "lighting" },
+  { id: "gold-floor-lamp", name: "Brass Tripod Lamp", desc: "A tall brass tripod with a linen shade.", icon: "🪔", price: 1400, kind: "floor", size: [1, 1], visual: "tripod-lamp", category: "lighting" },
+  { id: "wall-sconces", name: "Pair of Brass Wall Sconces", desc: "Warm uplights either side of art or a bed.", icon: "🕯️", price: 1600, kind: "wall", size: [3, 1], visual: "sconces", category: "lighting" },
+  { id: "grand-piano", name: "Concert Grand Piano", desc: "Gloss black, lid up, ready for a recital.", icon: "🎹", price: 38000, kind: "floor", size: [3, 4], visual: "grand-piano", category: "living", interaction: "chair" },
+  { id: "fireplace", name: "Marble Electric Fireplace", desc: "A sleek linear flame set in white marble.", icon: "🔥", price: 12500, kind: "floor", size: [4, 1], visual: "fireplace", category: "living" },
+  { id: "aquarium", name: "Reef Aquarium", desc: "A 2-metre tank of tropical reef fish.", icon: "🐠", price: 14000, kind: "floor", size: [4, 1], visual: "aquarium", category: "living" },
+  { id: "majlis", name: "Majlis Seating", desc: "Low floor cushions in an L for gahwa with guests.", icon: "🕌", price: 6500, kind: "floor", size: [4, 4], visual: "majlis", category: "living", interaction: "chair" },
+  { id: "velvet-armchair", name: "Emerald Velvet Armchair", desc: "Deep-buttoned velvet on brass feet.", icon: "💚", price: 2900, kind: "floor", size: [2, 2], visual: "armchair", category: "living", interaction: "chair" },
+  { id: "ottoman", name: "Tufted Leather Ottoman", desc: "A round pouf in cognac leather.", icon: "🟤", price: 900, kind: "floor", size: [1, 1], visual: "ottoman", category: "living" },
+  { id: "media-wall", name: '85" Media Wall', desc: "A wall-mounted 85-inch screen in a walnut surround.", icon: "📺", price: 8800, kind: "wall", size: [5, 2], visual: "media-wall", category: "living" },
+  { id: "canopy-bed", name: "Four-Poster Canopy Bed", desc: "A king bed under brass posts and sheer drapes.", icon: "👑", price: 16500, kind: "floor", size: [4, 5], visual: "canopy-bed", category: "bedroom", interaction: "bed" },
+  { id: "vanity", name: "Hollywood Vanity", desc: "A dressing table with a bulb-lit mirror.", icon: "💄", price: 3600, kind: "floor", size: [2, 1], visual: "vanity", category: "bedroom" },
+  { id: "wardrobe", name: "Walk-in Wardrobe Unit", desc: "Glass-fronted wardrobe with lit shelves.", icon: "👔", price: 7400, kind: "floor", size: [4, 1], visual: "wardrobe", category: "bedroom" },
+  { id: "dining-set", name: "Marble Dining Set for Six", desc: "A Calacatta marble table with six velvet chairs.", icon: "🍽️", price: 11800, kind: "floor", size: [4, 3], visual: "dining-set", category: "dining" },
+  { id: "kitchen-island", name: "Marble Kitchen Island", desc: "A waterfall-edge island with three stools.", icon: "🧑‍🍳", price: 13500, kind: "floor", size: [4, 2], visual: "kitchen-island", category: "dining" },
+  { id: "coffee-bar", name: "Espresso & Gahwa Bar", desc: "A coffee machine, dallah and cups on a brass cart.", icon: "☕", price: 2400, kind: "floor", size: [2, 1], visual: "coffee-bar", category: "dining", interaction: "cooler" },
+  { id: "wine-wall", name: "Lit Beverage Wall", desc: "A glass-fronted, back-lit drinks cabinet.", icon: "🍾", price: 5200, kind: "floor", size: [3, 1], visual: "drinks-cabinet", category: "dining" },
+  { id: "mirror-gold", name: "Venetian Gold Mirror", desc: "A tall arched mirror in a gilded frame.", icon: "🪞", price: 2600, kind: "wall", size: [2, 3], visual: "mirror", category: "wall" },
+  { id: "art-abstract", name: "Gold-Leaf Abstract Canvas", desc: "Sweeping navy and gold brushwork.", icon: "🎨", price: 4200, kind: "wall", size: [3, 2], visual: "art-abstract", category: "wall" },
+  { id: "art-calligraphy", name: "Arabic Calligraphy Panel", desc: "Gold Thuluth script on black, framed.", icon: "🖋️", price: 5600, kind: "wall", size: [3, 2], visual: "art-calligraphy", category: "wall" },
+  { id: "art-desert", name: "Desert Dunes Triptych", desc: "Three panels of golden-hour dunes.", icon: "🏜️", price: 3800, kind: "wall", size: [4, 2], visual: "art-desert", category: "wall" },
+  { id: "floating-shelves", name: "Floating Oak Shelves", desc: "Two shelves with books, vases and candles.", icon: "📖", price: 1300, kind: "wall", size: [3, 2], visual: "shelves", category: "wall" },
+  { id: "sculpture", name: "Bronze Falcon Sculpture", desc: "A falcon in flight on a marble plinth.", icon: "🦅", price: 6200, kind: "floor", size: [1, 1], visual: "sculpture", category: "decor" },
+  { id: "vase-pampas", name: "Pampas Grass Floor Vase", desc: "A tall ceramic urn of dried pampas.", icon: "🌾", price: 750, kind: "floor", size: [1, 1], visual: "vase", category: "decor" },
+  { id: "indoor-palm", name: "Indoor Date Palm", desc: "A potted palm, two metres tall.", icon: "🌴", price: 1900, kind: "floor", size: [1, 1], visual: "palm", category: "decor" },
+  { id: "orchids", name: "White Orchid Arrangement", desc: "Phalaenopsis orchids in a low marble bowl.", icon: "🌸", price: 650, kind: "floor", size: [1, 1], visual: "orchids", category: "decor" },
+  { id: "console", name: "Marble Console Table", desc: "For the entrance: a lamp, books and a tray.", icon: "🕰️", price: 3100, kind: "floor", size: [3, 1], visual: "console", category: "decor" },
+  { id: "rug-silk-round", name: "Hand-Knotted Silk Rug", desc: "A round ivory-and-gold silk rug.", icon: "🟡", price: 4800, kind: "rug", size: [5, 5], visual: "rug-round", category: "decor" },
+  { id: "rug-runner", name: "Moroccan Runner", desc: "A long Beni Ourain runner for hallways.", icon: "〰️", price: 1500, kind: "rug", size: [2, 6], visual: "rug-runner", category: "decor" },
+  { id: "artwork", name: "Burj Khalifa Sunset Painting", desc: "Original high-rise acrylic artwork.", icon: "🖼️", price: 1500, kind: "wall", size: [3, 2], category: "wall" },
 ];
 
 export const getCatalogItem = (id: string) => CATALOG.find((c) => c.id === id) ?? HOME_ITEMS.find((c) => c.id === id);
 
-export type Interaction = "cooler" | "bed" | "chair" | "door";
+export type Interaction = "cooler" | "bed" | "chair" | "door" | "stairs";
 
 /** Furniture that comes with every apartment, in its starting place. It can be moved like anything else. */
 export interface BuiltIn {
   id: string;
-  model: string;
+  /** A model file, or `visual` for something drawn in code. */
+  model?: string;
+  visual?: string;
   size: [number, number];
   placement: FloorPlacement;
   interaction?: Interaction;
   yaw?: number;
+  /** Part of the building (the staircase): it can't be moved or stored. */
+  fixed?: boolean;
 }
 
-export type HousingTier = "bed_space" | "studio" | "one_bedroom" | "two_bedroom" | "three_bedroom" | "penthouse" | "villa";
+export type HousingTier = "bed_space" | "studio" | "one_bedroom" | "two_bedroom" | "three_bedroom" | "duplex" | "townhouse" | "penthouse" | "villa";
+
+/** The home layout for a listing: its property type decides first (townhouses, villas and penthouses are
+    two-storey whatever their bedrooms), then the number of bedrooms. */
+export function housingTierFor(propertyType?: string | null, bedrooms?: number | null): HousingTier {
+  const t = (propertyType ?? "").toLowerCase();
+  if (t.includes("townhouse")) return "townhouse";
+  if (t.includes("villa")) return "villa";
+  if (t.includes("penthouse")) return "penthouse";
+  if (t.includes("duplex")) return "duplex";
+  if (t.includes("studio")) return "studio";
+  return getHousingTierFromText(bedrooms && bedrooms >= 3 ? "three_bedroom" : bedrooms === 2 ? "two_bedroom" : bedrooms === 1 ? "one_bedroom" : t);
+}
 
 export function getHousingTierFromText(text?: string | null): HousingTier {
   const raw = (text || "studio").toLowerCase();
   if (raw.includes("bed_space") || raw.includes("bed space") || raw.includes("shared")) return "bed_space";
+  if (raw.includes("townhouse")) return "townhouse";
+  if (raw.includes("duplex")) return "duplex";
   if (raw.includes("three_bedroom") || raw.includes("3-bedroom") || raw.includes("3 bedroom")) return "three_bedroom";
   if (raw.includes("two_bedroom") || raw.includes("2-bedroom") || raw.includes("2 bedroom")) return "two_bedroom";
   if (raw.includes("one_bedroom") || raw.includes("1-bedroom") || raw.includes("1 bedroom")) return "one_bedroom";
@@ -129,11 +201,84 @@ export interface HousingConfig {
   hasDollhouseUpView?: boolean;
   rooms?: RoomZone[];
   activities: HomeActivityDef[];
+  /** Two-storey homes: each floor's rooms and dividing walls (the top-level `rooms` is unused then). */
+  levels?: LevelDef[];
+  /** The finishes it comes with (the owner can change them in Style). */
+  finish: HomeStyle;
+  /** Panelled walls, crown moulding and cove lighting. */
+  luxury?: boolean;
 }
+
+/** One floor of a two-storey home. */
+export interface LevelDef {
+  label: string;
+  icon: string;
+  rooms: RoomZone[];
+  /** Dividing walls, each from a to b (metres), with an optional doorway [from, to] metres along it. */
+  walls: Array<{ a: [number, number]; b: [number, number]; door?: [number, number] }>;
+}
+
+// ---------------------------------------------------------------- finishes
+
+export type FloorFinish = "oak" | "herringbone" | "walnut" | "white-marble" | "black-marble" | "travertine";
+export const FLOOR_FINISHES: Array<{ id: FloorFinish; label: string; price: number }> = [
+  { id: "oak", label: "Light oak planks", price: 0 },
+  { id: "herringbone", label: "Herringbone parquet", price: 4500 },
+  { id: "walnut", label: "Dark walnut", price: 3800 },
+  { id: "travertine", label: "Travertine stone", price: 6200 },
+  { id: "white-marble", label: "Calacatta white marble", price: 9500 },
+  { id: "black-marble", label: "Nero Marquina black marble", price: 9500 },
+];
+export const WALL_PAINTS: Array<{ id: string; label: string; color: string; price: number }> = [
+  { id: "ivory", label: "Warm ivory", color: "#f4efe6", price: 0 },
+  { id: "greige", label: "Desert greige", color: "#d8cfc2", price: 900 },
+  { id: "sage", label: "Sage green", color: "#b7c4ad", price: 900 },
+  { id: "blush", label: "Rose blush", color: "#e9cfc8", price: 900 },
+  { id: "navy", label: "Midnight navy", color: "#25324a", price: 1200 },
+  { id: "charcoal", label: "Charcoal", color: "#33363b", price: 1200 },
+  { id: "emerald", label: "Emerald", color: "#1f4d40", price: 1200 },
+  { id: "terracotta", label: "Terracotta", color: "#b5654a", price: 1200 },
+];
+/** How a home is finished: floor, wall colour, and whether the walls are panelled with mouldings. */
+export interface HomeStyle { floor: FloorFinish; wall: string; panels: boolean }
+export const PANELS_PRICE = 5500;
+
+// ---------------------------------------------------------------- two-storey floor plans
+// The 7 m square is cut into rooms by walls on the grid lines (cells are 0.5 m), so furniture never
+// straddles a wall. The staircase runs up the east side (cols 12–13, rows 4–8) on both floors.
+
+const GROUND_ROOMS = (kitchen: string, living: string): RoomZone[] => [
+  { id: "kitchen", label: kitchen, icon: "🍳", desc: "Kitchen island and dining table", center: [-0.5, 0, -1.8], bounds: { minX: -3.5, maxX: 2.5, minZ: -3.5, maxZ: 0 } },
+  { id: "living", label: living, icon: "🛋️", desc: "Sofa, media wall and lounge", center: [-0.5, 0, 1.8], bounds: { minX: -3.5, maxX: 2.5, minZ: 0, maxZ: 3.5 } },
+  { id: "hall", label: "Entrance hall & stairs", icon: "🪜", desc: "Front door and the staircase", center: [3, 0, 2.3], bounds: { minX: 2.5, maxX: 3.5, minZ: -3.5, maxZ: 3.5 } },
+];
+const GROUND_WALLS: LevelDef["walls"] = [{ a: [-3.5, 0], b: [2.5, 0], door: [2.5, 3.5] }];
+const UPPER_THREE: Pick<LevelDef, "rooms" | "walls"> = {
+  rooms: [
+    { id: "master", label: "Master suite", icon: "👑", desc: "King bed, wardrobe and vanity", center: [-0.5, 0, -1.8], bounds: { minX: -3.5, maxX: 2.5, minZ: -3.5, maxZ: 0 } },
+    { id: "bed2", label: "Bedroom 2", icon: "🛏️", desc: "Double bed and desk", center: [-2, 0, 1.8], bounds: { minX: -3.5, maxX: -0.5, minZ: 0, maxZ: 3.5 } },
+    { id: "bed3", label: "Bedroom 3", icon: "🛏️", desc: "Guest bed", center: [1, 0, 1.8], bounds: { minX: -0.5, maxX: 2.5, minZ: 0, maxZ: 3.5 } },
+    { id: "landing", label: "Landing", icon: "🪜", desc: "Top of the stairs", center: [3, 0, -2.5], bounds: { minX: 2.5, maxX: 3.5, minZ: -3.5, maxZ: 3.5 } },
+  ],
+  walls: [{ a: [-3.5, 0], b: [2.5, 0], door: [3, 4] }, { a: [-0.5, 0], b: [-0.5, 3.5], door: [1.2, 2.2] }],
+};
+const UPPER_TWO: Pick<LevelDef, "rooms" | "walls"> = {
+  rooms: [
+    { id: "master", label: "Master suite", icon: "👑", desc: "King bed and wardrobe", center: [-0.5, 0, -1.8], bounds: { minX: -3.5, maxX: 2.5, minZ: -3.5, maxZ: 0 } },
+    { id: "bed2", label: "Bedroom 2", icon: "🛏️", desc: "Double bed and desk", center: [-0.5, 0, 1.8], bounds: { minX: -3.5, maxX: 2.5, minZ: 0, maxZ: 3.5 } },
+    { id: "landing", label: "Landing", icon: "🪜", desc: "Top of the stairs", center: [3, 0, -2.5], bounds: { minX: 2.5, maxX: 3.5, minZ: -3.5, maxZ: 3.5 } },
+  ],
+  walls: [{ a: [-3.5, 0], b: [2.5, 0], door: [3, 4] }],
+};
+const twoStorey = (kitchen: string, living: string, upper: Pick<LevelDef, "rooms" | "walls">): LevelDef[] => [
+  { label: "Downstairs", icon: "⬇️", rooms: GROUND_ROOMS(kitchen, living), walls: GROUND_WALLS },
+  { label: "Upstairs", icon: "⬆️", ...upper },
+];
 
 export const HOUSING_CONFIGS: Record<HousingTier, HousingConfig> = {
   bed_space: {
     id: "bed_space",
+    finish: { floor: "oak", wall: "#e2dcd2", panels: false },
     label: "Shared Bed Space",
     area: "Deira / Bur Dubai",
     monthly: 800,
@@ -150,6 +295,7 @@ export const HOUSING_CONFIGS: Record<HousingTier, HousingConfig> = {
   },
   studio: {
     id: "studio",
+    finish: { floor: "oak", wall: "#f7f5f1", panels: false },
     label: "Studio Apartment",
     area: "Al Barsha / JVC",
     monthly: 2500,
@@ -165,6 +311,7 @@ export const HOUSING_CONFIGS: Record<HousingTier, HousingConfig> = {
   },
   one_bedroom: {
     id: "one_bedroom",
+    finish: { floor: "herringbone", wall: "#efe6d8", panels: false },
     label: "1-Bedroom Apartment",
     area: "Dubai Marina / JBR · Multi-Room",
     monthly: 7000,
@@ -186,6 +333,8 @@ export const HOUSING_CONFIGS: Record<HousingTier, HousingConfig> = {
   },
   two_bedroom: {
     id: "two_bedroom",
+    finish: { floor: "herringbone", wall: "#ece6dc", panels: true },
+    luxury: true,
     label: "2-Bedroom Apartment",
     area: "Downtown / Creek · Dollhouse Up-View",
     monthly: 11500,
@@ -210,6 +359,8 @@ export const HOUSING_CONFIGS: Record<HousingTier, HousingConfig> = {
   },
   three_bedroom: {
     id: "three_bedroom",
+    finish: { floor: "walnut", wall: "#f1ede6", panels: true },
+    luxury: true,
     label: "3-Bedroom Residence",
     area: "Dubai Hills / Downtown · Multi-Suite",
     monthly: 15500,
@@ -232,6 +383,43 @@ export const HOUSING_CONFIGS: Record<HousingTier, HousingConfig> = {
       { id: "terrace_sunset_tea", room: "balcony", label: "Terrace Sunset Tea", icon: "🌅", desc: "Sip hot Moroccan mint tea with a panoramic sunset.", animation: "drink", need: { kind: "energy", amount: 40 } },
     ],
   },
+  duplex: {
+    id: "duplex",
+    label: "2-Bedroom Duplex",
+    area: "JVC / Business Bay · Two floors",
+    monthly: 13500,
+    icon: "🏬",
+    wallColor: "#efe9df",
+    skirtingColor: "#c8b493",
+    finish: { floor: "herringbone", wall: "#efe9df", panels: true },
+    luxury: true,
+    hasDollhouseUpView: true,
+    levels: twoStorey("Kitchen & dining", "Living room", UPPER_TWO),
+    activities: [
+      { id: "duplex_breakfast", room: "kitchen", label: "Breakfast at the Island", icon: "🥐", desc: "Shakshuka and karak at the kitchen island.", animation: "eat", need: { kind: "hunger", amount: 45 } },
+      { id: "duplex_movie", room: "living", label: "Movie Night", icon: "🍿", desc: "Popcorn and a film on the big screen downstairs.", animation: "sit", need: { kind: "fun", amount: 40 } },
+      { id: "duplex_sleep", room: "master", label: "Sleep Upstairs", icon: "🛏️", desc: "A quiet night in the upstairs master suite.", animation: "sit", need: { kind: "energy", amount: 65 } },
+    ],
+  },
+  townhouse: {
+    id: "townhouse",
+    label: "3-Bedroom Townhouse",
+    area: "Arabian Ranches / Damac Hills · Two floors",
+    monthly: 16500,
+    icon: "🏡",
+    wallColor: "#f3eee6",
+    skirtingColor: "#bfa88a",
+    finish: { floor: "travertine", wall: "#f3eee6", panels: true },
+    luxury: true,
+    hasDollhouseUpView: true,
+    levels: twoStorey("Family kitchen & dining", "Living room", UPPER_THREE),
+    activities: [
+      { id: "th_bbq", room: "kitchen", label: "Family Barbecue Dinner", icon: "🍖", desc: "Grill in the garden and eat together at the dining table.", animation: "eat", need: { kind: "hunger", amount: 55 } },
+      { id: "th_games", room: "living", label: "Board Games Night", icon: "🎲", desc: "Neighbours over for Ludo and karak.", animation: "talk", need: { kind: "social", amount: 50 } },
+      { id: "th_sleep", room: "master", label: "Master Suite Sleep", icon: "🛏️", desc: "Deep sleep upstairs, away from the street.", animation: "sit", need: { kind: "energy", amount: 70 } },
+      { id: "th_study", room: "bed3", label: "Home Office Focus", icon: "💻", desc: "A quiet session in the third bedroom.", animation: "sit", need: { kind: "fun", amount: 25 }, statBoost: { name: "focus", amount: 25 } },
+    ],
+  },
   penthouse: {
     id: "penthouse",
     label: "Downtown Luxury Penthouse",
@@ -240,6 +428,10 @@ export const HOUSING_CONFIGS: Record<HousingTier, HousingConfig> = {
     icon: "🏙️",
     wallColor: "#1a1e24",
     skirtingColor: "#d4af37",
+    finish: { floor: "black-marble", wall: "#2a2d33", panels: true },
+    luxury: true,
+    hasDollhouseUpView: true,
+    levels: twoStorey("Chef's kitchen & bar", "Grand salon", UPPER_TWO),
     activities: [
       { id: "skyline_jacuzzi", label: "Skyline Jacuzzi Soak", icon: "🧖", desc: "Heated outdoor plunge jacuzzi overlooking Burj Khalifa.", animation: "sit", need: { kind: "energy", amount: 50 } },
       { id: "artisanal_mocktail", label: "Artisanal Mocktail", icon: "🍸", desc: "Craft refreshing drinks at the marble wet bar.", animation: "drink", need: { kind: "social", amount: 35 } },
@@ -254,6 +446,10 @@ export const HOUSING_CONFIGS: Record<HousingTier, HousingConfig> = {
     icon: "🌴",
     wallColor: "#faf8f5",
     skirtingColor: "#b8860b",
+    finish: { floor: "white-marble", wall: "#f6f1e8", panels: true },
+    luxury: true,
+    hasDollhouseUpView: true,
+    levels: twoStorey("Kitchen & formal dining", "Majlis & family lounge", UPPER_THREE),
     activities: [
       { id: "private_beach_swim", label: "Private Beach Swim", icon: "🏖️", desc: "Swim in the calm waters of your private Palm beach.", animation: "wave", need: { kind: "energy", amount: 60 } },
       { id: "majlis_gahwa", label: "Majlis Gahwa & Dates", icon: "🫖", desc: "Serve cardamom Arabic coffee and dates to distinguished guests.", animation: "talk", need: { kind: "social", amount: 55 } },
@@ -310,19 +506,72 @@ export const BUILT_INS_BY_TIER: Record<HousingTier, BuiltIn[]> = {
     { id: "kitchen_fridge", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 7, row: 12, rot: 0 }, interaction: "cooler" },
     { id: "balcony_chair", model: "/models/furniture/lounge-chair.glb", size: [2, 2], placement: { kind: "floor", col: 4, row: 13, rot: 0 }, interaction: "chair" },
   ],
+  duplex: [
+    { id: "stairs", visual: "staircase", size: [2, 5], placement: { kind: "floor", col: 12, row: 4, rot: 0 }, interaction: "stairs", fixed: true },
+    { id: "stairwell", visual: "stairwell", size: [2, 5], placement: { kind: "floor", col: 12, row: 4, rot: 0, level: 1 }, interaction: "stairs", fixed: true },
+    { id: "dx_fridge", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 0, row: 0, rot: 0 }, interaction: "cooler" },
+    { id: "dx_island", visual: "kitchen-island", size: [4, 2], placement: { kind: "floor", col: 2, row: 3, rot: 0 } },
+    { id: "dx_dining", visual: "dining-set", size: [4, 3], placement: { kind: "floor", col: 7, row: 1, rot: 0 } },
+    { id: "dx_sofa", model: "/models/furniture/couch.glb", size: [4, 2], placement: { kind: "floor", col: 1, row: 7, rot: 2 }, interaction: "chair" },
+    { id: "dx_table", model: "/models/furniture/coffee-table.glb", size: [3, 2], placement: { kind: "floor", col: 1, row: 9, rot: 0 } },
+    { id: "dx_tv", model: "/models/furniture/tv.glb", size: [4, 1], placement: { kind: "floor", col: 1, row: 12, rot: 0 } },
+    { id: "dx_lamp", visual: "tripod-lamp", size: [1, 1], placement: { kind: "floor", col: 6, row: 7, rot: 0 } },
+    { id: "dx_plant", visual: "palm", size: [1, 1], placement: { kind: "floor", col: 10, row: 12, rot: 0 } },
+    { id: "dx_bed", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 1, row: 0, rot: 0, level: 1 }, interaction: "bed" },
+    { id: "dx_nightstand", model: "/models/furniture/side-table.glb", size: [1, 1], placement: { kind: "floor", col: 5, row: 0, rot: 0, level: 1 } },
+    { id: "dx_wardrobe", visual: "wardrobe", size: [4, 1], placement: { kind: "floor", col: 7, row: 0, rot: 0, level: 1 } },
+    { id: "dx_bed2", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 1, row: 8, rot: 0, level: 1 }, interaction: "bed" },
+    { id: "dx_desk", model: "/models/furniture/desk.glb", size: [3, 2], placement: { kind: "floor", col: 7, row: 11, rot: 0, level: 1 }, interaction: "chair" },
+  ],
+  townhouse: [
+    { id: "stairs", visual: "staircase", size: [2, 5], placement: { kind: "floor", col: 12, row: 4, rot: 0 }, interaction: "stairs", fixed: true },
+    { id: "stairwell", visual: "stairwell", size: [2, 5], placement: { kind: "floor", col: 12, row: 4, rot: 0, level: 1 }, interaction: "stairs", fixed: true },
+    { id: "th_fridge", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 0, row: 0, rot: 0 }, interaction: "cooler" },
+    { id: "th_island", visual: "kitchen-island", size: [4, 2], placement: { kind: "floor", col: 2, row: 3, rot: 0 } },
+    { id: "th_dining", visual: "dining-set", size: [4, 3], placement: { kind: "floor", col: 7, row: 1, rot: 0 } },
+    { id: "th_sofa", model: "/models/furniture/couch.glb", size: [4, 2], placement: { kind: "floor", col: 1, row: 7, rot: 2 }, interaction: "chair" },
+    { id: "th_table", model: "/models/furniture/coffee-table.glb", size: [3, 2], placement: { kind: "floor", col: 1, row: 9, rot: 0 } },
+    { id: "th_tv", model: "/models/furniture/tv.glb", size: [4, 1], placement: { kind: "floor", col: 1, row: 12, rot: 0 } },
+    { id: "th_lamp", visual: "tripod-lamp", size: [1, 1], placement: { kind: "floor", col: 6, row: 7, rot: 0 } },
+    { id: "th_armchair", visual: "armchair", size: [2, 2], placement: { kind: "floor", col: 9, row: 9, rot: 0 }, interaction: "chair" },
+    { id: "th_bed", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 1, row: 0, rot: 0, level: 1 }, interaction: "bed" },
+    { id: "th_nightstand", model: "/models/furniture/side-table.glb", size: [1, 1], placement: { kind: "floor", col: 5, row: 0, rot: 0, level: 1 } },
+    { id: "th_wardrobe", visual: "wardrobe", size: [4, 1], placement: { kind: "floor", col: 7, row: 0, rot: 0, level: 1 } },
+    { id: "th_bed2", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 0, row: 8, rot: 0, level: 1 }, interaction: "bed" },
+    { id: "th_bed3", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 7, row: 8, rot: 0, level: 1 }, interaction: "bed" },
+  ],
   penthouse: [
-    { id: "pent_bed", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 1, row: 0, rot: 0 }, interaction: "bed" },
-    { id: "pent_sofa", model: "/models/furniture/l-couch.glb", size: [4, 4], placement: { kind: "floor", col: 7, row: 5, rot: 2 }, interaction: "chair" },
-    { id: "pent_tv", model: "/models/furniture/tv.glb", size: [4, 1], placement: { kind: "floor", col: 7, row: 11, rot: 0 } },
-    { id: "pent_fridge", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 12, row: 0, rot: 0 }, interaction: "cooler" },
-    { id: "pent_lamp", model: "/models/furniture/floor-lamp.glb", size: [1, 1], placement: { kind: "floor", col: 6, row: 5, rot: 0 } },
+    { id: "stairs", visual: "staircase", size: [2, 5], placement: { kind: "floor", col: 12, row: 4, rot: 0 }, interaction: "stairs", fixed: true },
+    { id: "stairwell", visual: "stairwell", size: [2, 5], placement: { kind: "floor", col: 12, row: 4, rot: 0, level: 1 }, interaction: "stairs", fixed: true },
+    { id: "ph_fridge", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 0, row: 0, rot: 0 }, interaction: "cooler" },
+    { id: "ph_island", visual: "kitchen-island", size: [4, 2], placement: { kind: "floor", col: 2, row: 3, rot: 0 } },
+    { id: "ph_dining", visual: "dining-set", size: [4, 3], placement: { kind: "floor", col: 7, row: 1, rot: 0 } },
+    { id: "ph_sofa", model: "/models/furniture/l-couch.glb", size: [4, 4], placement: { kind: "floor", col: 0, row: 7, rot: 2 }, interaction: "chair" },
+    { id: "ph_table", model: "/models/furniture/coffee-table.glb", size: [3, 2], placement: { kind: "floor", col: 4, row: 10, rot: 0 } },
+    { id: "ph_tv", model: "/models/furniture/tv.glb", size: [4, 1], placement: { kind: "floor", col: 1, row: 12, rot: 0 } },
+    { id: "ph_lamp", visual: "tripod-lamp", size: [1, 1], placement: { kind: "floor", col: 6, row: 7, rot: 0 } },
+    { id: "ph_piano", visual: "grand-piano", size: [3, 4], placement: { kind: "floor", col: 9, row: 8, rot: 0 }, interaction: "chair" },
+    { id: "ph_bed", visual: "canopy-bed", size: [4, 5], placement: { kind: "floor", col: 1, row: 0, rot: 0, level: 1 }, interaction: "bed" },
+    { id: "ph_vanity", visual: "vanity", size: [2, 1], placement: { kind: "floor", col: 6, row: 0, rot: 0, level: 1 } },
+    { id: "ph_wardrobe", visual: "wardrobe", size: [4, 1], placement: { kind: "floor", col: 8, row: 0, rot: 0, level: 1 } },
+    { id: "ph_bed2", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 1, row: 8, rot: 0, level: 1 }, interaction: "bed" },
+    { id: "ph_chair", visual: "armchair", size: [2, 2], placement: { kind: "floor", col: 8, row: 9, rot: 0, level: 1 }, interaction: "chair" },
   ],
   villa: [
-    { id: "villa_bed", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 1, row: 0, rot: 0 }, interaction: "bed" },
-    { id: "villa_couch", model: "/models/furniture/couch.glb", size: [4, 2], placement: { kind: "floor", col: 7, row: 6, rot: 2 }, interaction: "chair" },
-    { id: "villa_table", model: "/models/furniture/coffee-table.glb", size: [3, 2], placement: { kind: "floor", col: 7, row: 9, rot: 0 } },
-    { id: "villa_fridge", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 12, row: 0, rot: 0 }, interaction: "cooler" },
-    { id: "villa_plant", model: "/models/furniture/houseplant.glb", size: [1, 1], placement: { kind: "floor", col: 12, row: 4, rot: 0 } },
+    { id: "stairs", visual: "staircase", size: [2, 5], placement: { kind: "floor", col: 12, row: 4, rot: 0 }, interaction: "stairs", fixed: true },
+    { id: "stairwell", visual: "stairwell", size: [2, 5], placement: { kind: "floor", col: 12, row: 4, rot: 0, level: 1 }, interaction: "stairs", fixed: true },
+    { id: "vl_fridge", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 0, row: 0, rot: 0 }, interaction: "cooler" },
+    { id: "vl_island", visual: "kitchen-island", size: [4, 2], placement: { kind: "floor", col: 2, row: 3, rot: 0 } },
+    { id: "vl_dining", visual: "dining-set", size: [4, 3], placement: { kind: "floor", col: 7, row: 1, rot: 0 } },
+    { id: "vl_majlis", visual: "majlis", size: [4, 4], placement: { kind: "floor", col: 1, row: 8, rot: 0 }, interaction: "chair" },
+    { id: "vl_aquarium", visual: "aquarium", size: [4, 1], placement: { kind: "floor", col: 6, row: 13, rot: 0 } },
+    { id: "vl_coffee", visual: "coffee-bar", size: [2, 1], placement: { kind: "floor", col: 9, row: 8, rot: 0 }, interaction: "cooler" },
+    { id: "vl_palm", visual: "palm", size: [1, 1], placement: { kind: "floor", col: 11, row: 12, rot: 0 } },
+    { id: "vl_bed", visual: "canopy-bed", size: [4, 5], placement: { kind: "floor", col: 1, row: 0, rot: 0, level: 1 }, interaction: "bed" },
+    { id: "vl_vanity", visual: "vanity", size: [2, 1], placement: { kind: "floor", col: 6, row: 0, rot: 0, level: 1 } },
+    { id: "vl_wardrobe", visual: "wardrobe", size: [4, 1], placement: { kind: "floor", col: 8, row: 0, rot: 0, level: 1 } },
+    { id: "vl_bed2", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 0, row: 8, rot: 0, level: 1 }, interaction: "bed" },
+    { id: "vl_bed3", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 7, row: 8, rot: 0, level: 1 }, interaction: "bed" },
   ],
 };
 
@@ -333,6 +582,15 @@ const HOME_NAMES: Record<string, [string, string]> = {
   study_desk: ["Executive Work Desk", "🖥️"], study_chair: ["Ergonomic Chair", "🪑"], bookcase: ["Oak Bookcase", "📚"], guest_bed: ["Guest Daybed", "🛏️"], bed2_bed: ["Guest Bedroom Bed", "🛏️"],
   living_couch: ["Sectional Sofa", "🛋️"], living_table: ["Glass Coffee Table", "☕"], living_tv: ["4K Smart TV", "📺"], balcony_chair: ["Balcony Lounge Chair", "💺"],
   pent_bed: ["King Suite Bed", "🛏️"], pent_sofa: ["L-Shaped Velvet Lounge", "🛋️"], pent_tv: ["OLED Entertainment Wall", "📺"], pent_fridge: ["Wet Bar Fridge", "🧊"], pent_lamp: ["Arc Designer Lamp", "💡"],
+  stairs: ["Staircase", "🪜"], stairwell: ["Stairs down", "🪜"],
+  dx_fridge: ["Fridge", "🧊"], dx_island: ["Kitchen Island", "🧑‍🍳"], dx_dining: ["Dining Table", "🍽️"], dx_sofa: ["Sofa", "🛋️"], dx_table: ["Coffee Table", "☕"], dx_tv: ["TV", "📺"], dx_lamp: ["Brass Lamp", "🪔"], dx_plant: ["Indoor Palm", "🌴"],
+  dx_bed: ["Master Bed", "🛏️"], dx_nightstand: ["Nightstand", "🟫"], dx_wardrobe: ["Wardrobe", "👔"], dx_bed2: ["Bedroom 2 Bed", "🛏️"], dx_desk: ["Desk", "🖥️"],
+  th_fridge: ["Fridge", "🧊"], th_island: ["Kitchen Island", "🧑‍🍳"], th_dining: ["Family Dining Table", "🍽️"], th_sofa: ["Sofa", "🛋️"], th_table: ["Coffee Table", "☕"], th_tv: ["TV", "📺"], th_lamp: ["Brass Lamp", "🪔"], th_armchair: ["Velvet Armchair", "💚"],
+  th_bed: ["Master Bed", "🛏️"], th_nightstand: ["Nightstand", "🟫"], th_wardrobe: ["Wardrobe", "👔"], th_bed2: ["Bedroom 2 Bed", "🛏️"], th_bed3: ["Bedroom 3 Bed", "🛏️"],
+  ph_fridge: ["Wet Bar Fridge", "🧊"], ph_island: ["Marble Island", "🧑‍🍳"], ph_dining: ["Dining for Six", "🍽️"], ph_sofa: ["L-Shaped Velvet Lounge", "🛋️"], ph_table: ["Coffee Table", "☕"], ph_tv: ["OLED TV", "📺"], ph_lamp: ["Brass Lamp", "🪔"], ph_piano: ["Grand Piano", "🎹"],
+  ph_bed: ["Four-Poster Canopy Bed", "👑"], ph_vanity: ["Vanity", "💄"], ph_wardrobe: ["Wardrobe", "👔"], ph_bed2: ["Guest Bed", "🛏️"], ph_chair: ["Velvet Armchair", "💚"],
+  vl_fridge: ["Gourmet Fridge", "🧊"], vl_island: ["Marble Island", "🧑‍🍳"], vl_dining: ["Formal Dining", "🍽️"], vl_majlis: ["Majlis", "🕌"], vl_aquarium: ["Reef Aquarium", "🐠"], vl_coffee: ["Gahwa Bar", "☕"], vl_palm: ["Date Palm", "🌴"],
+  vl_bed: ["Palatial Canopy Bed", "👑"], vl_vanity: ["Vanity", "💄"], vl_wardrobe: ["Walk-in Wardrobe", "👔"], vl_bed2: ["Bedroom 2 Bed", "🛏️"], vl_bed3: ["Bedroom 3 Bed", "🛏️"],
   villa_bed: ["Palatial Suite Bed", "🛏️"], villa_couch: ["Majlis Sofa", "🛋️"], villa_table: ["Glass Coffee Table", "☕"], villa_fridge: ["Gourmet Fridge", "🧊"], villa_plant: ["Fiddle Leaf Plant", "🪴"],
 };
 
@@ -343,6 +601,8 @@ const ALL_BUILT_IN_LIST = [
   ...BUILT_INS_BY_TIER.one_bedroom,
   ...BUILT_INS_BY_TIER.two_bedroom,
   ...BUILT_INS_BY_TIER.three_bedroom,
+  ...BUILT_INS_BY_TIER.duplex,
+  ...BUILT_INS_BY_TIER.townhouse,
   ...BUILT_INS_BY_TIER.penthouse,
   ...BUILT_INS_BY_TIER.villa,
 ];
@@ -358,9 +618,12 @@ export const HOME_ITEMS: CatalogItem[] = DEDUPED_BUILT_INS.map((b) => ({
   kind: "floor",
   size: b.size,
   model: b.model,
+  visual: b.visual,
   yaw: b.yaw,
   builtIn: true,
   interaction: b.interaction,
+  fixed: b.fixed,
+  category: "living" as ShopCategory,
 }));
 
 /** A home's furniture including the built-ins for that tier (in their starting place until they're moved). */
@@ -426,8 +689,8 @@ export function wallOffsetAt(wall: Wall, point: { x: number; z: number }, width:
   return Math.max(0, Math.min(GRID - width, offset));
 }
 
-/** Converts a hit point on the floor into the placement of an item centred there. */
-export function floorPlacementAt(size: [number, number], rot: Rotation, point: { x: number; z: number }): FloorPlacement {
+/** Converts a hit point on the floor into the placement of an item centred there (on floor `level`). */
+export function floorPlacementAt(size: [number, number], rot: Rotation, point: { x: number; z: number }, level = 0): FloorPlacement {
   const [w, d] = rotatedSize(size, rot);
   const col = Math.round((point.x + ROOM_SIZE / 2) / CELL - w / 2);
   const row = Math.round((point.z + ROOM_SIZE / 2) / CELL - d / 2);
@@ -436,8 +699,12 @@ export function floorPlacementAt(size: [number, number], rot: Rotation, point: {
     rot,
     col: Math.max(0, Math.min(GRID - w, col)),
     row: Math.max(0, Math.min(GRID - d, row)),
+    ...(level ? { level } : {}),
   };
 }
+
+/** Rugs lie under things, ceiling lights hang over them, everything else is solid: each only clashes with its own layer. */
+const layerOf = (kind: CatalogItem["kind"]) => (kind === "rug" ? "rug" : kind === "ceiling" ? "ceiling" : "solid");
 
 function floorCells(size: [number, number], p: FloorPlacement): string[] {
   const [w, d] = rotatedSize(size, p.rot);
@@ -452,13 +719,16 @@ function spansOverlap(a: number, aw: number, b: number, bw: number) {
 
 /** Whether `item` can go at `placement` given everything else already in the room. */
 export function isPlacementValid(item: CatalogItem, placement: Placement, others: OwnedFurniture[], ignoreUid?: string): boolean {
-  const placed = others.filter((o) => o.uid !== ignoreUid && o.placement);
+  // Only what's on the same floor matters.
+  const level = levelOf(placement);
+  const placed = others.filter((o) => o.uid !== ignoreUid && o.placement && levelOf(o.placement) === level);
 
   if (placement.kind === "wall") {
     if (item.kind !== "wall") return false;
     const w = item.size[0];
     if (placement.offset < 0 || placement.offset + w > GRID) return false;
-    if (placement.wall === DOOR.wall && spansOverlap(placement.offset, w, DOOR.offset, DOOR.width)) return false;
+    // The front door is downstairs only.
+    if (level === 0 && placement.wall === DOOR.wall && spansOverlap(placement.offset, w, DOOR.offset, DOOR.width)) return false;
     if (placement.wall === WINDOW.wall && spansOverlap(placement.offset, w, WINDOW.offset, WINDOW.width)) return false;
     return !placed.some((o) => {
       const p = o.placement!;
@@ -472,26 +742,27 @@ export function isPlacementValid(item: CatalogItem, placement: Placement, others
   if (placement.col < 0 || placement.row < 0 || placement.col + w > GRID || placement.row + d > GRID) return false;
 
   const mine = new Set(floorCells(item.size, placement));
-  const isRug = item.kind === "rug";
+  const layer = layerOf(item.kind);
 
-  // Rugs only clash with rugs; everything else clashes with solid furniture and reserved cells.
-  if (!isRug) {
+  // Solid furniture keeps clear of the doorway and where the citizen stands (downstairs).
+  if (layer === "solid" && level === 0) {
     for (const [c, r] of RESERVED_CELLS) if (mine.has(`${c},${r}`)) return false;
   }
   return !placed.some((o) => {
     const p = o.placement!;
     const other = getCatalogItem(o.itemId);
-    if (!other || p.kind !== "floor" || (other.kind === "rug") !== isRug) return false;
+    if (!other || p.kind !== "floor" || layerOf(other.kind) !== layer) return false;
     return floorCells(other.size, p).some((k) => mine.has(k));
   });
 }
 
 /** First free spot for an item, scanning from the room centre outwards (optionally at a fixed rotation). */
-export function findFreePlacement(item: CatalogItem, others: OwnedFurniture[], rot?: Rotation): Placement | null {
+export function findFreePlacement(item: CatalogItem, others: OwnedFurniture[], rot?: Rotation, level = 0): Placement | null {
+  const lv = level ? { level } : {};
   if (item.kind === "wall") {
     for (const wall of ["north", "east", "south", "west"] as Wall[]) {
       for (let offset = 0; offset <= GRID - item.size[0]; offset++) {
-        const p: WallPlacement = { kind: "wall", wall, offset };
+        const p: WallPlacement = { kind: "wall", wall, offset, ...lv };
         if (isPlacementValid(item, p, others)) return p;
       }
     }
@@ -500,7 +771,7 @@ export function findFreePlacement(item: CatalogItem, others: OwnedFurniture[], r
   const candidates: FloorPlacement[] = [];
   for (const r of rot === undefined ? ([0, 1] as Rotation[]) : [rot]) {
     const [w, d] = rotatedSize(item.size, r);
-    for (let col = 0; col <= GRID - w; col++) for (let row = 0; row <= GRID - d; row++) candidates.push({ kind: "floor", col, row, rot: r });
+    for (let col = 0; col <= GRID - w; col++) for (let row = 0; row <= GRID - d; row++) candidates.push({ kind: "floor", col, row, rot: r, ...lv });
   }
   const dist = (p: FloorPlacement) => {
     const c = floorCenter(item.size, p);

@@ -16,7 +16,10 @@ import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoo
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { gameAudio } from "@/utils/gameAudio";
 import { isNewCitizen, useRequireCitizen, adjustBalance, buyFurniture, setFurniturePlacement, signOut, updateCitizen, DEFAULT_NEEDS, type Needs } from "@/lib/citizenStore";
-import { CATALOG, getCatalogItem, withHomeItems, HOUSING_CONFIGS, type CatalogItem, type Placement, type Rotation, type HousingTier, type HomeActivityDef } from "@/lib/furniture";
+import {
+  CATALOG, FLOOR_FINISHES, PANELS_PRICE, SHOP_CATEGORIES, WALL_PAINTS, getCatalogItem, getHousingTierFromText, withHomeItems, HOUSING_CONFIGS,
+  type CatalogItem, type HomeStyle, type Interaction, type Placement, type Rotation, type HousingTier, type HomeActivityDef, type ShopCategory,
+} from "@/lib/furniture";
 import { useOnlineCount, formatOnline } from "@/lib/presence";
 import { useLifeLoop } from "@/lib/lifeLoop";
 import { WardrobeModal } from "@/components/avatar/WardrobeModal";
@@ -24,6 +27,16 @@ import { getPendingVenue } from "@/components/city/VenueDressCodeModal";
 import { NeedsDock } from "@/components/life/NeedsDock";
 import { gainSkill, lifeEvent } from "@/lib/life";
 import BLUEPRINT from "@/data/life/blueprint.json";
+
+/** Small previews of the floor finishes in the Style tab. */
+const FLOOR_SWATCH: Record<string, string> = {
+  oak: "repeating-linear-gradient(0deg,#c8935f 0 10px,#b98250 10px 11px)",
+  walnut: "repeating-linear-gradient(0deg,#5b3a24 0 10px,#3f2818 10px 11px)",
+  herringbone: "repeating-linear-gradient(45deg,#b98a57 0 8px,#a97a49 8px 16px),#b98a57",
+  travertine: "repeating-linear-gradient(0deg,#dfcfb3 0 6px,#d3c09f 6px 8px)",
+  "white-marble": "linear-gradient(135deg,#f5f3ef 40%,#c9c9cf 45%,#f5f3ef 50%)",
+  "black-marble": "linear-gradient(135deg,#17171a 40%,#d9d9d9 44%,#17171a 48%)",
+};
 
 export default function HomePage() {
   const router = useRouter();
@@ -68,35 +81,55 @@ export default function HomePage() {
   const [buyModalOpen, setBuyModalOpen] = useState(false);
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
-  const [shopTab, setShopTab] = useState<"shop" | "storage">("shop");
+  const [shopTab, setShopTab] = useState<"shop" | "storage" | "style">("shop");
+  const [shopCat, setShopCat] = useState<ShopCategory | "all">("all");
   const [placing, setPlacing] = useState<PlacingState | null>(null);
   const [decorating, setDecorating] = useState(false);
   const [turns, setTurns] = useState(0);
 
   const life = useLifeLoop();
   const rawTier = (life?.blueprint?.housing || citizen?.home || "studio").toLowerCase();
-  const housingTier: HousingTier = 
-    rawTier.includes("bed_space") || rawTier.includes("bed space") || rawTier.includes("shared") ? "bed_space"
-    : rawTier.includes("three_bedroom") || rawTier.includes("3-bedroom") || rawTier.includes("3 bedroom") ? "three_bedroom"
-    : rawTier.includes("two_bedroom") || rawTier.includes("2-bedroom") || rawTier.includes("2 bedroom") ? "two_bedroom"
-    : rawTier.includes("one_bedroom") || rawTier.includes("1-bedroom") || rawTier.includes("1 bedroom") ? "one_bedroom"
-    : rawTier.includes("penthouse") ? "penthouse"
-    : rawTier.includes("villa") ? "villa"
-    : "studio";
+  const housingTier: HousingTier = getHousingTierFromText(rawTier);
 
   const housingConfig = HOUSING_CONFIGS[housingTier] ?? HOUSING_CONFIGS.studio;
-  const isMultiRoom = housingTier === "one_bedroom" || housingTier === "two_bedroom" || housingTier === "three_bedroom";
+  // Two-storey homes (duplex, townhouse, penthouse, villa) show one floor at a time.
+  const levels = housingConfig.levels;
+  const [level, setLevel] = useState(0);
+  const rooms = levels ? levels[Math.min(level, levels.length - 1)].rooms : housingConfig.rooms;
+  const isMultiRoom = !!rooms?.length;
+  const homeStyle: HomeStyle = citizen?.homeStyle?.[housingTier] ?? housingConfig.finish;
   const [upView, setUpView] = useState(isMultiRoom);
   const [activeRoomId, setActiveRoomId] = useState<string>(housingTier === "one_bedroom" ? "bedroom" : "living");
   const [ritualsExpanded, setRitualsExpanded] = useState(false);
   const [tierModalOpen, setTierModalOpen] = useState(false);
 
   useEffect(() => {
+    setLevel(0);
     if (isMultiRoom) {
       setUpView(true);
       setActiveRoomId(housingTier === "one_bedroom" ? "bedroom" : "living");
     }
-  }, [housingTier, isMultiRoom]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [housingTier]);
+
+  /** Go to another floor: you arrive on the hall downstairs or the landing upstairs. */
+  const changeLevel = (n: number) => {
+    if (!levels || n === level || n < 0 || n >= levels.length) return;
+    setPlacing(null);
+    setLevel(n);
+    setActiveRoomId(n > 0 ? "landing" : "hall");
+  };
+
+  /** Re-finish the home (floor, paint, panelling), paying for the change. */
+  const restyle = (change: Partial<HomeStyle>, price: number, label: string) => {
+    if (price > 0 && !adjustBalance(-price)) {
+      showToast("⚠️ Not enough AED in your wallet!");
+      return;
+    }
+    updateCitizen((c) => ({ ...c, homeStyle: { ...c.homeStyle, [housingTier]: { ...homeStyle, ...change } } }));
+    gameAudio.playCoinSound();
+    showToast(`✨ ${label}${price ? ` · AED ${price.toLocaleString()}` : ""}`);
+  };
 
   const furniture = citizen?.furniture ?? [];
   const stored = withHomeItems(furniture, housingTier).filter((f) => !f.placement);
@@ -185,7 +218,7 @@ export default function HomePage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [placing]);
 
-  const handleInteractObject = (type: "cooler" | "bed" | "chair" | "door") => {
+  const handleInteractObject = (type: Interaction) => {
     gameAudio.playClickSound();
 
     if (type === "cooler") {
@@ -201,6 +234,8 @@ export default function HomePage() {
       showToast("🪑 Sat down to unwind. Fun increased!");
     } else if (type === "door") {
       router.push("/explore");
+    } else if (type === "stairs") {
+      showToast(level === 0 ? "🪜 Heading upstairs…" : "🪜 Heading downstairs…");
     }
   };
 
@@ -223,6 +258,9 @@ export default function HomePage() {
         onPickUp={handlePickUp}
         onPlaceBlocked={() => showToast("🚫 It doesn't fit there. Try a green spot.")}
         onInteractObject={handleInteractObject}
+        level={level}
+        onChangeLevel={changeLevel}
+        homeStyle={homeStyle}
       />
 
       {/* Camera controls */}
@@ -381,10 +419,23 @@ export default function HomePage() {
           </div>
 
           {/* Room Pills for Multi-Room Layouts (1-Bed, 2-Bed, 3-Bed) */}
-          {housingConfig.rooms && housingConfig.rooms.length > 0 && (
+          {levels && (
+            <div className="flex items-center gap-1 bg-slate-900/90 backdrop-blur-md p-1 rounded-full shadow-lg">
+              {levels.map((l, i) => (
+                <button
+                  key={l.label}
+                  onClick={() => { changeLevel(i); gameAudio.playClickSound(); }}
+                  className={`px-3 py-1 rounded-full text-[11px] font-black whitespace-nowrap transition-all ${level === i ? "bg-amber-400 text-slate-900 shadow" : "text-slate-200 hover:bg-white/10"}`}
+                >
+                  {l.icon} {l.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {rooms && rooms.length > 0 && (
             <div className="flex items-center gap-1 bg-white/95 backdrop-blur-md px-2 py-1 rounded-full shadow-lg border border-slate-200 overflow-x-auto max-w-[92vw]">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-1.5 pr-0.5">Rooms:</span>
-              {housingConfig.rooms.map((r) => {
+              {rooms.map((r) => {
                 const isSelected = activeRoomId === r.id;
                 return (
                   <button
@@ -490,8 +541,8 @@ export default function HomePage() {
                   <div className="flex items-center gap-1.5 text-[11px] font-black text-slate-800">
                     <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                     <span>Home Rituals & Activities</span>
-                    {housingConfig.rooms && (
-                      <span className="text-[10px] text-slate-400 font-semibold">({housingConfig.rooms?.find(r => r.id === activeRoomId)?.label ?? "All"})</span>
+                    {rooms && (
+                      <span className="text-[10px] text-slate-400 font-semibold">({rooms?.find(r => r.id === activeRoomId)?.label ?? "All"})</span>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
@@ -510,7 +561,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                  {(housingConfig.rooms
+                  {(rooms
                     ? housingConfig.activities.filter((a) => !a.room || a.room === activeRoomId || a.room === "living" || a.room === "bedroom")
                     : housingConfig.activities
                   ).slice(0, 4).map((act) => (
@@ -672,11 +723,79 @@ export default function HomePage() {
           <div className="flex gap-1 p-1 mt-3 bg-slate-100 rounded-xl text-xs font-black">
             <button onClick={() => setShopTab("shop")} className={`flex-1 py-1.5 rounded-lg ${shopTab === "shop" ? "bg-white shadow text-slate-900" : "text-slate-500"}`}>Shop</button>
             <button onClick={() => setShopTab("storage")} className={`flex-1 py-1.5 rounded-lg ${shopTab === "storage" ? "bg-white shadow text-slate-900" : "text-slate-500"}`}>Storage{stored.length ? ` (${stored.length})` : ""}</button>
+            <button onClick={() => setShopTab("style")} className={`flex-1 py-1.5 rounded-lg ${shopTab === "style" ? "bg-white shadow text-slate-900" : "text-slate-500"}`}>✨ Style</button>
           </div>
 
-          {shopTab === "shop" ? (
+          {shopTab === "style" ? (
+            <div className="pt-3 space-y-4">
+              <section>
+                <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Flooring</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {FLOOR_FINISHES.map((f) => {
+                    const current = homeStyle.floor === f.id;
+                    return (
+                      <button
+                        key={f.id}
+                        disabled={current}
+                        onClick={() => restyle({ floor: f.id }, f.price, `New floor: ${f.label}`)}
+                        className={`p-2.5 rounded-2xl border text-left transition-all ${current ? "border-emerald-500 bg-emerald-50" : "border-slate-200 hover:bg-slate-50 active:scale-95"}`}
+                      >
+                        <span className={`block h-8 rounded-lg mb-1.5`} style={{ background: FLOOR_SWATCH[f.id] }} />
+                        <span className="block text-[11px] font-black text-slate-900 leading-tight">{f.label}</span>
+                        <span className="text-[10px] font-mono font-bold text-emerald-600">{current ? "In your home" : f.price ? `AED ${f.price.toLocaleString()}` : "Free"}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+              <section>
+                <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Wall paint</h4>
+                <div className="grid grid-cols-4 gap-2">
+                  {WALL_PAINTS.map((w) => {
+                    const current = homeStyle.wall.toLowerCase() === w.color;
+                    return (
+                      <button
+                        key={w.id}
+                        disabled={current}
+                        title={w.label}
+                        onClick={() => restyle({ wall: w.color }, w.price, `Walls painted ${w.label}`)}
+                        className={`p-1.5 rounded-2xl border text-center transition-all ${current ? "border-emerald-500 bg-emerald-50" : "border-slate-200 hover:bg-slate-50 active:scale-95"}`}
+                      >
+                        <span className="block h-8 rounded-lg border border-black/5" style={{ background: w.color }} />
+                        <span className="block text-[10px] font-black text-slate-800 mt-1 leading-tight">{w.label}</span>
+                        <span className="text-[9px] font-mono font-bold text-emerald-600">{current ? "✓" : w.price ? `AED ${w.price.toLocaleString()}` : "Free"}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+              <section className="p-3 rounded-2xl border border-slate-200 flex items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-xs font-black text-slate-900">🏛️ Panelled walls & cove lighting</h4>
+                  <p className="text-[11px] text-slate-500">Raised panels, a chair rail, crown moulding and a warm LED cove.</p>
+                </div>
+                <button
+                  onClick={() => restyle({ panels: !homeStyle.panels }, homeStyle.panels ? 0 : PANELS_PRICE, homeStyle.panels ? "Panelling removed" : "Walls panelled")}
+                  className={`px-3 py-1.5 rounded-xl font-black text-xs whitespace-nowrap active:scale-95 ${homeStyle.panels ? "bg-slate-100 text-slate-700" : "bg-emerald-500 text-white"}`}
+                >
+                  {homeStyle.panels ? "Remove" : `AED ${PANELS_PRICE.toLocaleString()}`}
+                </button>
+              </section>
+            </div>
+          ) : shopTab === "shop" ? (
             <div className="space-y-2.5 pt-3">
-              {CATALOG.map(item => {
+              <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+                {[{ id: "all" as const, label: "All", icon: "🛍️" }, ...SHOP_CATEGORIES].map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => setShopCat(c.id)}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-black whitespace-nowrap border ${shopCat === c.id ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200"}`}
+                  >
+                    {c.icon} {c.label}
+                  </button>
+                ))}
+              </div>
+              {CATALOG.filter((item) => shopCat === "all" || item.category === shopCat).map(item => {
                 const owned = furniture.filter((f) => f.itemId === item.id).length;
                 return (
                   <div key={item.id} className="p-3 rounded-2xl border border-slate-100 bg-slate-50 flex items-center justify-between gap-3">
@@ -749,7 +868,8 @@ export default function HomePage() {
                   key={h.id}
                   onClick={() => {
                     updateCitizen((c) => ({ ...c, home: `${h.label}, ${h.area.split(" · ")[0]}` }));
-                    if (h.id === "one_bedroom" || h.id === "two_bedroom" || h.id === "three_bedroom") {
+                    const cfg = HOUSING_CONFIGS[h.id as HousingTier];
+                    if (cfg?.rooms?.length || cfg?.levels) {
                       setUpView(true);
                       setActiveRoomId(h.id === "one_bedroom" ? "bedroom" : "living");
                     } else {

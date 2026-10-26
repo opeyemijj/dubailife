@@ -8,12 +8,13 @@ import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import type { AvatarLookProps } from "../onboarding/AvatarCanvas";
 import { restPose, type RestPose } from "./restPose";
+import { LuxuryDecor } from "./LuxuryDecor";
 import { CitizenAvatar, StudioEnvironment, type AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 import { SceneLoadingOverlay } from "@/components/GameLoadingScreen";
 import {
   AVATAR_SPOT, BUILT_INS, CELL, DOOR, GRID, ROOM_SIZE, WALL_HEIGHT, WINDOW,
-  findFreePlacement, floorCenter, floorPlacementAt, getCatalogItem, isPlacementValid, rotatedSize, wallOffsetAt, wallTransform, withHomeItems,
-  HOUSING_CONFIGS, type HousingTier, type RoomZone,
+  findFreePlacement, floorCenter, floorPlacementAt, getCatalogItem, isPlacementValid, levelOf, rotatedSize, wallOffsetAt, wallTransform, withHomeItems,
+  HOUSING_CONFIGS, type FloorFinish, type HomeStyle, type HousingTier, type LevelDef, type RoomZone,
   type CatalogItem, type FloorPlacement, type Interaction, type OwnedFurniture, type Placement, type Rotation, type Wall,
 } from "@/lib/furniture";
 
@@ -56,6 +57,11 @@ export interface ApartmentRoomProps {
   /** Called when a tap lands somewhere the item doesn't fit. */
   onPlaceBlocked?: () => void;
   onInteractObject?: (type: Interaction) => void;
+  /** Two-storey homes: the floor on show (0 downstairs, 1 upstairs). Taking the stairs asks to change it. */
+  level?: number;
+  onChangeLevel?: (level: number) => void;
+  /** The owner's floor, wall paint and panelling (defaults to what the home came with). */
+  homeStyle?: HomeStyle;
   /** Other people in the room: the resident when visiting, and other citizens here right now. */
   people?: Person[];
 }
@@ -526,6 +532,7 @@ function FlatScreenTVOnStand({ size, ghost }: { size: [number, number]; ghost?: 
 
 
 function ItemVisual({ item, ghost }: { item: CatalogItem; ghost?: "valid" | "invalid" }) {
+  if (item.visual) return <LuxuryDecor visual={item.visual} size={item.size} ghost={ghost} />;
   if (item.id === "tv" || item.id.includes("tv")) return <FlatScreenTVOnStand size={item.size} ghost={ghost} />;
   if (item.kind === "wall") return <SunsetPainting size={item.size} ghost={ghost} />;
   return <FurnitureModel url={item.model!} size={item.size} yaw={item.yaw} ghost={ghost} />;
@@ -561,8 +568,8 @@ function wallFrame(wall: Wall) {
 }
 
 /** One wall with optional door / window cut-outs, drawn as solid segments. Local x runs along the wall. */
-function WallSegments({ wall, color = "#f1e4cf", skirtingColor = "#e7d5b8" }: { wall: Wall; color?: string; skirtingColor?: string }) {
-  const opening = wall === DOOR.wall ? { ...DOOR, bottom: 0, top: 2.2 } : wall === WINDOW.wall ? { ...WINDOW, bottom: 1.0, top: 2.3 } : null;
+function WallSegments({ wall, color = "#f1e4cf", skirtingColor = "#e7d5b8", noDoor, panels }: { wall: Wall; color?: string; skirtingColor?: string; noDoor?: boolean; panels?: boolean }) {
+  const opening = wall === DOOR.wall && !noDoor ? { ...DOOR, bottom: 0, top: 2.2 } : wall === WINDOW.wall ? { ...WINDOW, bottom: 1.0, top: 2.3 } : null;
   // Wall-item offsets run along local +x from the left end as seen from inside the room.
   const toX = (offset: number) => -HALF + offset * CELL;
   const pieces: Array<{ x0: number; x1: number; y0: number; y1: number }> = [];
@@ -589,7 +596,55 @@ function WallSegments({ wall, color = "#f1e4cf", skirtingColor = "#e7d5b8" }: { 
         <boxGeometry args={[ROOM_SIZE, 0.12, 0.03]} />
         <meshStandardMaterial color={skirtingColor} roughness={0.7} />
       </mesh>
+      {panels && <Panelling pieces={pieces} color={color} trim={skirtingColor} />}
     </>
+  );
+}
+
+/** Luxury walls: raised panels below a chair rail and above it, a crown moulding and a warm cove light. */
+function Panelling({ pieces, color, trim }: { pieces: Array<{ x0: number; x1: number; y0: number; y1: number }>; color: string; trim: string }) {
+  const raised = useMemo(() => {
+    const c = new THREE.Color(color);
+    const hsl = { h: 0, s: 0, l: 0 };
+    c.getHSL(hsl);
+    return c.offsetHSL(0, 0, hsl.l > 0.5 ? -0.05 : 0.06).getStyle();
+  }, [color]);
+  const boxes: Array<{ x: number; w: number; y: number; h: number }> = [];
+  for (const p of pieces) {
+    if (p.y0 > 0) continue;
+    const len = p.x1 - p.x0;
+    const n = Math.max(1, Math.round(len / 1.15));
+    if (len < 0.5) continue;
+    const pw = len / n;
+    for (let i = 0; i < n; i++) {
+      const x = p.x0 + pw * (i + 0.5);
+      boxes.push({ x, w: pw - 0.16, y: 0.55, h: 0.62 });
+      if (p.y1 >= WALL_HEIGHT) boxes.push({ x, w: pw - 0.16, y: 1.95, h: 1.35 });
+    }
+  }
+  return (
+    <group>
+      {boxes.map((b, i) => (
+        <mesh key={i} position={[b.x, b.y, 0.012]} raycast={() => null}>
+          <boxGeometry args={[b.w, b.h, 0.025]} />
+          <meshStandardMaterial color={raised} roughness={0.75} />
+        </mesh>
+      ))}
+      {pieces.filter((p) => p.y0 === 0).map((p, i) => (
+        <mesh key={`r${i}`} position={[(p.x0 + p.x1) / 2, 1.0, 0.02]} raycast={() => null}>
+          <boxGeometry args={[p.x1 - p.x0, 0.05, 0.04]} />
+          <meshStandardMaterial color={trim} roughness={0.5} metalness={0.2} />
+        </mesh>
+      ))}
+      <mesh position={[0, WALL_HEIGHT - 0.07, 0.05]} raycast={() => null}>
+        <boxGeometry args={[ROOM_SIZE, 0.14, 0.1]} />
+        <meshStandardMaterial color={trim} roughness={0.5} metalness={0.2} />
+      </mesh>
+      <mesh position={[0, WALL_HEIGHT - 0.17, 0.08]} raycast={() => null}>
+        <boxGeometry args={[ROOM_SIZE - 0.1, 0.025, 0.02]} />
+        <meshStandardMaterial color="#ffd9a0" emissive="#ffc777" emissiveIntensity={1.4} />
+      </mesh>
+    </group>
   );
 }
 
@@ -647,9 +702,12 @@ interface ShellProps {
   onDoor?: () => void;
   wallColor?: string;
   skirtingColor?: string;
+  /** Upstairs: no front door. */
+  upstairs?: boolean;
+  panels?: boolean;
 }
 
-function RoomShell({ hiddenWalls, wallTargeting, interactive, onWallPointer, onDoor, wallColor, skirtingColor }: ShellProps) {
+function RoomShell({ hiddenWalls, wallTargeting, interactive, onWallPointer, onDoor, wallColor, skirtingColor, upstairs, panels }: ShellProps) {
   return (
     <>
       {WALLS.map(({ wall }) => {
@@ -665,8 +723,8 @@ function RoomShell({ hiddenWalls, wallTargeting, interactive, onWallPointer, onD
               </mesh>
             ) : (
               <>
-                <WallSegments wall={wall} color={wallColor} skirtingColor={skirtingColor} />
-                {wall === DOOR.wall && <Door onOpen={onDoor} interactive={interactive} />}
+                <WallSegments wall={wall} color={wallColor} skirtingColor={skirtingColor} noDoor={upstairs} panels={panels} />
+                {wall === DOOR.wall && !upstairs && <Door onOpen={onDoor} interactive={interactive} />}
                 {wall === WINDOW.wall && <Window />}
                 {wallTargeting && (
                   <mesh
@@ -1257,35 +1315,154 @@ function ThreeBedroomPartitions({
   );
 }
 
-/** Wood-plank floor texture drawn in code. */
-function useFloorTexture() {
+/** A repeatable pseudo-random sequence, so textures come out the same every time. */
+function seeded(seed: number) {
+  let x = seed;
+  return () => { x = (x * 1664525 + 1013904223) % 4294967296; return x / 4294967296; };
+}
+
+/** Floor texture for a finish, drawn in code: planks, herringbone parquet, marble or travertine tiles. */
+function useFloorTexture(finish: FloorFinish = "oak") {
   return useMemo(() => {
     const c = document.createElement("canvas");
     c.width = 512;
     c.height = 512;
     const ctx = c.getContext("2d")!;
-    const tones = ["#c8935f", "#bf8954", "#cf9c68", "#b98250", "#c48f5b"];
-    const plank = 64;
-    for (let row = 0; row < 512 / plank; row++) {
-      let x = -((row * 97) % 220);
-      while (x < 512) {
-        const len = 160 + ((row * 31 + x) % 120);
-        ctx.fillStyle = tones[Math.abs(row * 7 + x) % tones.length];
-        ctx.fillRect(x, row * plank, len, plank);
-        ctx.fillStyle = "rgba(60,35,15,0.35)";
-        ctx.fillRect(x, row * plank, 2, plank);
-        x += len;
+    const rnd = seeded(7);
+    let repeat = 2;
+    if (finish === "oak" || finish === "walnut") {
+      const tones = finish === "oak" ? ["#c8935f", "#bf8954", "#cf9c68", "#b98250", "#c48f5b"] : ["#5b3a24", "#4f321f", "#664229", "#563621", "#6b4630"];
+      const plank = 64;
+      for (let row = 0; row < 512 / plank; row++) {
+        let x = -((row * 97) % 220);
+        while (x < 512) {
+          const len = 160 + ((row * 31 + x) % 120);
+          ctx.fillStyle = tones[Math.abs(row * 7 + x) % tones.length];
+          ctx.fillRect(x, row * plank, len, plank);
+          ctx.fillStyle = "rgba(30,18,8,0.35)";
+          ctx.fillRect(x, row * plank, 2, plank);
+          x += len;
+        }
+        ctx.fillStyle = "rgba(30,18,8,0.4)";
+        ctx.fillRect(0, row * plank, 512, 2);
       }
-      ctx.fillStyle = "rgba(60,35,15,0.4)";
-      ctx.fillRect(0, row * plank, 512, 2);
+    } else if (finish === "herringbone") {
+      const tones = ["#b98a57", "#a97a49", "#c4955f", "#b07f4d"];
+      const L = 96, W = 24;
+      ctx.fillStyle = "#a97a49";
+      ctx.fillRect(0, 0, 512, 512);
+      for (let y = -L; y < 512 + L; y += W * 2) {
+        for (let x = -L; x < 512 + L; x += L) {
+          for (const dir of [1, -1]) {
+            ctx.save();
+            ctx.translate(x + (dir === 1 ? 0 : L / 2), y + (dir === 1 ? 0 : W));
+            ctx.rotate((dir * Math.PI) / 4);
+            ctx.fillStyle = tones[Math.floor(rnd() * tones.length)];
+            ctx.fillRect(0, 0, L * 0.71, W);
+            ctx.strokeStyle = "rgba(50,30,12,0.45)";
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(0, 0, L * 0.71, W);
+            ctx.restore();
+          }
+        }
+      }
+      repeat = 3;
+    } else {
+      // Stone: large tiles with veining (marble) or pitted bands (travertine).
+      const base = finish === "white-marble" ? "#f1efeb" : finish === "black-marble" ? "#17171a" : "#dfcfb3";
+      const vein = finish === "white-marble" ? "rgba(120,120,130,0.45)" : finish === "black-marble" ? "rgba(235,235,235,0.55)" : "rgba(160,130,90,0.35)";
+      ctx.fillStyle = base;
+      ctx.fillRect(0, 0, 512, 512);
+      if (finish === "travertine") {
+        for (let i = 0; i < 40; i++) { ctx.fillStyle = `rgba(170,140,100,${0.08 + rnd() * 0.12})`; ctx.fillRect(0, rnd() * 512, 512, 2 + rnd() * 8); }
+        for (let i = 0; i < 260; i++) { ctx.fillStyle = "rgba(140,110,75,0.35)"; ctx.beginPath(); ctx.ellipse(rnd() * 512, rnd() * 512, 1 + rnd() * 4, 1 + rnd(), 0, 0, Math.PI * 2); ctx.fill(); }
+      } else {
+        for (let v = 0; v < 9; v++) {
+          ctx.strokeStyle = vein;
+          ctx.lineWidth = 0.6 + rnd() * 2.2;
+          ctx.beginPath();
+          let x = rnd() * 512, y = rnd() * 512;
+          ctx.moveTo(x, y);
+          for (let k = 0; k < 14; k++) { x += (rnd() - 0.3) * 70; y += (rnd() - 0.5) * 60; ctx.lineTo(x, y); }
+          ctx.stroke();
+        }
+      }
+      ctx.strokeStyle = finish === "black-marble" ? "rgba(212,175,55,0.5)" : "rgba(0,0,0,0.18)";
+      ctx.lineWidth = 2;
+      for (let k = 0; k <= 512; k += 256) { ctx.beginPath(); ctx.moveTo(k, 0); ctx.lineTo(k, 512); ctx.moveTo(0, k); ctx.lineTo(512, k); ctx.stroke(); }
+      repeat = 3.5;
     }
     const t = new THREE.CanvasTexture(c);
     t.colorSpace = THREE.SRGBColorSpace;
     t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    t.repeat.set(2, 2);
+    t.repeat.set(repeat, repeat);
     t.anisotropy = 8;
     return t;
-  }, []);
+  }, [finish]);
+}
+
+/** One floor of a two-storey home: its dividing walls (with doorways) and a tappable badge per room. */
+function LevelPartitions({ def, upView, activeRoomId, onSelectRoom, onFloorClick, placingItem, wallColor, skirtingColor }: {
+  def: LevelDef;
+  upView?: boolean;
+  activeRoomId?: string;
+  onSelectRoom?: (id: string) => void;
+  onFloorClick?: (point: THREE.Vector3) => void;
+  placingItem?: boolean;
+  wallColor: string;
+  skirtingColor: string;
+}) {
+  const wallH = upView ? 1.15 : 2.6;
+  const pieces = def.walls.flatMap((w) => {
+    const len = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]);
+    const ux = (w.b[0] - w.a[0]) / len, uz = (w.b[1] - w.a[1]) / len;
+    const along = (t0: number, t1: number, y0: number, y1: number) => ({
+      x: w.a[0] + ux * (t0 + t1) / 2, z: w.a[1] + uz * (t0 + t1) / 2, len: t1 - t0, y0, y1, yaw: Math.atan2(-uz, ux),
+    });
+    if (!w.door) return [along(0, len, 0, wallH)];
+    const [d0, d1] = w.door;
+    return [along(0, d0, 0, wallH), along(d1, len, 0, wallH), ...(wallH > 2.3 ? [along(d0, d1, 2.2, wallH)] : [])].filter((p) => p.len > 0.01);
+  });
+  return (
+    <group>
+      {pieces.map((p, i) => (
+        <group key={i} position={[p.x, 0, p.z]} rotation={[0, p.yaw, 0]}>
+          <mesh position={[0, (p.y0 + p.y1) / 2, 0]} receiveShadow castShadow>
+            <boxGeometry args={[p.len, p.y1 - p.y0, 0.12]} />
+            <meshStandardMaterial color={wallColor} roughness={0.85} />
+          </mesh>
+          {p.y0 === 0 && (
+            <mesh position={[0, 0.06, 0]}>
+              <boxGeometry args={[p.len, 0.12, 0.15]} />
+              <meshStandardMaterial color={skirtingColor} roughness={0.7} />
+            </mesh>
+          )}
+        </group>
+      ))}
+      {def.rooms.map((r) => {
+        const isSelected = activeRoomId === r.id;
+        return (
+          <group
+            key={r.id}
+            position={[r.center[0], 0.03, r.center[2]]}
+            onClick={(e) => {
+              if (placingItem) return;
+              e.stopPropagation();
+              onFloorClick?.(new THREE.Vector3(r.center[0], 0, r.center[2]));
+              onSelectRoom?.(r.id);
+            }}
+            onPointerOver={() => { document.body.style.cursor = "pointer"; }}
+            onPointerOut={() => { document.body.style.cursor = ""; }}
+          >
+            <mesh rotation={[-Math.PI / 2, 0, 0]}>
+              <ringGeometry args={[0.35, 0.48, 32]} />
+              <meshBasicMaterial color={isSelected ? "#10b981" : "#38bdf8"} transparent opacity={isSelected ? 0.7 : 0.25} depthWrite={false} />
+            </mesh>
+          </group>
+        );
+      })}
+    </group>
+  );
 }
 
 // ---------- camera ----------
@@ -1393,13 +1570,30 @@ function RoomScene({
   onPickUp,
   onPlaceBlocked,
   onInteractObject,
+  level = 0,
+  onChangeLevel,
+  homeStyle,
   people = [],
   labels,
 }: ApartmentRoomProps & { labels: LabelNodes }) {
   const config = HOUSING_CONFIGS[housingTier] ?? HOUSING_CONFIGS.studio;
-  const floorTexture = useFloorTexture();
+  // Two-storey homes show one floor at a time; everything else is a single floor 0.
+  const levelDef = config.levels ? config.levels[Math.min(level, config.levels.length - 1)] : undefined;
+  const lvl = levelDef ? Math.min(level, config.levels!.length - 1) : 0;
+  const rooms = levelDef?.rooms ?? config.rooms;
+  const style = homeStyle ?? config.finish;
+  const floorTexture = useFloorTexture(style.floor);
   // Everything in the room, including what came with it, can be moved.
   const furniture = useMemo(() => withHomeItems(ownFurniture, housingTier), [ownFurniture, housingTier]);
+  // The staircase (two-storey homes): where its foot and top are on each floor.
+  const stairs = useMemo(() => {
+    const f = furniture.find((x) => getCatalogItem(x.itemId)?.visual === "staircase" && x.placement?.kind === "floor");
+    if (!f || f.placement?.kind !== "floor") return null;
+    const item = getCatalogItem(f.itemId)!;
+    const c = floorCenter(item.size, f.placement);
+    const d = rotatedSize(item.size, f.placement.rot)[1] * CELL;
+    return { x: c.x, foot: c.z + d / 2 + 0.35, bottom: c.z + d / 2, top: c.z - d / 2, landing: c.z - d / 2 - 0.4 };
+  }, [furniture]);
   const [hiddenWalls, setHiddenWalls] = useState<Set<Wall>>(new Set(["south", "east"]));
   // Where the user last pointed the item being placed (cleared by switching items).
   const [moved, setMoved] = useState<{ uid: string; placement: Placement } | null>(null);
@@ -1412,13 +1606,27 @@ function RoomScene({
   /** Gets up from a seat or bed (to its stand spot) before walking anywhere. */
   const getUp = () => setPose((p) => (p.stand ? { position: [p.stand[0], 0, p.stand[1]], yaw: p.yaw } : p));
   const animTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Going up or down the stairs: from one point to another, then onto the other floor.
+  const climbRef = useRef<{ from: [number, number, number]; to: [number, number, number]; yaw: number; t: number; next: number } | null>(null);
 
   const currentRoom = useMemo(() => {
-    if (config.rooms && config.rooms.length > 0) {
-      return config.rooms.find((r) => r.id === activeRoomId) ?? config.rooms[0];
+    if (rooms && rooms.length > 0) {
+      return rooms.find((r) => r.id === activeRoomId) ?? rooms[0];
     }
     return undefined;
-  }, [config.rooms, activeRoomId]);
+  }, [rooms, activeRoomId]);
+
+  // Arriving on another floor (by the stairs or the floor switcher): stand at the stairs on that floor.
+  const [shownLevel, setShownLevel] = useState(lvl);
+  if (shownLevel !== lvl) {
+    setShownLevel(lvl);
+    if (stairs) {
+      setWalkTarget(null);
+      setPendingAction(null);
+      setPose(lvl > 0 ? { position: [stairs.x, 0, stairs.landing], yaw: Math.PI } : { position: [stairs.x, 0, stairs.foot], yaw: 0 });
+      setAnimation("idle");
+    }
+  }
 
   const targetPos = useMemo<[number, number, number] | undefined>(() => {
     if (upView) return [0, 0.4, 0];
@@ -1428,7 +1636,7 @@ function RoomScene({
 
   // Click-to-walk destination locomotion
   const handleFloorLocomotion = (point: THREE.Vector3) => {
-    if (busy) return;
+    if (busy || climbRef.current) return;
     const clampedX = Math.max(-3.2, Math.min(3.2, point.x));
     const clampedZ = Math.max(-3.2, Math.min(4.3, point.z));
 
@@ -1441,8 +1649,8 @@ function RoomScene({
     setWalkTarget([clampedX, clampedZ]);
     setClickBeacon({ x: clampedX, z: clampedZ, time: performance.now() });
 
-    if (config.rooms && config.rooms.length > 0) {
-      const matched = config.rooms.find(
+    if (rooms && rooms.length > 0) {
+      const matched = rooms.find(
         (r) =>
           clampedX >= r.bounds.minX &&
           clampedX <= r.bounds.maxX &&
@@ -1464,6 +1672,17 @@ function RoomScene({
 
   // Smooth frame locomotion update
   useFrame((_, dt) => {
+    const climb = climbRef.current;
+    if (climb) {
+      climb.t = Math.min(1, climb.t + dt / 1.8);
+      const k = climb.t;
+      setPose({ position: [climb.from[0] + (climb.to[0] - climb.from[0]) * k, climb.from[1] + (climb.to[1] - climb.from[1]) * k, climb.from[2] + (climb.to[2] - climb.from[2]) * k], yaw: climb.yaw });
+      if (climb.t >= 1) {
+        climbRef.current = null;
+        onChangeLevel?.(climb.next);
+      }
+      return;
+    }
     if (walkTarget) {
       const curX = pose.position[0];
       const curZ = pose.position[2];
@@ -1495,7 +1714,14 @@ function RoomScene({
           const act = pendingAction;
           setPendingAction(null);
           if (animTimer.current) clearTimeout(animTimer.current);
-          if (act.rest) {
+          if (act.type === "stairs" && stairs) {
+            // Up the treads to the top, or down through the stairwell to the hall.
+            const up = lvl === 0;
+            climbRef.current = up
+              ? { from: [stairs.x, 0, stairs.bottom], to: [stairs.x, 3, stairs.top], yaw: Math.PI, t: 0, next: lvl + 1 }
+              : { from: [stairs.x, 0, stairs.top], to: [stairs.x, -1.4, stairs.top + 1.2], yaw: 0, t: 0, next: lvl - 1 };
+            setAnimation("walk");
+          } else if (act.rest) {
             // Sit down or lie down, and stay there until the player taps somewhere else.
             const r = act.rest;
             setPose({ position: r.position, yaw: r.yaw, lie: r.lie, stand: r.stand });
@@ -1521,20 +1747,20 @@ function RoomScene({
   const ghost = useMemo<Placement | null>(() => {
     if (!placing || !placingItem) return null;
     const base = moved?.uid === placing.uid ? moved.placement : furniture.find((f) => f.uid === placing.uid)?.placement;
-    if (base && base.kind === (placingItem.kind === "wall" ? "wall" : "floor")) {
-      return base.kind === "floor" ? floorPlacementAt(placingItem.size, placing.rot, floorCenter(placingItem.size, base)) : base;
+    if (base && levelOf(base) === lvl && base.kind === (placingItem.kind === "wall" ? "wall" : "floor")) {
+      return base.kind === "floor" ? floorPlacementAt(placingItem.size, placing.rot, floorCenter(placingItem.size, base), lvl) : base;
     }
     const others = furniture.filter((f) => f.uid !== placing.uid);
-    return findFreePlacement(placingItem, others, placingItem.kind === "wall" ? undefined : placing.rot)
-      ?? (placingItem.kind === "wall" ? { kind: "wall", wall: "north", offset: 1 } : floorPlacementAt(placingItem.size, placing.rot, { x: 0, z: 0.5 }));
-  }, [placing, placingItem, moved, furniture]);
+    return findFreePlacement(placingItem, others, placingItem.kind === "wall" ? undefined : placing.rot, lvl)
+      ?? (placingItem.kind === "wall" ? { kind: "wall", wall: "north", offset: 1, ...(lvl ? { level: lvl } : {}) } : floorPlacementAt(placingItem.size, placing.rot, { x: 0, z: 0.5 }, lvl));
+  }, [placing, placingItem, moved, furniture, lvl]);
 
   const ghostValid = !!(ghost && placingItem && isPlacementValid(placingItem, ghost, furniture, placing?.uid));
 
   const onFloorPointer = (e: ThreeEvent<PointerEvent> | ThreeEvent<MouseEvent>, click: boolean) => {
     if (placing && placingItem && placingItem.kind !== "wall") {
       if (click && e.delta > DRAG_THRESHOLD) return;
-      const next = floorPlacementAt(placingItem.size, placing.rot, e.point);
+      const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl);
       setMoved({ uid: placing.uid, placement: next });
       if (click) {
         e.stopPropagation();
@@ -1554,7 +1780,7 @@ function RoomScene({
   const onWallPointer = (wall: Wall, e: ThreeEvent<PointerEvent> | ThreeEvent<MouseEvent>, click: boolean) => {
     if (!placing || !placingItem || placingItem.kind !== "wall") return;
     if (click && e.delta > DRAG_THRESHOLD) return;
-    const next = { kind: "wall" as const, wall, offset: wallOffsetAt(wall, e.point, placingItem.size[0]) };
+    const next = { kind: "wall" as const, wall, offset: wallOffsetAt(wall, e.point, placingItem.size[0]), ...(lvl ? { level: lvl } : {}) };
     setMoved({ uid: placing.uid, placement: next });
     if (click) {
       e.stopPropagation();
@@ -1564,6 +1790,7 @@ function RoomScene({
   };
 
   const interact = (type: Interaction, item?: CatalogItem, placement?: Placement | null) => {
+    if (climbRef.current) return;
     onInteractObject?.(type);
     if (animTimer.current) {
       clearTimeout(animTimer.current);
@@ -1571,7 +1798,11 @@ function RoomScene({
     }
     getUp();
     const rest = item ? restPose(item, placement, type, avatarHeight) : undefined;
-    if (rest) {
+    if (type === "stairs" && stairs) {
+      // Walk to the foot of the stairs (or the top, upstairs), then climb.
+      setWalkTarget(lvl === 0 ? [stairs.x, stairs.foot] : [stairs.x, stairs.landing]);
+      setPendingAction({ type });
+    } else if (rest) {
       // Walk to the side of the bed or the front of the seat, then lie down or sit.
       setWalkTarget(rest.stand);
       setPendingAction({ type, rest });
@@ -1602,7 +1833,12 @@ function RoomScene({
         onClick={(e) => onFloorPointer(e, true)}
       >
         <planeGeometry args={[ROOM_SIZE, ROOM_SIZE]} />
-        <meshStandardMaterial map={floorTexture} roughness={0.65} color={config.floorTint} />
+        <meshStandardMaterial
+          map={floorTexture}
+          roughness={style.floor.includes("marble") ? 0.18 : style.floor === "travertine" ? 0.55 : 0.65}
+          metalness={style.floor.includes("marble") ? 0.05 : 0}
+          color={style.floor === "oak" ? config.floorTint : undefined}
+        />
       </mesh>
       {/* Grid overlay while placing floor items */}
       {placingItem && placingItem.kind !== "wall" && (
@@ -1617,9 +1853,25 @@ function RoomScene({
         interactive={!busy}
         onWallPointer={onWallPointer}
         onDoor={() => interact("door")}
-        wallColor={config.wallColor}
+        wallColor={style.wall}
         skirtingColor={config.skirtingColor}
+        upstairs={lvl > 0}
+        panels={style.panels}
       />
+
+      {/* Two-storey homes: the rooms of the floor on show */}
+      {levelDef && (
+        <LevelPartitions
+          def={levelDef}
+          upView={upView}
+          activeRoomId={activeRoomId}
+          onSelectRoom={onSelectRoom}
+          onFloorClick={handleFloorLocomotion}
+          placingItem={!!placing}
+          wallColor={style.wall}
+          skirtingColor={config.skirtingColor}
+        />
+      )}
 
       {/* Multi-Room Partitions for 1-Bedroom Layout */}
       {housingTier === "one_bedroom" && (
@@ -1629,7 +1881,7 @@ function RoomScene({
           onSelectRoom={onSelectRoom}
           onFloorClick={handleFloorLocomotion}
           placingItem={!!placing}
-          wallColor={config.wallColor}
+          wallColor={style.wall}
           skirtingColor={config.skirtingColor}
         />
       )}
@@ -1642,7 +1894,7 @@ function RoomScene({
           onSelectRoom={onSelectRoom}
           onFloorClick={handleFloorLocomotion}
           placingItem={!!placing}
-          wallColor={config.wallColor}
+          wallColor={style.wall}
           skirtingColor={config.skirtingColor}
         />
       )}
@@ -1655,7 +1907,7 @@ function RoomScene({
           onSelectRoom={onSelectRoom}
           onFloorClick={handleFloorLocomotion}
           placingItem={!!placing}
-          wallColor={config.wallColor}
+          wallColor={style.wall}
           skirtingColor={config.skirtingColor}
         />
       )}
@@ -1677,7 +1929,7 @@ function RoomScene({
       {/* Owned and built-in furniture (the one being moved is shown as a ghost instead) */}
       {furniture.map((f) => {
         const item = getCatalogItem(f.itemId);
-        if (!item || !f.placement || f.uid === placing?.uid) return null;
+        if (!item || !f.placement || f.uid === placing?.uid || levelOf(f.placement) !== lvl) return null;
         // Wall art disappears with its wall when that wall is cut away.
         if (f.placement.kind === "wall" && hiddenWalls.has(f.placement.wall)) return null;
         return (
@@ -1687,16 +1939,16 @@ function RoomScene({
                 onClick={(e) => {
                   if (placing || e.delta > DRAG_THRESHOLD) return;
                   // Decorating: pick it up to move. Otherwise: use it (sit, sleep, open the fridge).
-                  if (decorating) { e.stopPropagation(); onPickUp?.(f.uid); return; }
+                  if (decorating) { e.stopPropagation(); if (!item.fixed) onPickUp?.(f.uid); return; }
                   if (item.interaction) { e.stopPropagation(); interact(item.interaction, item, f.placement); }
                 }}
-                onPointerOver={(decorating && !placing) || (item.interaction && !busy) ? hoverCursor(true) : undefined}
+                onPointerOver={(decorating && !placing && !item.fixed) || (item.interaction && !busy) ? hoverCursor(true) : undefined}
                 onPointerOut={hoverCursor(false)}
               >
                 <ItemVisual item={item} />
 
                 {/* Tactile Decorate-mode hit plate and visual highlight for every movable item */}
-                {decorating && !placing && f.placement.kind === "floor" && (
+                {decorating && !placing && !item.fixed && f.placement.kind === "floor" && (
                   <group>
                     <mesh
                       rotation={[-Math.PI / 2, 0, 0]}

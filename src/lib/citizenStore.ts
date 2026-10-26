@@ -8,7 +8,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import type { AvatarLookProps } from "@/components/avatar/roster";
-import { withHomeItems, getHousingTierFromText, type HousingTier, type OwnedFurniture, type Placement } from "@/lib/furniture";
+import { withHomeItems, getHousingTierFromText, type HomeStyle, type HousingTier, type OwnedFurniture, type Placement } from "@/lib/furniture";
 import type { Accessory } from "@/lib/city/types";
 import { supabase } from "@/lib/supabase/client";
 import type { LifeState } from "@/lib/life";
@@ -67,6 +67,8 @@ export interface Citizen {
   home?: string;
   balance: number;
   furniture?: OwnedFurniture[];
+  /** Floor, wall paint and panelling chosen for each home (absent: as the home came). */
+  homeStyle?: Partial<Record<HousingTier, HomeStyle>>;
   inventory?: InventoryItem[];
   /** Accessory product ids currently worn on the avatar. */
   worn?: string[];

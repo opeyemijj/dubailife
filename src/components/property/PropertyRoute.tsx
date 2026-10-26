@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, DoorClosed, KeyRound, Loader2, LogOut, MapPin, Navigation, Settings2, ShoppingBag, UserPlus, X, Zap } from "lucide-react";
 import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoom";
-import { CATALOG, getCatalogItem, withHomeItems, HOUSING_CONFIGS, type CatalogItem, type OwnedFurniture, type Placement, type Rotation, type HousingTier } from "@/lib/furniture";
+import { CATALOG, getCatalogItem, housingTierFor, withHomeItems, HOUSING_CONFIGS, type CatalogItem, type OwnedFurniture, type Placement, type Rotation, type HousingTier } from "@/lib/furniture";
 import { adjustBalance, updateCitizen, useCitizen, useRequireCitizen } from "@/lib/citizenStore";
 import { distanceMetres, entranceOf, getEntity } from "@/lib/city/geo";
 import { instantFare } from "@/lib/transit";
@@ -260,16 +260,20 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
     : canEdit ? `🛠️ ${flat.residentName ?? "The owner"} lets you redecorate here.`
     : `👋 You're visiting ${flat.residentName ?? "someone"}'s home. Look around — you can't change anything.`;
 
-  const housingTier: HousingTier = 
-    (flat.bedrooms && flat.bedrooms >= 3) || flat.property_type?.toLowerCase().includes("3-bedroom") || flat.property_type?.toLowerCase().includes("3 bedroom") ? "three_bedroom"
-    : (flat.bedrooms && flat.bedrooms === 2) || flat.property_type?.toLowerCase().includes("2-bedroom") || flat.property_type?.toLowerCase().includes("2 bedroom") ? "two_bedroom"
-    : (flat.bedrooms && flat.bedrooms === 1) || flat.property_type?.toLowerCase().includes("1-bedroom") || flat.property_type?.toLowerCase().includes("1 bedroom") ? "one_bedroom"
-    : flat.property_type?.toLowerCase().includes("penthouse") ? "penthouse"
-    : flat.property_type?.toLowerCase().includes("villa") ? "villa"
-    : "studio";
+  // Townhouses, villas and penthouses are two-storey whatever their bedrooms; then it goes by bedrooms.
+  const housingTier: HousingTier = housingTierFor(flat.property_type, flat.bedrooms);
 
   const housingConfig = HOUSING_CONFIGS[housingTier] ?? HOUSING_CONFIGS.studio;
-  const isMultiRoom = housingTier === "one_bedroom" || housingTier === "two_bedroom" || housingTier === "three_bedroom";
+  const levels = housingConfig.levels;
+  const [level, setLevel] = useState(0);
+  const rooms = levels ? levels[Math.min(level, levels.length - 1)].rooms : housingConfig.rooms;
+  const changeLevel = (n: number) => {
+    if (!levels || n === level || n < 0 || n >= levels.length) return;
+    setPlacing(null);
+    setLevel(n);
+    setActiveRoomId(n > 0 ? "landing" : "hall");
+  };
+  const isMultiRoom = !!rooms?.length;
   const [upView, setUpView] = useState(isMultiRoom);
   const [activeRoomId, setActiveRoomId] = useState<string>(housingTier === "one_bedroom" ? "bedroom" : "living");
 
@@ -294,6 +298,8 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         upView={upView}
         activeRoomId={activeRoomId}
         onSelectRoom={setActiveRoomId}
+        level={level}
+        onChangeLevel={changeLevel}
         onPlace={(uid, p) => place(uid, p)}
         onPickUp={(uid) => { const f = withHomeItems(furniture, housingTier).find((x) => x.uid === uid); if (f) setPlacing({ uid, itemId: f.itemId, rot: f.placement?.kind === "floor" ? f.placement.rot : 0 }); }}
         onPlaceBlocked={() => say("🚫 It doesn't fit there.")}
@@ -311,7 +317,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
       </header>
 
       {/* Multi-Room Navigation & Cutaway View Pills */}
-      {housingConfig.rooms && housingConfig.rooms.length > 0 && (
+      {rooms && rooms.length > 0 && (
         <div className="absolute top-[4.65rem] left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-full shadow-lg border border-slate-200 overflow-x-auto max-w-[94vw]">
           <button
             onClick={() => setUpView(!upView)}
@@ -321,8 +327,17 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
           >
             {upView ? "📐 All Rooms" : "🔍 Room Focus"}
           </button>
+          {levels?.map((l, i) => (
+            <button
+              key={l.label}
+              onClick={() => { changeLevel(i); gameAudio.playClickSound(); }}
+              className={`px-2.5 py-0.5 rounded-full text-[10px] font-black whitespace-nowrap ${level === i ? "bg-amber-400 text-slate-900" : "bg-slate-100 text-slate-700"}`}
+            >
+              {l.icon} {l.label}
+            </button>
+          ))}
           <div className="w-[1px] h-3 bg-slate-200" />
-          {housingConfig.rooms.map((r) => {
+          {rooms.map((r) => {
             const isSelected = activeRoomId === r.id;
             return (
               <button

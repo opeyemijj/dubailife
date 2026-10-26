@@ -6,6 +6,8 @@
     { "id": "one_bedroom", "label": "1-bedroom apartment", "area": "Dubai Marina / JBR", "monthly": 7000, "icon": "🌇" },
     { "id": "two_bedroom", "label": "2-bedroom apartment", "area": "Downtown / Creek · dollhouse up-view", "monthly": 11500, "icon": "🏙️" },
     { "id": "three_bedroom", "label": "3-bedroom apartment", "area": "Dubai Hills / Downtown · multi-suite", "monthly": 15500, "icon": "🏰" },
+    { "id": "duplex", "label": "2-bedroom duplex", "area": "JVC / Business Bay · two floors", "monthly": 13500, "icon": "🏬" },
+    { "id": "townhouse", "label": "3-bedroom townhouse", "area": "Arabian Ranches / Damac Hills · two floors", "monthly": 16500, "icon": "🏡" },
     { "id": "penthouse", "label": "Downtown luxury penthouse", "area": "Downtown", "monthly": 18000, "icon": "🏙️" },
     { "id": "villa", "label": "Palm Jumeirah signature villa", "area": "Palm Jumeirah", "monthly": 45000, "icon": "🌴" }
   ],
