@@ -79,7 +79,8 @@ export async function loadConversation(me: string, other: string): Promise<Messa
   return (data ?? []) as Message[];
 }
 
-export async function sendMessage(me: string, to: string, body: string, place: string | null = null): Promise<Message | null> {
+/** Sends a chat message (and a push). `pushUrl` makes the push open somewhere else, like a game room. */
+export async function sendMessage(me: string, to: string, body: string, place: string | null = null, pushUrl?: string): Promise<Message | null> {
   const row = { id: crypto.randomUUID(), from_id: me, to_id: to, body, place };
   const { error } = await supabase().from("messages").insert(row);
   if (error) chatRefused(error);
@@ -96,7 +97,7 @@ export async function sendMessage(me: string, to: string, body: string, place: s
           {
             title: `Message from ${senderName}`,
             body: body.length > 80 ? body.slice(0, 77) + "…" : body,
-            url: `/phone?tab=chats&chat=${me}`,
+            url: pushUrl ?? `/phone?tab=chats&chat=${me}`,
             tag: `chat-${me}`,
           },
           me

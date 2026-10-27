@@ -1,18 +1,18 @@
 "use client";
 
-// In a game room's lobby: search anyone by username or name and invite them. They get a live alert and a
-// push notification with a button that drops them straight into this room.
+// In a game room's lobby: search anyone by username or name and invite them. They get a live alert, a
+// chat message with a Join button (so it's there later) and a push that drops them straight into the room.
 
 import { useEffect, useState } from "react";
 import { Search, Send, Check } from "lucide-react";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
-import { findPeople, type Contact } from "@/lib/messages";
+import { findPeople, sendMessage, type Contact } from "@/lib/messages";
 import { inviteToRoom } from "@/lib/games/rooms";
-import { sendPushNotification } from "@/lib/push/client";
+
 import { useOnlineUsernames } from "@/lib/presence";
 import type { GameInfo } from "@/lib/games/registry";
 
-export function InvitePlayers({ info, roomId, code, myId, myUsername, inRoom }: { info: GameInfo; roomId: string; code: string; myId: string; myUsername: string; inRoom: string[] }) {
+export function InvitePlayers({ info, roomId, code, myId, inRoom }: { info: GameInfo; roomId: string; code: string; myId: string; myUsername?: string; inRoom: string[] }) {
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Contact[]>([]);
   const [sent, setSent] = useState<Record<string, "sending" | "sent" | string>>({});
@@ -29,12 +29,8 @@ export function InvitePlayers({ info, roomId, code, myId, myUsername, inRoom }: 
     const r = await inviteToRoom(roomId, c.id);
     if (r.error) return setSent((s) => ({ ...s, [c.id]: r.error! }));
     setSent((s) => ({ ...s, [c.id]: "sent" }));
-    void sendPushNotification(c.id, {
-      title: `${info.icon} @${myUsername} invited you to ${info.name}`,
-      body: "Tap to join the game now.",
-      url: `/games/${info.id}?room=${code}`,
-      tag: `game-invite-${roomId}`,
-    }, myId);
+    // Also in your chat with them, so it's waiting there later; its push opens the room directly.
+    void sendMessage(myId, c.id, `${info.icon} Come play ${info.name} with me! · /games/${info.id}?room=${code}`, null, `/games/${info.id}?room=${code}`);
   };
 
   const shown = results.filter((c) => !inRoom.includes(c.id))

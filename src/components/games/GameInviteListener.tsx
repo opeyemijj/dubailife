@@ -1,7 +1,8 @@
 "use client";
 
 // Runs on every page while signed in: a game invite arrives as a card at the top with Join (straight
-// into the room) or Not now. The push notification carries the same link when the app is closed.
+// into the room) or Not now. Unanswered invites show when the app opens (if the room is still waiting);
+// each invite is also a chat message with a Join button, and its push opens the room directly.
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -26,6 +27,16 @@ export function GameInviteListener() {
   useEffect(() => {
     if (!me) return;
     const db = supabase();
+    // Invites not answered yet (sent while the app was closed), for rooms still waiting for players.
+    void (async () => {
+      const { data } = await db.from("game_invites").select("id, from_id, game, code, room_id").eq("to_id", me).eq("status", "sent").order("created_at", { ascending: false }).limit(5);
+      if (!data?.length) return;
+      const { data: open } = await db.from("game_rooms").select("id").in("id", data.map((i) => i.room_id)).eq("status", "lobby");
+      const waiting = data.filter((i) => open?.some((r) => r.id === i.room_id));
+      if (!waiting.length) return;
+      const who = await contacts(waiting.map((i) => i.from_id));
+      setInvites((l) => [...l, ...waiting.filter((i) => !l.some((x) => x.id === i.id)).map((i) => ({ id: i.id, game: i.game, code: i.code, from: { username: who.get(i.from_id)?.username ?? "someone", look: who.get(i.from_id)?.look } }))]);
+    })();
     const ch = db.channel(`game-invites-${me}-${Math.random().toString(36).slice(2, 7)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "game_invites", filter: `to_id=eq.${me}` }, async (p) => {
         const row = p.new as { id: number; from_id: string; game: string; code: string; status: string };

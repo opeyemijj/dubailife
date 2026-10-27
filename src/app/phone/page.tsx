@@ -3,6 +3,8 @@
 // The citizen's phone: real conversations (kept 7 days), friends and people to find, and alerts
 // for money, knocks and friend requests — all live from the database.
 
+import Link from "next/link";
+import { GAMES } from "@/lib/games/registry";
 import { askForPush } from "@/lib/push/engage";
 import { useCitizen } from "@/lib/citizenStore";
 import { getPlace } from "@/lib/city/places";
@@ -150,7 +152,7 @@ function Chats({ me, online, open }: { me: string; online: ReadonlySet<string>; 
 
 /** "📍 … · /explore?open=dubai-mall" → the invite text and where it goes. */
 function parseInvite(body: string): { text: string; href: string } | null {
-  const m = body.match(/^(.*?)\s*·\s*(\/(?:explore|place|property)\S*)$/);
+  const m = body.match(/^(.*?)\s*·\s*(\/(?:explore|place|property|games)\S*)$/);
   return m ? { text: m[1], href: m[2] } : null;
 }
 
@@ -230,7 +232,7 @@ function Thread({ me, other, online, onBack }: { me: string; other: string; onli
             <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[78%] px-3 py-2 rounded-2xl text-sm break-words ${mine ? "bg-sky-500 rounded-br-md" : "bg-white/10 rounded-bl-md"}`}>
                 {inv ? inv.text : m.body}
-                {inv && !mine && <button onClick={() => router.push(inv.href)} className="mt-1.5 block w-full h-8 rounded-lg bg-white text-sky-600 text-xs font-black">{inv.href.startsWith("/property") ? "Go to their home" : "Go there"}</button>}
+                {inv && !mine && <button onClick={() => router.push(inv.href)} className="mt-1.5 block w-full h-8 rounded-lg bg-white text-sky-600 text-xs font-black">{inv.href.startsWith("/property") ? "Go to their home" : inv.href.startsWith("/games") ? "🎮 Join game" : "Go there"}</button>}
                 <div className="text-[10px] mt-0.5 text-white/60">{when(m.created_at)}{m.place ? ` · ${m.place}` : ""}</div>
               </div>
             </div>
@@ -405,7 +407,7 @@ function People({ me, online, open }: { me: string; online: ReadonlySet<string>;
 
 // ---------------------------------------------------------------- alerts
 
-interface Alert { id: string; icon: string; title: string; detail?: string; at: string }
+interface Alert { id: string; icon: string; title: string; detail?: string; at: string; href?: string }
 
 function PushSettingsCard({ me }: { me: string }) {
   const [permission, setPermission] = useState<string>("default");
@@ -510,12 +512,13 @@ function Alerts({ me }: { me: string }) {
   useEffect(() => {
     const db = supabase();
     (async () => {
-      const [transfers, knocks, requests] = await Promise.all([
+      const [transfers, knocks, requests, invites] = await Promise.all([
         db.from("transfers").select("id, from_id, to_id, amount, place, created_at").order("created_at", { ascending: false }).limit(30),
         db.from("entry_requests").select("id, visitor_id, visitor_name, flat_id, status, created_at").order("created_at", { ascending: false }).limit(30),
         db.from("friendships").select("user_id, created_at").eq("friend_id", me).eq("status", "pending"),
+        db.from("game_invites").select("id, from_id, game, code, status, created_at").eq("to_id", me).order("created_at", { ascending: false }).limit(20),
       ]);
-      const ids = [...(transfers.data ?? []).flatMap((t) => [t.from_id, t.to_id]), ...(requests.data ?? []).map((r) => r.user_id)];
+      const ids = [...(transfers.data ?? []).flatMap((t) => [t.from_id, t.to_id]), ...(requests.data ?? []).map((r) => r.user_id), ...(invites.data ?? []).map((i) => i.from_id)];
       const who = await contacts(ids);
       const name = (id: string) => `@${who.get(id)?.username ?? "someone"}`;
       const flatName = (id: string) => `${id.split(":")[0].replace(/-/g, " ")} · ${id.split(":")[1]}`;
@@ -527,6 +530,10 @@ function Alerts({ me }: { me: string }) {
           ? { id: `k${k.id}`, icon: k.status === "approved" ? "🚪" : k.status === "denied" ? "🙅" : "✊", title: `You knocked at ${flatName(k.flat_id)}`, detail: k.status === "pending" ? "Waiting for an answer" : k.status === "approved" ? "They let you in" : "Not this time", at: k.created_at }
           : { id: `k${k.id}`, icon: "✊", title: `${k.visitor_name} knocked at your home`, detail: `${flatName(k.flat_id)} · ${k.status}`, at: k.created_at }),
         ...(requests.data ?? []).map((r) => ({ id: `f${r.user_id}`, icon: "🤝", title: `${name(r.user_id)} wants to be friends`, detail: "Accept in the People tab", at: r.created_at })),
+        ...(invites.data ?? []).map((i) => {
+          const g = GAMES.find((x) => x.id === i.game);
+          return { id: `g${i.id}`, icon: g?.icon ?? "🎲", title: `${name(i.from_id)} invited you to ${g?.name ?? "a game"}`, detail: i.status === "joined" ? "You joined" : i.status === "declined" ? "You said not now" : undefined, at: i.created_at, href: i.status === "sent" ? `/games/${i.game}?room=${i.code}` : undefined };
+        }),
       ];
       setAlerts(list.sort((a, b) => b.at.localeCompare(a.at)));
     })();
@@ -542,7 +549,7 @@ function Alerts({ me }: { me: string }) {
         <div className="text-center py-10 space-y-2">
           <div className="text-4xl">🔔</div>
           <p className="text-sm text-white/60">Nothing yet.</p>
-          <p className="text-xs text-white/40">Money, knocks on your door and friend requests show up here.</p>
+          <p className="text-xs text-white/40">Money, knocks on your door, friend requests and game invites show up here.</p>
         </div>
       ) : (
         grouped.map((a) => (
@@ -552,7 +559,8 @@ function Alerts({ me }: { me: string }) {
               <span className="block text-sm font-bold">{a.title}</span>
               {a.detail && <span className="block text-xs text-white/50 capitalize-first">{a.detail}</span>}
             </span>
-            <span className="text-[11px] text-white/40 shrink-0">{when(a.at)}</span>
+            {a.href ? <Link href={a.href} className="shrink-0 h-8 px-3 rounded-full bg-emerald-500 text-white text-xs font-black flex items-center">Join</Link>
+              : <span className="text-[11px] text-white/40 shrink-0">{when(a.at)}</span>}
           </div>
         ))
       )}
