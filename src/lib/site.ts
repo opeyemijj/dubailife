@@ -5,13 +5,15 @@ export const SITE = {
   shortName: "Dubai Life",
   domain: "mydubailife.app",
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://mydubailife.app").replace(/\/$/, ""),
-  tagline: "Live your Dubai life online — Free 3D Virtual City & Games",
+  tagline: "Live your Dubai story",
   description:
-    "Dubai Life (mydubailife.app) is the premier free 3D virtual Dubai life simulator and multiplayer browser game. Create your 3D avatar, explore Downtown Dubai, Burj Khalifa & Dubai Mall, decorate luxury apartments, play 17 multiplayer games, meet real players, and live the Dubai life online.",
+    "Dubai Life is a Sims-style life game set in Dubai. Ride the Metro, rent a Marina flat, get a job, shop at Dubai Mall and make real friends. Play free online.",
   themeColor: "#1e1b4b",
   backgroundColor: "#0f0a2e",
   keywords: [
     "Dubai Life",
+    "Dubai Life game",
+    "Dubai life simulation game",
     "Come To Dubai",
     "mydubailife.app",
     "Dubai life simulator",

@@ -36,11 +36,11 @@ function HomeContent() {
     <main className="fixed inset-0 h-[100dvh] w-screen bg-[#d6bc8a] overflow-hidden select-none touch-none overscroll-none font-sans">
       {/* Search Engine & Screen Reader Semantic Indexing for Canvas/3D Game */}
       <header className="sr-only">
-        <h1>Dubai Life — Free 3D Virtual Dubai Simulator & Browser Game</h1>
+        <h1>Dubai Life — the Dubai life game</h1>
         <p>
-          Welcome to Dubai Life (mydubailife.app), the premier free 3D virtual Dubai life simulator.
-          Explore Downtown Dubai, Burj Khalifa, and The Dubai Mall in interactive 3D. Decorate luxury penthouses,
-          play 17 multiplayer games like Ludo, Chess, and Pool, meet real players, and advertise your business in virtual Dubai.
+          Dubai Life is a free, Sims-style life game set in Dubai. Create your avatar, ride the Dubai Metro and taxis,
+          rent a flat in the Marina or a villa on the Palm, get a job, shop at Dubai Mall, play multiplayer games
+          like Ludo, Chess and Pool, and make real friends. Play in your browser on phone or computer.
         </p>
         <nav aria-label="City Quick Navigation">
           <ul>

@@ -34,7 +34,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
   title: {
-    default: "Dubai Life — Free 3D Virtual Dubai Simulator & City Game",
+    default: "Dubai Life Game — Live Your Dubai Story, Free Online",
     template: "%s - Dubai Life",
   },
   description: SITE.description,
@@ -47,35 +47,30 @@ export const metadata: Metadata = {
   classification: "Virtual World / Life Simulation / Multiplayer Games",
   alternates: {
     canonical: "/",
-    languages: {
-      "en-AE": "/",
-      "en-US": "/",
-      "ar-AE": "/",
-    },
   },
   openGraph: {
     type: "website",
     siteName: SITE.name,
-    title: "Dubai Life — Free 3D Virtual Dubai Simulator & City Game",
+    title: "Dubai Life Game — Live Your Dubai Story, Free Online",
     description: SITE.description,
     url: "/",
     locale: "en_AE",
-    alternateLocale: ["en_US", "ar_AE"],
     images: [
       {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Dubai Life — Free 3D Virtual City & Life Simulator",
+        alt: "Dubai Life — a Sims-style life game set in Dubai",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Dubai Life — Free 3D Virtual Dubai Simulator & City Game",
+    title: "Dubai Life Game — Live Your Dubai Story, Free Online",
     description: SITE.description,
     images: ["/twitter-image"],
-    creator: "@cometodubai",
+    site: "@dubailifeapp",
+    creator: "@dubailifeapp",
   },
   robots: {
     index: true,
@@ -112,12 +107,7 @@ const STRUCTURED_DATA = {
       name: "Dubai Life",
       alternateName: ["mydubailife.app", "Come To Dubai"],
       description: SITE.description,
-      inLanguage: ["en", "ar"],
-      potentialAction: {
-        "@type": "SearchAction",
-        target: `${SITE.url}/explore?q={search_term_string}`,
-        "query-input": "required name=search_term_string",
-      },
+      inLanguage: "en",
     },
     {
       "@type": "Organization",
@@ -131,7 +121,10 @@ const STRUCTURED_DATA = {
         height: 512,
       },
       sameAs: [
-        "https://twitter.com/cometodubai",
+        "https://x.com/dubailifeapp",
+        "https://www.instagram.com/dubailifeapp/",
+        "https://www.tiktok.com/@dubailifeapp",
+        "https://www.linkedin.com/company/dubailifeapp",
       ],
     },
     {
@@ -161,13 +154,6 @@ const STRUCTURED_DATA = {
         price: "0",
         priceCurrency: "AED",
         availability: "https://schema.org/InStock",
-      },
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: "4.9",
-        ratingCount: "2840",
-        bestRating: "5",
-        worstRating: "1",
       },
       contentLocation: {
         "@type": "Place",
