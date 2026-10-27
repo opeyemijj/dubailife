@@ -473,24 +473,6 @@ export default function HomePage() {
       {/* TOP LEFT QUESTS & OBJECTIVES (Image 2) */}
       {!cleanScreen && (
         <div className="absolute top-[4.75rem] sm:top-24 left-3 sm:left-6 z-30 pointer-events-auto space-y-1.5">
-          {/* Quiet while the first-day checklist is running, so new players see one clear set of goals. */}
-          {!firstDayActive && <>
-          <div className="flex items-center gap-2 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg border border-slate-100 text-xs font-bold text-slate-800 max-w-[280px]">
-            <span className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-xs shrink-0">🍎</span>
-            <div className="truncate">
-              <div className="leading-tight">Eat something</div>
-              <div className="text-[10px] text-slate-400 font-semibold">Tap the cooler or stove</div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg border border-slate-100 text-xs font-bold text-slate-800 max-w-[280px]">
-            <span className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs shrink-0">💎</span>
-            <div className="truncate">
-              <div className="leading-tight">Daily gem hunt</div>
-              <div className="text-[10px] text-slate-400 font-semibold">7758 found · next prize AED 3,000</div>
-            </div>
-          </div>
-          </>}
 
           <button
             onClick={() => setCleanScreen(!cleanScreen)}
@@ -570,6 +552,25 @@ export default function HomePage() {
                     </button>
                   </div>
                 </div>
+                {/* Today's to-dos live here rather than as cards over the room (quiet during the first-day checklist). */}
+                {!firstDayActive && (
+                  <div className="grid grid-cols-2 gap-1.5 mb-1.5">
+                    <div className={`flex items-center gap-2 p-2 rounded-xl border ${needs.hunger < 50 ? "bg-amber-50 border-amber-200" : "bg-slate-50 border-slate-100"}`}>
+                      <span className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center text-sm shrink-0">🍎</span>
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-black text-slate-800 leading-tight">Eat something</div>
+                        <div className="text-[9px] text-slate-400 font-medium truncate">Tap the fridge or kitchen</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
+                      <span className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-sm shrink-0">💎</span>
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-black text-slate-800 leading-tight">Daily gem hunt</div>
+                        <div className="text-[9px] text-slate-400 font-medium truncate">Find today&apos;s gem around the city</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                   {(rooms
                     ? housingConfig.activities.filter((a) => !a.room || a.room === activeRoomId || a.room === "living" || a.room === "bedroom")

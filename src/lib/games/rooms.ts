@@ -28,6 +28,8 @@ const friendly = (m: string) =>
   : /not_signed_in/.test(m) ? "Please log in to play with others." : /stale_move/.test(m) ? "Someone moved first — updating."
   : /cant_pay:(.*)/.test(m) ? `Not enough virtual AED to play: ${m.match(/cant_pay:([^"]*)/)?.[1]?.trim()}`
   : /insufficient_funds/.test(m) ? "You don't have enough virtual AED for this game. Top up in your wallet."
+  : /already_in_room/.test(m) ? "They're already in this room." : /too_many_invites/.test(m) ? "That's a lot of invites. Give people a moment to answer."
+  : /room_closed/.test(m) ? "This game has already started." : /not_in_room/.test(m) ? "Join the room first to invite people."
   : "Something went wrong. Please try again.";
 
 async function call<T>(fn: string, args: Record<string, unknown>): Promise<{ data?: T; error?: string }> {
@@ -39,6 +41,9 @@ export const createRoom = (game: GameId, isPublic: boolean, max: number) => call
 export const quickMatch = (game: GameId, max: number) => call<GameRoom>("quick_match", { p_game: game, p_max: max });
 export const joinRoom = (code: string) => call<GameRoom>("join_game_room", { p_code: code });
 export const leaveRoom = (id: string) => call<null>("leave_game_room", { p_room: id });
+/** Invites someone to the room by their id; they're told live (and by push, sent by the caller). */
+export const inviteToRoom = (room: string, to: string) => call<number>("invite_to_game", { p_room: room, p_to: to });
+export const answerInvite = (invite: number, join: boolean) => call<null>("answer_game_invite", { p_invite: invite, p_join: join });
 export const startRoom = <S,>(id: string, state: S) => call<GameRoom<S>>("start_game_room", { p_room: id, p_state: state });
 export const moveRoom = <S,>(id: string, version: number, state: S, done = false) => call<GameRoom<S>>("game_move", { p_room: id, p_version: version, p_state: state, p_done: done });
 

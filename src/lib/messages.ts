@@ -116,10 +116,11 @@ export function onIncoming(me: string, cb: (m: Message) => void) {
   return () => { supabase().removeChannel(channel); };
 }
 
-/** Finds citizens by username (for starting a chat or adding a friend). */
+/** Finds citizens by username or name (for starting a chat, adding a friend or inviting to a game). */
 export async function findPeople(query: string, me: string): Promise<Contact[]> {
-  const q = query.trim().replace(/^@/, "");
+  const q = query.trim().replace(/^@/, "").replace(/[%_,()]/g, "");
   if (q.length < 2) return [];
-  const { data } = await supabase().from("profiles").select("id, username, display_name, citizen").ilike("username", `${q}%`).neq("id", me).limit(10);
+  const { data } = await supabase().from("profiles").select("id, username, display_name, citizen")
+    .or(`username.ilike.${q}%,display_name.ilike.%${q}%`).neq("id", me).limit(10);
   return (data ?? []).map((p) => ({ id: p.id, username: p.username, name: p.display_name, look: (p.citizen as { look?: AvatarLookProps } | null)?.look }));
 }

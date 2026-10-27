@@ -4,6 +4,7 @@
 // code, or join a friend's code), play, see the result, and the Hall of Fame. "Back to Game City" returns
 // to the district on the map. Results are saved to the player's profile and the leaderboard.
 
+import { InvitePlayers } from "./InvitePlayers";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -310,6 +311,9 @@ function RoomGame({ info, initial, myId, myUsername, onPlaying, onExit }: { info
           {typeof navigator !== "undefined" && "share" in navigator && <button onClick={share} className="h-10 px-3 rounded-xl bg-slate-100 font-bold text-sm flex items-center gap-1.5"><Share2 className="w-4 h-4" /> Share</button>}
         </div>
         <PlayerStrip seats={seats} me={me} turn={null} slots={room.max_players} />
+        {room.players.length < room.max_players && (
+          <InvitePlayers info={info} roomId={room.id} code={room.code} myId={myId} myUsername={myUsername} inRoom={room.players.map((p) => p.id)} />
+        )}
         {host ? (
           <button disabled={room.players.length < info.minPlayers || saving}
             onClick={async () => { setSaving(true); const { error: e } = await startRoom(room.id, mod.init(room.players.length, Math.floor(Math.random() * 1e9))); setSaving(false); if (e) setError(e); }}

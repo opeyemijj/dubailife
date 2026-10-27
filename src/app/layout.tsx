@@ -21,6 +21,7 @@ import { LifeHub } from "@/components/life/LifeHub";
 import { PhoneOverlay } from "@/components/layout/PhoneOverlay";
 import { HudSheets } from "@/components/layout/HudSheets";
 import { LoveListener } from "@/components/love/LoveListener";
+import { GameInviteListener } from "@/components/games/GameInviteListener";
 import { EmbedBridge, OutsidePhone } from "@/components/layout/Embed";
 
 const fredoka = Fredoka({ subsets: ["latin"], display: 'swap' });
@@ -213,6 +214,7 @@ export default function RootLayout({
           <PhoneOverlay />
           <HudSheets />
           <LoveListener />
+          <GameInviteListener />
         </OutsidePhone>
       </body>
     </html>
