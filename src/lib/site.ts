@@ -8,13 +8,19 @@ export const SITE = {
   tagline: "Live your Dubai story",
   description:
     "Dubai Life is a Sims-style life game set in Dubai. Ride the Metro, rent a Marina flat, get a job, shop at Dubai Mall and make real friends. Play free online.",
+  /** Every account is @dubailifeapp. */
+  socials: [
+    { label: "𝕏", href: "https://x.com/dubailifeapp" },
+    { label: "TikTok", href: "https://www.tiktok.com/@dubailifeapp" },
+    { label: "Instagram", href: "https://www.instagram.com/dubailifeapp/" },
+    { label: "LinkedIn", href: "https://www.linkedin.com/company/dubailifeapp" },
+  ],
   themeColor: "#1e1b4b",
   backgroundColor: "#0f0a2e",
   keywords: [
     "Dubai Life",
     "Dubai Life game",
     "Dubai life simulation game",
-    "Come To Dubai",
     "mydubailife.app",
     "Dubai life simulator",
     "virtual Dubai 3D",

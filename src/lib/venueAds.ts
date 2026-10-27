@@ -1,5 +1,7 @@
 "use client";
 
+import { SITE } from "@/lib/site";
+
 export type WallPanelId = "panel_main" | "panel_west" | "panel_east";
 
 export interface WallPanelDef {
@@ -144,7 +146,7 @@ export function getVenueWallAd(venueId: string, panelId: WallPanelId = "panel_ma
         ? "https://images.unsplash.com/photo-1574096079513-d8259312b785?auto=format&fit=crop&w=800&q=80"
         : "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80",
     ctaLabel: "Learn More",
-    ctaUrl: "https://cometodubai.com",
+    ctaUrl: SITE.url,
     badge: "Official Sponsor",
     isOwnerAd: true,
   };

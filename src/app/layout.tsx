@@ -14,6 +14,7 @@ import { ScamPhone } from "@/components/safety/ScamPhone";
 import { DiscoverHost } from "@/components/guide/Discover";
 import { Suspense } from "react";
 import { SITE } from "@/lib/site";
+import { GAMES } from "@/lib/games/registry";
 import { ServiceWorker } from "@/components/pwa/ServiceWorker";
 import { KeyboardShortcuts } from "@/components/common/KeyboardShortcuts";
 import { LifeHub } from "@/components/life/LifeHub";
@@ -34,7 +35,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
   title: {
-    default: "Dubai Life Game — Live Your Dubai Story, Free Online",
+    default: "Dubai Life — Live Your Dubai Story, Free Online",
     template: "%s - Dubai Life",
   },
   description: SITE.description,
@@ -51,7 +52,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: SITE.name,
-    title: "Dubai Life Game — Live Your Dubai Story, Free Online",
+    title: "Dubai Life — Live Your Dubai Story, Free Online",
     description: SITE.description,
     url: "/",
     locale: "en_AE",
@@ -66,7 +67,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Dubai Life Game — Live Your Dubai Story, Free Online",
+    title: "Dubai Life — Live Your Dubai Story, Free Online",
     description: SITE.description,
     images: ["/twitter-image"],
     site: "@dubailifeapp",
@@ -88,6 +89,11 @@ export const metadata: Metadata = {
     title: SITE.shortName,
     statusBarStyle: "black-translucent",
   },
+  // Ownership checks for Google Search Console and Bing Webmaster Tools (set the codes in the environment).
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION,
+    other: process.env.BING_SITE_VERIFICATION ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION } : undefined,
+  },
   formatDetection: { telephone: false, email: false, address: false },
   // Older iPhones still look for the apple-prefixed tag.
   other: {
@@ -105,7 +111,7 @@ const STRUCTURED_DATA = {
       "@id": `${SITE.url}/#website`,
       url: SITE.url,
       name: "Dubai Life",
-      alternateName: ["mydubailife.app", "Come To Dubai"],
+      alternateName: ["mydubailife.app", "Dubai Life Game"],
       description: SITE.description,
       inLanguage: "en",
     },
@@ -120,18 +126,13 @@ const STRUCTURED_DATA = {
         width: 512,
         height: 512,
       },
-      sameAs: [
-        "https://x.com/dubailifeapp",
-        "https://www.instagram.com/dubailifeapp/",
-        "https://www.tiktok.com/@dubailifeapp",
-        "https://www.linkedin.com/company/dubailifeapp",
-      ],
+      sameAs: SITE.socials.map((x) => x.href),
     },
     {
       "@type": ["VideoGame", "SoftwareApplication", "WebApplication"],
       "@id": `${SITE.url}/#app`,
       name: "Dubai Life",
-      alternateName: ["mydubailife.app", "Come To Dubai", "Dubai Life Simulator"],
+      alternateName: ["mydubailife.app", "Dubai Life Game", "Dubai Life Simulator"],
       url: SITE.url,
       description: SITE.description,
       image: `${SITE.url}/brand/icon-512.png`,
@@ -167,7 +168,7 @@ const STRUCTURED_DATA = {
       featureList: [
         "Interactive 3D Downtown Dubai, Burj Khalifa & Dubai Mall",
         "Custom 3D Avatar Creation with Outfits and Styles",
-        "17 Free Multiplayer Arcade Games (Ludo, Chess, Pool, Tycoon)",
+        `${GAMES.length} free multiplayer games (Ludo, Chess, Pool and more)`,
         "Apartment Customization, Furniture Placement & Renting",
         "Real-Time Social Chat, Messaging & Door Knocks",
         "Push Notifications on Home Screen PWA",

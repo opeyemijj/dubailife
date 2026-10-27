@@ -1,0 +1,15 @@
+# Dubai Life
+
+> Dubai Life (https://mydubailife.app) is a free online life simulation set in Dubai, played in the browser on phone or computer. Players create an avatar, rent a home, get a job, ride the Dubai Metro and taxis, shop at Dubai Mall, play multiplayer games and make real friends.
+
+The app's name is "Dubai Life"; mydubailife.app is its web address. Social accounts: @dubailifeapp on X, Instagram, TikTok and LinkedIn.
+
+## Pages
+
+- [What is Dubai Life?](https://mydubailife.app/about): what you can do, places, games and FAQ
+- [Explore the Dubai map](https://mydubailife.app/explore): the city map with landmarks, venues and metro stations
+- [The Dubai Mall](https://mydubailife.app/place/dubai-mall): one of the places you can go inside
+- [Dubai Academic City](https://mydubailife.app/academics): courses and skills
+- [Dubai scam check](https://mydubailife.app/scam-check): a 30-second quiz on common Dubai scams
+- [Advertise in Dubai Life](https://mydubailife.app/business): billboards and business listings
+- [Sitemap](https://mydubailife.app/sitemap.xml): every public page

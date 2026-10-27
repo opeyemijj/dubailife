@@ -6,6 +6,8 @@ import { compact, useSiteStats } from "@/lib/siteStats";
 import { PLACES } from "@/lib/city/places";
 import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { SITE } from "@/lib/site";
 import { 
   Users, Eye, EyeOff, X, Calendar as CalendarIcon, 
   Check, ShieldCheck, ChevronDown
@@ -23,7 +25,7 @@ interface LandingOverlayProps {
 }
 
 /** Social accounts shown under the sign-up / log-in buttons. Add each account's link as `href` when ready. */
-const SOCIALS: Array<{ label: string; href?: string }> = [{ label: "𝕏" }, { label: "TikTok" }, { label: "Instagram" }, { label: "LinkedIn" }];
+const SOCIALS: Array<{ label: string; href?: string }> = SITE.socials;
 
 export function LandingOverlay({
   isLoggedIn = false,
@@ -311,8 +313,9 @@ export function LandingOverlay({
 
           <div className="flex justify-center"><InstallApp /></div>
 
-          {/* Social accounts */}
+          {/* What Dubai Life is, and the social accounts */}
           <div className="flex items-center justify-center gap-3 pt-1 text-xs font-bold text-slate-500">
+            <Link href="/about" className="hover:text-slate-800 transition-colors">About</Link>
             {SOCIALS.map((n) => n.href
               ? <a key={n.label} href={n.href} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 transition-colors">{n.label}</a>
               : <span key={n.label} className="hover:text-slate-800 cursor-pointer transition-colors">{n.label}</span>)}
