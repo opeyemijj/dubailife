@@ -24,10 +24,10 @@ export type { AvatarLookProps } from "./roster";
  * "sleep" and "swim" have no clips of their own: sleep is the idle clip slowed to a sleeper's breathing,
  * swim is the walk clip sped up for the leg kick (the scene lays the body down; BodyPose moves the arms).
  */
-export type AvatarAnimation = "idle" | "sit" | "wave" | "clap" | "walk" | "dance" | "talk" | "sleep" | "swim" | "skate";
-// skate: the walk clip slowed right down, for long gliding strides.
-const CLIP_FOR: Partial<Record<AvatarAnimation, AvatarAnimation>> = { sleep: "idle", swim: "walk", skate: "walk" };
-const SPEED_FOR: Partial<Record<AvatarAnimation, number>> = { sleep: 0.3, swim: 1.5, skate: 0.55 };
+export type AvatarAnimation = "idle" | "sit" | "wave" | "clap" | "walk" | "dance" | "talk" | "sleep" | "swim" | "skate" | "run";
+// skate: the walk clip slowed right down, for long gliding strides; run: the walk clip at a jogger's cadence.
+const CLIP_FOR: Partial<Record<AvatarAnimation, AvatarAnimation>> = { sleep: "idle", swim: "walk", skate: "walk", run: "walk" };
+const SPEED_FOR: Partial<Record<AvatarAnimation, number>> = { sleep: 0.3, swim: 1.5, skate: 0.55, run: 2.6 };
 
 /**
  * Arm poses laid over whatever clip is playing, for rides and water: arms crossed on the chest (slides),
@@ -40,7 +40,7 @@ export type BodyPose = "armsCrossed" | "armsUp" | "swim" | "balance" | "grip" | 
 export const DEFAULT_LOOK: AvatarLookProps = { gender: "woman", bodyType: "Hourglass" };
 
 const HEIGHT: Record<Gender, number> = { woman: 1.68, man: 1.8 };
-const CLIPS: Exclude<AvatarAnimation, "sleep" | "swim" | "skate">[] = ["idle", "sit", "wave", "clap", "walk", "dance", "talk"];
+const CLIPS: Exclude<AvatarAnimation, "sleep" | "swim" | "skate" | "run">[] = ["idle", "sit", "wave", "clap", "walk", "dance", "talk"];
 
 /** Soft studio lighting for realistic skin, generated in code (no HDR download). */
 export function StudioEnvironment({ intensity = 0.6 }: { intensity?: number }) {

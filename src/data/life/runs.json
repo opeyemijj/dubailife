@@ -1,0 +1,14 @@
+{
+  "_note": "Going for a run from home (components/home/RunJourney). Each route is out and back, or once round the block, from your front door. 'distances' are one way (the loop round the block is twice that, so every option is the same total). The run plays faster than real time; the pace shown is a realistic jog. Effects apply when you get home.",
+  "routes": [
+    { "id": "citywalk", "name": "City Walk", "icon": "🌴", "desc": "Palm-lined paving past cafés and boutiques", "kind": "out-and-back" },
+    { "id": "jbr", "name": "JBR Beach Walk", "icon": "🏖️", "desc": "The beachfront path between the sea and the towers", "kind": "out-and-back" },
+    { "id": "block", "name": "Around the block", "icon": "🏘️", "desc": "Once round your neighbourhood and back to your door", "kind": "loop" }
+  ],
+  "distances": [100, 200],
+  "playSpeed": 6.5,
+  "walkSpeed": 1.6,
+  "paceSecondsPerKm": 330,
+  "effects": { "fun": 15, "energy": -12, "hunger": -8, "hygiene": -20 },
+  "fitnessXp": 25
+}

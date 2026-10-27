@@ -101,6 +101,7 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
     { id: "police", name: "Dubai Police", icon: "🚓", bg: "from-blue-700 to-slate-900", screen: "court", badge: courtBadge, isNew: true },
     { id: "health", name: "Dubai Health", icon: "🩺", bg: "from-teal-400 to-cyan-700", screen: "clinic", badge: clinicBadge, isNew: true },
     { id: "hayati", name: "Hayati", icon: "💞", bg: "from-rose-400 to-pink-600", screen: "hayati", badge: loveBadge, isNew: true },
+    { id: "marathon", name: "Marathon", icon: "🏅", bg: "from-emerald-500 to-teal-700", href: "/marathon", isNew: true },
     { id: "messages", name: "Messages", icon: "💬", bg: "from-sky-400 to-blue-600", screen: "page:/phone", badge: unread },
     { id: "jobs", name: "Jobs", icon: "💼", bg: "from-emerald-400 to-emerald-700", screen: "jobs" },
     { id: "wallet", name: "Wallet", icon: "💳", bg: "from-amber-300 to-orange-500", screen: "page:/wallet" },

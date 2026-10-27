@@ -27,6 +27,8 @@ import { getPendingVenue } from "@/components/city/VenueDressCodeModal";
 import { NeedsDock } from "@/components/life/NeedsDock";
 import { gainSkill, lifeEvent } from "@/lib/life";
 import { FixtureProgress, FixtureSheet, completeFixtureAction } from "@/components/home/FixtureSheet";
+import { applyRun, RUNS, RunJourney, type RouteId } from "@/components/home/RunJourney";
+import { Sheet } from "@/components/ui/sheet";
 import type { Fixture, FixtureAction } from "@/lib/homeFixtures";
 import BLUEPRINT from "@/data/life/blueprint.json";
 
@@ -86,6 +88,11 @@ export default function HomePage() {
   // The kitchen or bathroom fixture being used, and the action under way.
   const [fixture, setFixture] = useState<Fixture | null>(null);
   const [running, setRunning] = useState<FixtureAction | null>(null);
+  // Going for a run: choosing the route, then the run itself.
+  const [runPicker, setRunPicker] = useState(false);
+  const [runRoute, setRunRoute] = useState<RouteId>("citywalk");
+  const [runDistance, setRunDistance] = useState(RUNS.distances[0]);
+  const [onRun, setOnRun] = useState(false);
   const [shopTab, setShopTab] = useState<"shop" | "storage" | "style">("shop");
   const [shopCat, setShopCat] = useState<ShopCategory | "all">("all");
   const [placing, setPlacing] = useState<PlacingState | null>(null);
@@ -562,6 +569,14 @@ export default function HomePage() {
                         <div className="text-[9px] text-slate-400 font-medium truncate">Tap the fridge or kitchen</div>
                       </div>
                     </div>
+                    <button onClick={() => { gameAudio.playClickSound(); setRitualsExpanded(false); setRunPicker(true); }} className="col-span-2 flex items-center gap-2 p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-left active:scale-[0.98]">
+                      <span className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center text-sm shrink-0">🏃</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] font-black text-slate-800 leading-tight">Go for a run</div>
+                        <div className="text-[9px] text-slate-500 font-medium truncate">City Walk, JBR Beach Walk or round the block</div>
+                      </div>
+                      <span className="text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">+Fun</span>
+                    </button>
                     <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
                       <span className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-sm shrink-0">💎</span>
                       <div className="min-w-0">
@@ -657,6 +672,34 @@ export default function HomePage() {
       )}
 
       {/* Floating Interactive Toast */}
+      {runPicker && (
+        <Sheet icon="🏃" title="Go for a run" subtitle="Out of your front door and back" onClose={() => setRunPicker(false)}>
+          <div className="space-y-2">
+            {RUNS.routes.map((r) => (
+              <button key={r.id} onClick={() => setRunRoute(r.id as RouteId)} className={`w-full flex items-center gap-3 p-3 rounded-[22px] text-left ${runRoute === r.id ? "bg-emerald-50 ring-2 ring-emerald-500" : "bg-slate-100/80"}`}>
+                <span className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-2xl">{r.icon}</span>
+                <span className="flex-1 min-w-0"><span className="block font-semibold">{r.name}</span><span className="block text-sm text-slate-500">{r.desc}</span></span>
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {RUNS.distances.map((d) => (
+              <button key={d} onClick={() => setRunDistance(d)} className={`h-14 rounded-full font-semibold ${runDistance === d ? "bg-emerald-700 text-white" : "bg-slate-100 text-slate-700"}`}>
+                {runRoute === "block" ? `${d * 2} m loop` : `${d} m out and back`}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => { gameAudio.playClickSound(); setRunPicker(false); setOnRun(true); }} className="w-full h-14 rounded-full bg-emerald-700 text-white text-lg font-semibold shadow-[inset_0_-4px_0_rgba(0,0,0,0.2)]">Start running</button>
+        </Sheet>
+      )}
+      {onRun && (
+        <RunJourney route={runRoute} distance={runDistance} look={citizen?.look} onDone={(r) => {
+          applyRun(r);
+          setOnRun(false);
+          if (r.fraction > 0.05) showToast(`🏃 ${r.metres} m run · ${r.fraction >= 1 ? "great work!" : "cut short, still counts"}`);
+        }} />
+      )}
+
       {fixture && !running && (
         <FixtureSheet fixture={fixture} onClose={() => setFixture(null)} onStart={(a) => { gameAudio.playClickSound(); setRunning(a); setFixture(null); }} />
       )}

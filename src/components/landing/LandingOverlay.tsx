@@ -217,8 +217,8 @@ export function LandingOverlay({
               </div>
             </div>
 
-            {/* Top Right Auth Buttons */}
-            {isLoggedIn ? (
+            {/* Signed in: a way home and out. Signed out, Sign up and Log in are in the card at the bottom. */}
+            {isLoggedIn && (
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <button
                   onClick={() => router.push("/home")}
@@ -231,21 +231,6 @@ export function LandingOverlay({
                   className="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-full bg-white hover:bg-slate-50 active:scale-95 text-slate-700 border border-slate-200/80 font-bold text-xs sm:text-sm transition-all shadow-sm"
                 >
                   Log out
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <button
-                  onClick={handleOpenSignUp}
-                  className="px-4 py-2.5 sm:py-2 rounded-full bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-black text-xs sm:text-sm transition-all shadow-md shadow-emerald-500/20"
-                >
-                  Sign up
-                </button>
-                <button
-                  onClick={handleOpenLogIn}
-                  className="px-4 py-2.5 sm:py-2 rounded-full bg-white hover:bg-slate-50 active:scale-95 text-slate-800 border border-slate-200/80 font-bold text-xs sm:text-sm transition-all shadow-sm"
-                >
-                  Log in
                 </button>
               </div>
             )}

@@ -108,5 +108,17 @@ lneed("gift", `p_amount > ${love.maxGift} then raise exception 'amount_out_of_ra
 lneed("i do before", `starts_at - interval '${love.iDoWindow.beforeMinutes} minutes' then raise exception 'too_early'`);
 lneed("i do after", `starts_at + interval '${love.iDoWindow.afterMinutes} minutes' then raise exception 'too_late'`);
 for (const [id, r] of Object.entries(love.roles)) lneed(`role ${id}`, `when '${id}' then ${r.max}`);
-console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service and love config match the database.");
+// The marathon (src/data/life/marathon.json vs *_marathon.sql).
+const mar = JSON.parse(readFileSync("src/data/life/marathon.json", "utf8"));
+const marFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_marathon.sql")).sort().pop();
+const marSql = readFileSync(`supabase/migrations/${marFile}`, "utf8");
+const mneed = (label, text) => { if (!marSql.includes(text)) { bad++; console.error(`marathon ${label}: differs from SQL (${text})`); } };
+mneed("day", `isodow from s at time zone 'Asia/Dubai') = ${mar.startDow}`);
+mneed("hour", `interval '${mar.startHour} hours'`);
+mneed("window", `s + interval '${mar.windowMinutes} minutes' > p_at`);
+mneed("course", `least(p_distance, elapsed * ${mar.maxSpeed} + 25, ${mar.courseMetres})`);
+mneed("finish", `if d >= ${mar.courseMetres} then`);
+mneed("prizes", `prizes bigint[] := array[${mar.prizes.join(", ")}]`);
+mneed("points", `'wellbeing', ${mar.finisherPoints}, 'marathon:'`);
+console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love and marathon config match the database.");
 process.exit(bad ? 1 : 0);

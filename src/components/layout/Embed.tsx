@@ -19,7 +19,7 @@ export function OutsidePhone({ children }: { children: React.ReactNode }) {
 }
 
 /** Routes that can't live in the phone: they open full screen behind it. */
-const OUTSIDE = /^\/($|explore|place|property|games|driving|home|onboarding|\?)/;
+const OUTSIDE = /^\/($|explore|place|property|games|driving|home|onboarding|marathon|wedding|\?)/;
 export const NAVIGATE = "dubai:navigate";
 
 function leave(href: string) {

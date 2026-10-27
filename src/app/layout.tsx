@@ -22,6 +22,7 @@ import { PhoneOverlay } from "@/components/layout/PhoneOverlay";
 import { HudSheets } from "@/components/layout/HudSheets";
 import { LoveListener } from "@/components/love/LoveListener";
 import { GameInviteListener } from "@/components/games/GameInviteListener";
+import { MarathonBanner } from "@/components/marathon/MarathonBanner";
 import { EmbedBridge, OutsidePhone } from "@/components/layout/Embed";
 
 const fredoka = Fredoka({ subsets: ["latin"], display: 'swap' });
@@ -215,6 +216,7 @@ export default function RootLayout({
           <HudSheets />
           <LoveListener />
           <GameInviteListener />
+          <MarathonBanner />
         </OutsidePhone>
       </body>
     </html>

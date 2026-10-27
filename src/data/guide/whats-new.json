@@ -1,6 +1,22 @@
 {
   "items": [
     {
+      "id": "2026-10-28-marathon",
+      "date": "2026-10-28",
+      "icon": "🏅",
+      "title": "The Dubai Life Marathon, every Friday",
+      "text": "Run together with everyone at 7pm Dubai time past Burj Khalifa, Sheikh Zayed Road and the Museum of the Future. Free to enter; the top 3 win AED 50,000, 25,000 and 10,000.",
+      "how": "Phone → Marathon → Sign up, then invite your friends with your link."
+    },
+    {
+      "id": "2026-10-28-run",
+      "date": "2026-10-28",
+      "icon": "🏃",
+      "title": "Go for a run",
+      "text": "Run out of your front door along City Walk, the JBR Beach Walk or round the block, and back home.",
+      "how": "Home → Rituals → Go for a run."
+    },
+    {
       "id": "2026-10-27-hayati",
       "date": "2026-10-27",
       "icon": "💞",

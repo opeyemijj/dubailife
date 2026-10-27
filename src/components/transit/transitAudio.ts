@@ -80,6 +80,31 @@ export function doorThud() {
   src.buffer = buf; src.connect(f).connect(g).connect(a.destination); src.start();
 }
 
+/** One footstep: a short soft thud, brighter and knockier on timber, a scuff on stone. `hard` 0..1 for a run. */
+export function footstep(surface: "stone" | "wood" | "pavement" = "stone", hard = 0.6) {
+  const a = ac();
+  if (!a || muted) return;
+  const len = 0.09;
+  const buf = a.createBuffer(1, Math.floor(a.sampleRate * len), a.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (a.sampleRate * (surface === "wood" ? 0.012 : 0.018)));
+  const src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  f.type = "lowpass";
+  // A little variety from step to step, so it doesn't sound like a metronome.
+  f.frequency.value = (surface === "wood" ? 1300 : surface === "pavement" ? 900 : 700) * (0.85 + Math.random() * 0.3);
+  g.gain.value = 0.18 + hard * 0.25;
+  src.buffer = buf;
+  src.connect(f).connect(g).connect(a.destination);
+  src.start();
+  if (surface === "wood") {
+    // The board's hollow knock under the heel.
+    const o = a.createOscillator(), og = a.createGain(), t = a.currentTime;
+    o.type = "sine"; o.frequency.value = 170 + Math.random() * 30;
+    og.gain.setValueAtTime(0.12 * (0.6 + hard), t); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+    o.connect(og).connect(a.destination); o.start(t); o.stop(t + 0.1);
+  }
+}
+
 // ---------------------------------------------------------------- continuous sounds
 
 interface Loop { src: AudioBufferSourceNode; gain: GainNode; filter: BiquadFilterNode; osc?: OscillatorNode; level: number }

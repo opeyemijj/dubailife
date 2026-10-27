@@ -1,0 +1,25 @@
+{
+  "_note": "The Dubai Life Marathon (weekly, free). Mirrored in supabase/migrations/*_marathon.sql: the Friday 19:00 GST start, the 15-minute race window, the course length, the top speed and the prizes (checked by scripts/check-life-config.mjs). The course plays in game metres; the distance shown is scaled (×10) so the full course reads as a marathon. Locals run alongside for company but never enter or rank.",
+  "name": "Dubai Life Marathon",
+  "startDow": 5,
+  "startHour": 19,
+  "windowMinutes": 15,
+  "courseMetres": 4220,
+  "displayScale": 10,
+  "baseSpeed": 6,
+  "tapBoost": 1.4,
+  "maxSpeed": 12,
+  "prizes": [50000, 25000, 10000],
+  "finisherPoints": 30,
+  "effects": { "fun": 30, "energy": -25, "hunger": -15, "hygiene": -30 },
+  "fitnessXp": 60,
+  "landmarks": [
+    { "at": 0, "name": "Start · The Dubai Mall", "icon": "🛍️" },
+    { "at": 700, "name": "Burj Khalifa", "icon": "🏙️" },
+    { "at": 1500, "name": "Sheikh Zayed Road", "icon": "🛣️" },
+    { "at": 2300, "name": "Dubai Frame", "icon": "🖼️" },
+    { "at": 3100, "name": "Museum of the Future", "icon": "🔭" },
+    { "at": 3800, "name": "DIFC Gate", "icon": "🏛️" },
+    { "at": 4220, "name": "Finish · The Dubai Mall", "icon": "🏁" }
+  ]
+}
