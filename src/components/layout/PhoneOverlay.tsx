@@ -1,11 +1,12 @@
 "use client";
 
-// The phone in your hand: opens over the map (the round phone button, or "dubai:open-phone") with a
-// home screen of apps. Apps open their pages; Games opens a list inside the phone.
+// The phone in your hand: opens over the map (the phone button beside Profile, or "dubai:open-phone") with a
+// home screen of apps. Apps stay inside the phone: the built-in ones as screens, the app's own pages in a
+// frame (see Embed.tsx). Only what needs the whole screen leaves it: the map, games, driving, a Metro ride.
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Search, X } from "lucide-react";
+import { ChevronLeft, Loader2, Search, X } from "lucide-react";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { useCitizen } from "@/lib/citizenStore";
 import { useUnreadTotal } from "@/lib/unread";
@@ -20,7 +21,11 @@ import { JobsApp } from "@/components/phone/JobsApp";
 import { ClinicApp } from "@/components/phone/ClinicApp";
 import { PoliceApp } from "@/components/phone/PoliceApp";
 import { DeliveryApp } from "@/components/phone/DeliveryApp";
-import { RideApp } from "@/components/phone/RideApp";
+import { RideApp, type MetroTrip } from "@/components/phone/RideApp";
+import { MetroJourney } from "@/components/transit/MetroJourney";
+import { adjustBalance, updateCitizen } from "@/lib/citizenStore";
+import { entranceOf } from "@/lib/city/geo";
+import { NAVIGATE } from "@/components/layout/Embed";
 import { HayatiApp } from "@/components/phone/HayatiApp";
 import { useLove } from "@/lib/love";
 import APPS from "@/data/phone/apps.json";
@@ -29,23 +34,46 @@ import APPS from "@/data/phone/apps.json";
 export const openPhone = (app?: Screen) => window.dispatchEvent(new CustomEvent("dubai:open-phone", { detail: app }));
 
 /** Apps that open inside the phone (the rest open their page). */
-type Screen = "home" | "games" | "jobs" | "clinic" | "court" | "food" | "grocery" | "rides" | "hayati" | `store:${string}`;
+type Screen = "home" | "games" | "jobs" | "clinic" | "court" | "food" | "grocery" | "rides" | "hayati" | `store:${string}` | `page:${string}`;
 
 interface App { id: string; name: string; icon: string; bg: string; href?: string; screen?: Screen; run?: () => void; badge?: number; isNew?: boolean }
 
 export function PhoneOverlay() {
   const { citizen } = useCitizen();
+  const router = useRouter();
   const [open, setOpen] = useState<Screen | null>(null);
+  const [metro, setMetro] = useState<MetroTrip | null>(null);
   useEffect(() => {
     const show = (e: Event) => { gameAudio.playClickSound(); setOpen((e as CustomEvent<Screen | undefined>).detail ?? "home"); };
+    // A page inside the phone asked to open somewhere in the city: put the phone away and go there.
+    const out = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin || e.data?.type !== NAVIGATE) return;
+      setOpen(null);
+      router.push(e.data.href);
+    };
     window.addEventListener("dubai:open-phone", show);
-    return () => window.removeEventListener("dubai:open-phone", show);
-  }, []);
+    window.addEventListener("message", out);
+    return () => { window.removeEventListener("dubai:open-phone", show); window.removeEventListener("message", out); };
+  }, [router]);
+
+  if (metro) {
+    const arrive = () => {
+      const at = entranceOf(metro.placeId);
+      if (at) updateCitizen((c) => ({ ...c, location: { ...at, placeId: metro.placeId } }));
+      setMetro(null);
+      router.push(`/place/${metro.placeId}`);
+    };
+    return (
+      <ModalPortal>
+        <MetroJourney fromMap={metro.fromMap} toMap={metro.toMap} gold={metro.gold} look={citizen?.look} onPay={(fare) => adjustBalance(-fare)} onArrive={arrive} onCancel={() => setMetro(null)} />
+      </ModalPortal>
+    );
+  }
   if (!open || !citizen?.id) return null;
-  return <Phone key={open} me={citizen.id} start={open} onClose={() => setOpen(null)} />;
+  return <Phone key={open} me={citizen.id} start={open} onClose={() => setOpen(null)} onMetro={(t) => { setOpen(null); setMetro(t); }} />;
 }
 
-function Phone({ me, start, onClose }: { me: string; start: Screen; onClose: () => void }) {
+function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onClose: () => void; onMetro: (t: MetroTrip) => void }) {
   const router = useRouter();
   const unread = useUnreadTotal(me);
   const services = useServices(me);
@@ -73,27 +101,27 @@ function Phone({ me, start, onClose }: { me: string; start: Screen; onClose: () 
     { id: "police", name: "Dubai Police", icon: "🚓", bg: "from-blue-700 to-slate-900", screen: "court", badge: courtBadge, isNew: true },
     { id: "health", name: "Dubai Health", icon: "🩺", bg: "from-teal-400 to-cyan-700", screen: "clinic", badge: clinicBadge, isNew: true },
     { id: "hayati", name: "Hayati", icon: "💞", bg: "from-rose-400 to-pink-600", screen: "hayati", badge: loveBadge, isNew: true },
-    { id: "messages", name: "Messages", icon: "💬", bg: "from-sky-400 to-blue-600", href: "/phone", badge: unread },
+    { id: "messages", name: "Messages", icon: "💬", bg: "from-sky-400 to-blue-600", screen: "page:/phone", badge: unread },
     { id: "jobs", name: "Jobs", icon: "💼", bg: "from-emerald-400 to-emerald-700", screen: "jobs" },
-    { id: "wallet", name: "Wallet", icon: "💳", bg: "from-amber-300 to-orange-500", href: "/wallet" },
+    { id: "wallet", name: "Wallet", icon: "💳", bg: "from-amber-300 to-orange-500", screen: "page:/wallet" },
     { id: "games", name: "Games", icon: "🎱", bg: "from-emerald-500 to-green-800", screen: "games" },
     { id: "metro", name: "Map", icon: "🗺️", bg: "from-cyan-300 to-teal-600", href: "/explore" },
-    { id: "people", name: "People", icon: "👥", bg: "from-violet-400 to-purple-700", href: "/phone?tab=contacts" },
+    { id: "people", name: "People", icon: "👥", bg: "from-violet-400 to-purple-700", screen: "page:/phone?tab=contacts" },
     { id: "todo", name: "To do", icon: "✅", bg: "from-lime-300 to-green-600", run: () => openDiscover("do") },
     { id: "places", name: "Places", icon: "📍", bg: "from-rose-400 to-red-600", run: () => openDiscover("places") },
-    { id: "uni", name: "Academy", icon: "🎓", bg: "from-indigo-400 to-indigo-700", href: "/academics" },
+    { id: "uni", name: "Academy", icon: "🎓", bg: "from-indigo-400 to-indigo-700", screen: "page:/academics" },
     { id: "driving", name: "Driving", icon: "🚗", bg: "from-slate-500 to-slate-800", href: "/driving" },
-    { id: "business", name: "Business", icon: "🏪", bg: "from-fuchsia-400 to-pink-600", href: "/business" },
-    { id: "ventures", name: "Ventures", icon: "📈", bg: "from-teal-400 to-emerald-700", href: "/ventures" },
-    { id: "tournament", name: "Tournament", icon: "🏆", bg: "from-yellow-300 to-amber-600", href: "/tournament" },
+    { id: "business", name: "Business", icon: "🏪", bg: "from-fuchsia-400 to-pink-600", screen: "page:/business" },
+    { id: "ventures", name: "Ventures", icon: "📈", bg: "from-teal-400 to-emerald-700", screen: "page:/ventures" },
+    { id: "tournament", name: "Tournament", icon: "🏆", bg: "from-yellow-300 to-amber-600", screen: "page:/tournament" },
     { id: "goals", name: "Goals", icon: "🎯", bg: "from-green-400 to-emerald-600", run: () => openLife("goals") },
     { id: "skills", name: "Skills", icon: "⭐", bg: "from-orange-300 to-orange-600", run: () => openLife("skills") },
-    { id: "scams", name: "Scam Check", icon: "🛡️", bg: "from-red-400 to-rose-700", href: "/scam-check" },
+    { id: "scams", name: "Scam Check", icon: "🛡️", bg: "from-red-400 to-rose-700", screen: "page:/scam-check" },
     { id: "news", name: "What's new", icon: "✨", bg: "from-violet-300 to-indigo-500", run: () => openSheet("whats-new") },
     { id: "ideas", name: "Ideas", icon: "💡", bg: "from-yellow-200 to-amber-400", run: () => openSheet("suggest") },
-    { id: "alerts", name: "Alerts", icon: "🔔", bg: "from-rose-300 to-pink-600", href: "/phone?tab=alerts" },
-    { id: "guide", name: "Guide", icon: "🧭", bg: "from-sky-300 to-cyan-600", href: "/guide" },
-    { id: "profile", name: "Profile", icon: "🙂", bg: "from-zinc-300 to-zinc-500", href: "/profile" },
+    { id: "alerts", name: "Alerts", icon: "🔔", bg: "from-rose-300 to-pink-600", screen: "page:/phone?tab=alerts" },
+    { id: "guide", name: "Guide", icon: "🧭", bg: "from-sky-300 to-cyan-600", screen: "page:/guide" },
+    { id: "profile", name: "Profile", icon: "🙂", bg: "from-zinc-300 to-zinc-500", screen: "page:/profile" },
   ], [unread, clinicBadge, courtBadge, loveBadge]);
 
   const home = () => setScreen("home");
@@ -134,7 +162,8 @@ function Phone({ me, start, onClose }: { me: string; start: Screen; onClose: () 
             : screen === "food" ? <DeliveryApp mode="food" onBack={home} />
             : screen === "grocery" ? <DeliveryApp mode="grocery" onBack={home} />
             : screen.startsWith("store:") ? <DeliveryApp mode="food" storeId={screen.slice(6)} onBack={home} />
-            : screen === "rides" ? <RideApp onBack={home} onClose={onClose} />
+            : screen === "rides" ? <RideApp onBack={home} onClose={onClose} onMetro={onMetro} />
+            : screen.startsWith("page:") ? <PageApp path={screen.slice(5)} title={apps.find((a) => a.screen === screen)?.name ?? ""} onBack={home} />
             : screen === "hayati" ? <HayatiApp onBack={home} />
             : screen === "games" ? (
               <div className="relative flex-1 overflow-y-auto px-5 pb-10">
@@ -156,7 +185,7 @@ function Phone({ me, start, onClose }: { me: string; start: Screen; onClose: () 
                   <div className="text-lg text-white/90 mt-2">{t?.date} · Dubai</div>
                 </div>
                 {unread > 0 && (
-                  <button onClick={() => { onClose(); router.push("/phone"); }} className="mt-4 w-full flex items-center gap-3 p-3 pr-2 rounded-3xl bg-white text-slate-900 text-left shadow-lg">
+                  <button onClick={() => setScreen("page:/phone")} className="mt-4 w-full flex items-center gap-3 p-3 pr-2 rounded-3xl bg-white text-slate-900 text-left shadow-lg">
                     <span className="w-11 h-11 rounded-full bg-sky-100 flex items-center justify-center text-xl">💬</span>
                     <span className="flex-1 font-bold leading-tight">{unread} unread message{unread > 1 ? "s" : ""}</span>
                     <span className="h-10 px-4 rounded-full bg-sky-500 text-white font-black flex items-center">Read ›</span>
@@ -186,5 +215,22 @@ function Phone({ me, start, onClose }: { me: string; start: Screen; onClose: () 
         </div>
       </div>
     </ModalPortal>
+  );
+}
+
+/** One of the app's pages, inside the phone. */
+function PageApp({ path, title, onBack }: { path: string; title: string; onBack: () => void }) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <div className="absolute inset-0 bg-white flex flex-col pt-12">
+      <div className="flex items-center gap-1 px-3 pb-2 text-slate-900">
+        <button onClick={onBack} aria-label="Back" className="w-10 h-10 flex items-center justify-center text-sky-600"><ChevronLeft className="w-7 h-7" /></button>
+        <h2 className="text-xl font-black truncate">{title}</h2>
+      </div>
+      <div className="relative flex-1">
+        {!loaded && <div className="absolute inset-0 flex items-center justify-center text-slate-400"><Loader2 className="w-7 h-7 animate-spin" /></div>}
+        <iframe src={path} title={title} onLoad={() => setLoaded(true)} className={`absolute inset-0 w-full h-full border-0 ${loaded ? "" : "opacity-0"}`} />
+      </div>
+    </div>
   );
 }

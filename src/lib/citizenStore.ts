@@ -69,6 +69,8 @@ export interface Citizen {
   furniture?: OwnedFurniture[];
   /** Floor, wall paint and panelling chosen for each home (absent: as the home came). */
   homeStyle?: Partial<Record<HousingTier, HomeStyle>>;
+  /** Groceries at home, used by the kitchen and bathroom (src/data/home/fixtures.json). */
+  pantry?: Record<string, number>;
   inventory?: InventoryItem[];
   /** Accessory product ids currently worn on the avatar. */
   worn?: string[];
@@ -109,9 +111,22 @@ let started = false;
 let signedOutOnPurpose = false;
 const listeners = new Set<() => void>();
 
+// Every open copy of the app (other tabs, and pages opened inside the in-game phone) shares the citizen:
+// each change is sent to the others, so a stale copy never saves over a newer one.
+const sync = typeof window !== "undefined" && "BroadcastChannel" in window ? new BroadcastChannel("dubai-citizen") : null;
+let fromSync = false;
+if (sync) sync.onmessage = (e: MessageEvent<Citizen>) => {
+  if (!state.citizen || e.data?.id !== state.citizen.id) return;
+  fromSync = true;
+  setState({ ...state, citizen: e.data });
+  fromSync = false;
+};
+
 function setState(next: CitizenState) {
+  const changed = next.citizen !== state.citizen;
   state = next;
   listeners.forEach((l) => l());
+  if (changed && !fromSync && next.citizen) sync?.postMessage(next.citizen);
 }
 
 interface ProfileRow {

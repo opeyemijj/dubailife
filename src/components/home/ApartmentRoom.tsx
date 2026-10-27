@@ -9,10 +9,13 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import type { AvatarLookProps } from "../onboarding/AvatarCanvas";
 import { restPose, type RestPose } from "./restPose";
 import { LuxuryDecor } from "./LuxuryDecor";
+import { buildNav, findPath, type Rect, type Seg } from "./homeNav";
+import { HomeFixtures } from "./HomeFixtures";
+import { fixtureRect, fixtureSpot, fixturesFor, fixtureWallsFor, type Fixture } from "@/lib/homeFixtures";
 import { CitizenAvatar, StudioEnvironment, type AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 import { SceneLoadingOverlay } from "@/components/GameLoadingScreen";
 import {
-  AVATAR_SPOT, BUILT_INS, CELL, DOOR, GRID, ROOM_SIZE, WALL_HEIGHT, WINDOW,
+  AVATAR_SPOT, BUILT_INS, CELL, DOOR, GRID, LAYOUT_SCALE, ROOM_SIZE, WALL_HEIGHT, WINDOW,
   findFreePlacement, floorCenter, floorPlacementAt, getCatalogItem, isPlacementValid, levelOf, rotatedSize, wallOffsetAt, wallTransform, withHomeItems,
   HOUSING_CONFIGS, type FloorFinish, type HomeStyle, type HousingTier, type LevelDef, type RoomZone,
   type CatalogItem, type FloorPlacement, type Interaction, type OwnedFurniture, type Placement, type Rotation, type Wall,
@@ -57,6 +60,8 @@ export interface ApartmentRoomProps {
   /** Called when a tap lands somewhere the item doesn't fit. */
   onPlaceBlocked?: () => void;
   onInteractObject?: (type: Interaction) => void;
+  /** A kitchen or bathroom fixture was reached and is being used (see HomeFixtures). */
+  onUseFixture?: (f: Fixture) => void;
   /** Two-storey homes: the floor on show (0 downstairs, 1 upstairs). Taking the stairs asks to change it. */
   level?: number;
   onChangeLevel?: (level: number) => void;
@@ -568,8 +573,11 @@ function wallFrame(wall: Wall) {
 }
 
 /** One wall with optional door / window cut-outs, drawn as solid segments. Local x runs along the wall. */
-function WallSegments({ wall, color = "#f1e4cf", skirtingColor = "#e7d5b8", noDoor, panels }: { wall: Wall; color?: string; skirtingColor?: string; noDoor?: boolean; panels?: boolean }) {
-  const opening = wall === DOOR.wall && !noDoor ? { ...DOOR, bottom: 0, top: 2.2 } : wall === WINDOW.wall ? { ...WINDOW, bottom: 1.0, top: 2.3 } : null;
+function WallSegments({ wall, color = "#f1e4cf", skirtingColor = "#e7d5b8", noDoor, panels, balcony }: { wall: Wall; color?: string; skirtingColor?: string; noDoor?: boolean; panels?: boolean; balcony?: boolean }) {
+  const opening = wall === DOOR.wall && !noDoor ? { ...DOOR, bottom: 0, top: 2.2 }
+    : wall === WINDOW.wall ? { ...WINDOW, bottom: 1.0, top: 2.3 }
+    // Homes with a balcony: a glass door in the middle of the south wall.
+    : wall === "south" && balcony ? { offset: GRID / 2 - 1, width: 2, bottom: 0, top: 2.3 } : null;
   // Wall-item offsets run along local +x from the left end as seen from inside the room.
   const toX = (offset: number) => -HALF + offset * CELL;
   const pieces: Array<{ x0: number; x1: number; y0: number; y1: number }> = [];
@@ -705,9 +713,11 @@ interface ShellProps {
   /** Upstairs: no front door. */
   upstairs?: boolean;
   panels?: boolean;
+  /** A balcony beyond the south wall, reached through a glass door. */
+  balcony?: boolean;
 }
 
-function RoomShell({ hiddenWalls, wallTargeting, interactive, onWallPointer, onDoor, wallColor, skirtingColor, upstairs, panels }: ShellProps) {
+function RoomShell({ hiddenWalls, wallTargeting, interactive, onWallPointer, onDoor, wallColor, skirtingColor, upstairs, panels, balcony }: ShellProps) {
   return (
     <>
       {WALLS.map(({ wall }) => {
@@ -723,7 +733,7 @@ function RoomShell({ hiddenWalls, wallTargeting, interactive, onWallPointer, onD
               </mesh>
             ) : (
               <>
-                <WallSegments wall={wall} color={wallColor} skirtingColor={skirtingColor} noDoor={upstairs} panels={panels} />
+                <WallSegments wall={wall} color={wallColor} skirtingColor={skirtingColor} noDoor={upstairs} panels={panels} balcony={balcony} />
                 {wall === DOOR.wall && !upstairs && <Door onOpen={onDoor} interactive={interactive} />}
                 {wall === WINDOW.wall && <Window />}
                 {wallTargeting && (
@@ -767,6 +777,8 @@ function OneBedroomPartitions({
 
   return (
     <group>
+      {/* Drawn for the old 7 m home: spread out to today's (furniture keeps its size). */}
+      <group scale={[LAYOUT_SCALE, 1, LAYOUT_SCALE]}>
       {/* 1. DISTINCT PER-ROOM FLOORING SLABS */}
       {/* Master Bedroom (North half): Cream wool carpet */}
       <mesh
@@ -859,6 +871,7 @@ function OneBedroomPartitions({
         <meshStandardMaterial color="#38bdf8" transparent opacity={0.35} roughness={0.1} />
       </mesh>
 
+      </group>
       {/* 5. 3D ROOM BADGES & SELECTION RINGS */}
       {HOUSING_CONFIGS.one_bedroom.rooms?.map((r) => {
         const isSelected = activeRoomId === r.id;
@@ -908,6 +921,8 @@ function TwoBedroomPartitions({
 
   return (
     <group>
+      {/* Drawn for the old 7 m home: spread out to today's (furniture keeps its size). */}
+      <group scale={[LAYOUT_SCALE, 1, LAYOUT_SCALE]}>
       {/* 1. DISTINCT PER-ROOM FLOORING SLABS (Gives each room its own authentic material & visual zone) */}
       {/* Master Suite: Cream wool carpet */}
       <mesh
@@ -1063,6 +1078,7 @@ function TwoBedroomPartitions({
         <meshStandardMaterial color="#38bdf8" transparent opacity={0.35} roughness={0.1} />
       </mesh>
 
+      </group>
       {/* 5. 3D ROOM BADGES & SELECTION RINGS */}
       {HOUSING_CONFIGS.two_bedroom.rooms?.map((r) => {
         const isSelected = activeRoomId === r.id;
@@ -1113,6 +1129,8 @@ function ThreeBedroomPartitions({
 
   return (
     <group>
+      {/* Drawn for the old 7 m home: spread out to today's (furniture keeps its size). */}
+      <group scale={[LAYOUT_SCALE, 1, LAYOUT_SCALE]}>
       {/* 1. DISTINCT PER-ROOM FLOORING SLABS */}
       {/* Master Suite (NW): Wool carpet */}
       <mesh
@@ -1261,12 +1279,12 @@ function ThreeBedroomPartitions({
       </mesh>
 
       {/* Kitchen Island Countertop Pass */}
-      <mesh position={[0.75, 0.95 / 2, 2.85]} receiveShadow castShadow>
-        <boxGeometry args={[WALL_THICKNESS, 0.95, 1.3]} />
+      <mesh position={[0.75, 0.95 / 2, 2.55]} receiveShadow castShadow>
+        <boxGeometry args={[WALL_THICKNESS, 0.95, 0.7]} />
         <meshStandardMaterial color="#1e293b" roughness={0.4} />
       </mesh>
-      <mesh position={[0.75, 0.98, 2.85]} receiveShadow>
-        <boxGeometry args={[0.55, 0.06, 1.4]} />
+      <mesh position={[0.75, 0.98, 2.55]} receiveShadow>
+        <boxGeometry args={[0.55, 0.06, 0.8]} />
         <meshStandardMaterial color="#0f172a" roughness={0.2} metalness={0.25} />
       </mesh>
 
@@ -1288,6 +1306,7 @@ function ThreeBedroomPartitions({
         <meshStandardMaterial color="#38bdf8" transparent opacity={0.35} roughness={0.1} />
       </mesh>
 
+      </group>
       {/* 4. 3D ROOM BADGES & SELECTION RINGS */}
       {HOUSING_CONFIGS.three_bedroom.rooms?.map((r) => {
         const isSelected = activeRoomId === r.id;
@@ -1489,7 +1508,7 @@ function CameraRig({
   // Pull back on narrow (portrait) screens so the whole room fits.
   useEffect(() => {
     if (!controls) return;
-    const dist = size.width / size.height < 0.8 ? 17 : 12.5;
+    const dist = size.width / size.height < 0.8 ? 24 : 17.5;
     const dir = camera.position.clone().sub(controls.target).normalize();
     camera.position.copy(controls.target).addScaledVector(dir, dist);
     controls.update();
@@ -1570,6 +1589,7 @@ function RoomScene({
   onPickUp,
   onPlaceBlocked,
   onInteractObject,
+  onUseFixture,
   level = 0,
   onChangeLevel,
   homeStyle,
@@ -1600,8 +1620,32 @@ function RoomScene({
   const [animation, setAnimation] = useState<AvatarAnimation>("idle");
   const [pose, setPose] = useState<Pose>(STAND);
   const [walkTarget, setWalkTarget] = useState<[number, number] | null>(null);
+  // The route there: round walls and furniture, through doorways (see homeNav.ts).
+  const routeRef = useRef<{ for: [number, number]; points: Array<[number, number]> } | null>(null);
+  // The kitchen and bathroom on this floor, and the bathroom's walls.
+  const fixtures = useMemo(() => fixturesFor(housingTier, lvl), [housingTier, lvl]);
+  const fixtureWalls = useMemo(() => fixtureWallsFor(housingTier, lvl), [housingTier, lvl]);
+  const nav = useMemo(() => {
+    // The whole floor (room zones leave gaps round the walls; the walls themselves keep rooms apart), and the balcony.
+    const roomRects: Rect[] = [{ minX: -HALF, maxX: HALF, minZ: -HALF, maxZ: HALF }, ...(rooms ?? []).filter((r) => r.id === "balcony").map((r) => r.bounds)];
+    const walls: Seg[] = [...(levelDef ? levelDef.walls : config.walls ?? [])];
+    // The south wall, with its glass door out to the balcony.
+    if (rooms?.some((r) => r.id === "balcony")) walls.push({ a: [-HALF, HALF], b: [HALF, HALF], door: [HALF - 0.5, HALF + 0.5] });
+    walls.push(...fixtureWalls);
+    const blocks: Rect[] = [...(levelDef ? [] : config.blocks ?? []), ...fixtures.map(fixtureRect)];
+    for (const f of withHomeItems(furniture, housingTier)) {
+      if (f.placement?.kind !== "floor" || levelOf(f.placement) !== lvl) continue;
+      const item = getCatalogItem(f.itemId);
+      // Rugs and mats are walked over.
+      if (!item || item.kind === "rug" || item.kind === "ceiling") continue;
+      const [w, d] = rotatedSize(item.size, f.placement.rot);
+      const c = floorCenter(item.size, f.placement);
+      blocks.push({ minX: c.x - (w * CELL) / 2, maxX: c.x + (w * CELL) / 2, minZ: c.z - (d * CELL) / 2, maxZ: c.z + (d * CELL) / 2 });
+    }
+    return buildNav(roomRects, walls, blocks);
+  }, [rooms, levelDef, config, furniture, housingTier, lvl, fixtures, fixtureWalls]);
   const [clickBeacon, setClickBeacon] = useState<{ x: number; z: number; time: number } | null>(null);
-  const [pendingAction, setPendingAction] = useState<{ type: Interaction; rest?: RestPose } | null>(null);
+  const [pendingAction, setPendingAction] = useState<{ type: Interaction; rest?: RestPose; fixture?: Fixture } | null>(null);
   const avatarHeight = look?.gender === "man" ? 1.8 : 1.68;
   /** Gets up from a seat or bed (to its stand spot) before walking anywhere. */
   const getUp = () => setPose((p) => (p.stand ? { position: [p.stand[0], 0, p.stand[1]], yaw: p.yaw } : p));
@@ -1637,8 +1681,8 @@ function RoomScene({
   // Click-to-walk destination locomotion
   const handleFloorLocomotion = (point: THREE.Vector3) => {
     if (busy || climbRef.current) return;
-    const clampedX = Math.max(-3.2, Math.min(3.2, point.x));
-    const clampedZ = Math.max(-3.2, Math.min(4.3, point.z));
+    const clampedX = Math.max(-HALF + 0.3, Math.min(HALF - 0.3, point.x));
+    const clampedZ = Math.max(-HALF + 0.3, Math.min(HALF + (rooms?.some((r) => r.id === "balcony") ? 1.6 : -0.3), point.z));
 
     if (animTimer.current) {
       clearTimeout(animTimer.current);
@@ -1686,11 +1730,20 @@ function RoomScene({
     if (walkTarget) {
       const curX = pose.position[0];
       const curZ = pose.position[2];
-      const dx = walkTarget[0] - curX;
-      const dz = walkTarget[1] - curZ;
+      // A new destination: plan the route from here.
+      if (routeRef.current?.for !== walkTarget) {
+        const points = findPath(nav, [curX, curZ], walkTarget);
+        routeRef.current = { for: walkTarget, points: points.length ? points : [[curX, curZ]] };
+      }
+      const route = routeRef.current.points;
+      // Reached a corner of the route: on to the next one.
+      if (route.length > 1 && Math.hypot(route[0][0] - curX, route[0][1] - curZ) < 0.12) route.shift();
+      const next = route[0];
+      const dx = next[0] - curX;
+      const dz = next[1] - curZ;
       const dist = Math.hypot(dx, dz);
 
-      if (dist > 0.08) {
+      if (dist > 0.08 || route.length > 1) {
         const targetYaw = Math.atan2(dx, dz);
         let diff = targetYaw - pose.yaw;
         while (diff < -Math.PI) diff += Math.PI * 2;
@@ -1705,8 +1758,10 @@ function RoomScene({
         setPose({ position: [nextX, 0, nextZ], yaw: newYaw });
         if (animation !== "walk") setAnimation("walk");
       } else {
-        const finalX = walkTarget[0];
-        const finalZ = walkTarget[1];
+        // Where the route ends: the spot itself, or as near as it can be reached.
+        const finalX = next[0];
+        const finalZ = next[1];
+        routeRef.current = null;
         setWalkTarget(null);
         setClickBeacon(null);
 
@@ -1714,7 +1769,13 @@ function RoomScene({
           const act = pendingAction;
           setPendingAction(null);
           if (animTimer.current) clearTimeout(animTimer.current);
-          if (act.type === "stairs" && stairs) {
+          if (act.fixture) {
+            // At the fixture: face it and get on with it.
+            const spot = fixtureSpot(act.fixture);
+            setPose({ position: [finalX, 0, finalZ], yaw: spot.yaw });
+            setAnimation("talk");
+            onUseFixture?.(act.fixture);
+          } else if (act.type === "stairs" && stairs) {
             // Up the treads to the top, or down through the stairwell to the hall.
             const up = lvl === 0;
             climbRef.current = up
@@ -1857,6 +1918,25 @@ function RoomScene({
         skirtingColor={config.skirtingColor}
         upstairs={lvl > 0}
         panels={style.panels}
+        balcony={!!rooms?.some((r) => r.id === "balcony")}
+      />
+
+      {/* The kitchen and bathroom */}
+      <HomeFixtures
+        fixtures={fixtures}
+        walls={fixtureWalls}
+        wallColor={style.wall}
+        skirtingColor={config.skirtingColor}
+        wallH={upView ? 1.15 : 2.6}
+        onUse={busy ? undefined : (f) => {
+          if (climbRef.current) return;
+          if (animTimer.current) { clearTimeout(animTimer.current); animTimer.current = null; }
+          getUp();
+          const spot = fixtureSpot(f);
+          setWalkTarget([spot.x, spot.z]);
+          setClickBeacon({ x: spot.x, z: spot.z, time: performance.now() });
+          setPendingAction({ type: "cooler", fixture: f });
+        }}
       />
 
       {/* Two-storey homes: the rooms of the floor on show */}
@@ -2003,7 +2083,7 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
   return (
     <div className="w-full h-full relative select-none">
       <SceneLoadingOverlay label={props.loadingLabel ?? "Opening your apartment"} />
-      <Canvas shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false} camera={{ position: [8, 7.5, 8], fov: 35 }} dpr={quality.dpr}>
+      <Canvas shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false} camera={{ position: [11.5, 10.7, 11.5], fov: 35 }} dpr={quality.dpr}>
         {props.background !== "transparent" && <color attach="background" args={[props.background ?? "#7f9c78"]} />}
         <StudioEnvironment intensity={0.35} />
         <hemisphereLight args={["#fff7ed", "#6b7280", 1.0]} />
@@ -2031,8 +2111,8 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
           enableDamping
           minPolarAngle={props.upView ? 0.2 : 0.35}
           maxPolarAngle={props.upView ? 1.15 : 1.25}
-          minDistance={6}
-          maxDistance={22}
+          minDistance={7}
+          maxDistance={30}
         />
       </Canvas>
       <PeopleLabels people={props.people ?? []} nodes={labels} />

@@ -2,9 +2,13 @@
 // The room is a square of GRID x GRID cells; floor items occupy a w x d block of cells,
 // wall items occupy a run of cells along one wall.
 
-export const ROOM_SIZE = 7; // metres
+export const ROOM_SIZE = 10; // metres
 export const CELL = 0.5; // metres per grid cell
-export const GRID = ROOM_SIZE / CELL; // 14
+export const GRID = ROOM_SIZE / CELL; // 20
+/** Homes were first drawn on a 7 m square (14 cells). Layouts below are still written in those numbers and
+    spread out to the 10 m home by LAYOUT_SCALE; furniture keeps its real size, so rooms get roomier. */
+export const OLD_GRID = 14;
+export const LAYOUT_SCALE = ROOM_SIZE / (OLD_GRID * CELL);
 export const WALL_HEIGHT = 3;
 
 export type Wall = "north" | "south" | "east" | "west";
@@ -17,6 +21,8 @@ export interface FloorPlacement {
   rot: Rotation;
   /** Which floor of a two-storey home (0 downstairs, 1 upstairs); absent means 0. */
   level?: number;
+  /** The grid it was placed on: absent for the old 14-cell homes (moved on load, see migratePlacement). */
+  g?: number;
 }
 
 export interface WallPlacement {
@@ -24,6 +30,22 @@ export interface WallPlacement {
   wall: Wall;
   offset: number; // first cell along the wall
   level?: number;
+  g?: number;
+}
+
+/** One coordinate of an old 14-cell placement on the 20-cell grid: things against a wall stay against it. */
+function spreadCell(v: number, span: number) {
+  if (v <= 0) return 0;
+  if (v + span >= OLD_GRID) return GRID - span;
+  return Math.max(0, Math.min(GRID - span, Math.round(v * LAYOUT_SCALE)));
+}
+
+/** Moves a placement made in the old, smaller home to the same spot in today's home. */
+export function migratePlacement<P extends Placement | null | undefined>(p: P, size: [number, number]): P {
+  if (!p || p.g === GRID) return p;
+  if (p.kind === "wall") return { ...p, offset: spreadCell(p.offset, size[0]), g: GRID };
+  const [w, d] = p.rot % 2 === 0 ? size : [size[1], size[0]];
+  return { ...p, col: spreadCell(p.col, w), row: spreadCell(p.row, d), g: GRID };
 }
 
 /** The floor a placed item is on (0 when unset: every single-storey home and older saves). */
@@ -203,6 +225,10 @@ export interface HousingConfig {
   activities: HomeActivityDef[];
   /** Two-storey homes: each floor's rooms and dividing walls (the top-level `rooms` is unused then). */
   levels?: LevelDef[];
+  /** Single-floor homes: the dividing walls drawn in their layout, so walking goes through the doors. */
+  walls?: LevelDef["walls"];
+  /** Counters and islands built into the layout, which can't be walked through. */
+  blocks?: Array<{ minX: number; maxX: number; minZ: number; maxZ: number }>;
   /** The finishes it comes with (the owner can change them in Style). */
   finish: HomeStyle;
   /** Panelled walls, crown moulding and cove lighting. */
@@ -275,10 +301,11 @@ const twoStorey = (kitchen: string, living: string, upper: Pick<LevelDef, "rooms
   { label: "Upstairs", icon: "⬆️", ...upper },
 ];
 
-export const HOUSING_CONFIGS: Record<HousingTier, HousingConfig> = {
+const RAW_HOUSING_CONFIGS: Record<HousingTier, HousingConfig> = {
   bed_space: {
     id: "bed_space",
-    finish: { floor: "oak", wall: "#e2dcd2", panels: false },
+    finish: { floor: "white-marble", wall: "#efe9df", panels: true },
+    luxury: true,
     label: "Shared Bed Space",
     area: "Deira / Bur Dubai",
     monthly: 800,
@@ -295,7 +322,8 @@ export const HOUSING_CONFIGS: Record<HousingTier, HousingConfig> = {
   },
   studio: {
     id: "studio",
-    finish: { floor: "oak", wall: "#f7f5f1", panels: false },
+    finish: { floor: "white-marble", wall: "#f6f1e8", panels: true },
+    luxury: true,
     label: "Studio Apartment",
     area: "Al Barsha / JVC",
     monthly: 2500,
@@ -311,7 +339,10 @@ export const HOUSING_CONFIGS: Record<HousingTier, HousingConfig> = {
   },
   one_bedroom: {
     id: "one_bedroom",
-    finish: { floor: "herringbone", wall: "#efe6d8", panels: false },
+    walls: [{ a: [-3.5, 0], b: [3.5, 0], door: [2.7, 4.3] }],
+    blocks: [{ minX: 1.72, maxX: 2.28, minZ: 0.55, maxZ: 2.85 }],
+    finish: { floor: "travertine", wall: "#f3eee6", panels: true },
+    luxury: true,
     label: "1-Bedroom Apartment",
     area: "Dubai Marina / JBR · Multi-Room",
     monthly: 7000,
@@ -333,7 +364,9 @@ export const HOUSING_CONFIGS: Record<HousingTier, HousingConfig> = {
   },
   two_bedroom: {
     id: "two_bedroom",
-    finish: { floor: "herringbone", wall: "#ece6dc", panels: true },
+    walls: [{ a: [-3.5, 0], b: [3.5, 0], door: [2.6, 4.4] }, { a: [0, -3.5], b: [0, -0.8] }],
+    blocks: [{ minX: 0.52, maxX: 1.08, minZ: 0.5, maxZ: 2.9 }],
+    finish: { floor: "white-marble", wall: "#ece6dc", panels: true },
     luxury: true,
     label: "2-Bedroom Apartment",
     area: "Downtown / Creek · Dollhouse Up-View",
@@ -359,7 +392,12 @@ export const HOUSING_CONFIGS: Record<HousingTier, HousingConfig> = {
   },
   three_bedroom: {
     id: "three_bedroom",
-    finish: { floor: "walnut", wall: "#f1ede6", panels: true },
+    walls: [
+      { a: [-3.5, 0], b: [3.5, 0], door: [2.6, 4.4] }, { a: [0, -3.5], b: [0, -0.8] },
+      { a: [0.75, 0], b: [0.75, 2.2], door: [0.4, 1.2] }, { a: [0.75, 2.2], b: [3.5, 2.2] },
+    ],
+    blocks: [{ minX: 0.47, maxX: 1.03, minZ: 2.2, maxZ: 2.9 }],
+    finish: { floor: "white-marble", wall: "#f1ede6", panels: true },
     luxury: true,
     label: "3-Bedroom Residence",
     area: "Dubai Hills / Downtown · Multi-Suite",
@@ -391,7 +429,7 @@ export const HOUSING_CONFIGS: Record<HousingTier, HousingConfig> = {
     icon: "🏬",
     wallColor: "#efe9df",
     skirtingColor: "#c8b493",
-    finish: { floor: "herringbone", wall: "#efe9df", panels: true },
+    finish: { floor: "travertine", wall: "#efe9df", panels: true },
     luxury: true,
     hasDollhouseUpView: true,
     levels: twoStorey("Kitchen & dining", "Living room", UPPER_TWO),
@@ -458,27 +496,41 @@ export const HOUSING_CONFIGS: Record<HousingTier, HousingConfig> = {
   },
 };
 
-export const BUILT_INS: BuiltIn[] = [
+const RAW_BUILT_INS: BuiltIn[] = [
   { id: "bed", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 2, row: 0, rot: 0 }, interaction: "bed" },
   { id: "bedside", model: "/models/furniture/side-table.glb", size: [1, 1], placement: { kind: "floor", col: 6, row: 0, rot: 0 } },
   { id: "fridge", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 12, row: 0, rot: 0 }, interaction: "cooler" },
   { id: "chair", model: "/models/furniture/chair.glb", size: [2, 2], placement: { kind: "floor", col: 9, row: 5, rot: 2 }, interaction: "chair" },
 ];
 
-export const BUILT_INS_BY_TIER: Record<HousingTier, BuiltIn[]> = {
+const RAW_BUILT_INS_BY_TIER: Record<HousingTier, BuiltIn[]> = {
   bed_space: [
     { id: "bunk_bed", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 1, row: 0, rot: 0 }, interaction: "bed" },
     { id: "locker", model: "/models/furniture/side-table.glb", size: [1, 1], placement: { kind: "floor", col: 5, row: 0, rot: 0 } },
     { id: "mini_kettle", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 11, row: 0, rot: 0 }, interaction: "cooler" },
     { id: "stool", model: "/models/furniture/chair.glb", size: [2, 2], placement: { kind: "floor", col: 8, row: 4, rot: 2 }, interaction: "chair" },
+    { id: "lx_bs_chandelier", visual: "chandelier-ring", size: [2, 2], placement: { kind: "floor", col: 6, row: 6, rot: 0 } },
+    { id: "lx_bs_palm", visual: "palm", size: [1, 1], placement: { kind: "floor", col: 0, row: 13, rot: 0 } },
+    { id: "lx_bs_orchids", visual: "orchids", size: [1, 1], placement: { kind: "floor", col: 6, row: 0, rot: 0 } },
   ],
-  studio: BUILT_INS,
+  studio: [...RAW_BUILT_INS,
+    { id: "lx_st_chandelier", visual: "chandelier-crystal", size: [2, 2], placement: { kind: "floor", col: 6, row: 7, rot: 0 } },
+    { id: "lx_st_rug", visual: "rug-round", size: [5, 5], placement: { kind: "floor", col: 4, row: 7, rot: 0 } },
+    { id: "lx_st_palm", visual: "palm", size: [1, 1], placement: { kind: "floor", col: 0, row: 13, rot: 0 } },
+    { id: "lx_st_vase", visual: "vase", size: [1, 1], placement: { kind: "floor", col: 7, row: 0, rot: 0 } },
+  ],
   one_bedroom: [
     { id: "master_bed", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 1, row: 0, rot: 0 }, interaction: "bed" },
     { id: "nightstand", model: "/models/furniture/side-table.glb", size: [1, 1], placement: { kind: "floor", col: 5, row: 0, rot: 0 } },
     { id: "lounge_sofa", model: "/models/furniture/couch.glb", size: [4, 2], placement: { kind: "floor", col: 7, row: 6, rot: 2 }, interaction: "chair" },
     { id: "tv_table", model: "/models/furniture/tv.glb", size: [4, 1], placement: { kind: "floor", col: 7, row: 10, rot: 0 } },
     { id: "kitchen_fridge", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 12, row: 0, rot: 0 }, interaction: "cooler" },
+    { id: "lx_ob_chandelier", visual: "chandelier-crystal", size: [2, 2], placement: { kind: "floor", col: 3, row: 9, rot: 0 } },
+    { id: "lx_ob_bed_light", visual: "chandelier-ring", size: [2, 2], placement: { kind: "floor", col: 2, row: 1, rot: 0 } },
+    { id: "lx_ob_rug", visual: "rug-round", size: [5, 5], placement: { kind: "floor", col: 1, row: 8, rot: 0 } },
+    { id: "lx_ob_palm", visual: "palm", size: [1, 1], placement: { kind: "floor", col: 0, row: 13, rot: 0 } },
+    { id: "lx_ob_orchids", visual: "orchids", size: [1, 1], placement: { kind: "floor", col: 0, row: 7, rot: 0 } },
+    { id: "lx_ob_falcon", visual: "sculpture", size: [1, 1], placement: { kind: "floor", col: 6, row: 0, rot: 0 } },
   ],
   two_bedroom: [
     { id: "master_bed", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 1, row: 0, rot: 0 }, interaction: "bed" },
@@ -486,25 +538,35 @@ export const BUILT_INS_BY_TIER: Record<HousingTier, BuiltIn[]> = {
     { id: "study_desk", model: "/models/furniture/desk.glb", size: [3, 2], placement: { kind: "floor", col: 9, row: 0, rot: 0 }, interaction: "chair" },
     { id: "study_chair", model: "/models/furniture/desk-chair.glb", size: [1, 1], placement: { kind: "floor", col: 10, row: 2, rot: 0 }, interaction: "chair" },
     { id: "bookcase", model: "/models/furniture/bookcase.glb", size: [2, 1], placement: { kind: "floor", col: 12, row: 0, rot: 0 } },
-    { id: "guest_bed", model: "/models/furniture/couch.glb", size: [4, 2], placement: { kind: "floor", col: 8, row: 4, rot: 0 }, interaction: "bed" },
+    { id: "guest_bed", model: "/models/furniture/couch.glb", size: [4, 2], placement: { kind: "floor", col: 7, row: 3, rot: 0 }, interaction: "bed" },
     { id: "living_couch", model: "/models/furniture/couch.glb", size: [4, 2], placement: { kind: "floor", col: 1, row: 7, rot: 2 }, interaction: "chair" },
     { id: "living_table", model: "/models/furniture/coffee-table.glb", size: [3, 2], placement: { kind: "floor", col: 1, row: 9, rot: 0 } },
     { id: "living_tv", model: "/models/furniture/tv.glb", size: [4, 1], placement: { kind: "floor", col: 1, row: 12, rot: 0 } },
     { id: "kitchen_fridge", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 12, row: 7, rot: 0 }, interaction: "cooler" },
     { id: "balcony_chair", model: "/models/furniture/lounge-chair.glb", size: [2, 2], placement: { kind: "floor", col: 6, row: 12, rot: 0 }, interaction: "chair" },
+    { id: "lx_tb_chandelier", visual: "chandelier-crystal", size: [2, 2], placement: { kind: "floor", col: 2, row: 9, rot: 0 } },
+    { id: "lx_tb_bed_light", visual: "chandelier-ring", size: [2, 2], placement: { kind: "floor", col: 2, row: 1, rot: 0 } },
+    { id: "lx_tb_rug", visual: "rug-round", size: [5, 5], placement: { kind: "floor", col: 0, row: 8, rot: 0 } },
+    { id: "lx_tb_palm", visual: "palm", size: [1, 1], placement: { kind: "floor", col: 0, row: 13, rot: 0 } },
+    { id: "lx_tb_falcon", visual: "sculpture", size: [1, 1], placement: { kind: "floor", col: 6, row: 0, rot: 0 } },
   ],
   three_bedroom: [
     { id: "master_bed", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 1, row: 0, rot: 0 }, interaction: "bed" },
     { id: "nightstand", model: "/models/furniture/side-table.glb", size: [1, 1], placement: { kind: "floor", col: 5, row: 0, rot: 0 } },
     { id: "bed2_bed", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 9, row: 0, rot: 0 }, interaction: "bed" },
-    { id: "study_desk", model: "/models/furniture/desk.glb", size: [3, 2], placement: { kind: "floor", col: 9, row: 6, rot: 0 }, interaction: "chair" },
+    { id: "study_desk", model: "/models/furniture/desk.glb", size: [3, 2], placement: { kind: "floor", col: 8, row: 6, rot: 0 }, interaction: "chair" },
     { id: "study_chair", model: "/models/furniture/desk-chair.glb", size: [1, 1], placement: { kind: "floor", col: 10, row: 8, rot: 0 }, interaction: "chair" },
     { id: "bookcase", model: "/models/furniture/bookcase.glb", size: [2, 1], placement: { kind: "floor", col: 12, row: 6, rot: 0 } },
     { id: "living_couch", model: "/models/furniture/couch.glb", size: [4, 2], placement: { kind: "floor", col: 1, row: 7, rot: 2 }, interaction: "chair" },
     { id: "living_table", model: "/models/furniture/coffee-table.glb", size: [3, 2], placement: { kind: "floor", col: 1, row: 9, rot: 0 } },
     { id: "living_tv", model: "/models/furniture/tv.glb", size: [4, 1], placement: { kind: "floor", col: 1, row: 12, rot: 0 } },
-    { id: "kitchen_fridge", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 7, row: 12, rot: 0 }, interaction: "cooler" },
+    { id: "kitchen_fridge", model: "/models/furniture/fridge.glb", size: [2, 2], placement: { kind: "floor", col: 5, row: 10, rot: 0 }, interaction: "cooler" },
     { id: "balcony_chair", model: "/models/furniture/lounge-chair.glb", size: [2, 2], placement: { kind: "floor", col: 4, row: 13, rot: 0 }, interaction: "chair" },
+    { id: "lx_hb_chandelier", visual: "chandelier-crystal", size: [2, 2], placement: { kind: "floor", col: 2, row: 9, rot: 0 } },
+    { id: "lx_hb_bed_light", visual: "chandelier-ring", size: [2, 2], placement: { kind: "floor", col: 2, row: 1, rot: 0 } },
+    { id: "lx_hb_rug", visual: "rug-round", size: [5, 5], placement: { kind: "floor", col: 0, row: 8, rot: 0 } },
+    { id: "lx_hb_palm", visual: "palm", size: [1, 1], placement: { kind: "floor", col: 0, row: 13, rot: 0 } },
+    { id: "lx_hb_vase", visual: "vase", size: [1, 1], placement: { kind: "floor", col: 6, row: 0, rot: 0 } },
   ],
   duplex: [
     { id: "stairs", visual: "staircase", size: [2, 5], placement: { kind: "floor", col: 12, row: 4, rot: 0 }, interaction: "stairs", fixed: true },
@@ -522,6 +584,8 @@ export const BUILT_INS_BY_TIER: Record<HousingTier, BuiltIn[]> = {
     { id: "dx_wardrobe", visual: "wardrobe", size: [4, 1], placement: { kind: "floor", col: 7, row: 0, rot: 0, level: 1 } },
     { id: "dx_bed2", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 1, row: 8, rot: 0, level: 1 }, interaction: "bed" },
     { id: "dx_desk", model: "/models/furniture/desk.glb", size: [3, 2], placement: { kind: "floor", col: 7, row: 11, rot: 0, level: 1 }, interaction: "chair" },
+    { id: "lx_dx_chandelier", visual: "chandelier-crystal", size: [2, 2], placement: { kind: "floor", col: 2, row: 9, rot: 0 } },
+    { id: "lx_dx_rug", visual: "rug-round", size: [5, 5], placement: { kind: "floor", col: 1, row: 8, rot: 0 } },
   ],
   townhouse: [
     { id: "stairs", visual: "staircase", size: [2, 5], placement: { kind: "floor", col: 12, row: 4, rot: 0 }, interaction: "stairs", fixed: true },
@@ -539,6 +603,8 @@ export const BUILT_INS_BY_TIER: Record<HousingTier, BuiltIn[]> = {
     { id: "th_wardrobe", visual: "wardrobe", size: [4, 1], placement: { kind: "floor", col: 7, row: 0, rot: 0, level: 1 } },
     { id: "th_bed2", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 0, row: 8, rot: 0, level: 1 }, interaction: "bed" },
     { id: "th_bed3", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 7, row: 8, rot: 0, level: 1 }, interaction: "bed" },
+    { id: "lx_th_chandelier", visual: "chandelier-crystal", size: [2, 2], placement: { kind: "floor", col: 2, row: 9, rot: 0 } },
+    { id: "lx_th_rug", visual: "rug-round", size: [5, 5], placement: { kind: "floor", col: 1, row: 8, rot: 0 } },
   ],
   penthouse: [
     { id: "stairs", visual: "staircase", size: [2, 5], placement: { kind: "floor", col: 12, row: 4, rot: 0 }, interaction: "stairs", fixed: true },
@@ -556,6 +622,7 @@ export const BUILT_INS_BY_TIER: Record<HousingTier, BuiltIn[]> = {
     { id: "ph_wardrobe", visual: "wardrobe", size: [4, 1], placement: { kind: "floor", col: 8, row: 0, rot: 0, level: 1 } },
     { id: "ph_bed2", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 1, row: 8, rot: 0, level: 1 }, interaction: "bed" },
     { id: "ph_chair", visual: "armchair", size: [2, 2], placement: { kind: "floor", col: 8, row: 9, rot: 0, level: 1 }, interaction: "chair" },
+    { id: "lx_ph_chandelier", visual: "chandelier-crystal", size: [2, 2], placement: { kind: "floor", col: 2, row: 9, rot: 0 } },
   ],
   villa: [
     { id: "stairs", visual: "staircase", size: [2, 5], placement: { kind: "floor", col: 12, row: 4, rot: 0 }, interaction: "stairs", fixed: true },
@@ -572,10 +639,12 @@ export const BUILT_INS_BY_TIER: Record<HousingTier, BuiltIn[]> = {
     { id: "vl_wardrobe", visual: "wardrobe", size: [4, 1], placement: { kind: "floor", col: 8, row: 0, rot: 0, level: 1 } },
     { id: "vl_bed2", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 0, row: 8, rot: 0, level: 1 }, interaction: "bed" },
     { id: "vl_bed3", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 7, row: 8, rot: 0, level: 1 }, interaction: "bed" },
+    { id: "lx_vl_chandelier", visual: "chandelier-crystal", size: [2, 2], placement: { kind: "floor", col: 2, row: 9, rot: 0 } },
   ],
 };
 
 const HOME_NAMES: Record<string, [string, string]> = {
+  lx_bs_chandelier: ["Gold Ring Chandelier", "⭕"], lx_bs_palm: ["Indoor Date Palm", "🌴"], lx_bs_orchids: ["White Orchids", "🌸"], lx_st_chandelier: ["Crystal Chandelier", "💎"], lx_st_rug: ["Hand-Knotted Silk Rug", "🟡"], lx_st_palm: ["Indoor Date Palm", "🌴"], lx_st_vase: ["Pampas Floor Vase", "🌾"], lx_ob_chandelier: ["Crystal Chandelier", "💎"], lx_ob_bed_light: ["Gold Ring Chandelier", "⭕"], lx_ob_rug: ["Hand-Knotted Silk Rug", "🟡"], lx_ob_palm: ["Indoor Date Palm", "🌴"], lx_ob_orchids: ["White Orchids", "🌸"], lx_ob_falcon: ["Bronze Falcon Sculpture", "🦅"], lx_tb_chandelier: ["Crystal Chandelier", "💎"], lx_tb_bed_light: ["Gold Ring Chandelier", "⭕"], lx_tb_rug: ["Hand-Knotted Silk Rug", "🟡"], lx_tb_palm: ["Indoor Date Palm", "🌴"], lx_tb_falcon: ["Bronze Falcon Sculpture", "🦅"], lx_hb_chandelier: ["Crystal Chandelier", "💎"], lx_hb_bed_light: ["Gold Ring Chandelier", "⭕"], lx_hb_rug: ["Hand-Knotted Silk Rug", "🟡"], lx_hb_palm: ["Indoor Date Palm", "🌴"], lx_hb_vase: ["Pampas Floor Vase", "🌾"], lx_dx_chandelier: ["Crystal Chandelier", "💎"], lx_dx_rug: ["Hand-Knotted Silk Rug", "🟡"], lx_th_chandelier: ["Crystal Chandelier", "💎"], lx_th_rug: ["Hand-Knotted Silk Rug", "🟡"], lx_ph_chandelier: ["Crystal Chandelier", "💎"], lx_vl_chandelier: ["Crystal Chandelier", "💎"],
   bed: ["Bed", "🛏️"], bedside: ["Bedside table", "🟫"], fridge: ["Fridge", "🧊"], chair: ["Armchair", "🪑"],
   bunk_bed: ["Bunk Bed", "🛏️"], locker: ["Suitcase Stand", "🧳"], mini_kettle: ["Kettle & Mini-Fridge", "☕"], stool: ["Stool", "🪑"],
   master_bed: ["Master Bed", "🛏️"], nightstand: ["Nightstand", "🟫"], lounge_sofa: ["Lounge Sofa", "🛋️"], tv_table: ["65\" 4K TV", "📺"], kitchen_fridge: ["Kitchen Fridge", "🧊"],
@@ -594,10 +663,38 @@ const HOME_NAMES: Record<string, [string, string]> = {
   villa_bed: ["Palatial Suite Bed", "🛏️"], villa_couch: ["Majlis Sofa", "🛋️"], villa_table: ["Glass Coffee Table", "☕"], villa_fridge: ["Gourmet Fridge", "🧊"], villa_plant: ["Fiddle Leaf Plant", "🪴"],
 };
 
+// ---------------------------------------------------------------- the 10 m home
+// Layouts above are written for the old 7 m square; here they're spread out to today's home. Walls drawn
+// from data snap to the half-metre grid; the single-storey layouts' walls (drawn in ApartmentRoom, scaled
+// the same way) and room zones scale exactly.
+
+const k = LAYOUT_SCALE;
+const pt = ([x, z]: [number, number], snap: boolean): [number, number] => snap ? [Math.round(x * k * 2) / 2, Math.round(z * k * 2) / 2] : [x * k, z * k];
+const spreadWalls = (walls: LevelDef["walls"], snap: boolean): LevelDef["walls"] =>
+  walls.map((w) => ({ a: pt(w.a, snap), b: pt(w.b, snap), ...(w.door ? { door: [w.door[0] * k, w.door[1] * k] as [number, number] } : {}) }));
+const spreadRooms = (rooms: RoomZone[]): RoomZone[] => rooms.map((r) => ({
+  ...r,
+  center: [r.center[0] * k, r.center[1], r.center[2] * k],
+  bounds: { minX: r.bounds.minX * k, maxX: r.bounds.maxX * k, minZ: r.bounds.minZ * k, maxZ: r.bounds.maxZ * k },
+}));
+
+export const HOUSING_CONFIGS = Object.fromEntries(Object.entries(RAW_HOUSING_CONFIGS).map(([id, c]) => [id, {
+  ...c,
+  rooms: c.rooms && spreadRooms(c.rooms),
+  walls: c.walls && spreadWalls(c.walls, false),
+  blocks: c.blocks?.map((b) => ({ minX: b.minX * k, maxX: b.maxX * k, minZ: b.minZ * k, maxZ: b.maxZ * k })),
+  levels: c.levels?.map((l) => ({ ...l, rooms: spreadRooms(l.rooms), walls: spreadWalls(l.walls, true) })),
+}])) as Record<HousingTier, HousingConfig>;
+
+const spreadBuiltIn = (b: BuiltIn): BuiltIn => ({ ...b, placement: migratePlacement(b.placement as Placement, b.size) as BuiltIn["placement"] });
+export const BUILT_INS: BuiltIn[] = RAW_BUILT_INS.map(spreadBuiltIn);
+export const BUILT_INS_BY_TIER = Object.fromEntries(Object.entries(RAW_BUILT_INS_BY_TIER).map(([id, list]) => [id, list.map(spreadBuiltIn)])) as Record<HousingTier, BuiltIn[]>;
+
 /** All potential built-ins across tiers as catalog items */
 const ALL_BUILT_IN_LIST = [
   ...BUILT_INS,
   ...BUILT_INS_BY_TIER.bed_space,
+  ...BUILT_INS_BY_TIER.studio,
   ...BUILT_INS_BY_TIER.one_bedroom,
   ...BUILT_INS_BY_TIER.two_bedroom,
   ...BUILT_INS_BY_TIER.three_bedroom,
@@ -615,7 +712,8 @@ export const HOME_ITEMS: CatalogItem[] = DEDUPED_BUILT_INS.map((b) => ({
   icon: HOME_NAMES[b.id]?.[1] ?? "📦",
   desc: "Came with your home.",
   price: 0,
-  kind: "floor",
+  // Chandeliers hang from the ceiling and rugs lie flat, like the same pieces in the shop.
+  kind: (b.visual && CATALOG.find((c) => c.visual === b.visual)?.kind) || "floor",
   size: b.size,
   model: b.model,
   visual: b.visual,
@@ -628,6 +726,12 @@ export const HOME_ITEMS: CatalogItem[] = DEDUPED_BUILT_INS.map((b) => ({
 
 /** A home's furniture including the built-ins for that tier (in their starting place until they're moved). */
 export function withHomeItems(furniture: OwnedFurniture[], tier: HousingTier = "studio"): OwnedFurniture[] {
+  // Pieces placed in the old, smaller home move to the same spot in today's.
+  furniture = furniture.map((f) => {
+    if (!f.placement || f.placement.g === GRID) return f;
+    const item = getCatalogItem(f.itemId);
+    return item ? { ...f, placement: migratePlacement(f.placement, item.size) } : f;
+  });
   const tierBuiltIns = BUILT_INS_BY_TIER[tier] ?? BUILT_INS;
   const validBuiltInUids = new Set(tierBuiltIns.map((b) => `builtin:${b.id}`));
   
@@ -642,16 +746,16 @@ export function withHomeItems(furniture: OwnedFurniture[], tier: HousingTier = "
 }
 
 /** Door and window spans on the walls, in cells. */
-export const DOOR = { wall: "west" as Wall, offset: 9, width: 2, height: 4.4 };
-export const WINDOW = { wall: "north" as Wall, offset: 8, width: 4 };
+export const DOOR = { wall: "west" as Wall, offset: 13, width: 2, height: 4.4 };
+export const WINDOW = { wall: "north" as Wall, offset: 11, width: 6 };
 
 /** Cells kept clear: in front of the door, and where the citizen stands. */
 const RESERVED_CELLS: Array<[number, number]> = [
-  [0, 3], [0, 4], [1, 3], [1, 4],
-  [7, 8], [7, 9], [8, 8], [8, 9],
+  [0, 5], [0, 6], [1, 5], [1, 6],
+  [11, 12], [11, 13], [12, 12], [12, 13],
 ];
 
-export const AVATAR_SPOT = { x: -3.5 + 8 * CELL, z: -3.5 + 9 * CELL };
+export const AVATAR_SPOT = { x: -ROOM_SIZE / 2 + 12 * CELL, z: -ROOM_SIZE / 2 + 13 * CELL };
 
 /** Footprint size after rotation. */
 export function rotatedSize(size: [number, number], rot: Rotation): [number, number] {
@@ -700,6 +804,7 @@ export function floorPlacementAt(size: [number, number], rot: Rotation, point: {
     col: Math.max(0, Math.min(GRID - w, col)),
     row: Math.max(0, Math.min(GRID - d, row)),
     ...(level ? { level } : {}),
+    g: GRID,
   };
 }
 
@@ -762,7 +867,7 @@ export function findFreePlacement(item: CatalogItem, others: OwnedFurniture[], r
   if (item.kind === "wall") {
     for (const wall of ["north", "east", "south", "west"] as Wall[]) {
       for (let offset = 0; offset <= GRID - item.size[0]; offset++) {
-        const p: WallPlacement = { kind: "wall", wall, offset, ...lv };
+        const p: WallPlacement = { kind: "wall", wall, offset, ...lv, g: GRID };
         if (isPlacementValid(item, p, others)) return p;
       }
     }
@@ -771,7 +876,7 @@ export function findFreePlacement(item: CatalogItem, others: OwnedFurniture[], r
   const candidates: FloorPlacement[] = [];
   for (const r of rot === undefined ? ([0, 1] as Rotation[]) : [rot]) {
     const [w, d] = rotatedSize(item.size, r);
-    for (let col = 0; col <= GRID - w; col++) for (let row = 0; row <= GRID - d; row++) candidates.push({ kind: "floor", col, row, rot: r, ...lv });
+    for (let col = 0; col <= GRID - w; col++) for (let row = 0; row <= GRID - d; row++) candidates.push({ kind: "floor", col, row, rot: r, ...lv, g: GRID });
   }
   const dist = (p: FloorPlacement) => {
     const c = floorCenter(item.size, p);

@@ -1,0 +1,145 @@
+{
+  "_note": "The kitchen and bathroom built into every home: what each fixture is, what you can do with it (time, needs, the pantry ingredients it uses) and where it sits in each home type. Cells are 0.5 m on the 14 × 14 floor (col 0 is the west wall, row 0 the north wall); rot 0 faces south, 1 west, 2 north, 3 east. Bathroom walls are [x, z] metres with an optional doorway [from, to] metres along the wall.",
+
+  "kinds": {
+    "kitchen-run": {
+      "name": "Kitchen", "icon": "🍳", "size": [4, 1],
+      "desc": "Sink, five-burner hob and oven, microwave and a blender. Cooking needs ingredients from your pantry.",
+      "actions": [
+        { "id": "cook-machboos", "label": "Cook chicken machboos", "icon": "🍛", "seconds": 8, "needs": { "hunger": 55 }, "uses": { "rice": 1, "chicken": 1 }, "meal": true, "skill": "cooking" },
+        { "id": "fry-eggs", "label": "Fry eggs on toast", "icon": "🍳", "seconds": 5, "needs": { "hunger": 30 }, "uses": { "eggs": 1, "bread": 1 }, "meal": true, "skill": "cooking" },
+        { "id": "blend-smoothie", "label": "Blend a smoothie", "icon": "🥤", "seconds": 5, "needs": { "hunger": 15, "energy": 15 }, "uses": { "fruit": 1, "milk": 1 }, "meal": true },
+        { "id": "make-karak", "label": "Make karak chai", "icon": "☕", "seconds": 4, "needs": { "energy": 20 }, "uses": { "tea": 1, "milk": 1 } },
+        { "id": "microwave-noodles", "label": "Microwave noodles", "icon": "🍜", "seconds": 3, "needs": { "hunger": 20 }, "uses": { "noodles": 1 }, "meal": true },
+        { "id": "wash-dishes", "label": "Wash the dishes", "icon": "🧽", "seconds": 6, "needs": { "hygiene": 5, "fun": -5 }, "uses": {} }
+      ]
+    },
+    "washer": {
+      "name": "Washing machine", "icon": "🧺", "size": [1, 1],
+      "desc": "Front-loading washer. Clean clothes keep you fresh.",
+      "actions": [
+        { "id": "laundry", "label": "Do the laundry", "icon": "🧺", "seconds": 8, "needs": { "hygiene": 20 }, "uses": { "detergent": 1 } }
+      ]
+    },
+    "toilet": {
+      "name": "Toilet", "icon": "🚽", "size": [1, 1],
+      "desc": "With a bidet shower, as in every Dubai bathroom.",
+      "actions": [
+        { "id": "use-toilet", "label": "Use the toilet", "icon": "🚽", "seconds": 4, "needs": { "bladder": 100, "hygiene": -5 }, "uses": {} }
+      ]
+    },
+    "shower": {
+      "name": "Walk-in glass shower", "icon": "🚿", "size": [2, 2],
+      "desc": "A tiled corner with glass doors and a rain head.",
+      "actions": [
+        { "id": "shower", "label": "Shower", "icon": "🚿", "seconds": 6, "needs": { "hygiene": 60 }, "uses": {} },
+        { "id": "shower-soap", "label": "Long shower with shower gel", "icon": "🧴", "seconds": 7, "needs": { "hygiene": 80, "fun": 5 }, "uses": { "soap": 1 } },
+        { "id": "sing", "label": "Sing in the shower", "icon": "🎶", "seconds": 7, "needs": { "hygiene": 50, "fun": 15 }, "uses": {} },
+        { "id": "bucket-bath", "label": "Bucket bath", "icon": "🪣", "seconds": 6, "needs": { "hygiene": 40 }, "uses": {} }
+      ]
+    },
+    "basin": {
+      "name": "Bathroom vanity", "icon": "🪞", "size": [1, 1],
+      "desc": "A basin and a mirror.",
+      "actions": [
+        { "id": "wash-face", "label": "Wash your face", "icon": "💦", "seconds": 3, "needs": { "hygiene": 15 }, "uses": {} },
+        { "id": "brush-teeth", "label": "Brush your teeth", "icon": "🪥", "seconds": 3, "needs": { "hygiene": 20 }, "uses": { "toothpaste": 1 } }
+      ]
+    },
+    "basin-double": {
+      "name": "Double vanity", "icon": "🪞", "size": [2, 1],
+      "desc": "Two basins under a wide mirror.",
+      "actions": [
+        { "id": "wash-face", "label": "Wash your face", "icon": "💦", "seconds": 3, "needs": { "hygiene": 15 }, "uses": {} },
+        { "id": "brush-teeth", "label": "Brush your teeth", "icon": "🪥", "seconds": 3, "needs": { "hygiene": 20 }, "uses": { "toothpaste": 1 } },
+        { "id": "skincare", "label": "Skincare routine", "icon": "🧖", "seconds": 5, "needs": { "hygiene": 20, "fun": 10 }, "uses": { "soap": 1 } }
+      ]
+    }
+  },
+
+  "pantry": {
+    "rice": { "name": "Basmati rice", "icon": "🍚" },
+    "chicken": { "name": "Chicken", "icon": "🍗" },
+    "eggs": { "name": "Eggs", "icon": "🥚" },
+    "bread": { "name": "Arabic bread", "icon": "🫓" },
+    "fruit": { "name": "Fruit", "icon": "🍎" },
+    "milk": { "name": "Milk", "icon": "🥛" },
+    "tea": { "name": "Tea", "icon": "🫖" },
+    "noodles": { "name": "Instant noodles", "icon": "🍜" },
+    "dates": { "name": "Khalas dates", "icon": "🌴" },
+    "detergent": { "name": "Laundry detergent", "icon": "🧴" },
+    "soap": { "name": "Shower gel", "icon": "🧼" },
+    "toothpaste": { "name": "Toothpaste", "icon": "🪥" }
+  },
+  "starterPantry": { "rice": 2, "chicken": 2, "eggs": 4, "bread": 4, "fruit": 3, "milk": 3, "tea": 6, "noodles": 2, "detergent": 3, "soap": 4, "toothpaste": 6 },
+
+  "layouts": {
+    "bed_space": {
+      "fixtures": [
+        { "kind": "kitchen-run", "col": 6, "row": 13, "rot": 2 },
+        { "kind": "basin", "col": 10, "row": 10, "rot": 0 },
+        { "kind": "shower", "col": 12, "row": 10, "rot": 0 },
+        { "kind": "toilet", "col": 13, "row": 13, "rot": 1 }
+      ],
+      "walls": [{ "a": [1.5, 1.5], "b": [3.5, 1.5] }, { "a": [1.5, 1.5], "b": [1.5, 3.5], "door": [0.5, 1.3] }]
+    },
+    "studio": {
+      "fixtures": [
+        { "kind": "kitchen-run", "col": 8, "row": 0, "rot": 0 },
+        { "kind": "basin", "col": 10, "row": 10, "rot": 0 },
+        { "kind": "shower", "col": 12, "row": 10, "rot": 0 },
+        { "kind": "washer", "col": 12, "row": 13, "rot": 2 },
+        { "kind": "toilet", "col": 13, "row": 13, "rot": 1 }
+      ],
+      "walls": [{ "a": [1.5, 1.5], "b": [3.5, 1.5] }, { "a": [1.5, 1.5], "b": [1.5, 3.5], "door": [0.5, 1.3] }]
+    },
+    "one_bedroom": {
+      "fixtures": [
+        { "kind": "kitchen-run", "col": 13, "row": 8, "rot": 1 },
+        { "kind": "basin-double", "col": 10, "row": 3, "rot": 0 },
+        { "kind": "shower", "col": 12, "row": 3, "rot": 0 },
+        { "kind": "toilet", "col": 13, "row": 5, "rot": 1 },
+        { "kind": "washer", "col": 12, "row": 6, "rot": 2 }
+      ],
+      "walls": [{ "a": [1.0, -2.0], "b": [3.5, -2.0] }, { "a": [1.0, -2.0], "b": [1.0, 0], "door": [0.6, 1.4] }]
+    },
+    "two_bedroom": {
+      "fixtures": [
+        { "kind": "kitchen-run", "col": 13, "row": 9, "rot": 1 },
+        { "kind": "basin", "col": 11, "row": 2, "rot": 0 },
+        { "kind": "shower", "col": 12, "row": 2, "rot": 0 },
+        { "kind": "washer", "col": 13, "row": 4, "rot": 1 },
+        { "kind": "toilet", "col": 13, "row": 5, "rot": 1 }
+      ],
+      "walls": [{ "a": [2.0, -2.5], "b": [3.5, -2.5] }, { "a": [2.0, -2.5], "b": [2.0, 0], "door": [1.6, 2.4] }]
+    },
+    "three_bedroom": {
+      "fixtures": [
+        { "kind": "kitchen-run", "col": 10, "row": 13, "rot": 2 },
+        { "kind": "basin", "col": 11, "row": 7, "rot": 0 },
+        { "kind": "shower", "col": 12, "row": 7, "rot": 0 },
+        { "kind": "washer", "col": 12, "row": 10, "rot": 2 },
+        { "kind": "toilet", "col": 13, "row": 10, "rot": 1 }
+      ],
+      "walls": [{ "a": [2.0, 0], "b": [2.0, 2.2], "door": [1.2, 2.0] }]
+    },
+    "duplex": { "twoStorey": true },
+    "townhouse": { "twoStorey": true },
+    "penthouse": { "twoStorey": true },
+    "villa": { "twoStorey": true },
+    "_twoStorey": {
+      "fixtures": [
+        { "kind": "kitchen-run", "col": 2, "row": 0, "rot": 0 },
+        { "kind": "washer", "col": 6, "row": 0, "rot": 0 },
+        { "kind": "basin-double", "col": 8, "row": 3, "rot": 0, "level": 1 },
+        { "kind": "shower", "col": 10, "row": 3, "rot": 0, "level": 1 },
+        { "kind": "toilet", "col": 11, "row": 6, "rot": 1, "level": 1 }
+      ],
+      "walls": [
+        { "a": [0.5, -2.0], "b": [2.5, -2.0], "level": 1 },
+        { "a": [0.5, -2.0], "b": [0.5, 0], "door": [0.6, 1.4], "level": 1 },
+        { "a": [2.5, -2.0], "b": [2.5, 0], "level": 1 }
+      ]
+    }
+  }
+}

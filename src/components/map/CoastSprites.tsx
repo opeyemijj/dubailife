@@ -233,54 +233,69 @@ export const WildWadiSprite = ({ width = 170, height = 130, name = 'Wild Wadi Wa
 );
 
 /**
- * A public beach: shallow water at the top, sand below, umbrellas and loungers, a lifeguard tower and
- * palms behind. Variants add what each beach is known for (kites and food trucks at Kite Beach…).
+ * A public beach: shallow water at the back, sand in front, umbrellas and loungers, a lifeguard tower and
+ * palms. The ground is laid out like every plot on the map: the far edge sits further right than the
+ * near one (0.2355 × the depth), with a thin front edge, so beaches recede the same way as the city.
+ * Variants add what each beach is known for (kites and food trucks at Kite Beach…).
  */
+const BEACH_D = 92;                       // depth of the ground, back edge (y 0) to front edge (y 92)
+const BEACH_SLANT = BEACH_D * 0.2355;     // how far right the back edge sits
+const BEACH_W = 300 - BEACH_SLANT;        // width of each edge
+/** A point on the beach (x 0–300 along it, y 0 at the water's back edge to 92 at the front) on screen. */
+const bp = (x: number, y: number) => [x * (BEACH_W / 300) + BEACH_SLANT * (1 - y / BEACH_D), y] as const;
+const band = (y0: number, y1: number) => [bp(0, y0), bp(300, y0), bp(300, y1), bp(0, y1)].map(([x, y]) => `${x},${y}`).join(' ');
+
 export const CoastBeachSprite = ({ width = 300, height = 108, name = 'Beach', variant = 'public' }: { width?: number; height?: number; name?: string; variant?: string }) => {
   const umbrellaColors = ['#f43f5e', '#0ea5e9', '#f59e0b', '#10b981', '#a855f7'];
   return (
     <svg viewBox="0 0 300 108" width={width} height={height} preserveAspectRatio="none" className="drop-shadow-md overflow-visible">
-      {/* shallow water, wet sand, dry sand */}
-      <path d="M0,0 L300,0 L300,22 Q150,30 0,22 Z" fill="#67e8f9" opacity="0.75" />
-      <path d="M0,22 Q150,30 300,22 L300,34 Q150,42 0,34 Z" fill="#fde68a" />
-      <path d="M0,34 Q150,42 300,34 L300,92 L0,92 Z" fill="#fef3c7" />
+      {/* the ground's front edge, then shallow water, wet sand and dry sand receding to the right */}
+      <polygon points={`${bp(0, BEACH_D).join(',')} ${bp(300, BEACH_D).join(',')} ${bp(300, BEACH_D)[0]},${BEACH_D + 4} 0,${BEACH_D + 4}`} fill="#d6a756" />
+      <polygon points={band(0, 22)} fill="#67e8f9" opacity="0.8" />
+      <polygon points={band(22, 32)} fill="#fde68a" />
+      <polygon points={band(32, BEACH_D)} fill="#fef3c7" />
       {/* swimmers */}
-      {[40, 120, 210, 268].map((x, i) => <circle key={x} cx={x} cy={10 + (i % 2) * 6} r="1.8" fill="#7c2d12" />)}
-      {/* umbrellas and loungers */}
+      {[40, 120, 210, 268].map((x, i) => { const [px, py] = bp(x, 8 + (i % 2) * 6); return <circle key={x} cx={px} cy={py} r="1.8" fill="#7c2d12" />; })}
+      {/* umbrellas and loungers, upright on the sand */}
       {Array.from({ length: 12 }, (_, i) => {
-        const x = 18 + i * 23 + (i % 2) * 4;
-        const y = 50 + (i % 3) * 10;
+        const [x, y] = bp(18 + i * 23 + (i % 2) * 4, 50 + (i % 3) * 10);
         return (
           <g key={i}>
-            <rect x={x - 6} y={y + 4} width="12" height="3" rx="1" fill="#fff" stroke="#e5e7eb" strokeWidth="0.4" />
+            <polygon points={`${x - 6},${y + 4} ${x + 6},${y + 4} ${x + 7.4},${y + 1} ${x - 4.6},${y + 1}`} fill="#fff" stroke="#e5e7eb" strokeWidth="0.4" />
             <rect x={x - 0.6} y={y - 5} width="1.2" height="9" fill="#78716c" />
             <ellipse cx={x} cy={y - 5} rx="8" ry="3.2" fill={umbrellaColors[i % umbrellaColors.length]} />
           </g>
         );
       })}
       {/* lifeguard tower */}
-      <g><rect x="150" y="40" width="2" height="14" fill="#b91c1c" /><rect x="158" y="40" width="2" height="14" fill="#b91c1c" /><rect x="146" y="32" width="18" height="9" fill="#dc2626" /><polygon points="144,32 155,25 166,32" fill="#fff" /></g>
+      {(() => { const [x, y] = bp(150, 54); return <g><rect x={x} y={y - 14} width="2" height="14" fill="#b91c1c" /><rect x={x + 8} y={y - 14} width="2" height="14" fill="#b91c1c" /><rect x={x - 4} y={y - 22} width="18" height="9" fill="#dc2626" /><rect x={x + 14} y={y - 24} width="3" height="9" fill="#991b1b" /><polygon points={`${x - 6},${y - 22} ${x + 5},${y - 29} ${x + 16},${y - 22}`} fill="#fff" /></g>; })()}
       {variant === 'kite' && (<>
         {/* kitesurfers' kites over the water, and the food trucks behind the beach */}
-        {[[60, -26, '#f43f5e'], [140, -34, '#facc15'], [230, -22, '#22c55e']].map(([x, y, c]) => (
-          <g key={x as number}><path d={`M${x},${y} q14,-10 28,0 q-14,4 -28,0`} fill={c as string} /><path d={`M${(x as number) + 14},${(y as number) + 2} L${(x as number) + 6},${(y as number) + 34}`} stroke="#334155" strokeWidth="0.5" /></g>
-        ))}
-        {[[70, 'SALT', '#fff'], [118, 'Tacos', '#fde047'], [166, 'Coffee', '#a7f3d0']].map(([x, t, c]) => (
-          <g key={t as string}><rect x={x as number} y="72" width="34" height="14" rx="2" fill={c as string} stroke="#334155" strokeWidth="0.6" /><text x={(x as number) + 17} y="82" fontSize="6.5" fontWeight="900" fill="#0f172a" textAnchor="middle">{t as string}</text></g>
-        ))}
+        {[[60, '#f43f5e', -26], [140, '#facc15', -34], [230, '#22c55e', -22]].map(([x, c, y]) => {
+          const [px] = bp(x as number, 0);
+          return <g key={x as number}><path d={`M${px},${y} q14,-10 28,0 q-14,4 -28,0`} fill={c as string} /><path d={`M${px + 14},${(y as number) + 2} L${px + 6},${(y as number) + 34}`} stroke="#334155" strokeWidth="0.5" /></g>;
+        })}
+        {[[70, 'SALT', '#fff'], [118, 'Tacos', '#fde047'], [166, 'Coffee', '#a7f3d0']].map(([x, t, c]) => {
+          const [px, py] = bp(x as number, 86);
+          return <g key={t as string}><polygon points={`${px + 34},${py - 14} ${px + 37},${py - 17} ${px + 37},${py - 3} ${px + 34},${py}`} fill="#94a3b8" /><rect x={px} y={py - 14} width="34" height="14" rx="2" fill={c as string} stroke="#334155" strokeWidth="0.6" /><text x={px + 17} y={py - 4} fontSize="6.5" fontWeight="900" fill="#0f172a" textAnchor="middle">{t as string}</text></g>;
+        })}
       </>)}
-      {variant === 'sunset' && <circle cx="270" cy="-4" r="12" fill="#fb923c" opacity="0.9" />}
+      {variant === 'sunset' && <circle cx={bp(270, 0)[0]} cy="-4" r="12" fill="#fb923c" opacity="0.9" />}
       {variant === 'j1' && (<>
         {/* the boardwalk and its cafés */}
-        <rect x="0" y="80" width="300" height="6" fill="#d6a76c" />
-        {[40, 120, 200].map((x) => (<g key={x}><rect x={x} y="68" width="26" height="12" fill="#fff7ed" stroke="#d6d3d1" strokeWidth="0.6" /><rect x={x} y="66" width="26" height="3" fill="#0f766e" /></g>))}
+        <polygon points={band(80, 86)} fill="#d6a76c" />
+        {[40, 120, 200].map((x) => { const [px, py] = bp(x, 80); return <g key={x}><polygon points={`${px + 26},${py - 12} ${px + 30},${py - 15} ${px + 30},${py - 3} ${px + 26},${py}`} fill="#e7e5e4" /><rect x={px} y={py - 12} width="26" height="12" fill="#fff7ed" stroke="#d6d3d1" strokeWidth="0.6" /><rect x={px} y={py - 14} width="26" height="3" fill="#0f766e" /></g>; })}
       </>)}
       {variant === 'jbr' && (<>
-        {/* The Walk's towers behind the sand */}
-        {[20, 70, 120, 170, 220, 260].map((x, i) => <rect key={x} x={x} y={52 - (i % 3) * 14} width="22" height={40 + (i % 3) * 14} fill="#e2e8f0" stroke="#94a3b8" strokeWidth="0.6" opacity="0.9" />)}
+        {/* The Walk's towers behind the sand: front and right side */}
+        {[20, 70, 120, 170, 220, 260].map((x, i) => {
+          const [px, py] = bp(x, 88);
+          const h = 40 + (i % 3) * 14;
+          return <g key={x} opacity="0.92"><polygon points={`${px + 22},${py - h} ${px + 28},${py - h - 5} ${px + 28},${py - 5} ${px + 22},${py}`} fill="#94a3b8" /><polygon points={`${px},${py - h} ${px + 6},${py - h - 5} ${px + 28},${py - h - 5} ${px + 22},${py - h}`} fill="#f1f5f9" /><rect x={px} y={py - h} width="22" height={h} fill="#e2e8f0" stroke="#94a3b8" strokeWidth="0.6" /></g>;
+        })}
       </>)}
-      {/* palms along the back of the beach */}
-      {[12, 80, 150, 222, 290].map((x) => palm(x, 92, 0.9))}
+      {/* palms along the front of the beach */}
+      {[12, 80, 150, 222, 290].map((x) => { const [px] = bp(x, BEACH_D); return palm(px, BEACH_D, 0.9); })}
       {label(name, 300, 94)}
     </svg>
   );

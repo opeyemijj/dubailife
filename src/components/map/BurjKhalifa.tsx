@@ -163,270 +163,7 @@ export const BurjKhalifa: React.FC<BurjKhalifaProps> = ({
 
       {/* Front and right side: the tower is drawn with its left faces showing, so it is mirrored round its spine. */}
       <MirrorX cx={160}>
-      {/* --- CENTRAL PODIUM ISLAND --- */}
-      <g>
-        {/* Left Side Facade (Along FloorTile depth vector: dx=+0.2355*dy) */}
-        <polygon 
-          points="116,320 122,296 122,308 116,332" 
-          fill="url(#bk-left-facet)" 
-          stroke="#1e293b" 
-          strokeWidth="1" 
-        />
-        {/* Front Facade (Baseline slope +0.01667) */}
-        <polygon 
-          points="116,320 204,321.5 204,333.5 116,332" 
-          fill="url(#bk-front-facet)" 
-          stroke="#0f172a" 
-          strokeWidth="1.2" 
-        />
-        {/* Top Roof Deck (Camera from top!) */}
-        <polygon 
-          points="116,320 204,321.5 210,297.5 122,296" 
-          fill="url(#bk-steel-cap)" 
-          stroke="#0f172a" 
-          strokeWidth="1.2" 
-        />
-
-        {/* Sculptural Aerodynamic Entrance Portico */}
-        <polygon points="148,316 160,336 172,316 160,310" fill="url(#bk-steel-cap)" stroke="#0f172a" strokeWidth="1.2" />
-        <polygon points="148,316 160,336 160,340 148,320" fill="#64748b" stroke="#0f172a" strokeWidth="1" />
-        <polygon points="160,336 172,316 172,320 160,340" fill="#334155" stroke="#0f172a" strokeWidth="1" />
-        <rect x="156" y="322" width="8" height="10" fill="#1e293b" stroke="#0f172a" strokeWidth="0.8" rx="1" />
-        <line x1="160" y1="322" x2="160" y2="332" stroke="#38bdf8" strokeWidth="0.8" />
-      </g>
-
-      {/* The tower above the podium, stretched upward from where it stands (y=312) so it rises far
-          above every other tower, as the world's tallest building does (828 m vs ~300–356 m nearby).
-          It draws above the sprite's box; the plaza, podium and badge keep their size. */}
-      <g className="bk-tower" transform={`translate(0 312) scale(1 ${TOWER_STRETCH}) translate(0 -312)`}>
-      {/* --- TIER 1: LOWER SPIRALING WINGS (y=262 to 312) --- */}
-      <g>
-        {/* LEFT WING (Left side slightly visible along FloorTile depth) */}
-        <polygon 
-          points="120,278 126,256 126,290 120,312" 
-          fill="url(#bk-left-facet)" 
-          stroke="#0f172a" 
-          strokeWidth="1.2" 
-        />
-        <polygon 
-          points="120,278 148,278.5 148,312 120,312" 
-          fill="url(#bk-front-facet)" 
-          stroke="#0f172a" 
-          strokeWidth="1.3" 
-        />
-        <polygon 
-          points="120,278 148,278.5 154,256.5 126,256" 
-          fill="url(#bk-steel-cap)" 
-          stroke="#0f172a" 
-          strokeWidth="1.1" 
-        />
-        <line x1="128" y1="278" x2="128" y2="312" stroke="#ffffff" strokeWidth="0.9" opacity="0.95" />
-        <line x1="140" y1="278" x2="140" y2="312" stroke="#64748b" strokeWidth="0.8" />
-
-        {/* RIGHT WING */}
-        <polygon 
-          points="172,268 200,268.5 200,312 172,312" 
-          fill="url(#bk-front-facet)" 
-          stroke="#0f172a" 
-          strokeWidth="1.3" 
-        />
-        <polygon 
-          points="172,268 200,268.5 204,250.5 176,250" 
-          fill="url(#bk-steel-cap)" 
-          stroke="#0f172a" 
-          strokeWidth="1.1" 
-        />
-
-        {/* CENTER PROW CYLINDER */}
-        <polygon 
-          points="144,262 176,262.5 176,312 144,312" 
-          fill="url(#bk-mirror-facet)" 
-          stroke="#0f172a" 
-          strokeWidth="1.4" 
-        />
-        <polygon 
-          points="144,262 176,262.5 180,242.5 148,242" 
-          fill="url(#bk-steel-cap)" 
-          stroke="#0f172a" 
-          strokeWidth="1.2" 
-        />
-        <line x1="160" y1="262" x2="160" y2="312" stroke="#ffffff" strokeWidth="1.6" opacity="0.95" />
-      </g>
-
-      {/* --- TIER 2: MID-LOWER SETBACKS (y=218 to 262) --- */}
-      <g>
-        <polygon 
-          points="128,234 133,214 133,242 128,262" 
-          fill="url(#bk-left-facet)" 
-          stroke="#0f172a" 
-          strokeWidth="1.1" 
-        />
-        <polygon 
-          points="128,234 152,234.4 152,262 128,262" 
-          fill="url(#bk-front-facet)" 
-          stroke="#0f172a" 
-          strokeWidth="1.2" 
-        />
-        <polygon 
-          points="128,234 152,234.4 157,214.4 133,214" 
-          fill="url(#bk-steel-cap)" 
-          stroke="#0f172a" 
-          strokeWidth="1" 
-        />
-
-        {/* Right Wing Front & Top */}
-        <polygon 
-          points="168,224 192,224.4 192,262 168,262" 
-          fill="url(#bk-front-facet)" 
-          stroke="#0f172a" 
-          strokeWidth="1.2" 
-        />
-        <polygon 
-          points="168,224 192,224.4 196,206.4 172,206" 
-          fill="url(#bk-steel-cap)" 
-          stroke="#0f172a" 
-          strokeWidth="1" 
-        />
-
-        {/* Center Spine */}
-        <polygon 
-          points="148,218 172,218.4 172,262 148,262" 
-          fill="url(#bk-mirror-facet)" 
-          stroke="#0f172a" 
-          strokeWidth="1.3" 
-        />
-        <polygon 
-          points="148,218 172,218.4 176,200.4 152,200" 
-          fill="url(#bk-steel-cap)" 
-          stroke="#0f172a" 
-          strokeWidth="1.1" 
-        />
-        <line x1="160" y1="218" x2="160" y2="262" stroke="#ffffff" strokeWidth="1.5" />
-      </g>
-
-      {/* --- TIER 3: MID-TOWER SETBACKS (y=178 to 218) --- */}
-      <g>
-        <polygon 
-          points="136,194 140,176 140,200 136,218" 
-          fill="url(#bk-left-facet)" 
-          stroke="#0f172a" 
-          strokeWidth="1" 
-        />
-        <polygon 
-          points="136,194 156,194.3 156,218 136,218" 
-          fill="url(#bk-front-facet)" 
-          stroke="#0f172a" 
-          strokeWidth="1.1" 
-        />
-        <polygon 
-          points="136,194 156,194.3 160,176.3 140,176" 
-          fill="url(#bk-steel-cap)" 
-          stroke="#0f172a" 
-          strokeWidth="0.9" 
-        />
-
-        <polygon 
-          points="164,186 184,186.3 184,218 164,218" 
-          fill="url(#bk-front-facet)" 
-          stroke="#0f172a" 
-          strokeWidth="1.1" 
-        />
-        <polygon 
-          points="164,186 184,186.3 188,170.3 168,170" 
-          fill="url(#bk-steel-cap)" 
-          stroke="#0f172a" 
-          strokeWidth="0.9" 
-        />
-
-        <polygon 
-          points="152,178 168,178.3 168,218 152,218" 
-          fill="url(#bk-mirror-facet)" 
-          stroke="#0f172a" 
-          strokeWidth="1.2" 
-        />
-        <polygon 
-          points="152,178 168,178.3 172,162.3 156,162" 
-          fill="url(#bk-steel-cap)" 
-          stroke="#0f172a" 
-          strokeWidth="1" 
-        />
-        <line x1="160" y1="178" x2="160" y2="218" stroke="#ffffff" strokeWidth="1.3" />
-      </g>
-
-      {/* --- TIER 4: HIGH-ALTITUDE SHAFT (y=143 to 178) --- */}
-      <g>
-        <polygon 
-          points="144,156 148,141 148,163 144,178" 
-          fill="url(#bk-left-facet)" 
-          stroke="#0f172a" 
-          strokeWidth="0.9" 
-        />
-        <polygon 
-          points="144,156 158,156.2 158,178 144,178" 
-          fill="url(#bk-front-facet)" 
-          stroke="#0f172a" 
-          strokeWidth="1" 
-        />
-        <polygon 
-          points="144,156 158,156.2 162,141.2 148,141" 
-          fill="url(#bk-steel-cap)" 
-          stroke="#0f172a" 
-          strokeWidth="0.8" 
-        />
-
-        <polygon 
-          points="154,143 166,143.2 166,178 154,178" 
-          fill="url(#bk-mirror-facet)" 
-          stroke="#0f172a" 
-          strokeWidth="1.1" 
-        />
-        <polygon 
-          points="154,143 166,143.2 169,130.2 157,130" 
-          fill="url(#bk-steel-cap)" 
-          stroke="#0f172a" 
-          strokeWidth="0.9" 
-        />
-        <line x1="160" y1="143" x2="160" y2="178" stroke="#ffffff" strokeWidth="1.2" />
-      </g>
-
-      {/* --- TIER 5: UPPER PINNACLE CORE (y=108 to 143) --- */}
-      <g>
-        <polygon 
-          points="155,112 158,100 158,131 155,143" 
-          fill="url(#bk-left-facet)" 
-          stroke="#0f172a" 
-          strokeWidth="0.8" 
-        />
-        <polygon 
-          points="155,112 165,112.2 165,143 155,143" 
-          fill="url(#bk-front-facet)" 
-          stroke="#0f172a" 
-          strokeWidth="0.9" 
-        />
-        <polygon 
-          points="155,112 165,112.2 168,100.2 158,100" 
-          fill="url(#bk-steel-cap)" 
-          stroke="#0f172a" 
-          strokeWidth="0.8" 
-        />
-        <line x1="160" y1="112" x2="160" y2="143" stroke="#ffffff" strokeWidth="1" />
-      </g>
-
-      {/* --- TELESCOPIC NEEDLE SPIRE (y=20 to 112) --- */}
-      <g>
-        <polygon points="158,112 162,112 161.5,75 158.5,75" fill="url(#bk-spire-needle)" stroke="#0f172a" strokeWidth="0.9" />
-        <polygon points="158.8,75 161.2,75 160.6,42 159.4,42" fill="url(#bk-spire-needle)" stroke="#0f172a" strokeWidth="0.7" />
-        <line x1="160" y1="42" x2="160" y2="20" stroke="#ffffff" strokeWidth="1.4" strokeLinecap="round" />
-        <line x1="160" y1="20" x2="160" y2="16" stroke="#cbd5e1" strokeWidth="0.9" strokeLinecap="round" />
-
-        {/* Flashing Aircraft Obstruction Beacon */}
-        <circle cx="160" cy="16" r="4.5" fill="url(#bk-beacon-star)">
-          <animate attributeName="r" values="3;7;3" dur="1.2s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.6;1;0.6" dur="1.2s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="160" cy="16" r="1.5" fill="#ef4444" />
-      </g>
-      </g>
+        <Tower />
       </MirrorX>
 
       {/* ==================================================================== */}
@@ -445,3 +182,57 @@ export const BurjKhalifa: React.FC<BurjKhalifaProps> = ({
 
 export const BurjKhalifaIcon = BurjKhalifa;
 export default BurjKhalifa;
+
+/**
+ * The tower as stacked setbacks, each a block with its front, its side going back and a sliver of roof,
+ * the same construction as the other towers on the map (drawn with the side on the left; the caller
+ * mirrors it so the side shows on the right). A glass spine runs up the middle of every tier.
+ */
+const TIERS = [
+  { hw: 44, top: 262 }, { hw: 36, top: 205 }, { hw: 29, top: 155 }, { hw: 22, top: 112 },
+  { hw: 16, top: 76 }, { hw: 11, top: 48 }, { hw: 7, top: 30 },
+];
+const BASE_Y = 330;
+const CX = 160;
+
+function Tower() {
+  // Each tier stands on the one below it.
+  const bottoms = TIERS.map((_, i) => (i === 0 ? BASE_Y : TIERS[i - 1].top));
+  const bottom = TIERS[TIERS.length - 1].top;
+  return (
+    <g className="bk-tower">
+      {/* Podium */}
+      <TowerBlock x0={CX - 58} x1={CX + 58} yb={BASE_Y + 8} yt={BASE_Y - 10} depth={16} rise={7} front="#e2e8f0" />
+      {TIERS.map((t, i) => {
+        const yb = bottoms[i];
+        return (
+          <g key={i}>
+            <TowerBlock x0={CX - t.hw} x1={CX + t.hw} yb={yb} yt={t.top} depth={6 + t.hw * 0.28} rise={5} front="url(#bk-front-facet)" />
+            {/* Glass spine and floor lines */}
+            <rect x={CX - t.hw * 0.28} y={t.top} width={t.hw * 0.56} height={yb - t.top} fill="url(#bk-mirror-facet)" opacity="0.9" />
+            {Array.from({ length: Math.floor((yb - t.top) / 9) }, (_, k) => (
+              <line key={k} x1={CX - t.hw} x2={CX + t.hw} y1={t.top + 9 * (k + 1)} y2={t.top + 9 * (k + 1)} stroke="#94a3b8" strokeWidth="0.5" opacity="0.6" />
+            ))}
+          </g>
+        );
+      })}
+      {/* Spire with its beacon */}
+      <polygon points={`${CX - 2.4},${bottom} ${CX + 2.4},${bottom} ${CX + 0.6},4 ${CX - 0.6},4`} fill="url(#bk-front-facet)" stroke="#64748b" strokeWidth="0.5" />
+      <polygon points={`${CX - 2.4},${bottom} ${CX - 5},${bottom - 3} ${CX - 1.6},4 ${CX - 0.6},4`} fill="url(#bk-left-facet)" />
+      <circle cx={CX} cy="4" r="1.6" fill="#ef4444">
+        <animate attributeName="opacity" values="0.4;1;0.4" dur="1.4s" repeatCount="indefinite" />
+      </circle>
+    </g>
+  );
+}
+
+/** One block: the front face, the side going back to the left and up, and the roof edge on top. */
+function TowerBlock({ x0, x1, yb, yt, depth, rise, front }: { x0: number; x1: number; yb: number; yt: number; depth: number; rise: number; front: string }) {
+  return (
+    <g>
+      <polygon points={`${x0 - depth},${yb - rise} ${x0},${yb} ${x0},${yt} ${x0 - depth},${yt - rise}`} fill="url(#bk-left-facet)" stroke="#1e293b" strokeWidth="0.6" />
+      <polygon points={`${x0},${yt} ${x1},${yt} ${x1 - depth},${yt - rise} ${x0 - depth},${yt - rise}`} fill="#f8fafc" stroke="#94a3b8" strokeWidth="0.6" />
+      <rect x={x0} y={yt} width={x1 - x0} height={yb - yt} fill={front} stroke="#64748b" strokeWidth="0.6" />
+    </g>
+  );
+}

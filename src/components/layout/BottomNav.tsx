@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Map, User } from "lucide-react";
+import { Home, Map, Smartphone, User } from "lucide-react";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { useCitizen } from "@/lib/citizenStore";
 import { useUnreadTotal } from "@/lib/unread";
@@ -13,6 +13,7 @@ import { openPhone } from "@/components/layout/PhoneOverlay";
 import { MoodFace } from "@/components/layout/TopBar";
 import { gameAudio } from "@/utils/gameAudio";
 import { illnessOf, useServices } from "@/lib/cityServices";
+import { useEmbedded } from "@/components/layout/Embed";
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -20,20 +21,20 @@ export function BottomNav() {
   const { citizen } = useCitizen();
   const unread = useUnreadTotal(citizen?.id);
   const onMap = isActive("/explore") && !!citizen?.id;
+  // Inside the in-game phone the page around it already has the bar.
+  if (useEmbedded()) return null;
 
   return (
     <div className="fixed bottom-0 left-0 w-full z-50 px-3 sm:px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 pointer-events-none select-none">
       <div className="max-w-md mx-auto">
         <ServiceAlert />
         {onMap && <YouChip />}
-        <div className="flex items-center gap-2.5">
-          <nav className="flex-1 h-[60px] bg-white/95 backdrop-blur-2xl border border-white rounded-full p-1.5 flex items-center pointer-events-auto shadow-[0_8px_28px_rgba(15,23,42,0.25)]">
-            <NavItem href="/home" icon={<Home className="w-6 h-6" />} label="Home" active={isActive("/home")} />
-            <NavItem href="/profile" icon={<User className="w-6 h-6" />} label="Me" active={isActive("/profile")} />
-            <NavItem href="/explore" icon={<Map className="w-6 h-6" />} label="Map" active={isActive("/explore")} />
-          </nav>
+        <nav className="h-[60px] bg-white/95 backdrop-blur-2xl border border-white rounded-full p-1.5 flex items-center pointer-events-auto shadow-[0_8px_28px_rgba(15,23,42,0.25)]">
+          <NavItem href="/home" icon={<Home className="w-6 h-6" />} label="Home" active={isActive("/home")} />
+          <NavItem href="/explore" icon={<Map className="w-6 h-6" />} label="Map" active={isActive("/explore")} />
+          <NavItem href="/profile" icon={<User className="w-6 h-6" />} label="Me" active={isActive("/profile")} />
           <PhoneButton unread={unread} />
-        </div>
+        </nav>
       </div>
     </div>
   );
@@ -93,19 +94,17 @@ function ServiceAlert() {
   );
 }
 
-/** The round button that brings your phone up over the page. */
+/** Your phone, beside your profile: it opens over the page. */
 function PhoneButton({ unread }: { unread: number }) {
   return (
     <button
       onClick={() => openPhone()}
       aria-label={unread ? `Phone: ${unread} unread` : "Phone"}
-      className="relative pointer-events-auto w-[60px] h-[60px] shrink-0 rounded-full bg-white shadow-[0_8px_28px_rgba(15,23,42,0.25)] flex items-center justify-center overflow-hidden active:scale-90 transition-transform"
+      className="relative h-full flex-1 rounded-full flex items-center justify-center text-slate-600 hover:text-slate-900 active:scale-95 transition-all"
     >
-      <span className="block w-7 h-11 rounded-[7px] border-[3px] border-slate-900 bg-gradient-to-b from-sky-400 via-violet-500 to-fuchsia-500 rotate-[14deg] translate-y-1.5 flex items-start justify-center pt-1.5">
-        <span className="w-3.5 h-3 rounded-full bg-white text-[7px] leading-3 text-violet-600 font-black text-center">···</span>
-      </span>
+      <Smartphone className="w-6 h-6" />
       {unread > 0 && (
-        <span className="absolute top-1 right-1 min-w-[20px] h-5 px-1 rounded-full bg-rose-500 text-white text-[11px] font-black flex items-center justify-center ring-2 ring-white">
+        <span className="absolute top-1 left-1/2 ml-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center ring-2 ring-white">
           {unread > 99 ? "99+" : unread}
         </span>
       )}

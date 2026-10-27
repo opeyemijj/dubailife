@@ -21,6 +21,7 @@ import { LifeHub } from "@/components/life/LifeHub";
 import { PhoneOverlay } from "@/components/layout/PhoneOverlay";
 import { HudSheets } from "@/components/layout/HudSheets";
 import { LoveListener } from "@/components/love/LoveListener";
+import { EmbedBridge, OutsidePhone } from "@/components/layout/Embed";
 
 const fredoka = Fredoka({ subsets: ["latin"], display: 'swap' });
 
@@ -191,23 +192,28 @@ export default function RootLayout({
       <body className={`antialiased min-h-screen bg-background text-foreground ${fredoka.className}`}>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA).replace(/</g, "\\u003c") }} />
         <ServiceWorker />
-        <PresenceTracker />
-        <KnockListener />
-        <MoneyListener />
-        <FriendRequestListener />
-        <Suspense fallback={null}><MessageAlerts /></Suspense>
-        <NotificationPrompt />
-        <PushCoach />
-        <AgeGate />
-        <FirstDay />
-        <ScamPhone />
-        <DiscoverHost />
+        <OutsidePhone>
+          <PresenceTracker />
+          <KnockListener />
+          <MoneyListener />
+          <FriendRequestListener />
+          <Suspense fallback={null}><MessageAlerts /></Suspense>
+          <NotificationPrompt />
+          <PushCoach />
+          <AgeGate />
+          <FirstDay />
+          <ScamPhone />
+          <DiscoverHost />
+        </OutsidePhone>
+        <EmbedBridge />
         {children}
-        <KeyboardShortcuts />
         <LifeHub />
-        <PhoneOverlay />
-        <HudSheets />
-        <LoveListener />
+        <OutsidePhone>
+          <KeyboardShortcuts />
+          <PhoneOverlay />
+          <HudSheets />
+          <LoveListener />
+        </OutsidePhone>
       </body>
     </html>
   );

@@ -14,6 +14,7 @@ import { openPhone } from "@/components/layout/PhoneOverlay";
 import { openSheet } from "@/components/layout/HudSheets";
 import { gameAudio } from "@/utils/gameAudio";
 import { useServices } from "@/lib/cityServices";
+import { useEmbedded } from "@/components/layout/Embed";
 
 export interface TopBarProps {
   walletBalance?: number;
@@ -37,6 +38,7 @@ export function TopBar({ walletBalance: walletOverride }: TopBarProps) {
   const t = now ? dubaiTime(now) : null;
   const mood = moodOf(citizen, !!useServices(citizen?.id)?.illness);
   const [open, setOpen] = useState(false);
+  if (useEmbedded()) return null;
 
   return (
     <div className="fixed top-0 left-0 w-full z-50 px-3 sm:px-6 pt-[max(0.6rem,env(safe-area-inset-top))] pb-1.5 pointer-events-none select-none text-slate-900">

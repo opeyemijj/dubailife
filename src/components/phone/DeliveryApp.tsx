@@ -10,11 +10,11 @@ import { placeOrder, useOrders } from "@/lib/phoneOrders";
 import APPS from "@/data/phone/apps.json";
 import { AppScreen, aed, Big, Card, Note } from "./AppScreen";
 
-type Item = { id: string; name: string; icon: string; price: number; need: NeedKey; amount: number };
+type Item = { id: string; name: string; icon: string; price: number; need?: NeedKey; amount?: number; stock?: string; qty?: number };
 type Store = { id: string; name: string; icon: string; bg: string; kind: string; items: Item[] };
 
 const FOOD: Store[] = APPS.delivery.stores.map((s) => ({ ...s, items: s.menu.map((m) => ({ ...m, need: "hunger" as NeedKey, amount: m.hunger })) }));
-const GROCERY: Store = { id: "daily-basket", name: APPS.grocery.app.name, icon: APPS.grocery.app.icon, bg: APPS.grocery.app.bg, kind: "Groceries", items: APPS.grocery.items as Item[] };
+const GROCERY: Store = { id: "daily-basket", name: APPS.grocery.app.name, icon: APPS.grocery.app.icon, bg: APPS.grocery.app.bg, kind: "Groceries for your kitchen", items: APPS.grocery.items as Item[] };
 
 export const storeById = (id: string) => FOOD.find((s) => s.id === id);
 
@@ -57,8 +57,12 @@ function Menu({ store, fee, minutes, seconds }: { store: Store; fee: number; min
 
   const order = () => {
     const feeds = new Map<NeedKey, number>();
-    for (const i of lines) feeds.set(i.need, Math.min(100, (feeds.get(i.need) ?? 0) + i.amount * cart[i.id]));
-    const ok = placeOrder({ store: store.name, icon: store.icon, total, minutes, feeds: [...feeds].map(([need, amount]) => ({ need, amount })), meal: lines.some((i) => i.need === "hunger") }, seconds);
+    const stock: Record<string, number> = {};
+    for (const i of lines) {
+      if (i.stock) stock[i.stock] = (stock[i.stock] ?? 0) + (i.qty ?? 1) * cart[i.id];
+      else if (i.need) feeds.set(i.need, Math.min(100, (feeds.get(i.need) ?? 0) + (i.amount ?? 0) * cart[i.id]));
+    }
+    const ok = placeOrder({ store: store.name, icon: store.icon, total, minutes, feeds: [...feeds].map(([need, amount]) => ({ need, amount })), stock: Object.keys(stock).length ? stock : undefined, meal: lines.some((i) => i.need === "hunger") }, seconds);
     if (!ok) return setNote({ ok: false, text: "Not enough AED in your wallet." });
     setCart({});
     setNote({ ok: true, text: `Order placed with ${store.name}. Your rider is on the way.` });
@@ -76,7 +80,7 @@ function Menu({ store, fee, minutes, seconds }: { store: Store; fee: number; min
           <span className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-2xl shrink-0">{i.icon}</span>
           <span className="flex-1 min-w-0">
             <span className="block font-semibold leading-tight">{i.name}</span>
-            <span className="block text-sm text-slate-500">{aed(i.price)} · {i.need} +{i.amount}</span>
+            <span className="block text-sm text-slate-500">{aed(i.price)} · {i.stock ? `${i.qty} for your pantry` : `${i.need} +${i.amount}`}</span>
           </span>
           {cart[i.id] ? (
             <span className="flex items-center gap-2">

@@ -1,11 +1,12 @@
 "use client";
 
 // Food and grocery orders from the phone's apps (src/data/phone/apps.json). Paid when placed; the order is
-// prepared and ridden over in game time (well under a minute), then it feeds you wherever you are, even
-// with the phone closed.
+// prepared and ridden over in game time (well under a minute). Food feeds you wherever you are; groceries
+// go into the pantry at home. Either way it arrives even with the phone closed.
 
 import { useSyncExternalStore } from "react";
-import { adjustBalance, boostNeed, type NeedKey } from "@/lib/citizenStore";
+import { adjustBalance, boostNeed, updateCitizen, type NeedKey } from "@/lib/citizenStore";
+import { pantryOf } from "@/lib/homeFixtures";
 import { lifeEvent } from "@/lib/life";
 import { gameAudio } from "@/utils/gameAudio";
 
@@ -18,6 +19,8 @@ export interface Order {
   arriveAt: number;
   eta: number; // the minutes shown to the player
   feeds: Array<{ need: NeedKey; amount: number }>;
+  /** Groceries for the pantry at home. */
+  stock?: Record<string, number>;
   meal: boolean;
   delivered: boolean;
 }
@@ -43,9 +46,17 @@ function deliver(id: number) {
   if (!o || o.delivered) return;
   o.delivered = true;
   for (const f of o.feeds) boostNeed(f.need, f.amount);
+  if (o.stock) {
+    const add = o.stock;
+    updateCitizen((c) => {
+      const pantry: Record<string, number> = { ...pantryOf(c) };
+      for (const [k, n] of Object.entries(add)) pantry[k] = (pantry[k] ?? 0) + n;
+      return { ...c, pantry };
+    });
+  }
   if (o.meal) lifeEvent("meal");
   gameAudio.playCoinSound();
-  window.dispatchEvent(new CustomEvent("dubai:toast", { detail: `${o.icon} Your ${o.store} order has arrived. Enjoy!` }));
+  window.dispatchEvent(new CustomEvent("dubai:toast", { detail: o.stock ? `${o.icon} Your ${o.store} groceries are in your kitchen.` : `${o.icon} Your ${o.store} order has arrived. Enjoy!` }));
   emit();
 }
 

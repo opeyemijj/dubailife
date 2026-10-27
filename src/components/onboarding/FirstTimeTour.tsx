@@ -8,7 +8,7 @@ import { ModalPortal } from "@/components/ui/modal-portal";
 
 // Four short steps; everything else is learned by playing (the first-day checklist guides what to do).
 const STEPS = [
-  { icon: "👋", title: "Welcome to Dubai", text: "Players and Locals (our hosts, tagged Local) fill the city. Your time, mood and wallet are at the top: tap the arrow for your visa, streak and more. Your phone is the round button at the bottom." },
+  { icon: "👋", title: "Welcome to Dubai", text: "Players and Locals (our hosts, tagged Local) fill the city. Your time, mood and wallet are at the top: tap the arrow for your visa, streak and more. Your phone is beside Profile in the bottom bar." },
   { icon: "🗺️", title: "Go anywhere", text: "Pinch and drag the map, then tap a building to go inside: malls, clubs, restaurants, hotels and Academic City." },
   { icon: "🚶", title: "Inside a venue", text: "Tap the floor to walk, counters to shop or order, staff to ask for a job, and people to chat." },
   { icon: "🌅", title: "Your first day", text: "Follow the checklist in the corner for an AED 10,000 bonus. Settings → How Dubai works explains visas, jobs and prizes any time." },

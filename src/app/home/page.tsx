@@ -26,6 +26,8 @@ import { WardrobeModal } from "@/components/avatar/WardrobeModal";
 import { getPendingVenue } from "@/components/city/VenueDressCodeModal";
 import { NeedsDock } from "@/components/life/NeedsDock";
 import { gainSkill, lifeEvent } from "@/lib/life";
+import { FixtureProgress, FixtureSheet, completeFixtureAction } from "@/components/home/FixtureSheet";
+import type { Fixture, FixtureAction } from "@/lib/homeFixtures";
 import BLUEPRINT from "@/data/life/blueprint.json";
 
 /** Small previews of the floor finishes in the Style tab. */
@@ -81,6 +83,9 @@ export default function HomePage() {
   const [buyModalOpen, setBuyModalOpen] = useState(false);
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  // The kitchen or bathroom fixture being used, and the action under way.
+  const [fixture, setFixture] = useState<Fixture | null>(null);
+  const [running, setRunning] = useState<FixtureAction | null>(null);
   const [shopTab, setShopTab] = useState<"shop" | "storage" | "style">("shop");
   const [shopCat, setShopCat] = useState<ShopCategory | "all">("all");
   const [placing, setPlacing] = useState<PlacingState | null>(null);
@@ -258,6 +263,7 @@ export default function HomePage() {
         onPickUp={handlePickUp}
         onPlaceBlocked={() => showToast("🚫 It doesn't fit there. Try a green spot.")}
         onInteractObject={handleInteractObject}
+        onUseFixture={(f) => setFixture(f)}
         level={level}
         onChangeLevel={changeLevel}
         homeStyle={homeStyle}
@@ -646,6 +652,20 @@ export default function HomePage() {
       )}
 
       {/* Floating Interactive Toast */}
+      {fixture && !running && (
+        <FixtureSheet fixture={fixture} onClose={() => setFixture(null)} onStart={(a) => { gameAudio.playClickSound(); setRunning(a); setFixture(null); }} />
+      )}
+      {running && (
+        <div className="absolute left-3 top-[max(7.5rem,calc(env(safe-area-inset-top)+7rem))] z-40 pointer-events-auto">
+          <FixtureProgress
+            key={running.id}
+            action={running}
+            onCancel={() => setRunning(null)}
+            onDone={() => { completeFixtureAction(running); showToast(`${running.icon} ${running.label}: done`); setRunning(null); }}
+          />
+        </div>
+      )}
+
       {toastMsg && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 bg-slate-950/90 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-full shadow-2xl animate-in fade-in slide-in-from-top-2">
           {toastMsg}
