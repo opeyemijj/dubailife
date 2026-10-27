@@ -148,6 +148,8 @@ function voiceFor(lang: "en" | "ar", style: VoiceStyle = "announcer"): SpeechSyn
     ?? voices.find((v) => v.lang === "en-GB") ?? voices.find((v) => v.lang.startsWith("en"));
 }
 
+const speaking = new Set<SpeechSynthesisUtterance>();
+
 function speakNow(text: string, lang: "en" | "ar", style: VoiceStyle = "announcer"): Promise<void> {
   return new Promise((resolve) => {
     if (muted || typeof speechSynthesis === "undefined") return resolve();
@@ -157,8 +159,12 @@ function speakNow(text: string, lang: "en" | "ar", style: VoiceStyle = "announce
     u.lang = lang === "ar" ? "ar-AE" : style === "driver" ? "en-IN" : "en-GB";
     u.rate = lang === "ar" ? 0.92 : style === "driver" ? 1.0 : 0.95;
     u.pitch = style === "driver" ? 0.85 : 1.05;
-    u.onend = () => resolve();
-    u.onerror = () => resolve();
+    // Kept referenced until it ends: some mobile browsers drop an utterance that is garbage collected mid-speech.
+    speaking.add(u);
+    u.onend = () => { speaking.delete(u); resolve(); };
+    u.onerror = () => { speaking.delete(u); resolve(); };
+    // Android Chrome can be left paused after the tab was in the background.
+    speechSynthesis.resume();
     speechSynthesis.speak(u);
     // Some browsers never fire onend: don't hold the queue forever.
     setTimeout(resolve, 2500 + text.length * 90);
@@ -206,4 +212,35 @@ export function stopSpeech() {
 export function warmUpVoices() {
   if (typeof speechSynthesis !== "undefined") speechSynthesis.getVoices();
   ac();
+}
+
+// ---------------------------------------------------------------- unlocking sound on phones
+// iOS Safari (and some Android browsers) only allow Web Audio and speech after they've been started inside a
+// tap. Announcements come later, from timers, so they'd be silent. The first tap anywhere in the app starts
+// the audio context with a silent sound and speaks a silent utterance, which unlocks both for the session.
+
+let speechUnlocked = false;
+
+export function unlockTransitAudio() {
+  const a = ac();
+  if (a) {
+    if (a.state !== "running") void a.resume();
+    const src = a.createBufferSource();
+    src.buffer = a.createBuffer(1, 1, 22050);
+    src.connect(a.destination);
+    src.start(0);
+  }
+  if (!speechUnlocked && typeof speechSynthesis !== "undefined") {
+    speechUnlocked = true;
+    const u = new SpeechSynthesisUtterance(" ");
+    u.volume = 0;
+    speechSynthesis.speak(u);
+    speechSynthesis.getVoices();
+  }
+}
+
+if (typeof window !== "undefined") {
+  // Every tap keeps the audio context running (iOS suspends it again after the app was in the background).
+  const onGesture = () => { if (!speechUnlocked || ctx?.state !== "running") unlockTransitAudio(); };
+  for (const type of ["pointerup", "touchend", "click", "keydown"]) window.addEventListener(type, onGesture, { capture: true, passive: true });
 }

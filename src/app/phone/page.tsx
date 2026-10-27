@@ -6,6 +6,7 @@
 import { askForPush } from "@/lib/push/engage";
 import { useCitizen } from "@/lib/citizenStore";
 import { getPlace } from "@/lib/city/places";
+import { addGuest, flatTitle, myFlats, type FlatView } from "@/lib/city/flats";
 import { sendMoney } from "@/lib/room";
 import { markRead, useUnreadCounts } from "@/lib/unread";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -192,6 +193,23 @@ function Thread({ me, other, online, onBack }: { me: string; other: string; onli
   const here = citizen?.location?.placeId ? getPlace(citizen.location.placeId) : null;
   const invite = () => here && post(`📍 Come and join me at ${here.name} · /explore?open=${here.id}`);
 
+  // The home I live in (rented, or owned and not let out): inviting them adds them to its guest list,
+  // so they can walk straight in, and sends a link that takes them to the door.
+  const [home, setHome] = useState<FlatView | null>(null);
+  const [inviteNote, setInviteNote] = useState<string | null>(null);
+  useEffect(() => {
+    myFlats(me).then((fs) => setHome(fs.find((f) => f.tenant_id === me) ?? fs.find((f) => f.owner_id === me && !f.tenant_id && !f.tenant_npc) ?? null));
+  }, [me]);
+  const inviteHome = async () => {
+    if (!home || !who) return;
+    const res = await addGuest(home.id, who.username, false);
+    if (!res.ok) { setInviteNote(res.error); return; }
+    const where = [flatTitle({ ...home, residentName: null }), getPlace(home.building_id)?.name].filter(Boolean).join(", ");
+    if (await post(`🏠 Come over to my place: ${where} · /property/${home.building_id}/${encodeURIComponent(home.unit)}`)) {
+      setInviteNote(`@${who.username} is on your guest list and can come straight in.`);
+    }
+  };
+
   return (
     // Fixed to the screen: the header stays at the top, the input at the very bottom.
     <main className="fixed inset-0 h-[100dvh] bg-zinc-950 text-white flex flex-col">
@@ -212,7 +230,7 @@ function Thread({ me, other, online, onBack }: { me: string; other: string; onli
             <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[78%] px-3 py-2 rounded-2xl text-sm break-words ${mine ? "bg-sky-500 rounded-br-md" : "bg-white/10 rounded-bl-md"}`}>
                 {inv ? inv.text : m.body}
-                {inv && !mine && <button onClick={() => router.push(inv.href)} className="mt-1.5 block w-full h-8 rounded-lg bg-white text-sky-600 text-xs font-black">Go there</button>}
+                {inv && !mine && <button onClick={() => router.push(inv.href)} className="mt-1.5 block w-full h-8 rounded-lg bg-white text-sky-600 text-xs font-black">{inv.href.startsWith("/property") ? "Go to their home" : "Go there"}</button>}
                 <div className="text-[10px] mt-0.5 text-white/60">{when(m.created_at)}{m.place ? ` · ${m.place}` : ""}</div>
               </div>
             </div>
@@ -224,6 +242,7 @@ function Thread({ me, other, online, onBack }: { me: string; other: string; onli
         <div className="max-w-md mx-auto px-3 pt-2 flex gap-2 overflow-x-auto scrollbar-hide">
           <button onClick={() => setPaying(true)} className="shrink-0 h-8 px-3 rounded-full bg-emerald-500/15 text-emerald-300 text-xs font-bold">💸 Send money</button>
           <button onClick={() => post("👋")} className="shrink-0 h-8 px-3 rounded-full bg-white/10 text-xs font-bold">👋 Wave</button>
+          {home && <button onClick={inviteHome} className="shrink-0 h-8 px-3 rounded-full bg-amber-500/15 text-amber-300 text-xs font-bold">🏠 Invite to my home</button>}
           {here && <button onClick={invite} className="shrink-0 h-8 px-3 rounded-full bg-sky-500/15 text-sky-300 text-xs font-bold">📍 Invite to {here.name}</button>}
           <button onClick={() => router.push("/explore")} className="shrink-0 h-8 px-3 rounded-full bg-white/10 text-xs font-bold">🗺️ Find a place to meet</button>
         </div>
@@ -231,6 +250,7 @@ function Thread({ me, other, online, onBack }: { me: string; other: string; onli
           <input value={text} onChange={(e) => setText(e.target.value)} maxLength={500} placeholder={who ? `Message @${who.username}` : "Message"} className="flex-1 h-12 rounded-xl bg-white/5 border border-white/10 px-3 text-base outline-none" />
           <button className="w-12 h-12 rounded-xl bg-sky-500 flex items-center justify-center" aria-label="Send"><Send className="w-4 h-4" /></button>
         </form>
+        {inviteNote && <p className="text-center text-xs text-amber-200 pt-1">{inviteNote}</p>}
         {failed && <p className="text-center text-xs text-rose-300 pt-1">Couldn&apos;t send — check your connection and try again.</p>}
       </div>
       {paying && who && <PayFriend to={who} balance={citizen?.balance ?? 0} onDone={(amount) => { setPaying(false); if (amount) void post(`💸 Sent you AED ${amount.toLocaleString()}`); }} />}
