@@ -174,7 +174,7 @@ export function HomeFixtures({ fixtures, walls, wallColor, skirtingColor, wallH,
     <group>
       {pieces.map((p, i) => (
         <group key={i} position={[p.x, 0, p.z]} rotation={[0, p.yaw, 0]}>
-          <mesh position={[0, (p.y0 + p.y1) / 2, 0]} receiveShadow castShadow>
+          <mesh position={[0, (p.y0 + p.y1) / 2, 0]} receiveShadow castShadow userData={{ wall: true }}>
             <boxGeometry args={[p.len, p.y1 - p.y0, 0.1]} />
             <meshStandardMaterial color={wallColor} roughness={0.85} />
           </mesh>

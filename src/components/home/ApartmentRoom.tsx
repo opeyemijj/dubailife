@@ -596,7 +596,7 @@ function WallSegments({ wall, color = "#f1e4cf", skirtingColor = "#e7d5b8", noDo
   return (
     <>
       {pieces.map((p, i) => (
-        <mesh key={i} position={[(p.x0 + p.x1) / 2, (p.y0 + p.y1) / 2, -WALL_THICKNESS / 2]} receiveShadow castShadow>
+        <mesh key={i} position={[(p.x0 + p.x1) / 2, (p.y0 + p.y1) / 2, -WALL_THICKNESS / 2]} receiveShadow castShadow userData={{ wall: true }}>
           <boxGeometry args={[p.x1 - p.x0, p.y1 - p.y0, WALL_THICKNESS]} />
           <meshStandardMaterial color={color} roughness={0.9} />
         </mesh>
@@ -900,7 +900,7 @@ function LevelPartitions({ def, upView, activeRoomId, onSelectRoom, onFloorClick
     <group>
       {pieces.map((p, i) => (
         <group key={i} position={[p.x, 0, p.z]} rotation={[0, p.yaw, 0]}>
-          <mesh position={[0, (p.y0 + p.y1) / 2, 0]} receiveShadow castShadow>
+          <mesh position={[0, (p.y0 + p.y1) / 2, 0]} receiveShadow castShadow userData={{ wall: true }}>
             <boxGeometry args={[p.len, p.y1 - p.y0, 0.12]} />
             <meshStandardMaterial color={wallColor} roughness={0.85} />
           </mesh>
@@ -969,13 +969,17 @@ function CameraRig({
   // Pull back on narrow (portrait) screens so the whole room fits.
   useEffect(() => {
     if (!controls) return;
-    const dist = inside ? 2.8 : size.width / size.height < 0.8 ? 19 : 14;
+    const dist = inside ? 4.4 : size.width / size.height < 0.8 ? 19 : 14;
     const dir = camera.position.clone().sub(controls.target).normalize();
     camera.position.copy(controls.target).addScaledVector(dir, dist);
     controls.update();
   }, [controls, camera, size.width, size.height, inside]);
   // Where the citizen was last frame, so the camera can move along with them.
   const lastFollow = useRef<[number, number, number] | null>(null);
+  // Walls faded because they stand between the camera and the citizen (inside view).
+  const faded = useRef(new Set<THREE.Mesh>());
+  const rayRef = useRef(new THREE.Raycaster());
+  const scene = useThree((s) => s.scene);
 
   useEffect(() => {
     if (!controls || turns === lastTurns.current) return;
@@ -995,11 +999,37 @@ function CameraRig({
       controls.target.add(shift);
       camera.position.add(shift);
       if (moved > 0.0005) {
-        const behind = new THREE.Vector3(follow[0] - Math.sin(followYaw) * 2.6, 2.3, follow[2] - Math.cos(followYaw) * 2.6);
+        const behind = new THREE.Vector3(follow[0] - Math.sin(followYaw) * 4.2, 2.9, follow[2] - Math.cos(followYaw) * 4.2);
         camera.position.lerp(behind, Math.min(1, dt * 2.5));
       }
       lastFollow.current = follow;
       controls.update();
+      // Any wall between the camera and the citizen turns see-through while it's in the way.
+      const walls: THREE.Mesh[] = [];
+      scene.traverse((o) => { if ((o as THREE.Mesh).isMesh && o.userData.wall) walls.push(o as THREE.Mesh); });
+      // Lines from the camera to the head, both shoulders, the waist and the feet: a wall crossing any of them
+      // hides part of the citizen or the room just beyond them.
+      const ray = rayRef.current;
+      const side = new THREE.Vector3().subVectors(head, camera.position).setY(0).normalize().cross(new THREE.Vector3(0, 1, 0)).multiplyScalar(0.7);
+      const aims = [head, head.clone().add(side), head.clone().sub(side), new THREE.Vector3(follow[0], 0.9, follow[2]), new THREE.Vector3(follow[0], 0.1, follow[2])];
+      const blocking = new Set<THREE.Mesh>();
+      for (const aim of aims) {
+        const toAim = aim.clone().sub(camera.position);
+        ray.set(camera.position, toAim.clone().normalize());
+        ray.far = toAim.length() - 0.3;
+        for (const h of ray.intersectObjects(walls, false)) blocking.add(h.object as THREE.Mesh);
+      }
+      for (const m of blocking) {
+        const mat = m.material as THREE.MeshStandardMaterial;
+        if (!faded.current.has(m)) { mat.transparent = true; mat.depthWrite = false; mat.needsUpdate = true; faded.current.add(m); }
+        mat.opacity += (0.12 - mat.opacity) * Math.min(1, dt * 8);
+      }
+      for (const m of [...faded.current]) {
+        if (blocking.has(m)) continue;
+        const mat = m.material as THREE.MeshStandardMaterial;
+        mat.opacity += (1 - mat.opacity) * Math.min(1, dt * 6);
+        if (mat.opacity > 0.98) { mat.opacity = 1; mat.transparent = false; mat.depthWrite = true; mat.needsUpdate = true; faded.current.delete(m); }
+      }
     } else if (follow && !upView) {
       // Above: follow the citizen from room to room, gliding rather than jumping.
       const k = Math.min(1, dt * 3);
@@ -1577,8 +1607,8 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
           enableDamping
           minPolarAngle={props.upView ? 0.2 : props.view === "inside" ? 0.6 : 0.35}
           maxPolarAngle={props.upView ? 1.15 : props.view === "inside" ? 1.5 : 1.25}
-          minDistance={props.view === "inside" && !props.upView ? 1.2 : 6}
-          maxDistance={props.view === "inside" && !props.upView ? 5 : 30}
+          minDistance={props.view === "inside" && !props.upView ? 2.5 : 6}
+          maxDistance={props.view === "inside" && !props.upView ? 7.5 : 30}
         />
       </Canvas>
       <PeopleLabels people={props.people ?? []} nodes={labels} />

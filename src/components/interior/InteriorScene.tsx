@@ -547,7 +547,7 @@ function FollowCamera({ follow, inside }: { follow: Follow; inside: boolean }) {
       const me = follow.current.get("me");
       if (!me) return;
       controls.target.set(me.position.x, 1.45, me.position.z);
-      camera.position.set(me.position.x, 2.3, me.position.z + 2.8);
+      camera.position.set(me.position.x, 3.0, me.position.z + 4.6);
     } else {
       controls.target.copy(TARGET);
       camera.position.set(0, 7.5, 12);
@@ -565,7 +565,7 @@ function FollowCamera({ follow, inside }: { follow: Follow; inside: boolean }) {
       camera.position.add(shift);
       if (last.current && last.current.distanceTo(p) > 0.0005) {
         const yaw = me.rotation.y;
-        camera.position.lerp(new THREE.Vector3(p.x - Math.sin(yaw) * 2.8, 2.3, p.z - Math.cos(yaw) * 2.8), Math.min(1, dt * 2.5));
+        camera.position.lerp(new THREE.Vector3(p.x - Math.sin(yaw) * 4.6, 3.0, p.z - Math.cos(yaw) * 4.6), Math.min(1, dt * 2.5));
       }
     } else {
       // Glide part of the way: the room stays framed, with the citizen drifting nearer the middle.
@@ -904,8 +904,8 @@ export function InteriorScene({
         maxPolarAngle={inside ? 1.5 : 1.2}
         minAzimuthAngle={inside ? -Infinity : -0.9}
         maxAzimuthAngle={inside ? Infinity : 0.9}
-        minDistance={inside ? 1.2 : 6}
-        maxDistance={inside ? 5 : Math.max(w, d) + 6}
+        minDistance={inside ? 2.5 : 6}
+        maxDistance={inside ? 8 : Math.max(w, d) + 6}
       />
     </Canvas>
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-[1]">
