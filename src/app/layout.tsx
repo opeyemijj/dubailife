@@ -20,6 +20,7 @@ import { KeyboardShortcuts } from "@/components/common/KeyboardShortcuts";
 import { LifeHub } from "@/components/life/LifeHub";
 import { PhoneOverlay } from "@/components/layout/PhoneOverlay";
 import { HudSheets } from "@/components/layout/HudSheets";
+import { LoveListener } from "@/components/love/LoveListener";
 
 const fredoka = Fredoka({ subsets: ["latin"], display: 'swap' });
 
@@ -206,6 +207,7 @@ export default function RootLayout({
         <LifeHub />
         <PhoneOverlay />
         <HudSheets />
+        <LoveListener />
       </body>
     </html>
   );

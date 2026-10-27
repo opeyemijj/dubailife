@@ -1,0 +1,51 @@
+{
+  "_note": "Relationships and weddings (the Hayati app). Only what UAE law allows: a man and a woman, one partner at a time, both agreeing at every step. Numbers are mirrored in supabase/migrations/*_love.sql and checked by scripts/check-life-config.mjs.",
+  "levels": { "dailyLove": 1, "date": 5, "propose": 10 },
+  "cooldownDays": 3,
+  "datePlaces": [
+    { "id": "dubai-fountain", "label": "Fountain show at sunset", "icon": "⛲" },
+    { "id": "the-pointe", "label": "Dinner at The Pointe", "icon": "🌅" },
+    { "id": "kite-beach", "label": "Walk on Kite Beach", "icon": "🏖️" },
+    { "id": "address-skyview", "label": "Sky View drinks", "icon": "🌃" },
+    { "id": "madinat-jumeirah", "label": "Abra ride at Madinat", "icon": "🛶" },
+    { "id": "dubai-frame", "label": "Dubai Frame at night", "icon": "🖼️" },
+    { "id": "burj-al-arab", "label": "Afternoon tea at Burj Al Arab", "icon": "🫖" },
+    { "id": "atlantis-the-royal", "label": "Dinner at Atlantis The Royal", "icon": "🍽️" }
+  ],
+  "rings": [
+    { "id": "silver", "name": "Silver band", "icon": "💍", "price": 2500 },
+    { "id": "gold", "name": "18k gold ring", "icon": "💍", "price": 12000 },
+    { "id": "diamond", "name": "Diamond solitaire", "icon": "💎", "price": 45000 },
+    { "id": "emerald", "name": "Emerald and diamond halo", "icon": "💚", "price": 150000 }
+  ],
+  "ceremonies": [
+    { "id": "civil", "name": "Civil marriage · Dubai Courts", "icon": "🏛️", "fee": 1500, "text": "For non-Muslim couples: single-status papers, Emirates IDs and a licence in 24 hours." },
+    { "id": "religious", "name": "Religious marriage contract", "icon": "📜", "fee": 1000, "text": "The contract is signed before the celebration, with the mahr, the groom's gift to the bride, agreed beforehand." }
+  ],
+  "venues": [
+    { "id": "kite-beach", "name": "Beach ceremony, Kite Beach", "icon": "🏖️", "base": 5000, "perGuest": 150 },
+    { "id": "palace-downtown", "name": "Palace Downtown, fountain terrace", "icon": "⛲", "base": 25000, "perGuest": 450 },
+    { "id": "madinat-jumeirah", "name": "Madinat Jumeirah, waterside", "icon": "🛶", "base": 30000, "perGuest": 500 },
+    { "id": "atlantis-the-palm", "name": "Atlantis, The Palm, grand ballroom", "icon": "🏰", "base": 20000, "perGuest": 400 },
+    { "id": "one-zaabeel", "name": "One Za'abeel, sky ballroom", "icon": "🏙️", "base": 40000, "perGuest": 600 },
+    { "id": "burj-al-arab", "name": "Burj Al Arab, royal suite terrace", "icon": "⛵", "base": 50000, "perGuest": 900 }
+  ],
+  "guestOptions": [20, 50, 100, 200],
+  "maxGift": 50000,
+  "slotMinutes": 30,
+  "iDoWindow": { "beforeMinutes": 10, "afterMinutes": 45 },
+  "roles": {
+    "best_man": { "name": "Best man", "max": 1 },
+    "maid_of_honour": { "name": "Maid of honour", "max": 1 },
+    "bridesmaid": { "name": "Bridesmaid", "max": 6 },
+    "groomsman": { "name": "Groomsman", "max": 6 },
+    "guest": { "name": "Guest", "max": 1000 }
+  },
+  "programme": [
+    { "at": 0, "icon": "🥁", "text": "The zaffa: drums and dancers lead the couple in" },
+    { "at": 5, "icon": "💍", "text": "The vows. The couple each say \"I do\"" },
+    { "at": 12, "icon": "💃", "text": "First dance" },
+    { "at": 18, "icon": "🎂", "text": "Cutting the cake" },
+    { "at": 24, "icon": "🎆", "text": "Fireworks and farewells" }
+  ]
+}

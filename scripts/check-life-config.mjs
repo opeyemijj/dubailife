@@ -90,5 +90,23 @@ need("senior", `coin_move(me, -${lw.seniorCounsel.fee}, 'spend', 'Senior Counsel
 need("senior strength", `lawyer_kind = 'senior', lawyer_fee = ${lw.seniorCounsel.fee}, defence = ${lw.seniorCounsel.strength}`);
 need("clear chance", `random() < ${lw.clearBase} + ${lw.clearPerPoint} * coalesce(c.defence, 0)`);
 need("pass mark", `score >= ${svc.interviews._pass}`);
-console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job and city-service config match the database.");
+// Relationships and weddings (src/data/life/love.json vs *_love.sql).
+const love = JSON.parse(readFileSync("src/data/life/love.json", "utf8"));
+const loveFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_love.sql")).sort().pop();
+const loveSql = readFileSync(`supabase/migrations/${loveFile}`, "utf8");
+const lneed = (label, text) => { if (!loveSql.includes(text)) { bad++; console.error(`love ${label}: differs from SQL (${text})`); } };
+lneed("rings", `select case p_ring ${love.rings.map((r) => `when '${r.id}' then ${r.price}`).join(" ")} end`);
+lneed("date places", `select p_place in (${love.datePlaces.map((d) => `'${d.id}'`).join(", ")})`);
+for (const v of love.venues) lneed(`venue ${v.id}`, `when '${v.id}' then array[${v.base}, ${v.perGuest}]`);
+lneed("ceremonies", `select case p_ceremony ${love.ceremonies.map((c) => `when '${c.id}' then ${c.fee}`).join(" ")} end`);
+lneed("guests", `p_guests not in (${love.guestOptions.join(", ")})`);
+lneed("propose level", `r.level < ${love.levels.propose} then raise exception 'too_soon'`);
+lneed("date level", `set level = level + ${love.levels.date} where`);
+lneed("love level", `set level = level + ${love.levels.dailyLove} where`);
+lneed("cooldown", `ended_at > now() - interval '${love.cooldownDays} days'`);
+lneed("gift", `p_amount > ${love.maxGift} then raise exception 'amount_out_of_range'`);
+lneed("i do before", `starts_at - interval '${love.iDoWindow.beforeMinutes} minutes' then raise exception 'too_early'`);
+lneed("i do after", `starts_at + interval '${love.iDoWindow.afterMinutes} minutes' then raise exception 'too_late'`);
+for (const [id, r] of Object.entries(love.roles)) lneed(`role ${id}`, `when '${id}' then ${r.max}`);
+console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service and love config match the database.");
 process.exit(bad ? 1 : 0);

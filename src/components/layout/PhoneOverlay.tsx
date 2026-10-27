@@ -21,13 +21,15 @@ import { ClinicApp } from "@/components/phone/ClinicApp";
 import { PoliceApp } from "@/components/phone/PoliceApp";
 import { DeliveryApp } from "@/components/phone/DeliveryApp";
 import { RideApp } from "@/components/phone/RideApp";
+import { HayatiApp } from "@/components/phone/HayatiApp";
+import { useLove } from "@/lib/love";
 import APPS from "@/data/phone/apps.json";
 
 /** Opens the phone, on an app's screen if given. */
 export const openPhone = (app?: Screen) => window.dispatchEvent(new CustomEvent("dubai:open-phone", { detail: app }));
 
 /** Apps that open inside the phone (the rest open their page). */
-type Screen = "home" | "games" | "jobs" | "clinic" | "court" | "food" | "grocery" | "rides" | `store:${string}`;
+type Screen = "home" | "games" | "jobs" | "clinic" | "court" | "food" | "grocery" | "rides" | "hayati" | `store:${string}`;
 
 interface App { id: string; name: string; icon: string; bg: string; href?: string; screen?: Screen; run?: () => void; badge?: number; isNew?: boolean }
 
@@ -47,6 +49,8 @@ function Phone({ me, start, onClose }: { me: string; start: Screen; onClose: () 
   const router = useRouter();
   const unread = useUnreadTotal(me);
   const services = useServices(me);
+  const love = useLove(me);
+  const loveBadge = love?.incoming.length ?? 0;
   const now = useNow();
   const t = now ? dubaiTime(now) : null;
   const [q, setQ] = useState("");
@@ -68,6 +72,7 @@ function Phone({ me, start, onClose }: { me: string; start: Screen; onClose: () 
     { id: "grocery", name: APPS.grocery.app.name, icon: APPS.grocery.app.icon, bg: APPS.grocery.app.bg, screen: "grocery", isNew: true },
     { id: "police", name: "Dubai Police", icon: "🚓", bg: "from-blue-700 to-slate-900", screen: "court", badge: courtBadge, isNew: true },
     { id: "health", name: "Dubai Health", icon: "🩺", bg: "from-teal-400 to-cyan-700", screen: "clinic", badge: clinicBadge, isNew: true },
+    { id: "hayati", name: "Hayati", icon: "💞", bg: "from-rose-400 to-pink-600", screen: "hayati", badge: loveBadge, isNew: true },
     { id: "messages", name: "Messages", icon: "💬", bg: "from-sky-400 to-blue-600", href: "/phone", badge: unread },
     { id: "jobs", name: "Jobs", icon: "💼", bg: "from-emerald-400 to-emerald-700", screen: "jobs" },
     { id: "wallet", name: "Wallet", icon: "💳", bg: "from-amber-300 to-orange-500", href: "/wallet" },
@@ -89,7 +94,7 @@ function Phone({ me, start, onClose }: { me: string; start: Screen; onClose: () 
     { id: "alerts", name: "Alerts", icon: "🔔", bg: "from-rose-300 to-pink-600", href: "/phone?tab=alerts" },
     { id: "guide", name: "Guide", icon: "🧭", bg: "from-sky-300 to-cyan-600", href: "/guide" },
     { id: "profile", name: "Profile", icon: "🙂", bg: "from-zinc-300 to-zinc-500", href: "/profile" },
-  ], [unread, clinicBadge, courtBadge]);
+  ], [unread, clinicBadge, courtBadge, loveBadge]);
 
   const home = () => setScreen("home");
   // App screens are white, so the status bar and home bar turn dark on them.
@@ -130,6 +135,7 @@ function Phone({ me, start, onClose }: { me: string; start: Screen; onClose: () 
             : screen === "grocery" ? <DeliveryApp mode="grocery" onBack={home} />
             : screen.startsWith("store:") ? <DeliveryApp mode="food" storeId={screen.slice(6)} onBack={home} />
             : screen === "rides" ? <RideApp onBack={home} onClose={onClose} />
+            : screen === "hayati" ? <HayatiApp onBack={home} />
             : screen === "games" ? (
               <div className="relative flex-1 overflow-y-auto px-5 pb-10">
                 <button onClick={home} className="flex items-center gap-1 font-bold text-white/90 mb-3"><ChevronLeft className="w-5 h-5" /> Home</button>
