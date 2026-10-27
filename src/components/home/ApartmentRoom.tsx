@@ -1997,14 +1997,14 @@ function RoomScene({
   );
 }
 
-export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: string }) {
+export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: string; /** "transparent" shows the page behind the room. */ background?: string }) {
   const labels = useRef(new Map<string, HTMLDivElement>());
   const quality = useMemo(() => canvasQuality(), []);
   return (
     <div className="w-full h-full relative select-none">
       <SceneLoadingOverlay label={props.loadingLabel ?? "Opening your apartment"} />
       <Canvas shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false} camera={{ position: [8, 7.5, 8], fov: 35 }} dpr={quality.dpr}>
-        <color attach="background" args={["#7f9c78"]} />
+        {props.background !== "transparent" && <color attach="background" args={[props.background ?? "#7f9c78"]} />}
         <StudioEnvironment intensity={0.35} />
         <hemisphereLight args={["#fff7ed", "#6b7280", 1.0]} />
         <directionalLight

@@ -5,6 +5,7 @@
 // with those points. Everything is kept on the citizen (profiles.citizen.life) and saved with the game.
 
 import { DEFAULT_NEEDS, getCitizenState, updateCitizen, type Citizen, type NeedKey, type Needs } from "@/lib/citizenStore";
+import { isIll, maybeFallIll, SERVICES } from "@/lib/cityServices";
 
 // ---------------------------------------------------------------- state
 
@@ -130,6 +131,7 @@ export function gainSkill(id: SkillId, xp: number): number | null {
 
 /** Something happened. Chats count once per person per day. */
 export function lifeEvent(kind: LifeEventKind, withId?: string) {
+  if (kind === "meal") maybeFallIll("meal");
   updateLife((l) => {
     if (kind === "chat" && withId) {
       const key = `${today()}:${withId}`;
@@ -185,11 +187,16 @@ export function tickNeeds(now = Date.now()) {
     const life = { ...l, tickAt: new Date(now).toISOString() };
     if (ms < 30_000) return l.tickAt ? c : { ...c, life };
     const needs = { ...DEFAULT_NEEDS, ...c.needs };
-    const hours = ms / 3_600_000;
+    // Being ill wears you down faster until a doctor treats you.
+    const hours = (ms / 3_600_000) * (isIll() ? SERVICES.illness.drainMultiplier : 1);
     for (const k of Object.keys(DROP_PER_HOUR) as NeedKey[]) {
       const slower = PERKS.filter((p) => p.need === k && l.perks.includes(p.id)).reduce((s, p) => s + (p.slower ?? 0), 0);
       needs[k] = Math.max(0, Math.round((needs[k] - DROP_PER_HOUR[k] * hours * (1 - slower)) * 10) / 10);
     }
+    // Run down (hungry and unwashed) invites the flu; the summer midday sun, heatstroke when worn out.
+    if (needs.hunger < 20 && needs.hygiene < 20) maybeFallIll("rundown");
+    const gst = new Date(now + 4 * 3_600_000);
+    if (gst.getUTCMonth() >= 4 && gst.getUTCMonth() <= 8 && gst.getUTCHours() >= 12 && gst.getUTCHours() < 16 && needs.energy < 30) maybeFallIll("heat");
     return { ...c, needs, life };
   });
 }

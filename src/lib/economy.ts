@@ -4,6 +4,7 @@
 // Venture types come from src/data/economy/ventures.json; the server keeps each venture's treasury and staff.
 
 import SYSTEM_JOBS from "@/data/economy/system-jobs.json";
+import SERVICES from "@/data/economy/city-services.json";
 import { supabase } from "@/lib/supabase/client";
 import { refreshCitizen } from "@/lib/citizenStore";
 import VENTURES from "@/data/economy/ventures.json";
@@ -26,10 +27,10 @@ export interface Economy {
   job: MyJob | null;
   applications: Array<{ jobId: number; status: "pending" | "hired" | "rejected" }>;
 }
-export interface BoardJob { id: number; title: string; weeklyWage: number; shiftsPerWeek: number; requirement: Requirement; venture: string; ventureType: string; system: boolean; mine: boolean }
+export interface BoardJob { id: number; title: string; weeklyWage: number; shiftsPerWeek: number; requirement: Requirement; venture: string; ventureType: string; system: boolean; mine: boolean; service?: "doctor" | "police" | "lawyer" | null; interview?: "passed" | "failed" | null }
 
 /** Icon for a city (system) company, from src/data/economy/system-jobs.json. */
-export const companyIcon = (name: string) => SYSTEM_JOBS.companies.find((c) => c.name === name)?.icon;
+export const companyIcon = (name: string) => [...SYSTEM_JOBS.companies, ...SERVICES.careers].find((c) => c.name === name)?.icon;
 
 const ERRORS: Record<string, string> = {
   insufficient_funds: "You don't have enough AED for that.",
@@ -47,6 +48,7 @@ const ERRORS: Record<string, string> = {
   already_worked: "You've already worked today's shift. Come back tomorrow.",
   no_job: "You don't have a job yet.",
   invalid_type: "Pick a venture type.",
+  needs_interview: "Pass the interview for this job first.",
 };
 const explain = (m: string) => Object.entries(ERRORS).find(([k]) => m.includes(k))?.[1] ?? "Something went wrong. Try again.";
 

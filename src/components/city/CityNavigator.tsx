@@ -3,10 +3,14 @@
 // Choosing a destination in a building and travelling to it across the city map.
 //   directory (stores / vendors / facilities / flats) → journey (walk · taxi · direct) → arrive → enter
 
-import { ModalPortal } from "@/components/ui/modal-portal";
+import { Sheet, SheetChip } from "@/components/ui/sheet";
+import { usePresentCitizens } from "@/lib/presence";
+import { localsAt } from "@/lib/locals";
+import { useNow } from "@/lib/dubaiClock";
+import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Building2, Car, DoorOpen, Footprints, Home, KeyRound, Loader2, Search, TrainFront, X, Zap } from "lucide-react";
+import { ArrowLeft, Building2, Car, DoorOpen, Footprints, Home, KeyRound, Link2, Loader2, Search, TrainFront, Zap } from "lucide-react";
 import type { Place, Venue } from "@/lib/city/types";
 import { distanceMetres, entranceOf } from "@/lib/city/geo";
 import { buyFlat, flatRoute, flatTitle, listFlats, rentFlat, type FlatView } from "@/lib/city/flats";
@@ -143,36 +147,34 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
     );
   }
 
+  const back = destination && !travelling && !journeyVenueId
+    ? <button onClick={() => setDestination(null)} className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center" aria-label="Back"><ArrowLeft className="w-6 h-6" /></button>
+    : KIND_ICON[place.kind];
   return (
-    // Above everything (top bar, district bar, bottom nav), with the map dimmed behind.
-    <ModalPortal>
+    // A bottom sheet over the map (above the top bar and bottom nav), so you still see where it is.
+    <>
     {!dressCodeVenue && (
-      <div className="fixed inset-0 z-[180] flex items-end sm:items-center justify-center p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:p-6">
-        <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]" onClick={travelling ? undefined : onClose} aria-hidden />
-        <div role="dialog" aria-modal="true" className="relative w-full sm:max-w-lg bg-white text-slate-900 rounded-3xl shadow-2xl max-h-[calc(100dvh-1rem)] sm:max-h-[85vh] flex flex-col">
-          <div className="flex items-start gap-2 p-4 pb-2 border-b border-slate-100">
-            {destination && !travelling && !journeyVenueId && (
-              <button onClick={() => setDestination(null)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center" aria-label="Back"><ArrowLeft className="w-4 h-4" /></button>
-            )}
-            <div className="flex-1 min-w-0">
-              <h2 className="font-black text-lg leading-tight">{destination ? destination.label : place.name}</h2>
-              <p className="text-xs text-slate-500">{destination ? `at ${place.name}` : place.blurb}</p>
-            </div>
-            {!travelling && <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center" aria-label="Close"><X className="w-4 h-4" /></button>}
-          </div>
-          <div className="overflow-y-auto p-4 space-y-2">
-            {destination ? (
-              <Journey destination={destination} playerPos={playerPos} travelling={travelling} onGo={go} gold={metroGold} onGold={setMetroGold} />
-            ) : place.kind === "residential" || place.kind === "home" ? (
+      <Sheet
+        icon={back}
+        title={destination ? destination.label : place.name}
+        subtitle={destination ? `at ${place.name}` : kindLine(place)}
+        onClose={travelling ? undefined : onClose}
+      >
+        {destination ? (
+          <Journey destination={destination} playerPos={playerPos} travelling={travelling} onGo={go} gold={metroGold} onGold={setMetroGold} />
+        ) : (
+          <>
+            <PlaceIntro place={place} onPick={(v) => setDressCodeVenue(v)} />
+            {place.kind === "residential" || place.kind === "home" ? (
               <FlatsDirectory place={place} onPick={(f) => setDestination({ place, label: flatTitle(f), route: flatRoute(f) })} />
             ) : place.venues.length === 1 ? (
-              <SingleVenue venue={place.venues[0]} onGo={() => setDressCodeVenue(place.venues[0])} />
+              <SingleVenue venue={place.venues[0]} showBlurb={place.venues[0].blurb !== place.blurb} onGo={() => setDressCodeVenue(place.venues[0])} />
             ) : (
               <Directory place={place} onPick={(v) => setDressCodeVenue(v)} />
             )}
-          </div>
-        </div>
-      </div>
+          </>
+        )}
+      </Sheet>
     )}
     {dressCodeVenue && (
       <VenueDressCodeModal
@@ -187,7 +189,84 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
         }}
       />
     )}
-    </ModalPortal>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------- about the place
+
+const KIND_ICON: Record<Place["kind"], string> = { mall: "🛍️", "food-hall": "🍽️", hotel: "🏨", club: "🪩", attraction: "🎡", park: "🌳", residential: "🏢", home: "🏡" };
+const KIND_NAME: Record<Place["kind"], string> = { mall: "Shopping mall", "food-hall": "Food hall", hotel: "Hotel", club: "Nightlife", attraction: "Attraction", park: "Park", residential: "Homes", home: "Homes" };
+
+function kindLine(place: Place) {
+  const open = place.venues.filter((v) => !v.comingSoon).length;
+  if (place.venues.length <= 1) return place.venues[0]?.category ?? KIND_NAME[place.kind];
+  const noun = place.kind === "hotel" ? "places inside" : place.kind === "food-hall" ? "kitchens" : place.kind === "mall" ? "stores" : "venues";
+  return `${KIND_NAME[place.kind]} · ${open} ${noun}`;
+}
+
+/** What the place is, a link to share it, things to do there and who's there now. */
+function PlaceIntro({ place, onPick }: { place: Place; onPick: (v: Venue) => void }) {
+  const { citizen } = useCitizen();
+  const present = usePresentCitizens();
+  const now = useNow();
+  const players = present.filter((p) => p.placeId === place.id && p.username !== citizen?.username);
+  const locals = now ? [...new Map(place.venues.flatMap((v) => localsAt(place.id, v.id, now)).map((l) => [l.id, l])).values()] : [];
+  // Things to do: each venue's activities (one venue: its own), at most ten, each once.
+  const todo = [...new Map(place.venues.filter((v) => !v.comingSoon).flatMap((v) => (v.activities ?? []).map((a) => [a.label, { a, v }] as const))).values()].slice(0, 10);
+
+  const share = async () => {
+    const url = `${window.location.origin}/place/${place.id}`;
+    const text = `Meet me at ${place.name} in Dubai Life`;
+    if (navigator.share) { try { await navigator.share({ title: place.name, text, url }); } catch { /* cancelled */ } return; }
+    try { await navigator.clipboard.writeText(`${text} ${url}`); } catch { /* clipboard blocked */ }
+    window.dispatchEvent(new CustomEvent("dubai:toast", { detail: "🔗 Link copied. Paste it anywhere to share." }));
+  };
+
+  return (
+    <>
+      <div className="space-y-2">
+        <p className="text-[17px] text-slate-500 leading-relaxed">{place.blurb}</p>
+        <button onClick={share} className="flex items-center gap-2 text-[17px] font-semibold text-sky-600 hover:underline text-left"><Link2 className="w-5 h-5 shrink-0" /> Share a link to {place.name}</button>
+      </div>
+      {todo.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {todo.map(({ a, v }) => <SheetChip key={a.label} onClick={() => onPick(v)}><span>{a.icon}</span>{a.label}</SheetChip>)}
+        </div>
+      )}
+      <div className="space-y-2">
+        <h3 className="text-[15px] font-semibold text-slate-500">Here now</h3>
+        {players.length + locals.length === 0 ? (
+          <p className="text-sm text-slate-400">Nobody&apos;s here right now. Be the first, and share the link so friends can join you.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {players.slice(0, 8).map((p) => (
+              <span key={p.username} className="inline-flex items-center gap-2 pl-1 pr-3.5 h-11 rounded-full bg-slate-100">
+                <Face src={p.preset ? rosterThumb(p.preset) : null} online />
+                <span className="font-semibold">@{p.username}</span>
+              </span>
+            ))}
+            {locals.slice(0, Math.max(0, 8 - players.length)).map((l) => (
+              <span key={l.id} className="inline-flex items-center gap-2 pl-1 pr-2 h-11 rounded-full bg-slate-100">
+                <Face src={rosterThumb(presetFor(l.look))} />
+                <span className="font-semibold">{l.name}</span>
+                <span className="text-[10px] font-black uppercase tracking-wide bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">Local</span>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+function Face({ src, online }: { src: string | null; online?: boolean }) {
+  return (
+    <span className="relative w-9 h-9 shrink-0">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {src ? <img src={src} alt="" className="w-9 h-9 rounded-full object-cover object-top bg-white" /> : <span className="block w-9 h-9 rounded-full bg-slate-300" />}
+      {online && <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-100" />}
+    </span>
   );
 }
 
@@ -230,10 +309,10 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
   return <button onClick={onClick} className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold ${active ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"}`}>{children}</button>;
 }
 
-function SingleVenue({ venue, onGo }: { venue: Venue; onGo: () => void }) {
+function SingleVenue({ venue, showBlurb, onGo }: { venue: Venue; showBlurb: boolean; onGo: () => void }) {
   return (
     <>
-      <p className="text-sm text-slate-600">{venue.blurb}</p>
+      {showBlurb && <p className="text-sm text-slate-600">{venue.blurb}</p>}
       <div className="space-y-1.5">
         {venue.products.slice(0, 4).map((p) => (
           <div key={p.id} className="flex items-center gap-2 text-sm"><span>{p.icon}</span><span className="flex-1 font-bold">{p.name}</span><span className="font-mono font-black text-emerald-600">{p.price ? aed(p.price) : "Free"}</span></div>

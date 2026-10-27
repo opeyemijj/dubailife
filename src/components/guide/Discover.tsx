@@ -2,7 +2,7 @@
 
 // Discover: "To do" (what to do, where and why: src/data/guide/activities.json) and "Places to visit"
 // (every place, club, bar and lounge in the city: src/data/guide/places-to-visit.json). Opened from the
-// map's bottom bar, plus a one-time pop-up on the map that suggests the first few. Items tick themselves off.
+// phone and the top bar's status panel, plus a one-time pop-up on the map that suggests the first few. Items tick themselves off.
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -177,7 +177,7 @@ export function DiscoverHost() {
           <button onClick={close} className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white flex items-center justify-center text-slate-600 shadow" aria-label="Close"><X className="w-4 h-4" /></button>
           <header className="px-5 pt-5 pb-3 pr-14">
             <h2 className="text-xl font-black">{showIntro ? "Things you can do in Dubai" : tab === "do" ? "Things to do" : "Places to visit"}</h2>
-            <p className="text-sm text-slate-500">{showIntro ? "A few ideas to start. Find everything under To do and Places on the bottom bar." : tab === "do" ? `${todo.length} to try · ${done.length} done` : `${VISIT.places.length - placesLeft} of ${VISIT.places.length} visited`}</p>
+            <p className="text-sm text-slate-500">{showIntro ? "A few ideas to start. Find them all under To do and Places in your phone, or the arrow at the top." : tab === "do" ? `${todo.length} to try · ${done.length} done` : `${VISIT.places.length - placesLeft} of ${VISIT.places.length} visited`}</p>
             {!showIntro && (
               <div className="flex gap-1.5 mt-3 bg-white rounded-full p-1 border border-slate-200">
                 {([["do", `✅ To do · ${todo.length}`], ["places", `📍 Places · ${placesLeft}`]] as const).map(([id, label]) => (

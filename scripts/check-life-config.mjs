@@ -56,5 +56,39 @@ const sysSql = readFileSync(`supabase/migrations/${sysFile}`, "utf8");
 for (const c of sys.companies) {
   if (!sysSql.includes(`('${c.name}', '${c.title}', ${c.weeklyWage}, ${c.shiftsPerWeek}, '${c.requirement}')`)) { bad++; console.error(`system job ${c.name}: differs from SQL`); }
 }
-console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season and system-job config match the database.");
+// City services (src/data/economy/city-services.json vs *_city_services.sql): careers, interview and
+// defence answer keys, illness treatments, and the police, clinic and court numbers.
+const svc = JSON.parse(readFileSync("src/data/economy/city-services.json", "utf8"));
+const svcFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_city_services.sql")).sort().pop();
+const svcSql = readFileSync(`supabase/migrations/${svcFile}`, "utf8");
+const need = (label, text) => { if (!svcSql.includes(text)) { bad++; console.error(`city services ${label}: differs from SQL (${text})`); } };
+for (const c of svc.careers) need(`career ${c.name}`, `('${c.name}', '${c.title}', ${c.weeklyWage}, ${c.shiftsPerWeek}, '${c.requirement}', '${c.service}')`);
+for (const [set, qs] of Object.entries(svc.interviews)) {
+  if (set === "_pass") continue;
+  if (set !== "_player" && !sys.companies.some((c) => c.name === set) && !svc.careers.some((c) => c.name === set)) { bad++; console.error(`interview ${set}: no such company`); }
+  need(`interview ${set}`, `('${set}', '{${qs.map((q) => q.answer).join(",")}}')`);
+}
+for (const c of [...sys.companies, ...svc.careers]) if (!svc.interviews[c.name]) { bad++; console.error(`interview missing for ${c.name}`); }
+need("defence", `('_defence', '{${svc.law.defence.map((q) => q.answer).join(",")}}')`);
+need("treatments", `select case p_kind ${svc.illness.kinds.map((k) => `when '${k.id}' then ${k.treatment}`).join(" ")} end`);
+need("illness kinds", `check (kind in (${svc.illness.kinds.map((k) => `'${k.id}'`).join(", ")}))`);
+need("clinic fee", `coin_move(me, -${svc.illness.localClinicFee}, 'spend', 'Clinic visit`);
+need("fee limits", `when 'doctor' then array[${svc.illness.fee.min}, ${svc.illness.fee.max}, ${svc.illness.fee.default}] when 'lawyer' then array[${svc.law.fee.min}, ${svc.law.fee.max}, ${svc.law.fee.default}]`);
+const po = svc.police;
+need("single", `when p_amount > ${po.singleOver} then`);
+need("daily", `when received > ${po.receivedDayOver} then`);
+need("new account", `created_at > now() - interval '${po.newAccountDays} days' into young`);
+need("new account amount", `when young and p_amount > ${po.newAccountOver} then`);
+need("chance", `least(${po.maxChance}, ${po.baseChance} + ${po.chancePerMillion} * p_amount / 1000000.0)`);
+need("hearing", `default now() + interval '${po.hearingHours} hours'`);
+need("fine", `c.held * ${po.finePercent} / 100`);
+need("bounty", `coin_move(c.officer_id, ${po.officerBounty}, 'earn', 'Arrest bounty'`);
+const lw = svc.law;
+need("legal aid", `coin_move(me, -${lw.legalAid.fee}, 'spend', 'Legal Aid`);
+need("legal aid strength", `lawyer_kind = 'aid', lawyer_fee = ${lw.legalAid.fee}, defence = ${lw.legalAid.strength}`);
+need("senior", `coin_move(me, -${lw.seniorCounsel.fee}, 'spend', 'Senior Counsel`);
+need("senior strength", `lawyer_kind = 'senior', lawyer_fee = ${lw.seniorCounsel.fee}, defence = ${lw.seniorCounsel.strength}`);
+need("clear chance", `random() < ${lw.clearBase} + ${lw.clearPerPoint} * coalesce(c.defence, 0)`);
+need("pass mark", `score >= ${svc.interviews._pass}`);
+console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job and city-service config match the database.");
 process.exit(bad ? 1 : 0);

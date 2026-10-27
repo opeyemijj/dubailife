@@ -1,0 +1,104 @@
+{
+  "_note": "Jobs that serve other players (doctor, police, lawyer), interviews, illness, and the police and courts. Every number and answer key here is mirrored in supabase/migrations/*_city_services.sql and checked by scripts/check-life-config.mjs. Players in these jobs do the work first; a Local steps in when none is free.",
+
+  "careers": [
+    { "name": "Dubai Health", "icon": "🩺", "title": "Doctor", "weeklyWage": 4000, "shiftsPerWeek": 5, "requirement": "degree", "service": "doctor" },
+    { "name": "Dubai Police", "icon": "🚓", "title": "Police officer", "weeklyWage": 3200, "shiftsPerWeek": 5, "requirement": "licence", "service": "police" },
+    { "name": "Dubai Courts", "icon": "⚖️", "title": "Lawyer", "weeklyWage": 3800, "shiftsPerWeek": 5, "requirement": "degree", "service": "lawyer" }
+  ],
+
+  "interviews": {
+    "_pass": 2,
+    "City Metro": [
+      { "q": "A tourist asks how to get to Dubai Mall. You…", "options": ["Point vaguely at the map", "Tell them: Red Line to Burj Khalifa/Dubai Mall, then the link bridge", "Say it's not your job"], "answer": 1 },
+      { "q": "Someone is eating on the platform. You…", "options": ["Politely remind them eating isn't allowed on the Metro", "Join them", "Ignore it"], "answer": 0 },
+      { "q": "The Gold Class carriage is for…", "options": ["Anyone, free", "Passengers with a Gold Class fare", "Staff only"], "answer": 1 }
+    ],
+    "Marina Mall Group": [
+      { "q": "A customer can't find their size. You…", "options": ["Check the stock room and offer alternatives", "Say it's sold out without looking", "Send them to another shop"], "answer": 0 },
+      { "q": "It's quiet on the shop floor. You…", "options": ["Scroll your phone", "Tidy the rails and restock", "Leave early"], "answer": 1 },
+      { "q": "A customer wants to return worn shoes without a receipt. You…", "options": ["Shout at them", "Refund straight away", "Explain the returns policy calmly and call a manager"], "answer": 2 }
+    ],
+    "Gulf Hotels": [
+      { "q": "A guest arrives at 6am; check-in is at 3pm. You…", "options": ["Send them away", "Store their bags and offer the lounge, or early check-in if a room is ready", "Give them someone else's room"], "answer": 1 },
+      { "q": "A guest complains about noise. You…", "options": ["Apologise and offer a quieter room", "Tell them it's Dubai", "Hang up"], "answer": 0 },
+      { "q": "The right way to greet guests is…", "options": ["Silence until they speak", "\"What do you want?\"", "A warm welcome and their name if you know it"], "answer": 2 }
+    ],
+    "Desert Tours": [
+      { "q": "Before dune bashing you always…", "options": ["Skip the seatbelt briefing", "Check seatbelts and ask about health conditions", "Drive faster"], "answer": 1 },
+      { "q": "It's 46°C. On the tour you…", "options": ["Keep everyone hydrated and in the shade between stops", "Cancel the water", "Make them walk"], "answer": 0 },
+      { "q": "A guest asks about the falcon. You…", "options": ["Make something up", "Say falcons are fake", "Share that falconry is a proud Emirati tradition"], "answer": 2 }
+    ],
+    "Swift Delivery": [
+      { "q": "The customer's building has no number on the map. You…", "options": ["Give up", "Call or message the customer to confirm", "Leave the food anywhere"], "answer": 1 },
+      { "q": "The light turns amber as you reach it. You…", "options": ["Stop safely", "Speed up", "Mount the pavement"], "answer": 0 },
+      { "q": "A hot meal and a cold drink go…", "options": ["In the same bag, upside down", "In the boot", "In separate insulated bags"], "answer": 2 }
+    ],
+    "Falcon Analytics": [
+      { "q": "Sales rose 10% one month and fell 10% the next. Overall they…", "options": ["Are back where they started", "Fell about 1%", "Rose 20%"], "answer": 1 },
+      { "q": "The client wants a chart of sales over a year. You use…", "options": ["A line chart", "A pie chart with 365 slices", "A 3D donut"], "answer": 0 },
+      { "q": "You find an error in last week's report. You…", "options": ["Hide it", "Blame a colleague", "Tell your manager and send a correction"], "answer": 2 }
+    ],
+    "Dubai Health": [
+      { "q": "A patient has vomiting after street food. Most likely…", "options": ["Food poisoning", "A broken arm", "Sunburn"], "answer": 0 },
+      { "q": "First thing for a patient who fainted in the heat?", "options": ["Send them for a run", "Move them to the shade, cool them and give fluids", "Give them coffee"], "answer": 1 },
+      { "q": "Patient records are…", "options": ["Fine to post online", "Shared with friends", "Confidential"], "answer": 2 }
+    ],
+    "Dubai Police": [
+      { "q": "Someone is suddenly sent a huge sum from a brand-new account. You…", "options": ["Ignore it", "Open a case and hold the money until a judge decides", "Keep the money"], "answer": 1 },
+      { "q": "A suspect asks for a lawyer. You…", "options": ["Let them hire one", "Refuse", "Laugh"], "answer": 0 },
+      { "q": "Who decides if a suspect is guilty?", "options": ["The arresting officer", "Social media", "A judge in court"], "answer": 2 }
+    ],
+    "Dubai Courts": [
+      { "q": "Your client is accused of laundering a gift. The strongest defence is…", "options": ["Shouting at the judge", "Evidence of where the money came from and why", "Saying nothing"], "answer": 1 },
+      { "q": "You must always…", "options": ["Keep what your client tells you confidential", "Tell the press", "Charge them twice"], "answer": 0 },
+      { "q": "The judge asks a question you don't know. You…", "options": ["Make it up", "Walk out", "Say you'll confirm it and come back with facts"], "answer": 2 }
+    ],
+    "_player": [
+      { "q": "You'll be late for your first shift. You…", "options": ["Message your manager before the shift starts", "Turn up late and say nothing", "Don't go"], "answer": 0 },
+      { "q": "A customer is rude to you. You…", "options": ["Be rude back", "Stay calm and polite, and ask a manager for help if needed", "Walk off"], "answer": 1 },
+      { "q": "Why do you want this job?", "options": ["I don't", "Free food", "To learn, earn and help the business grow"], "answer": 2 }
+    ]
+  },
+
+  "illness": {
+    "kinds": [
+      { "id": "food-poisoning", "name": "Food poisoning", "icon": "🤢", "how": "Something you ate didn't agree with you.", "treatment": 1 },
+      { "id": "flu", "name": "Flu", "icon": "🤒", "how": "Run down: hungry, tired and not washing.", "treatment": 0 },
+      { "id": "heatstroke", "name": "Heatstroke", "icon": "🥵", "how": "Too long in the Dubai sun.", "treatment": 2 }
+    ],
+    "treatments": ["Rest, fluids and paracetamol", "Rehydration salts and a light diet", "Cool down, shade and IV fluids"],
+    "mealChance": 0.04,
+    "runDownChance": 0.25,
+    "heatChance": 0.03,
+    "drainMultiplier": 2,
+    "localClinicFee": 350,
+    "fee": { "min": 50, "max": 5000, "default": 250 }
+  },
+
+  "police": {
+    "singleOver": 200000,
+    "receivedDayOver": 500000,
+    "newAccountDays": 2,
+    "newAccountOver": 50000,
+    "baseChance": 0.35,
+    "chancePerMillion": 0.4,
+    "maxChance": 0.9,
+    "hearingHours": 24,
+    "finePercent": 10,
+    "officerBounty": 500
+  },
+
+  "law": {
+    "fee": { "min": 100, "max": 50000, "default": 1500 },
+    "legalAid": { "fee": 500, "strength": 1 },
+    "seniorCounsel": { "fee": 15000, "strength": 2 },
+    "clearBase": 0.2,
+    "clearPerPoint": 0.2,
+    "defence": [
+      { "q": "The money came from a friend. What do you put before the judge?", "options": ["The chat where the friend explained the gift", "A selfie", "Nothing"], "answer": 0 },
+      { "q": "The prosecutor says the sender's account is brand new. You reply…", "options": ["\"So what?\"", "Show your client knew the sender before the transfer", "Agree it's suspicious"], "answer": 1 },
+      { "q": "Your closing argument should be…", "options": ["Long and angry", "About something else", "Short: the facts, the evidence and why it's lawful"], "answer": 2 }
+    ]
+  }
+}

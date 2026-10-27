@@ -1,7 +1,7 @@
 "use client";
 
 import { ACADEMIC_MAP_CENTER } from "@/lib/city/academic";
-import { memo, useCallback, useState, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { memo, useCallback, useDeferredValue, useState, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { TransformWrapper, TransformComponent, type ReactZoomPanPinchRef } from "react-zoom-pan-pinch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -14,6 +14,7 @@ import { PALM_VIEW, WORLD_TOP } from '@/lib/city/palm';
 import { GAME_CITY } from '@/lib/city/gameCity';
 import { CELL, blockCells, mosaicBlocks, type SectionKey } from '@/lib/city/floorMosaic';
 import { isLowPower } from '@/lib/device';
+import { MapLoadProgress } from './MapLoadProgress';
 
 const noSubscribe = () => () => {};
 
@@ -918,13 +919,19 @@ export function InteractiveMap({
         && loc.renderedY > v.y - v.h * 0.5 - r && loc.renderedY < v.y + v.h * 1.5 + r * 1.5;
     });
   }, [allRenderedEntities, view, isEditMode, hydrated]);
+  // Buildings coming into view are drawn in the background, so panning never waits for them.
+  const shownEntities = useDeferredValue(visibleEntities);
+  const mapRootRef = useRef<HTMLDivElement>(null);
 
   return (
     <div
+      ref={mapRootRef}
       onContextMenu={(e) => { e.preventDefault(); if (!isSuperAdmin) setContextMenu(null); }}
       className={`absolute inset-0 w-screen h-[100dvh] z-0 bg-[#d6bc8a] overflow-hidden touch-none select-none overscroll-none ${lite ? 'map-lite' : ''}`}
     >
       
+      <MapLoadProgress rootRef={mapRootRef} drawing={shownEntities !== visibleEntities} />
+
       {/* Top Left: Edit Mode Controls (Super Admin only; safe position below TopBar) */}
       {isSuperAdmin && <div className="absolute top-20 sm:top-24 left-3 sm:left-6 z-30 flex items-center gap-2 pointer-events-auto">
         <button
@@ -1293,7 +1300,7 @@ export function InteractiveMap({
               </div>
             </div>
 
-            {visibleEntities.map((loc) => {
+            {shownEntities.map((loc) => {
               const isFloorTile = isFloorTileType(loc.type);
               const isOverlay = isOverlayType(loc.type);
               const baseTransform = isOverlay ? 'translate(-50%, -50%)' : 'translate(-50%, -90%)';
@@ -1494,7 +1501,7 @@ export function InteractiveMap({
             {/* Rendered physically after all building sprites with z-[400] to guarantee badges NEVER render under any building, billboard, or villa */}
             {!isEditMode && (
               <div className="absolute inset-0 pointer-events-none z-[400]">
-                {visibleEntities
+                {shownEntities
                   .filter((loc) => {
                     const cat = getEntityCategoryInfo(loc);
                     return isSpecialPlaceVenue(loc, cat);

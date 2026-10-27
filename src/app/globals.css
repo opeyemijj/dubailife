@@ -163,3 +163,9 @@ html, body { overscroll-behavior: none; }
   transform: scaleX(-1);
 }
 
+
+/* Bottom sheets and the phone slide up into view. */
+@keyframes sheetUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}

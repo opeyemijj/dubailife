@@ -12,7 +12,14 @@ import { Search, Coffee, Music, ShoppingBag, Trophy, Navigation, Home, X, Slider
 
 const InteractiveMap = dynamic(
   () => import("@/components/map/InteractiveMap").then((mod) => mod.InteractiveMap),
-  { ssr: false, loading: () => <SmallLoader label="Loading Dubai" /> }
+  {
+    ssr: false,
+    loading: () => (
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="px-6 h-14 rounded-full bg-white/95 shadow-xl flex items-center text-lg font-semibold text-slate-700">Loading map…</div>
+      </div>
+    ),
+  }
 );
 
 export default function ExplorePage() {
@@ -72,11 +79,11 @@ function Explore() {
       {!searchOpen && (
         <button
           onClick={() => { setSearchOpen(true); setIsFilterExpanded(true); }}
-          className="absolute top-[max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))] sm:top-40 right-3 sm:right-6 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full hover:bg-slate-900 transition-colors bg-slate-950/90 border border-white/15 shadow-xl flex items-center justify-center"
+          className="absolute top-[max(4.25rem,calc(env(safe-area-inset-top)+3.6rem))] left-3 sm:left-6 z-20 h-11 pl-3 pr-4 gap-1.5 rounded-full bg-white/95 hover:bg-white border border-white shadow-[0_4px_18px_rgba(15,23,42,0.18)] flex items-center justify-center text-slate-800 font-bold text-sm active:scale-95 transition-transform"
           aria-label="Search places"
         >
-          <Search className="w-5 h-5 text-cyan-300" />
-          {(searchQuery || activeFilter !== "all") && <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 ring-2 ring-slate-950" />}
+          <Search className="w-5 h-5 text-emerald-700" /> Search
+          {(searchQuery || activeFilter !== "all") && <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />}
         </button>
       )}
 

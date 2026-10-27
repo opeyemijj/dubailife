@@ -1,0 +1,93 @@
+{
+  "_note": "Everyday apps on the in-game phone. Brands are fictional stand-ins for the apps people in Dubai use daily (food delivery, fast food, groceries, rides). Swap names here if you sign a real brand partnership. Food restores hunger; groceries restore hunger or hygiene.",
+  "delivery": {
+    "app": { "name": "Yalla Eats", "icon": "🛵", "bg": "from-orange-400 to-red-500", "tagline": "Food to your door" },
+    "deliveryFee": 7,
+    "minutes": [20, 35],
+    "seconds": 40,
+    "stores": [
+      {
+        "id": "cluck-shack", "name": "Cluck Shack", "icon": "🍗", "bg": "from-red-500 to-red-700", "kind": "Fried chicken", "home": true,
+        "menu": [
+          { "id": "bucket", "name": "Family bucket, 8 pieces", "icon": "🍗", "price": 79, "hunger": 60 },
+          { "id": "zinger", "name": "Spicy chicken burger meal", "icon": "🍔", "price": 29, "hunger": 40 },
+          { "id": "twister", "name": "Chicken wrap", "icon": "🌯", "price": 17, "hunger": 25 },
+          { "id": "fries", "name": "Large fries", "icon": "🍟", "price": 9, "hunger": 12 },
+          { "id": "cola", "name": "Cola", "icon": "🥤", "price": 6, "hunger": 4 }
+        ]
+      },
+      {
+        "id": "golden-bun", "name": "Golden Bun", "icon": "🍔", "bg": "from-yellow-400 to-red-500", "kind": "Burgers", "home": true,
+        "menu": [
+          { "id": "double", "name": "Double beef burger meal", "icon": "🍔", "price": 32, "hunger": 45 },
+          { "id": "nuggets", "name": "Chicken nuggets, 9", "icon": "🍗", "price": 22, "hunger": 28 },
+          { "id": "breakfast", "name": "Egg muffin breakfast", "icon": "🥯", "price": 15, "hunger": 22 },
+          { "id": "sundae", "name": "Caramel sundae", "icon": "🍨", "price": 8, "hunger": 8 },
+          { "id": "coffee", "name": "Iced coffee", "icon": "🧋", "price": 12, "hunger": 4 }
+        ]
+      },
+      {
+        "id": "shawarma-station", "name": "Shawarma Station", "icon": "🌯", "bg": "from-amber-500 to-orange-700", "kind": "Arabic",
+        "menu": [
+          { "id": "chicken", "name": "Chicken shawarma", "icon": "🌯", "price": 9, "hunger": 22 },
+          { "id": "meat", "name": "Meat shawarma plate", "icon": "🥙", "price": 27, "hunger": 42 },
+          { "id": "falafel", "name": "Falafel wrap", "icon": "🧆", "price": 7, "hunger": 18 },
+          { "id": "hummus", "name": "Hummus and bread", "icon": "🫓", "price": 14, "hunger": 18 },
+          { "id": "laban", "name": "Laban up", "icon": "🥛", "price": 3, "hunger": 4 }
+        ]
+      },
+      {
+        "id": "pizza-pronto", "name": "Pizza Pronto", "icon": "🍕", "bg": "from-rose-500 to-red-700", "kind": "Pizza",
+        "menu": [
+          { "id": "large", "name": "Large pepperoni pizza", "icon": "🍕", "price": 49, "hunger": 55 },
+          { "id": "margherita", "name": "Medium margherita", "icon": "🍕", "price": 32, "hunger": 40 },
+          { "id": "wings", "name": "BBQ wings", "icon": "🍗", "price": 25, "hunger": 25 },
+          { "id": "garlic", "name": "Garlic bread", "icon": "🥖", "price": 12, "hunger": 12 }
+        ]
+      },
+      {
+        "id": "karak-corner", "name": "Karak Corner", "icon": "☕", "bg": "from-amber-600 to-yellow-800", "kind": "Tea and snacks",
+        "menu": [
+          { "id": "karak", "name": "Karak chai", "icon": "☕", "price": 2, "hunger": 5 },
+          { "id": "paratha", "name": "Cheese and egg paratha", "icon": "🫓", "price": 8, "hunger": 20 },
+          { "id": "samosa", "name": "Samosas, 3", "icon": "🥟", "price": 6, "hunger": 14 },
+          { "id": "chips-oman", "name": "Chips sandwich", "icon": "🥪", "price": 5, "hunger": 15 }
+        ]
+      },
+      {
+        "id": "mandi-house", "name": "Mandi House", "icon": "🍛", "bg": "from-emerald-600 to-teal-800", "kind": "Emirati and Yemeni",
+        "menu": [
+          { "id": "chicken-mandi", "name": "Chicken mandi", "icon": "🍛", "price": 30, "hunger": 50 },
+          { "id": "lamb-mandi", "name": "Lamb mandi for two", "icon": "🍖", "price": 85, "hunger": 70 },
+          { "id": "machboos", "name": "Chicken machboos", "icon": "🍚", "price": 32, "hunger": 50 },
+          { "id": "luqaimat", "name": "Luqaimat with date syrup", "icon": "🍯", "price": 15, "hunger": 12 }
+        ]
+      }
+    ]
+  },
+  "grocery": {
+    "app": { "name": "Daily Basket", "icon": "🛒", "bg": "from-yellow-300 to-amber-500", "tagline": "Groceries in 15 minutes" },
+    "deliveryFee": 5,
+    "minutes": [12, 18],
+    "seconds": 25,
+    "items": [
+      { "id": "bread", "name": "Arabic bread", "icon": "🫓", "price": 3, "need": "hunger", "amount": 10 },
+      { "id": "eggs", "name": "Eggs, 12", "icon": "🥚", "price": 14, "need": "hunger", "amount": 20 },
+      { "id": "dates", "name": "Khalas dates, 500g", "icon": "🌴", "price": 18, "need": "hunger", "amount": 15 },
+      { "id": "fruit", "name": "Fruit box", "icon": "🍎", "price": 22, "need": "hunger", "amount": 22 },
+      { "id": "water", "name": "Water, 12 bottles", "icon": "💧", "price": 9, "need": "energy", "amount": 10 },
+      { "id": "noodles", "name": "Instant noodles, 5", "icon": "🍜", "price": 8, "need": "hunger", "amount": 18 },
+      { "id": "soap", "name": "Shower gel", "icon": "🧴", "price": 15, "need": "hygiene", "amount": 30 },
+      { "id": "toothpaste", "name": "Toothpaste and brush", "icon": "🪥", "price": 12, "need": "hygiene", "amount": 15 },
+      { "id": "detergent", "name": "Laundry detergent", "icon": "🧺", "price": 25, "need": "hygiene", "amount": 20 }
+    ]
+  },
+  "rides": {
+    "app": { "name": "Yalla Ride", "icon": "🚗", "bg": "from-emerald-400 to-green-700", "tagline": "Rides across Dubai" },
+    "classes": [
+      { "id": "go", "name": "Go", "icon": "🚗", "note": "Everyday rides", "multiplier": 1 },
+      { "id": "comfort", "name": "Comfort", "icon": "🚙", "note": "Newer cars, more legroom", "multiplier": 1.35 },
+      { "id": "business", "name": "Business", "icon": "🖤", "note": "Luxury sedans", "multiplier": 2.2 }
+    ]
+  }
+}

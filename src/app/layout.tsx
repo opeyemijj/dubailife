@@ -18,6 +18,8 @@ import { GAMES } from "@/lib/games/registry";
 import { ServiceWorker } from "@/components/pwa/ServiceWorker";
 import { KeyboardShortcuts } from "@/components/common/KeyboardShortcuts";
 import { LifeHub } from "@/components/life/LifeHub";
+import { PhoneOverlay } from "@/components/layout/PhoneOverlay";
+import { HudSheets } from "@/components/layout/HudSheets";
 
 const fredoka = Fredoka({ subsets: ["latin"], display: 'swap' });
 
@@ -202,6 +204,8 @@ export default function RootLayout({
         {children}
         <KeyboardShortcuts />
         <LifeHub />
+        <PhoneOverlay />
+        <HudSheets />
       </body>
     </html>
   );

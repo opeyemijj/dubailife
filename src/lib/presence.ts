@@ -7,6 +7,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
 import { useCitizen } from "@/lib/citizenStore";
+import { presetFor } from "@/components/avatar/roster";
 
 const CHANNEL = "dubai-online";
 
@@ -14,7 +15,10 @@ let channel: RealtimeChannel | null = null;
 let subscribed = false;
 let count: number | null = null; // null until the first sync
 let online: ReadonlySet<string> = new Set(); // usernames of signed-in citizens online now
-let identity: { username: string | null } = { username: null };
+/** Where each signed-in citizen online now last went, for "Here now" on the map. */
+export interface PresentCitizen { username: string; placeId: string | null; preset: string | null }
+let members: PresentCitizen[] = [];
+let identity: { username: string | null; placeId: string | null; preset: string | null } = { username: null, placeId: null, preset: null };
 const listeners = new Set<() => void>();
 const presenceKey = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2);
 
@@ -24,7 +28,7 @@ function notify() {
 
 function track() {
   if (!channel || !subscribed) return;
-  channel.track({ username: identity.username, onlineAt: new Date().toISOString() }).catch(() => {});
+  channel.track({ ...identity, onlineAt: new Date().toISOString() }).catch(() => {});
 }
 
 function connect() {
@@ -33,9 +37,16 @@ function connect() {
   channel = supabase().channel(CHANNEL, { config: { presence: { key: presenceKey } } });
   channel
     .on("presence", { event: "sync" }, () => {
-      const state = channel!.presenceState<{ username: string | null }>();
+      const state = channel!.presenceState<{ username: string | null; placeId?: string | null; preset?: string | null }>();
       count = Object.keys(state).length;
-      online = new Set(Object.values(state).flat().map((m) => m.username).filter((u): u is string => !!u));
+      const all = Object.values(state).flat();
+      online = new Set(all.map((m) => m.username).filter((u): u is string => !!u));
+      const seen = new Set<string>();
+      members = all.flatMap((m) => {
+        if (!m.username || seen.has(m.username)) return [];
+        seen.add(m.username);
+        return [{ username: m.username, placeId: m.placeId ?? null, preset: m.preset ?? null }];
+      });
       notify();
     })
     .subscribe((status) => {
@@ -68,16 +79,25 @@ export function useOnlineUsernames(): ReadonlySet<string> {
   return useSyncExternalStore(subscribe, () => online, () => EMPTY);
 }
 
-/** Tags this tab's presence with the signed-in citizen. Mount once near the root. */
+const NO_MEMBERS: PresentCitizen[] = [];
+
+/** Signed-in citizens online now, with the place they last went to. */
+export function usePresentCitizens(): PresentCitizen[] {
+  return useSyncExternalStore(subscribe, () => members, () => NO_MEMBERS);
+}
+
+/** Tags this tab's presence with the signed-in citizen and where they are. Mount once near the root. */
 export function usePresenceIdentity() {
   const { citizen, isLoggedIn } = useCitizen();
   const username = isLoggedIn ? citizen?.username ?? null : null;
+  const placeId = username ? citizen?.location?.placeId ?? null : null;
+  const preset = username && citizen?.look ? presetFor(citizen.look) : null;
   useEffect(() => {
     connect();
-    if (identity.username === username) return;
-    identity = { username };
+    if (identity.username === username && identity.placeId === placeId && identity.preset === preset) return;
+    identity = { username, placeId, preset };
     track();
-  }, [username]);
+  }, [username, placeId, preset]);
 }
 
 export function formatOnline(n: number | null): string {

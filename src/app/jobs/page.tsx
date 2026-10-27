@@ -1,6 +1,6 @@
 "use client";
 
-// The Dubai Job Board (design spec section 10): jobs posted by player ventures. Apply, get hired, clock in
+// The Dubai Job Board (design spec section 10): jobs posted by player ventures. Interview, apply, get hired, clock in
 // one shift a day, and get paid every Friday at 17:00 GST from the venture's own takings.
 
 import Link from "next/link";
@@ -10,6 +10,7 @@ import { useRequireCitizen } from "@/lib/citizenStore";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { aed, applyJob, companyIcon, daysUntil, endJob, jobBoard, myEconomy, VENTURES, ventureType, workShift, type BoardJob, type Economy } from "@/lib/economy";
 import { gameAudio } from "@/utils/gameAudio";
+import { openPhone } from "@/components/layout/PhoneOverlay";
 
 export default function JobBoardPage() {
   useRequireCitizen();
@@ -34,6 +35,8 @@ export default function JobBoardPage() {
     void load();
   };
   const apply = async (id: number) => {
+    // Every job starts with an interview, taken in the phone's Jobs app.
+    if (jobs?.find((j) => j.id === id)?.interview !== "passed") { openPhone("jobs"); return; }
     const r = await applyJob(id);
     if (r.error) return say(false, r.error);
     gameAudio.playClickSound();
@@ -105,7 +108,7 @@ export default function JobBoardPage() {
                   {j.mine ? <span className="text-[10px] font-bold text-slate-500">Your venture</span>
                     : st === "pending" ? <span className="text-[11px] font-bold text-amber-300">Applied</span>
                     : st === "hired" ? <span className="text-[11px] font-bold text-emerald-300">Hired</span>
-                    : <button disabled={!!eco?.job} onClick={() => apply(j.id)} className="text-xs font-black px-3 py-1.5 rounded-full bg-sky-500 disabled:opacity-30">{st === "rejected" ? "Reapply" : "Apply"}</button>}
+                    : <button disabled={!!eco?.job} onClick={() => apply(j.id)} className="text-xs font-black px-3 py-1.5 rounded-full bg-sky-500 disabled:opacity-30">{st === "rejected" ? "Reapply" : j.interview === "passed" ? "Apply" : "Interview"}</button>}
                 </div>
               );
             })}

@@ -1,0 +1,52 @@
+{
+  "items": [
+    {
+      "id": "2026-10-27-city-services",
+      "date": "2026-10-27",
+      "icon": "⚖️",
+      "title": "Doctors, police and courts",
+      "text": "Get ill and see a doctor, get arrested over a suspicious transfer and hire a lawyer, or become the doctor, officer or lawyer yourself. Every job now starts with an interview.",
+      "how": "Phone → Dubai Health, Dubai Police or Jobs."
+    },
+    {
+      "id": "2026-10-27-daily-apps",
+      "date": "2026-10-27",
+      "icon": "🛵",
+      "title": "Order food, groceries and rides",
+      "text": "Yalla Eats, Cluck Shack, Golden Bun, Daily Basket and Yalla Ride are on your phone. Food is delivered wherever you are and fills you up.",
+      "how": "Tap the round phone button, then any of the new apps on the first row."
+    },
+    {
+      "id": "2026-10-27-phone",
+      "date": "2026-10-27",
+      "icon": "📱",
+      "title": "A new phone and a cleaner map",
+      "text": "Your phone now opens right over the map with all your apps. Tap the arrow at the top for the time, your mood, streak, wallet and music.",
+      "how": "Tap the round phone button at the bottom right. Tap any place on the map to read about it and see who's there before you go."
+    },
+    {
+      "id": "2026-10-27-invite-home",
+      "date": "2026-10-27",
+      "icon": "🏠",
+      "title": "Invite friends to your home",
+      "text": "Send a friend a link to your door from any chat. They go on your guest list and can walk straight in.",
+      "how": "Phone → Messages → open a chat → 🏠 Invite to my home."
+    },
+    {
+      "id": "2026-10-26-two-storey",
+      "date": "2026-10-27",
+      "icon": "🏡",
+      "title": "Duplexes, townhouses and luxury interiors",
+      "text": "Two-storey homes with stairs you can climb, grand pianos, chandeliers, fireplaces and aquariums. Restyle floors, walls and panelling.",
+      "how": "Open Home, then the ✨ Style tab. Tap the stairs to go up."
+    },
+    {
+      "id": "2026-10-26-metro-voice",
+      "date": "2026-10-27",
+      "icon": "🚇",
+      "title": "Metro announcements on phones",
+      "text": "The Red Line voice now speaks on iPhone and Android, in English and Arabic.",
+      "how": "Take the metro from any station on the map with your sound on."
+    }
+  ]
+}

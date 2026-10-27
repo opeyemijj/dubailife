@@ -8,6 +8,7 @@ import { LandingOverlay } from "@/components/landing/LandingOverlay";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { placeForEntity } from "@/lib/city/places";
 import { useCitizen, signOut } from "@/lib/citizenStore";
+import { WelcomeBack } from "@/components/landing/WelcomeBack";
 
 const InteractiveMap = dynamic(
   () => import("@/components/map/InteractiveMap").then((mod) => mod.InteractiveMap),
@@ -31,6 +32,10 @@ export function HomeContent() {
       icon: billboard ? "📣" : place?.kind === "club" ? "🪩" : place?.kind === "hotel" ? "🏨" : place?.kind === "mall" ? "🛍️" : place?.kind === "residential" ? "🏙️" : place?.kind === "park" ? "🌴" : "📍",
     });
   };
+
+  // Back with a live session: their home and a Continue button, unless a sign-up or log-in link was opened.
+  const authLink = typeof window !== "undefined" && /[?&](signup|login|ref)=/.test(window.location.search);
+  if (isLoggedIn && citizen && !authLink) return <WelcomeBack citizen={citizen} />;
 
   return (
     <main className="fixed inset-0 h-[100dvh] w-screen bg-[#d6bc8a] overflow-hidden select-none touch-none overscroll-none font-sans">
