@@ -40,6 +40,13 @@ const FAQ: Array<[string, string]> = [
   ["Can I play with friends?", "Yes. Invite friends with your link, meet in the city, visit each other's homes and play Ludo, Chess, Pool and the other games together."],
 ];
 
+// Who built Dubai Life, and how to reach them.
+const DEVELOPER: Array<{ label: string; handle: string; href: string; icon: string }> = [
+  { label: "LinkedIn", handle: "in/opeyemijj", href: "https://www.linkedin.com/in/opeyemijj/", icon: "💼" },
+  { label: "Instagram", handle: "@brainofficial_", href: "https://www.instagram.com/brainofficial_/", icon: "📸" },
+  { label: "WhatsApp", handle: "+971 58 549 0044", href: "https://wa.me/971585490044", icon: "💬" },
+];
+
 const STRUCTURED = {
   "@context": "https://schema.org",
   "@graph": [
@@ -126,6 +133,28 @@ export default function AboutPage() {
                 <p className="text-sm text-slate-300 mt-2 leading-relaxed">{a}</p>
               </details>
             ))}
+          </div>
+        </section>
+
+        <section aria-labelledby="developer" className="space-y-3">
+          <h2 id="developer" className="text-xl font-black">Meet the developer</h2>
+          <div className="rounded-2xl bg-white/5 border border-white/10 p-4 space-y-3">
+            <p className="text-sm text-slate-300 leading-relaxed">
+              Dubai Life is designed and built by an independent developer in Dubai. Questions, ideas or partnerships? Get in touch.
+            </p>
+            <ul className="grid sm:grid-cols-3 gap-2">
+              {DEVELOPER.map((d) => (
+                <li key={d.label}>
+                  <a href={d.href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2.5">
+                    <span className="text-xl" aria-hidden>{d.icon}</span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-black">{d.label}</span>
+                      <span className="block text-xs text-slate-400 truncate">{d.handle}</span>
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
         </section>
 
