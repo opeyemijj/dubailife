@@ -119,8 +119,9 @@ function Landmarks() {
 
 function Tag({ text, kind }: { text: string; kind: "me" | "player" | "local" }) {
   return (
-    <Html position={[0, 2.25, 0]} center distanceFactor={10} zIndexRange={[10, 0]}>
-      <div className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-black shadow ${kind === "me" ? "bg-emerald-500 text-white" : kind === "local" ? "bg-amber-400 text-slate-900" : "bg-sky-500 text-white"}`}>{text}</div>
+    // A fixed small size wherever the runner is, so someone beside the camera doesn't fill the screen.
+    <Html position={[0, 2.25, 0]} center zIndexRange={[10, 0]} style={{ pointerEvents: "none" }}>
+      <div className={`whitespace-nowrap rounded-full px-1.5 py-0.5 text-[9px] font-black shadow opacity-90 ${kind === "me" ? "bg-emerald-500 text-white" : kind === "local" ? "bg-amber-400 text-slate-900" : "bg-sky-500 text-white"}`}>{text}</div>
     </Html>
   );
 }
@@ -164,9 +165,19 @@ function LocalRunner({ i, startMs, live }: { i: number; startMs: number; live: b
 
 interface MeState { s: number; boost: number; stride: number; reported: number; finished: boolean }
 
-function Me({ look, bib, startMs, live, me, onChunk, onFinish }: {
-  look?: AvatarLookProps; bib: number; startMs: number; live: boolean; me: React.RefObject<MeState>; onChunk: (c: number) => void; onFinish: (ms: number | null) => void;
+function Me({ look, bib, live, start, taps, onDistance, onChunk, onFinish }: {
+  look?: AvatarLookProps; bib: number; live: boolean; start: { s: number; finished: boolean }; taps: number;
+  onDistance: (s: number) => void; onChunk: (c: number) => void; onFinish: (ms: number | null) => void;
 }) {
+  const me = useRef<MeState>({ s: start.s, boost: 0, stride: 0, reported: 0, finished: start.finished });
+  // Each tap on RUN (counted by the screen) is a burst of speed, up to the top pace.
+  const seenTaps = useRef(taps);
+  useEffect(() => {
+    const extra = taps - seenTaps.current;
+    seenTaps.current = taps;
+    if (extra > 0 && !me.current.finished) me.current.boost = Math.min(MARATHON.maxSpeed - MARATHON.baseSpeed, me.current.boost + extra * MARATHON.tapBoost);
+  }, [taps]);
+  const lastShown = useRef(0);
   const g = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
   const camera = useThree((s) => s.camera);
@@ -200,9 +211,10 @@ function Me({ look, bib, startMs, live, me, onChunk, onFinish }: {
     if (want !== anim) setAnim(want);
     g.current.position.set(M.s, 0, laneOf(bib));
     if (body.current) {
-      body.current.position.y = running ? Math.abs(Math.sin(M.stride * Math.PI)) * 0.09 : 0;
+      body.current.position.y = running ? Math.abs(Math.sin(M.stride * Math.PI)) * 0.04 : 0;
       body.current.rotation.x += ((running ? 0.17 : 0) - body.current.rotation.x) * Math.min(1, dt * 6);
     }
+    if (performance.now() - lastShown.current > 150) { lastShown.current = performance.now(); onDistance(M.s); }
     const c = Math.floor(M.s / 100);
     if (c !== chunk.current) { chunk.current = c; onChunk(c); }
     // Close behind, a little to the side so the pack ahead shows.
@@ -227,7 +239,9 @@ export function MarathonRace({ o, myId, look, onExit, onFinished }: { o: Overvie
   const night = sky === "night";
   const startMs = Date.parse(o.race);
   const mine = o.me!;
-  const me = useRef<MeState>({ s: Number(mine.distance), boost: 0, stride: 0, reported: 0, finished: !!mine.finishMs });
+  const [start] = useState(() => ({ s: Number(mine.distance), finished: !!mine.finishMs }));
+  const [myS, setMyS] = useState(start.s);
+  const [taps, setTaps] = useState(0);
   const [chunk, setChunk] = useState(0);
   const [clock, setClock] = useState(() => serverNow());
   const [finish, setFinish] = useState<number | null>(mine.finishMs);
@@ -238,8 +252,8 @@ export function MarathonRace({ o, myId, look, onExit, onFinished }: { o: Overvie
   const countdown = Math.ceil((startMs - clock) / 1000);
 
   const tap = () => {
-    if (!live || me.current.finished) return;
-    me.current.boost = Math.min(MARATHON.maxSpeed - MARATHON.baseSpeed, me.current.boost + MARATHON.tapBoost);
+    if (!live || finish) return;
+    setTaps((n) => n + 1);
     setPressed(true); setTimeout(() => setPressed(false), 90);
   };
   useEffect(() => {
@@ -250,7 +264,6 @@ export function MarathonRace({ o, myId, look, onExit, onFinished }: { o: Overvie
 
   // Position: finishers by time, then everyone else by distance (you included, at your live distance).
   const others = o.runners.filter((r) => r.id !== myId);
-  const myS = me.current.s;
   const place = finish
     ? 1 + others.filter((r) => r.finishMs !== null && r.finishMs < finish).length
     : 1 + others.filter((r) => r.finishMs !== null || r.distance > myS).length;
@@ -266,7 +279,7 @@ export function MarathonRace({ o, myId, look, onExit, onFinished }: { o: Overvie
         <Landmarks />
         {others.map((r) => <Other key={r.id} r={r} live={live} />)}
         {Array.from({ length: 8 }, (_, i) => <LocalRunner key={i} i={i} startMs={startMs} live={live} />)}
-        <Me look={look} bib={mine.bib} startMs={startMs} live={live} me={me} onChunk={setChunk}
+        <Me look={look} bib={mine.bib} live={live} start={start} taps={taps} onDistance={setMyS} onChunk={setChunk}
           onFinish={(ms) => { gameAudio.playCoinSound(); setFinish(ms); if (ms) onFinished(ms, place); }} />
         <pointLight position={[myS, 6, 0]} intensity={night ? 60 : 10} distance={30} color="#ffe2b0" />
       </Canvas>

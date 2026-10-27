@@ -276,7 +276,7 @@ function Runner({ look, line, night, surface, onProgress, onFinish }: {
     }
     if (body.current) {
       const lift = Math.abs(Math.sin(stride.current * Math.PI));
-      body.current.position.y = L.done ? 0 : lift * (walking ? 0.02 : 0.09);
+      body.current.position.y = L.done ? 0 : lift * (walking ? 0.02 : 0.04);
       body.current.rotation.x += ((L.done ? 0 : walking ? 0.03 : 0.17) - body.current.rotation.x) * Math.min(1, dt * 6);
     }
     const p = at(line.pts, cum, L.s);

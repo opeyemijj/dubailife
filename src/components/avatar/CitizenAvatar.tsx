@@ -25,9 +25,10 @@ export type { AvatarLookProps } from "./roster";
  * swim is the walk clip sped up for the leg kick (the scene lays the body down; BodyPose moves the arms).
  */
 export type AvatarAnimation = "idle" | "sit" | "wave" | "clap" | "walk" | "dance" | "talk" | "sleep" | "swim" | "skate" | "run";
-// skate: the walk clip slowed right down, for long gliding strides; run: the walk clip at a jogger's cadence.
-const CLIP_FOR: Partial<Record<AvatarAnimation, AvatarAnimation>> = { sleep: "idle", swim: "walk", skate: "walk", run: "walk" };
-const SPEED_FOR: Partial<Record<AvatarAnimation, number>> = { sleep: 0.3, swim: 1.5, skate: 0.55, run: 2.6 };
+// skate: the walk clip slowed right down, for long gliding strides; run: its own clip, built from the walk
+// (see makeRunClip), played at a runner's cadence.
+const CLIP_FOR: Partial<Record<AvatarAnimation, AvatarAnimation>> = { sleep: "idle", swim: "walk", skate: "walk" };
+const SPEED_FOR: Partial<Record<AvatarAnimation, number>> = { sleep: 0.3, swim: 1.5, skate: 0.55, run: 1.85 };
 
 /**
  * Arm poses laid over whatever clip is playing, for rides and water: arms crossed on the chest (slides),
@@ -66,13 +67,82 @@ export function StudioEnvironment({ intensity = 0.6 }: { intensity?: number }) {
   return null;
 }
 
+/**
+ * A run, made from the walk: the same skeleton motion, every joint moving the way it already does but
+ * further (a long stride, a driving thigh, arms swinging from the shoulder), with the knees and elbows
+ * held bent along their own hinge (elbows near 90°, pumping), and a bigger bounce through the hips.
+ *  scale: how much further each joint swings round its average;  bend: extra flex in radians, in the
+ *  direction the joint already flexes in the walk compared with the skeleton at rest.
+ */
+const RUN_SHAPE: Record<string, { scale: number; bend?: number }> = {
+  Bip01_L_Thigh: { scale: 1.75 }, Bip01_R_Thigh: { scale: 1.75 },
+  Bip01_L_Calf: { scale: 1.7, bend: 0.5 }, Bip01_R_Calf: { scale: 1.7, bend: 0.5 },
+  Bip01_L_Foot: { scale: 1.3 }, Bip01_R_Foot: { scale: 1.3 },
+  // The arms are placed each frame instead (useRunArms): their bones' axes don't amplify cleanly.
+  Bip01_Spine: { scale: 1.4 }, Bip01_Spine1: { scale: 1.4 }, Bip01_Pelvis: { scale: 1.35 },
+};
+
+function makeRunClip(walk: THREE.AnimationClip, rest: THREE.Object3D): THREE.AnimationClip {
+  const run = walk.clone();
+  run.name = "run";
+  const q = new THREE.Quaternion(), mean = new THREE.Quaternion(), d = new THREE.Quaternion(), flex = new THREE.Quaternion(), axis = new THREE.Vector3();
+  for (const t of run.tracks) {
+    const bone = t.name.split(".")[0];
+    if (t.name.endsWith(".position") && bone === "Bip01_Pelvis") {
+      // Twice the rise and fall of the hips: a runner's bounce.
+      const v = t.values, n = v.length / 3;
+      let avg = 0;
+      for (let i = 0; i < n; i++) avg += v[i * 3 + 1] / n;
+      for (let i = 0; i < n; i++) v[i * 3 + 1] = avg + (v[i * 3 + 1] - avg) * 2.2;
+      continue;
+    }
+    const shape = RUN_SHAPE[bone];
+    if (!shape || !t.name.endsWith(".quaternion")) continue;
+    const v = t.values, n = v.length / 4;
+    // The joint's average pose over the cycle (all keys on the same side of the sphere).
+    const first = new THREE.Quaternion(v[0], v[1], v[2], v[3]);
+    const sum = [0, 0, 0, 0];
+    for (let i = 0; i < n; i++) {
+      q.fromArray(v, i * 4);
+      const sign = q.dot(first) < 0 ? -1 : 1;
+      sum[0] += q.x * sign; sum[1] += q.y * sign; sum[2] += q.z * sign; sum[3] += q.w * sign;
+    }
+    mean.set(sum[0], sum[1], sum[2], sum[3]).normalize();
+    // Which way the joint flexes: from the skeleton at rest toward its average bend in the walk.
+    if (shape.bend) {
+      const restQ = rest.getObjectByName(bone)?.quaternion;
+      if (restQ) {
+        d.copy(restQ).invert().multiply(mean);
+        const angle = 2 * Math.acos(Math.min(1, Math.abs(d.w)));
+        axis.set(d.x, d.y, d.z);
+        if (axis.lengthSq() > 1e-8 && angle > 1e-3) flex.setFromAxisAngle(axis.normalize().multiplyScalar(Math.sign(d.w) || 1), shape.bend);
+        else flex.identity();
+      } else flex.identity();
+    }
+    for (let i = 0; i < n; i++) {
+      q.fromArray(v, i * 4);
+      // The swing round the average, made bigger.
+      d.copy(mean).invert().multiply(q);
+      if (d.w < 0) d.set(-d.x, -d.y, -d.z, -d.w);
+      const angle = 2 * Math.acos(Math.min(1, d.w));
+      axis.set(d.x, d.y, d.z);
+      if (axis.lengthSq() > 1e-10) d.setFromAxisAngle(axis.normalize(), angle * shape.scale);
+      q.copy(mean);
+      if (shape.bend) q.multiply(flex);
+      q.multiply(d).normalize();
+      q.toArray(v, i * 4);
+    }
+  }
+  return run;
+}
+
 /** Clips from the roster animation files, renamed, and trimmed so they fit any body size. */
 function useRosterClips(gender: Gender) {
   const urls = rosterAnimations(gender);
   const files = useGLTF(CLIPS.map((c) => urls[c]));
   return useMemo(
-    () =>
-      files.map((f, i) => {
+    () => {
+      const clips = files.map((f, i) => {
         const clip = f.animations[0].clone();
         clip.name = CLIPS[i];
         // Rotations drive every bone, but only the root/pelvis may move: per-bone offsets
@@ -81,7 +151,10 @@ function useRosterClips(gender: Gender) {
         const rootMotion = CLIPS[i] === "walk" ? /^Bip01_Pelvis\.position$/ : /^Bip01(_Pelvis)?\.position$/;
         clip.tracks = clip.tracks.filter((t) => t.name.endsWith(".quaternion") || rootMotion.test(t.name));
         return clip;
-      }),
+      });
+      const w = CLIPS.indexOf("walk");
+      return [...clips, makeRunClip(clips[w], files[w].scene)];
+    },
     [files],
   );
 }
@@ -158,6 +231,61 @@ function usePlay(actions: Record<string, THREE.AnimationAction | null>, animatio
 }
 
 export type CarryMode = "hold" | "raise" | "drink" | "eat";
+
+/**
+ * A runner's arms, set each frame once the run clip has posed the legs: each upper arm swings forward and
+ * back beside the body in time with the opposite leg, the forearm held at a right angle to it (hands
+ * carried in toward the middle), so the elbows pump. Bones are turned to point where they should go, so
+ * this works whatever the skeleton's own axes. Call after the clip has been applied for the frame.
+ */
+function useRunArms(model: { scene: THREE.Object3D }, active: boolean) {
+  const bones = useMemo(() => {
+    const named = (...names: string[]) => names.map((n) => model.scene.getObjectByName(n)).find(Boolean);
+    const side = (s: "L" | "R", full: "Left" | "Right") => ({
+      upper: named(`Bip01_${s}_UpperArm`, `${full}Arm`), fore: named(`Bip01_${s}_Forearm`, `${full}ForeArm`), hand: named(`Bip01_${s}_Hand`, `${full}Hand`),
+      thigh: named(`Bip01_${s}_Thigh`, `${full}UpLeg`), calf: named(`Bip01_${s}_Calf`, `${full}Leg`),
+    });
+    return { L: side("L", "Left"), R: side("R", "Right") };
+  }, [model]);
+  const v = useMemo(() => ({ a: new THREE.Vector3(), b: new THREE.Vector3(), left: new THREE.Vector3(), fwd: new THREE.Vector3(), down: new THREE.Vector3(),
+    dir: new THREE.Vector3(), cur: new THREE.Vector3(), q: new THREE.Quaternion(), q2: new THREE.Quaternion(), q3: new THREE.Quaternion() }), []);
+
+  useFrame(() => {
+    if (!active) return;
+    const { L, R } = bones;
+    if (!L.upper || !L.fore || !L.hand || !L.thigh || !L.calf || !R.upper || !R.fore || !R.hand || !R.thigh || !R.calf) return;
+    model.scene.updateWorldMatrix(true, true);
+    // The body's own frame: left (across the hips), forward, and down.
+    v.left.copy(L.thigh.getWorldPosition(v.a)).sub(R.thigh.getWorldPosition(v.b)).normalize();
+    v.down.set(0, -1, 0);
+    v.fwd.crossVectors(v.left, v.down.clone().negate()).normalize();
+    v.down.crossVectors(v.left, v.fwd).normalize().negate();
+    if (v.down.y > 0) v.down.negate();
+
+    const aim = (bone: THREE.Object3D, child: THREE.Object3D, to: THREE.Vector3) => {
+      if (!bone.parent) return;
+      v.cur.copy(child.getWorldPosition(v.a)).sub(bone.getWorldPosition(v.b)).normalize();
+      v.q.setFromUnitVectors(v.cur, to);
+      bone.getWorldQuaternion(v.q2).premultiply(v.q);
+      bone.quaternion.copy(bone.parent.getWorldQuaternion(v.q3).invert().multiply(v.q2));
+      bone.updateWorldMatrix(false, true);
+    };
+
+    for (const [arm, opp, out] of [[L, R, 1], [R, L, -1]] as const) {
+      // How far the opposite knee is ahead of its hip (−1 behind … 1 ahead): the arm swings with it.
+      const thigh = v.a.copy(opp.calf!.getWorldPosition(v.a)).sub(opp.thigh!.getWorldPosition(v.b));
+      const k = Math.max(-1, Math.min(1, thigh.dot(v.fwd) / Math.max(0.001, thigh.length())));
+      // A slight backward bias: the elbow drives back behind the body on the back swing.
+      const swing = k * 1.4 - 0.12;
+      // Upper arm: down, swung forward or back, a little out from the body.
+      v.dir.copy(v.down).multiplyScalar(Math.cos(swing)).addScaledVector(v.fwd, Math.sin(swing)).addScaledVector(v.left, out * 0.14).normalize();
+      aim(arm.upper!, arm.fore!, v.dir.clone());
+      // Forearm: a right angle forward of the upper arm, hands toward the middle.
+      v.dir.copy(v.down).multiplyScalar(-Math.sin(swing)).addScaledVector(v.fwd, Math.cos(swing)).addScaledVector(v.left, -out * 0.28).normalize();
+      aim(arm.fore!, arm.hand!, v.dir.clone());
+    }
+  });
+}
 
 /**
  * Something carried in the right hand (a bottle, a drink, food prop…), kept upright whatever the arm does.
@@ -415,6 +543,7 @@ function RosterAvatar({
   const root = useRef<THREE.Group>(null);
   const { actions } = useAnimations(clips, root);
   usePlay(actions, animation);
+  useRunArms(model, animation === "run");
   const held = useRef<THREE.Group>(null);
   const effectiveMode: CarryMode | false = carryMode ?? (raiseHand ? "raise" : !!holding ? "hold" : false);
   // The pose first, so anything held follows the posed hand.
@@ -481,6 +610,7 @@ function CustomAvatar({
 
   // Registered after useAnimations, so it runs once the source has been posed for this frame.
   useFrame(() => retargeter?.update());
+  useRunArms(model, animation === "run");
   useBodyPose(model, pose);
 
   return (
