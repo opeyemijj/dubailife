@@ -104,7 +104,9 @@ export default function HomePage() {
   const isMultiRoom = !!rooms?.length;
   const homeStyle: HomeStyle = citizen?.homeStyle?.[housingTier] ?? housingConfig.finish;
   const [upView, setUpView] = useState(isMultiRoom);
-  const [activeRoomId, setActiveRoomId] = useState<string>(housingTier === "one_bedroom" ? "bedroom" : "living");
+  // Looking down on the home, or over the shoulder in the room.
+  const [view, setView] = useState<"above" | "inside">("above");
+  const [activeRoomId, setActiveRoomId] = useState<string>("living");
   const [ritualsExpanded, setRitualsExpanded] = useState(false);
   const [tierModalOpen, setTierModalOpen] = useState(false);
 
@@ -112,7 +114,7 @@ export default function HomePage() {
     setLevel(0);
     if (isMultiRoom) {
       setUpView(true);
-      setActiveRoomId(housingTier === "one_bedroom" ? "bedroom" : "living");
+      setActiveRoomId("living");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [housingTier]);
@@ -257,6 +259,7 @@ export default function HomePage() {
         turns={turns}
         housingTier={housingTier}
         upView={upView}
+        view={view}
         activeRoomId={activeRoomId}
         onSelectRoom={setActiveRoomId}
         onPlace={handlePlace}
@@ -271,6 +274,7 @@ export default function HomePage() {
 
       {/* Camera controls */}
       <div className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-2 pointer-events-auto">
+        <button onClick={() => { setView((v) => (v === "inside" ? "above" : "inside")); setUpView(false); }} className="w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg border border-slate-200 flex items-center justify-center text-lg active:scale-90 transition-all" title={view === "inside" ? "View from above" : "View from inside"} aria-label={view === "inside" ? "View from above" : "View from inside"}>{view === "inside" ? "🏠" : "👤"}</button>
         <button
           onClick={() => setTurns((t) => t - 1)}
           className="w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 active:scale-90 transition-all"

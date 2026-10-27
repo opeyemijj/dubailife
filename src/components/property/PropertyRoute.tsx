@@ -275,12 +275,14 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   };
   const isMultiRoom = !!rooms?.length;
   const [upView, setUpView] = useState(isMultiRoom);
-  const [activeRoomId, setActiveRoomId] = useState<string>(housingTier === "one_bedroom" ? "bedroom" : "living");
+  // Looking down on the home, or over the shoulder in the room.
+  const [view, setView] = useState<"above" | "inside">("above");
+  const [activeRoomId, setActiveRoomId] = useState<string>("living");
 
   useEffect(() => {
     if (isMultiRoom) {
       setUpView(true);
-      setActiveRoomId(housingTier === "one_bedroom" ? "bedroom" : "living");
+      setActiveRoomId("living");
     }
   }, [housingTier, isMultiRoom]);
 
@@ -296,6 +298,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         people={people}
         housingTier={housingTier}
         upView={upView}
+        view={view}
         activeRoomId={activeRoomId}
         onSelectRoom={setActiveRoomId}
         level={level}
@@ -363,6 +366,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
       {banner && <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 bg-slate-950/85 text-white text-xs font-bold px-4 py-2 rounded-full shadow-xl max-w-[92vw] text-center">{banner}</div>}
 
       <div className="absolute right-3 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-2">
+        <button onClick={() => { setView((v) => (v === "inside" ? "above" : "inside")); setUpView(false); }} className="w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg border border-slate-200 flex items-center justify-center text-lg active:scale-90 transition-all" title={view === "inside" ? "View from above" : "View from inside"} aria-label={view === "inside" ? "View from above" : "View from inside"}>{view === "inside" ? "🏠" : "👤"}</button>
         <button onClick={() => setTurns((t) => t - 1)} className="w-10 h-10 rounded-full bg-white shadow-lg font-black" aria-label="Rotate room left">⟲</button>
         <button onClick={() => setTurns((t) => t + 1)} className="w-10 h-10 rounded-full bg-white shadow-lg font-black" aria-label="Rotate room right">⟳</button>
       </div>

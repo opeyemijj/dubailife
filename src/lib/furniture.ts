@@ -2,6 +2,8 @@
 // The room is a square of GRID x GRID cells; floor items occupy a w x d block of cells,
 // wall items occupy a run of cells along one wall.
 
+import FLOORPLANS from "@/data/home/floorplans.json";
+
 export const ROOM_SIZE = 10; // metres
 export const CELL = 0.5; // metres per grid cell
 export const GRID = ROOM_SIZE / CELL; // 20
@@ -678,7 +680,20 @@ const spreadRooms = (rooms: RoomZone[]): RoomZone[] => rooms.map((r) => ({
   bounds: { minX: r.bounds.minX * k, maxX: r.bounds.maxX * k, minZ: r.bounds.minZ * k, maxZ: r.bounds.maxZ * k },
 }));
 
-export const HOUSING_CONFIGS = Object.fromEntries(Object.entries(RAW_HOUSING_CONFIGS).map(([id, c]) => [id, {
+// Standard Dubai floor plans (src/data/home/floorplans.json), drawn for the 10 m home: these replace the
+// older layouts' rooms, walls and furniture wherever a plan exists.
+type PlanFurniture = { id: string; name: string; icon: string; size: number[]; col: number; row: number; rot: number; model?: string; visual?: string; interaction?: string; level?: number; fixed?: boolean };
+type Plan = { rooms?: RoomZone[]; walls?: LevelDef["walls"]; levels?: LevelDef[]; furniture: PlanFurniture[] };
+const PLANS = FLOORPLANS as unknown as Record<string, Plan>;
+const planIdOf = (tier: string, id: string) => `fp_${tier}_${id}`;
+
+export const HOUSING_CONFIGS = Object.fromEntries(Object.entries(RAW_HOUSING_CONFIGS).map(([id, c]) => [id, PLANS[id] ? {
+  ...c,
+  rooms: PLANS[id].rooms,
+  walls: PLANS[id].walls,
+  blocks: undefined,
+  levels: PLANS[id].levels,
+} : {
   ...c,
   rooms: c.rooms && spreadRooms(c.rooms),
   walls: c.walls && spreadWalls(c.walls, false),
@@ -688,28 +703,28 @@ export const HOUSING_CONFIGS = Object.fromEntries(Object.entries(RAW_HOUSING_CON
 
 const spreadBuiltIn = (b: BuiltIn): BuiltIn => ({ ...b, placement: migratePlacement(b.placement as Placement, b.size) as BuiltIn["placement"] });
 export const BUILT_INS: BuiltIn[] = RAW_BUILT_INS.map(spreadBuiltIn);
-export const BUILT_INS_BY_TIER = Object.fromEntries(Object.entries(RAW_BUILT_INS_BY_TIER).map(([id, list]) => [id, list.map(spreadBuiltIn)])) as Record<HousingTier, BuiltIn[]>;
+export const BUILT_INS_BY_TIER = Object.fromEntries(Object.entries(RAW_BUILT_INS_BY_TIER).map(([id, list]) => [id, PLANS[id]
+  ? PLANS[id].furniture.map((p): BuiltIn => ({
+      id: planIdOf(id, p.id), model: p.model, visual: p.visual, size: p.size as [number, number],
+      placement: { kind: "floor", col: p.col, row: p.row, rot: p.rot as Rotation, ...(p.level ? { level: p.level } : {}), g: GRID },
+      interaction: p.interaction as Interaction | undefined, fixed: p.fixed,
+    }))
+  : list.map(spreadBuiltIn)])) as Record<HousingTier, BuiltIn[]>;
+const PLAN_NAMES: Record<string, [string, string]> = Object.fromEntries(Object.entries(PLANS).flatMap(([tier, p]) => p.furniture?.map((f) => [planIdOf(tier, f.id), [f.name, f.icon]]) ?? []));
 
 /** All potential built-ins across tiers as catalog items */
 const ALL_BUILT_IN_LIST = [
   ...BUILT_INS,
-  ...BUILT_INS_BY_TIER.bed_space,
-  ...BUILT_INS_BY_TIER.studio,
-  ...BUILT_INS_BY_TIER.one_bedroom,
-  ...BUILT_INS_BY_TIER.two_bedroom,
-  ...BUILT_INS_BY_TIER.three_bedroom,
-  ...BUILT_INS_BY_TIER.duplex,
-  ...BUILT_INS_BY_TIER.townhouse,
-  ...BUILT_INS_BY_TIER.penthouse,
-  ...BUILT_INS_BY_TIER.villa,
+  ...Object.values(RAW_BUILT_INS_BY_TIER).flat().map(spreadBuiltIn),
+  ...Object.values(BUILT_INS_BY_TIER).flat(),
 ];
 const DEDUPED_BUILT_INS = Array.from(new Map(ALL_BUILT_IN_LIST.map((b) => [b.id, b])).values());
 
 /** The built-ins as furniture items (so they can be moved, rotated and stored). */
 export const HOME_ITEMS: CatalogItem[] = DEDUPED_BUILT_INS.map((b) => ({
   id: `home-${b.id}`,
-  name: HOME_NAMES[b.id]?.[0] ?? b.id,
-  icon: HOME_NAMES[b.id]?.[1] ?? "📦",
+  name: PLAN_NAMES[b.id]?.[0] ?? HOME_NAMES[b.id]?.[0] ?? b.id,
+  icon: PLAN_NAMES[b.id]?.[1] ?? HOME_NAMES[b.id]?.[1] ?? "📦",
   desc: "Came with your home.",
   price: 0,
   // Chandeliers hang from the ceiling and rugs lie flat, like the same pieces in the shop.
@@ -746,16 +761,17 @@ export function withHomeItems(furniture: OwnedFurniture[], tier: HousingTier = "
 }
 
 /** Door and window spans on the walls, in cells. */
-export const DOOR = { wall: "west" as Wall, offset: 13, width: 2, height: 4.4 };
+export const DOOR = { wall: "west" as Wall, offset: 9, width: 2, height: 4.4 };
 export const WINDOW = { wall: "north" as Wall, offset: 11, width: 6 };
 
 /** Cells kept clear: in front of the door, and where the citizen stands. */
 const RESERVED_CELLS: Array<[number, number]> = [
-  [0, 5], [0, 6], [1, 5], [1, 6],
-  [11, 12], [11, 13], [12, 12], [12, 13],
+  [0, 9], [0, 10], [1, 9], [1, 10],
+  [3, 9], [3, 10],
 ];
 
-export const AVATAR_SPOT = { x: -ROOM_SIZE / 2 + 12 * CELL, z: -ROOM_SIZE / 2 + 13 * CELL };
+// Just inside the front door, in the entrance hall.
+export const AVATAR_SPOT = { x: -ROOM_SIZE / 2 + 3.5 * CELL, z: 0 };
 
 /** Footprint size after rotation. */
 export function rotatedSize(size: [number, number], rot: Rotation): [number, number] {

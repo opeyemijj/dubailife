@@ -3,7 +3,8 @@
 // the bathroom's walls, what you can do with each fixture, and the pantry its recipes use.
 
 import FIXTURES from "@/data/home/fixtures.json";
-import { CELL, LAYOUT_SCALE, migratePlacement, ROOM_SIZE, type FloorPlacement, type HousingTier, type Rotation } from "@/lib/furniture";
+import FLOORPLANS from "@/data/home/floorplans.json";
+import { CELL, GRID, LAYOUT_SCALE, migratePlacement, ROOM_SIZE, type FloorPlacement, type HousingTier, type Rotation } from "@/lib/furniture";
 import type { Citizen, NeedKey } from "@/lib/citizenStore";
 
 export { FIXTURES };
@@ -14,6 +15,8 @@ export interface Fixture { id: string; kind: FixtureKind; size: [number, number]
 export interface FixtureWall { a: [number, number]; b: [number, number]; door?: [number, number] }
 
 type Layout = { fixtures: Array<{ kind: string; col: number; row: number; rot: number; level?: number }>; walls: Array<FixtureWall & { level?: number }> };
+/** A standard floor plan's fixtures (already on today's grid; its bathroom walls are in the plan's walls). */
+const planOf = (tier: HousingTier) => (FLOORPLANS as unknown as Record<string, { fixtures?: Layout["fixtures"] }>)[tier];
 const layoutOf = (tier: HousingTier): Layout => {
   const all = FIXTURES.layouts as unknown as Record<string, Partial<Layout> & { twoStorey?: boolean }>;
   const l = all[tier];
@@ -24,6 +27,15 @@ export const kindOf = (kind: FixtureKind) => FIXTURES.kinds[kind] as { name: str
 
 /** The fixtures on one floor of a home. */
 export function fixturesFor(tier: HousingTier, level = 0): Fixture[] {
+  const plan = planOf(tier);
+  if (plan?.fixtures) {
+    return plan.fixtures.filter((f) => (f.level ?? 0) === level).map((f, i) => ({
+      id: `${tier}:${level}:${i}`,
+      kind: f.kind as FixtureKind,
+      size: kindOf(f.kind as FixtureKind).size as [number, number],
+      placement: { kind: "floor", col: f.col, row: f.row, rot: f.rot as Rotation, level, g: GRID },
+    }));
+  }
   return layoutOf(tier).fixtures
     .filter((f) => (f.level ?? 0) === level)
     .map((f, i) => ({
@@ -37,7 +49,7 @@ export function fixturesFor(tier: HousingTier, level = 0): Fixture[] {
 
 /** The bathroom's walls on one floor of a home. */
 const snap = (v: number) => Math.round(v * LAYOUT_SCALE * 2) / 2;
-export const fixtureWallsFor = (tier: HousingTier, level = 0): FixtureWall[] =>
+export const fixtureWallsFor = (tier: HousingTier, level = 0): FixtureWall[] => planOf(tier) ? [] :
   (layoutOf(tier).walls ?? []).filter((w) => (w.level ?? 0) === level).map(({ a, b, door }) => ({
     a: [snap(a[0]), snap(a[1])], b: [snap(b[0]), snap(b[1])], ...(door ? { door: [door[0] * LAYOUT_SCALE, door[1] * LAYOUT_SCALE] as [number, number] } : {}),
   }));

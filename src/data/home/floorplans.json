@@ -1,0 +1,5913 @@
+{
+ "_note": "Floor plans for every home type on the 10 m home, laid out like a standard Dubai flat or villa: an entrance hall with a guest toilet, open living and dining onto the balcony, a closed kitchen with laundry, bedrooms with en-suites and a walk-in wardrobe in the master; two-storey homes have the kitchen, dining, living majlis and guest toilet downstairs and the bedrooms and bathrooms upstairs. Metres for rooms and walls (x west→east, z north→south, -5..5; a wall's door is [from, to] metres along it); 0.5 m cells for furniture and fixtures (col 0 = west wall, row 0 = north wall; rot 0 faces south, 1 west, 2 north, 3 east). Generated layouts are checked by scripts (every fixture and bed reachable, nothing overlapping).",
+ "one_bedroom": {
+  "rooms": [
+   {
+    "id": "hall",
+    "label": "Entrance hall",
+    "icon": "🚪",
+    "desc": "Front door, console and the way to every room",
+    "bounds": {
+     "minX": -5,
+     "maxX": 5,
+     "minZ": -1,
+     "maxZ": 1
+    },
+    "center": [
+     -3.5,
+     0,
+     0
+    ]
+   },
+   {
+    "id": "master",
+    "label": "Master suite",
+    "icon": "👑",
+    "desc": "King bed, walk-in wardrobe and en-suite",
+    "bounds": {
+     "minX": 0,
+     "maxX": 5,
+     "minZ": -5,
+     "maxZ": -1
+    },
+    "center": [
+     1.5,
+     0,
+     -3
+    ]
+   },
+   {
+    "id": "study",
+    "label": "Study & dressing room",
+    "icon": "📚",
+    "desc": "Desk, books and a reading chair",
+    "bounds": {
+     "minX": -3,
+     "maxX": 0,
+     "minZ": -5,
+     "maxZ": -1
+    },
+    "center": [
+     -1.5,
+     0,
+     -3.0
+    ]
+   },
+   {
+    "id": "master_bath",
+    "label": "Master en-suite",
+    "icon": "🛁",
+    "desc": "Rain shower, double vanity, toilet",
+    "bounds": {
+     "minX": 3,
+     "maxX": 5,
+     "minZ": -5,
+     "maxZ": -2.5
+    },
+    "center": [
+     4.0,
+     0,
+     -3.75
+    ]
+   },
+   {
+    "id": "guest_wc",
+    "label": "Guest toilet",
+    "icon": "🚽",
+    "desc": "Off the hall, for visitors",
+    "bounds": {
+     "minX": -5,
+     "maxX": -3,
+     "minZ": -3,
+     "maxZ": -1
+    },
+    "center": [
+     -4.0,
+     0,
+     -2.0
+    ]
+   },
+   {
+    "id": "living",
+    "label": "Living & dining",
+    "icon": "🛋️",
+    "desc": "Sofa, TV, dining table and the balcony door",
+    "bounds": {
+     "minX": -5,
+     "maxX": 2,
+     "minZ": 1,
+     "maxZ": 5
+    },
+    "center": [
+     -1.5,
+     0,
+     3
+    ]
+   },
+   {
+    "id": "balcony",
+    "label": "Balcony",
+    "icon": "🌇",
+    "desc": "Glass balustrade over the city",
+    "bounds": {
+     "minX": -2.5,
+     "maxX": 2.5,
+     "minZ": 5,
+     "maxZ": 6.5
+    },
+    "center": [
+     0.0,
+     0,
+     5.75
+    ]
+   },
+   {
+    "id": "kitchen",
+    "label": "Kitchen & laundry",
+    "icon": "🍳",
+    "desc": "Closed kitchen with its own door",
+    "bounds": {
+     "minX": 2,
+     "maxX": 5,
+     "minZ": 1,
+     "maxZ": 5
+    },
+    "center": [
+     3.5,
+     0,
+     3.0
+    ]
+   }
+  ],
+  "walls": [
+   {
+    "a": [
+     -5,
+     -1
+    ],
+    "b": [
+     -3,
+     -1
+    ],
+    "door": [
+     0.4,
+     1.4
+    ]
+   },
+   {
+    "a": [
+     -3,
+     -1
+    ],
+    "b": [
+     0,
+     -1
+    ],
+    "door": [
+     1,
+     2
+    ]
+   },
+   {
+    "a": [
+     0,
+     -1
+    ],
+    "b": [
+     5,
+     -1
+    ],
+    "door": [
+     0.5,
+     1.5
+    ]
+   },
+   {
+    "a": [
+     -3,
+     -3
+    ],
+    "b": [
+     -3,
+     -1
+    ]
+   },
+   {
+    "a": [
+     -5,
+     -3
+    ],
+    "b": [
+     -3,
+     -3
+    ]
+   },
+   {
+    "a": [
+     0,
+     -5
+    ],
+    "b": [
+     0,
+     -1
+    ]
+   },
+   {
+    "a": [
+     3,
+     -5
+    ],
+    "b": [
+     3,
+     -2.5
+    ]
+   },
+   {
+    "a": [
+     3,
+     -2.5
+    ],
+    "b": [
+     5,
+     -2.5
+    ],
+    "door": [
+     0.3,
+     1.2
+    ]
+   },
+   {
+    "a": [
+     -5,
+     1
+    ],
+    "b": [
+     2,
+     1
+    ],
+    "door": [
+     1,
+     4
+    ]
+   },
+   {
+    "a": [
+     2,
+     1
+    ],
+    "b": [
+     5,
+     1
+    ],
+    "door": [
+     1,
+     2
+    ]
+   },
+   {
+    "a": [
+     2,
+     1
+    ],
+    "b": [
+     2,
+     5
+    ]
+   }
+  ],
+  "furniture": [
+   {
+    "id": "hall_console",
+    "name": "Marble console",
+    "icon": "🕰️",
+    "size": [
+     3,
+     1
+    ],
+    "col": 14,
+    "row": 8,
+    "rot": 0,
+    "visual": "console"
+   },
+   {
+    "id": "hall_runner",
+    "name": "Moroccan runner",
+    "icon": "〰️",
+    "size": [
+     2,
+     6
+    ],
+    "col": 3,
+    "row": 9,
+    "rot": 1,
+    "visual": "rug-runner"
+   },
+   {
+    "id": "hall_palm",
+    "name": "Indoor date palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 19,
+    "row": 8,
+    "rot": 0,
+    "visual": "palm"
+   },
+   {
+    "id": "master_bed",
+    "name": "King bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 11,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed"
+   },
+   {
+    "id": "master_side_l",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 10,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb"
+   },
+   {
+    "id": "master_side_r",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 15,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb"
+   },
+   {
+    "id": "master_wardrobe",
+    "name": "Walk-in wardrobe",
+    "icon": "👔",
+    "size": [
+     4,
+     1
+    ],
+    "col": 10,
+    "row": 3,
+    "rot": 3,
+    "visual": "wardrobe"
+   },
+   {
+    "id": "master_vanity",
+    "name": "Hollywood vanity",
+    "icon": "💄",
+    "size": [
+     2,
+     1
+    ],
+    "col": 16,
+    "row": 7,
+    "rot": 2,
+    "visual": "vanity"
+   },
+   {
+    "id": "master_light",
+    "name": "Gold ring chandelier",
+    "icon": "⭕",
+    "size": [
+     2,
+     2
+    ],
+    "col": 12,
+    "row": 1,
+    "rot": 0,
+    "visual": "chandelier-ring"
+   },
+   {
+    "id": "living_sofa",
+    "name": "Sectional sofa",
+    "icon": "🛋️",
+    "size": [
+     4,
+     2
+    ],
+    "col": 3,
+    "row": 13,
+    "rot": 0,
+    "model": "/models/furniture/couch.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "living_table",
+    "name": "Coffee table",
+    "icon": "☕",
+    "size": [
+     3,
+     2
+    ],
+    "col": 3,
+    "row": 15,
+    "rot": 0,
+    "model": "/models/furniture/coffee-table.glb"
+   },
+   {
+    "id": "living_tv",
+    "name": "4K smart TV",
+    "icon": "📺",
+    "size": [
+     4,
+     1
+    ],
+    "col": 3,
+    "row": 19,
+    "rot": 2,
+    "model": "/models/furniture/tv.glb"
+   },
+   {
+    "id": "living_armchair",
+    "name": "Velvet armchair",
+    "icon": "💚",
+    "size": [
+     2,
+     2
+    ],
+    "col": 0,
+    "row": 14,
+    "rot": 3,
+    "visual": "armchair",
+    "interaction": "chair"
+   },
+   {
+    "id": "living_rug",
+    "name": "Hand-knotted silk rug",
+    "icon": "🟡",
+    "size": [
+     5,
+     5
+    ],
+    "col": 2,
+    "row": 13,
+    "rot": 0,
+    "visual": "rug-round"
+   },
+   {
+    "id": "living_chandelier",
+    "name": "Crystal chandelier",
+    "icon": "💎",
+    "size": [
+     2,
+     2
+    ],
+    "col": 4,
+    "row": 15,
+    "rot": 0,
+    "visual": "chandelier-crystal"
+   },
+   {
+    "id": "living_lamp",
+    "name": "Brass tripod lamp",
+    "icon": "🪔",
+    "size": [
+     1,
+     1
+    ],
+    "col": 7,
+    "row": 13,
+    "rot": 0,
+    "visual": "tripod-lamp"
+   },
+   {
+    "id": "living_palm",
+    "name": "Indoor date palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 0,
+    "row": 19,
+    "rot": 0,
+    "visual": "palm"
+   },
+   {
+    "id": "dining",
+    "name": "Marble dining for six",
+    "icon": "🍽️",
+    "size": [
+     4,
+     3
+    ],
+    "col": 9,
+    "row": 13,
+    "rot": 0,
+    "visual": "dining-set"
+   },
+   {
+    "id": "dining_light",
+    "name": "Pendant trio",
+    "icon": "🔮",
+    "size": [
+     3,
+     1
+    ],
+    "col": 9,
+    "row": 14,
+    "rot": 0,
+    "visual": "pendant-trio"
+   },
+   {
+    "id": "study_desk",
+    "name": "Executive desk",
+    "icon": "🖥️",
+    "size": [
+     3,
+     2
+    ],
+    "col": 6,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/desk.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "study_chair",
+    "name": "Desk chair",
+    "icon": "🪑",
+    "size": [
+     1,
+     1
+    ],
+    "col": 7,
+    "row": 2,
+    "rot": 0,
+    "model": "/models/furniture/desk-chair.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "study_books",
+    "name": "Oak bookcase",
+    "icon": "📚",
+    "size": [
+     2,
+     1
+    ],
+    "col": 4,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/bookcase.glb"
+   },
+   {
+    "id": "study_lounge",
+    "name": "Reading chair",
+    "icon": "💺",
+    "size": [
+     2,
+     2
+    ],
+    "col": 4,
+    "row": 4,
+    "rot": 0,
+    "model": "/models/furniture/lounge-chair.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "kitchen_fridge",
+    "name": "Fridge",
+    "icon": "🧊",
+    "size": [
+     2,
+     2
+    ],
+    "col": 18,
+    "row": 17,
+    "rot": 0,
+    "model": "/models/furniture/fridge.glb",
+    "interaction": "cooler"
+   }
+  ],
+  "fixtures": [
+   {
+    "kind": "basin-double",
+    "col": 16,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "shower",
+    "col": 18,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "toilet",
+    "col": 19,
+    "row": 3,
+    "rot": 1
+   },
+   {
+    "kind": "toilet",
+    "col": 0,
+    "row": 4,
+    "rot": 3
+   },
+   {
+    "kind": "basin",
+    "col": 2,
+    "row": 4,
+    "rot": 0
+   },
+   {
+    "kind": "kitchen-run",
+    "col": 19,
+    "row": 13,
+    "rot": 1
+   },
+   {
+    "kind": "washer",
+    "col": 19,
+    "row": 19,
+    "rot": 1
+   }
+  ]
+ },
+ "two_bedroom": {
+  "rooms": [
+   {
+    "id": "hall",
+    "label": "Entrance hall",
+    "icon": "🚪",
+    "desc": "Front door, console and the way to every room",
+    "bounds": {
+     "minX": -5,
+     "maxX": 5,
+     "minZ": -1,
+     "maxZ": 1
+    },
+    "center": [
+     -3.5,
+     0,
+     0
+    ]
+   },
+   {
+    "id": "master",
+    "label": "Master suite",
+    "icon": "👑",
+    "desc": "King bed, walk-in wardrobe and en-suite",
+    "bounds": {
+     "minX": 0,
+     "maxX": 5,
+     "minZ": -5,
+     "maxZ": -1
+    },
+    "center": [
+     1.5,
+     0,
+     -3
+    ]
+   },
+   {
+    "id": "bed2",
+    "label": "Bedroom 2",
+    "icon": "🛏️",
+    "desc": "Double bed, desk and en-suite",
+    "bounds": {
+     "minX": -3,
+     "maxX": 0,
+     "minZ": -5,
+     "maxZ": -1
+    },
+    "center": [
+     -1.5,
+     0,
+     -3.0
+    ]
+   },
+   {
+    "id": "bed2_bath",
+    "label": "Bedroom 2 en-suite",
+    "icon": "🚿",
+    "desc": "Shower, basin, toilet",
+    "bounds": {
+     "minX": -5,
+     "maxX": -3,
+     "minZ": -5,
+     "maxZ": -3
+    },
+    "center": [
+     -4.0,
+     0,
+     -4.0
+    ]
+   },
+   {
+    "id": "master_bath",
+    "label": "Master en-suite",
+    "icon": "🛁",
+    "desc": "Rain shower, double vanity, toilet",
+    "bounds": {
+     "minX": 3,
+     "maxX": 5,
+     "minZ": -5,
+     "maxZ": -2.5
+    },
+    "center": [
+     4.0,
+     0,
+     -3.75
+    ]
+   },
+   {
+    "id": "guest_wc",
+    "label": "Guest toilet",
+    "icon": "🚽",
+    "desc": "Off the hall, for visitors",
+    "bounds": {
+     "minX": -5,
+     "maxX": -3,
+     "minZ": -3,
+     "maxZ": -1
+    },
+    "center": [
+     -4.0,
+     0,
+     -2.0
+    ]
+   },
+   {
+    "id": "living",
+    "label": "Living & dining",
+    "icon": "🛋️",
+    "desc": "Sofa, TV, dining table and the balcony door",
+    "bounds": {
+     "minX": -5,
+     "maxX": 2,
+     "minZ": 1,
+     "maxZ": 5
+    },
+    "center": [
+     -1.5,
+     0,
+     3
+    ]
+   },
+   {
+    "id": "balcony",
+    "label": "Balcony",
+    "icon": "🌇",
+    "desc": "Glass balustrade over the city",
+    "bounds": {
+     "minX": -2.5,
+     "maxX": 2.5,
+     "minZ": 5,
+     "maxZ": 6.5
+    },
+    "center": [
+     0.0,
+     0,
+     5.75
+    ]
+   },
+   {
+    "id": "kitchen",
+    "label": "Kitchen & laundry",
+    "icon": "🍳",
+    "desc": "Closed kitchen with its own door",
+    "bounds": {
+     "minX": 2,
+     "maxX": 5,
+     "minZ": 1,
+     "maxZ": 5
+    },
+    "center": [
+     3.5,
+     0,
+     3.0
+    ]
+   }
+  ],
+  "walls": [
+   {
+    "a": [
+     -5,
+     -1
+    ],
+    "b": [
+     -3,
+     -1
+    ],
+    "door": [
+     0.4,
+     1.4
+    ]
+   },
+   {
+    "a": [
+     -3,
+     -1
+    ],
+    "b": [
+     0,
+     -1
+    ],
+    "door": [
+     1,
+     2
+    ]
+   },
+   {
+    "a": [
+     0,
+     -1
+    ],
+    "b": [
+     5,
+     -1
+    ],
+    "door": [
+     0.5,
+     1.5
+    ]
+   },
+   {
+    "a": [
+     -3,
+     -3
+    ],
+    "b": [
+     -3,
+     -1
+    ]
+   },
+   {
+    "a": [
+     -5,
+     -3
+    ],
+    "b": [
+     -3,
+     -3
+    ]
+   },
+   {
+    "a": [
+     0,
+     -5
+    ],
+    "b": [
+     0,
+     -1
+    ]
+   },
+   {
+    "a": [
+     3,
+     -5
+    ],
+    "b": [
+     3,
+     -2.5
+    ]
+   },
+   {
+    "a": [
+     3,
+     -2.5
+    ],
+    "b": [
+     5,
+     -2.5
+    ],
+    "door": [
+     0.3,
+     1.2
+    ]
+   },
+   {
+    "a": [
+     -5,
+     1
+    ],
+    "b": [
+     2,
+     1
+    ],
+    "door": [
+     1,
+     4
+    ]
+   },
+   {
+    "a": [
+     -3,
+     -5
+    ],
+    "b": [
+     -3,
+     -3
+    ],
+    "door": [
+     0.6,
+     1.4
+    ]
+   },
+   {
+    "a": [
+     2,
+     1
+    ],
+    "b": [
+     5,
+     1
+    ],
+    "door": [
+     1,
+     2
+    ]
+   },
+   {
+    "a": [
+     2,
+     1
+    ],
+    "b": [
+     2,
+     5
+    ]
+   }
+  ],
+  "furniture": [
+   {
+    "id": "hall_console",
+    "name": "Marble console",
+    "icon": "🕰️",
+    "size": [
+     3,
+     1
+    ],
+    "col": 14,
+    "row": 8,
+    "rot": 0,
+    "visual": "console"
+   },
+   {
+    "id": "hall_runner",
+    "name": "Moroccan runner",
+    "icon": "〰️",
+    "size": [
+     2,
+     6
+    ],
+    "col": 3,
+    "row": 9,
+    "rot": 1,
+    "visual": "rug-runner"
+   },
+   {
+    "id": "hall_palm",
+    "name": "Indoor date palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 19,
+    "row": 8,
+    "rot": 0,
+    "visual": "palm"
+   },
+   {
+    "id": "master_bed",
+    "name": "King bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 11,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed"
+   },
+   {
+    "id": "master_side_l",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 10,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb"
+   },
+   {
+    "id": "master_side_r",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 15,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb"
+   },
+   {
+    "id": "master_wardrobe",
+    "name": "Walk-in wardrobe",
+    "icon": "👔",
+    "size": [
+     4,
+     1
+    ],
+    "col": 10,
+    "row": 3,
+    "rot": 3,
+    "visual": "wardrobe"
+   },
+   {
+    "id": "master_vanity",
+    "name": "Hollywood vanity",
+    "icon": "💄",
+    "size": [
+     2,
+     1
+    ],
+    "col": 16,
+    "row": 7,
+    "rot": 2,
+    "visual": "vanity"
+   },
+   {
+    "id": "master_light",
+    "name": "Gold ring chandelier",
+    "icon": "⭕",
+    "size": [
+     2,
+     2
+    ],
+    "col": 12,
+    "row": 1,
+    "rot": 0,
+    "visual": "chandelier-ring"
+   },
+   {
+    "id": "living_sofa",
+    "name": "Sectional sofa",
+    "icon": "🛋️",
+    "size": [
+     4,
+     2
+    ],
+    "col": 3,
+    "row": 13,
+    "rot": 0,
+    "model": "/models/furniture/couch.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "living_table",
+    "name": "Coffee table",
+    "icon": "☕",
+    "size": [
+     3,
+     2
+    ],
+    "col": 3,
+    "row": 15,
+    "rot": 0,
+    "model": "/models/furniture/coffee-table.glb"
+   },
+   {
+    "id": "living_tv",
+    "name": "4K smart TV",
+    "icon": "📺",
+    "size": [
+     4,
+     1
+    ],
+    "col": 3,
+    "row": 19,
+    "rot": 2,
+    "model": "/models/furniture/tv.glb"
+   },
+   {
+    "id": "living_armchair",
+    "name": "Velvet armchair",
+    "icon": "💚",
+    "size": [
+     2,
+     2
+    ],
+    "col": 0,
+    "row": 14,
+    "rot": 3,
+    "visual": "armchair",
+    "interaction": "chair"
+   },
+   {
+    "id": "living_rug",
+    "name": "Hand-knotted silk rug",
+    "icon": "🟡",
+    "size": [
+     5,
+     5
+    ],
+    "col": 2,
+    "row": 13,
+    "rot": 0,
+    "visual": "rug-round"
+   },
+   {
+    "id": "living_chandelier",
+    "name": "Crystal chandelier",
+    "icon": "💎",
+    "size": [
+     2,
+     2
+    ],
+    "col": 4,
+    "row": 15,
+    "rot": 0,
+    "visual": "chandelier-crystal"
+   },
+   {
+    "id": "living_lamp",
+    "name": "Brass tripod lamp",
+    "icon": "🪔",
+    "size": [
+     1,
+     1
+    ],
+    "col": 7,
+    "row": 13,
+    "rot": 0,
+    "visual": "tripod-lamp"
+   },
+   {
+    "id": "living_palm",
+    "name": "Indoor date palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 0,
+    "row": 19,
+    "rot": 0,
+    "visual": "palm"
+   },
+   {
+    "id": "dining",
+    "name": "Marble dining for six",
+    "icon": "🍽️",
+    "size": [
+     4,
+     3
+    ],
+    "col": 9,
+    "row": 13,
+    "rot": 0,
+    "visual": "dining-set"
+   },
+   {
+    "id": "dining_light",
+    "name": "Pendant trio",
+    "icon": "🔮",
+    "size": [
+     3,
+     1
+    ],
+    "col": 9,
+    "row": 14,
+    "rot": 0,
+    "visual": "pendant-trio"
+   },
+   {
+    "id": "bed2_bed",
+    "name": "Double bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 5,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed"
+   },
+   {
+    "id": "bed2_side",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 9,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb"
+   },
+   {
+    "id": "bed2_desk",
+    "name": "Desk",
+    "icon": "🖥️",
+    "size": [
+     3,
+     2
+    ],
+    "col": 8,
+    "row": 5,
+    "rot": 1,
+    "model": "/models/furniture/desk.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "kitchen_fridge",
+    "name": "Fridge",
+    "icon": "🧊",
+    "size": [
+     2,
+     2
+    ],
+    "col": 18,
+    "row": 17,
+    "rot": 0,
+    "model": "/models/furniture/fridge.glb",
+    "interaction": "cooler"
+   }
+  ],
+  "fixtures": [
+   {
+    "kind": "basin-double",
+    "col": 16,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "shower",
+    "col": 18,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "toilet",
+    "col": 19,
+    "row": 3,
+    "rot": 1
+   },
+   {
+    "kind": "toilet",
+    "col": 0,
+    "row": 4,
+    "rot": 3
+   },
+   {
+    "kind": "basin",
+    "col": 2,
+    "row": 4,
+    "rot": 0
+   },
+   {
+    "kind": "shower",
+    "col": 0,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "toilet",
+    "col": 3,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "basin",
+    "col": 0,
+    "row": 3,
+    "rot": 3
+   },
+   {
+    "kind": "kitchen-run",
+    "col": 19,
+    "row": 13,
+    "rot": 1
+   },
+   {
+    "kind": "washer",
+    "col": 19,
+    "row": 19,
+    "rot": 1
+   }
+  ]
+ },
+ "three_bedroom": {
+  "rooms": [
+   {
+    "id": "hall",
+    "label": "Entrance hall",
+    "icon": "🚪",
+    "desc": "Front door, console and the way to every room",
+    "bounds": {
+     "minX": -5,
+     "maxX": 5,
+     "minZ": -1,
+     "maxZ": 1
+    },
+    "center": [
+     -3.5,
+     0,
+     0
+    ]
+   },
+   {
+    "id": "master",
+    "label": "Master suite",
+    "icon": "👑",
+    "desc": "King bed, walk-in wardrobe and en-suite",
+    "bounds": {
+     "minX": 0,
+     "maxX": 5,
+     "minZ": -5,
+     "maxZ": -1
+    },
+    "center": [
+     1.5,
+     0,
+     -3
+    ]
+   },
+   {
+    "id": "bed2",
+    "label": "Bedroom 2",
+    "icon": "🛏️",
+    "desc": "Double bed, desk and en-suite",
+    "bounds": {
+     "minX": -3,
+     "maxX": 0,
+     "minZ": -5,
+     "maxZ": -1
+    },
+    "center": [
+     -1.5,
+     0,
+     -3.0
+    ]
+   },
+   {
+    "id": "bed2_bath",
+    "label": "Bedroom 2 en-suite",
+    "icon": "🚿",
+    "desc": "Shower, basin, toilet",
+    "bounds": {
+     "minX": -5,
+     "maxX": -3,
+     "minZ": -5,
+     "maxZ": -3
+    },
+    "center": [
+     -4.0,
+     0,
+     -4.0
+    ]
+   },
+   {
+    "id": "master_bath",
+    "label": "Master en-suite",
+    "icon": "🛁",
+    "desc": "Rain shower, double vanity, toilet",
+    "bounds": {
+     "minX": 3,
+     "maxX": 5,
+     "minZ": -5,
+     "maxZ": -2.5
+    },
+    "center": [
+     4.0,
+     0,
+     -3.75
+    ]
+   },
+   {
+    "id": "guest_wc",
+    "label": "Family bathroom",
+    "icon": "🚽",
+    "desc": "Off the hall, for visitors",
+    "bounds": {
+     "minX": -5,
+     "maxX": -3,
+     "minZ": -3,
+     "maxZ": -1
+    },
+    "center": [
+     -4.0,
+     0,
+     -2.0
+    ]
+   },
+   {
+    "id": "living",
+    "label": "Living & dining",
+    "icon": "🛋️",
+    "desc": "Sofa, TV, dining table and the balcony door",
+    "bounds": {
+     "minX": -5,
+     "maxX": 2,
+     "minZ": 1,
+     "maxZ": 5
+    },
+    "center": [
+     -1.5,
+     0,
+     3
+    ]
+   },
+   {
+    "id": "balcony",
+    "label": "Balcony",
+    "icon": "🌇",
+    "desc": "Glass balustrade over the city",
+    "bounds": {
+     "minX": -2.5,
+     "maxX": 2.5,
+     "minZ": 5,
+     "maxZ": 6.5
+    },
+    "center": [
+     0.0,
+     0,
+     5.75
+    ]
+   },
+   {
+    "id": "bed3",
+    "label": "Bedroom 3",
+    "icon": "🛏️",
+    "desc": "Daybed for a child or guest",
+    "bounds": {
+     "minX": 2,
+     "maxX": 5,
+     "minZ": 1,
+     "maxZ": 3
+    },
+    "center": [
+     3.5,
+     0,
+     2.0
+    ]
+   },
+   {
+    "id": "kitchen",
+    "label": "Kitchen & laundry",
+    "icon": "🍳",
+    "desc": "Closed kitchen off the dining room",
+    "bounds": {
+     "minX": 2,
+     "maxX": 5,
+     "minZ": 3,
+     "maxZ": 5
+    },
+    "center": [
+     3.5,
+     0,
+     4.0
+    ]
+   }
+  ],
+  "walls": [
+   {
+    "a": [
+     -5,
+     -1
+    ],
+    "b": [
+     -3,
+     -1
+    ],
+    "door": [
+     0.4,
+     1.4
+    ]
+   },
+   {
+    "a": [
+     -3,
+     -1
+    ],
+    "b": [
+     0,
+     -1
+    ],
+    "door": [
+     1,
+     2
+    ]
+   },
+   {
+    "a": [
+     0,
+     -1
+    ],
+    "b": [
+     5,
+     -1
+    ],
+    "door": [
+     0.5,
+     1.5
+    ]
+   },
+   {
+    "a": [
+     -3,
+     -3
+    ],
+    "b": [
+     -3,
+     -1
+    ]
+   },
+   {
+    "a": [
+     -5,
+     -3
+    ],
+    "b": [
+     -3,
+     -3
+    ]
+   },
+   {
+    "a": [
+     0,
+     -5
+    ],
+    "b": [
+     0,
+     -1
+    ]
+   },
+   {
+    "a": [
+     3,
+     -5
+    ],
+    "b": [
+     3,
+     -2.5
+    ]
+   },
+   {
+    "a": [
+     3,
+     -2.5
+    ],
+    "b": [
+     5,
+     -2.5
+    ],
+    "door": [
+     0.3,
+     1.2
+    ]
+   },
+   {
+    "a": [
+     -5,
+     1
+    ],
+    "b": [
+     2,
+     1
+    ],
+    "door": [
+     1,
+     4
+    ]
+   },
+   {
+    "a": [
+     -3,
+     -5
+    ],
+    "b": [
+     -3,
+     -3
+    ],
+    "door": [
+     0.6,
+     1.4
+    ]
+   },
+   {
+    "a": [
+     2,
+     1
+    ],
+    "b": [
+     5,
+     1
+    ],
+    "door": [
+     1,
+     2
+    ]
+   },
+   {
+    "a": [
+     2,
+     1
+    ],
+    "b": [
+     2,
+     3
+    ]
+   },
+   {
+    "a": [
+     2,
+     3
+    ],
+    "b": [
+     2,
+     5
+    ],
+    "door": [
+     0.6,
+     1.6
+    ]
+   },
+   {
+    "a": [
+     2,
+     3
+    ],
+    "b": [
+     5,
+     3
+    ]
+   }
+  ],
+  "furniture": [
+   {
+    "id": "hall_console",
+    "name": "Marble console",
+    "icon": "🕰️",
+    "size": [
+     3,
+     1
+    ],
+    "col": 14,
+    "row": 8,
+    "rot": 0,
+    "visual": "console"
+   },
+   {
+    "id": "hall_runner",
+    "name": "Moroccan runner",
+    "icon": "〰️",
+    "size": [
+     2,
+     6
+    ],
+    "col": 3,
+    "row": 9,
+    "rot": 1,
+    "visual": "rug-runner"
+   },
+   {
+    "id": "hall_palm",
+    "name": "Indoor date palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 19,
+    "row": 8,
+    "rot": 0,
+    "visual": "palm"
+   },
+   {
+    "id": "master_bed",
+    "name": "King bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 11,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed"
+   },
+   {
+    "id": "master_side_l",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 10,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb"
+   },
+   {
+    "id": "master_side_r",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 15,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb"
+   },
+   {
+    "id": "master_wardrobe",
+    "name": "Walk-in wardrobe",
+    "icon": "👔",
+    "size": [
+     4,
+     1
+    ],
+    "col": 10,
+    "row": 3,
+    "rot": 3,
+    "visual": "wardrobe"
+   },
+   {
+    "id": "master_vanity",
+    "name": "Hollywood vanity",
+    "icon": "💄",
+    "size": [
+     2,
+     1
+    ],
+    "col": 16,
+    "row": 7,
+    "rot": 2,
+    "visual": "vanity"
+   },
+   {
+    "id": "master_light",
+    "name": "Gold ring chandelier",
+    "icon": "⭕",
+    "size": [
+     2,
+     2
+    ],
+    "col": 12,
+    "row": 1,
+    "rot": 0,
+    "visual": "chandelier-ring"
+   },
+   {
+    "id": "living_sofa",
+    "name": "Sectional sofa",
+    "icon": "🛋️",
+    "size": [
+     4,
+     2
+    ],
+    "col": 3,
+    "row": 13,
+    "rot": 0,
+    "model": "/models/furniture/couch.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "living_table",
+    "name": "Coffee table",
+    "icon": "☕",
+    "size": [
+     3,
+     2
+    ],
+    "col": 3,
+    "row": 15,
+    "rot": 0,
+    "model": "/models/furniture/coffee-table.glb"
+   },
+   {
+    "id": "living_tv",
+    "name": "4K smart TV",
+    "icon": "📺",
+    "size": [
+     4,
+     1
+    ],
+    "col": 3,
+    "row": 19,
+    "rot": 2,
+    "model": "/models/furniture/tv.glb"
+   },
+   {
+    "id": "living_armchair",
+    "name": "Velvet armchair",
+    "icon": "💚",
+    "size": [
+     2,
+     2
+    ],
+    "col": 0,
+    "row": 14,
+    "rot": 3,
+    "visual": "armchair",
+    "interaction": "chair"
+   },
+   {
+    "id": "living_rug",
+    "name": "Hand-knotted silk rug",
+    "icon": "🟡",
+    "size": [
+     5,
+     5
+    ],
+    "col": 2,
+    "row": 13,
+    "rot": 0,
+    "visual": "rug-round"
+   },
+   {
+    "id": "living_chandelier",
+    "name": "Crystal chandelier",
+    "icon": "💎",
+    "size": [
+     2,
+     2
+    ],
+    "col": 4,
+    "row": 15,
+    "rot": 0,
+    "visual": "chandelier-crystal"
+   },
+   {
+    "id": "living_lamp",
+    "name": "Brass tripod lamp",
+    "icon": "🪔",
+    "size": [
+     1,
+     1
+    ],
+    "col": 7,
+    "row": 13,
+    "rot": 0,
+    "visual": "tripod-lamp"
+   },
+   {
+    "id": "living_palm",
+    "name": "Indoor date palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 0,
+    "row": 19,
+    "rot": 0,
+    "visual": "palm"
+   },
+   {
+    "id": "dining",
+    "name": "Marble dining for six",
+    "icon": "🍽️",
+    "size": [
+     4,
+     3
+    ],
+    "col": 9,
+    "row": 13,
+    "rot": 0,
+    "visual": "dining-set"
+   },
+   {
+    "id": "dining_light",
+    "name": "Pendant trio",
+    "icon": "🔮",
+    "size": [
+     3,
+     1
+    ],
+    "col": 9,
+    "row": 14,
+    "rot": 0,
+    "visual": "pendant-trio"
+   },
+   {
+    "id": "bed2_bed",
+    "name": "Double bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 5,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed"
+   },
+   {
+    "id": "bed2_side",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 9,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb"
+   },
+   {
+    "id": "bed2_desk",
+    "name": "Desk",
+    "icon": "🖥️",
+    "size": [
+     3,
+     2
+    ],
+    "col": 8,
+    "row": 5,
+    "rot": 1,
+    "model": "/models/furniture/desk.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "bed3_bed",
+    "name": "Daybed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     2
+    ],
+    "col": 16,
+    "row": 14,
+    "rot": 0,
+    "model": "/models/furniture/couch.glb",
+    "interaction": "bed"
+   },
+   {
+    "id": "kitchen_fridge",
+    "name": "Fridge",
+    "icon": "🧊",
+    "size": [
+     2,
+     2
+    ],
+    "col": 18,
+    "row": 16,
+    "rot": 0,
+    "model": "/models/furniture/fridge.glb",
+    "interaction": "cooler"
+   }
+  ],
+  "fixtures": [
+   {
+    "kind": "basin-double",
+    "col": 16,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "shower",
+    "col": 18,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "toilet",
+    "col": 19,
+    "row": 3,
+    "rot": 1
+   },
+   {
+    "kind": "shower",
+    "col": 0,
+    "row": 4,
+    "rot": 0
+   },
+   {
+    "kind": "toilet",
+    "col": 3,
+    "row": 4,
+    "rot": 0
+   },
+   {
+    "kind": "basin",
+    "col": 3,
+    "row": 6,
+    "rot": 1
+   },
+   {
+    "kind": "shower",
+    "col": 0,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "toilet",
+    "col": 3,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "basin",
+    "col": 0,
+    "row": 3,
+    "rot": 3
+   },
+   {
+    "kind": "kitchen-run",
+    "col": 15,
+    "row": 19,
+    "rot": 2
+   },
+   {
+    "kind": "washer",
+    "col": 14,
+    "row": 16,
+    "rot": 0
+   }
+  ]
+ },
+ "studio": {
+  "rooms": [
+   {
+    "id": "sleep",
+    "label": "Bedroom area",
+    "icon": "🛏️",
+    "desc": "Bed, wardrobe and nightstands",
+    "bounds": {
+     "minX": -5,
+     "maxX": -1,
+     "minZ": -5,
+     "maxZ": 0
+    },
+    "center": [
+     -3.0,
+     0,
+     -2.5
+    ]
+   },
+   {
+    "id": "kitchen",
+    "label": "Kitchenette",
+    "icon": "🍳",
+    "desc": "Hob, sink, fridge and breakfast island",
+    "bounds": {
+     "minX": -1,
+     "maxX": 2.5,
+     "minZ": -5,
+     "maxZ": 0
+    },
+    "center": [
+     0.75,
+     0,
+     -2.5
+    ]
+   },
+   {
+    "id": "bath",
+    "label": "Bathroom",
+    "icon": "🚿",
+    "desc": "Shower, basin, toilet and washer",
+    "bounds": {
+     "minX": 2.5,
+     "maxX": 5,
+     "minZ": -5,
+     "maxZ": -2
+    },
+    "center": [
+     3.75,
+     0,
+     -3.5
+    ]
+   },
+   {
+    "id": "living",
+    "label": "Living area",
+    "icon": "🛋️",
+    "desc": "Sofa and TV",
+    "bounds": {
+     "minX": -5,
+     "maxX": 5,
+     "minZ": 0,
+     "maxZ": 5
+    },
+    "center": [
+     -1,
+     0,
+     2.5
+    ]
+   }
+  ],
+  "walls": [
+   {
+    "a": [
+     2.5,
+     -5
+    ],
+    "b": [
+     2.5,
+     -2
+    ]
+   },
+   {
+    "a": [
+     2.5,
+     -2
+    ],
+    "b": [
+     5,
+     -2
+    ],
+    "door": [
+     0.5,
+     1.5
+    ]
+   }
+  ],
+  "furniture": [
+   {
+    "id": "st_bed",
+    "name": "Queen bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 1,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed"
+   },
+   {
+    "id": "st_side",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 5,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb"
+   },
+   {
+    "id": "st_wardrobe",
+    "name": "Wardrobe",
+    "icon": "👔",
+    "size": [
+     4,
+     1
+    ],
+    "col": 0,
+    "row": 5,
+    "rot": 3,
+    "visual": "wardrobe"
+   },
+   {
+    "id": "st_light",
+    "name": "Gold ring chandelier",
+    "icon": "⭕",
+    "size": [
+     2,
+     2
+    ],
+    "col": 2,
+    "row": 1,
+    "rot": 0,
+    "visual": "chandelier-ring"
+   },
+   {
+    "id": "st_island",
+    "name": "Breakfast island",
+    "icon": "🧑‍🍳",
+    "size": [
+     4,
+     2
+    ],
+    "col": 9,
+    "row": 3,
+    "rot": 0,
+    "visual": "kitchen-island"
+   },
+   {
+    "id": "st_sofa",
+    "name": "Sofa",
+    "icon": "🛋️",
+    "size": [
+     4,
+     2
+    ],
+    "col": 6,
+    "row": 12,
+    "rot": 0,
+    "model": "/models/furniture/couch.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "st_table",
+    "name": "Coffee table",
+    "icon": "☕",
+    "size": [
+     3,
+     2
+    ],
+    "col": 6,
+    "row": 14,
+    "rot": 0,
+    "model": "/models/furniture/coffee-table.glb"
+   },
+   {
+    "id": "st_tv",
+    "name": "Smart TV",
+    "icon": "📺",
+    "size": [
+     4,
+     1
+    ],
+    "col": 6,
+    "row": 19,
+    "rot": 2,
+    "model": "/models/furniture/tv.glb"
+   },
+   {
+    "id": "st_rug",
+    "name": "Silk rug",
+    "icon": "🟡",
+    "size": [
+     5,
+     5
+    ],
+    "col": 5,
+    "row": 12,
+    "rot": 0,
+    "visual": "rug-round"
+   },
+   {
+    "id": "st_chandelier",
+    "name": "Crystal chandelier",
+    "icon": "💎",
+    "size": [
+     2,
+     2
+    ],
+    "col": 7,
+    "row": 14,
+    "rot": 0,
+    "visual": "chandelier-crystal"
+   },
+   {
+    "id": "st_armchair",
+    "name": "Velvet armchair",
+    "icon": "💚",
+    "size": [
+     2,
+     2
+    ],
+    "col": 2,
+    "row": 13,
+    "rot": 3,
+    "visual": "armchair",
+    "interaction": "chair"
+   },
+   {
+    "id": "st_palm",
+    "name": "Indoor date palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 0,
+    "row": 19,
+    "rot": 0,
+    "visual": "palm"
+   },
+   {
+    "id": "st_vase",
+    "name": "Pampas vase",
+    "icon": "🌾",
+    "size": [
+     1,
+     1
+    ],
+    "col": 19,
+    "row": 12,
+    "rot": 0,
+    "visual": "vase"
+   },
+   {
+    "id": "st_fridge",
+    "name": "Fridge",
+    "icon": "🧊",
+    "size": [
+     2,
+     2
+    ],
+    "col": 13,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/fridge.glb",
+    "interaction": "cooler"
+   }
+  ],
+  "fixtures": [
+   {
+    "kind": "kitchen-run",
+    "col": 9,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "shower",
+    "col": 18,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "toilet",
+    "col": 15,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "basin",
+    "col": 16,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "washer",
+    "col": 19,
+    "row": 5,
+    "rot": 1
+   }
+  ]
+ },
+ "bed_space": {
+  "rooms": [
+   {
+    "id": "sleep",
+    "label": "Bunk room",
+    "icon": "🛏️",
+    "desc": "Bed, wardrobe and nightstands",
+    "bounds": {
+     "minX": -5,
+     "maxX": -1,
+     "minZ": -5,
+     "maxZ": 0
+    },
+    "center": [
+     -3.0,
+     0,
+     -2.5
+    ]
+   },
+   {
+    "id": "kitchen",
+    "label": "Kitchenette",
+    "icon": "🍳",
+    "desc": "Hob, sink, fridge and breakfast island",
+    "bounds": {
+     "minX": -1,
+     "maxX": 2.5,
+     "minZ": -5,
+     "maxZ": 0
+    },
+    "center": [
+     0.75,
+     0,
+     -2.5
+    ]
+   },
+   {
+    "id": "bath",
+    "label": "Bathroom",
+    "icon": "🚿",
+    "desc": "Shower, basin, toilet and washer",
+    "bounds": {
+     "minX": 2.5,
+     "maxX": 5,
+     "minZ": -5,
+     "maxZ": -2
+    },
+    "center": [
+     3.75,
+     0,
+     -3.5
+    ]
+   },
+   {
+    "id": "living",
+    "label": "Living area",
+    "icon": "🛋️",
+    "desc": "Sofa and TV",
+    "bounds": {
+     "minX": -5,
+     "maxX": 5,
+     "minZ": 0,
+     "maxZ": 5
+    },
+    "center": [
+     -1,
+     0,
+     2.5
+    ]
+   }
+  ],
+  "walls": [
+   {
+    "a": [
+     2.5,
+     -5
+    ],
+    "b": [
+     2.5,
+     -2
+    ]
+   },
+   {
+    "a": [
+     2.5,
+     -2
+    ],
+    "b": [
+     5,
+     -2
+    ],
+    "door": [
+     0.5,
+     1.5
+    ]
+   }
+  ],
+  "furniture": [
+   {
+    "id": "bs_bunk1",
+    "name": "Bunk bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 1,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed"
+   },
+   {
+    "id": "bs_bunk2",
+    "name": "Bunk bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 1,
+    "row": 13,
+    "rot": 0,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed"
+   },
+   {
+    "id": "bs_locker1",
+    "name": "Suitcase locker",
+    "icon": "🧳",
+    "size": [
+     1,
+     1
+    ],
+    "col": 5,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb"
+   },
+   {
+    "id": "bs_locker2",
+    "name": "Suitcase locker",
+    "icon": "🧳",
+    "size": [
+     1,
+     1
+    ],
+    "col": 5,
+    "row": 13,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb"
+   },
+   {
+    "id": "bs_table",
+    "name": "Shared table",
+    "icon": "🍽️",
+    "size": [
+     3,
+     2
+    ],
+    "col": 9,
+    "row": 12,
+    "rot": 0,
+    "model": "/models/furniture/coffee-table.glb"
+   },
+   {
+    "id": "bs_stool",
+    "name": "Stool",
+    "icon": "🪑",
+    "size": [
+     2,
+     2
+    ],
+    "col": 13,
+    "row": 12,
+    "rot": 0,
+    "model": "/models/furniture/chair.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "bs_light",
+    "name": "Ceiling light",
+    "icon": "⭕",
+    "size": [
+     2,
+     2
+    ],
+    "col": 9,
+    "row": 14,
+    "rot": 0,
+    "visual": "chandelier-ring"
+   },
+   {
+    "id": "bs_palm",
+    "name": "Plant",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 19,
+    "row": 19,
+    "rot": 0,
+    "visual": "palm"
+   },
+   {
+    "id": "be_fridge",
+    "name": "Fridge",
+    "icon": "🧊",
+    "size": [
+     2,
+     2
+    ],
+    "col": 13,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/fridge.glb",
+    "interaction": "cooler"
+   }
+  ],
+  "fixtures": [
+   {
+    "kind": "kitchen-run",
+    "col": 9,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "shower",
+    "col": 18,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "toilet",
+    "col": 15,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "basin",
+    "col": 16,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "washer",
+    "col": 19,
+    "row": 5,
+    "rot": 1
+   }
+  ]
+ },
+ "duplex": {
+  "levels": [
+   {
+    "label": "Downstairs",
+    "icon": "⬇️",
+    "rooms": [
+     {
+      "id": "hall",
+      "label": "Entrance hall",
+      "icon": "🚪",
+      "desc": "Front door, console and the way to every room",
+      "bounds": {
+       "minX": -5,
+       "maxX": 5,
+       "minZ": -1,
+       "maxZ": 1
+      },
+      "center": [
+       -3.5,
+       0,
+       0
+      ]
+     },
+     {
+      "id": "kitchen",
+      "label": "Kitchen & laundry",
+      "icon": "🍳",
+      "desc": "Closed kitchen with island and laundry",
+      "bounds": {
+       "minX": -5,
+       "maxX": -1,
+       "minZ": -5,
+       "maxZ": -1
+      },
+      "center": [
+       -3.0,
+       0,
+       -3.0
+      ]
+     },
+     {
+      "id": "dining",
+      "label": "Dining room",
+      "icon": "🍽️",
+      "desc": "Dining table for six",
+      "bounds": {
+       "minX": -1,
+       "maxX": 3.5,
+       "minZ": -5,
+       "maxZ": -1
+      },
+      "center": [
+       1.25,
+       0,
+       -3.0
+      ]
+     },
+     {
+      "id": "guest_wc",
+      "label": "Guest toilet",
+      "icon": "🚽",
+      "desc": "Off the dining room",
+      "bounds": {
+       "minX": 3.5,
+       "maxX": 5,
+       "minZ": -5,
+       "maxZ": -3
+      },
+      "center": [
+       4.25,
+       0,
+       -4.0
+      ]
+     },
+     {
+      "id": "living",
+      "label": "Living room & majlis",
+      "icon": "🛋️",
+      "desc": "Sofas, majlis and the TV wall",
+      "bounds": {
+       "minX": -5,
+       "maxX": 5,
+       "minZ": 1,
+       "maxZ": 5
+      },
+      "center": [
+       0,
+       0,
+       3
+      ]
+     }
+    ],
+    "walls": [
+     {
+      "a": [
+       -5,
+       -1
+      ],
+      "b": [
+       -1,
+       -1
+      ],
+      "door": [
+       2,
+       3
+      ]
+     },
+     {
+      "a": [
+       -1,
+       -5
+      ],
+      "b": [
+       -1,
+       -1
+      ]
+     },
+     {
+      "a": [
+       3.5,
+       -5
+      ],
+      "b": [
+       3.5,
+       -3
+      ],
+      "door": [
+       0.6,
+       1.4
+      ]
+     },
+     {
+      "a": [
+       3.5,
+       -3
+      ],
+      "b": [
+       5,
+       -3
+      ]
+     }
+    ]
+   },
+   {
+    "label": "Upstairs",
+    "icon": "⬆️",
+    "rooms": [
+     {
+      "id": "landing",
+      "label": "Landing",
+      "icon": "🪜",
+      "desc": "Top of the stairs",
+      "bounds": {
+       "minX": -5,
+       "maxX": 5,
+       "minZ": -1,
+       "maxZ": 1
+      },
+      "center": [
+       4,
+       0,
+       0
+      ]
+     },
+     {
+      "id": "family_bath",
+      "label": "Family bathroom",
+      "icon": "🛁",
+      "desc": "Shower and double vanity",
+      "bounds": {
+       "minX": -5,
+       "maxX": -2,
+       "minZ": -5,
+       "maxZ": -1
+      },
+      "center": [
+       -3.5,
+       0,
+       -3.0
+      ]
+     },
+     {
+      "id": "bed3",
+      "label": "Study",
+      "icon": "📚",
+      "desc": "Off the landing",
+      "bounds": {
+       "minX": -2,
+       "maxX": 3.5,
+       "minZ": -5,
+       "maxZ": -1
+      },
+      "center": [
+       0.75,
+       0,
+       -3.0
+      ]
+     },
+     {
+      "id": "master",
+      "label": "Master suite",
+      "icon": "👑",
+      "desc": "King bed, walk-in wardrobe and en-suite",
+      "bounds": {
+       "minX": -5,
+       "maxX": 0,
+       "minZ": 1,
+       "maxZ": 5
+      },
+      "center": [
+       -2,
+       0,
+       2.5
+      ]
+     },
+     {
+      "id": "master_bath",
+      "label": "Master en-suite",
+      "icon": "🛁",
+      "desc": "Shower, vanity, toilet",
+      "bounds": {
+       "minX": -5,
+       "maxX": -3,
+       "minZ": 3,
+       "maxZ": 5
+      },
+      "center": [
+       -4.0,
+       0,
+       4.0
+      ]
+     },
+     {
+      "id": "bed2",
+      "label": "Bedroom 2",
+      "icon": "🛏️",
+      "desc": "Double bed and desk",
+      "bounds": {
+       "minX": 0,
+       "maxX": 5,
+       "minZ": 1,
+       "maxZ": 5
+      },
+      "center": [
+       2.5,
+       0,
+       3.0
+      ]
+     }
+    ],
+    "walls": [
+     {
+      "a": [
+       -5,
+       -1
+      ],
+      "b": [
+       -2,
+       -1
+      ],
+      "door": [
+       1,
+       2
+      ]
+     },
+     {
+      "a": [
+       -2,
+       -1
+      ],
+      "b": [
+       3.5,
+       -1
+      ],
+      "door": [
+       2,
+       3
+      ]
+     },
+     {
+      "a": [
+       -2,
+       -5
+      ],
+      "b": [
+       -2,
+       -1
+      ]
+     },
+     {
+      "a": [
+       3.5,
+       -5
+      ],
+      "b": [
+       3.5,
+       -1
+      ]
+     },
+     {
+      "a": [
+       -5,
+       1
+      ],
+      "b": [
+       0,
+       1
+      ],
+      "door": [
+       3,
+       4
+      ]
+     },
+     {
+      "a": [
+       0,
+       1
+      ],
+      "b": [
+       5,
+       1
+      ],
+      "door": [
+       1,
+       2
+      ]
+     },
+     {
+      "a": [
+       0,
+       1
+      ],
+      "b": [
+       0,
+       5
+      ]
+     },
+     {
+      "a": [
+       -5,
+       3
+      ],
+      "b": [
+       -3,
+       3
+      ],
+      "door": [
+       0.5,
+       1.5
+      ]
+     },
+     {
+      "a": [
+       -3,
+       3
+      ],
+      "b": [
+       -3,
+       5
+      ]
+     }
+    ]
+   }
+  ],
+  "furniture": [
+   {
+    "id": "stairs",
+    "name": "Staircase",
+    "icon": "🪜",
+    "size": [
+     2,
+     5
+    ],
+    "col": 18,
+    "row": 4,
+    "rot": 0,
+    "visual": "staircase",
+    "interaction": "stairs",
+    "fixed": true
+   },
+   {
+    "id": "stairwell",
+    "name": "Stairs down",
+    "icon": "🪜",
+    "size": [
+     2,
+     5
+    ],
+    "col": 18,
+    "row": 4,
+    "rot": 0,
+    "visual": "stairwell",
+    "interaction": "stairs",
+    "level": 1,
+    "fixed": true
+   },
+   {
+    "id": "hall_console",
+    "name": "Marble console",
+    "icon": "🕰️",
+    "size": [
+     3,
+     1
+    ],
+    "col": 10,
+    "row": 8,
+    "rot": 0,
+    "visual": "console"
+   },
+   {
+    "id": "kitchen_fridge",
+    "name": "Fridge",
+    "icon": "🧊",
+    "size": [
+     2,
+     2
+    ],
+    "col": 5,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/fridge.glb",
+    "interaction": "cooler"
+   },
+   {
+    "id": "kitchen_island",
+    "name": "Marble island",
+    "icon": "🧑‍🍳",
+    "size": [
+     4,
+     2
+    ],
+    "col": 1,
+    "row": 3,
+    "rot": 0,
+    "visual": "kitchen-island"
+   },
+   {
+    "id": "dining",
+    "name": "Dining for six",
+    "icon": "🍽️",
+    "size": [
+     4,
+     3
+    ],
+    "col": 9,
+    "row": 2,
+    "rot": 0,
+    "visual": "dining-set"
+   },
+   {
+    "id": "dining_light",
+    "name": "Pendant trio",
+    "icon": "🔮",
+    "size": [
+     3,
+     1
+    ],
+    "col": 9,
+    "row": 3,
+    "rot": 0,
+    "visual": "pendant-trio"
+   },
+   {
+    "id": "dining_bar",
+    "name": "Espresso & gahwa bar",
+    "icon": "☕",
+    "size": [
+     2,
+     1
+    ],
+    "col": 13,
+    "row": 0,
+    "rot": 0,
+    "visual": "coffee-bar",
+    "interaction": "cooler"
+   },
+   {
+    "id": "living_sofa",
+    "name": "L-shaped lounge",
+    "icon": "🛋️",
+    "size": [
+     4,
+     4
+    ],
+    "col": 8,
+    "row": 13,
+    "rot": 0,
+    "model": "/models/furniture/l-couch.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "living_table",
+    "name": "Coffee table",
+    "icon": "☕",
+    "size": [
+     3,
+     2
+    ],
+    "col": 12,
+    "row": 14,
+    "rot": 0,
+    "model": "/models/furniture/coffee-table.glb"
+   },
+   {
+    "id": "living_tv",
+    "name": "OLED TV",
+    "icon": "📺",
+    "size": [
+     4,
+     1
+    ],
+    "col": 8,
+    "row": 19,
+    "rot": 2,
+    "model": "/models/furniture/tv.glb"
+   },
+   {
+    "id": "living_rug",
+    "name": "Silk rug",
+    "icon": "🟡",
+    "size": [
+     5,
+     5
+    ],
+    "col": 7,
+    "row": 13,
+    "rot": 0,
+    "visual": "rug-round"
+   },
+   {
+    "id": "living_chandelier",
+    "name": "Crystal chandelier",
+    "icon": "💎",
+    "size": [
+     2,
+     2
+    ],
+    "col": 9,
+    "row": 15,
+    "rot": 0,
+    "visual": "chandelier-crystal"
+   },
+   {
+    "id": "living_palm",
+    "name": "Indoor date palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 19,
+    "row": 19,
+    "rot": 0,
+    "visual": "palm"
+   },
+   {
+    "id": "majlis",
+    "name": "Majlis seating",
+    "icon": "🕌",
+    "size": [
+     4,
+     4
+    ],
+    "col": 1,
+    "row": 13,
+    "rot": 0,
+    "visual": "majlis",
+    "interaction": "chair"
+   },
+   {
+    "id": "master_bed",
+    "name": "King bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 5,
+    "row": 15,
+    "rot": 2,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "master_side_l",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 4,
+    "row": 19,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "master_side_r",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 9,
+    "row": 19,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "master_wardrobe",
+    "name": "Walk-in wardrobe",
+    "icon": "👔",
+    "size": [
+     4,
+     1
+    ],
+    "col": 9,
+    "row": 12,
+    "rot": 1,
+    "visual": "wardrobe",
+    "level": 1
+   },
+   {
+    "id": "master_vanity",
+    "name": "Hollywood vanity",
+    "icon": "💄",
+    "size": [
+     2,
+     1
+    ],
+    "col": 0,
+    "row": 12,
+    "rot": 0,
+    "visual": "vanity",
+    "level": 1
+   },
+   {
+    "id": "master_light",
+    "name": "Gold ring chandelier",
+    "icon": "⭕",
+    "size": [
+     2,
+     2
+    ],
+    "col": 6,
+    "row": 16,
+    "rot": 0,
+    "visual": "chandelier-ring",
+    "level": 1
+   },
+   {
+    "id": "bed2_bed",
+    "name": "Double bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 12,
+    "row": 15,
+    "rot": 2,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "bed2_side",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 11,
+    "row": 19,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "bed2_desk",
+    "name": "Desk",
+    "icon": "🖥️",
+    "size": [
+     3,
+     2
+    ],
+    "col": 18,
+    "row": 12,
+    "rot": 1,
+    "model": "/models/furniture/desk.glb",
+    "interaction": "chair",
+    "level": 1
+   },
+   {
+    "id": "landing_palm",
+    "name": "Indoor palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 18,
+    "row": 0,
+    "rot": 0,
+    "visual": "palm",
+    "level": 1
+   },
+   {
+    "id": "study_desk",
+    "name": "Executive desk",
+    "icon": "🖥️",
+    "size": [
+     3,
+     2
+    ],
+    "col": 8,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/desk.glb",
+    "interaction": "chair",
+    "level": 1
+   },
+   {
+    "id": "study_books",
+    "name": "Oak bookcase",
+    "icon": "📚",
+    "size": [
+     2,
+     1
+    ],
+    "col": 12,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/bookcase.glb",
+    "level": 1
+   }
+  ],
+  "fixtures": [
+   {
+    "kind": "kitchen-run",
+    "col": 1,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "washer",
+    "col": 0,
+    "row": 5,
+    "rot": 3
+   },
+   {
+    "kind": "toilet",
+    "col": 19,
+    "row": 0,
+    "rot": 1
+   },
+   {
+    "kind": "basin",
+    "col": 17,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "shower",
+    "col": 0,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "basin-double",
+    "col": 2,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "toilet",
+    "col": 5,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "shower",
+    "col": 0,
+    "row": 18,
+    "rot": 2,
+    "level": 1
+   },
+   {
+    "kind": "toilet",
+    "col": 3,
+    "row": 19,
+    "rot": 2,
+    "level": 1
+   },
+   {
+    "kind": "basin",
+    "col": 3,
+    "row": 17,
+    "rot": 1,
+    "level": 1
+   }
+  ]
+ },
+ "townhouse": {
+  "levels": [
+   {
+    "label": "Downstairs",
+    "icon": "⬇️",
+    "rooms": [
+     {
+      "id": "hall",
+      "label": "Entrance hall",
+      "icon": "🚪",
+      "desc": "Front door, console and the way to every room",
+      "bounds": {
+       "minX": -5,
+       "maxX": 5,
+       "minZ": -1,
+       "maxZ": 1
+      },
+      "center": [
+       -3.5,
+       0,
+       0
+      ]
+     },
+     {
+      "id": "kitchen",
+      "label": "Kitchen & laundry",
+      "icon": "🍳",
+      "desc": "Closed kitchen with island and laundry",
+      "bounds": {
+       "minX": -5,
+       "maxX": -1,
+       "minZ": -5,
+       "maxZ": -1
+      },
+      "center": [
+       -3.0,
+       0,
+       -3.0
+      ]
+     },
+     {
+      "id": "dining",
+      "label": "Dining room",
+      "icon": "🍽️",
+      "desc": "Dining table for six",
+      "bounds": {
+       "minX": -1,
+       "maxX": 3.5,
+       "minZ": -5,
+       "maxZ": -1
+      },
+      "center": [
+       1.25,
+       0,
+       -3.0
+      ]
+     },
+     {
+      "id": "guest_wc",
+      "label": "Guest toilet",
+      "icon": "🚽",
+      "desc": "Off the dining room",
+      "bounds": {
+       "minX": 3.5,
+       "maxX": 5,
+       "minZ": -5,
+       "maxZ": -3
+      },
+      "center": [
+       4.25,
+       0,
+       -4.0
+      ]
+     },
+     {
+      "id": "living",
+      "label": "Living room & majlis",
+      "icon": "🛋️",
+      "desc": "Sofas, majlis and the TV wall",
+      "bounds": {
+       "minX": -5,
+       "maxX": 5,
+       "minZ": 1,
+       "maxZ": 5
+      },
+      "center": [
+       0,
+       0,
+       3
+      ]
+     }
+    ],
+    "walls": [
+     {
+      "a": [
+       -5,
+       -1
+      ],
+      "b": [
+       -1,
+       -1
+      ],
+      "door": [
+       2,
+       3
+      ]
+     },
+     {
+      "a": [
+       -1,
+       -5
+      ],
+      "b": [
+       -1,
+       -1
+      ]
+     },
+     {
+      "a": [
+       3.5,
+       -5
+      ],
+      "b": [
+       3.5,
+       -3
+      ],
+      "door": [
+       0.6,
+       1.4
+      ]
+     },
+     {
+      "a": [
+       3.5,
+       -3
+      ],
+      "b": [
+       5,
+       -3
+      ]
+     }
+    ]
+   },
+   {
+    "label": "Upstairs",
+    "icon": "⬆️",
+    "rooms": [
+     {
+      "id": "landing",
+      "label": "Landing",
+      "icon": "🪜",
+      "desc": "Top of the stairs",
+      "bounds": {
+       "minX": -5,
+       "maxX": 5,
+       "minZ": -1,
+       "maxZ": 1
+      },
+      "center": [
+       4,
+       0,
+       0
+      ]
+     },
+     {
+      "id": "family_bath",
+      "label": "Family bathroom",
+      "icon": "🛁",
+      "desc": "Shower and double vanity",
+      "bounds": {
+       "minX": -5,
+       "maxX": -2,
+       "minZ": -5,
+       "maxZ": -1
+      },
+      "center": [
+       -3.5,
+       0,
+       -3.0
+      ]
+     },
+     {
+      "id": "bed3",
+      "label": "Bedroom 3",
+      "icon": "🛏️",
+      "desc": "Off the landing",
+      "bounds": {
+       "minX": -2,
+       "maxX": 3.5,
+       "minZ": -5,
+       "maxZ": -1
+      },
+      "center": [
+       0.75,
+       0,
+       -3.0
+      ]
+     },
+     {
+      "id": "master",
+      "label": "Master suite",
+      "icon": "👑",
+      "desc": "King bed, walk-in wardrobe and en-suite",
+      "bounds": {
+       "minX": -5,
+       "maxX": 0,
+       "minZ": 1,
+       "maxZ": 5
+      },
+      "center": [
+       -2,
+       0,
+       2.5
+      ]
+     },
+     {
+      "id": "master_bath",
+      "label": "Master en-suite",
+      "icon": "🛁",
+      "desc": "Shower, vanity, toilet",
+      "bounds": {
+       "minX": -5,
+       "maxX": -3,
+       "minZ": 3,
+       "maxZ": 5
+      },
+      "center": [
+       -4.0,
+       0,
+       4.0
+      ]
+     },
+     {
+      "id": "bed2",
+      "label": "Bedroom 2",
+      "icon": "🛏️",
+      "desc": "Double bed and desk",
+      "bounds": {
+       "minX": 0,
+       "maxX": 5,
+       "minZ": 1,
+       "maxZ": 5
+      },
+      "center": [
+       2.5,
+       0,
+       3.0
+      ]
+     }
+    ],
+    "walls": [
+     {
+      "a": [
+       -5,
+       -1
+      ],
+      "b": [
+       -2,
+       -1
+      ],
+      "door": [
+       1,
+       2
+      ]
+     },
+     {
+      "a": [
+       -2,
+       -1
+      ],
+      "b": [
+       3.5,
+       -1
+      ],
+      "door": [
+       2,
+       3
+      ]
+     },
+     {
+      "a": [
+       -2,
+       -5
+      ],
+      "b": [
+       -2,
+       -1
+      ]
+     },
+     {
+      "a": [
+       3.5,
+       -5
+      ],
+      "b": [
+       3.5,
+       -1
+      ]
+     },
+     {
+      "a": [
+       -5,
+       1
+      ],
+      "b": [
+       0,
+       1
+      ],
+      "door": [
+       3,
+       4
+      ]
+     },
+     {
+      "a": [
+       0,
+       1
+      ],
+      "b": [
+       5,
+       1
+      ],
+      "door": [
+       1,
+       2
+      ]
+     },
+     {
+      "a": [
+       0,
+       1
+      ],
+      "b": [
+       0,
+       5
+      ]
+     },
+     {
+      "a": [
+       -5,
+       3
+      ],
+      "b": [
+       -3,
+       3
+      ],
+      "door": [
+       0.5,
+       1.5
+      ]
+     },
+     {
+      "a": [
+       -3,
+       3
+      ],
+      "b": [
+       -3,
+       5
+      ]
+     }
+    ]
+   }
+  ],
+  "furniture": [
+   {
+    "id": "stairs",
+    "name": "Staircase",
+    "icon": "🪜",
+    "size": [
+     2,
+     5
+    ],
+    "col": 18,
+    "row": 4,
+    "rot": 0,
+    "visual": "staircase",
+    "interaction": "stairs",
+    "fixed": true
+   },
+   {
+    "id": "stairwell",
+    "name": "Stairs down",
+    "icon": "🪜",
+    "size": [
+     2,
+     5
+    ],
+    "col": 18,
+    "row": 4,
+    "rot": 0,
+    "visual": "stairwell",
+    "interaction": "stairs",
+    "level": 1,
+    "fixed": true
+   },
+   {
+    "id": "hall_console",
+    "name": "Marble console",
+    "icon": "🕰️",
+    "size": [
+     3,
+     1
+    ],
+    "col": 10,
+    "row": 8,
+    "rot": 0,
+    "visual": "console"
+   },
+   {
+    "id": "kitchen_fridge",
+    "name": "Fridge",
+    "icon": "🧊",
+    "size": [
+     2,
+     2
+    ],
+    "col": 5,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/fridge.glb",
+    "interaction": "cooler"
+   },
+   {
+    "id": "kitchen_island",
+    "name": "Marble island",
+    "icon": "🧑‍🍳",
+    "size": [
+     4,
+     2
+    ],
+    "col": 1,
+    "row": 3,
+    "rot": 0,
+    "visual": "kitchen-island"
+   },
+   {
+    "id": "dining",
+    "name": "Dining for six",
+    "icon": "🍽️",
+    "size": [
+     4,
+     3
+    ],
+    "col": 9,
+    "row": 2,
+    "rot": 0,
+    "visual": "dining-set"
+   },
+   {
+    "id": "dining_light",
+    "name": "Pendant trio",
+    "icon": "🔮",
+    "size": [
+     3,
+     1
+    ],
+    "col": 9,
+    "row": 3,
+    "rot": 0,
+    "visual": "pendant-trio"
+   },
+   {
+    "id": "dining_bar",
+    "name": "Espresso & gahwa bar",
+    "icon": "☕",
+    "size": [
+     2,
+     1
+    ],
+    "col": 13,
+    "row": 0,
+    "rot": 0,
+    "visual": "coffee-bar",
+    "interaction": "cooler"
+   },
+   {
+    "id": "living_sofa",
+    "name": "L-shaped lounge",
+    "icon": "🛋️",
+    "size": [
+     4,
+     4
+    ],
+    "col": 8,
+    "row": 13,
+    "rot": 0,
+    "model": "/models/furniture/l-couch.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "living_table",
+    "name": "Coffee table",
+    "icon": "☕",
+    "size": [
+     3,
+     2
+    ],
+    "col": 12,
+    "row": 14,
+    "rot": 0,
+    "model": "/models/furniture/coffee-table.glb"
+   },
+   {
+    "id": "living_tv",
+    "name": "OLED TV",
+    "icon": "📺",
+    "size": [
+     4,
+     1
+    ],
+    "col": 8,
+    "row": 19,
+    "rot": 2,
+    "model": "/models/furniture/tv.glb"
+   },
+   {
+    "id": "living_rug",
+    "name": "Silk rug",
+    "icon": "🟡",
+    "size": [
+     5,
+     5
+    ],
+    "col": 7,
+    "row": 13,
+    "rot": 0,
+    "visual": "rug-round"
+   },
+   {
+    "id": "living_chandelier",
+    "name": "Crystal chandelier",
+    "icon": "💎",
+    "size": [
+     2,
+     2
+    ],
+    "col": 9,
+    "row": 15,
+    "rot": 0,
+    "visual": "chandelier-crystal"
+   },
+   {
+    "id": "living_palm",
+    "name": "Indoor date palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 19,
+    "row": 19,
+    "rot": 0,
+    "visual": "palm"
+   },
+   {
+    "id": "majlis",
+    "name": "Majlis seating",
+    "icon": "🕌",
+    "size": [
+     4,
+     4
+    ],
+    "col": 1,
+    "row": 13,
+    "rot": 0,
+    "visual": "majlis",
+    "interaction": "chair"
+   },
+   {
+    "id": "master_bed",
+    "name": "King bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 5,
+    "row": 15,
+    "rot": 2,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "master_side_l",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 4,
+    "row": 19,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "master_side_r",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 9,
+    "row": 19,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "master_wardrobe",
+    "name": "Walk-in wardrobe",
+    "icon": "👔",
+    "size": [
+     4,
+     1
+    ],
+    "col": 9,
+    "row": 12,
+    "rot": 1,
+    "visual": "wardrobe",
+    "level": 1
+   },
+   {
+    "id": "master_vanity",
+    "name": "Hollywood vanity",
+    "icon": "💄",
+    "size": [
+     2,
+     1
+    ],
+    "col": 0,
+    "row": 12,
+    "rot": 0,
+    "visual": "vanity",
+    "level": 1
+   },
+   {
+    "id": "master_light",
+    "name": "Gold ring chandelier",
+    "icon": "⭕",
+    "size": [
+     2,
+     2
+    ],
+    "col": 6,
+    "row": 16,
+    "rot": 0,
+    "visual": "chandelier-ring",
+    "level": 1
+   },
+   {
+    "id": "bed2_bed",
+    "name": "Double bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 12,
+    "row": 15,
+    "rot": 2,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "bed2_side",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 11,
+    "row": 19,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "bed2_desk",
+    "name": "Desk",
+    "icon": "🖥️",
+    "size": [
+     3,
+     2
+    ],
+    "col": 18,
+    "row": 12,
+    "rot": 1,
+    "model": "/models/furniture/desk.glb",
+    "interaction": "chair",
+    "level": 1
+   },
+   {
+    "id": "landing_palm",
+    "name": "Indoor palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 18,
+    "row": 0,
+    "rot": 0,
+    "visual": "palm",
+    "level": 1
+   },
+   {
+    "id": "bed3_bed",
+    "name": "Double bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 8,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "bed3_side",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 12,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   }
+  ],
+  "fixtures": [
+   {
+    "kind": "kitchen-run",
+    "col": 1,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "washer",
+    "col": 0,
+    "row": 5,
+    "rot": 3
+   },
+   {
+    "kind": "toilet",
+    "col": 19,
+    "row": 0,
+    "rot": 1
+   },
+   {
+    "kind": "basin",
+    "col": 17,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "shower",
+    "col": 0,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "basin-double",
+    "col": 2,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "toilet",
+    "col": 5,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "shower",
+    "col": 0,
+    "row": 18,
+    "rot": 2,
+    "level": 1
+   },
+   {
+    "kind": "toilet",
+    "col": 3,
+    "row": 19,
+    "rot": 2,
+    "level": 1
+   },
+   {
+    "kind": "basin",
+    "col": 3,
+    "row": 17,
+    "rot": 1,
+    "level": 1
+   }
+  ]
+ },
+ "penthouse": {
+  "levels": [
+   {
+    "label": "Downstairs",
+    "icon": "⬇️",
+    "rooms": [
+     {
+      "id": "hall",
+      "label": "Entrance hall",
+      "icon": "🚪",
+      "desc": "Front door, console and the way to every room",
+      "bounds": {
+       "minX": -5,
+       "maxX": 5,
+       "minZ": -1,
+       "maxZ": 1
+      },
+      "center": [
+       -3.5,
+       0,
+       0
+      ]
+     },
+     {
+      "id": "kitchen",
+      "label": "Kitchen & laundry",
+      "icon": "🍳",
+      "desc": "Closed kitchen with island and laundry",
+      "bounds": {
+       "minX": -5,
+       "maxX": -1,
+       "minZ": -5,
+       "maxZ": -1
+      },
+      "center": [
+       -3.0,
+       0,
+       -3.0
+      ]
+     },
+     {
+      "id": "dining",
+      "label": "Dining room",
+      "icon": "🍽️",
+      "desc": "Dining table for six",
+      "bounds": {
+       "minX": -1,
+       "maxX": 3.5,
+       "minZ": -5,
+       "maxZ": -1
+      },
+      "center": [
+       1.25,
+       0,
+       -3.0
+      ]
+     },
+     {
+      "id": "guest_wc",
+      "label": "Guest toilet",
+      "icon": "🚽",
+      "desc": "Off the dining room",
+      "bounds": {
+       "minX": 3.5,
+       "maxX": 5,
+       "minZ": -5,
+       "maxZ": -3
+      },
+      "center": [
+       4.25,
+       0,
+       -4.0
+      ]
+     },
+     {
+      "id": "living",
+      "label": "Living room & majlis",
+      "icon": "🛋️",
+      "desc": "Sofas, majlis and the TV wall",
+      "bounds": {
+       "minX": -5,
+       "maxX": 5,
+       "minZ": 1,
+       "maxZ": 5
+      },
+      "center": [
+       0,
+       0,
+       3
+      ]
+     }
+    ],
+    "walls": [
+     {
+      "a": [
+       -5,
+       -1
+      ],
+      "b": [
+       -1,
+       -1
+      ],
+      "door": [
+       2,
+       3
+      ]
+     },
+     {
+      "a": [
+       -1,
+       -5
+      ],
+      "b": [
+       -1,
+       -1
+      ]
+     },
+     {
+      "a": [
+       3.5,
+       -5
+      ],
+      "b": [
+       3.5,
+       -3
+      ],
+      "door": [
+       0.6,
+       1.4
+      ]
+     },
+     {
+      "a": [
+       3.5,
+       -3
+      ],
+      "b": [
+       5,
+       -3
+      ]
+     }
+    ]
+   },
+   {
+    "label": "Upstairs",
+    "icon": "⬆️",
+    "rooms": [
+     {
+      "id": "landing",
+      "label": "Landing",
+      "icon": "🪜",
+      "desc": "Top of the stairs",
+      "bounds": {
+       "minX": -5,
+       "maxX": 5,
+       "minZ": -1,
+       "maxZ": 1
+      },
+      "center": [
+       4,
+       0,
+       0
+      ]
+     },
+     {
+      "id": "family_bath",
+      "label": "Family bathroom",
+      "icon": "🛁",
+      "desc": "Shower and double vanity",
+      "bounds": {
+       "minX": -5,
+       "maxX": -2,
+       "minZ": -5,
+       "maxZ": -1
+      },
+      "center": [
+       -3.5,
+       0,
+       -3.0
+      ]
+     },
+     {
+      "id": "bed3",
+      "label": "Bedroom 3",
+      "icon": "🛏️",
+      "desc": "Off the landing",
+      "bounds": {
+       "minX": -2,
+       "maxX": 3.5,
+       "minZ": -5,
+       "maxZ": -1
+      },
+      "center": [
+       0.75,
+       0,
+       -3.0
+      ]
+     },
+     {
+      "id": "master",
+      "label": "Master suite",
+      "icon": "👑",
+      "desc": "King bed, walk-in wardrobe and en-suite",
+      "bounds": {
+       "minX": -5,
+       "maxX": 0,
+       "minZ": 1,
+       "maxZ": 5
+      },
+      "center": [
+       -2,
+       0,
+       2.5
+      ]
+     },
+     {
+      "id": "master_bath",
+      "label": "Master en-suite",
+      "icon": "🛁",
+      "desc": "Shower, vanity, toilet",
+      "bounds": {
+       "minX": -5,
+       "maxX": -3,
+       "minZ": 3,
+       "maxZ": 5
+      },
+      "center": [
+       -4.0,
+       0,
+       4.0
+      ]
+     },
+     {
+      "id": "bed2",
+      "label": "Bedroom 2",
+      "icon": "🛏️",
+      "desc": "Double bed and desk",
+      "bounds": {
+       "minX": 0,
+       "maxX": 5,
+       "minZ": 1,
+       "maxZ": 5
+      },
+      "center": [
+       2.5,
+       0,
+       3.0
+      ]
+     }
+    ],
+    "walls": [
+     {
+      "a": [
+       -5,
+       -1
+      ],
+      "b": [
+       -2,
+       -1
+      ],
+      "door": [
+       1,
+       2
+      ]
+     },
+     {
+      "a": [
+       -2,
+       -1
+      ],
+      "b": [
+       3.5,
+       -1
+      ],
+      "door": [
+       2,
+       3
+      ]
+     },
+     {
+      "a": [
+       -2,
+       -5
+      ],
+      "b": [
+       -2,
+       -1
+      ]
+     },
+     {
+      "a": [
+       3.5,
+       -5
+      ],
+      "b": [
+       3.5,
+       -1
+      ]
+     },
+     {
+      "a": [
+       -5,
+       1
+      ],
+      "b": [
+       0,
+       1
+      ],
+      "door": [
+       3,
+       4
+      ]
+     },
+     {
+      "a": [
+       0,
+       1
+      ],
+      "b": [
+       5,
+       1
+      ],
+      "door": [
+       1,
+       2
+      ]
+     },
+     {
+      "a": [
+       0,
+       1
+      ],
+      "b": [
+       0,
+       5
+      ]
+     },
+     {
+      "a": [
+       -5,
+       3
+      ],
+      "b": [
+       -3,
+       3
+      ],
+      "door": [
+       0.5,
+       1.5
+      ]
+     },
+     {
+      "a": [
+       -3,
+       3
+      ],
+      "b": [
+       -3,
+       5
+      ]
+     }
+    ]
+   }
+  ],
+  "furniture": [
+   {
+    "id": "stairs",
+    "name": "Staircase",
+    "icon": "🪜",
+    "size": [
+     2,
+     5
+    ],
+    "col": 18,
+    "row": 4,
+    "rot": 0,
+    "visual": "staircase",
+    "interaction": "stairs",
+    "fixed": true
+   },
+   {
+    "id": "stairwell",
+    "name": "Stairs down",
+    "icon": "🪜",
+    "size": [
+     2,
+     5
+    ],
+    "col": 18,
+    "row": 4,
+    "rot": 0,
+    "visual": "stairwell",
+    "interaction": "stairs",
+    "level": 1,
+    "fixed": true
+   },
+   {
+    "id": "hall_console",
+    "name": "Marble console",
+    "icon": "🕰️",
+    "size": [
+     3,
+     1
+    ],
+    "col": 10,
+    "row": 8,
+    "rot": 0,
+    "visual": "console"
+   },
+   {
+    "id": "kitchen_fridge",
+    "name": "Fridge",
+    "icon": "🧊",
+    "size": [
+     2,
+     2
+    ],
+    "col": 5,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/fridge.glb",
+    "interaction": "cooler"
+   },
+   {
+    "id": "kitchen_island",
+    "name": "Marble island",
+    "icon": "🧑‍🍳",
+    "size": [
+     4,
+     2
+    ],
+    "col": 1,
+    "row": 3,
+    "rot": 0,
+    "visual": "kitchen-island"
+   },
+   {
+    "id": "dining",
+    "name": "Dining for six",
+    "icon": "🍽️",
+    "size": [
+     4,
+     3
+    ],
+    "col": 9,
+    "row": 2,
+    "rot": 0,
+    "visual": "dining-set"
+   },
+   {
+    "id": "dining_light",
+    "name": "Pendant trio",
+    "icon": "🔮",
+    "size": [
+     3,
+     1
+    ],
+    "col": 9,
+    "row": 3,
+    "rot": 0,
+    "visual": "pendant-trio"
+   },
+   {
+    "id": "dining_bar",
+    "name": "Espresso & gahwa bar",
+    "icon": "☕",
+    "size": [
+     2,
+     1
+    ],
+    "col": 13,
+    "row": 0,
+    "rot": 0,
+    "visual": "coffee-bar",
+    "interaction": "cooler"
+   },
+   {
+    "id": "living_sofa",
+    "name": "L-shaped lounge",
+    "icon": "🛋️",
+    "size": [
+     4,
+     4
+    ],
+    "col": 8,
+    "row": 13,
+    "rot": 0,
+    "model": "/models/furniture/l-couch.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "living_table",
+    "name": "Coffee table",
+    "icon": "☕",
+    "size": [
+     3,
+     2
+    ],
+    "col": 12,
+    "row": 14,
+    "rot": 0,
+    "model": "/models/furniture/coffee-table.glb"
+   },
+   {
+    "id": "living_tv",
+    "name": "OLED TV",
+    "icon": "📺",
+    "size": [
+     4,
+     1
+    ],
+    "col": 8,
+    "row": 19,
+    "rot": 2,
+    "model": "/models/furniture/tv.glb"
+   },
+   {
+    "id": "living_rug",
+    "name": "Silk rug",
+    "icon": "🟡",
+    "size": [
+     5,
+     5
+    ],
+    "col": 7,
+    "row": 13,
+    "rot": 0,
+    "visual": "rug-round"
+   },
+   {
+    "id": "living_chandelier",
+    "name": "Crystal chandelier",
+    "icon": "💎",
+    "size": [
+     2,
+     2
+    ],
+    "col": 9,
+    "row": 15,
+    "rot": 0,
+    "visual": "chandelier-crystal"
+   },
+   {
+    "id": "living_palm",
+    "name": "Indoor date palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 19,
+    "row": 19,
+    "rot": 0,
+    "visual": "palm"
+   },
+   {
+    "id": "majlis",
+    "name": "Majlis seating",
+    "icon": "🕌",
+    "size": [
+     4,
+     4
+    ],
+    "col": 1,
+    "row": 13,
+    "rot": 0,
+    "visual": "majlis",
+    "interaction": "chair"
+   },
+   {
+    "id": "master_bed",
+    "name": "Canopy bed",
+    "icon": "👑",
+    "size": [
+     4,
+     5
+    ],
+    "col": 5,
+    "row": 15,
+    "rot": 2,
+    "visual": "canopy-bed",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "master_side_l",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 4,
+    "row": 19,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "master_side_r",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 9,
+    "row": 19,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "master_wardrobe",
+    "name": "Walk-in wardrobe",
+    "icon": "👔",
+    "size": [
+     4,
+     1
+    ],
+    "col": 9,
+    "row": 12,
+    "rot": 1,
+    "visual": "wardrobe",
+    "level": 1
+   },
+   {
+    "id": "master_vanity",
+    "name": "Hollywood vanity",
+    "icon": "💄",
+    "size": [
+     2,
+     1
+    ],
+    "col": 0,
+    "row": 12,
+    "rot": 0,
+    "visual": "vanity",
+    "level": 1
+   },
+   {
+    "id": "master_light",
+    "name": "Gold ring chandelier",
+    "icon": "⭕",
+    "size": [
+     2,
+     2
+    ],
+    "col": 6,
+    "row": 16,
+    "rot": 0,
+    "visual": "chandelier-ring",
+    "level": 1
+   },
+   {
+    "id": "bed2_bed",
+    "name": "Double bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 12,
+    "row": 15,
+    "rot": 2,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "bed2_side",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 11,
+    "row": 19,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "bed2_desk",
+    "name": "Desk",
+    "icon": "🖥️",
+    "size": [
+     3,
+     2
+    ],
+    "col": 18,
+    "row": 12,
+    "rot": 1,
+    "model": "/models/furniture/desk.glb",
+    "interaction": "chair",
+    "level": 1
+   },
+   {
+    "id": "landing_palm",
+    "name": "Indoor palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 18,
+    "row": 0,
+    "rot": 0,
+    "visual": "palm",
+    "level": 1
+   },
+   {
+    "id": "bed3_bed",
+    "name": "Double bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 8,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "bed3_side",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 12,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "piano",
+    "name": "Concert grand piano",
+    "icon": "🎹",
+    "size": [
+     3,
+     4
+    ],
+    "col": 15,
+    "row": 13,
+    "rot": 0,
+    "visual": "grand-piano",
+    "interaction": "chair"
+   }
+  ],
+  "fixtures": [
+   {
+    "kind": "kitchen-run",
+    "col": 1,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "washer",
+    "col": 0,
+    "row": 5,
+    "rot": 3
+   },
+   {
+    "kind": "toilet",
+    "col": 19,
+    "row": 0,
+    "rot": 1
+   },
+   {
+    "kind": "basin",
+    "col": 17,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "shower",
+    "col": 0,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "basin-double",
+    "col": 2,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "toilet",
+    "col": 5,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "shower",
+    "col": 0,
+    "row": 18,
+    "rot": 2,
+    "level": 1
+   },
+   {
+    "kind": "toilet",
+    "col": 3,
+    "row": 19,
+    "rot": 2,
+    "level": 1
+   },
+   {
+    "kind": "basin",
+    "col": 3,
+    "row": 17,
+    "rot": 1,
+    "level": 1
+   }
+  ]
+ },
+ "villa": {
+  "levels": [
+   {
+    "label": "Downstairs",
+    "icon": "⬇️",
+    "rooms": [
+     {
+      "id": "hall",
+      "label": "Entrance hall",
+      "icon": "🚪",
+      "desc": "Front door, console and the way to every room",
+      "bounds": {
+       "minX": -5,
+       "maxX": 5,
+       "minZ": -1,
+       "maxZ": 1
+      },
+      "center": [
+       -3.5,
+       0,
+       0
+      ]
+     },
+     {
+      "id": "kitchen",
+      "label": "Kitchen & laundry",
+      "icon": "🍳",
+      "desc": "Closed kitchen with island and laundry",
+      "bounds": {
+       "minX": -5,
+       "maxX": -1,
+       "minZ": -5,
+       "maxZ": -1
+      },
+      "center": [
+       -3.0,
+       0,
+       -3.0
+      ]
+     },
+     {
+      "id": "dining",
+      "label": "Dining room",
+      "icon": "🍽️",
+      "desc": "Dining table for six",
+      "bounds": {
+       "minX": -1,
+       "maxX": 3.5,
+       "minZ": -5,
+       "maxZ": -1
+      },
+      "center": [
+       1.25,
+       0,
+       -3.0
+      ]
+     },
+     {
+      "id": "guest_wc",
+      "label": "Guest toilet",
+      "icon": "🚽",
+      "desc": "Off the dining room",
+      "bounds": {
+       "minX": 3.5,
+       "maxX": 5,
+       "minZ": -5,
+       "maxZ": -3
+      },
+      "center": [
+       4.25,
+       0,
+       -4.0
+      ]
+     },
+     {
+      "id": "living",
+      "label": "Living room & majlis",
+      "icon": "🛋️",
+      "desc": "Sofas, majlis and the TV wall",
+      "bounds": {
+       "minX": -5,
+       "maxX": 5,
+       "minZ": 1,
+       "maxZ": 5
+      },
+      "center": [
+       0,
+       0,
+       3
+      ]
+     }
+    ],
+    "walls": [
+     {
+      "a": [
+       -5,
+       -1
+      ],
+      "b": [
+       -1,
+       -1
+      ],
+      "door": [
+       2,
+       3
+      ]
+     },
+     {
+      "a": [
+       -1,
+       -5
+      ],
+      "b": [
+       -1,
+       -1
+      ]
+     },
+     {
+      "a": [
+       3.5,
+       -5
+      ],
+      "b": [
+       3.5,
+       -3
+      ],
+      "door": [
+       0.6,
+       1.4
+      ]
+     },
+     {
+      "a": [
+       3.5,
+       -3
+      ],
+      "b": [
+       5,
+       -3
+      ]
+     }
+    ]
+   },
+   {
+    "label": "Upstairs",
+    "icon": "⬆️",
+    "rooms": [
+     {
+      "id": "landing",
+      "label": "Landing",
+      "icon": "🪜",
+      "desc": "Top of the stairs",
+      "bounds": {
+       "minX": -5,
+       "maxX": 5,
+       "minZ": -1,
+       "maxZ": 1
+      },
+      "center": [
+       4,
+       0,
+       0
+      ]
+     },
+     {
+      "id": "family_bath",
+      "label": "Family bathroom",
+      "icon": "🛁",
+      "desc": "Shower and double vanity",
+      "bounds": {
+       "minX": -5,
+       "maxX": -2,
+       "minZ": -5,
+       "maxZ": -1
+      },
+      "center": [
+       -3.5,
+       0,
+       -3.0
+      ]
+     },
+     {
+      "id": "bed3",
+      "label": "Bedroom 3",
+      "icon": "🛏️",
+      "desc": "Off the landing",
+      "bounds": {
+       "minX": -2,
+       "maxX": 3.5,
+       "minZ": -5,
+       "maxZ": -1
+      },
+      "center": [
+       0.75,
+       0,
+       -3.0
+      ]
+     },
+     {
+      "id": "master",
+      "label": "Master suite",
+      "icon": "👑",
+      "desc": "King bed, walk-in wardrobe and en-suite",
+      "bounds": {
+       "minX": -5,
+       "maxX": 0,
+       "minZ": 1,
+       "maxZ": 5
+      },
+      "center": [
+       -2,
+       0,
+       2.5
+      ]
+     },
+     {
+      "id": "master_bath",
+      "label": "Master en-suite",
+      "icon": "🛁",
+      "desc": "Shower, vanity, toilet",
+      "bounds": {
+       "minX": -5,
+       "maxX": -3,
+       "minZ": 3,
+       "maxZ": 5
+      },
+      "center": [
+       -4.0,
+       0,
+       4.0
+      ]
+     },
+     {
+      "id": "bed2",
+      "label": "Bedroom 2",
+      "icon": "🛏️",
+      "desc": "Double bed and desk",
+      "bounds": {
+       "minX": 0,
+       "maxX": 5,
+       "minZ": 1,
+       "maxZ": 5
+      },
+      "center": [
+       2.5,
+       0,
+       3.0
+      ]
+     }
+    ],
+    "walls": [
+     {
+      "a": [
+       -5,
+       -1
+      ],
+      "b": [
+       -2,
+       -1
+      ],
+      "door": [
+       1,
+       2
+      ]
+     },
+     {
+      "a": [
+       -2,
+       -1
+      ],
+      "b": [
+       3.5,
+       -1
+      ],
+      "door": [
+       2,
+       3
+      ]
+     },
+     {
+      "a": [
+       -2,
+       -5
+      ],
+      "b": [
+       -2,
+       -1
+      ]
+     },
+     {
+      "a": [
+       3.5,
+       -5
+      ],
+      "b": [
+       3.5,
+       -1
+      ]
+     },
+     {
+      "a": [
+       -5,
+       1
+      ],
+      "b": [
+       0,
+       1
+      ],
+      "door": [
+       3,
+       4
+      ]
+     },
+     {
+      "a": [
+       0,
+       1
+      ],
+      "b": [
+       5,
+       1
+      ],
+      "door": [
+       1,
+       2
+      ]
+     },
+     {
+      "a": [
+       0,
+       1
+      ],
+      "b": [
+       0,
+       5
+      ]
+     },
+     {
+      "a": [
+       -5,
+       3
+      ],
+      "b": [
+       -3,
+       3
+      ],
+      "door": [
+       0.5,
+       1.5
+      ]
+     },
+     {
+      "a": [
+       -3,
+       3
+      ],
+      "b": [
+       -3,
+       5
+      ]
+     }
+    ]
+   }
+  ],
+  "furniture": [
+   {
+    "id": "stairs",
+    "name": "Staircase",
+    "icon": "🪜",
+    "size": [
+     2,
+     5
+    ],
+    "col": 18,
+    "row": 4,
+    "rot": 0,
+    "visual": "staircase",
+    "interaction": "stairs",
+    "fixed": true
+   },
+   {
+    "id": "stairwell",
+    "name": "Stairs down",
+    "icon": "🪜",
+    "size": [
+     2,
+     5
+    ],
+    "col": 18,
+    "row": 4,
+    "rot": 0,
+    "visual": "stairwell",
+    "interaction": "stairs",
+    "level": 1,
+    "fixed": true
+   },
+   {
+    "id": "hall_console",
+    "name": "Marble console",
+    "icon": "🕰️",
+    "size": [
+     3,
+     1
+    ],
+    "col": 10,
+    "row": 8,
+    "rot": 0,
+    "visual": "console"
+   },
+   {
+    "id": "kitchen_fridge",
+    "name": "Fridge",
+    "icon": "🧊",
+    "size": [
+     2,
+     2
+    ],
+    "col": 5,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/fridge.glb",
+    "interaction": "cooler"
+   },
+   {
+    "id": "kitchen_island",
+    "name": "Marble island",
+    "icon": "🧑‍🍳",
+    "size": [
+     4,
+     2
+    ],
+    "col": 1,
+    "row": 3,
+    "rot": 0,
+    "visual": "kitchen-island"
+   },
+   {
+    "id": "dining",
+    "name": "Dining for six",
+    "icon": "🍽️",
+    "size": [
+     4,
+     3
+    ],
+    "col": 9,
+    "row": 2,
+    "rot": 0,
+    "visual": "dining-set"
+   },
+   {
+    "id": "dining_light",
+    "name": "Pendant trio",
+    "icon": "🔮",
+    "size": [
+     3,
+     1
+    ],
+    "col": 9,
+    "row": 3,
+    "rot": 0,
+    "visual": "pendant-trio"
+   },
+   {
+    "id": "dining_bar",
+    "name": "Espresso & gahwa bar",
+    "icon": "☕",
+    "size": [
+     2,
+     1
+    ],
+    "col": 13,
+    "row": 0,
+    "rot": 0,
+    "visual": "coffee-bar",
+    "interaction": "cooler"
+   },
+   {
+    "id": "living_sofa",
+    "name": "L-shaped lounge",
+    "icon": "🛋️",
+    "size": [
+     4,
+     4
+    ],
+    "col": 8,
+    "row": 13,
+    "rot": 0,
+    "model": "/models/furniture/l-couch.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "living_table",
+    "name": "Coffee table",
+    "icon": "☕",
+    "size": [
+     3,
+     2
+    ],
+    "col": 12,
+    "row": 14,
+    "rot": 0,
+    "model": "/models/furniture/coffee-table.glb"
+   },
+   {
+    "id": "living_tv",
+    "name": "OLED TV",
+    "icon": "📺",
+    "size": [
+     4,
+     1
+    ],
+    "col": 8,
+    "row": 19,
+    "rot": 2,
+    "model": "/models/furniture/tv.glb"
+   },
+   {
+    "id": "living_rug",
+    "name": "Silk rug",
+    "icon": "🟡",
+    "size": [
+     5,
+     5
+    ],
+    "col": 7,
+    "row": 13,
+    "rot": 0,
+    "visual": "rug-round"
+   },
+   {
+    "id": "living_chandelier",
+    "name": "Crystal chandelier",
+    "icon": "💎",
+    "size": [
+     2,
+     2
+    ],
+    "col": 9,
+    "row": 15,
+    "rot": 0,
+    "visual": "chandelier-crystal"
+   },
+   {
+    "id": "living_palm",
+    "name": "Indoor date palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 19,
+    "row": 19,
+    "rot": 0,
+    "visual": "palm"
+   },
+   {
+    "id": "majlis",
+    "name": "Majlis seating",
+    "icon": "🕌",
+    "size": [
+     4,
+     4
+    ],
+    "col": 1,
+    "row": 13,
+    "rot": 0,
+    "visual": "majlis",
+    "interaction": "chair"
+   },
+   {
+    "id": "master_bed",
+    "name": "Canopy bed",
+    "icon": "👑",
+    "size": [
+     4,
+     5
+    ],
+    "col": 5,
+    "row": 15,
+    "rot": 2,
+    "visual": "canopy-bed",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "master_side_l",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 4,
+    "row": 19,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "master_side_r",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 9,
+    "row": 19,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "master_wardrobe",
+    "name": "Walk-in wardrobe",
+    "icon": "👔",
+    "size": [
+     4,
+     1
+    ],
+    "col": 9,
+    "row": 12,
+    "rot": 1,
+    "visual": "wardrobe",
+    "level": 1
+   },
+   {
+    "id": "master_vanity",
+    "name": "Hollywood vanity",
+    "icon": "💄",
+    "size": [
+     2,
+     1
+    ],
+    "col": 0,
+    "row": 12,
+    "rot": 0,
+    "visual": "vanity",
+    "level": 1
+   },
+   {
+    "id": "master_light",
+    "name": "Gold ring chandelier",
+    "icon": "⭕",
+    "size": [
+     2,
+     2
+    ],
+    "col": 6,
+    "row": 16,
+    "rot": 0,
+    "visual": "chandelier-ring",
+    "level": 1
+   },
+   {
+    "id": "bed2_bed",
+    "name": "Double bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 12,
+    "row": 15,
+    "rot": 2,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "bed2_side",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 11,
+    "row": 19,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "bed2_desk",
+    "name": "Desk",
+    "icon": "🖥️",
+    "size": [
+     3,
+     2
+    ],
+    "col": 18,
+    "row": 12,
+    "rot": 1,
+    "model": "/models/furniture/desk.glb",
+    "interaction": "chair",
+    "level": 1
+   },
+   {
+    "id": "landing_palm",
+    "name": "Indoor palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 18,
+    "row": 0,
+    "rot": 0,
+    "visual": "palm",
+    "level": 1
+   },
+   {
+    "id": "bed3_bed",
+    "name": "Double bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 8,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "bed3_side",
+    "name": "Nightstand",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 12,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "aquarium",
+    "name": "Reef aquarium",
+    "icon": "🐠",
+    "size": [
+     4,
+     1
+    ],
+    "col": 1,
+    "row": 19,
+    "rot": 2,
+    "visual": "aquarium"
+   },
+   {
+    "id": "piano",
+    "name": "Concert grand piano",
+    "icon": "🎹",
+    "size": [
+     3,
+     4
+    ],
+    "col": 15,
+    "row": 13,
+    "rot": 0,
+    "visual": "grand-piano",
+    "interaction": "chair"
+   }
+  ],
+  "fixtures": [
+   {
+    "kind": "kitchen-run",
+    "col": 1,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "washer",
+    "col": 0,
+    "row": 5,
+    "rot": 3
+   },
+   {
+    "kind": "toilet",
+    "col": 19,
+    "row": 0,
+    "rot": 1
+   },
+   {
+    "kind": "basin",
+    "col": 17,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "shower",
+    "col": 0,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "basin-double",
+    "col": 2,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "toilet",
+    "col": 5,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "shower",
+    "col": 0,
+    "row": 18,
+    "rot": 2,
+    "level": 1
+   },
+   {
+    "kind": "toilet",
+    "col": 3,
+    "row": 19,
+    "rot": 2,
+    "level": 1
+   },
+   {
+    "kind": "basin",
+    "col": 3,
+    "row": 17,
+    "rot": 1,
+    "level": 1
+   }
+  ]
+ }
+}

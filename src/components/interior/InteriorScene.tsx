@@ -3,6 +3,7 @@
 // A venue interior in 3D: the room, its fixtures and stations, staff, shoppers and the citizen.
 // Clicking a station walks the citizen there; on arrival the page opens that station's panel.
 
+import { VenueLuxury } from "./VenueLuxury";
 import { canvasQuality } from "@/lib/device";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
@@ -108,6 +109,8 @@ interface Props {
   onWallAdClick?: (panelId: WallPanelId) => void;
   /** Active 3D stage visual effects for venue activities (spotlight, floor rings, confetti) */
   activityFX?: Activity3DFX;
+  /** Over-the-shoulder camera in the room instead of the overview. */
+  inside?: boolean;
 }
 
 const NATURAL_FLOOR: Partial<Record<string, string>> = { sand: "#f3dfae", deck: "#ece7df", ice: "#e0f2fe" };
@@ -129,7 +132,9 @@ function Room({
   const [w, d] = plan.size;
   // Sand, pool decks and ice have their own natural colour whatever the venue's palette.
   const floorBase = NATURAL_FLOOR[plan.floor] ?? venue.palette.floor;
-  const floor = useMemo(() => floorTexture(plan.floor, floorBase, [w / 4, d / 4]), [plan.floor, floorBase, w, d]);
+  // Plain tiles and concrete are upgraded to polished marble, like the homes.
+  const floorKind = plan.walls && (plan.floor === "tiles" || plan.floor === "concrete") ? "marble" : plan.floor;
+  const floor = useMemo(() => floorTexture(floorKind, floorBase, [w / 4, d / 4]), [floorKind, floorBase, w, d]);
   const dark = venue.layout === "club" || venue.palette.wall === "#2a2420" || venue.palette.wall === "#0f172a" || venue.palette.wall === "#5a3e2b";
   const sign = useMemo(() => signTexture(venue.name, dark ? "#f8fafc" : venue.palette.accent, null), [venue.name, venue.palette.accent, dark]);
 
@@ -167,13 +172,15 @@ function Room({
         onClick={onFloor ? (e) => { if (e.delta > DRAG) return; e.stopPropagation(); onFloor([e.point.x, e.point.z]); } : undefined}
       >
         <planeGeometry args={[w, d]} />
-        <meshStandardMaterial map={floor} roughness={plan.floor === "marble" ? 0.25 : plan.floor === "concrete" ? 0.6 : 0.75} metalness={plan.floor === "marble" ? 0.1 : 0} />
+        <meshStandardMaterial map={floor} roughness={floorKind === "marble" ? 0.18 : floorKind === "wood" ? 0.45 : 0.75} metalness={floorKind === "marble" ? 0.12 : 0} />
       </mesh>
       {plan.walls && (
         <>
           <mesh position={[0, WALL_H / 2, -d / 2]} receiveShadow><boxGeometry args={[w, WALL_H, 0.12]} /><meshStandardMaterial color={venue.palette.wall} roughness={0.9} /></mesh>
           <mesh position={[-w / 2, WALL_H / 2, 0]} receiveShadow><boxGeometry args={[0.12, WALL_H, d]} /><meshStandardMaterial color={venue.palette.wall} roughness={0.9} /></mesh>
           <mesh position={[w / 2, WALL_H / 2, 0]} receiveShadow><boxGeometry args={[0.12, WALL_H, d]} /><meshStandardMaterial color={venue.palette.wall} roughness={0.9} /></mesh>
+          {/* Panelling, pilasters, cove light, sconces, chandeliers and palms (see VenueLuxury). */}
+          <VenueLuxury venue={venue} plan={plan} wallH={WALL_H} />
           {/* Skirting and a lit cove line give the room its finish. */}
           <mesh position={[0, 0.06, -d / 2 + 0.07]}><boxGeometry args={[w, 0.12, 0.02]} /><meshStandardMaterial color={venue.palette.accent} /></mesh>
           <mesh position={[0, WALL_H - 0.1, -d / 2 + 0.08]}><boxGeometry args={[w, 0.04, 0.02]} /><meshStandardMaterial color="#fff7e6" emissive="#fff1d6" emissiveIntensity={1.2} /></mesh>
@@ -525,6 +532,55 @@ function FitCamera({ width, depth }: { width: number; depth: number }) {
   return null;
 }
 
+/**
+ * Keeps the citizen in view: from above, the camera glides along as they walk round the room; inside, it
+ * sits over their shoulder and settles in behind them as they go.
+ */
+function FollowCamera({ follow, inside }: { follow: Follow; inside: boolean }) {
+  const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
+  const camera = useThree((s) => s.camera);
+  const last = useRef<THREE.Vector3 | null>(null);
+  /* eslint-disable react-hooks/immutability */
+  useEffect(() => {
+    if (!controls) return;
+    if (inside) {
+      const me = follow.current.get("me");
+      if (!me) return;
+      controls.target.set(me.position.x, 1.45, me.position.z);
+      camera.position.set(me.position.x, 2.3, me.position.z + 2.8);
+    } else {
+      controls.target.copy(TARGET);
+      camera.position.set(0, 7.5, 12);
+    }
+    controls.update();
+  }, [inside, controls, camera, follow]);
+  useFrame((_, dt) => {
+    const me = follow.current.get("me");
+    if (!controls || !me) return;
+    const p = me.position;
+    if (inside) {
+      const head = new THREE.Vector3(p.x, 1.45, p.z);
+      const shift = head.clone().sub(controls.target);
+      controls.target.add(shift);
+      camera.position.add(shift);
+      if (last.current && last.current.distanceTo(p) > 0.0005) {
+        const yaw = me.rotation.y;
+        camera.position.lerp(new THREE.Vector3(p.x - Math.sin(yaw) * 2.8, 2.3, p.z - Math.cos(yaw) * 2.8), Math.min(1, dt * 2.5));
+      }
+    } else {
+      // Glide part of the way: the room stays framed, with the citizen drifting nearer the middle.
+      const k = Math.min(1, dt * 2.5);
+      const dx = (p.x * 0.6 + TARGET.x * 0.4 - controls.target.x) * k, dz = (p.z * 0.6 + TARGET.z * 0.4 - controls.target.z) * k;
+      controls.target.x += dx; controls.target.z += dz;
+      camera.position.x += dx; camera.position.z += dz;
+    }
+    controls.update();
+    last.current = (last.current ?? new THREE.Vector3()).copy(p);
+  });
+  /* eslint-enable react-hooks/immutability */
+  return null;
+}
+
 /** Another citizen in the venue: walks to wherever they are, faces where they face, tappable. */
 type Follow = React.RefObject<Map<string, THREE.Object3D>>;
 
@@ -714,6 +770,7 @@ export function InteriorScene({
   peerConsumptions,
   vipTables = [],
   activityFX,
+  inside = false,
 }: Props) {
   const quality = useMemo(() => canvasQuality(), []);
   const [w, d] = plan.size;
@@ -836,18 +893,19 @@ export function InteriorScene({
       {ride && onRideEnd && <RideRig key={ride.key} active={ride} look={look} worn={worn} onEnd={onRideEnd} />}
       <ActivityFXLayer activityFX={activityFX} follow={followNodes} />
       <LabelTracker labels={labels} nodes={labelNodes} follow={followNodes} />
-      <FitCamera width={w} depth={d} />
+      {!inside && <FitCamera width={w} depth={d} />}
+      <FollowCamera follow={followNodes} inside={inside} />
       <OrbitControls
         makeDefault
         target={TARGET}
         enablePan={false}
         enableDamping
-        minPolarAngle={0.45}
-        maxPolarAngle={1.2}
-        minAzimuthAngle={-0.9}
-        maxAzimuthAngle={0.9}
-        minDistance={6}
-        maxDistance={Math.max(w, d) + 6}
+        minPolarAngle={inside ? 0.6 : 0.45}
+        maxPolarAngle={inside ? 1.5 : 1.2}
+        minAzimuthAngle={inside ? -Infinity : -0.9}
+        maxAzimuthAngle={inside ? Infinity : 0.9}
+        minDistance={inside ? 1.2 : 6}
+        maxDistance={inside ? 5 : Math.max(w, d) + 6}
       />
     </Canvas>
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-[1]">

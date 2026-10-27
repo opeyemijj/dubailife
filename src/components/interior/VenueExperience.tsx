@@ -78,6 +78,8 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   const [wallAdOpen, setWallAdOpen] = useState(false);
   const [selectedAdPanel, setSelectedAdPanel] = useState<WallPanelId>("panel_main");
   const [guideOpen, setGuideOpen] = useState(false);
+  // Over-the-shoulder camera in the room, or the overview.
+  const [inside, setInside] = useState(false);
   const [clothingStoreOpen, setClothingStoreOpen] = useState(false);
   const [activeConsumption, setActiveConsumption] = useState<{ kind: "drink" | "eat"; propKind: ServeKind; tint?: string } | null>(null);
   const [vipReservations, setVipReservations] = useState<VipTableReservation[]>([]);
@@ -1160,6 +1162,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   return (
     <main className="fixed inset-0 w-screen h-[100dvh] overflow-hidden select-none font-sans bg-black text-slate-900 overscroll-none">
       <InteriorScene
+        inside={inside && !ride}
         ride={ride}
         onRideEnd={onRideEnd}
         extras={castles.length ? <>{castles.map((c) => <group key={`${c.at[0]},${c.at[1]}`} position={[c.at[0], 0, c.at[1]]}><SandCastle stage={c.stage} /></group>)}</> : null}
@@ -1275,6 +1278,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
           <span className="sm:hidden">AED {new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(citizen?.balance ?? 0)}</span>
           <span className="hidden sm:inline">AED {(citizen?.balance ?? 0).toLocaleString()}</span>
         </div>
+        <button onClick={() => setInside((v) => !v)} className="pointer-events-auto w-10 h-10 shrink-0 rounded-full bg-white/95 shadow-lg flex items-center justify-center text-lg" title={inside ? "View from above" : "View from inside"} aria-label={inside ? "View from above" : "View from inside"}>{inside ? "🏠" : "👤"}</button>
         <button onClick={() => setGuideOpen(true)} className="pointer-events-auto w-10 h-10 shrink-0 rounded-full bg-white/95 shadow-lg flex items-center justify-center text-slate-700 hover:text-slate-950 transition-colors" title="Venue Guide" aria-label="Venue Guide">
           <HelpCircle className="w-4 h-4" />
         </button>

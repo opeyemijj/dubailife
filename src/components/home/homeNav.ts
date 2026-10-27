@@ -1,7 +1,7 @@
 // Walking at home: the floor is a grid of quarter-metre cells. Cells outside the rooms, along walls
 // (except through doorways), under counters and under furniture are closed; the citizen takes the
-// shortest open route (A*), straightened wherever there's a clear line, so they go round walls and
-// through doors instead of through them.
+// shortest open route, straightened wherever there's a clear line, so they go round walls and through
+// doors instead of through them.
 
 export type Seg = { a: [number, number]; b: [number, number]; door?: [number, number] };
 export type Rect = { minX: number; maxX: number; minZ: number; maxZ: number };
@@ -78,29 +78,25 @@ function clearLine(n: NavMap, a: [number, number], b: [number, number]) {
 }
 
 /**
- * Waypoints from `from` to (as near as can be reached to) `to`, ending exactly at `to` when it's open.
- * Empty when there's no way through.
+ * Waypoints from `from` to `to`, or to the reachable spot nearest it (a tap on furniture or in a sealed-off
+ * corner walks as close as the rooms allow). Empty when nowhere can be reached.
  */
 export function findPath(n: NavMap, from: [number, number], to: [number, number]): Array<[number, number]> {
-  const s = nearestOpen(n, from[0], from[1]), g = nearestOpen(n, to[0], to[1]);
-  if (!s || !g) return [];
-  const goalPoint: [number, number] = (() => { const [c, r] = cellOf(n, to[0], to[1]); return c === g[0] && r === g[1] ? to : centre(n, g[0], g[1]); })();
+  const s = nearestOpen(n, from[0], from[1]);
+  if (!s) return [];
   const idx = (c: number, r: number) => r * n.cols + c;
-  const gScore = new Float32Array(n.cols * n.rows).fill(Infinity);
+  // Every cell reachable from here, with the shortest way to it (the grid is small: Dijkstra is plenty).
+  const dist = new Float32Array(n.cols * n.rows).fill(Infinity);
   const came = new Int32Array(n.cols * n.rows).fill(-1);
-  const closed = new Uint8Array(n.cols * n.rows);
-  const h = (c: number, r: number) => Math.hypot(c - g[0], r - g[1]);
-  const heap: Array<[number, number]> = [[h(s[0], s[1]), idx(s[0], s[1])]];
-  gScore[idx(s[0], s[1])] = 0;
-  const goal = idx(g[0], g[1]);
-  while (heap.length) {
-    // A small grid: a sorted pop is plenty fast.
+  const done = new Uint8Array(n.cols * n.rows);
+  const queue: Array<[number, number]> = [[0, idx(s[0], s[1])]];
+  dist[idx(s[0], s[1])] = 0;
+  while (queue.length) {
     let bi = 0;
-    for (let i = 1; i < heap.length; i++) if (heap[i][0] < heap[bi][0]) bi = i;
-    const [, cur] = heap.splice(bi, 1)[0];
-    if (cur === goal) break;
-    if (closed[cur]) continue;
-    closed[cur] = 1;
+    for (let i = 1; i < queue.length; i++) if (queue[i][0] < queue[bi][0]) bi = i;
+    const [, cur] = queue.splice(bi, 1)[0];
+    if (done[cur]) continue;
+    done[cur] = 1;
     const cc = cur % n.cols, cr = Math.floor(cur / n.cols);
     for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
       if (!dc && !dr) continue;
@@ -109,11 +105,21 @@ export function findPath(n: NavMap, from: [number, number], to: [number, number]
       // No cutting corners past a wall end.
       if (dc && dr && (!isOpen(n, cc + dc, cr) || !isOpen(n, cc, cr + dr))) continue;
       const ni = idx(nc, nr);
-      const cost = gScore[cur] + (dc && dr ? Math.SQRT2 : 1);
-      if (cost < gScore[ni]) { gScore[ni] = cost; came[ni] = cur; heap.push([cost + h(nc, nr), ni]); }
+      const d = dist[cur] + (dc && dr ? Math.SQRT2 : 1);
+      if (d < dist[ni]) { dist[ni] = d; came[ni] = cur; queue.push([d, ni]); }
     }
   }
-  if (came[goal] === -1 && goal !== idx(s[0], s[1])) return [];
+  // The reachable cell nearest the destination.
+  let goal = -1, best = Infinity;
+  for (let i = 0; i < done.length; i++) {
+    if (!done[i]) continue;
+    const [x, z] = centre(n, i % n.cols, Math.floor(i / n.cols));
+    const d = Math.hypot(x - to[0], z - to[1]);
+    if (d < best) { best = d; goal = i; }
+  }
+  if (goal < 0) return [];
+  const [gc, gr] = cellOf(n, to[0], to[1]);
+  const goalPoint: [number, number] = goal === idx(gc, gr) ? to : centre(n, goal % n.cols, Math.floor(goal / n.cols));
   const cells: Array<[number, number]> = [];
   for (let at = goal; at !== -1; at = came[at]) cells.unshift(centre(n, at % n.cols, Math.floor(at / n.cols)));
   cells[cells.length - 1] = goalPoint;

@@ -52,6 +52,8 @@ export interface ApartmentRoomProps {
   housingTier?: HousingTier;
   /** High-angle isometric dollhouse cutaway up-view */
   upView?: boolean;
+  /** "inside": an over-the-shoulder camera in the room with the citizen, instead of looking down on the home. */
+  view?: "above" | "inside";
   /** Active room focus in multi-room flats (e.g. 2-bedroom) */
   activeRoomId?: string;
   onSelectRoom?: (roomId: string) => void;
@@ -755,586 +757,38 @@ function RoomShell({ hiddenWalls, wallTargeting, interactive, onWallPointer, onD
   );
 }
 
-function OneBedroomPartitions({
-  upView,
-  activeRoomId,
-  onSelectRoom,
-  onFloorClick,
-  placingItem,
-  wallColor = "#efe6d8",
-  skirtingColor = "#d6c2a5",
-}: {
-  upView?: boolean;
-  activeRoomId?: string;
-  onSelectRoom?: (id: string) => void;
-  onFloorClick?: (point: THREE.Vector3) => void;
-  /** True while furniture is being placed: taps go to the main floor so the item can be dropped. */
-  placingItem?: boolean;
-  wallColor?: string;
-  skirtingColor?: string;
-}) {
-  const wallH = upView ? 1.15 : 2.6;
-
+/** The balcony beyond the glass door: a teak deck, a glass balustrade on a steel rail, and planters. */
+function Balcony({ room, onFloorClick }: { room: RoomZone; onFloorClick?: (point: THREE.Vector3) => void }) {
+  const { minX, maxX, minZ, maxZ } = room.bounds;
+  const w = maxX - minX, d = maxZ - minZ, cx = (minX + maxX) / 2, cz = (minZ + maxZ) / 2;
   return (
     <group>
-      {/* Drawn for the old 7 m home: spread out to today's (furniture keeps its size). */}
-      <group scale={[LAYOUT_SCALE, 1, LAYOUT_SCALE]}>
-      {/* 1. DISTINCT PER-ROOM FLOORING SLABS */}
-      {/* Master Bedroom (North half): Cream wool carpet */}
-      <mesh
-        position={[0, 0.005, -1.75]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("bedroom"); }}
-      >
-        <planeGeometry args={[6.92, 3.46]} />
-        <meshStandardMaterial color="#dfd8cb" roughness={0.9} />
+      <mesh position={[cx, -0.02, cz]} receiveShadow onClick={(e) => { e.stopPropagation(); onFloorClick?.(e.point); }}>
+        <boxGeometry args={[w, 0.08, d]} />
+        <meshStandardMaterial color="#a47148" roughness={0.75} />
       </mesh>
-      <mesh position={[0, 0.007, -1.75]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
-        <ringGeometry args={[1.68, 1.72, 4]} />
-        <meshBasicMaterial color={activeRoomId === "bedroom" ? "#10b981" : "#cbbfae"} transparent opacity={activeRoomId === "bedroom" ? 0.9 : 0.35} />
-      </mesh>
-
-      {/* Living Salon & Kitchenette (South half): Scandinavian blonde oak */}
-      <mesh
-        position={[0, 0.005, 1.75]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("living"); }}
-      >
-        <planeGeometry args={[6.92, 3.46]} />
-        <meshStandardMaterial color="#cbb08c" roughness={0.65} />
-      </mesh>
-      <mesh position={[0, 0.007, 1.75]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
-        <ringGeometry args={[1.7, 1.74, 4]} />
-        <meshBasicMaterial color={activeRoomId === "living" ? "#10b981" : "#bfa17c"} transparent opacity={activeRoomId === "living" ? 0.9 : 0.35} />
-      </mesh>
-
-      {/* Marina Balcony: Outdoor teak decking */}
-      <mesh
-        position={[0, 0.005, 4.15]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("balcony"); }}
-      >
-        <planeGeometry args={[5.0, 1.3]} />
-        <meshStandardMaterial color="#854d27" roughness={0.7} />
-      </mesh>
-      <mesh position={[0, 0.007, 4.15]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
-        <ringGeometry args={[1.0, 1.04, 4]} />
-        <meshBasicMaterial color={activeRoomId === "balcony" ? "#10b981" : "#a16207"} transparent opacity={activeRoomId === "balcony" ? 0.9 : 0.4} />
-      </mesh>
-
-      {/* 2. INTERNAL PARTITION WALL & ARCHITECTURAL DOORWAY */}
-      <mesh position={[-2.15, wallH / 2, 0]} receiveShadow castShadow>
-        <boxGeometry args={[2.7, wallH, WALL_THICKNESS]} />
-        <meshStandardMaterial color={wallColor} roughness={0.85} />
-      </mesh>
-      <mesh position={[2.15, wallH / 2, 0]} receiveShadow castShadow>
-        <boxGeometry args={[2.7, wallH, WALL_THICKNESS]} />
-        <meshStandardMaterial color={wallColor} roughness={0.85} />
-      </mesh>
-      <mesh position={[0, wallH - 0.25, 0]} receiveShadow castShadow>
-        <boxGeometry args={[1.6, 0.5, WALL_THICKNESS]} />
-        <meshStandardMaterial color={wallColor} roughness={0.85} />
-      </mesh>
-      <mesh position={[0, wallH - 0.52, 0]}>
-        <boxGeometry args={[1.62, 0.06, WALL_THICKNESS + 0.02]} />
-        <meshStandardMaterial color={skirtingColor} roughness={0.6} />
-      </mesh>
-
-      {/* 3. KITCHENETTE BREAKFAST BAR */}
-      <mesh position={[2.0, 0.95 / 2, 1.7]} receiveShadow castShadow>
-        <boxGeometry args={[WALL_THICKNESS, 0.95, 2.2]} />
-        <meshStandardMaterial color="#1e293b" roughness={0.4} />
-      </mesh>
-      <mesh position={[2.0, 0.98, 1.7]} receiveShadow>
-        <boxGeometry args={[0.55, 0.06, 2.3]} />
-        <meshStandardMaterial color="#0f172a" roughness={0.2} metalness={0.25} />
-      </mesh>
-
-      {/* 4. BALCONY GLASS BALUSTRADE */}
-      <mesh position={[0, 0.55, 4.8]}>
-        <boxGeometry args={[5.0, 1.1, 0.04]} />
-        <meshStandardMaterial color="#38bdf8" transparent opacity={0.35} roughness={0.1} />
-      </mesh>
-      <mesh position={[0, 1.12, 4.8]}>
-        <boxGeometry args={[5.04, 0.05, 0.07]} />
-        <meshStandardMaterial color="#94a3b8" metalness={0.85} roughness={0.2} />
-      </mesh>
-      <mesh position={[-2.5, 0.55, 4.15]} rotation={[0, Math.PI / 2, 0]}>
-        <boxGeometry args={[1.3, 1.1, 0.04]} />
-        <meshStandardMaterial color="#38bdf8" transparent opacity={0.35} roughness={0.1} />
-      </mesh>
-      <mesh position={[2.5, 0.55, 4.15]} rotation={[0, Math.PI / 2, 0]}>
-        <boxGeometry args={[1.3, 1.1, 0.04]} />
-        <meshStandardMaterial color="#38bdf8" transparent opacity={0.35} roughness={0.1} />
-      </mesh>
-
-      </group>
-      {/* 5. 3D ROOM BADGES & SELECTION RINGS */}
-      {HOUSING_CONFIGS.one_bedroom.rooms?.map((r) => {
-        const isSelected = activeRoomId === r.id;
-        return (
-          <group
-            key={r.id}
-            position={[r.center[0], 0.06, r.center[2]]}
-            onClick={(e) => {
-              if (placingItem) return;
-              e.stopPropagation();
-              onFloorClick?.(new THREE.Vector3(r.center[0], 0, r.center[2]));
-              onSelectRoom?.(r.id);
-            }}
-            onPointerOver={() => { document.body.style.cursor = "pointer"; }}
-            onPointerOut={() => { document.body.style.cursor = ""; }}
-          >
-            <mesh rotation={[-Math.PI / 2, 0, 0]}>
-              <ringGeometry args={[0.55, 0.75, 32]} />
-              <meshBasicMaterial color={isSelected ? "#10b981" : "#38bdf8"} transparent opacity={isSelected ? 0.8 : 0.3} />
-            </mesh>
-          </group>
-        );
-      })}
+      {Array.from({ length: Math.floor(w / 0.25) }, (_, i) => (
+        <mesh key={i} position={[minX + 0.125 + i * 0.25, 0.021, cz]} raycast={() => null}>
+          <boxGeometry args={[0.01, 0.002, d]} />
+          <meshStandardMaterial color="#7c5230" />
+        </mesh>
+      ))}
+      {([[cx, maxZ, w, 0], [minX, cz, d, Math.PI / 2], [maxX, cz, d, Math.PI / 2]] as const).map(([x, z, len, yaw], i) => (
+        <group key={i} position={[x, 0, z]} rotation={[0, yaw, 0]}>
+          <mesh position={[0, 0.55, 0]}><boxGeometry args={[len, 1.1, 0.03]} /><meshStandardMaterial color="#7dd3fc" transparent opacity={0.3} roughness={0.05} /></mesh>
+          <mesh position={[0, 1.12, 0]}><boxGeometry args={[len + 0.04, 0.05, 0.07]} /><meshStandardMaterial color="#94a3b8" metalness={0.85} roughness={0.2} /></mesh>
+        </group>
+      ))}
+      {[minX + 0.35, maxX - 0.35].map((x) => (
+        <group key={x} position={[x, 0, maxZ - 0.35]}>
+          <mesh position={[0, 0.22, 0]} castShadow><boxGeometry args={[0.45, 0.44, 0.45]} /><meshStandardMaterial color="#e7e5e4" roughness={0.6} /></mesh>
+          <mesh position={[0, 0.75, 0]} castShadow><sphereGeometry args={[0.32, 12, 10]} /><meshStandardMaterial color="#15803d" roughness={0.8} /></mesh>
+        </group>
+      ))}
     </group>
   );
 }
 
-function TwoBedroomPartitions({
-  upView,
-  activeRoomId,
-  onSelectRoom,
-  onFloorClick,
-  placingItem,
-  wallColor = "#ece6dc",
-  skirtingColor = "#c9b79c",
-}: {
-  upView?: boolean;
-  activeRoomId?: string;
-  onSelectRoom?: (id: string) => void;
-  onFloorClick?: (point: THREE.Vector3) => void;
-  /** True while furniture is being placed: taps go to the main floor so the item can be dropped. */
-  placingItem?: boolean;
-  wallColor?: string;
-  skirtingColor?: string;
-}) {
-  const wallH = upView ? 1.15 : 2.6; // Waist-height cutaway in dollhouse up-view, full room height in room view!
-
-  return (
-    <group>
-      {/* Drawn for the old 7 m home: spread out to today's (furniture keeps its size). */}
-      <group scale={[LAYOUT_SCALE, 1, LAYOUT_SCALE]}>
-      {/* 1. DISTINCT PER-ROOM FLOORING SLABS (Gives each room its own authentic material & visual zone) */}
-      {/* Master Suite: Cream wool carpet */}
-      <mesh
-        position={[-1.75, 0.005, -1.75]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("master"); }}
-      >
-        <planeGeometry args={[3.46, 3.46]} />
-        <meshStandardMaterial color="#dfd8cb" roughness={0.9} />
-      </mesh>
-      {/* Master Suite perimeter accent border */}
-      <mesh position={[-1.75, 0.007, -1.75]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
-        <ringGeometry args={[1.68, 1.72, 4]} />
-        <meshBasicMaterial color={activeRoomId === "master" ? "#10b981" : "#cbbfae"} transparent opacity={activeRoomId === "master" ? 0.9 : 0.4} />
-      </mesh>
-
-      {/* Bedroom 2 / Study: Scandinavian blonde oak floor */}
-      <mesh
-        position={[1.75, 0.005, -1.75]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("study"); }}
-      >
-        <planeGeometry args={[3.46, 3.46]} />
-        <meshStandardMaterial color="#cbb08c" roughness={0.65} />
-      </mesh>
-      {/* Study perimeter accent border */}
-      <mesh position={[1.75, 0.007, -1.75]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
-        <ringGeometry args={[1.68, 1.72, 4]} />
-        <meshBasicMaterial color={activeRoomId === "study" ? "#10b981" : "#bfa17c"} transparent opacity={activeRoomId === "study" ? 0.9 : 0.4} />
-      </mesh>
-
-      {/* Living Salon: Polished Italian travertine marble */}
-      <mesh
-        position={[-1.35, 0.005, 1.75]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("living"); }}
-      >
-        <planeGeometry args={[4.26, 3.46]} />
-        <meshStandardMaterial color="#f3eee5" roughness={0.3} metalness={0.15} />
-      </mesh>
-      {/* Living perimeter accent border */}
-      <mesh position={[-1.35, 0.007, 1.75]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
-        <ringGeometry args={[1.7, 1.74, 4]} />
-        <meshBasicMaterial color={activeRoomId === "living" ? "#10b981" : "#dfd6c8"} transparent opacity={activeRoomId === "living" ? 0.9 : 0.4} />
-      </mesh>
-
-      {/* Open Kitchen: Slate charcoal porcelain tiles */}
-      <mesh
-        position={[2.15, 0.005, 1.75]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("kitchen"); }}
-      >
-        <planeGeometry args={[2.66, 3.46]} />
-        <meshStandardMaterial color="#334155" roughness={0.5} />
-      </mesh>
-      {/* Kitchen perimeter accent border */}
-      <mesh position={[2.15, 0.007, 1.75]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
-        <ringGeometry args={[1.3, 1.34, 4]} />
-        <meshBasicMaterial color={activeRoomId === "kitchen" ? "#10b981" : "#475569"} transparent opacity={activeRoomId === "kitchen" ? 0.9 : 0.4} />
-      </mesh>
-
-      {/* Skyline Balcony: Outdoor teak decking planks */}
-      <mesh
-        position={[0, 0.005, 4.15]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("balcony"); }}
-      >
-        <planeGeometry args={[5.0, 1.3]} />
-        <meshStandardMaterial color="#854d27" roughness={0.7} />
-      </mesh>
-      {/* Balcony perimeter accent border */}
-      <mesh position={[0, 0.007, 4.15]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
-        <ringGeometry args={[1.0, 1.04, 4]} />
-        <meshBasicMaterial color={activeRoomId === "balcony" ? "#10b981" : "#a16207"} transparent opacity={activeRoomId === "balcony" ? 0.9 : 0.4} />
-      </mesh>
-
-      {/* 2. INTERNAL PARTITION WALLS & ARCHITECTURAL DOORWAYS */}
-      {/* Center partition (E-W) separating North bedrooms from South living/kitchen */}
-      {/* Master Bedroom South Wall: x from -3.5 to -0.9 */}
-      <mesh position={[-2.2, wallH / 2, 0]} receiveShadow castShadow>
-        <boxGeometry args={[2.6, wallH, WALL_THICKNESS]} />
-        <meshStandardMaterial color={wallColor} roughness={0.85} />
-      </mesh>
-      {/* Master Bedroom Doorway Header (above door opening at x: -0.9 to 0) */}
-      <mesh position={[-0.45, wallH - 0.25, 0]} receiveShadow castShadow>
-        <boxGeometry args={[0.9, 0.5, WALL_THICKNESS]} />
-        <meshStandardMaterial color={wallColor} roughness={0.85} />
-      </mesh>
-      {/* Master Bedroom Wooden Door Frame */}
-      <mesh position={[-0.45, wallH - 0.52, 0]}>
-        <boxGeometry args={[0.92, 0.06, WALL_THICKNESS + 0.02]} />
-        <meshStandardMaterial color={skirtingColor} roughness={0.6} />
-      </mesh>
-
-      {/* Study South Wall: x from 0.9 to 3.5 */}
-      <mesh position={[2.2, wallH / 2, 0]} receiveShadow castShadow>
-        <boxGeometry args={[2.6, wallH, WALL_THICKNESS]} />
-        <meshStandardMaterial color={wallColor} roughness={0.85} />
-      </mesh>
-      {/* Study Doorway Header (above door opening at x: 0 to 0.9) */}
-      <mesh position={[0.45, wallH - 0.25, 0]} receiveShadow castShadow>
-        <boxGeometry args={[0.9, 0.5, WALL_THICKNESS]} />
-        <meshStandardMaterial color={wallColor} roughness={0.85} />
-      </mesh>
-      {/* Study Wooden Door Frame */}
-      <mesh position={[0.45, wallH - 0.52, 0]}>
-        <boxGeometry args={[0.92, 0.06, WALL_THICKNESS + 0.02]} />
-        <meshStandardMaterial color={skirtingColor} roughness={0.6} />
-      </mesh>
-
-      {/* Dividing Wall (N-S) between Master Bedroom and Study: x = 0, z from -3.5 to -0.8 */}
-      <mesh position={[0, wallH / 2, -2.15]} receiveShadow castShadow>
-        <boxGeometry args={[WALL_THICKNESS, wallH, 2.7]} />
-        <meshStandardMaterial color={wallColor} roughness={0.85} />
-      </mesh>
-
-      {/* 3. MODERN KITCHEN ISLAND BREAKFAST COUNTER */}
-      {/* Kitchen Island Base: x = 0.8, z from 0.5 to 2.9 */}
-      <mesh position={[0.8, 0.95 / 2, 1.7]} receiveShadow castShadow>
-        <boxGeometry args={[WALL_THICKNESS, 0.95, 2.4]} />
-        <meshStandardMaterial color="#1e293b" roughness={0.4} />
-      </mesh>
-      {/* Waterfall Granite Countertop */}
-      <mesh position={[0.8, 0.98, 1.7]} receiveShadow>
-        <boxGeometry args={[0.55, 0.06, 2.5]} />
-        <meshStandardMaterial color="#0f172a" roughness={0.2} metalness={0.25} />
-      </mesh>
-
-      {/* 4. BALCONY GLASS BALUSTRADE & PANORAMA RAILING */}
-      {/* South Front Glass Railing */}
-      <mesh position={[0, 0.55, 4.8]}>
-        <boxGeometry args={[5.0, 1.1, 0.04]} />
-        <meshStandardMaterial color="#38bdf8" transparent opacity={0.35} roughness={0.1} />
-      </mesh>
-      {/* South Front Steel Handrail */}
-      <mesh position={[0, 1.12, 4.8]}>
-        <boxGeometry args={[5.04, 0.05, 0.07]} />
-        <meshStandardMaterial color="#94a3b8" metalness={0.85} roughness={0.2} />
-      </mesh>
-      {/* Balcony Left Glass Railing */}
-      <mesh position={[-2.5, 0.55, 4.15]} rotation={[0, Math.PI / 2, 0]}>
-        <boxGeometry args={[1.3, 1.1, 0.04]} />
-        <meshStandardMaterial color="#38bdf8" transparent opacity={0.35} roughness={0.1} />
-      </mesh>
-      {/* Balcony Right Glass Railing */}
-      <mesh position={[2.5, 0.55, 4.15]} rotation={[0, Math.PI / 2, 0]}>
-        <boxGeometry args={[1.3, 1.1, 0.04]} />
-        <meshStandardMaterial color="#38bdf8" transparent opacity={0.35} roughness={0.1} />
-      </mesh>
-
-      </group>
-      {/* 5. 3D ROOM BADGES & SELECTION RINGS */}
-      {HOUSING_CONFIGS.two_bedroom.rooms?.map((r) => {
-        const isSelected = activeRoomId === r.id;
-        return (
-          <group
-            key={r.id}
-            position={[r.center[0], 0.06, r.center[2]]}
-            onClick={(e) => {
-              if (placingItem) return;
-              e.stopPropagation();
-              onFloorClick?.(new THREE.Vector3(r.center[0], 0, r.center[2]));
-              onSelectRoom?.(r.id);
-            }}
-            onPointerOver={() => { document.body.style.cursor = "pointer"; }}
-            onPointerOut={() => { document.body.style.cursor = ""; }}
-          >
-            {/* Glowing circular floor beacon */}
-            <mesh rotation={[-Math.PI / 2, 0, 0]}>
-              <ringGeometry args={[0.55, 0.75, 32]} />
-              <meshBasicMaterial color={isSelected ? "#10b981" : "#38bdf8"} transparent opacity={isSelected ? 0.8 : 0.3} />
-            </mesh>
-          </group>
-        );
-      })}
-    </group>
-  );
-}
-
-function ThreeBedroomPartitions({
-  upView,
-  activeRoomId,
-  onSelectRoom,
-  onFloorClick,
-  placingItem,
-  wallColor = "#f1ede6",
-  skirtingColor = "#bfae95",
-}: {
-  upView?: boolean;
-  activeRoomId?: string;
-  onSelectRoom?: (id: string) => void;
-  onFloorClick?: (point: THREE.Vector3) => void;
-  /** True while furniture is being placed: taps go to the main floor so the item can be dropped. */
-  placingItem?: boolean;
-  wallColor?: string;
-  skirtingColor?: string;
-}) {
-  const wallH = upView ? 1.15 : 2.6;
-
-  return (
-    <group>
-      {/* Drawn for the old 7 m home: spread out to today's (furniture keeps its size). */}
-      <group scale={[LAYOUT_SCALE, 1, LAYOUT_SCALE]}>
-      {/* 1. DISTINCT PER-ROOM FLOORING SLABS */}
-      {/* Master Suite (NW): Wool carpet */}
-      <mesh
-        position={[-1.85, 0.005, -1.75]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("master"); }}
-      >
-        <planeGeometry args={[3.26, 3.46]} />
-        <meshStandardMaterial color="#ded6c9" roughness={0.9} />
-      </mesh>
-      <mesh position={[-1.85, 0.007, -1.75]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
-        <ringGeometry args={[1.5, 1.54, 4]} />
-        <meshBasicMaterial color={activeRoomId === "master" ? "#10b981" : "#cbbfae"} transparent opacity={activeRoomId === "master" ? 0.9 : 0.4} />
-      </mesh>
-
-      {/* Bedroom 2 (NE): Blonde Scandinavian oak */}
-      <mesh
-        position={[1.85, 0.005, -1.75]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("bed2"); }}
-      >
-        <planeGeometry args={[3.26, 3.46]} />
-        <meshStandardMaterial color="#cbb08c" roughness={0.65} />
-      </mesh>
-      <mesh position={[1.85, 0.007, -1.75]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
-        <ringGeometry args={[1.5, 1.54, 4]} />
-        <meshBasicMaterial color={activeRoomId === "bed2" ? "#10b981" : "#bfa17c"} transparent opacity={activeRoomId === "bed2" ? 0.9 : 0.4} />
-      </mesh>
-
-      {/* Bedroom 3 / Creative Studio (Mid-East): Parquet */}
-      <mesh
-        position={[2.15, 0.005, 1.1]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("bed3"); }}
-      >
-        <planeGeometry args={[2.66, 2.16]} />
-        <meshStandardMaterial color="#b89f82" roughness={0.6} />
-      </mesh>
-      <mesh position={[2.15, 0.007, 1.1]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
-        <ringGeometry args={[1.1, 1.14, 4]} />
-        <meshBasicMaterial color={activeRoomId === "bed3" ? "#10b981" : "#a88e71"} transparent opacity={activeRoomId === "bed3" ? 0.9 : 0.4} />
-      </mesh>
-
-      {/* Grand Living Salon (SW & Center): Travertine marble */}
-      <mesh
-        position={[-1.4, 0.005, 1.75]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("living"); }}
-      >
-        <planeGeometry args={[4.16, 3.46]} />
-        <meshStandardMaterial color="#f5efe6" roughness={0.3} metalness={0.15} />
-      </mesh>
-      <mesh position={[-1.4, 0.007, 1.75]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
-        <ringGeometry args={[1.7, 1.74, 4]} />
-        <meshBasicMaterial color={activeRoomId === "living" ? "#10b981" : "#dfd6c8"} transparent opacity={activeRoomId === "living" ? 0.9 : 0.4} />
-      </mesh>
-
-      {/* Gourmet Kitchen & Dining (SE): Slate charcoal porcelain tiles */}
-      <mesh
-        position={[2.15, 0.005, 2.85]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("kitchen"); }}
-      >
-        <planeGeometry args={[2.66, 1.26]} />
-        <meshStandardMaterial color="#334155" roughness={0.5} />
-      </mesh>
-
-      {/* Panoramic Terrace (South): Teak decking planks */}
-      <mesh
-        position={[0, 0.005, 4.15]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-        onClick={(e) => { if (placingItem) return; e.stopPropagation(); onFloorClick?.(e.point); onSelectRoom?.("balcony"); }}
-      >
-        <planeGeometry args={[5.0, 1.3]} />
-        <meshStandardMaterial color="#854d27" roughness={0.7} />
-      </mesh>
-      <mesh position={[0, 0.007, 4.15]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
-        <ringGeometry args={[1.0, 1.04, 4]} />
-        <meshBasicMaterial color={activeRoomId === "balcony" ? "#10b981" : "#a16207"} transparent opacity={activeRoomId === "balcony" ? 0.9 : 0.4} />
-      </mesh>
-
-      {/* 2. INTERNAL PARTITION WALLS & ARCHITECTURAL DOORWAYS */}
-      {/* Master Bedroom South Wall: x from -3.5 to -0.9 */}
-      <mesh position={[-2.2, wallH / 2, 0]} receiveShadow castShadow>
-        <boxGeometry args={[2.6, wallH, WALL_THICKNESS]} />
-        <meshStandardMaterial color={wallColor} roughness={0.85} />
-      </mesh>
-      <mesh position={[-0.45, wallH - 0.25, 0]} receiveShadow castShadow>
-        <boxGeometry args={[0.9, 0.5, WALL_THICKNESS]} />
-        <meshStandardMaterial color={wallColor} roughness={0.85} />
-      </mesh>
-      <mesh position={[-0.45, wallH - 0.52, 0]}>
-        <boxGeometry args={[0.92, 0.06, WALL_THICKNESS + 0.02]} />
-        <meshStandardMaterial color={skirtingColor} roughness={0.6} />
-      </mesh>
-
-      {/* Bedroom 2 South Wall: x from 0.9 to 3.5 */}
-      <mesh position={[2.2, wallH / 2, 0]} receiveShadow castShadow>
-        <boxGeometry args={[2.6, wallH, WALL_THICKNESS]} />
-        <meshStandardMaterial color={wallColor} roughness={0.85} />
-      </mesh>
-      <mesh position={[0.45, wallH - 0.25, 0]} receiveShadow castShadow>
-        <boxGeometry args={[0.9, 0.5, WALL_THICKNESS]} />
-        <meshStandardMaterial color={wallColor} roughness={0.85} />
-      </mesh>
-      <mesh position={[0.45, wallH - 0.52, 0]}>
-        <boxGeometry args={[0.92, 0.06, WALL_THICKNESS + 0.02]} />
-        <meshStandardMaterial color={skirtingColor} roughness={0.6} />
-      </mesh>
-
-      {/* Dividing Wall (N-S) between Master Bedroom and Bed 2: x = 0, z from -3.5 to -0.8 */}
-      <mesh position={[0, wallH / 2, -2.15]} receiveShadow castShadow>
-        <boxGeometry args={[WALL_THICKNESS, wallH, 2.7]} />
-        <meshStandardMaterial color={wallColor} roughness={0.85} />
-      </mesh>
-
-      {/* Dividing Wall (N-S) between Grand Living and Bed 3 / Kitchen: x = 0.75 */}
-      <mesh position={[0.75, wallH / 2, 0.2]} receiveShadow castShadow>
-        <boxGeometry args={[WALL_THICKNESS, wallH, 0.4]} />
-        <meshStandardMaterial color={wallColor} roughness={0.85} />
-      </mesh>
-      {/* Bed 3 Doorway Header (door at z: 0.4 to 1.2) */}
-      <mesh position={[0.75, wallH - 0.25, 0.8]} receiveShadow castShadow>
-        <boxGeometry args={[WALL_THICKNESS, 0.5, 0.8]} />
-        <meshStandardMaterial color={wallColor} roughness={0.85} />
-      </mesh>
-      <mesh position={[0.75, wallH - 0.52, 0.8]}>
-        <boxGeometry args={[WALL_THICKNESS + 0.02, 0.06, 0.82]} />
-        <meshStandardMaterial color={skirtingColor} roughness={0.6} />
-      </mesh>
-      <mesh position={[0.75, wallH / 2, 1.7]} receiveShadow castShadow>
-        <boxGeometry args={[WALL_THICKNESS, wallH, 1.0]} />
-        <meshStandardMaterial color={wallColor} roughness={0.85} />
-      </mesh>
-
-      {/* Dividing Wall (E-W) between Bed 3 and Kitchen: z = 2.2, x from 0.75 to 3.5 */}
-      <mesh position={[2.12, wallH / 2, 2.2]} receiveShadow castShadow>
-        <boxGeometry args={[2.75, wallH, WALL_THICKNESS]} />
-        <meshStandardMaterial color={wallColor} roughness={0.85} />
-      </mesh>
-
-      {/* Kitchen Island Countertop Pass */}
-      <mesh position={[0.75, 0.95 / 2, 2.55]} receiveShadow castShadow>
-        <boxGeometry args={[WALL_THICKNESS, 0.95, 0.7]} />
-        <meshStandardMaterial color="#1e293b" roughness={0.4} />
-      </mesh>
-      <mesh position={[0.75, 0.98, 2.55]} receiveShadow>
-        <boxGeometry args={[0.55, 0.06, 0.8]} />
-        <meshStandardMaterial color="#0f172a" roughness={0.2} metalness={0.25} />
-      </mesh>
-
-      {/* 3. BALCONY GLASS BALUSTRADE & PANORAMA RAILING */}
-      <mesh position={[0, 0.55, 4.8]}>
-        <boxGeometry args={[5.0, 1.1, 0.04]} />
-        <meshStandardMaterial color="#38bdf8" transparent opacity={0.35} roughness={0.1} />
-      </mesh>
-      <mesh position={[0, 1.12, 4.8]}>
-        <boxGeometry args={[5.04, 0.05, 0.07]} />
-        <meshStandardMaterial color="#94a3b8" metalness={0.85} roughness={0.2} />
-      </mesh>
-      <mesh position={[-2.5, 0.55, 4.15]} rotation={[0, Math.PI / 2, 0]}>
-        <boxGeometry args={[1.3, 1.1, 0.04]} />
-        <meshStandardMaterial color="#38bdf8" transparent opacity={0.35} roughness={0.1} />
-      </mesh>
-      <mesh position={[2.5, 0.55, 4.15]} rotation={[0, Math.PI / 2, 0]}>
-        <boxGeometry args={[1.3, 1.1, 0.04]} />
-        <meshStandardMaterial color="#38bdf8" transparent opacity={0.35} roughness={0.1} />
-      </mesh>
-
-      </group>
-      {/* 4. 3D ROOM BADGES & SELECTION RINGS */}
-      {HOUSING_CONFIGS.three_bedroom.rooms?.map((r) => {
-        const isSelected = activeRoomId === r.id;
-        return (
-          <group
-            key={r.id}
-            position={[r.center[0], 0.06, r.center[2]]}
-            onClick={(e) => {
-              if (placingItem) return;
-              e.stopPropagation();
-              onFloorClick?.(new THREE.Vector3(r.center[0], 0, r.center[2]));
-              onSelectRoom?.(r.id);
-            }}
-            onPointerOver={() => { document.body.style.cursor = "pointer"; }}
-            onPointerOut={() => { document.body.style.cursor = ""; }}
-          >
-            <mesh rotation={[-Math.PI / 2, 0, 0]}>
-              <ringGeometry args={[0.55, 0.75, 32]} />
-              <meshBasicMaterial color={isSelected ? "#10b981" : "#38bdf8"} transparent opacity={isSelected ? 0.8 : 0.3} />
-            </mesh>
-          </group>
-        );
-      })}
-    </group>
-  );
-}
-
-/** A repeatable pseudo-random sequence, so textures come out the same every time. */
 function seeded(seed: number) {
   let x = seed;
   return () => { x = (x * 1664525 + 1013904223) % 4294967296; return x / 4294967296; };
@@ -1491,11 +945,18 @@ function CameraRig({
   turns,
   upView,
   targetPos,
+  follow,
+  followYaw = 0,
+  inside,
   onHiddenWallsChange,
 }: {
   turns: number;
   upView?: boolean;
   targetPos?: [number, number, number];
+  /** Where the citizen is: the camera follows them from room to room. */
+  follow?: [number, number, number];
+  followYaw?: number;
+  inside?: boolean;
   onHiddenWallsChange: (walls: Set<Wall>) => void;
 }) {
   const controls = useThree((s) => s.controls) as unknown as OrbitControlsImpl | null;
@@ -1508,11 +969,13 @@ function CameraRig({
   // Pull back on narrow (portrait) screens so the whole room fits.
   useEffect(() => {
     if (!controls) return;
-    const dist = size.width / size.height < 0.8 ? 24 : 17.5;
+    const dist = inside ? 2.8 : size.width / size.height < 0.8 ? 19 : 14;
     const dir = camera.position.clone().sub(controls.target).normalize();
     camera.position.copy(controls.target).addScaledVector(dir, dist);
     controls.update();
-  }, [controls, camera, size.width, size.height]);
+  }, [controls, camera, size.width, size.height, inside]);
+  // Where the citizen was last frame, so the camera can move along with them.
+  const lastFollow = useRef<[number, number, number] | null>(null);
 
   useEffect(() => {
     if (!controls || turns === lastTurns.current) return;
@@ -1524,8 +987,28 @@ function CameraRig({
   useFrame((_, dt) => {
     if (!controls) return;
 
-    // Smooth gliding towards active room target
-    if (targetPos) {
+    if (inside && follow) {
+      // Over the shoulder: aim at the citizen's head; while they walk, settle in behind them.
+      const head = new THREE.Vector3(follow[0], 1.45, follow[2]);
+      const moved = lastFollow.current ? Math.hypot(follow[0] - lastFollow.current[0], follow[2] - lastFollow.current[2]) : 0;
+      const shift = head.clone().sub(controls.target);
+      controls.target.add(shift);
+      camera.position.add(shift);
+      if (moved > 0.0005) {
+        const behind = new THREE.Vector3(follow[0] - Math.sin(followYaw) * 2.6, 2.3, follow[2] - Math.cos(followYaw) * 2.6);
+        camera.position.lerp(behind, Math.min(1, dt * 2.5));
+      }
+      lastFollow.current = follow;
+      controls.update();
+    } else if (follow && !upView) {
+      // Above: follow the citizen from room to room, gliding rather than jumping.
+      const k = Math.min(1, dt * 3);
+      const dx = (follow[0] - controls.target.x) * k, dz = (follow[2] - controls.target.z) * k;
+      controls.target.x += dx; controls.target.z += dz;
+      camera.position.x += dx; camera.position.z += dz;
+      lastFollow.current = follow;
+    } else if (targetPos) {
+      // Smooth gliding towards the active room (or the middle, from above)
       const lerpFactor = Math.min(1, dt * 5.0);
       const dx = (targetPos[0] - controls.target.x) * lerpFactor;
       const dy = (targetPos[1] - controls.target.y) * lerpFactor;
@@ -1538,7 +1021,7 @@ function CameraRig({
     }
 
     const targetElevation = upView ? 15.0 : 7.2;
-    if (Math.abs(camera.position.y - targetElevation) > 0.05) {
+    if (!inside && Math.abs(camera.position.y - targetElevation) > 0.05) {
       camera.position.y += (targetElevation - camera.position.y) * Math.min(1, dt * 3.5);
     }
     controls.update();
@@ -1557,12 +1040,15 @@ function CameraRig({
       if (s.t >= 1) swing.current = null;
     }
 
-    // Hide walls standing between the camera and the room centre.
-    const cx = camera.position.x;
-    const cz = camera.position.z;
+    // Hide walls standing between the camera and what it's looking at.
+    const cx = camera.position.x - (inside ? 0 : controls.target.x * 0.3);
+    const cz = camera.position.z - (inside ? 0 : controls.target.z * 0.3);
     const len = Math.hypot(cx, cz) || 1;
     const hidden = new Set<Wall>();
-    for (const { wall, normal } of WALLS) if ((cx * normal[0] + cz * normal[1]) / len > 0.25) hidden.add(wall);
+    // Inside, only a wall the camera has backed up against (or through) is cut away; from above, the near ones.
+    for (const { wall, normal } of WALLS) {
+      if (inside ? cx * normal[0] + cz * normal[1] > HALF - 0.7 : (cx * normal[0] + cz * normal[1]) / len > 0.25) hidden.add(wall);
+    }
     const key = [...hidden].sort().join(",");
     if (key !== lastKey.current) {
       lastKey.current = key;
@@ -1583,6 +1069,7 @@ function RoomScene({
   turns = 0,
   housingTier = "studio",
   upView = false,
+  view = "above",
   activeRoomId,
   onSelectRoom,
   onPlace,
@@ -1883,6 +1370,9 @@ function RoomScene({
         turns={turns}
         upView={upView}
         targetPos={targetPos}
+        follow={upView ? undefined : pose.position}
+        followYaw={pose.yaw}
+        inside={view === "inside" && !upView}
         onHiddenWallsChange={setHiddenWalls}
       />
 
@@ -1953,11 +1443,12 @@ function RoomScene({
         />
       )}
 
-      {/* Multi-Room Partitions for 1-Bedroom Layout */}
-      {housingTier === "one_bedroom" && (
-        <OneBedroomPartitions
+      {/* Single-storey homes: the floor plan's walls and rooms (src/data/home/floorplans.json) */}
+      {!levelDef && config.walls && (
+        <LevelPartitions
+          def={{ label: "", icon: "", rooms: rooms ?? [], walls: config.walls }}
           upView={upView}
-          activeRoomId={activeRoomId ?? "bedroom"}
+          activeRoomId={activeRoomId}
           onSelectRoom={onSelectRoom}
           onFloorClick={handleFloorLocomotion}
           placingItem={!!placing}
@@ -1965,32 +1456,7 @@ function RoomScene({
           skirtingColor={config.skirtingColor}
         />
       )}
-
-      {/* Multi-Room Partitions for 2-Bedroom Layout */}
-      {housingTier === "two_bedroom" && (
-        <TwoBedroomPartitions
-          upView={upView}
-          activeRoomId={activeRoomId ?? "living"}
-          onSelectRoom={onSelectRoom}
-          onFloorClick={handleFloorLocomotion}
-          placingItem={!!placing}
-          wallColor={style.wall}
-          skirtingColor={config.skirtingColor}
-        />
-      )}
-
-      {/* Multi-Room Partitions for 3-Bedroom Layout */}
-      {housingTier === "three_bedroom" && (
-        <ThreeBedroomPartitions
-          upView={upView}
-          activeRoomId={activeRoomId ?? "living"}
-          onSelectRoom={onSelectRoom}
-          onFloorClick={handleFloorLocomotion}
-          placingItem={!!placing}
-          wallColor={style.wall}
-          skirtingColor={config.skirtingColor}
-        />
-      )}
+      {rooms?.some((r) => r.id === "balcony") && <Balcony room={rooms.find((r) => r.id === "balcony")!} onFloorClick={handleFloorLocomotion} />}
 
       {/* Visual Click-to-Walk Destination Beacon */}
       {clickBeacon && (
@@ -2109,10 +1575,10 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
           target={[0, 0.8, 0]}
           enablePan={false}
           enableDamping
-          minPolarAngle={props.upView ? 0.2 : 0.35}
-          maxPolarAngle={props.upView ? 1.15 : 1.25}
-          minDistance={7}
-          maxDistance={30}
+          minPolarAngle={props.upView ? 0.2 : props.view === "inside" ? 0.6 : 0.35}
+          maxPolarAngle={props.upView ? 1.15 : props.view === "inside" ? 1.5 : 1.25}
+          minDistance={props.view === "inside" && !props.upView ? 1.2 : 6}
+          maxDistance={props.view === "inside" && !props.upView ? 5 : 30}
         />
       </Canvas>
       <PeopleLabels people={props.people ?? []} nodes={labels} />
