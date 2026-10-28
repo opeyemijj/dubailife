@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Briefcase, Check, HelpCircle, LogOut, Megaphone, MessageCircle, MessagesSquare, Search, Shirt, ShoppingBag, Sparkles, X } from "lucide-react";
 import type { Place, Product, StationKind, Venue } from "@/lib/city/types";
 import { adjustBalance, boostNeed, updateCitizen, useCitizen, type InventoryItem } from "@/lib/citizenStore";
+import { funKindOf, isStaycation, logFun } from "@/lib/fun";
 import { gainSkill, lifeEvent } from "@/lib/life";
 import type { AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 import { gameAudio } from "@/utils/gameAudio";
@@ -104,6 +105,11 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   useEffect(() => { countVisit(key); }, [key]);
   const router = useRouter();
   const { citizen } = useCitizen();
+  // Going into a beach, club, waterpark, restaurant (brunch), attraction or hotel counts for Life & Fun goals.
+  useEffect(() => {
+    const kind = funKindOf(place, venue);
+    if (kind && citizen?.id) logFun(kind, place.id, venue.id);
+  }, [place, venue, citizen?.id]);
   const plan = useMemo(() => buildPlan(venue), [venue]);
 
   const [walkTo, setWalkTo] = useState<WalkTarget | null>(null);
@@ -675,6 +681,8 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       return;
     }
     gameAudio.playCoinSound();
+    // A hotel room or suite is a staycation (Life & Fun).
+    if (isStaycation(product.id)) logFun("staycation", place.id, venue.id, product.id);
     const item: InventoryItem = {
       uid: uniqueId(product.id),
       productId: product.id,

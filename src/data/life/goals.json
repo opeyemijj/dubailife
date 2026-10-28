@@ -227,18 +227,12 @@
     {
       "id": "love",
       "icon": "💍",
-      "title": "Love and family",
-      "why": "Meet someone, date, and if it's right, marry. Only what UAE law allows: a man and a woman, both agreeing.",
+      "title": "Marriage and family",
+      "why": "When it's right: get engaged, then married. Only what UAE law allows: a man and a woman, both agreeing. (Dating is in Life & Fun.)",
       "aed": 1000,
       "xp": 150,
       "pillar": "wellbeing",
       "steps": [
-        {
-          "id": "date",
-          "title": "Start dating someone",
-          "done": "dating",
-          "href": "/phone"
-        },
         {
           "id": "engaged",
           "title": "Get engaged",

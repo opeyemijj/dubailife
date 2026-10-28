@@ -11,10 +11,20 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { GoalSteps } from "@/components/goals/GoalSteps";
 import { openGoalSetup } from "@/components/goals/GoalSetup";
 import { DailyMissions } from "@/components/goals/DailyMissions";
+import { FunGoals } from "@/components/goals/FunGoals";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { currentGoal, DEFAULT_ORDER, goalClaimed, goalDone, goalOf, lifeProgress, stepDone, useGoals, type Goal } from "@/lib/goals";
 
 export default function GoalsPage() {
+  return <Suspense><Goals /></Suspense>;
+}
+
+function Goals() {
   const { citizen } = useRequireCitizen();
+  // Two tabs: the life path in order, and Life & Fun (?tab=fun).
+  const params = useSearchParams();
+  const [tab, setTab] = useState<"path" | "fun">(params?.get("tab") === "fun" ? "fun" : "path");
   const { status } = useGoals(citizen?.id);
   const now = currentGoal(status);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -29,9 +39,16 @@ export default function GoalsPage() {
         <header className="flex items-center gap-3">
           <Link href="/explore" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center" aria-label="Back to the map"><ArrowLeft className="w-4 h-4" /></Link>
           <h1 className="text-2xl font-black flex-1">My goals</h1>
-          {status?.order && <button onClick={openGoalSetup} className="h-10 px-3 rounded-full bg-white/10 text-xs font-black flex items-center gap-1.5"><ListOrdered className="w-4 h-4" /> Change order</button>}
+          {tab === "path" && status?.order && <button onClick={openGoalSetup} className="h-10 px-3 rounded-full bg-white/10 text-xs font-black flex items-center gap-1.5"><ListOrdered className="w-4 h-4" /> Change order</button>}
         </header>
 
+        <div className="grid grid-cols-2 gap-1 rounded-2xl bg-white/5 p-1" role="tablist">
+          {([["path", "🧭 Life path"], ["fun", "🎉 Life & Fun"]] as const).map(([id, label]) => (
+            <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={`h-10 rounded-xl text-sm font-black ${tab === id ? (id === "fun" ? "bg-fuchsia-500" : "bg-teal-500") : "text-white/60"}`}>{label}</button>
+          ))}
+        </div>
+
+        {tab === "fun" ? <FunGoals /> : <>
         <section className="rounded-3xl bg-gradient-to-br from-teal-500 to-emerald-700 p-5 shadow-xl">
           <p className="text-xs font-black uppercase tracking-wider text-white/70">Your Dubai story</p>
           <p className="text-4xl font-black">{pct}%</p>
@@ -72,7 +89,8 @@ export default function GoalsPage() {
             })}
           </ol>
         )}
-        {citizen?.dream && <p className="text-center text-xs text-white/50">Your dream: <b className="text-white/80">{citizen.dream}</b>. Every goal moves you closer.</p>}
+        </>}
+        {tab === "path" && citizen?.dream && <p className="text-center text-xs text-white/50">Your dream: <b className="text-white/80">{citizen.dream}</b>. Every goal moves you closer.</p>}
       </div>
       <BottomNav />
     </main>

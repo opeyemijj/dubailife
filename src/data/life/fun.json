@@ -1,0 +1,40 @@
+{
+  "_note": "Life & Fun goals: things to do whenever you like, alongside the ordered life path. Visits are logged by public.log_fun() when you go into a venue (or book a hotel night); love goals read Hayati. Each goal is collected once for XP (wellbeing league points); the weekend card asks for two different fun things on Saturday or Sunday (Dubai time) and builds a weekend streak. Checks, counts and XP are mirrored in supabase/migrations/*_fun.sql (scripts/check-life-config.mjs).",
+  "kinds": ["beach", "club", "hotel", "staycation", "brunch", "attraction", "waterpark"],
+  "categories": [
+    { "id": "love", "icon": "💞", "title": "Love", "blurb": "Find someone, go on dates, become a couple. A man and a woman, both agreeing." },
+    { "id": "nightlife", "icon": "🪩", "title": "Nightlife", "blurb": "Party hard on the weekend, brunch with friends, a night at the club." },
+    { "id": "beach", "icon": "🏖️", "title": "Beach and outdoors", "blurb": "Sun, sea and the waterparks. Dubai's best free (and not-so-free) days out." },
+    { "id": "staycation", "icon": "🏨", "title": "Staycations and treats", "blurb": "A night in a five-star hotel, the attractions, treating yourself." }
+  ],
+  "goals": [
+    { "id": "partner", "category": "love", "icon": "💑", "title": "Get a boyfriend or girlfriend", "check": "dating", "count": 1, "xp": 100, "href": "/phone" },
+    { "id": "first-date", "category": "love", "icon": "🌹", "title": "Go on your first date", "check": "dates", "count": 1, "xp": 50, "href": "/phone" },
+    { "id": "date-spots", "category": "love", "icon": "📍", "title": "Date at all 8 date spots", "check": "date-spots", "count": 8, "xp": 200, "href": "/phone" },
+
+    { "id": "first-club", "category": "nightlife", "icon": "🪩", "title": "Your first night at a club", "check": "club", "count": 1, "xp": 50, "href": "/explore" },
+    { "id": "party-weekends", "category": "nightlife", "icon": "🎉", "title": "Party on 4 weekends", "check": "club-weekends", "count": 4, "xp": 150, "href": "/explore" },
+    { "id": "brunch", "category": "nightlife", "icon": "🥂", "title": "Weekend brunch", "check": "brunch", "count": 1, "xp": 50, "href": "/explore" },
+
+    { "id": "beach-day", "category": "beach", "icon": "🏖️", "title": "A day at the beach", "check": "beach", "count": 1, "xp": 50, "href": "/explore" },
+    { "id": "beaches", "category": "beach", "icon": "🌊", "title": "Visit 4 different beaches", "check": "beach-places", "count": 4, "xp": 150, "href": "/explore" },
+    { "id": "waterpark", "category": "beach", "icon": "🛝", "title": "Go to a waterpark", "check": "waterpark", "count": 1, "xp": 75, "href": "/explore" },
+
+    { "id": "staycation", "category": "staycation", "icon": "🛏️", "title": "Your first staycation", "check": "staycation", "count": 1, "xp": 100, "href": "/explore" },
+    { "id": "hotels", "category": "staycation", "icon": "🏨", "title": "Stay at 3 different hotels", "check": "staycation-places", "count": 3, "xp": 200, "href": "/explore" },
+    { "id": "sights", "category": "staycation", "icon": "🎡", "title": "See 3 attractions", "check": "attraction-places", "count": 3, "xp": 100, "href": "/explore" }
+  ],
+  "weekend": {
+    "need": 2,
+    "xp": 60,
+    "options": [
+      { "id": "club", "icon": "🪩", "title": "Party at a club" },
+      { "id": "beach", "icon": "🏖️", "title": "Beach day" },
+      { "id": "brunch", "icon": "🥂", "title": "Brunch" },
+      { "id": "date", "icon": "🌹", "title": "A date" },
+      { "id": "staycation", "icon": "🛏️", "title": "Staycation" },
+      { "id": "attraction", "icon": "🎡", "title": "An attraction" },
+      { "id": "waterpark", "icon": "🛝", "title": "Waterpark" }
+    ]
+  }
+}

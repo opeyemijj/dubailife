@@ -163,7 +163,10 @@ for (const [label, text] of [["caught", `if random() < ${fl.caughtChance} then`]
 // Life goals (src/data/life/goals.json vs *_goals.sql): steps, rewards, pillars, the plan bonus, savings target and order rules.
 const goals = JSON.parse(readFileSync("src/data/life/goals.json", "utf8"));
 const goalFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_goals.sql")).sort().pop();
-const goalSql = readFileSync(`supabase/migrations/${goalFile}`, "utf8");
+// Later migrations redefine some goal functions (the fun migration changed the love steps): read them too.
+const funFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_fun.sql")).sort().pop();
+const funSql = readFileSync(`supabase/migrations/${funFile}`, "utf8");
+const goalSql = readFileSync(`supabase/migrations/${goalFile}`, "utf8") + funSql;
 const gneed = (label, text) => { if (!goalSql.includes(text)) { bad++; console.error(`goals ${label}: differs from SQL (${text})`); } };
 for (const g of goals.goals) {
   gneed(`steps ${g.id}`, `when '${g.id}' then array[${g.steps.map((s) => `'${s.done}'`).join(", ")}]`);
@@ -191,5 +194,14 @@ for (const [id, m] of Object.entries(mis.missions)) {
   const sqlPillar = ["shift", "apply"].includes(id) ? "career" : ["lesson", "driving"].includes(id) ? "learning" : "wellbeing";
   if (m.pillar !== sqlPillar) { bad++; console.error(`missions pillar ${id}: ${m.pillar} in JSON, ${sqlPillar} in SQL`); }
 }
-console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving, parking, goals and missions config match the database.");
+// Life & Fun (src/data/life/fun.json vs *_fun.sql): each goal's check, count and XP, the kinds, the weekend card.
+const fun = JSON.parse(readFileSync("src/data/life/fun.json", "utf8"));
+const fneed = (label, text) => { if (!funSql.includes(text)) { bad++; console.error(`fun ${label}: differs from SQL (${text})`); } };
+for (const g of fun.goals) fneed(`goal ${g.id}`, `when '${g.id}' then array['${g.check}', '${g.count}', '${g.xp}']`);
+fneed("goal list", `ids text[] := array[${fun.goals.map((g) => `'${g.id}'`).join(", ")}]`);
+fneed("kinds", `check (kind in (${fun.kinds.map((k) => `'${k}'`).join(", ")}))`);
+fneed("weekend need", `, 1), 0) < ${fun.weekend.need} then raise exception 'not_done'`);
+fneed("weekend xp", `id := 'weekend:' || sat; xp := ${fun.weekend.xp};`);
+fneed("weekend options", `kind in (${fun.weekend.options.filter((o) => o.id !== "date").map((o) => `'${o.id}'`).join(", ")})`);
+console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving, parking, goals, missions and fun config match the database.");
 process.exit(bad ? 1 : 0);

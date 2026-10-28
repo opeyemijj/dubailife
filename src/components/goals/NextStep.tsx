@@ -14,6 +14,8 @@ import { currentGoal, goalDone, lifeProgress, stepDone, useGoals } from "@/lib/g
 import { gameAudio } from "@/utils/gameAudio";
 import { GoalSteps } from "./GoalSteps";
 import { DailyMissions } from "./DailyMissions";
+import { WeekendCard } from "./FunGoals";
+import { useFun } from "@/lib/fun";
 import { collectable, useMissions } from "@/lib/missions";
 
 export function NextStep() {
@@ -23,6 +25,9 @@ export function NextStep() {
   const firstDay = useFirstDayActive();
   const { missions } = useMissions(citizen?.id);
   const todo = missions ? missions.missions.filter((m) => !m.done).length : null;
+  // On Saturdays and Sundays the weekend card joins the goal and the missions.
+  const { status: fun } = useFun(citizen?.id);
+  const weekend = fun?.weekend.now && !fun.weekend.claimed ? fun : null;
   const [open, setOpen] = useState(false);
   const [won, setWon] = useState<{ aed: number; xp: number; next?: string } | null>(null);
   const atHome = path.startsWith("/home");
@@ -51,6 +56,7 @@ export function NextStep() {
           <span>{ready ? "🎁" : goal.icon}</span>
           {ready ? `${goal.title}: collect` : `${goal.title} · ${done}/${goal.steps.length}`}
           {todo !== null && <span className="ml-1 rounded-full bg-violet-600 text-white text-[10px] px-1.5 py-0.5">☀️ {3 - todo}/3</span>}
+          {weekend && <span className="rounded-full bg-fuchsia-600 text-white text-[10px] px-1.5 py-0.5">🎉 {Math.min(weekend.weekend.done.length, 2)}/2</span>}
         </button>
       ) : (
         <div className="rounded-3xl bg-white text-slate-900 shadow-2xl p-4 space-y-2.5 w-full">
@@ -73,6 +79,7 @@ export function NextStep() {
             </div>
           )}
           <div className="border-t border-slate-100 pt-2.5"><DailyMissions onGo={() => setOpen(false)} /></div>
+          {weekend && <WeekendCard status={weekend} />}
           <Link href="/goals" className="flex items-center justify-between text-xs font-black text-teal-700">
             <span>All my goals</span><span>Your Dubai story: {Math.round(lifeProgress(status) * 100)}%</span>
           </Link>
