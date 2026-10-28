@@ -1,5 +1,6 @@
 "use client";
 
+import { openPhone } from "@/components/layout/PhoneOverlay";
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -103,7 +104,8 @@ export function KeyboardShortcuts() {
             break;
           case "p":
             e.preventDefault();
-            router.push("/phone");
+            // The phone opens over whatever page you're on.
+            openPhone();
             break;
           case "s":
             e.preventDefault();

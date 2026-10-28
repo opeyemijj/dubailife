@@ -2375,154 +2375,218 @@
  "bed_space": {
   "rooms": [
    {
-    "id": "sleep",
-    "label": "Bunk room",
+    "id": "bedroom",
+    "label": "Shared room · 4 beds",
     "icon": "🛏️",
-    "desc": "Bed, wardrobe and nightstands",
+    "desc": "A bed and a locker each, and the table in the middle",
     "bounds": {
      "minX": -5,
-     "maxX": -1,
+     "maxX": 5,
      "minZ": -5,
-     "maxZ": 0
+     "maxZ": 2.5
     },
     "center": [
-     -3.0,
      0,
-     -2.5
+     0,
+     -1.2
     ]
    },
    {
     "id": "kitchen",
     "label": "Kitchenette",
     "icon": "🍳",
-    "desc": "Hob, sink, fridge and breakfast island",
+    "desc": "Shared hob, sink and fridge",
     "bounds": {
-     "minX": -1,
-     "maxX": 2.5,
-     "minZ": -5,
-     "maxZ": 0
+     "minX": -5,
+     "maxX": 0,
+     "minZ": 2.5,
+     "maxZ": 5
     },
     "center": [
-     0.75,
+     -2.5,
      0,
-     -2.5
+     3.75
     ]
    },
    {
     "id": "bath",
     "label": "Bathroom",
     "icon": "🚿",
-    "desc": "Shower, basin, toilet and washer",
+    "desc": "Shared shower, basin, toilet and washer",
     "bounds": {
-     "minX": 2.5,
+     "minX": 0,
      "maxX": 5,
-     "minZ": -5,
-     "maxZ": -2
-    },
-    "center": [
-     3.75,
-     0,
-     -3.5
-    ]
-   },
-   {
-    "id": "living",
-    "label": "Living area",
-    "icon": "🛋️",
-    "desc": "Sofa and TV",
-    "bounds": {
-     "minX": -5,
-     "maxX": 5,
-     "minZ": 0,
+     "minZ": 2.5,
      "maxZ": 5
     },
     "center": [
-     -1,
+     2.5,
      0,
-     2.5
+     3.75
     ]
    }
   ],
   "walls": [
    {
     "a": [
-     2.5,
-     -5
+     -5,
+     2.5
     ],
     "b": [
-     2.5,
-     -2
+     0,
+     2.5
+    ],
+    "door": [
+     3,
+     4
     ]
    },
    {
     "a": [
-     2.5,
-     -2
+     0,
+     2.5
     ],
     "b": [
      5,
-     -2
+     2.5
     ],
     "door": [
-     0.5,
-     1.5
+     2,
+     3
+    ]
+   },
+   {
+    "a": [
+     0,
+     2.5
+    ],
+    "b": [
+     0,
+     5
     ]
    }
   ],
   "furniture": [
    {
-    "id": "bs_bunk1",
-    "name": "Bunk bed",
+    "id": "bed1",
+    "name": "Bed 1",
     "icon": "🛏️",
     "size": [
-     4,
-     5
+     2,
+     4
     ],
-    "col": 1,
+    "col": 0,
     "row": 0,
     "rot": 0,
     "model": "/models/furniture/bed.glb",
     "interaction": "bed"
    },
    {
-    "id": "bs_bunk2",
-    "name": "Bunk bed",
-    "icon": "🛏️",
-    "size": [
-     4,
-     5
-    ],
-    "col": 1,
-    "row": 13,
-    "rot": 0,
-    "model": "/models/furniture/bed.glb",
-    "interaction": "bed"
-   },
-   {
-    "id": "bs_locker1",
-    "name": "Suitcase locker",
+    "id": "locker1",
+    "name": "Locker 1",
     "icon": "🧳",
     "size": [
      1,
      1
     ],
-    "col": 5,
+    "col": 2,
     "row": 0,
     "rot": 0,
     "model": "/models/furniture/side-table.glb"
    },
    {
-    "id": "bs_locker2",
-    "name": "Suitcase locker",
+    "id": "bed2",
+    "name": "Bed 2",
+    "icon": "🛏️",
+    "size": [
+     2,
+     4
+    ],
+    "col": 18,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed"
+   },
+   {
+    "id": "locker2",
+    "name": "Locker 2",
     "icon": "🧳",
     "size": [
      1,
      1
     ],
-    "col": 5,
-    "row": 13,
+    "col": 17,
+    "row": 0,
     "rot": 0,
     "model": "/models/furniture/side-table.glb"
+   },
+   {
+    "id": "bed3",
+    "name": "Bed 3",
+    "icon": "🛏️",
+    "size": [
+     2,
+     4
+    ],
+    "col": 0,
+    "row": 11,
+    "rot": 0,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed"
+   },
+   {
+    "id": "locker3",
+    "name": "Locker 3",
+    "icon": "🧳",
+    "size": [
+     1,
+     1
+    ],
+    "col": 2,
+    "row": 14,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb"
+   },
+   {
+    "id": "bed4",
+    "name": "Bed 4",
+    "icon": "🛏️",
+    "size": [
+     2,
+     4
+    ],
+    "col": 18,
+    "row": 11,
+    "rot": 0,
+    "model": "/models/furniture/bed.glb",
+    "interaction": "bed"
+   },
+   {
+    "id": "locker4",
+    "name": "Locker 4",
+    "icon": "🧳",
+    "size": [
+     1,
+     1
+    ],
+    "col": 17,
+    "row": 14,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb"
+   },
+   {
+    "id": "bs_rug",
+    "name": "Shared rug",
+    "icon": "🟡",
+    "size": [
+     5,
+     5
+    ],
+    "col": 7,
+    "row": 4,
+    "rot": 0,
+    "visual": "rug-round"
    },
    {
     "id": "bs_table",
@@ -2532,22 +2596,36 @@
      3,
      2
     ],
-    "col": 9,
-    "row": 12,
+    "col": 8,
+    "row": 5,
     "rot": 0,
     "model": "/models/furniture/coffee-table.glb"
    },
    {
-    "id": "bs_stool",
+    "id": "bs_stool1",
     "name": "Stool",
     "icon": "🪑",
     "size": [
      2,
      2
     ],
-    "col": 13,
-    "row": 12,
-    "rot": 0,
+    "col": 5,
+    "row": 5,
+    "rot": 3,
+    "model": "/models/furniture/chair.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "bs_stool2",
+    "name": "Stool",
+    "icon": "🪑",
+    "size": [
+     2,
+     2
+    ],
+    "col": 12,
+    "row": 5,
+    "rot": 1,
     "model": "/models/furniture/chair.glb",
     "interaction": "chair"
    },
@@ -2559,10 +2637,24 @@
      2,
      2
     ],
-    "col": 9,
-    "row": 14,
+    "col": 8,
+    "row": 5,
     "rot": 0,
     "visual": "chandelier-ring"
+   },
+   {
+    "id": "bs_fridge",
+    "name": "Shared fridge",
+    "icon": "🧊",
+    "size": [
+     2,
+     2
+    ],
+    "col": 6,
+    "row": 18,
+    "rot": 0,
+    "model": "/models/furniture/fridge.glb",
+    "interaction": "cooler"
    },
    {
     "id": "bs_palm",
@@ -2572,56 +2664,42 @@
      1,
      1
     ],
-    "col": 19,
-    "row": 19,
-    "rot": 0,
-    "visual": "palm"
-   },
-   {
-    "id": "be_fridge",
-    "name": "Fridge",
-    "icon": "🧊",
-    "size": [
-     2,
-     2
-    ],
-    "col": 13,
+    "col": 9,
     "row": 0,
     "rot": 0,
-    "model": "/models/furniture/fridge.glb",
-    "interaction": "cooler"
+    "visual": "palm"
    }
   ],
   "fixtures": [
    {
     "kind": "kitchen-run",
-    "col": 9,
-    "row": 0,
-    "rot": 0
+    "col": 1,
+    "row": 19,
+    "rot": 2
    },
    {
     "kind": "shower",
     "col": 18,
-    "row": 0,
-    "rot": 0
+    "row": 18,
+    "rot": 2
    },
    {
     "kind": "toilet",
     "col": 15,
-    "row": 0,
-    "rot": 0
+    "row": 19,
+    "rot": 2
    },
    {
     "kind": "basin",
-    "col": 16,
-    "row": 0,
-    "rot": 0
+    "col": 12,
+    "row": 19,
+    "rot": 2
    },
    {
     "kind": "washer",
-    "col": 19,
-    "row": 5,
-    "rot": 1
+    "col": 10,
+    "row": 19,
+    "rot": 2
    }
   ]
  },

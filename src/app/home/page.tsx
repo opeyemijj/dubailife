@@ -20,7 +20,10 @@ import {
   CATALOG, FLOOR_FINISHES, PANELS_PRICE, SHOP_CATEGORIES, WALL_PAINTS, getCatalogItem, getHousingTierFromText, withHomeItems, HOUSING_CONFIGS,
   type CatalogItem, type HomeStyle, type Interaction, type Placement, type Rotation, type HousingTier, type HomeActivityDef, type ShopCategory,
 } from "@/lib/furniture";
-import { useOnlineCount, formatOnline } from "@/lib/presence";
+import { useOnlineCount, useOnlineUsernames, formatOnline } from "@/lib/presence";
+import { matesInRoom, useBedspace } from "@/lib/bedspace";
+import { openPhone } from "@/components/layout/PhoneOverlay";
+import { useUnreadTotal } from "@/lib/unread";
 import { useLifeLoop } from "@/lib/lifeLoop";
 import { WardrobeModal } from "@/components/avatar/WardrobeModal";
 import { getPendingVenue } from "@/components/city/VenueDressCodeModal";
@@ -102,6 +105,10 @@ export default function HomePage() {
   const life = useLifeLoop();
   const rawTier = (life?.blueprint?.housing || citizen?.home || "studio").toLowerCase();
   const housingTier: HousingTier = getHousingTierFromText(rawTier);
+  // A bed space is shared with up to three other players, each at their own bed.
+  const bedspace = useBedspace(housingTier === "bed_space");
+  const onlineNames = useOnlineUsernames();
+  const unread = useUnreadTotal(citizen?.id);
 
   const housingConfig = HOUSING_CONFIGS[housingTier] ?? HOUSING_CONFIGS.studio;
   // Two-storey homes (duplex, townhouse, penthouse, villa) show one floor at a time.
@@ -259,6 +266,7 @@ export default function HomePage() {
       
       {/* 3D Isometric Apartment Interior */}
       <ApartmentRoom
+        people={matesInRoom(bedspace, onlineNames, (m) => router.push(`/phone?tab=chats&chat=${m.id}`))}
         look={citizen?.look}
         furniture={furniture}
         placing={placing}
@@ -659,13 +667,15 @@ export default function HomePage() {
               <span>Map</span>
             </button>
 
-            {/* Phone */}
-            <button 
-              onClick={() => router.push("/phone")}
-              className="flex-1 min-h-[48px] py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full hover:bg-slate-100 text-slate-700 font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors"
+            {/* Phone: opens over your home, like everywhere else */}
+            <button
+              onClick={() => openPhone()}
+              aria-label={unread ? `Phone: ${unread} unread` : "Phone"}
+              className="relative flex-1 min-h-[48px] py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full hover:bg-slate-100 text-slate-700 font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors"
             >
               <Smartphone className="w-3.5 h-3.5" />
               <span>Phone</span>
+              {unread > 0 && <span className="absolute top-0.5 right-1 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center ring-2 ring-white">{unread > 99 ? "99+" : unread}</span>}
             </button>
           </div>
         </div>
