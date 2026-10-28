@@ -7,17 +7,21 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, Briefcase } from "lucide-react";
 import { useRequireCitizen } from "@/lib/citizenStore";
+import { monthlyPay, qualifiesFor, studyFor, useGoals } from "@/lib/goals";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { aed, applyJob, companyIcon, daysUntil, endJob, jobBoard, myEconomy, VENTURES, ventureType, workShift, type BoardJob, type Economy } from "@/lib/economy";
 import { gameAudio } from "@/utils/gameAudio";
-import { openPhone } from "@/components/layout/PhoneOverlay";
+import { InterviewScene } from "@/components/jobs/InterviewScene";
 
 export default function JobBoardPage() {
-  useRequireCitizen();
+  const { citizen } = useRequireCitizen();
+  // Your qualifications, to show which jobs you can take now and what to study for the rest.
+  const { status: goals } = useGoals(citizen?.id);
   const [eco, setEco] = useState<Economy | null>(null);
   const [jobs, setJobs] = useState<BoardJob[] | null>(null);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   const [now] = useState(() => Date.now());
+  const [interview, setInterview] = useState<BoardJob | null>(null);
 
   const load = useCallback(async () => {
     const [e, j] = await Promise.all([myEconomy(), jobBoard()]);
@@ -35,8 +39,9 @@ export default function JobBoardPage() {
     void load();
   };
   const apply = async (id: number) => {
-    // Every job starts with an interview, taken in the phone's Jobs app.
-    if (jobs?.find((j) => j.id === id)?.interview !== "passed") { openPhone("jobs"); return; }
+    // Every job starts with an interview, at the recruitment centre in 3D.
+    const job = jobs?.find((j) => j.id === id);
+    if (job && job.interview !== "passed") { setInterview(job); return; }
     const r = await applyJob(id);
     if (r.error) return say(false, r.error);
     gameAudio.playClickSound();
@@ -103,7 +108,11 @@ export default function JobBoardPage() {
                   <span className="flex-1 min-w-0">
                     <span className="block font-black text-sm">{j.title} · {j.venture}</span>
                     {j.system && <span className="inline-block text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 mb-0.5">Always hiring · instant start</span>}
-                    <span className="block text-[11px] text-slate-400">{aed(j.weeklyWage)}/week · {j.shiftsPerWeek} shift{j.shiftsPerWeek === 1 ? "" : "s"} · {VENTURES.requirements[j.requirement]}</span>
+                    <span className="block text-[11px] text-slate-400"><b className="text-emerald-300">{aed(monthlyPay(j.weeklyWage))}/month</b> · paid weekly · {j.shiftsPerWeek} shift{j.shiftsPerWeek === 1 ? "" : "s"} · {VENTURES.requirements[j.requirement]}</span>
+                    {qualifiesFor(j.requirement, goals) === true && j.requirement !== "none" && <span className="inline-block mt-0.5 text-[10px] font-black px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">✓ You qualify</span>}
+                    {qualifiesFor(j.requirement, goals) === false && (
+                      <Link href={studyFor(j.title)?.href ?? "/academics"} className="block mt-0.5 text-[11px] font-black text-amber-300">🎓 Not yet: study {studyFor(j.title)?.label ?? "at Academic City"} ›</Link>
+                    )}
                   </span>
                   {j.mine ? <span className="text-[10px] font-bold text-slate-500">Your venture</span>
                     : st === "pending" ? <span className="text-[11px] font-bold text-amber-300">Applied</span>
@@ -115,6 +124,13 @@ export default function JobBoardPage() {
         </section>
         <p className="text-[11px] text-slate-500 text-center">A job at a player venture also counts for the Employment visa. Pay comes only from what the venture earns.</p>
       </div>
+      {interview && (
+        <InterviewScene job={interview} look={citizen?.look} onDone={(hired) => {
+          setInterview(null);
+          if (hired) say(true, `🎉 You're hired as ${interview.title} at ${interview.venture}. Work your first shift below.`);
+          void load();
+        }} />
+      )}
       <BottomNav />
     </main>
   );

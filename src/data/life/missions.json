@@ -1,0 +1,25 @@
+{
+  "_note": "Daily missions: three a game day (09:00 GST to 09:00), picked on the server from your current goal (public.my_missions()) and checked against what you did that day. Each pays 'xp' league points; doing all three opens the mystery box (AED by the odds below, shown to players, plus box.xp). Savings: money moved out of your wallet into a jar that counts toward the Save up goal; payday offers the 'shares' when wages arrive. Mirrored in supabase/migrations/*_missions.sql (scripts/check-life-config.mjs).",
+  "xp": 20,
+  "box": {
+    "xp": 40,
+    "odds": [
+      { "aed": 100, "chance": 50 },
+      { "aed": 250, "chance": 30 },
+      { "aed": 500, "chance": 15 },
+      { "aed": 1000, "chance": 5 }
+    ]
+  },
+  "missions": {
+    "shift": { "icon": "💼", "title": "Work a shift", "href": "/jobs", "pillar": "career" },
+    "apply": { "icon": "🤝", "title": "Interview for a job", "href": "/jobs", "pillar": "career" },
+    "lesson": { "icon": "🎓", "title": "Pass a lesson at Academic City", "href": "/academics", "pillar": "learning" },
+    "driving": { "icon": "🪪", "title": "Practise at the Driving Academy", "href": "/driving", "pillar": "learning" },
+    "drive": { "icon": "🚗", "title": "Drive somewhere and park", "href": "/explore", "pillar": "wellbeing" },
+    "friend": { "icon": "👋", "title": "Add a new friend", "href": "/explore", "pillar": "wellbeing" },
+    "message": { "icon": "💬", "title": "Message someone", "href": "/phone", "pillar": "wellbeing" },
+    "game": { "icon": "🎲", "title": "Play a game", "href": "/games", "pillar": "wellbeing" },
+    "date": { "icon": "💞", "title": "Go on a date", "href": "/phone", "pillar": "wellbeing" }
+  },
+  "savings": { "shares": [0, 10, 25, 50] }
+}

@@ -25,6 +25,10 @@ import { GameInviteListener } from "@/components/games/GameInviteListener";
 import { MarathonBanner } from "@/components/marathon/MarathonBanner";
 import { Custody } from "@/components/cars/Custody";
 import { FineNotice } from "@/components/cars/FineNotice";
+import { GoalSetup } from "@/components/goals/GoalSetup";
+import { NextStep } from "@/components/goals/NextStep";
+import { MorningScene } from "@/components/goals/MorningScene";
+import { Payday } from "@/components/goals/Payday";
 import { EmbedBridge, OutsidePhone } from "@/components/layout/Embed";
 
 const fredoka = Fredoka({ subsets: ["latin"], display: 'swap' });
@@ -206,6 +210,7 @@ export default function RootLayout({
           <PushCoach />
           <AgeGate />
           <FirstDay />
+          <NextStep />
           <ScamPhone />
           <DiscoverHost />
         </OutsidePhone>
@@ -221,6 +226,9 @@ export default function RootLayout({
           <MarathonBanner />
           <Custody />
           <FineNotice />
+          <GoalSetup />
+          <MorningScene />
+          <Payday />
         </OutsidePhone>
       </body>
     </html>

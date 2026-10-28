@@ -80,6 +80,10 @@ export function doorThud() {
   src.buffer = buf; src.connect(f).connect(g).connect(a.destination); src.start();
 }
 
+/** A phone ringing: two short trills. */
+export function phoneRing() {
+  for (const at of [0, 0.45]) for (let i = 0; i < 6; i++) beep(i % 2 ? 1300 : 1050, at + i * 0.05, 0.05, 0.05, "sine");
+}
 /** A parking sensor's beep (they come faster as you get closer). */
 export const sensorBeep = () => beep(2100, 0, 0.06, 0.05, "sine");
 /** A car horn: two detuned square tones, a short double toot. */

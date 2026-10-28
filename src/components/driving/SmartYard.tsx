@@ -2,10 +2,12 @@
 
 // Smart Yard (Driving Academy stage 3): a top-down parking test. Steer a car into the marked bay without
 // touching cones, walls or parked cars, then stop straight inside it. Two tasks: a 90° bay, then a
-// parallel bay. Turn the steering wheel and hold the pedals, or use the arrow keys.
+// parallel bay. Driven like a real car: the steering wheel, GAS, and BRAKE (hold it when stopped to reverse),
+// with brake and reverse lights and parking sensors that beep faster as you get close. Arrow keys work too.
 
 import { useEffect, useRef, useState } from "react";
 import { SteeringWheel } from "@/components/cars/SteeringWheel";
+import { sensorBeep } from "@/components/transit/transitAudio";
 
 const W = 340, H = 440, CAR_W = 22, CAR_L = 40, WHEELBASE = 30;
 type Rect = { x: number; y: number; w: number; h: number };
@@ -45,11 +47,12 @@ export function SmartYard({ onDone }: { onDone: (passed: boolean) => void }) {
   const [status, setStatus] = useState<"driving" | "crashed" | "parked" | "timeout">("driving");
   const [secs, setSecs] = useState(90);
   const [run, setRun] = useState(0);
+  const [gear, setGear] = useState<{ g: "D" | "R" | "P"; kmh: number }>({ g: "P", kmh: 0 });
 
   useEffect(() => {
     const t = TASKS[task];
     const car = { ...t.start, v: 0 };
-    let last = performance.now(), parkedFor = 0, left = 90, raf = 0, ended = false;
+    let last = performance.now(), parkedFor = 0, left = 90, raf = 0, ended = false, beepAt = 0, hudAt = 0, near = 99, steer = 0, braking = false;
     const end = (s: typeof status) => { if (ended) return; ended = true; setStatus(s); };
     const ctx = canvas.current!.getContext("2d")!;
 
@@ -61,8 +64,17 @@ export function SmartYard({ onDone }: { onDone: (passed: boolean) => void }) {
       ctx.fillStyle = "#64748b"; for (const p of t.parked) { ctx.fillRect(p.x + 3, p.y + 3, p.w - 6, p.h - 6); }
       ctx.fillStyle = "#f97316"; for (const [cx, cy] of t.cones) { ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill(); }
       ctx.save(); ctx.translate(car.x, car.y); ctx.rotate(car.a);
-      ctx.fillStyle = "#0ea5e9"; ctx.fillRect(-CAR_W / 2, -CAR_L / 2, CAR_W, CAR_L);
-      ctx.fillStyle = "#e0f2fe"; ctx.fillRect(-CAR_W / 2 + 3, -CAR_L / 2 + 5, CAR_W - 6, 8);
+      // Wheels (the front pair turn with the steering), the body, glass, and the lights at each end.
+      ctx.fillStyle = "#0f172a";
+      for (const [wx, wy, turn] of [[-CAR_W / 2 - 1, -CAR_L / 2 + 8, 1], [CAR_W / 2 + 1, -CAR_L / 2 + 8, 1], [-CAR_W / 2 - 1, CAR_L / 2 - 8, 0], [CAR_W / 2 + 1, CAR_L / 2 - 8, 0]]) {
+        ctx.save(); ctx.translate(wx, wy); ctx.rotate(turn ? steer : 0); ctx.fillRect(-2.5, -5, 5, 10); ctx.restore();
+      }
+      ctx.fillStyle = "#0ea5e9"; ctx.beginPath(); ctx.roundRect(-CAR_W / 2, -CAR_L / 2, CAR_W, CAR_L, 5); ctx.fill();
+      ctx.fillStyle = "#e0f2fe"; ctx.fillRect(-CAR_W / 2 + 3, -CAR_L / 2 + 6, CAR_W - 6, 7);
+      ctx.fillStyle = "#bae6fd"; ctx.fillRect(-CAR_W / 2 + 3, CAR_L / 2 - 10, CAR_W - 6, 5);
+      ctx.fillStyle = "#fef9c3"; ctx.fillRect(-CAR_W / 2 + 2, -CAR_L / 2, 5, 2.5); ctx.fillRect(CAR_W / 2 - 7, -CAR_L / 2, 5, 2.5);
+      ctx.fillStyle = car.v < -0.5 ? "#ffffff" : braking || Math.abs(car.v) < 0.5 ? "#ef4444" : "#7f1d1d";
+      ctx.fillRect(-CAR_W / 2 + 2, CAR_L / 2 - 2.5, 5, 2.5); ctx.fillRect(CAR_W / 2 - 7, CAR_L / 2 - 2.5, 5, 2.5);
       ctx.restore();
     };
 
@@ -70,11 +82,13 @@ export function SmartYard({ onDone }: { onDone: (passed: boolean) => void }) {
       const dt = Math.min(0.05, (now - last) / 1000); last = now;
       if (!ended) {
         const k = keys.current;
-        if (k.up) car.v = Math.min(90, car.v + 140 * dt);
-        else if (k.down) car.v = Math.max(-60, car.v - 140 * dt);
+        // GAS pulls forward (and brakes you while reversing); BRAKE slows you, then reverses once you've stopped.
+        braking = false;
+        if (k.up) { if (car.v < -1) { car.v = Math.min(0, car.v + 220 * dt); braking = true; } else car.v = Math.min(90, car.v + 120 * dt); }
+        else if (k.down) { if (car.v > 1) { car.v = Math.max(0, car.v - 220 * dt); braking = true; } else car.v = Math.max(-50, car.v - 90 * dt); }
         else car.v *= Math.pow(0.15, dt);
         if (Math.abs(car.v) < 0.5 && !k.up && !k.down) car.v = 0;
-        const steer = k.left || k.right ? (k.left ? -0.55 : 0) + (k.right ? 0.55 : 0) : wheel.current * 0.55;
+        steer = k.left || k.right ? (k.left ? -0.55 : 0) + (k.right ? 0.55 : 0) : wheel.current * 0.55;
         car.a += (car.v / WHEELBASE) * Math.tan(steer) * dt;
         car.x += car.v * Math.sin(car.a) * dt;
         car.y -= car.v * Math.cos(car.a) * dt;
@@ -87,6 +101,16 @@ export function SmartYard({ onDone }: { onDone: (passed: boolean) => void }) {
           // cone centre inside the car body
           (() => { const s = Math.sin(-car.a), c = Math.cos(-car.a), dx = cx - car.x, dy = cy - car.y; const lx = dx * c - dy * s, ly = dx * s + dy * c; return Math.abs(lx) < CAR_W / 2 + 5 && Math.abs(ly) < CAR_L / 2 + 5; })()));
         if (hitWall || hitParked || hitCone) end("crashed");
+
+        // Parking sensors: the nearest cone, parked car or wall, beeping faster as it gets closer.
+        near = 99;
+        for (const [px, py] of cs) {
+          near = Math.min(near, px, W - px, py, H - py);
+          for (const [cx, cy] of t.cones) near = Math.min(near, Math.hypot(px - cx, py - cy) - 6);
+          for (const p of t.parked) near = Math.min(near, Math.max(p.x - px, px - (p.x + p.w), p.y - py, py - (p.y + p.h), 0));
+        }
+        if (Math.abs(car.v) > 2 && near < 26 && now - beepAt > Math.max(70, near * 14)) { beepAt = now; sensorBeep(); }
+        if (now - hudAt > 120) { hudAt = now; setGear({ g: car.v < -0.5 ? "R" : car.v > 0.5 ? "D" : "P", kmh: Math.round(Math.abs(car.v) / 6) }); }
 
         const inside = cs.every((c) => inRect(c, t.bay));
         const angleOff = Math.abs(((car.a - t.bayAngle) % Math.PI + Math.PI * 1.5) % Math.PI - Math.PI / 2);
@@ -113,11 +137,11 @@ export function SmartYard({ onDone }: { onDone: (passed: boolean) => void }) {
   const next = () => {
     if (task + 1 < TASKS.length) { setTask(task + 1); retry(); } else onDone(true);
   };
-  const pad = (k: keyof typeof keys.current, label: string, cls = "") => (
-    <button
+  const pedal = (k: "up" | "down", body: React.ReactNode, cls: string, label: string) => (
+    <button aria-label={label} onContextMenu={(e) => e.preventDefault()}
       onPointerDown={(e) => { e.preventDefault(); keys.current[k] = true; }}
       onPointerUp={() => { keys.current[k] = false; }} onPointerLeave={() => { keys.current[k] = false; }} onPointerCancel={() => { keys.current[k] = false; }}
-      className={`h-14 rounded-2xl bg-white/10 active:bg-white/25 text-2xl font-black select-none touch-none ${cls}`}>{label}</button>
+      className={`rounded-2xl text-white font-black select-none touch-none flex flex-col items-center justify-center leading-tight shadow-[inset_0_-5px_0_rgba(0,0,0,0.3)] active:scale-95 ${cls}`}>{body}</button>
   );
 
   return (
@@ -138,10 +162,20 @@ export function SmartYard({ onDone }: { onDone: (passed: boolean) => void }) {
           </div>
         )}
       </div>
-      <p className="text-[11px] text-slate-400 text-center">Stop straight inside the green bay. Touching a cone, wall or parked car fails the try. Arrow keys work too.</p>
-      <div className="flex items-center gap-3">
-        <SteeringWheel size={128} onSteer={(v) => { wheel.current = v; }} />
-        <div className="flex-1 grid grid-cols-2 gap-2">{pad("down", "R", "text-base h-20")}{pad("up", "▲", "h-20 bg-emerald-600/60 active:bg-emerald-500")}</div>
+      <p className="text-[11px] text-slate-400 text-center">Stop straight inside the green bay. Touching a cone, wall or parked car fails the try. Hold BRAKE when stopped to reverse. Arrow keys work too.</p>
+      <div className="flex items-end gap-3">
+        <SteeringWheel size={136} className="bg-white/10 ring-1 ring-white/15" onSteer={(v) => { wheel.current = v; }} />
+        <div className="flex-1 flex flex-col items-center gap-2">
+          {/* the gear and speed */}
+          <div className="flex items-center gap-1.5 text-xs font-black">
+            {(["P", "R", "D"] as const).map((g) => <span key={g} className={`w-7 h-7 rounded-lg flex items-center justify-center ${gear.g === g ? (g === "R" ? "bg-white text-slate-900" : "bg-emerald-500 text-slate-950") : "bg-white/10 text-white/40"}`}>{g}</span>)}
+            <span className="ml-1 tabular-nums text-white/70">{gear.kmh} km/h</span>
+          </div>
+          <div className="flex items-end gap-2">
+            {pedal("down", <><span className="text-xs">BRAKE</span><span className="text-[9px] font-bold text-white/80">hold to reverse ↩</span></>, `w-[76px] h-16 ${gear.g === "R" ? "bg-slate-700" : "bg-rose-600"}`, "Brake, or hold when stopped to reverse")}
+            {pedal("up", <span className="text-xs">GAS</span>, "w-[72px] h-24 bg-emerald-600", "Accelerate")}
+          </div>
+        </div>
       </div>
     </div>
   );

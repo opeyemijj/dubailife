@@ -906,7 +906,10 @@ export function DriveJourney({ drivables, metres, destination, look, balance, on
             <SteeringWheel size={140} className="bg-white/30 backdrop-blur-sm ring-1 ring-white/40" onSteer={(v) => { sim.current.steer = v; }} />
           </div>
           <div className="absolute right-3 bottom-[max(1rem,env(safe-area-inset-bottom))] flex items-end gap-2">
-            <Hold simRef={sim} control="brake" label="Brake" className="w-16 h-16 rounded-2xl bg-rose-600 text-white text-xs font-black shadow-[inset_0_-5px_0_rgba(0,0,0,0.3)] active:scale-95">BRAKE</Hold>
+            <Hold simRef={sim} control="brake" label="Brake, or hold when stopped to reverse" className={`w-[72px] h-16 rounded-2xl text-white font-black shadow-[inset_0_-5px_0_rgba(0,0,0,0.3)] active:scale-95 flex flex-col items-center justify-center leading-tight ${hud.reverse ? "bg-slate-800" : "bg-rose-600"}`}>
+              <span className="text-xs">BRAKE</span>
+              <span className="text-[9px] font-bold text-white/80">{phase === "park" ? "hold to reverse ↩" : "/ reverse"}</span>
+            </Hold>
             <Hold simRef={sim} control="gas" label="Accelerate" className="w-[72px] h-24 rounded-2xl bg-emerald-600 text-white text-xs font-black shadow-[inset_0_-6px_0_rgba(0,0,0,0.3)] active:scale-95">GAS</Hold>
           </div>
           {phase === "park" && hud.stopped && hud.onLot && (

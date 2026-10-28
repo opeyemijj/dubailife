@@ -10,6 +10,7 @@ import { useRequireCitizen } from "@/lib/citizenStore";
 import { supabase } from "@/lib/supabase/client";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Checkout } from "@/components/commerce/Checkout";
+import { SavingsJar } from "@/components/goals/SavingsJar";
 import { commerceError, formatAED, useSettings, type CoinPackage } from "@/lib/commerce";
 
 interface Line { id: number; delta: number; balance_after: number; kind: string; reason: string | null; created_at: string }
@@ -52,6 +53,8 @@ export default function WalletPage() {
           <div className="mt-1 text-4xl font-black flex items-center gap-2"><Coins className="w-8 h-8" /> {(citizen?.balance ?? 0).toLocaleString()}</div>
           <p className="mt-2 text-xs font-bold opacity-75">Spend it on shopping, food, homes, furniture and gifts around Dubai. Virtual AED can&apos;t be cashed out.</p>
         </section>
+
+        <SavingsJar me={me} balance={citizen?.balance ?? 0} />
 
         <section className="space-y-3">
           <h2 className="text-sm font-black text-white/80">Get virtual AED</h2>

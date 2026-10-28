@@ -106,6 +106,7 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
     { id: "marathon", name: "Marathon", icon: "🏅", bg: "from-emerald-500 to-teal-700", href: "/marathon", isNew: true },
     { id: "messages", name: "Messages", icon: "💬", bg: "from-sky-400 to-blue-600", screen: "page:/phone", badge: unread },
     { id: "jobs", name: "Jobs", icon: "💼", bg: "from-emerald-400 to-emerald-700", screen: "jobs" },
+    { id: "goals", name: "Goals", icon: "🎯", bg: "from-teal-400 to-emerald-700", screen: "page:/goals", isNew: true },
     { id: "wallet", name: "Wallet", icon: "💳", bg: "from-amber-300 to-orange-500", screen: "page:/wallet" },
     { id: "games", name: "Games", icon: "🎱", bg: "from-emerald-500 to-green-800", screen: "games" },
     { id: "metro", name: "Map", icon: "🗺️", bg: "from-cyan-300 to-teal-600", href: "/explore" },
@@ -159,7 +160,7 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
               <span className="flex items-center gap-1.5">●●● 5G <span className="inline-block w-6 h-3 rounded-[3px] border-2 border-current relative"><span className="absolute inset-0.5 right-1 bg-current rounded-[1px]" /></span></span>
             </div>
 
-            {screen === "jobs" ? <JobsApp onBack={home} />
+            {screen === "jobs" ? <JobsApp onBack={home} onClose={onClose} />
             : screen === "clinic" ? <ClinicApp onBack={home} />
             : screen === "court" ? <PoliceApp onBack={home} />
             : screen === "food" ? <DeliveryApp mode="food" onBack={home} />

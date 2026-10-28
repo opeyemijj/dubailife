@@ -160,5 +160,36 @@ for (const [label, text] of [["caught", `if random() < ${fl.caughtChance} then`]
   ["custody", `now() + interval '${fl.custodyHours} hours'`], ["fine", `when c.kind = 'fake_licence' then ${fl.fine} else`], ["bail", `-${fl.bail}, 'spend', 'Bail'`]]) {
   if (!flSql.includes(text)) { bad++; console.error(`fake licence ${label}: differs from SQL (${text})`); }
 }
-console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving and parking config match the database.");
+// Life goals (src/data/life/goals.json vs *_goals.sql): steps, rewards, pillars, the plan bonus, savings target and order rules.
+const goals = JSON.parse(readFileSync("src/data/life/goals.json", "utf8"));
+const goalFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_goals.sql")).sort().pop();
+const goalSql = readFileSync(`supabase/migrations/${goalFile}`, "utf8");
+const gneed = (label, text) => { if (!goalSql.includes(text)) { bad++; console.error(`goals ${label}: differs from SQL (${text})`); } };
+for (const g of goals.goals) {
+  gneed(`steps ${g.id}`, `when '${g.id}' then array[${g.steps.map((s) => `'${s.done}'`).join(", ")}]`);
+  gneed(`reward ${g.id}`, `when '${g.id}' then array[${g.aed}, ${g.xp}]`);
+  if (g.pillar !== "career") gneed(`pillar ${g.id}`, `when '${g.id}' then '${g.pillar}'`);
+  else if (new RegExp(`when '${g.id}' then '(learning|wellbeing|scam)'`).test(goalSql)) { bad++; console.error(`goals pillar ${g.id}: SQL isn't career`); }
+}
+gneed("all goals", `all_goals text[] := array[${goals.goals.map((g) => `'${g.id}'`).join(", ")}]`);
+gneed("pinned", `p_order[1] <> '${goals.pinned[0]}' or p_order[2] <> '${goals.pinned[1]}'`);
+for (const [later, first] of goals.after) gneed(`order ${later}`, `array_position(p_order, '${later}') < array_position(p_order, '${first}')`);
+gneed("plan xp", `'career', ${goals.planXp}, 'goal:plan:'`);
+gneed("save target", `select ${goals.save.months} * public.blueprint_monthly(p_user, blueprint)`);
+gneed("save fallback", `, ${goals.save.fallback})::bigint`);
+// Daily missions, the mystery box and savings (src/data/life/missions.json vs *_missions.sql).
+const mis = JSON.parse(readFileSync("src/data/life/missions.json", "utf8"));
+const misFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_missions.sql")).sort().pop();
+const misSql = readFileSync(`supabase/migrations/${misFile}`, "utf8");
+const mneed2 = (label, text) => { if (!misSql.includes(text)) { bad++; console.error(`missions ${label}: differs from SQL (${text})`); } };
+for (const id of Object.keys(mis.missions)) mneed2(`check ${id}`, `when '${id}' then `);
+mneed2("xp", `${mis.xp}, 'mission:'`);
+mneed2("box xp", `'wellbeing', ${mis.box.xp}, 'box:'`);
+let cum = 0;
+mneed2("box odds", "prize := case " + mis.box.odds.map((o, i) => { cum += o.chance; return i === mis.box.odds.length - 1 ? `else ${o.aed} end` : `when r < ${cum} then ${o.aed}`; }).join(" ") + ";");
+for (const [id, m] of Object.entries(mis.missions)) {
+  const sqlPillar = ["shift", "apply"].includes(id) ? "career" : ["lesson", "driving"].includes(id) ? "learning" : "wellbeing";
+  if (m.pillar !== sqlPillar) { bad++; console.error(`missions pillar ${id}: ${m.pillar} in JSON, ${sqlPillar} in SQL`); }
+}
+console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving, parking, goals and missions config match the database.");
 process.exit(bad ? 1 : 0);

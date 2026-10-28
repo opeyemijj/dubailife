@@ -5,9 +5,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { aed as aedEco, applyJob, companyIcon, daysUntil, endJob, jobBoard, myEconomy, VENTURES, ventureType, workShift, type BoardJob, type Economy } from "@/lib/economy";
-import { interviewFor, takeInterview } from "@/lib/cityServices";
 import { gameAudio } from "@/utils/gameAudio";
-import { AppScreen, Big, Card, Note, Quiz } from "./AppScreen";
+import { InterviewScene } from "@/components/jobs/InterviewScene";
+import { useRouter } from "next/navigation";
+import { useCitizen } from "@/lib/citizenStore";
+import { monthlyPay, qualifiesFor, studyFor, useGoals } from "@/lib/goals";
+import { AppScreen, Big, Card, Note } from "./AppScreen";
 
 const SERVICE_LINE: Record<string, string> = {
   doctor: "Treat sick players in the Clinic app and keep the fee you set.",
@@ -15,7 +18,10 @@ const SERVICE_LINE: Record<string, string> = {
   lawyer: "Players with a court date hire you for the fee you set. Prepare their defence.",
 };
 
-export function JobsApp({ onBack }: { onBack: () => void }) {
+export function JobsApp({ onBack, onClose }: { onBack: () => void; onClose?: () => void }) {
+  const router = useRouter();
+  const { citizen } = useCitizen();
+  const { status: goals } = useGoals(citizen?.id);
   const [eco, setEco] = useState<Economy | null>(null);
   const [jobs, setJobs] = useState<BoardJob[] | null>(null);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
@@ -36,13 +42,6 @@ export function JobsApp({ onBack }: { onBack: () => void }) {
     gameAudio.playCoinSound();
     setNote({ ok: true, text: j.system ? `🎉 You're hired as ${j.title} at ${j.venture}. Work your first shift above.` : `Interview passed. ${j.venture} will review your application.` });
     void load();
-  };
-  const finishInterview = async (j: BoardJob, answers: number[]) => {
-    setInterview(null);
-    const r = await takeInterview(j.id, answers);
-    if (r.error) return setNote({ ok: false, text: r.error });
-    if (!r.data!.passed) { void load(); return setNote({ ok: false, text: `${r.data!.score}/3 right. Not this time: you can try again tomorrow.` }); }
-    await apply(j);
   };
   const shift = async () => {
     const r = await workShift();
@@ -83,15 +82,13 @@ export function JobsApp({ onBack }: { onBack: () => void }) {
 
       {note && <Note ok={note.ok}>{note.text}</Note>}
 
+      {/* The interview is played in 3D at the recruitment centre; it hires you when you pass. */}
       {interview && (
-        <Quiz
-          title={`Interview · ${interview.venture}`}
-          intro={`For ${interview.title}. Get 2 of 3 right to pass.`}
-          questions={interviewFor(interview.venture, interview.system)}
-          onDone={(a) => void finishInterview(interview, a)}
-          onCancel={() => setInterview(null)}
-          submitLabel="Finish interview"
-        />
+        <InterviewScene job={interview} look={citizen?.look} onDone={(hired) => {
+          setInterview(null);
+          if (hired) setNote({ ok: true, text: `🎉 You're hired as ${interview.title} at ${interview.venture}. Work your first shift above.` });
+          void load();
+        }} />
       )}
 
       {jobs === null ? <p className="text-slate-500 text-center py-8">Loading jobs…</p> : jobs.filter((j) => !j.mine).map((j) => {
@@ -106,16 +103,21 @@ export function JobsApp({ onBack }: { onBack: () => void }) {
                 <p className="text-slate-500 leading-snug">Starts as {j.title}</p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-lg font-black text-emerald-700">{aedEco(j.weeklyWage)}</p>
-                <p className="text-sm text-slate-500">per week</p>
+                <p className="text-lg font-black text-emerald-700">{aedEco(monthlyPay(j.weeklyWage))}</p>
+                <p className="text-sm text-slate-500">a month</p>
               </div>
             </div>
             {j.service && <p className="text-slate-600 leading-snug">{SERVICE_LINE[j.service]}</p>}
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">
               <span>🕘 {j.shiftsPerWeek} shifts a week</span>
-              {j.requirement !== "none" && <span>🔒 {VENTURES.requirements[j.requirement]}</span>}
+              {j.requirement !== "none" && <span>{qualifiesFor(j.requirement, goals) ? "✅" : "🔒"} {VENTURES.requirements[j.requirement]}</span>}
               {!j.system && <span>👥 Player business</span>}
             </div>
+            {qualifiesFor(j.requirement, goals) === false && st !== "hired" && (
+              <button onClick={() => { onClose?.(); router.push(studyFor(j.title)?.href ?? "/academics"); }} className="w-full rounded-2xl bg-amber-50 text-amber-800 p-3 text-left text-sm font-semibold">
+                🎓 You don&apos;t qualify yet. Study <b>{studyFor(j.title)?.label ?? "at Academic City"}</b>, then come back ›
+              </button>
+            )}
             {st === "hired" ? <p className="text-center font-semibold text-emerald-700">Hired</p>
               : st === "pending" ? <p className="text-center font-semibold text-amber-600">Application sent · waiting for the owner</p>
               : j.interview === "failed" ? <p className="text-center text-slate-500">Interview failed today · try again tomorrow</p>

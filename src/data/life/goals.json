@@ -1,0 +1,288 @@
+{
+  "_note": "Life goals: the newcomer's path, set in order after signup. Each step's 'done' is a key from public.goal_checks(); a goal is claimable when all its steps are done, paying 'aed' and 'xp' (league points in 'pillar', which also move the season pass). Steps, rewards, the plan bonus, the savings target and the order rules are mirrored in supabase/migrations/*_goals.sql and checked by scripts/check-life-config.mjs.",
+  "pinned": [
+    "home",
+    "job"
+  ],
+  "after": [
+    [
+      "car",
+      "license"
+    ]
+  ],
+  "planXp": 50,
+  "save": {
+    "months": 3,
+    "fallback": 15000
+  },
+  "goals": [
+    {
+      "id": "home",
+      "icon": "🏠",
+      "title": "Get a place to live",
+      "why": "You chose your home when you signed up. Everything in Dubai starts with an address.",
+      "aed": 200,
+      "xp": 50,
+      "pillar": "wellbeing",
+      "steps": [
+        {
+          "id": "home",
+          "title": "Move into your home",
+          "done": "home",
+          "href": "/home"
+        }
+      ]
+    },
+    {
+      "id": "job",
+      "icon": "💼",
+      "title": "Get a job",
+      "why": "Most people come to Dubai for work. A job pays your rent and keeps your visa alive.",
+      "aed": 500,
+      "xp": 100,
+      "pillar": "career",
+      "steps": [
+        {
+          "id": "budget",
+          "title": "Plan your monthly budget",
+          "done": "blueprint",
+          "action": "visa"
+        },
+        {
+          "id": "hired",
+          "title": "Get hired from the Job Board",
+          "done": "job",
+          "href": "/jobs"
+        },
+        {
+          "id": "shift",
+          "title": "Work your first shift",
+          "done": "shift",
+          "href": "/jobs"
+        }
+      ]
+    },
+    {
+      "id": "school",
+      "icon": "🎓",
+      "title": "Get a better job: go to school",
+      "why": "Better jobs need a diploma, a degree or a license. Study while you work, then move up.",
+      "aed": 1500,
+      "xp": 150,
+      "pillar": "learning",
+      "steps": [
+        {
+          "id": "enrol",
+          "title": "Enrol in a course at Academic City",
+          "done": "course",
+          "href": "/academics"
+        },
+        {
+          "id": "lesson",
+          "title": "Pass your first lesson",
+          "done": "lesson",
+          "href": "/academics"
+        },
+        {
+          "id": "graduate",
+          "title": "Graduate",
+          "done": "graduated",
+          "href": "/academics"
+        },
+        {
+          "id": "better",
+          "title": "Get hired into a job that needs it",
+          "done": "betterJob",
+          "href": "/jobs"
+        }
+      ]
+    },
+    {
+      "id": "license",
+      "icon": "🪪",
+      "title": "Get your driving license",
+      "why": "A license opens driving jobs and lets you rent or buy a car.",
+      "aed": 750,
+      "xp": 100,
+      "pillar": "learning",
+      "steps": [
+        {
+          "id": "eye",
+          "title": "Pass the eye test",
+          "done": "eye",
+          "href": "/driving"
+        },
+        {
+          "id": "theory",
+          "title": "Pass the theory exam",
+          "done": "theory",
+          "href": "/driving"
+        },
+        {
+          "id": "yard",
+          "title": "Pass the Smart Yard parking test",
+          "done": "yard",
+          "href": "/driving"
+        },
+        {
+          "id": "issued",
+          "title": "Get your license",
+          "done": "licence",
+          "href": "/driving"
+        }
+      ]
+    },
+    {
+      "id": "car",
+      "icon": "🚗",
+      "title": "Get your car",
+      "why": "Rent one by the day or month, or buy your own. Then drive yourself around the city.",
+      "aed": 500,
+      "xp": 100,
+      "pillar": "career",
+      "steps": [
+        {
+          "id": "car",
+          "title": "Rent or buy a car on Sheikh Zayed Road",
+          "done": "car",
+          "href": "/explore"
+        },
+        {
+          "id": "drive",
+          "title": "Drive somewhere and park it",
+          "done": "drove",
+          "href": "/explore"
+        }
+      ]
+    },
+    {
+      "id": "friends",
+      "icon": "🤝",
+      "title": "Make friends and go out",
+      "why": "Dubai is better with people. Friends invite you out, play games with you and help you move up.",
+      "aed": 300,
+      "xp": 100,
+      "pillar": "wellbeing",
+      "steps": [
+        {
+          "id": "first",
+          "title": "Add your first friend",
+          "done": "friend",
+          "href": "/explore"
+        },
+        {
+          "id": "three",
+          "title": "Have three friends",
+          "done": "friends3",
+          "href": "/explore"
+        },
+        {
+          "id": "game",
+          "title": "Play a game",
+          "done": "game",
+          "href": "/games"
+        }
+      ]
+    },
+    {
+      "id": "save",
+      "icon": "🏦",
+      "title": "Save up",
+      "why": "An emergency fund of three months' costs means one bad month doesn't send you home.",
+      "aed": 1000,
+      "xp": 150,
+      "pillar": "career",
+      "steps": [
+        {
+          "id": "budget",
+          "title": "Plan your monthly budget",
+          "done": "blueprint",
+          "action": "visa"
+        },
+        {
+          "id": "fund",
+          "title": "Save three months of your costs",
+          "done": "saved",
+          "href": "/wallet"
+        }
+      ]
+    },
+    {
+      "id": "invest",
+      "icon": "📈",
+      "title": "Invest",
+      "why": "Make your money work: buy a property or start a business.",
+      "aed": 2000,
+      "xp": 200,
+      "pillar": "career",
+      "steps": [
+        {
+          "id": "invest",
+          "title": "Buy a property or start a venture",
+          "done": "invested",
+          "href": "/ventures"
+        }
+      ]
+    },
+    {
+      "id": "love",
+      "icon": "💍",
+      "title": "Love and family",
+      "why": "Meet someone, date, and if it's right, marry. Only what UAE law allows: a man and a woman, both agreeing.",
+      "aed": 1000,
+      "xp": 150,
+      "pillar": "wellbeing",
+      "steps": [
+        {
+          "id": "date",
+          "title": "Start dating someone",
+          "done": "dating",
+          "href": "/phone"
+        },
+        {
+          "id": "engaged",
+          "title": "Get engaged",
+          "done": "engaged",
+          "href": "/phone"
+        },
+        {
+          "id": "married",
+          "title": "Get married",
+          "done": "married",
+          "href": "/wedding"
+        }
+      ]
+    }
+  ],
+  "careers": {
+    "_note": "What to study for each job on the board (by title): the course page, or the Driving Academy for a license. Shown when you don't qualify yet.",
+    "Front desk host": {
+      "course": "gems-arabic",
+      "label": "Arabic for Newcomers & Dubai Etiquette"
+    },
+    "Tour guide": {
+      "course": "dc-uae-studies",
+      "label": "UAE Studies & National Heritage"
+    },
+    "Delivery driver": {
+      "href": "/driving",
+      "label": "Driving Academy"
+    },
+    "Police officer": {
+      "href": "/driving",
+      "label": "Driving Academy"
+    },
+    "Junior analyst": {
+      "course": "onebrain-data",
+      "label": "Data Analytics & AI Business Intelligence"
+    },
+    "Doctor": {
+      "course": "aud-business",
+      "label": "a university degree (AUD Business & Entrepreneurship)"
+    },
+    "Lawyer": {
+      "course": "aud-business",
+      "label": "a university degree (AUD Business & Entrepreneurship)"
+    }
+  }
+}
