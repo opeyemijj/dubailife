@@ -1,8 +1,9 @@
 "use client";
 
-// Caught with a fake licence: outside the rental branch, a Dubai Police car pulls up with its lights going
-// and the siren on, two officers get out and walk over, you put your hands up, and they walk you to the
-// car. About ten seconds; then the case is in the Dubai Police app (custody, a lawyer, the court).
+// Arrested: a Dubai Police car pulls up with its lights going and the siren on, two officers get out and
+// walk over, you put your hands up, and they walk you to the car. Outside the rental branch for a fake
+// licence; at the roadside beside your crashed car after an accident. About ten seconds; then the case is
+// in the Dubai Police app (custody, a lawyer, the court).
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -53,7 +54,18 @@ function PoliceCar({ carRef, lightsRef }: { carRef: React.RefObject<THREE.Group 
   );
 }
 
-function Scene({ look, onSay, onDone }: { look?: AvatarLookProps; onSay: (s: string | null) => void; onDone: () => void }) {
+/** What happened: the banner, the four things said, and your crashed car at the kerb (an accident). */
+export interface ArrestStory { title: string; reason: string; lines: [string, string, string, string]; car?: Car & { model3d?: string }; plate?: string }
+export const FAKE_LICENCE_ARREST: ArrestStory = {
+  title: "Arrested", reason: "Using a fake driving licence",
+  lines: ["🚨 Siren outside the rental office…", "Dubai Police. Stay where you are.", "This licence is fake. You're under arrest.", "You'll be held until a lawyer or the court sorts this out."],
+};
+export const accidentArrest = (car: Car, plate: string): ArrestStory => ({
+  title: "Arrested", reason: "Causing a traffic accident", car, plate,
+  lines: ["🚨 Dubai Police at the scene…", "Dubai Police. Step away from the vehicle.", "You caused this accident. You're under arrest.", "Your car goes to the impound. A lawyer or the court decides the rest."],
+});
+
+function Scene({ look, story, onSay, onDone }: { look?: AvatarLookProps; story: ArrestStory; onSay: (s: string | null) => void; onDone: () => void }) {
   const camera = useThree((s) => s.camera);
   const carRef = useRef<THREE.Group>(null);
   const lights = useRef<THREE.Group>(null);
@@ -76,10 +88,10 @@ function Scene({ look, onSay, onDone }: { look?: AvatarLookProps; onSay: (s: str
     const s = T < 2.6 ? 0 : T < 5 ? 1 : T < 7.5 ? 2 : 3;
     if (s !== step.current) {
       step.current = s;
-      if (s === 0) onSay("🚨 Siren outside the rental office…");
-      if (s === 1) { doorThud(); setCopAnim("walk"); onSay("Dubai Police. Stay where you are."); }
-      if (s === 2) { setCopAnim("talk"); setMyAnim("idle"); setHandsUp(true); onSay("This licence is fake. You're under arrest."); }
-      if (s === 3) { setCopAnim("walk"); setMyAnim("walk"); setHandsUp(false); onSay("You'll be held until a lawyer or the court sorts this out."); }
+      onSay(story.lines[s]);
+      if (s === 1) { doorThud(); setCopAnim("walk"); }
+      if (s === 2) { setCopAnim("talk"); setMyAnim("idle"); setHandsUp(true); }
+      if (s === 3) { setCopAnim("walk"); setMyAnim("walk"); setHandsUp(false); }
     }
     // The car brakes into the kerb.
     if (carRef.current) {
@@ -108,8 +120,14 @@ function Scene({ look, onSay, onDone }: { look?: AvatarLookProps; onSay: (s: str
       me.current.position.copy(pos);
     }
     // A wide shot from across the road, drifting in.
-    camera.position.lerp(new THREE.Vector3(4.5, 3.2, -3.5 + Math.min(T, 8) * 0.15), Math.min(1, dt * 1.5));
-    camera.lookAt(-1, 1.2, 3.8);
+    // After an accident: low behind your crashed car in the foreground, the arrest beyond it.
+    if (story.car) {
+      camera.position.lerp(new THREE.Vector3(3.4, 4.6, -10.5 + Math.min(T, 8) * 0.15), Math.min(1, dt * 1.5));
+      camera.lookAt(-0.8, 0.6, 3.6);
+    } else {
+      camera.position.lerp(new THREE.Vector3(4.5, 3.2, -3.5 + Math.min(T, 8) * 0.15), Math.min(1, dt * 1.5));
+      camera.lookAt(-1, 1.2, 3.8);
+    }
     if (T > 10.3 && !done.current) { done.current = true; onDone(); }
   });
 
@@ -125,6 +143,13 @@ function Scene({ look, onSay, onDone }: { look?: AvatarLookProps; onSay: (s: str
       {[-7, 7].map((x) => <StreetPalm key={x} x={x} z={3.6} h={6} />)}
       {[-10, 10].map((x) => <Lamp key={x} x={x} z={3.2} night={sky === "night"} />)}
       <PoliceCar carRef={carRef} lightsRef={lights} />
+      {story.car && (
+        // Your car where it stopped, nose dented in and the hazards blinking.
+        <group position={[2.6, 0, -1.4]} rotation={[0, Math.PI / 2 + 0.35, 0.015]}>
+          <CarModel car={story.car} plate={story.plate} />
+          <Hazards />
+        </group>
+      )}
       <group ref={cop0Ref} visible={false}><Suspense fallback={null}><CitizenAvatar look={OFFICER} animation={copAnim} /></Suspense></group>
       <group ref={cop1Ref} visible={false}><Suspense fallback={null}><CitizenAvatar look={OFFICER} animation={copAnim} /></Suspense></group>
       <group ref={me}><Suspense fallback={null}><CitizenAvatar look={look} animation={myAnim} pose={handsUp ? "armsUp" : undefined} /></Suspense></group>
@@ -132,18 +157,30 @@ function Scene({ look, onSay, onDone }: { look?: AvatarLookProps; onSay: (s: str
   );
 }
 
-export function ArrestScene({ look, onDone }: { look?: AvatarLookProps; onDone: () => void }) {
+function Hazards() {
+  const g = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => { if (g.current) g.current.visible = Math.floor(clock.elapsedTime * 2.5) % 2 === 0; });
+  return (
+    <group ref={g}>
+      {[[-0.8, 2.3], [0.8, 2.3], [-0.8, -2.35], [0.8, -2.35]].map(([x, z], i) => (
+        <mesh key={i} position={[x, 0.78, z]}><boxGeometry args={[0.22, 0.1, 0.06]} /><meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={3} /></mesh>
+      ))}
+    </group>
+  );
+}
+
+export function ArrestScene({ look, story = FAKE_LICENCE_ARREST, onDone }: { look?: AvatarLookProps; story?: ArrestStory; onDone: () => void }) {
   const quality = useMemo(() => canvasQuality(), []);
   const [say, setSay] = useState<string | null>(null);
   return (
     <div className="fixed inset-0 z-[200] bg-black">
       <Canvas dpr={quality.dpr} camera={{ position: [4.5, 3.2, -3.5], fov: 55 }}>
-        <Scene look={look} onSay={setSay} onDone={onDone} />
+        <Scene look={look} story={story} onSay={setSay} onDone={onDone} />
       </Canvas>
       <div className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 pointer-events-none">
         <div className="max-w-md mx-auto bg-rose-600 text-white rounded-[22px] shadow-xl px-4 py-2.5 flex items-center gap-3">
           <span className="text-2xl">🚔</span>
-          <div><p className="font-black leading-tight">Arrested</p><p className="text-xs text-rose-100">Using a fake driving licence</p></div>
+          <div><p className="font-black leading-tight">{story.title}</p><p className="text-xs text-rose-100">{story.reason}</p></div>
         </div>
       </div>
       {say && <div className="absolute bottom-28 inset-x-3 flex justify-center pointer-events-none"><p className="max-w-sm rounded-2xl bg-white text-slate-900 px-4 py-2.5 font-semibold shadow-xl">💬 {say}</p></div>}

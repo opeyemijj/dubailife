@@ -149,7 +149,11 @@ export function Recycled({ travel, spacing, count, render, x, y = 0, offset = 0 
 // ---------------------------------------------------------------- buildings
 
 /** City blocks either side, in the style of the district they're in (`districtAt(p)`). */
-export function CityBlocks({ travel, sky, districtAt, sides = [1, -1] }: { travel: Travel; sky: Sky; districtAt: (p: number) => District; sides?: number[] }) {
+export function CityBlocks({ travel, sky, districtAt, sides = [1, -1], clearRef }: {
+  travel: Travel; sky: Sky; districtAt: (p: number) => District; sides?: number[];
+  /** Stretches of the route (+x side) kept clear of buildings, e.g. a fuel station: [from, to] metres. */
+  clearRef?: React.RefObject<Array<[number, number]>>;
+}) {
   const night = sky === "night";
   const tex = useMemo(() => windowTexture(night), [night]);
   const COUNT = 28, SPACING = 26;
@@ -185,6 +189,7 @@ export function CityBlocks({ travel, sky, districtAt, sides = [1, -1] }: { trave
       // Back from the pavement (further on the metro side, behind the viaduct).
       const setback = ROAD.half + ROAD.median / 2 + ROAD.pavement + 8 + hash(seed, 5) * 10 + (side < 0 ? 14 : 0);
       mesh.position.set(side * setback, (mesh.userData.h as number) / 2, s - p);
+      mesh.visible = !(side > 0 && clearRef?.current?.some(([a, b]) => p > a - 15 && p < b + 15));
     });
   });
   // A unit box with its UVs tiled so window texture repeats sensibly across any size.

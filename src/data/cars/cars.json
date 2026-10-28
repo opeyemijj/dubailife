@@ -1,5 +1,5 @@
 {
-  "_note": "Car rental companies and dealerships on the map (Sheikh Zayed Road), the cars each one offers, and the costs of owning one. Real brands are shown as places to visit, marked not affiliated, like the other venues. Prices are in-game AED, close to real Dubai prices. Mirrored in supabase/migrations/*_cars.sql (checked by scripts/check-life-config.mjs). A driving licence from the Driving Academy is required to rent or buy.",
+  "_note": "Car rental companies and dealerships on the map (Sheikh Zayed Road), the cars each one offers, and the costs of owning one. Real brands are shown as places to visit, marked not affiliated, like the other venues. Prices are in-game AED, close to real Dubai prices. Mirrored in supabase/migrations/*_cars.sql (checked by scripts/check-life-config.mjs). A driving licence from the Driving Academy is required to rent or buy. Fuel: each car's tank (litres, or kWh for electric) and use per 100 km (a trip burns fuelGameFactor times its map distance, for the driving around town it stands for); the drive, refuelling, speed cameras, accidents and impounding are in *_driving.sql. Parking at the destination (RTA paid parking, fines for not paying or parking outside the bay, issued a few minutes later) is in *_parking.sql.",
   "rentals": [
     {
       "id": "sixt-szr",
@@ -132,6 +132,17 @@
         "lamborghini-urus",
         "lamborghini-huracan"
       ]
+    },
+    {
+      "id": "tesla-dubai",
+      "name": "Tesla Dubai",
+      "icon": "⚡",
+      "color": "#e31937",
+      "x": 4020,
+      "blurb": "Tesla's showroom on Sheikh Zayed Road: the electric Model Y, charged at Superchargers across the city.",
+      "stock": [
+        "tesla-model-y"
+      ]
     }
   ],
   "cars": [
@@ -145,7 +156,9 @@
       "day": 90,
       "seats": 5,
       "top": 180,
-      "model3d": "sedan"
+      "model3d": "sedan",
+      "tank": 42,
+      "per100": 6.5
     },
     {
       "id": "toyota-corolla",
@@ -157,7 +170,9 @@
       "day": 110,
       "seats": 5,
       "top": 190,
-      "model3d": "compact"
+      "model3d": "compact",
+      "tank": 50,
+      "per100": 6.8
     },
     {
       "id": "toyota-camry",
@@ -169,7 +184,9 @@
       "day": 150,
       "seats": 5,
       "top": 210,
-      "model3d": "sport-sedan"
+      "model3d": "sport-sedan",
+      "tank": 60,
+      "per100": 7.5
     },
     {
       "id": "nissan-patrol",
@@ -182,7 +199,9 @@
       "seats": 7,
       "top": 210,
       "suv": true,
-      "model3d": "suv"
+      "model3d": "suv",
+      "tank": 100,
+      "per100": 14
     },
     {
       "id": "toyota-land-cruiser",
@@ -195,7 +214,9 @@
       "seats": 7,
       "top": 210,
       "suv": true,
-      "model3d": "suv"
+      "model3d": "suv",
+      "tank": 110,
+      "per100": 13
     },
     {
       "id": "bmw-5",
@@ -207,7 +228,9 @@
       "day": 420,
       "seats": 5,
       "top": 250,
-      "model3d": "sport-sedan"
+      "model3d": "sport-sedan",
+      "tank": 68,
+      "per100": 8
     },
     {
       "id": "bmw-x5",
@@ -220,7 +243,9 @@
       "seats": 5,
       "top": 250,
       "suv": true,
-      "model3d": "suv"
+      "model3d": "suv",
+      "tank": 83,
+      "per100": 10
     },
     {
       "id": "mercedes-e",
@@ -232,7 +257,9 @@
       "day": 450,
       "seats": 5,
       "top": 250,
-      "model3d": "sedan"
+      "model3d": "sedan",
+      "tank": 66,
+      "per100": 8
     },
     {
       "id": "mercedes-g63",
@@ -245,7 +272,9 @@
       "seats": 5,
       "top": 240,
       "suv": true,
-      "model3d": "suv"
+      "model3d": "suv",
+      "tank": 100,
+      "per100": 15
     },
     {
       "id": "lamborghini-urus",
@@ -258,7 +287,9 @@
       "seats": 5,
       "top": 305,
       "suv": true,
-      "model3d": "suv"
+      "model3d": "suv",
+      "tank": 85,
+      "per100": 14
     },
     {
       "id": "lamborghini-huracan",
@@ -271,7 +302,25 @@
       "seats": 2,
       "top": 325,
       "low": true,
-      "model3d": "supercar"
+      "model3d": "supercar",
+      "tank": 83,
+      "per100": 15
+    },
+    {
+      "id": "tesla-model-y",
+      "make": "Tesla",
+      "model": "Model Y",
+      "kind": "Electric SUV",
+      "color": "#f8fafc",
+      "price": 190000,
+      "day": 450,
+      "seats": 5,
+      "top": 217,
+      "suv": true,
+      "model3d": "suv",
+      "electric": true,
+      "tank": 75,
+      "per100": 17
     }
   ],
   "rentDays": [
@@ -291,5 +340,42 @@
     "custodyHours": 3,
     "fine": 25000,
     "bail": 5000
+  },
+  "fuel": {
+    "petrolPerLitre": 2.95,
+    "chargePerKwh": 0.7,
+    "station": "ENOC",
+    "charger": "Tesla Supercharger"
+  },
+  "driving": {
+    "speedLimit": 100,
+    "radarOver": 120,
+    "speedingFine": 600,
+    "accidentFine": 5000,
+    "custodyHours": 3,
+    "impoundDays": 3,
+    "releaseFee": 3000,
+    "fuelGameFactor": 15,
+    "minGameMetres": 600,
+    "maxGameMetres": 2200,
+    "gameScale": 0.5
+  },
+  "parking": {
+    "perHour": 4,
+    "hours": [
+      1,
+      2,
+      4
+    ],
+    "unpaidFine": 150,
+    "badParkingFine": 200,
+    "unpaidAfterMinutes": [
+      3,
+      10
+    ],
+    "badAfterMinutes": [
+      1,
+      5
+    ]
   }
 }

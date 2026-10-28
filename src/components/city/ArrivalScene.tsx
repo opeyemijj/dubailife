@@ -16,6 +16,8 @@ import { Building, Lamp, StreetPalm } from "@/components/home/RunJourney";
 import { footstep, doorThud } from "@/components/transit/transitAudio";
 import { canvasQuality } from "@/lib/device";
 import { LOCALS } from "@/lib/locals";
+import { CarModel } from "@/components/cars/CarModel";
+import type { Car } from "@/lib/cars";
 import type { Place } from "@/lib/city/types";
 
 export type ArrivalKind = "club" | "hotel" | "mall" | "cafeteria" | "attraction" | "restaurant";
@@ -219,7 +221,10 @@ function scriptFor(kind: ArrivalKind, taxi: boolean): { beats: Beat[]; length: n
   ] };
 }
 
-function Scene({ kind, name, look, taxi, onSay, onDone }: { kind: ArrivalKind; name: string; look?: AvatarLookProps; taxi: boolean; onSay: (s: string | null) => void; onDone: () => void }) {
+/** Your own car, parked at the kerb where you got out. */
+export type ParkedCar = { car: Car; plate: string };
+
+function Scene({ kind, name, look, taxi, own, onSay, onDone }: { kind: ArrivalKind; name: string; look?: AvatarLookProps; taxi: boolean; own?: ParkedCar; onSay: (s: string | null) => void; onDone: () => void }) {
   const camera = useThree((s) => s.camera);
   const me = useRef<THREE.Group>(null);
   const car = useRef<THREE.Group>(null);
@@ -295,7 +300,8 @@ function Scene({ kind, name, look, taxi, onSay, onDone }: { kind: ArrivalKind; n
       {[-12, 12].map((x) => <Lamp key={x} x={x} z={0.8} night={night} />)}
       {kind === "club" && <VelvetRope open={rope} />}
       {kind === "cafeteria" && <><Rotisserie /><KarakCounter /><PavementSeating /></>}
-      {taxi && <group ref={car} position={[0, 0, -1.9]} rotation={[0, Math.PI / 2, 0]}><Sedan color="#f8fafc" taxiRoof="#e11d48" /></group>}
+      {taxi && !own && <group ref={car} position={[0, 0, -1.9]} rotation={[0, Math.PI / 2, 0]}><Sedan color="#f8fafc" taxiRoof="#e11d48" /></group>}
+      {own && <group position={[-0.6, 0, -1.7]} rotation={[0, Math.PI / 2, 0]}><Suspense fallback={null}><CarModel car={own.car} plate={own.plate} /></Suspense></group>}
       {/* the bouncer, doorman or the man at the counter */}
       <group position={kind === "club" ? [-1.4, 0, FACADE_Z - 1.4] : kind === "cafeteria" ? [2.9, 0, FACADE_Z - 0.6] : [1.6, 0, FACADE_Z - 1.2]} rotation={[0, Math.PI, 0]}>
         <Suspense fallback={null}><CitizenAvatar look={STAFF_LOOK[kind]} animation={staffAnim} /></Suspense>
@@ -315,14 +321,14 @@ function Scene({ kind, name, look, taxi, onSay, onDone }: { kind: ArrivalKind; n
   );
 }
 
-export function ArrivalScene({ place, label, look, taxi, onDone }: { place: Place; label: string; look?: AvatarLookProps; taxi: boolean; onDone: () => void }) {
+export function ArrivalScene({ place, label, look, taxi, own, onDone }: { place: Place; label: string; look?: AvatarLookProps; taxi: boolean; own?: ParkedCar; onDone: () => void }) {
   const quality = useMemo(() => canvasQuality(), []);
   const kind = arrivalKindOf(place);
   const [say, setSay] = useState<string | null>(null);
   return (
     <div className="fixed inset-0 z-[190] bg-black">
       <Canvas shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false} dpr={quality.dpr} camera={{ position: [1.5, 3.4, -7], fov: 55 }}>
-        <Scene kind={kind} name={place.name.split("·")[0].trim()} look={look} taxi={taxi} onSay={setSay} onDone={onDone} />
+        <Scene kind={kind} name={place.name.split("·")[0].trim()} look={look} taxi={taxi || !!own} own={own} onSay={setSay} onDone={onDone} />
       </Canvas>
       <div className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 pointer-events-none">
         <div className="max-w-md mx-auto bg-white/95 text-slate-900 rounded-[22px] shadow-xl px-4 py-2.5 flex items-center gap-3">

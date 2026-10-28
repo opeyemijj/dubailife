@@ -5,7 +5,7 @@
 
 import { Sheet, SheetChip } from "@/components/ui/sheet";
 import { ModalPortal } from "@/components/ui/modal-portal";
-import { ArrivalScene } from "./ArrivalScene";
+import { ArrivalScene, type ParkedCar } from "./ArrivalScene";
 import { usePresentCitizens } from "@/lib/presence";
 import { localsAt } from "@/lib/locals";
 import { useNow } from "@/lib/dubaiClock";
@@ -22,8 +22,12 @@ import { VenueDressCodeModal } from "./VenueDressCodeModal";
 import { TaxiJourney } from "@/components/transit/TaxiJourney";
 import { MetroJourney } from "@/components/transit/MetroJourney";
 import { instantFare, metroPlan, stationPoint, taxiQuote } from "@/lib/transit";
+import { DriveJourney } from "@/components/cars/DriveJourney";
+import { drivables, fuelFor, useGarage, type Drivable } from "@/lib/cars";
+import { reloadServices } from "@/lib/cityServices";
+import { openPhone } from "@/components/layout/PhoneOverlay";
 
-export type TravelMode = "walk" | "taxi" | "metro" | "direct";
+export type TravelMode = "walk" | "taxi" | "metro" | "direct" | "drive";
 
 export interface Destination {
   place: Place;
@@ -63,17 +67,23 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
   const { citizen } = useCitizen();
   const [dressCodeVenue, setDressCodeVenue] = useState<Venue | null>(null);
   // The last few metres in 3D before going in (venues; homes open straight away).
-  const [arriving, setArriving] = useState<{ taxi: boolean } | null>(null);
-  const enter = (taxi: boolean) => {
-    if (destination?.route.startsWith("/place/") || destination?.route.startsWith("/cars/")) setArriving({ taxi });
+  const [arriving, setArriving] = useState<{ taxi: boolean; own?: ParkedCar } | null>(null);
+  const enter = (taxi: boolean, own?: ParkedCar) => {
+    if (destination?.route.startsWith("/place/") || destination?.route.startsWith("/cars/")) setArriving({ taxi, own });
     else if (destination) router.push(destination.route);
   };
+  // Your own car (or your rental), driven there yourself (DriveJourney).
+  const { garage, reload: reloadGarage } = useGarage(citizen?.id);
+  const now = useNow();
+  const myCars = useMemo(() => drivables(garage, now), [garage, now]);
+  const [drive, setDrive] = useState<{ to: { x: number; y: number }; metres: number } | null>(null);
 
   const go = async (mode: TravelMode) => {
     if (!destination) return;
     const to = entranceOf(place.id) ?? playerPos;
     const metres = distanceMetres(playerPos, to);
     if (mode === "taxi") { gameAudio.playClickSound(); setTaxi({ to, metres }); return; }
+    if (mode === "drive") { gameAudio.playClickSound(); setDrive({ to, metres }); return; }
     if (mode === "metro") {
       const plan = metroPlan(playerPos, to);
       if (!plan) return;
@@ -112,7 +122,31 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
   if (arriving && destination) {
     return (
       <ModalPortal>
-        <ArrivalScene place={place} label={destination.label} look={citizen?.look} taxi={arriving.taxi} onDone={() => router.push(destination.route)} />
+        <ArrivalScene place={place} label={destination.label} look={citizen?.look} taxi={arriving.taxi} own={arriving.own} onDone={() => router.push(destination.route)} />
+      </ModalPortal>
+    );
+  }
+  if (drive && destination && myCars.length) {
+    const arriveByCar = async (d: Drivable) => {
+      const to = drive.to;
+      setDrive(null);
+      void reloadGarage();
+      await onTravel(to, "direct", 0);
+      updateCitizen((c) => ({ ...c, location: { ...to, placeId: place.id } }));
+      enter(false, { car: d.car, plate: d.plate });
+    };
+    return (
+      <ModalPortal>
+        <DriveJourney
+          drivables={myCars}
+          metres={drive.metres}
+          destination={destination.label === place.name ? place.name : `${destination.label}, ${place.name}`}
+          look={citizen?.look}
+          balance={citizen?.balance ?? 0}
+          onArrive={arriveByCar}
+          onArrested={() => { setDrive(null); void reloadGarage(); void reloadServices(); onClose(); openPhone("court"); }}
+          onCancel={() => { setDrive(null); void reloadGarage(); }}
+        />
       </ModalPortal>
     );
   }
@@ -179,7 +213,7 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
         onClose={travelling ? undefined : onClose}
       >
         {destination ? (
-          <Journey destination={destination} playerPos={playerPos} travelling={travelling} onGo={go} gold={metroGold} onGold={setMetroGold} />
+          <Journey destination={destination} playerPos={playerPos} travelling={travelling} onGo={go} gold={metroGold} onGold={setMetroGold} cars={myCars} />
         ) : (
           <>
             <PlaceIntro place={place} onPick={(v) => setDressCodeVenue(v)} />
@@ -489,9 +523,9 @@ function Fact({ k, v }: { k: string; v: string }) {
 
 // ---------------------------------------------------------------- journey
 
-function Journey({ destination, playerPos, travelling, onGo, gold, onGold }: {
+function Journey({ destination, playerPos, travelling, onGo, gold, onGold, cars }: {
   destination: Destination; playerPos: { x: number; y: number }; travelling: TravelMode | null; onGo: (m: TravelMode) => void;
-  gold: boolean; onGold: (g: boolean) => void;
+  gold: boolean; onGold: (g: boolean) => void; cars: Drivable[];
 }) {
   const { citizen } = useCitizen();
   const to = entranceOf(destination.place.id) ?? playerPos;
@@ -521,8 +555,17 @@ function Journey({ destination, playerPos, travelling, onGo, gold, onGold }: {
         <Option icon={<DoorOpen className="w-5 h-5" />} title="Walk in" note="You're at the entrance" onClick={() => onGo("walk")} primary />
       ) : (
         <>
-          <Option icon={<Footprints className="w-5 h-5" />} title="Walk" note={`≈ ${walkMinutes(metres)} min · free`} onClick={() => onGo("walk")} primary={metres < 1200} />
-          <Option icon={<Car className="w-5 h-5" />} title="Dubai Taxi" note={`≈ ${taxiMinutes(metres)} min · ${aed(fare)} (12 minimum)`} onClick={() => onGo("taxi")} disabled={(citizen?.balance ?? 0) < fare} primary={metres >= 1200} />
+          <Option icon={<Footprints className="w-5 h-5" />} title="Walk" note={`≈ ${walkMinutes(metres)} min · free`} onClick={() => onGo("walk")} primary={metres < 1200 && !cars.length} />
+          {cars.length > 0 && (
+            <Option
+              icon={<span className="text-lg">🚗</span>}
+              title={cars.length === 1 ? `Drive your ${cars[0].car.make} ${cars[0].car.model}` : "Drive your car"}
+              note={`≈ ${taxiMinutes(metres)} min · you drive · ${cars[0].car.electric ? "⚡ battery" : "⛽ fuel"} ${Math.round(cars[0].fuel)}%${cars[0].fuel < fuelFor(cars[0].car, metres) + 1 ? ` (${cars[0].car.electric ? "charge" : "fill up"} on the way)` : ""}`}
+              onClick={() => onGo("drive")}
+              primary
+            />
+          )}
+          <Option icon={<Car className="w-5 h-5" />} title="Dubai Taxi" note={`≈ ${taxiMinutes(metres)} min · ${aed(fare)} (12 minimum)`} onClick={() => onGo("taxi")} disabled={(citizen?.balance ?? 0) < fare} primary={metres >= 1200 && !cars.length} />
           {plan ? (
             <>
               <Option

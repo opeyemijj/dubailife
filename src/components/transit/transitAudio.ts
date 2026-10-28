@@ -80,6 +80,29 @@ export function doorThud() {
   src.buffer = buf; src.connect(f).connect(g).connect(a.destination); src.start();
 }
 
+/** A parking sensor's beep (they come faster as you get closer). */
+export const sensorBeep = () => beep(2100, 0, 0.06, 0.05, "sine");
+/** A car horn: two detuned square tones, a short double toot. */
+export function horn() {
+  for (const at of [0, 0.22]) { beep(415, at, 0.16, 0.05, "square"); beep(520, at, 0.16, 0.04, "square"); }
+}
+/** A crash: a heavy thump, then breaking glass and scraping metal. */
+export function crash() {
+  const a = ac();
+  if (!a || muted) return;
+  const len = a.sampleRate * 1.4;
+  const buf = a.createBuffer(1, len, a.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) {
+    const t = i / a.sampleRate;
+    d[i] = (Math.random() * 2 - 1) * (Math.exp(-t / 0.08) + 0.35 * Math.exp(-t / 0.6) * (Math.random() < 0.08 ? 3 : 1));
+  }
+  const src = a.createBufferSource(), low = a.createBiquadFilter(), g = a.createGain();
+  low.type = "lowpass"; low.frequency.value = 1600; g.gain.value = 0.9;
+  src.buffer = buf; src.connect(low).connect(g).connect(a.destination); src.start();
+  for (let i = 0; i < 7; i++) beep(2800 + Math.random() * 2400, 0.08 + Math.random() * 0.5, 0.03, 0.03, "triangle");
+}
+
 /** One footstep: a short soft thud, brighter and knockier on timber, a scuff on stone. `hard` 0..1 for a run. */
 export function footstep(surface: "stone" | "wood" | "pavement" = "stone", hard = 0.6) {
   const a = ac();
@@ -111,7 +134,7 @@ interface Loop { src: AudioBufferSourceNode; gain: GainNode; filter: BiquadFilte
 const loops = new Map<string, Loop>();
 
 /** A looping noise bed (train rumble, road noise) with an optional engine tone; `setLoopSpeed` drives it. */
-export function startLoop(id: "train" | "road", level = 0.12) {
+export function startLoop(id: "train" | "road" | "engine", level = 0.12) {
   const a = ac();
   if (!a || loops.has(id)) return;
   const buf = a.createBuffer(1, a.sampleRate * 2, a.sampleRate);
@@ -131,12 +154,19 @@ export function startLoop(id: "train" | "road", level = 0.12) {
     osc.connect(og).connect(gain);
     osc.start();
   }
+  if (id === "engine") {
+    // Your own car's engine: a growl that climbs with the revs.
+    osc = a.createOscillator(); osc.type = "sawtooth"; osc.frequency.value = 50;
+    const og = a.createGain(); og.gain.value = 0.05;
+    osc.connect(og).connect(gain);
+    osc.start();
+  }
   src.start();
   loops.set(id, { src, gain, filter, osc, level });
 }
 
 /** 0 (stopped) .. 1 (full speed): louder, brighter and higher as the vehicle speeds up. */
-export function setLoopSpeed(id: "train" | "road", k: number) {
+export function setLoopSpeed(id: "train" | "road" | "engine", k: number) {
   const a = ac(), l = loops.get(id);
   if (!a || !l) return;
   const t = a.currentTime;

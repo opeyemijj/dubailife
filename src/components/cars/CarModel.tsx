@@ -24,6 +24,8 @@ function plateTexture(plate: string) {
 }
 
 const LENGTH: Record<string, number> = { sedan: 4.7, compact: 4.6, "sport-sedan": 4.85, suv: 5.0, supercar: 4.5 };
+/** How long a car is in the scene (metres). */
+export const carLength = (car: { model3d?: string }) => LENGTH[car.model3d ?? "sedan"] ?? 4.7;
 /** The paint: each model's body material (the rest is glass, tyres, trim and lights). */
 const BODY = /^(LightBlue|Blue|White|Main)$/;
 

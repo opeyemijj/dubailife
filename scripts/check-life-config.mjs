@@ -124,15 +124,34 @@ mneed("points", `'wellbeing', ${mar.finisherPoints}, 'marathon:'`);
 const cars = JSON.parse(readFileSync("src/data/cars/cars.json", "utf8"));
 const carFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_cars.sql")).sort().pop();
 const carSql = readFileSync(`supabase/migrations/${carFile}`, "utf8");
-const cneed = (label, text) => { if (!carSql.includes(text)) { bad++; console.error(`cars ${label}: differs from SQL (${text})`); } };
-for (const c of cars.cars) cneed(`price ${c.id}`, `when '${c.id}' then array[${c.price}, ${c.day}]`);
-for (const r of cars.rentals) cneed(`fleet ${r.id}`, `when p_place = '${r.id}' and p_car in (${r.fleet.map((x) => `'${x}'`).join(", ")}) then 'rent'`);
-for (const d of cars.dealers) cneed(`stock ${d.id}`, `when p_place = '${d.id}' and p_car in (${d.stock.map((x) => `'${x}'`).join(", ")}) then 'buy'`);
+// Prices and stock are redefined by later migrations (the driving one added the Tesla): read the newest.
+const driveFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_driving.sql")).sort().pop();
+const driveSql = readFileSync(`supabase/migrations/${driveFile}`, "utf8");
+const cneed = (label, text, sql = carSql) => { if (!sql.includes(text)) { bad++; console.error(`cars ${label}: differs from SQL (${text})`); } };
+for (const c of cars.cars) cneed(`price ${c.id}`, `when '${c.id}' then array[${c.price}, ${c.day}]`, driveSql);
+for (const r of cars.rentals) cneed(`fleet ${r.id}`, `when p_place = '${r.id}' and p_car in (${r.fleet.map((x) => `'${x}'`).join(", ")}) then 'rent'`, driveSql);
+for (const d of cars.dealers) cneed(`stock ${d.id}`, `when p_place = '${d.id}' and p_car in (${d.stock.map((x) => `'${x}'`).join(", ")}) then 'buy'`, driveSql);
+// Driving (cars.json → each car's tank and use, fuel, driving vs *_driving.sql).
+for (const c of cars.cars) cneed(`energy ${c.id}`, `when '${c.id}' then array[${c.tank}, ${c.per100}, ${c.electric ? 1 : 0}]`, driveSql);
+const dr = cars.driving;
+for (const [label, text] of [["petrol", `else ${cars.fuel.petrolPerLitre} end`], ["charge", `when e[3] = 1 then ${cars.fuel.chargePerKwh} else`],
+  ["speeding fine", `fine := ${dr.speedingFine};`], ["fuel factor", `/ 1000.0 * ${dr.fuelGameFactor} * e[2] / 100`], ["accident custody", `'accident', now() + interval '${dr.custodyHours} hours'`],
+  ["accident fine", `when c.kind = 'accident' then ${dr.accidentFine} else`], ["impound", `impounded_until = now() + interval '${dr.impoundDays} days'`],
+  ["release", `-${dr.releaseFee}, 'spend', 'Car released`]]) cneed(`driving ${label}`, text, driveSql);
 cneed("days", `p_days not in (${cars.rentDays.join(", ")})`);
 cneed("discounts", `case p_days when 7 then ${(1 - cars.weekDiscount).toFixed(2)} when 30 then ${(1 - cars.monthDiscount).toFixed(2)} else 1 end`);
 cneed("deposit", `days, cost, deposit, ends_at) values (me, p_car, p_company, p_days, cost, ${cars.deposit},`);
 cneed("insurance", `ins := greatest(${cars.minInsurance}, price * ${cars.insurancePercent} / 100)`);
 cneed("registration", `-(price + ins + ${cars.registration})`);
+// Parking (cars.json → parking vs *_parking.sql).
+const pk = cars.parking;
+const pkFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_parking.sql")).sort().pop();
+const pkSql = readFileSync(`supabase/migrations/${pkFile}`, "utf8");
+for (const [label, text] of [["rate", `cost := p_hours * ${pk.perHour};`], ["hours", `p_hours not in (0, ${pk.hours.join(", ")})`],
+  ["unpaid fine", `'parking_unpaid', ${pk.unpaidFine},`], ["bad parking fine", `'bad_parking', ${pk.badParkingFine},`],
+  ["unpaid delay", `mins => ${pk.unpaidAfterMinutes[0]} + floor(random() * ${pk.unpaidAfterMinutes[1] - pk.unpaidAfterMinutes[0] + 1})`],
+  ["bad delay", `mins => ${pk.badAfterMinutes[0]} + floor(random() * ${pk.badAfterMinutes[1] - pk.badAfterMinutes[0] + 1})`],
+  ["speeding fine", `fine := ${dr.speedingFine};`], ["fuel factor", `/ 1000.0 * ${dr.fuelGameFactor} * e[2] / 100`]]) cneed(`parking ${label}`, text, pkSql);
 // The fake licence (cars.json → fakeLicence vs *_fake_licence.sql).
 const fl = cars.fakeLicence;
 const flFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_fake_licence.sql")).sort().pop();
@@ -141,5 +160,5 @@ for (const [label, text] of [["caught", `if random() < ${fl.caughtChance} then`]
   ["custody", `now() + interval '${fl.custodyHours} hours'`], ["fine", `when c.kind = 'fake_licence' then ${fl.fine} else`], ["bail", `-${fl.bail}, 'spend', 'Bail'`]]) {
   if (!flSql.includes(text)) { bad++; console.error(`fake licence ${label}: differs from SQL (${text})`); }
 }
-console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon and car config match the database.");
+console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving and parking config match the database.");
 process.exit(bad ? 1 : 0);

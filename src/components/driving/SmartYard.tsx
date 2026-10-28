@@ -2,9 +2,10 @@
 
 // Smart Yard (Driving Academy stage 3): a top-down parking test. Steer a car into the marked bay without
 // touching cones, walls or parked cars, then stop straight inside it. Two tasks: a 90° bay, then a
-// parallel bay. Hold the on-screen pedals or use the arrow keys.
+// parallel bay. Turn the steering wheel and hold the pedals, or use the arrow keys.
 
 import { useEffect, useRef, useState } from "react";
+import { SteeringWheel } from "@/components/cars/SteeringWheel";
 
 const W = 340, H = 440, CAR_W = 22, CAR_L = 40, WHEELBASE = 30;
 type Rect = { x: number; y: number; w: number; h: number };
@@ -38,6 +39,8 @@ const inRect = ([px, py]: [number, number], r: Rect, pad = 0) => px >= r.x - pad
 export function SmartYard({ onDone }: { onDone: (passed: boolean) => void }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const keys = useRef({ up: false, down: false, left: false, right: false });
+  /** The on-screen wheel: -1 full left .. 1 full right. */
+  const wheel = useRef(0);
   const [task, setTask] = useState(0);
   const [status, setStatus] = useState<"driving" | "crashed" | "parked" | "timeout">("driving");
   const [secs, setSecs] = useState(90);
@@ -71,7 +74,7 @@ export function SmartYard({ onDone }: { onDone: (passed: boolean) => void }) {
         else if (k.down) car.v = Math.max(-60, car.v - 140 * dt);
         else car.v *= Math.pow(0.15, dt);
         if (Math.abs(car.v) < 0.5 && !k.up && !k.down) car.v = 0;
-        const steer = (k.left ? -0.55 : 0) + (k.right ? 0.55 : 0);
+        const steer = k.left || k.right ? (k.left ? -0.55 : 0) + (k.right ? 0.55 : 0) : wheel.current * 0.55;
         car.a += (car.v / WHEELBASE) * Math.tan(steer) * dt;
         car.x += car.v * Math.sin(car.a) * dt;
         car.y -= car.v * Math.cos(car.a) * dt;
@@ -136,8 +139,9 @@ export function SmartYard({ onDone }: { onDone: (passed: boolean) => void }) {
         )}
       </div>
       <p className="text-[11px] text-slate-400 text-center">Stop straight inside the green bay. Touching a cone, wall or parked car fails the try. Arrow keys work too.</p>
-      <div className="grid grid-cols-4 gap-2">
-        {pad("left", "◀")}{pad("right", "▶")}{pad("down", "R", "text-base")}{pad("up", "▲", "bg-emerald-600/60 active:bg-emerald-500")}
+      <div className="flex items-center gap-3">
+        <SteeringWheel size={128} onSteer={(v) => { wheel.current = v; }} />
+        <div className="flex-1 grid grid-cols-2 gap-2">{pad("down", "R", "text-base h-20")}{pad("up", "▲", "h-20 bg-emerald-600/60 active:bg-emerald-500")}</div>
       </div>
     </div>
   );
