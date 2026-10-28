@@ -51,9 +51,17 @@ export function WeekendCard({ status, dark }: { status: FunStatus; dark?: boolea
 
 export function FunGoals() {
   const { citizen } = useCitizen();
-  const { status } = useFun(citizen?.id);
+  const { status, error, reload } = useFun(citizen?.id);
   const [busy, setBusy] = useState<string | null>(null);
   const [gained, setGained] = useState<Record<string, number>>({});
+  if (!status && error) {
+    return (
+      <div className="text-center py-8 space-y-3">
+        <p className="text-white/70">Couldn&apos;t load Life &amp; Fun right now.</p>
+        <button onClick={() => void reload()} className="h-10 px-5 rounded-full bg-white/10 font-black text-sm">Try again</button>
+      </div>
+    );
+  }
   if (!status) return <p className="text-center text-white/50 py-8">Loading…</p>;
   const prog = Object.fromEntries(status.goals.map((g) => [g.id, g]));
   const collect = async (id: string) => {

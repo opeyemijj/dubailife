@@ -36,18 +36,23 @@ export function logFun(kind: FunKind, place: string, venue?: string, item?: stri
 }
 
 let cache: FunStatus | null = null;
+/** True when the last load failed (so screens can say so instead of loading forever). */
+let failed = false;
 const subs = new Set<() => void>();
 let inflight: Promise<void> | null = null;
 export function reloadFun() {
   inflight ??= (async () => {
-    const { data } = await supabase().rpc("fun_status");
-    if (data) { cache = data as FunStatus; subs.forEach((f) => f()); }
+    const { data, error } = await supabase().rpc("fun_status");
+    failed = !!error || !data;
+    if (data) cache = data as FunStatus;
+    subs.forEach((f) => f());
     inflight = null;
   })();
   return inflight;
 }
 export function useFun(me: string | null | undefined) {
   const status = useSyncExternalStore((f) => { subs.add(f); return () => { subs.delete(f); }; }, () => cache, () => null);
+  const error = useSyncExternalStore((f) => { subs.add(f); return () => { subs.delete(f); }; }, () => failed, () => false);
   useEffect(() => {
     if (!me) return;
     const t = setTimeout(() => void reloadFun(), 0);
@@ -55,7 +60,7 @@ export function useFun(me: string | null | undefined) {
     document.addEventListener("visibilitychange", again);
     return () => { clearTimeout(t); document.removeEventListener("visibilitychange", again); };
   }, [me]);
-  return { status, reload: useCallback(() => reloadFun(), []) };
+  return { status, error, reload: useCallback(() => reloadFun(), []) };
 }
 
 export async function claimFun(claim: string) {

@@ -1,6 +1,6 @@
 "use client";
 
-// The goal you're on now, on the map and at home: a small pill ("Get a job · 1/3") that opens to the goal's
+// The goal you're on now, on the map: a small pill ("Get a job · 1/3") that opens to the goal's
 // steps, each with a button to go and do it, and the reward to collect when they're done. Sits under the
 // first-day checklist while that's still running.
 
@@ -30,15 +30,14 @@ export function NextStep() {
   const weekend = fun?.weekend.now && !fun.weekend.claimed ? fun : null;
   const [open, setOpen] = useState(false);
   const [won, setWon] = useState<{ aed: number; xp: number; next?: string } | null>(null);
-  const atHome = path.startsWith("/home");
-  if (!citizen?.id || !status?.order || !/^\/(explore|home)\b/.test(path)) return null;
+  // On the map only; at home your goal is in the Life panel's Goals tab.
+  if (!citizen?.id || !status?.order || !/^\/explore\b/.test(path)) return null;
 
   const goal = currentGoal(status);
   const done = goal ? goal.steps.filter((s) => stepDone(status, s)).length : 0;
   const ready = !!goal && goalDone(status, goal);
-  // On the map it sits under the Search button (and the first-day checklist while that's running).
-  const place = `fixed z-[59] w-[min(320px,calc(100vw-1.5rem))] flex flex-col ${atHome ? "right-3 items-end" : "left-3 items-start"} ${atHome ? (firstDay ? "top-[calc(env(safe-area-inset-top)+8.5rem)]" : "top-[calc(env(safe-area-inset-top)+5.25rem)]")
-    : firstDay ? "top-[calc(env(safe-area-inset-top)+10.25rem)]" : "top-[calc(env(safe-area-inset-top)+7.5rem)]"}`;
+  // It sits under the map's Search button (and the first-day checklist while that's running).
+  const place = `fixed z-[59] w-[min(320px,calc(100vw-1.5rem))] flex flex-col left-3 items-start ${firstDay ? "top-[calc(env(safe-area-inset-top)+10.25rem)]" : "top-[calc(env(safe-area-inset-top)+7.5rem)]"}`;
 
   if (!goal) {
     return (

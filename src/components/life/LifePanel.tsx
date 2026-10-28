@@ -31,6 +31,9 @@ import { ACADEMIC_COURSES } from "@/lib/city/academic";
 import { supabase } from "@/lib/supabase/client";
 import { contacts, listConversations, type Contact } from "@/lib/messages";
 import { gameAudio } from "@/utils/gameAudio";
+import { currentGoal, goalDone, stepDone, useGoals } from "@/lib/goals";
+import { GoalSteps } from "@/components/goals/GoalSteps";
+import { DailyMissions } from "@/components/goals/DailyMissions";
 
 export type LifeTab = "profile" | "visa" | "league" | "season" | "needs" | "goals" | "skills" | "people" | "career" | "settings";
 
@@ -309,6 +312,34 @@ function NeedsTab({ c, feelings, onClose }: { c: Citizen; feelings: ReturnType<t
 
 // ---------------------------------------------------------------- Goals
 
+/** Your life goal now (its steps and reward) and today's missions, with the way to the full plan and Life & Fun. */
+function LifeGoalNow({ me, onClose }: { me: string; onClose: () => void }) {
+  const { status } = useGoals(me);
+  const goal = currentGoal(status);
+  if (!status?.order) return null;
+  const done = goal ? goal.steps.filter((s) => stepDone(status, s)).length : 0;
+  return (
+    <Section title="Your life goal" right={<Link href="/goals" onClick={onClose} className="text-sm font-bold text-teal-600">All goals ›</Link>}>
+      {goal ? (
+        <Card className="space-y-2.5">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">{goal.icon}</span>
+            <div className="flex-1 min-w-0">
+              <div className="font-black leading-tight">{goal.title}</div>
+              <div className="text-xs text-slate-500">{goalDone(status, goal) ? "Ready to collect 🎁" : `${done}/${goal.steps.length} steps`}</div>
+            </div>
+          </div>
+          <GoalSteps goal={goal} status={status} onGo={onClose} />
+        </Card>
+      ) : <p className="text-sm text-slate-500">Every life goal reached. 🏆</p>}
+      <Card className="mt-2.5"><DailyMissions onGo={onClose} /></Card>
+      <Link href="/goals?tab=fun" onClick={onClose} className="mt-2.5 flex items-center justify-between rounded-3xl bg-gradient-to-r from-fuchsia-500 to-orange-400 text-white px-4 py-3 font-black">
+        <span>🎉 Life &amp; Fun: love, nightlife, beach, staycations</span><span>›</span>
+      </Link>
+    </Section>
+  );
+}
+
 function GoalsTab({ c, onClose }: { c: Citizen; onClose: () => void }) {
   const l = lifeOf(c);
   const [flash, setFlash] = useState<string | null>(null);
@@ -320,6 +351,7 @@ function GoalsTab({ c, onClose }: { c: Citizen; onClose: () => void }) {
 
   return (
     <div className="pt-1">
+      <LifeGoalNow me={c.id} onClose={onClose} />
       <Section title="Wishes" right={<span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 font-black text-sm">✨{l.points}</span>}>
         <div className="space-y-2.5">
           {l.wishes.map((w) => {
