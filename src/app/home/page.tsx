@@ -27,7 +27,6 @@ import { useUnreadTotal } from "@/lib/unread";
 import { useLifeLoop } from "@/lib/lifeLoop";
 import { WardrobeModal } from "@/components/avatar/WardrobeModal";
 import { getPendingVenue } from "@/components/city/VenueDressCodeModal";
-import { NeedsDock } from "@/components/life/NeedsDock";
 import { gainSkill, lifeEvent } from "@/lib/life";
 import { FixtureProgress, FixtureSheet, completeFixtureAction } from "@/components/home/FixtureSheet";
 import { applyRun, RUNS, RunJourney, type RouteId } from "@/components/home/RunJourney";
@@ -507,14 +506,6 @@ export default function HomePage() {
           <ChevronDown className="w-3.5 h-3.5" />
           <span>Show UI</span>
         </button>
-      )}
-
-      {/* BOTTOM LEFT: CITIZEN VITALS & NEEDS HUD (Image 2) */}
-      {!cleanScreen && (
-        <div className="absolute bottom-20 sm:bottom-24 left-3 sm:left-6 z-30 pointer-events-auto">
-          {/* The dock opens your needs, goals, skills, people and career. */}
-          <NeedsDock />
-        </div>
       )}
 
       {/* RELATABLE HOME ACTIVITIES DOCK (Collapsible Floating Pill / Expanded Drawer) */}

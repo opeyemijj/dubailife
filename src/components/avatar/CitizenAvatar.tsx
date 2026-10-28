@@ -82,6 +82,22 @@ const RUN_SHAPE: Record<string, { scale: number; bend?: number }> = {
   Bip01_Spine: { scale: 1.4 }, Bip01_Spine1: { scale: 1.4 }, Bip01_Pelvis: { scale: 1.35 },
 };
 
+/** The main direction a set of rotation vectors spread along (power iteration on their covariance), or null. */
+function principalAxis(rv: THREE.Vector3[]): THREE.Vector3 | null {
+  const m = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+  for (const r of rv) {
+    const c = [r.x, r.y, r.z];
+    for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) m[a * 3 + b] += c[a] * c[b];
+  }
+  let x = new THREE.Vector3(1, 0.5, 0.25);
+  for (let k = 0; k < 24; k++) {
+    const y = new THREE.Vector3(m[0] * x.x + m[1] * x.y + m[2] * x.z, m[3] * x.x + m[4] * x.y + m[5] * x.z, m[6] * x.x + m[7] * x.y + m[8] * x.z);
+    if (y.lengthSq() < 1e-14) return null;
+    x = y.normalize();
+  }
+  return x;
+}
+
 function makeRunClip(walk: THREE.AnimationClip, rest: THREE.Object3D): THREE.AnimationClip {
   const run = walk.clone();
   run.name = "run";
@@ -108,25 +124,37 @@ function makeRunClip(walk: THREE.AnimationClip, rest: THREE.Object3D): THREE.Ani
       sum[0] += q.x * sign; sum[1] += q.y * sign; sum[2] += q.z * sign; sum[3] += q.w * sign;
     }
     mean.set(sum[0], sum[1], sum[2], sum[3]).normalize();
-    // Which way the joint flexes: from the skeleton at rest toward its average bend in the walk.
-    if (shape.bend) {
-      const restQ = rest.getObjectByName(bone)?.quaternion;
-      if (restQ) {
-        d.copy(restQ).invert().multiply(mean);
-        const angle = 2 * Math.acos(Math.min(1, Math.abs(d.w)));
-        axis.set(d.x, d.y, d.z);
-        if (axis.lengthSq() > 1e-8 && angle > 1e-3) flex.setFromAxisAngle(axis.normalize().multiplyScalar(Math.sign(d.w) || 1), shape.bend);
-        else flex.identity();
-      } else flex.identity();
-    }
+    // Each key as a rotation vector away from the average (axis × angle).
+    const rv: THREE.Vector3[] = [];
     for (let i = 0; i < n; i++) {
       q.fromArray(v, i * 4);
-      // The swing round the average, made bigger.
       d.copy(mean).invert().multiply(q);
       if (d.w < 0) d.set(-d.x, -d.y, -d.z, -d.w);
       const angle = 2 * Math.acos(Math.min(1, d.w));
       axis.set(d.x, d.y, d.z);
-      if (axis.lengthSq() > 1e-10) d.setFromAxisAngle(axis.normalize(), angle * shape.scale);
+      rv.push(axis.lengthSq() > 1e-10 ? axis.normalize().multiplyScalar(angle) : new THREE.Vector3());
+    }
+    // The joint's hinge: the axis it swings round most (the main direction of those vectors). Only the swing
+    // round it is made bigger; any sideways or twisting motion stays as it is in the walk, so a leg can't
+    // flare out to the side.
+    const hinge = principalAxis(rv);
+    if (shape.bend) {
+      const restQ = rest.getObjectByName(bone)?.quaternion;
+      flex.identity();
+      if (restQ && hinge) {
+        // Bend further along the hinge, in the direction the joint already flexes from rest.
+        d.copy(restQ).invert().multiply(mean);
+        if (d.w < 0) d.set(-d.x, -d.y, -d.z, -d.w);
+        const dir = Math.sign(d.x * hinge.x + d.y * hinge.y + d.z * hinge.z) || 1;
+        flex.setFromAxisAngle(hinge, dir * shape.bend);
+      }
+    }
+    for (let i = 0; i < n; i++) {
+      const r = rv[i].clone();
+      if (hinge) r.addScaledVector(hinge, r.dot(hinge) * (shape.scale - 1));
+      const angle = r.length();
+      d.identity();
+      if (angle > 1e-8) d.setFromAxisAngle(r.divideScalar(angle), angle);
       q.copy(mean);
       if (shape.bend) q.multiply(flex);
       q.multiply(d).normalize();
