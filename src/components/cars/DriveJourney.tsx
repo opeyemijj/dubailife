@@ -713,7 +713,10 @@ export function DriveJourney({ drivables, metres, destination, look, balance, on
   const [arrest, setArrest] = useState(false);
   const filled = phase === "leave" || (stationAt !== null && hud.s > STATION_P + 5);
 
-  useEffect(() => { clear.current = stationAt !== null ? [[STATION_P - 35, STATION_P + 35]] : []; }, [stationAt]);
+  // No city blocks over the fuel station or the destination's car park (it has its own building behind).
+  useEffect(() => {
+    clear.current = [[length - LOT.half - 6, length + LOT.half + 6], ...(stationAt !== null ? [[STATION_P - 35, STATION_P + 35] as [number, number]] : [])];
+  }, [stationAt, length]);
   useEffect(() => () => { stopLoops(); stopSpeech(); }, []);
   // The satnav: how far to go (in real metres) and a spoken heads-up as you get close.
   const toGo = Math.max(0, ((length - 15 - hud.s) / length) * metres);
