@@ -85,15 +85,17 @@ function OpenCase({ c }: { c: CaseView }) {
       <div className="flex items-center gap-3">
         <span className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-3xl">🚔</span>
         <div className="flex-1 min-w-0">
-          <p className="font-black text-lg leading-tight">You&apos;ve been arrested</p>
+          <p className="font-black text-lg leading-tight">You&apos;ve been arrested{c.jailUntil && Date.parse(c.jailUntil) > now ? " · in custody" : ""}</p>
           <p className="text-slate-600 text-sm">{c.reason}</p>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2 text-sm">
-        <div className="rounded-2xl bg-white p-2.5"><p className="text-slate-500">Held</p><p className="font-black">{aed(c.held)}</p></div>
+        <div className="rounded-2xl bg-white p-2.5"><p className="text-slate-500">{c.kind === "fake_licence" ? "Charge" : "Held"}</p><p className="font-black">{c.kind === "fake_licence" ? "Fake licence" : aed(c.held)}</p></div>
         <div className="rounded-2xl bg-white p-2.5"><p className="text-slate-500">Hearing</p><p className="font-black">{until(c.hearingAt, now)}</p></div>
       </div>
-      <p className="text-sm text-slate-600">Arrested by {c.officer ? `Officer @${c.officer}` : "a Local officer"}. You can&apos;t send money until the judge rules. Cleared: the money is released. Guilty: it&apos;s confiscated and you&apos;re fined {SERVICES.police.finePercent}% of it. A good lawyer makes all the difference.</p>
+      <p className="text-sm text-slate-600">Arrested by {c.officer ? `Officer @${c.officer}` : "a Local officer"}. {c.kind === "fake_licence"
+        ? "Hiring a lawyer gets you out of custody on bail. Guilty in court: an AED 25,000 fine. A good lawyer makes all the difference."
+        : <>You can&apos;t send money until the judge rules. Cleared: the money is released. Guilty: it&apos;s confiscated and you&apos;re fined {SERVICES.police.finePercent}% of it. A good lawyer makes all the difference.</>}</p>
       {note && <Note ok={note.ok}>{note.text}</Note>}
 
       {c.lawyerKind ? (

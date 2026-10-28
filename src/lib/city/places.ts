@@ -3,6 +3,7 @@
 // treat them as representative. Store names are used to identify real places; product names are generic.
 
 import { catalog, jobFor, type CatalogKey } from "./catalog";
+import CARS from "@/data/cars/cars.json";
 import type { JobDef, Layout, Palette, Place, Product, Venue, VenueActivity } from "./types";
 import { menu, menuJob, type Cuisine } from "./menus";
 import { rideActivities } from "./rides";
@@ -994,6 +995,31 @@ export const PLACES: Place[] = [
     categories: ["Fashion", "Luxury fashion", "Footwear", "Sportswear", "Electronics", "Beauty", "Arabian fragrance", "Jewellery & watches", "Department store", "Supermarket", "Books", "Toys", "Home", "Eyewear", "Pharmacy & health", "Café", "Restaurant", "Entertainment", "Bank"],
   },
   { id: "souk-al-bahar", name: "Souk Al Bahar", kind: "mall", blurb: "Arabian-style souk on the Burj Lake with fountain-view dining.", venues: SOUK },
+  // A classic Dubai street cafeteria: cheap, quick and open late, with the chicken turning on spits in the
+  // glass rotisserie on the pavement (the arrival scene shows it) and karak chai brewed all day.
+  {
+    id: "yalla-karak-cafeteria", name: "Yalla Karak Cafeteria", kind: "food-hall",
+    blurb: "The street-corner cafeteria every Dubai resident knows: karak chai for a dirham, shawarma off the spit, and grilled chicken turning in the rotisserie outside.",
+    venues: [venue("Yalla Karak Cafeteria", "Karak, shawarma & grilled chicken", "restaurant", {
+      blurb: "Plastic chairs on the pavement, the rotisserie spinning outside, karak in paper cups. Cheap, quick and always busy.",
+      palette: { floor: "#d6d3d1", wall: "#fef3c7", accent: "#b91c1c" },
+      role: "Cafeteria man",
+      products: [
+        { id: "ykc:karak", name: "Karak chai", price: 1, icon: "☕", desc: "Strong tea boiled with cardamom and evaporated milk, in a paper cup.", station: "counter", consumable: { need: "energy", amount: 12 } },
+        { id: "ykc:shawarma", name: "Chicken shawarma", price: 7, icon: "🌯", desc: "Sliced off the spit, with garlic toum, pickles and fries in the wrap.", station: "counter", consumable: { need: "hunger", amount: 28 } },
+        { id: "ykc:half-chicken", name: "Half grilled chicken with rice", price: 18, icon: "🍗", desc: "From the rotisserie outside, with yellow rice, salad and garlic sauce.", station: "counter", consumable: { need: "hunger", amount: 50 } },
+        { id: "ykc:full-chicken", name: "Full grilled chicken for sharing", price: 30, icon: "🍗", desc: "A whole rotisserie chicken, Arabic bread, hummus and pickles.", station: "counter", consumable: { need: "hunger", amount: 75 } },
+        { id: "ykc:paratha", name: "Egg & cheese paratha", price: 5, icon: "🫓", desc: "Flaky paratha off the griddle, folded round egg and cheese.", station: "counter", consumable: { need: "hunger", amount: 20 } },
+        { id: "ykc:chips-oman", name: "Chips Oman sandwich", price: 4, icon: "🥪", desc: "Crushed Chips Oman, cream cheese and chilli sauce in a soft roll. A Gulf classic.", station: "counter", consumable: { need: "hunger", amount: 15 } },
+        { id: "ykc:juice", name: "Fresh avocado & mango cocktail", price: 9, icon: "🥤", desc: "Layered fresh juice with honey and nuts on top.", station: "counter", consumable: { need: "energy", amount: 15 } },
+      ],
+    })],
+  },
+  // Car rental companies and dealerships on Sheikh Zayed Road: each opens its 3D showroom (/cars/<id>).
+  ...[...CARS.rentals.map((c) => ({ ...c, rent: true })), ...CARS.dealers.map((c) => ({ ...c, rent: false }))].map((c): Place => ({
+    id: c.id, name: c.name, kind: "mall", blurb: c.blurb, route: `/cars/${c.id}`,
+    venues: [venue(c.name, c.rent ? "Car rental" : "Car dealership", "electronics", { blurb: c.blurb, role: c.rent ? "Rental agent" : "Sales consultant", noJob: true })],
+  })),
   { id: "timeout-market", name: "Time Out Market Dubai", kind: "food-hall", blurb: "Food hall with Dubai's best-reviewed chefs under one roof, overlooking the fountain.", venues: TIME_OUT },
   { id: "the-guild", name: "The Guild", kind: "food-hall", blurb: "A multi-venue dining collective — lunch, drinks, dinner and a nightcap by the piano.", venues: GUILD },
   {

@@ -120,5 +120,26 @@ mneed("course", `least(p_distance, elapsed * ${mar.maxSpeed} + 25, ${mar.courseM
 mneed("finish", `if d >= ${mar.courseMetres} then`);
 mneed("prizes", `prizes bigint[] := array[${mar.prizes.join(", ")}]`);
 mneed("points", `'wellbeing', ${mar.finisherPoints}, 'marathon:'`);
-console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love and marathon config match the database.");
+// Cars (src/data/cars/cars.json vs *_cars.sql): prices, who offers what, and the fees.
+const cars = JSON.parse(readFileSync("src/data/cars/cars.json", "utf8"));
+const carFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_cars.sql")).sort().pop();
+const carSql = readFileSync(`supabase/migrations/${carFile}`, "utf8");
+const cneed = (label, text) => { if (!carSql.includes(text)) { bad++; console.error(`cars ${label}: differs from SQL (${text})`); } };
+for (const c of cars.cars) cneed(`price ${c.id}`, `when '${c.id}' then array[${c.price}, ${c.day}]`);
+for (const r of cars.rentals) cneed(`fleet ${r.id}`, `when p_place = '${r.id}' and p_car in (${r.fleet.map((x) => `'${x}'`).join(", ")}) then 'rent'`);
+for (const d of cars.dealers) cneed(`stock ${d.id}`, `when p_place = '${d.id}' and p_car in (${d.stock.map((x) => `'${x}'`).join(", ")}) then 'buy'`);
+cneed("days", `p_days not in (${cars.rentDays.join(", ")})`);
+cneed("discounts", `case p_days when 7 then ${(1 - cars.weekDiscount).toFixed(2)} when 30 then ${(1 - cars.monthDiscount).toFixed(2)} else 1 end`);
+cneed("deposit", `days, cost, deposit, ends_at) values (me, p_car, p_company, p_days, cost, ${cars.deposit},`);
+cneed("insurance", `ins := greatest(${cars.minInsurance}, price * ${cars.insurancePercent} / 100)`);
+cneed("registration", `-(price + ins + ${cars.registration})`);
+// The fake licence (cars.json → fakeLicence vs *_fake_licence.sql).
+const fl = cars.fakeLicence;
+const flFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_fake_licence.sql")).sort().pop();
+const flSql = readFileSync(`supabase/migrations/${flFile}`, "utf8");
+for (const [label, text] of [["caught", `if random() < ${fl.caughtChance} then`], ["on return", `if r.fake and random() < ${fl.caughtOnReturnChance} then`],
+  ["custody", `now() + interval '${fl.custodyHours} hours'`], ["fine", `when c.kind = 'fake_licence' then ${fl.fine} else`], ["bail", `-${fl.bail}, 'spend', 'Bail'`]]) {
+  if (!flSql.includes(text)) { bad++; console.error(`fake licence ${label}: differs from SQL (${text})`); }
+}
+console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon and car config match the database.");
 process.exit(bad ? 1 : 0);

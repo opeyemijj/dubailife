@@ -19,6 +19,7 @@ export interface CaseView {
   id: number; held: number; reason: string; status: "open" | "cleared" | "guilty"; fine: number | null;
   lawyerKind: "player" | "aid" | "senior" | null; lawyer: string | null; defence: number | null; officer: string | null;
   hearingAt: string; verdictAt: string | null; createdAt: string;
+  kind?: "transfer" | "fake_licence"; jailUntil?: string | null;
 }
 export interface MyServices {
   service: Service | null;
@@ -53,6 +54,7 @@ const ERRORS: Record<string, string> = {
   defence_not_ready: "Your lawyer hasn't prepared your defence yet.",
   fee_out_of_range: "That fee is outside the allowed range.",
   already_prepared: "The defence is already prepared.",
+  not_in_custody: "You're not in custody.",
 };
 export const friendly = (msg: string) => ERRORS[Object.keys(ERRORS).find((k) => msg.includes(k)) ?? ""] ?? msg;
 
@@ -120,6 +122,7 @@ export const cancelConsult = (id: number) => after(call<null>("cancel_consult", 
 export const treatPatient = (id: number, treatment: number) => after(call<boolean>("treat_patient", { p_consult: id, p_treatment: treatment }));
 export const hireLawyer = (caseId: number, kind: "player" | "aid" | "senior", lawyer?: string) => after(call<null>("hire_lawyer", { p_case: caseId, p_kind: kind, p_lawyer: lawyer ?? null }));
 export const prepareDefence = (caseId: number, answers: number[]) => after(call<number>("prepare_defence", { p_case: caseId, p_answers: answers }));
+export const payBail = (caseId: number) => after(call<null>("pay_bail", { p_case: caseId }));
 export const goToCourt = (caseId: number) => after(call<CaseView>("go_to_court", { p_case: caseId }));
 
 // ---------------------------------------------------------------- falling ill

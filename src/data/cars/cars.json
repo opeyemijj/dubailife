@@ -1,0 +1,295 @@
+{
+  "_note": "Car rental companies and dealerships on the map (Sheikh Zayed Road), the cars each one offers, and the costs of owning one. Real brands are shown as places to visit, marked not affiliated, like the other venues. Prices are in-game AED, close to real Dubai prices. Mirrored in supabase/migrations/*_cars.sql (checked by scripts/check-life-config.mjs). A driving licence from the Driving Academy is required to rent or buy.",
+  "rentals": [
+    {
+      "id": "sixt-szr",
+      "name": "Sixt",
+      "icon": "🟠",
+      "color": "#ff5f00",
+      "x": 1640,
+      "blurb": "The orange counter on Sheikh Zayed Road: premium German cars by the day, week or month.",
+      "fleet": [
+        "nissan-sunny",
+        "toyota-camry",
+        "bmw-5",
+        "mercedes-g63"
+      ]
+    },
+    {
+      "id": "hertz-szr",
+      "name": "Hertz",
+      "icon": "🟡",
+      "color": "#ffcc00",
+      "x": 1760,
+      "blurb": "The yellow sign travellers know from the airport, with a branch on Sheikh Zayed Road.",
+      "fleet": [
+        "nissan-sunny",
+        "toyota-corolla",
+        "nissan-patrol",
+        "mercedes-e"
+      ]
+    },
+    {
+      "id": "europcar-szr",
+      "name": "Europcar",
+      "icon": "🟢",
+      "color": "#00a650",
+      "x": 2010,
+      "blurb": "Daily and monthly rentals, from city runabouts to family SUVs.",
+      "fleet": [
+        "toyota-corolla",
+        "toyota-camry",
+        "toyota-land-cruiser",
+        "bmw-x5"
+      ]
+    },
+    {
+      "id": "budget-szr",
+      "name": "Budget",
+      "icon": "🔵",
+      "color": "#00285f",
+      "x": 2130,
+      "blurb": "Good-value rentals for residents and visitors alike.",
+      "fleet": [
+        "nissan-sunny",
+        "toyota-corolla",
+        "nissan-patrol"
+      ]
+    },
+    {
+      "id": "autostrad-szr",
+      "name": "Autostrad",
+      "icon": "🔴",
+      "color": "#c8102e",
+      "x": 2400,
+      "blurb": "A UAE rental favourite, with monthly deals on everything from sedans to Land Cruisers.",
+      "fleet": [
+        "toyota-corolla",
+        "toyota-camry",
+        "toyota-land-cruiser",
+        "lamborghini-urus"
+      ]
+    }
+  ],
+  "dealers": [
+    {
+      "id": "al-futtaim-toyota",
+      "name": "Al-Futtaim Toyota",
+      "icon": "🚗",
+      "color": "#eb0a1e",
+      "x": 2680,
+      "blurb": "Toyota's showroom: the Corolla, Camry and the Land Cruiser everyone in the Gulf wants.",
+      "stock": [
+        "toyota-corolla",
+        "toyota-camry",
+        "toyota-land-cruiser"
+      ]
+    },
+    {
+      "id": "arabian-automobiles-nissan",
+      "name": "Arabian Automobiles Nissan",
+      "icon": "🚙",
+      "color": "#c3002f",
+      "x": 2950,
+      "blurb": "Nissan's Dubai home, from the Sunny to the desert-ready Patrol.",
+      "stock": [
+        "nissan-sunny",
+        "nissan-patrol"
+      ]
+    },
+    {
+      "id": "agmc-bmw",
+      "name": "AGMC BMW",
+      "icon": "🔵",
+      "color": "#1c69d4",
+      "x": 3070,
+      "blurb": "BMW's glass showroom on Sheikh Zayed Road.",
+      "stock": [
+        "bmw-5",
+        "bmw-x5"
+      ]
+    },
+    {
+      "id": "gargash-mercedes",
+      "name": "Gargash Mercedes-Benz",
+      "icon": "⭐",
+      "color": "#1f2937",
+      "x": 3780,
+      "blurb": "Dubai's Mercedes-Benz dealer since 1958: E-Class to the G-Wagon.",
+      "stock": [
+        "mercedes-e",
+        "mercedes-g63"
+      ]
+    },
+    {
+      "id": "lamborghini-dubai",
+      "name": "Lamborghini Dubai",
+      "icon": "🐂",
+      "color": "#d4a017",
+      "x": 3900,
+      "blurb": "The world's largest Lamborghini showroom, right on Sheikh Zayed Road.",
+      "stock": [
+        "lamborghini-urus",
+        "lamborghini-huracan"
+      ]
+    }
+  ],
+  "cars": [
+    {
+      "id": "nissan-sunny",
+      "make": "Nissan",
+      "model": "Sunny",
+      "kind": "Sedan",
+      "color": "#e5e7eb",
+      "price": 62000,
+      "day": 90,
+      "seats": 5,
+      "top": 180,
+      "model3d": "sedan"
+    },
+    {
+      "id": "toyota-corolla",
+      "make": "Toyota",
+      "model": "Corolla",
+      "kind": "Sedan",
+      "color": "#f8fafc",
+      "price": 82000,
+      "day": 110,
+      "seats": 5,
+      "top": 190,
+      "model3d": "compact"
+    },
+    {
+      "id": "toyota-camry",
+      "make": "Toyota",
+      "model": "Camry",
+      "kind": "Sedan",
+      "color": "#1e293b",
+      "price": 115000,
+      "day": 150,
+      "seats": 5,
+      "top": 210,
+      "model3d": "sport-sedan"
+    },
+    {
+      "id": "nissan-patrol",
+      "make": "Nissan",
+      "model": "Patrol",
+      "kind": "SUV",
+      "color": "#f1f5f9",
+      "price": 260000,
+      "day": 380,
+      "seats": 7,
+      "top": 210,
+      "suv": true,
+      "model3d": "suv"
+    },
+    {
+      "id": "toyota-land-cruiser",
+      "make": "Toyota",
+      "model": "Land Cruiser",
+      "kind": "SUV",
+      "color": "#d6d3d1",
+      "price": 320000,
+      "day": 450,
+      "seats": 7,
+      "top": 210,
+      "suv": true,
+      "model3d": "suv"
+    },
+    {
+      "id": "bmw-5",
+      "make": "BMW",
+      "model": "5 Series",
+      "kind": "Executive sedan",
+      "color": "#0f172a",
+      "price": 260000,
+      "day": 420,
+      "seats": 5,
+      "top": 250,
+      "model3d": "sport-sedan"
+    },
+    {
+      "id": "bmw-x5",
+      "make": "BMW",
+      "model": "X5",
+      "kind": "Luxury SUV",
+      "color": "#334155",
+      "price": 340000,
+      "day": 520,
+      "seats": 5,
+      "top": 250,
+      "suv": true,
+      "model3d": "suv"
+    },
+    {
+      "id": "mercedes-e",
+      "make": "Mercedes-Benz",
+      "model": "E-Class",
+      "kind": "Executive sedan",
+      "color": "#94a3b8",
+      "price": 280000,
+      "day": 450,
+      "seats": 5,
+      "top": 250,
+      "model3d": "sedan"
+    },
+    {
+      "id": "mercedes-g63",
+      "make": "Mercedes-AMG",
+      "model": "G 63",
+      "kind": "Luxury SUV",
+      "color": "#111827",
+      "price": 950000,
+      "day": 1500,
+      "seats": 5,
+      "top": 240,
+      "suv": true,
+      "model3d": "suv"
+    },
+    {
+      "id": "lamborghini-urus",
+      "make": "Lamborghini",
+      "model": "Urus",
+      "kind": "Super SUV",
+      "color": "#facc15",
+      "price": 1100000,
+      "day": 2800,
+      "seats": 5,
+      "top": 305,
+      "suv": true,
+      "model3d": "suv"
+    },
+    {
+      "id": "lamborghini-huracan",
+      "make": "Lamborghini",
+      "model": "Huracán",
+      "kind": "Supercar",
+      "color": "#16a34a",
+      "price": 1050000,
+      "day": 3200,
+      "seats": 2,
+      "top": 325,
+      "low": true,
+      "model3d": "supercar"
+    }
+  ],
+  "rentDays": [
+    1,
+    7,
+    30
+  ],
+  "weekDiscount": 0.15,
+  "monthDiscount": 0.35,
+  "deposit": 1500,
+  "registration": 420,
+  "insurancePercent": 3,
+  "minInsurance": 1500,
+  "fakeLicence": {
+    "caughtChance": 0.75,
+    "caughtOnReturnChance": 0.5,
+    "custodyHours": 3,
+    "fine": 25000,
+    "bail": 5000
+  }
+}

@@ -4,6 +4,8 @@
 //   directory (stores / vendors / facilities / flats) → journey (walk · taxi · direct) → arrive → enter
 
 import { Sheet, SheetChip } from "@/components/ui/sheet";
+import { ModalPortal } from "@/components/ui/modal-portal";
+import { ArrivalScene } from "./ArrivalScene";
 import { usePresentCitizens } from "@/lib/presence";
 import { localsAt } from "@/lib/locals";
 import { useNow } from "@/lib/dubaiClock";
@@ -60,6 +62,12 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
   const [metro, setMetro] = useState<{ plan: NonNullable<ReturnType<typeof metroPlan>>; to: { x: number; y: number }; gold: boolean } | null>(null);
   const { citizen } = useCitizen();
   const [dressCodeVenue, setDressCodeVenue] = useState<Venue | null>(null);
+  // The last few metres in 3D before going in (venues; homes open straight away).
+  const [arriving, setArriving] = useState<{ taxi: boolean } | null>(null);
+  const enter = (taxi: boolean) => {
+    if (destination?.route.startsWith("/place/") || destination?.route.startsWith("/cars/")) setArriving({ taxi });
+    else if (destination) router.push(destination.route);
+  };
 
   const go = async (mode: TravelMode) => {
     if (!destination) return;
@@ -85,7 +93,8 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
     const ms = mode === "direct" ? 0 : mode === "walk" ? Math.min(9000, Math.max(2200, metres * 9)) : Math.min(5000, Math.max(1800, metres * 2.5));
     await onTravel(to, mode, ms);
     updateCitizen((c) => ({ ...c, location: { ...to, placeId: place.id } }));
-    router.push(destination.route);
+    setTravelling(null);
+    enter(false);
   };
 
   const [metroGold, setMetroGold] = useState(false);
@@ -97,8 +106,16 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
     await onTravel(stationPoint(plan.to), "direct", 0);
     await onTravel(to, "walk", Math.min(6000, Math.max(1500, plan.walkFrom * 6)));
     updateCitizen((c) => ({ ...c, location: { ...to, placeId: place.id } }));
-    router.push(destination.route);
+    setTravelling(null);
+    enter(false);
   };
+  if (arriving && destination) {
+    return (
+      <ModalPortal>
+        <ArrivalScene place={place} label={destination.label} look={citizen?.look} taxi={arriving.taxi} onDone={() => router.push(destination.route)} />
+      </ModalPortal>
+    );
+  }
   if (metro && destination) {
     return (
       <MetroJourney
@@ -120,7 +137,8 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
     setTravelling("taxi");
     await onTravel(to, "taxi", 500);
     updateCitizen((c) => ({ ...c, location: { ...to, placeId: place.id } }));
-    router.push(destination.route);
+    setTravelling(null);
+    enter(true);
   };
   if (taxi && destination) {
     return (
@@ -167,6 +185,9 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
             <PlaceIntro place={place} onPick={(v) => setDressCodeVenue(v)} />
             {place.kind === "residential" || place.kind === "home" ? (
               <FlatsDirectory place={place} onPick={(f) => setDestination({ place, label: flatTitle(f), route: flatRoute(f) })} />
+            ) : place.route ? (
+              // Its own 3D page (a car showroom): straight to the journey, no dress code.
+              <button onClick={() => setDestination({ place, label: place.name, route: place.route! })} className="w-full py-3 rounded-xl bg-emerald-500 text-white font-black flex items-center justify-center gap-2"><DoorOpen className="w-4 h-4" /> Go to {place.name}</button>
             ) : place.venues.length === 1 ? (
               <SingleVenue venue={place.venues[0]} showBlurb={place.venues[0].blurb !== place.blurb} onGo={() => setDressCodeVenue(place.venues[0])} />
             ) : (

@@ -90,4 +90,6 @@ export interface Place {
   venues: Venue[];
   /** Category chips for the directory, in display order. */
   categories?: string[];
+  /** Opens its own page instead of a venue interior (e.g. a car showroom). */
+  route?: string;
 }

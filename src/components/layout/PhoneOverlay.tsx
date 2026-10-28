@@ -27,6 +27,7 @@ import { adjustBalance, updateCitizen } from "@/lib/citizenStore";
 import { entranceOf } from "@/lib/city/geo";
 import { NAVIGATE } from "@/components/layout/Embed";
 import { HayatiApp } from "@/components/phone/HayatiApp";
+import { CarsApp } from "@/components/phone/CarsApp";
 import { useLove } from "@/lib/love";
 import APPS from "@/data/phone/apps.json";
 
@@ -34,7 +35,7 @@ import APPS from "@/data/phone/apps.json";
 export const openPhone = (app?: Screen) => window.dispatchEvent(new CustomEvent("dubai:open-phone", { detail: app }));
 
 /** Apps that open inside the phone (the rest open their page). */
-type Screen = "home" | "games" | "jobs" | "clinic" | "court" | "food" | "grocery" | "rides" | "hayati" | `store:${string}` | `page:${string}`;
+type Screen = "home" | "games" | "jobs" | "clinic" | "court" | "food" | "grocery" | "rides" | "hayati" | "cars" | `store:${string}` | `page:${string}`;
 
 interface App { id: string; name: string; icon: string; bg: string; href?: string; screen?: Screen; run?: () => void; badge?: number; isNew?: boolean }
 
@@ -101,6 +102,7 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
     { id: "police", name: "Dubai Police", icon: "🚓", bg: "from-blue-700 to-slate-900", screen: "court", badge: courtBadge, isNew: true },
     { id: "health", name: "Dubai Health", icon: "🩺", bg: "from-teal-400 to-cyan-700", screen: "clinic", badge: clinicBadge, isNew: true },
     { id: "hayati", name: "Hayati", icon: "💞", bg: "from-rose-400 to-pink-600", screen: "hayati", badge: loveBadge, isNew: true },
+    { id: "cars", name: "My Car", icon: "🚗", bg: "from-slate-600 to-slate-900", screen: "cars", isNew: true },
     { id: "marathon", name: "Marathon", icon: "🏅", bg: "from-emerald-500 to-teal-700", href: "/marathon", isNew: true },
     { id: "messages", name: "Messages", icon: "💬", bg: "from-sky-400 to-blue-600", screen: "page:/phone", badge: unread },
     { id: "jobs", name: "Jobs", icon: "💼", bg: "from-emerald-400 to-emerald-700", screen: "jobs" },
@@ -166,6 +168,7 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
             : screen === "rides" ? <RideApp onBack={home} onClose={onClose} onMetro={onMetro} />
             : screen.startsWith("page:") ? <PageApp path={screen.slice(5)} title={apps.find((a) => a.screen === screen)?.name ?? ""} onBack={home} />
             : screen === "hayati" ? <HayatiApp onBack={home} />
+            : screen === "cars" ? <CarsApp onBack={home} onClose={onClose} />
             : screen === "games" ? (
               <div className="relative flex-1 overflow-y-auto px-5 pb-10">
                 <button onClick={home} className="flex items-center gap-1 font-bold text-white/90 mb-3"><ChevronLeft className="w-5 h-5" /> Home</button>

@@ -59,3 +59,12 @@ stored in the citizen's own browser; no Avaturn model files ship with this app.
 - props/television.glb — "Television" by Kenney https://poly.pizza/m/9trLeWoBek
 - props/bench.glb — "Bench" by Quaternius https://poly.pizza/m/jLxjFxFRpw
 - props/dining-chair.glb — "Chair" by Quaternius https://poly.pizza/m/kLViSk9EhX
+
+## Cars
+Car models by Quaternius, from Poly Pizza (https://poly.pizza), repainted per car in the app:
+- cars/sedan.glb — "Car" https://poly.pizza/m/unqqkULtRU (CC0 1.0)
+- cars/compact.glb — "Car" https://poly.pizza/m/Cz6yDaUcM9 (CC0 1.0)
+- cars/sport-sedan.glb — "Sports Car" https://poly.pizza/m/1mkmFkAz5v (CC0 1.0)
+- cars/suv.glb — "SUV" https://poly.pizza/m/xsMtZhBkxL (CC0 1.0)
+- cars/supercar.glb — "Car" by Quaternius https://poly.pizza/m/HQ0hvRM2XR, licensed under CC BY 3.0
+  (https://creativecommons.org/licenses/by/3.0/)
