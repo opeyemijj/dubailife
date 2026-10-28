@@ -90,7 +90,7 @@ function OpenCase({ c }: { c: CaseView }) {
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2 text-sm">
-        <div className="rounded-2xl bg-white p-2.5"><p className="text-slate-500">{c.kind === "fake_licence" ? "Charge" : "Held"}</p><p className="font-black">{c.kind === "fake_licence" ? "Fake licence" : aed(c.held)}</p></div>
+        <div className="rounded-2xl bg-white p-2.5"><p className="text-slate-500">{c.kind === "fake_licence" ? "Charge" : "Held"}</p><p className="font-black">{c.kind === "fake_licence" ? "Fake license" : aed(c.held)}</p></div>
         <div className="rounded-2xl bg-white p-2.5"><p className="text-slate-500">Hearing</p><p className="font-black">{until(c.hearingAt, now)}</p></div>
       </div>
       <p className="text-sm text-slate-600">Arrested by {c.officer ? `Officer @${c.officer}` : "a Local officer"}. {c.kind === "fake_licence"

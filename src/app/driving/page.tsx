@@ -1,7 +1,7 @@
 "use client";
 
 // The Driving Academy in Academic City (design spec section 8): eye & reflex test, theory exam, Smart Yard.
-// Passing all three issues a provisional in-game licence that unlocks car options in the Blueprint.
+// Passing all three issues a provisional in-game license that unlocks car options in the Blueprint.
 // Stage 4 (the highway road test) arrives with the 3D traffic simulation.
 
 import { ShareButton } from "@/components/share/ShareButton";
@@ -44,16 +44,16 @@ export default function DrivingAcademyPage() {
           <Link href="/academics" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center" aria-label="Back"><ArrowLeft className="w-5 h-5" /></Link>
           <div>
             <h1 className="text-xl font-black">🚗 Driving Academy</h1>
-            <p className="text-xs text-slate-400">Academic City · in-game licence</p>
+            <p className="text-xs text-slate-400">Academic City · in-game license</p>
           </div>
         </div>
 
         {p?.issued_at && (
           <div className="rounded-3xl bg-gradient-to-br from-sky-600 to-indigo-700 p-4 shadow-xl">
-            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-white/70"><span>Dubai Life · Driving licence</span><span>Provisional</span></div>
+            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-white/70"><span>Dubai Life · Driving license</span><span>Provisional</span></div>
             <p className="text-2xl font-black mt-2 tracking-wider">{p.licence_no}</p>
             <p className="text-xs text-white/80 mt-1">Issued {new Date(p.issued_at).toLocaleDateString()} · theory {p.theory_score}%</p>
-            <p className="text-[10px] text-white/60 mt-2">An in-game licence only. Not a real driving licence or government document.</p>
+            <p className="text-[10px] text-white/60 mt-2">An in-game license only. Not a real driving license or government document.</p>
             <ShareButton moment="licence" v={p.theory_score ?? 0} text="I passed my driving test in Dubai Life 🚗" className="mt-3 h-9 px-4 rounded-full bg-white/20 text-white text-xs" />
           </div>
         )}
@@ -76,7 +76,7 @@ export default function DrivingAcademyPage() {
             })}
             <div className="w-full flex items-center gap-3 rounded-2xl p-4 bg-slate-900/50 border border-white/5 opacity-60">
               <span className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-black shrink-0">4</span>
-              <span className="flex-1"><span className="block font-black">Highway road test</span><span className="block text-xs text-slate-400">Coming soon: lane discipline and merging in 3D traffic. Your licence is provisional until then.</span></span>
+              <span className="flex-1"><span className="block font-black">Highway road test</span><span className="block text-xs text-slate-400">Coming soon: lane discipline and merging in 3D traffic. Your license is provisional until then.</span></span>
             </div>
             {p?.issued_at && <Link href="/home" className="block text-center text-sm font-black py-3 rounded-2xl bg-white text-slate-950">Car options are unlocked in your Blueprint →</Link>}
           </div>
@@ -230,7 +230,7 @@ function TheoryExam({ onDone }: { onDone: (p: DrivingProgress | null) => void })
           : <button disabled={busy || Object.keys(answers).length < paper.length} onClick={handIn} className="flex-1 h-11 rounded-2xl bg-emerald-600 font-black text-sm disabled:opacity-40">{busy ? "Marking…" : "Hand in"}</button>}
       </div>
       {error && <p className="text-xs font-bold text-rose-400 text-center">{error}</p>}
-      <p className="text-[10px] text-slate-500 text-center">General road-safety knowledge for an in-game licence. Always follow the official traffic rules.</p>
+      <p className="text-[10px] text-slate-500 text-center">General road-safety knowledge for an in-game license. Always follow the official traffic rules.</p>
     </div>
   );
 }

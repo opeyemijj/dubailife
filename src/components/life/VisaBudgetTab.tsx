@@ -183,7 +183,7 @@ export function VisaBudgetTab({ onClose }: { onClose: () => void }) {
                           <span className="text-lg">{o.icon}</span>
                           <span className="flex-1 min-w-0">
                             <span className="block text-sm font-bold">{o.label}</span>
-                            <span className={`block text-[11px] ${on ? "text-white/70" : "text-slate-500"}`}>{locked ? "Needs a driving licence: get one at the Driving Academy" : o.area ?? o.detail}</span>
+                            <span className={`block text-[11px] ${on ? "text-white/70" : "text-slate-500"}`}>{locked ? "Needs a driving license: get one at the Driving Academy" : o.area ?? o.detail}</span>
                           </span>
                           <span className="text-xs font-black">{o.monthly ? aed(o.monthly) : "Free"}<span className="font-bold opacity-60">/mo</span></span>
                         </button>

@@ -43,7 +43,7 @@ const ERRORS: Record<string, string> = {
   already_employed: "You already have a job. Quit it first to take another.",
   needs_course: "This job needs an Academic City graduate.",
   needs_degree: "This job needs a university or accelerator degree.",
-  needs_licence: "This job needs a driving licence.",
+  needs_licence: "This job needs a driving license.",
   too_many_applications: "You have 5 applications waiting. Wait for answers first.",
   already_worked: "You've already worked today's shift. Come back tomorrow.",
   no_job: "You don't have a job yet.",

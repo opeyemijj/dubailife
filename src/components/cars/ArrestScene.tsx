@@ -2,7 +2,7 @@
 
 // Arrested: a Dubai Police car pulls up with its lights going and the siren on, two officers get out and
 // walk over, you put your hands up, and they walk you to the car. Outside the rental branch for a fake
-// licence; at the roadside beside your crashed car after an accident. About ten seconds; then the case is
+// license; at the roadside beside your crashed car after an accident. About ten seconds; then the case is
 // in the Dubai Police app (custody, a lawyer, the court).
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -57,8 +57,8 @@ function PoliceCar({ carRef, lightsRef }: { carRef: React.RefObject<THREE.Group 
 /** What happened: the banner, the four things said, and your crashed car at the kerb (an accident). */
 export interface ArrestStory { title: string; reason: string; lines: [string, string, string, string]; car?: Car & { model3d?: string }; plate?: string }
 export const FAKE_LICENCE_ARREST: ArrestStory = {
-  title: "Arrested", reason: "Using a fake driving licence",
-  lines: ["🚨 Siren outside the rental office…", "Dubai Police. Stay where you are.", "This licence is fake. You're under arrest.", "You'll be held until a lawyer or the court sorts this out."],
+  title: "Arrested", reason: "Using a fake driving license",
+  lines: ["🚨 Siren outside the rental office…", "Dubai Police. Stay where you are.", "This license is fake. You're under arrest.", "You'll be held until a lawyer or the court sorts this out."],
 };
 export const accidentArrest = (car: Car, plate: string): ArrestStory => ({
   title: "Arrested", reason: "Causing a traffic accident", car, plate,

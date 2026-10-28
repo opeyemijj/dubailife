@@ -59,7 +59,7 @@ export default function AcademicDistrictPage() {
           <span className="text-3xl">🚗</span>
           <span className="flex-1">
             <span className="block text-sm font-black text-white">Driving Academy</span>
-            <span className="block text-xs text-slate-300">Eye test, theory and Smart Yard. A licence unlocks cars in your Blueprint.</span>
+            <span className="block text-xs text-slate-300">Eye test, theory and Smart Yard. A license unlocks cars in your Blueprint.</span>
           </span>
           <span className="text-xs font-black text-sky-300">Start ›</span>
         </Link>

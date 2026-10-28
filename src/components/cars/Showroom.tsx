@@ -3,7 +3,7 @@
 // A car dealership or rental branch in 3D: a glass-fronted showroom with a polished floor, the brand's
 // colours, and every car on its own lit turntable. Pick a car to bring it centre stage; take it for a
 // test drive on Sheikh Zayed Road; then rent it (day, week or month) or buy it (insured and registered).
-// Both need the driving licence from the Driving Academy.
+// Both need the driving license from the Driving Academy.
 
 import { Suspense, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -83,9 +83,9 @@ export function Showroom({ shop }: { shop: Shop }) {
   if (driving) return <TestDrive car={car} look={citizen?.look} onDone={() => setDriving(false)} />;
   if (arrested) return <ArrestScene look={citizen?.look} onDone={() => { setArrested(false); void reloadServices(); openPhone("court"); }} />;
 
-  // No licence, at a rental counter: the risky option. Usually the agent spots it and calls the police.
+  // No license, at a rental counter: the risky option. Usually the agent spots it and calls the police.
   const tryFake = async () => {
-    if (!confirm("Show a fake driving licence? If they spot it, Dubai Police will arrest you: hours in custody, a lawyer, and a big fine.")) return;
+    if (!confirm("Show a fake driving license? If they spot it, Dubai Police will arrest you: hours in custody, a lawyer, and a big fine.")) return;
     setBusy(true);
     const r = await rentCarFake(shop.id, car.id, days);
     setBusy(false);
@@ -164,12 +164,12 @@ export function Showroom({ shop }: { shop: Shop }) {
             <p className="text-xs text-slate-500">Includes a year&apos;s insurance ({aed(insuranceFor(car))}) and RTA registration ({aed(CARS.registration)}).</p>
           )}
           {note && <p className={`rounded-2xl px-3 py-2 text-sm font-semibold ${note.ok ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-700"}`}>{note.text}</p>}
-          {/* Until the garage loads (or if it can't), the buttons still show: the server checks the licence. */}
+          {/* Until the garage loads (or if it can't), the buttons still show: the server checks the license. */}
           {garage && !licensed ? (
             <div className="rounded-2xl bg-amber-50 p-3 text-sm space-y-2">
-              <p className="font-semibold text-amber-900">🪪 You need a driving licence to {shop.rent ? "rent" : "buy"} a car.</p>
+              <p className="font-semibold text-amber-900">🪪 You need a driving license to {shop.rent ? "rent" : "buy"} a car.</p>
               <Link href="/driving" className="block text-center h-11 leading-[2.75rem] rounded-full bg-amber-500 text-white font-black">Go to the Driving Academy</Link>
-              {shop.rent && <button disabled={busy} onClick={tryFake} className="w-full h-10 rounded-full bg-white border border-rose-200 text-rose-700 text-sm font-semibold">🕶️ Show a fake licence (risky)</button>}
+              {shop.rent && <button disabled={busy} onClick={tryFake} className="w-full h-10 rounded-full bg-white border border-rose-200 text-rose-700 text-sm font-semibold">🕶️ Show a fake license (risky)</button>}
             </div>
           ) : shop.rent && garage?.rental ? (
             <div className="rounded-2xl bg-slate-50 p-3 text-sm space-y-2">
@@ -185,7 +185,7 @@ export function Showroom({ shop }: { shop: Shop }) {
             </div>
           )}
           {shop.rent && licensed && !garage?.rental && <p className="text-center text-[11px] text-slate-400">Includes a {aed(CARS.deposit)} deposit, returned when you bring the car back.</p>}
-          {garage?.licence && <p className="text-center text-[11px] text-slate-400">🪪 Licence {garage.licence.number}</p>}
+          {garage?.licence && <p className="text-center text-[11px] text-slate-400">🪪 License {garage.licence.number}</p>}
         </div>
       </div>
     </main>

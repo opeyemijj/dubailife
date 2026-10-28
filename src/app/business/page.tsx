@@ -77,7 +77,7 @@ function Dashboard({ me }: { me: string }) {
         <div className="flex items-end gap-3 flex-wrap">
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-black">{business.name}</h1>
-            <p className="text-sm text-slate-500">{[business.trade_license && `Licence ${business.trade_license}`, business.contact_email, business.contact_phone].filter(Boolean).join(" · ")}</p>
+            <p className="text-sm text-slate-500">{[business.trade_license && `License ${business.trade_license}`, business.contact_email, business.contact_phone].filter(Boolean).join(" · ")}</p>
           </div>
           <button onClick={() => setClaiming("")} className="h-10 px-4 rounded-xl bg-emerald-600 text-white text-sm font-black">Claim a venue</button>
         </div>
@@ -196,7 +196,7 @@ function Register({ onDone }: { onDone: () => void }) {
     <form onSubmit={submit} className="max-w-lg mx-auto bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-3">
       <h1 className="text-xl font-black">Register your business</h1>
       <p className="text-sm text-slate-500">Claim your real venue in virtual Dubai, manage what visitors see, and advertise to everyone exploring the city.</p>
-      {([["name", "Business name", true], ["license", "Trade licence number", true], ["email", "Business email", true], ["phone", "Phone", false], ["website", "Website (https://)", false]] as const).map(([k, label, req]) => (
+      {([["name", "Business name", true], ["license", "Trade license number", true], ["email", "Business email", true], ["phone", "Phone", false], ["website", "Website (https://)", false]] as const).map(([k, label, req]) => (
         <label key={k} className="block">
           <span className="text-xs font-bold text-slate-600">{label}</span>
           <input required={req} value={f[k]} onChange={set(k)} className="mt-1 w-full h-11 rounded-xl border border-slate-200 px-3 text-sm" />
@@ -256,11 +256,11 @@ function ClaimVenue({ businessId, initial, onClose, onClaimed }: { businessId: s
             <label className="block"><span className="text-xs font-bold text-slate-600">Your role</span>
               <select value={role} onChange={(e) => setRole(e.target.value)} className="mt-1 w-full h-11 rounded-xl border border-slate-200 px-2 text-sm">{["Owner", "General manager", "Marketing manager", "Authorised agency", "Other"].map((r) => <option key={r}>{r}</option>)}</select>
             </label>
-            <label className="block"><span className="text-xs font-bold text-slate-600">How can we verify you? (licence details, your position, a contact at the venue)</span>
+            <label className="block"><span className="text-xs font-bold text-slate-600">How can we verify you? (license details, your position, a contact at the venue)</span>
               <textarea value={evidence} onChange={(e) => setEvidence(e.target.value)} rows={4} maxLength={2000} className="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm" />
             </label>
             <label className="flex items-center gap-3 h-12 rounded-xl border-2 border-dashed border-slate-200 px-3 cursor-pointer">
-              <FileUp className="w-5 h-5 text-slate-400" /><span className="text-sm text-slate-600">{doc ? "Document attached ✓" : "Attach trade licence or authorisation letter (private)"}</span>
+              <FileUp className="w-5 h-5 text-slate-400" /><span className="text-sm text-slate-600">{doc ? "Document attached ✓" : "Attach trade license or authorisation letter (private)"}</span>
               <input type="file" accept="application/pdf,image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => upload(e.target.files?.[0])} />
             </label>
             {error && <p className="text-sm font-bold text-rose-600">{error}</p>}

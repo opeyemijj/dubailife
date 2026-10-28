@@ -75,7 +75,9 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
   // Your own car (or your rental), driven there yourself (DriveJourney).
   const { garage, reload: reloadGarage } = useGarage(citizen?.id);
   const now = useNow();
-  const myCars = useMemo(() => drivables(garage, now), [garage, now]);
+  // Only with a driving license (a car rented on a fake one stays parked here).
+  const licensed = garage ? !!garage.licence : null;
+  const myCars = useMemo(() => (garage?.licence ? drivables(garage, now) : []), [garage, now]);
   const [drive, setDrive] = useState<{ to: { x: number; y: number }; metres: number } | null>(null);
 
   const go = async (mode: TravelMode) => {
@@ -213,7 +215,7 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
         onClose={travelling ? undefined : onClose}
       >
         {destination ? (
-          <Journey destination={destination} playerPos={playerPos} travelling={travelling} onGo={go} gold={metroGold} onGold={setMetroGold} cars={myCars} />
+          <Journey destination={destination} playerPos={playerPos} travelling={travelling} onGo={go} gold={metroGold} onGold={setMetroGold} cars={myCars} licensed={licensed} />
         ) : (
           <>
             <PlaceIntro place={place} onPick={(v) => setDressCodeVenue(v)} />
@@ -523,10 +525,11 @@ function Fact({ k, v }: { k: string; v: string }) {
 
 // ---------------------------------------------------------------- journey
 
-function Journey({ destination, playerPos, travelling, onGo, gold, onGold, cars }: {
+function Journey({ destination, playerPos, travelling, onGo, gold, onGold, cars, licensed }: {
   destination: Destination; playerPos: { x: number; y: number }; travelling: TravelMode | null; onGo: (m: TravelMode) => void;
-  gold: boolean; onGold: (g: boolean) => void; cars: Drivable[];
+  gold: boolean; onGold: (g: boolean) => void; cars: Drivable[]; licensed: boolean | null;
 }) {
+  const router = useRouter();
   const { citizen } = useCitizen();
   const to = entranceOf(destination.place.id) ?? playerPos;
   const metres = useMemo(() => distanceMetres(playerPos, to), [playerPos, to]);
@@ -564,6 +567,17 @@ function Journey({ destination, playerPos, travelling, onGo, gold, onGold, cars 
               onClick={() => onGo("drive")}
               primary
             />
+          )}
+          {licensed === false && (
+            // No license, no driving: the option is there but off, with the way to get one.
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 space-y-2">
+              <div className="flex items-center gap-3 opacity-60">
+                <span className="w-10 h-10 rounded-xl flex items-center justify-center bg-slate-200 text-lg">🚗</span>
+                <div className="flex-1"><div className="font-black text-sm">Drive yourself</div><div className="text-[11px] text-slate-600">You need a UAE driving license to drive in Dubai</div></div>
+                <span className="text-lg">🔒</span>
+              </div>
+              <button onClick={() => router.push("/driving")} className="w-full h-11 rounded-full bg-amber-500 text-white font-black text-sm">🪪 Go to driving school &amp; get your license</button>
+            </div>
           )}
           <Option icon={<Car className="w-5 h-5" />} title="Dubai Taxi" note={`≈ ${taxiMinutes(metres)} min · ${aed(fare)} (12 minimum)`} onClick={() => onGo("taxi")} disabled={(citizen?.balance ?? 0) < fare} primary={metres >= 1200 && !cars.length} />
           {plan ? (

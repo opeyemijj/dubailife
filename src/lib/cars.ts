@@ -1,7 +1,7 @@
 "use client";
 
 // Renting and buying cars (src/data/cars/cars.json, enforced in *_cars.sql). Both need the driving
-// licence the Driving Academy issues when you pass.
+// license the Driving Academy issues when you pass.
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
@@ -30,7 +30,7 @@ export const insuranceFor = (car: Car) => Math.max(CARS.minInsurance, Math.floor
 export const buyTotal = (car: Car) => car.price + insuranceFor(car) + CARS.registration;
 
 const ERRORS: Record<string, string> = {
-  needs_licence: "You need a driving licence. Pass your test at the Driving Academy first.",
+  needs_licence: "You need a driving license. Pass your test at the Driving Academy first.",
   already_renting: "You already have a rental. Return it first.",
   insufficient_funds: "You don't have enough AED for that.",
   not_offered: "That car isn't available here.",
@@ -60,7 +60,7 @@ export function useGarage(me: string | null | undefined) {
 
 export const rentCar = (company: string, car: string, days: number) => call<number>("rent_car", { p_company: company, p_car: car, p_days: days });
 export const returnCar = () => call<{ caught: boolean; caseId?: number }>("return_car");
-/** Renting on a fake licence: usually spotted, and then the police are called. */
+/** Renting on a fake license: usually spotted, and then the police are called. */
 export const rentCarFake = (company: string, car: string, days: number) => call<{ caught: boolean; caseId?: number; rentalId?: number }>("rent_car_fake", { p_company: company, p_car: car, p_days: days });
 export const buyCar = (dealer: string, car: string) => call<{ plate: string; total: number; insurance: number }>("buy_car", { p_dealer: dealer, p_car: car });
 export const aed = (n: number) => `AED ${Math.round(n).toLocaleString()}`;

@@ -1,6 +1,6 @@
 "use client";
 
-// Cars on the phone: your licence, the cars you own (plate, insurance, registration, fuel, and the impound
+// Cars on the phone: your license, the cars you own (plate, insurance, registration, fuel, and the impound
 // if the police took it) and your rental, and every rental company and dealership on Sheikh Zayed Road.
 
 import { useEffect, useState } from "react";
@@ -36,13 +36,13 @@ export function CarsApp({ onBack, onClose }: { onBack: () => void; onClose: () =
         <>
           {garage.licence ? (
             <Card className="bg-gradient-to-br from-sky-600 to-indigo-700 text-white">
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/70">Dubai Life · Driving licence</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/70">Dubai Life · Driving license</p>
               <p className="text-2xl font-black tracking-wider">{garage.licence.number}</p>
               <p className="text-sm text-white/80">Issued {date(garage.licence.issuedAt)}</p>
             </Card>
           ) : (
             <Card className="bg-amber-50">
-              <p className="font-black">🪪 No driving licence yet</p>
+              <p className="font-black">🪪 No driving license yet</p>
               <p className="text-sm text-slate-600">Pass the Driving Academy test to rent or buy a car.</p>
               <button onClick={() => { onClose(); router.push("/driving"); }} className="w-full h-12 rounded-full bg-amber-500 text-white font-black">Go to the Driving Academy</button>
             </Card>

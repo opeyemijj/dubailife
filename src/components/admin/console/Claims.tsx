@@ -25,7 +25,7 @@ export function Claims() {
   const [msg, setMsg] = useState<string | null>(null);
 
   const review = async (c: Claim, approve: boolean) => {
-    const note = prompt(approve ? "Verified how? (e.g. trade licence checked, call to listed number)" : "Reason for rejecting:");
+    const note = prompt(approve ? "Verified how? (e.g. trade license checked, call to listed number)" : "Reason for rejecting:");
     if (note === null) return;
     setMsg(await act(() => db().rpc("admin_review_claim", { p_claim: c.id, p_approve: approve, p_note: note })) ?? (approve ? "Claim verified." : "Claim rejected."));
     reload();
@@ -45,7 +45,7 @@ export function Claims() {
               <td className="px-3 py-2.5"><div className="font-bold">{venueName(c.venue_key)}</div><div className="text-[11px] text-slate-400">{when(c.created_at)}</div></td>
               <td className="px-3 py-2.5 text-xs">
                 <div className="font-bold text-sm">{c.businesses?.name}</div>
-                {c.businesses?.trade_license && <div>Licence: {c.businesses.trade_license}</div>}
+                {c.businesses?.trade_license && <div>License: {c.businesses.trade_license}</div>}
                 <div>{c.businesses?.contact_email}</div><div>{c.businesses?.contact_phone}</div>
                 {c.businesses?.website && <a className="text-sky-600" href={c.businesses.website} target="_blank" rel="noreferrer">{c.businesses.website}</a>}
               </td>

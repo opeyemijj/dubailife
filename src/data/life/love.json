@@ -19,7 +19,7 @@
     { "id": "emerald", "name": "Emerald and diamond halo", "icon": "💚", "price": 150000 }
   ],
   "ceremonies": [
-    { "id": "civil", "name": "Civil marriage · Dubai Courts", "icon": "🏛️", "fee": 1500, "text": "For non-Muslim couples: single-status papers, Emirates IDs and a licence in 24 hours." },
+    { "id": "civil", "name": "Civil marriage · Dubai Courts", "icon": "🏛️", "fee": 1500, "text": "For non-Muslim couples: single-status papers, Emirates IDs and a license in 24 hours." },
     { "id": "religious", "name": "Religious marriage contract", "icon": "📜", "fee": 1000, "text": "The contract is signed before the celebration, with the mahr, the groom's gift to the bride, agreed beforehand." }
   ],
   "venues": [

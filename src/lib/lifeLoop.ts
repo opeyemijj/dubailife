@@ -100,7 +100,7 @@ export function syncIfDue() {
 }
 
 const ERRORS: Record<string, string> = {
-  needs_licence: "Car options need a driving licence from the Driving Academy.",
+  needs_licence: "Car options need a driving license from the Driving Academy.",
   invalid_blueprint: "Pick one option in each section.",
   invalid_remittance: "Family support goes up in steps of AED 500, up to AED 10,000.",
   needs_diploma: "Graduate from a course in Academic City first.",
