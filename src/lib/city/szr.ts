@@ -8,12 +8,12 @@ import { stripFront } from "./szrRoad";
 import CARS from "@/data/cars/cars.json";
 
 /** Building types that stand on the strip (the mosaic leaves a gap under each). */
-export const STRIP_TYPES: string[] = ["szr-tower", "coca-cola-arena", "szr-club"];
+export const STRIP_TYPES: string[] = ["szr-tower", "coca-cola-arena", "szr-club", "szr-cars"];
 
 interface Default {
   id: string;
   name: string;
-  type: "szr-tower" | "coca-cola-arena" | "szr-club";
+  type: "szr-tower" | "coca-cola-arena" | "szr-club" | "szr-cars";
   x: number;
   width: number;
   height: number;
@@ -46,7 +46,9 @@ const DEFAULTS: Default[] = [
 // Car rental counters and dealership showrooms along the same stretch (data: src/data/cars/cars.json).
 for (const c of [...CARS.rentals, ...CARS.dealers]) {
   const dealer = CARS.dealers.some((d) => d.id === c.id);
-  DEFAULTS.push({ id: c.id, name: c.name, type: "szr-club", x: c.x, width: dealer ? 110 : 96, height: dealer ? 84 : 74, marquee: c.name.toUpperCase().replace(/ (MERCEDES-BENZ|BMW|NISSAN|TOYOTA)$/, " $1"), colors: [c.color, "#ffffff", c.color] });
+  // Their own showroom sprite (szr-cars), with the cars they sell or rent in the window and out front.
+  const stock = ("stock" in c ? c.stock : c.fleet).map((id) => CARS.cars.find((x) => x.id === id)?.color ?? "#f8fafc");
+  DEFAULTS.push({ id: c.id, name: c.name, type: "szr-cars", x: c.x, width: dealer ? 110 : 96, height: dealer ? 84 : 74, marquee: c.name.toUpperCase().replace(/ (MERCEDES-BENZ|BMW|NISSAN|TOYOTA)$/, " $1"), colors: [c.color, "#ffffff", c.color], rent: !dealer, cars: stock.slice(0, 2) });
 }
 
 /** Default entities. Sprites stand on a point 10% up from their bottom edge. */

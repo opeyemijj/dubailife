@@ -132,7 +132,8 @@ function makeRunClip(walk: THREE.AnimationClip, rest: THREE.Object3D): THREE.Ani
       if (d.w < 0) d.set(-d.x, -d.y, -d.z, -d.w);
       const angle = 2 * Math.acos(Math.min(1, d.w));
       axis.set(d.x, d.y, d.z);
-      rv.push(axis.lengthSq() > 1e-10 ? axis.normalize().multiplyScalar(angle) : new THREE.Vector3());
+      // A copy for each key (axis is reused scratch space).
+      rv.push(axis.lengthSq() > 1e-10 ? axis.clone().normalize().multiplyScalar(angle) : new THREE.Vector3());
     }
     // The joint's hinge: the axis it swings round most (the main direction of those vectors). Only the swing
     // round it is made bigger; any sideways or twisting motion stays as it is in the walk, so a leg can't

@@ -24,7 +24,6 @@ export interface TopBarProps {
 const short = (n: number) =>
   n >= 1e9 ? `${(Math.floor(n / 1e8) / 10).toFixed(1)}B` : n >= 1e6 ? `${(Math.floor(n / 1e5) / 10).toFixed(1)}M` : n >= 1e4 ? `${Math.floor(n / 1000)}K` : n.toLocaleString();
 
-const pill = "bg-white/95 backdrop-blur-xl border border-white shadow-[0_4px_18px_rgba(15,23,42,0.18)]";
 
 export function MoodFace({ mood, className = "w-5 h-5" }: { mood: Mood; className?: string }) {
   const Icon = mood.face === "happy" ? Laugh : mood.face === "fine" ? Smile : mood.face === "low" ? Meh : mood.face === "sick" ? Thermometer : Frown;
@@ -42,44 +41,41 @@ export function TopBar({ walletBalance: walletOverride }: TopBarProps) {
 
   return (
     <div className="fixed top-0 left-0 w-full z-50 px-3 sm:px-6 pt-[max(0.6rem,env(safe-area-inset-top))] pb-1.5 pointer-events-none select-none text-slate-900">
-      <div className="max-w-7xl mx-auto grid grid-cols-[1fr_auto_1fr] items-start gap-2">
-        {/* Left: weather, Dubai time and mood. */}
+      {/* One slim bar, like Home's: time and mood, the status chevron, alerts and the wallet. */}
+      <div className="max-w-4xl mx-auto pointer-events-auto flex items-center justify-between gap-2 bg-white/95 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] pl-3 pr-1.5 py-1.5 rounded-full">
         <button
           onClick={() => { gameAudio.playClickSound(); setOpen((o) => !o); }}
           aria-label="Time, weather and mood"
-          className={`justify-self-start pointer-events-auto flex items-center gap-1.5 h-11 px-3 rounded-full ${pill} active:scale-95 transition-transform`}
+          className="flex items-center gap-1.5 min-w-0 active:scale-95 transition-transform"
         >
-          {t?.night ? <Moon className="w-4 h-4 text-indigo-500" /> : <Sun className="w-4 h-4 text-amber-500" />}
-          <span className="hidden min-[380px]:flex items-center text-[11px] font-bold text-orange-500"><Thermometer className="w-3.5 h-3.5" />{t ? `${t.tempC}°` : ""}</span>
-          <span className="text-base font-black tabular-nums leading-none">{t?.clock ?? "--:--"}<span className="text-[10px] font-bold text-slate-500 ml-0.5">{t?.ampm}</span></span>
-          <MoodFace mood={mood} />
+          {t?.night ? <Moon className="w-3.5 h-3.5 text-indigo-500" /> : <Sun className="w-3.5 h-3.5 text-amber-500" />}
+          <span className="text-sm font-black tabular-nums leading-none">{t?.clock ?? "--:--"}<span className="text-[9px] font-bold text-slate-500 ml-0.5">{t?.ampm}</span></span>
+          <span className="hidden min-[360px]:flex items-center text-[10px] font-bold text-orange-500"><Thermometer className="w-3 h-3" />{t ? `${t.tempC}°` : ""}</span>
+          <span className="w-px h-3.5 bg-slate-200" />
+          <MoodFace mood={mood} className="w-4 h-4" />
         </button>
 
-        {/* Centre: opens the status panel. */}
         <button
           onClick={() => { gameAudio.playClickSound(); setOpen((o) => !o); }}
           aria-label={open ? "Close status" : "Open status"}
           aria-expanded={open}
-          className={`pointer-events-auto h-11 w-16 rounded-full flex items-center justify-center active:scale-95 transition-all ${open ? "bg-slate-900 text-white shadow-lg" : pill}`}
+          className={`h-8 w-10 shrink-0 rounded-full flex items-center justify-center active:scale-95 transition-all ${open ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"}`}
         >
-          {open ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
 
-        {/* Right: wallet with top-up, and alerts below it. */}
-        <div className="justify-self-end flex flex-col items-end gap-2">
-          <div className={`pointer-events-auto flex items-center gap-2 h-11 pl-3.5 pr-1 rounded-full ${pill}`}>
-            <Link href="/wallet" aria-label={`Wallet: AED ${walletBalance.toLocaleString()}`} className="text-[15px] font-black tabular-nums">
-              <span className="text-[10px] font-bold text-slate-500 mr-0.5">AED</span>{short(walletBalance)}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Link href="/phone?tab=alerts" aria-label="Notifications" className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:scale-90">
+            <Bell className="w-4 h-4" />
+          </Link>
+          <div className="flex items-center gap-1 h-8 pl-2.5 pr-0.5 rounded-full bg-amber-50 border border-amber-200">
+            <Link href="/wallet" aria-label={`Wallet: AED ${walletBalance.toLocaleString()}`} className="text-[13px] font-black tabular-nums text-amber-900">
+              <span className="text-[9px] font-bold text-amber-700 mr-0.5">AED</span>{short(walletBalance)}
             </Link>
-            <Link href="/wallet" aria-label="Add money" className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-[inset_0_-3px_0_rgba(0,0,0,0.2)] active:scale-90">
-              <Plus className="w-5 h-5" strokeWidth={3} />
+            <Link href="/wallet" aria-label="Add money" className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center active:scale-90">
+              <Plus className="w-3.5 h-3.5" strokeWidth={3} />
             </Link>
           </div>
-          {!open && (
-            <Link href="/phone?tab=alerts" aria-label="Notifications" className={`pointer-events-auto w-11 h-11 rounded-full ${pill} flex items-center justify-center active:scale-90`}>
-              <Bell className="w-5 h-5" />
-            </Link>
-          )}
         </div>
       </div>
 

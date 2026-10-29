@@ -7,6 +7,7 @@ import { useRequireCitizen } from "@/lib/citizenStore";
 import dynamic from "next/dynamic";
 import { SmallLoader } from "@/components/GameLoadingScreen";
 import { TopBar } from "@/components/layout/TopBar";
+import { MapSocials } from "@/components/layout/MapSocials";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Search, Coffee, Music, ShoppingBag, Trophy, Navigation, Home, X, SlidersHorizontal, Building2, Building, Sparkles } from "lucide-react";
 
@@ -74,15 +75,16 @@ function Explore() {
 
       {/* Top Navigation HUD with Safe Area Padding */}
       <TopBar />
+      <MapSocials />
 
       {/* A search icon that slides the full search in (all screen sizes) */}
       {!searchOpen && (
         <button
           onClick={() => { setSearchOpen(true); setIsFilterExpanded(true); }}
-          className="absolute top-[max(4.25rem,calc(env(safe-area-inset-top)+3.6rem))] left-3 sm:left-6 z-20 h-11 pl-3 pr-4 gap-1.5 rounded-full bg-white/95 hover:bg-white border border-white shadow-[0_4px_18px_rgba(15,23,42,0.18)] flex items-center justify-center text-slate-800 font-bold text-sm active:scale-95 transition-transform"
+          className="absolute top-[max(4.25rem,calc(env(safe-area-inset-top)+3.6rem))] left-3 sm:left-6 z-20 h-9 pl-2.5 pr-3.5 gap-1.5 rounded-full bg-white/95 hover:bg-white border border-white shadow-[0_4px_18px_rgba(15,23,42,0.18)] flex items-center justify-center text-slate-800 font-bold text-sm active:scale-95 transition-transform"
           aria-label="Search places"
         >
-          <Search className="w-5 h-5 text-emerald-700" /> Search
+          <Search className="w-4 h-4 text-emerald-700" /> Search
           {(searchQuery || activeFilter !== "all") && <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />}
         </button>
       )}

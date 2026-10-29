@@ -41,7 +41,7 @@ import {
   IsometricNightclubVenue
 } from './DIFCZaabeelAmenities';
 import { DXBAirportBlock } from './DXBAirport';
-import { CocaColaArena, SZRLounge, SZRTower } from './SZRLandmarks';
+import { CocaColaArena, SZRCarShowroom, SZRLounge, SZRTower } from './SZRLandmarks';
 import { BluewatersSprite, JBRSprite, MarinaMallSprite, Pier7Sprite } from './JBRBluewaters';
 import { MirrorX } from './mirror';
 export { DXBAirportBlock };
@@ -4318,6 +4318,7 @@ export const getBuildingSprite = (id: string, type: string, seed?: number, title
   // Sheikh Zayed Road landmarks on the floor-ad strip
   if (type === 'szr-tower') return <SZRTower width={loc?.width} height={loc?.height} name={title || loc?.name} sign={loc?.sign} glass={loc?.glass} frame={loc?.frame} accent={loc?.accent} crown={loc?.crown} />;
   if (type === 'coca-cola-arena') return <CocaColaArena width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'szr-cars') return <SZRCarShowroom width={loc?.width} height={loc?.height} name={title || loc?.name} sign={loc?.marquee} color={loc?.colors?.[0]} rent={loc?.rent} cars={loc?.cars} />;
   if (type === 'szr-club') return <SZRLounge width={loc?.width} height={loc?.height} name={title || loc?.name} sign={loc?.marquee} colors={loc?.colors} />;
   // Palm Jumeirah landmarks
   if (type === 'hotel-atlantis') return <AtlantisPalmSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;

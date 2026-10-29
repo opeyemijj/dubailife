@@ -182,3 +182,70 @@ export const SZRLounge: React.FC<{ width?: number; height?: number; name?: strin
     </svg>
   );
 };
+
+/** A car side-on, as seen through a showroom window or parked out front. */
+const CarShape: React.FC<{ x: number; y: number; w: number; color: string }> = ({ x, y, w, color }) => {
+  const h = w * 0.36;
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <path d={`M0,${h * 0.62} Q${w * 0.02},${h * 0.32} ${w * 0.2},${h * 0.3} L${w * 0.32},${h * 0.02} L${w * 0.7},${h * 0.02} L${w * 0.84},${h * 0.3} Q${w},${h * 0.34} ${w},${h * 0.62} L${w},${h * 0.8} L0,${h * 0.8} Z`} fill={color} stroke="#0f172a" strokeWidth="0.6" />
+      <path d={`M${w * 0.35},${h * 0.08} L${w * 0.5},${h * 0.08} L${w * 0.5},${h * 0.3} L${w * 0.25},${h * 0.3} Z M${w * 0.53},${h * 0.08} L${w * 0.67},${h * 0.08} L${w * 0.79},${h * 0.3} L${w * 0.53},${h * 0.3} Z`} fill="#bfdbfe" opacity="0.9" />
+      <circle cx={w * 0.22} cy={h * 0.82} r={h * 0.2} fill="#111827" /><circle cx={w * 0.22} cy={h * 0.82} r={h * 0.08} fill="#9ca3af" />
+      <circle cx={w * 0.78} cy={h * 0.82} r={h * 0.2} fill="#111827" /><circle cx={w * 0.78} cy={h * 0.82} r={h * 0.08} fill="#9ca3af" />
+    </g>
+  );
+};
+
+/** A car dealership showroom (big glass front, cars on display, flags) or a car rental office (a counter,
+    a RENT A CAR banner and cars parked outside), in the brand's colour. Not a club, so not a marquee. */
+export const SZRCarShowroom: React.FC<{ width?: number; height?: number; name?: string; sign?: string; color?: string; rent?: boolean; cars?: string[] }> = ({
+  width = 110, height = 84, name = 'Showroom', sign = 'SHOWROOM', color = '#1d4ed8', rent = false, cars = ['#f8fafc', '#111827'],
+}) => {
+  const id = `cars-${sign.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+  return (
+    <svg viewBox="0 0 170 130" preserveAspectRatio="none" style={{ width, height }} className="drop-shadow-2xl cursor-pointer hover:scale-105 transition-transform origin-bottom select-none" aria-label={name}>
+      <defs>
+        <linearGradient id={`${id}-glass`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#e0f2fe" /><stop offset="100%" stopColor="#7dd3fc" /></linearGradient>
+      </defs>
+      <ellipse cx="85" cy="124" rx="82" ry="5" fill="#000" opacity="0.2" />
+      {/* forecourt */}
+      <rect x="6" y="112" width="158" height="8" fill="#d6d3d1" />
+      {rent && [12, 44, 128].map((x) => <rect key={x} x={x} y="112" width="1.5" height="8" fill="#ffffff" />)}
+      {/* side face and flat roof */}
+      <polygon points="150,30 164,24 164,112 150,116" fill={shade(color, -0.45)} />
+      <polygon points="14,30 150,30 164,24 28,24" fill="#e5e7eb" />
+      {/* the building: white frame, a brand band with the name, and the glass front */}
+      <rect x="14" y="30" width="136" height="86" fill="#f8fafc" stroke="#cbd5e1" />
+      <rect x="14" y="30" width="136" height="20" fill={color} />
+      <text x="82" y="44.5" textAnchor="middle" fontSize={sign.length > 12 ? 8.5 : sign.length > 8 ? 10 : 12} fontWeight="900" fill="#ffffff" fontFamily="system-ui, sans-serif" letterSpacing="1">{sign}</text>
+      <rect x="20" y="54" width="124" height={rent ? 36 : 58} fill={`url(#${id}-glass)`} stroke="#94a3b8" strokeWidth="0.8" />
+      {[51, 82, 113].map((x) => <rect key={x} x={x} y="54" width="1.4" height={rent ? 36 : 58} fill="#94a3b8" />)}
+      {rent ? (
+        <>
+          {/* the rental counter through the glass, a banner and the key sign */}
+          <rect x="34" y="76" width="96" height="10" fill={shade(color, 0.15)} />
+          <rect x="20" y="92" width="124" height="12" fill={color} />
+          <text x="82" y="101" textAnchor="middle" fontSize="8.5" fontWeight="900" fill="#ffffff" fontFamily="system-ui, sans-serif" letterSpacing="1.5">RENT A CAR</text>
+          <circle cx="152" cy="18" r="9" fill={color} stroke="#ffffff" strokeWidth="1.5" />
+          <text x="152" y="22" textAnchor="middle" fontSize="11">🔑</text>
+          <rect x="66" y="104" width="32" height="12" fill="#0f172a" opacity="0.7" />
+          <CarShape x={14} y={98} w={30} color={cars[0]} />
+          <CarShape x={128} y={98} w={30} color={cars[1] ?? cars[0]} />
+        </>
+      ) : (
+        <>
+          {/* two cars on the showroom floor, spotlit, and flags out front */}
+          {[44, 116].map((x) => <ellipse key={x} cx={x} cy="104" rx="20" ry="3" fill="#ffffff" opacity="0.7" />)}
+          <CarShape x={24} y={88} w={40} color={cars[0]} />
+          <CarShape x={96} y={88} w={40} color={cars[1] ?? cars[0]} />
+          {[8, 160].map((x) => (
+            <g key={x}>
+              <rect x={x} y="60" width="1.4" height="56" fill="#9ca3af" />
+              <rect x={x + 1.4} y="60" width="10" height="16" fill={color} />
+            </g>
+          ))}
+        </>
+      )}
+    </svg>
+  );
+};

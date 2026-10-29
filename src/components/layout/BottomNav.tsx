@@ -3,14 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Map, Smartphone, User } from "lucide-react";
-import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { useCitizen } from "@/lib/citizenStore";
 import { useUnreadTotal } from "@/lib/unread";
-import { moodOf } from "@/lib/dubaiClock";
 import { useLifeLoop, visaInfo } from "@/lib/lifeLoop";
 import { openLife } from "@/components/life/LifeHub";
 import { openPhone } from "@/components/layout/PhoneOverlay";
-import { MoodFace } from "@/components/layout/TopBar";
 import { gameAudio } from "@/utils/gameAudio";
 import { illnessOf, useServices } from "@/lib/cityServices";
 import { useEmbedded } from "@/components/layout/Embed";
@@ -28,7 +25,7 @@ export function BottomNav() {
     <div className="fixed bottom-0 left-0 w-full z-50 px-3 sm:px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 pointer-events-none select-none">
       <div className="max-w-md mx-auto">
         <ServiceAlert />
-        {onMap && <YouChip />}
+        {onMap && <VisaChip />}
         <nav className="h-[60px] bg-white/95 backdrop-blur-2xl border border-white rounded-full p-1.5 flex items-center pointer-events-auto shadow-[0_8px_28px_rgba(15,23,42,0.25)]">
           <NavItem href="/home" icon={<Home className="w-6 h-6" />} label="Home" active={isActive("/home")} />
           <NavItem href="/explore" icon={<Map className="w-6 h-6" />} label="Map" active={isActive("/explore")} />
@@ -40,35 +37,22 @@ export function BottomNav() {
   );
 }
 
-/** Your face and how you feel, just above the bar on the map; tapping opens your needs. */
-function YouChip() {
-  const { citizen } = useCitizen();
+/** On the map, only when the visa is running out (10 days or fewer): your face and mood are in the top bar. */
+function VisaChip() {
   const life = useLifeLoop();
-  const mood = moodOf(citizen, !!useServices(citizen?.id)?.illness);
   const visa = life && life.visaTier !== "GOLDEN" ? visaInfo(life.visaTier) : null;
+  if (!visa || !life || life.visaDaysLeft > 10) return null;
   return (
     <button
-      onClick={() => { gameAudio.playClickSound(); openLife("needs"); }}
-      aria-label={`You feel ${mood.label}. Open your needs`}
-      className="pointer-events-auto mb-2 flex items-center gap-1.5 active:scale-95 transition-transform"
+      onClick={() => { gameAudio.playClickSound(); openLife("visa"); }}
+      aria-label={`${visa.label}: ${life.visaDaysLeft} days left`}
+      className={`pointer-events-auto mb-2 h-9 px-3 rounded-full shadow-md flex items-center gap-1 font-bold text-sm active:scale-95 ${life.visaDaysLeft <= 5 ? "bg-rose-500 text-white" : "bg-white/95 text-slate-800"}`}
     >
-      <span className="w-12 h-12 rounded-full ring-[3px] ring-white shadow-lg overflow-hidden bg-rose-200">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={rosterThumb(presetFor(citizen?.look ?? { gender: "woman" }))} alt="" className="w-full h-full object-cover object-top" />
-      </span>
-      <span className="h-10 pl-2.5 pr-3.5 rounded-full bg-amber-50/95 shadow-md flex items-center gap-1.5 font-bold text-slate-800">
-        <MoodFace mood={mood} className="w-5 h-5" /> {mood.label}
-      </span>
-      {visa && life && life.visaDaysLeft <= 10 && (
-        <span className={`h-10 px-3 rounded-full shadow-md flex items-center font-bold text-sm ${life.visaDaysLeft <= 5 ? "bg-rose-500 text-white" : "bg-white/95 text-slate-800"}`}>
-          {visa.icon} {life.visaDaysLeft}d
-        </span>
-      )}
+      {visa.icon} Visa: {life.visaDaysLeft}d left
     </button>
   );
 }
 
-/** Ill, arrested, or patients and clients waiting: one card above the bar that opens the right app. */
 function ServiceAlert() {
   const { citizen } = useCitizen();
   const s = useServices(citizen?.id);
