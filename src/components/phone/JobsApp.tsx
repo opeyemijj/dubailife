@@ -10,18 +10,24 @@ import { InterviewScene } from "@/components/jobs/InterviewScene";
 import { useRouter } from "next/navigation";
 import { useCitizen } from "@/lib/citizenStore";
 import { monthlyPay, qualifiesFor, studyFor, useGoals } from "@/lib/goals";
+import { custodyUntil, useServices } from "@/lib/cityServices";
+import { useNow } from "@/lib/dubaiClock";
 import { AppScreen, Big, Card, Note } from "./AppScreen";
 
 const SERVICE_LINE: Record<string, string> = {
   doctor: "Treat sick players in the Clinic app and keep the fee you set.",
   police: "Make arrests on suspicious transfers and earn a bounty when a case is won.",
   lawyer: "Players with a court date hire you for the fee you set. Prepare their defence.",
+  decorator: "Players hire you to decorate their homes for the fee you set. Pick up their key and finish the look in the Decor app.",
 };
 
 export function JobsApp({ onBack, onClose }: { onBack: () => void; onClose?: () => void }) {
   const router = useRouter();
   const { citizen } = useCitizen();
   const { status: goals } = useGoals(citizen?.id);
+  const services = useServices(citizen?.id);
+  const clock = useNow();
+  const custody = custodyUntil(services, clock);
   const [eco, setEco] = useState<Economy | null>(null);
   const [jobs, setJobs] = useState<BoardJob[] | null>(null);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
@@ -93,7 +99,7 @@ export function JobsApp({ onBack, onClose }: { onBack: () => void; onClose?: () 
 
       {jobs === null ? <p className="text-slate-500 text-center py-8">Loading jobs…</p> : jobs.filter((j) => !j.mine).map((j) => {
         const st = statusOf(j.id);
-        const locked = !!eco?.job;
+        const locked = !!eco?.job || !!custody;
         return (
           <Card key={j.id}>
             <div className="flex items-start gap-3">
@@ -121,7 +127,7 @@ export function JobsApp({ onBack, onClose }: { onBack: () => void; onClose?: () 
             {st === "hired" ? <p className="text-center font-semibold text-emerald-700">Hired</p>
               : st === "pending" ? <p className="text-center font-semibold text-amber-600">Application sent · waiting for the owner</p>
               : j.interview === "failed" ? <p className="text-center text-slate-500">Interview failed today · try again tomorrow</p>
-              : locked ? <p className="text-center text-slate-400 text-sm">Quit your job to apply</p>
+              : locked ? <p className="text-center text-slate-400 text-sm">{custody ? "You're in custody: no job until you're released" : "Quit your job to apply"}</p>
               : <Big onClick={() => (j.interview === "passed" ? void apply(j) : setInterview(j))}>{j.interview === "passed" ? "Apply" : "Apply · take the interview"}</Big>}
           </Card>
         );

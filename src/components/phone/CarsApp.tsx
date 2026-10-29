@@ -39,13 +39,24 @@ export function CarsApp({ onBack, onClose }: { onBack: () => void; onClose: () =
               <p className="text-[10px] font-black uppercase tracking-widest text-white/70">Dubai Life · Driving license</p>
               <p className="text-2xl font-black tracking-wider">{garage.licence.number}</p>
               <p className="text-sm text-white/80">Issued {date(garage.licence.issuedAt)}</p>
+              <p className={`text-xs font-bold ${(garage.accidents ?? 0) >= CARS.driving.revokeAfterAccidents - 1 ? "text-amber-200" : "text-white/70"}`}>
+                Accidents: {garage.accidents ?? 0} of {CARS.driving.revokeAfterAccidents}. The {CARS.driving.revokeAfterAccidents === 3 ? "third" : `${CARS.driving.revokeAfterAccidents}th`} revokes your license.
+              </p>
             </Card>
           ) : (
+            garage.revokedAt ? (
+              <Card className="bg-rose-50">
+                <p className="font-black">🚫 Driving license revoked</p>
+                <p className="text-sm text-slate-600">Revoked on {date(garage.revokedAt)} after {CARS.driving.revokeAfterAccidents} traffic accidents. Pass the theory exam and the Smart Yard again at the Driving Academy for a new one.</p>
+                <button onClick={() => { onClose(); router.push("/driving"); }} className="w-full h-12 rounded-full bg-rose-600 text-white font-black">Go to the Driving Academy</button>
+              </Card>
+            ) : (
             <Card className="bg-amber-50">
               <p className="font-black">🪪 No driving license yet</p>
               <p className="text-sm text-slate-600">Pass the Driving Academy test to rent or buy a car.</p>
               <button onClick={() => { onClose(); router.push("/driving"); }} className="w-full h-12 rounded-full bg-amber-500 text-white font-black">Go to the Driving Academy</button>
             </Card>
+            )
           )}
 
           {garage.owned.map((o) => {

@@ -26,6 +26,7 @@ import { MarathonBanner } from "@/components/marathon/MarathonBanner";
 import { Custody } from "@/components/cars/Custody";
 import { FineNotice } from "@/components/cars/FineNotice";
 import { GoalSetup } from "@/components/goals/GoalSetup";
+import { DecorJobAlert } from "@/components/home/DecorJobAlert";
 import { NextStep } from "@/components/goals/NextStep";
 import { MorningScene } from "@/components/goals/MorningScene";
 import { Payday } from "@/components/goals/Payday";
@@ -227,6 +228,7 @@ export default function RootLayout({
           <Custody />
           <FineNotice />
           <GoalSetup />
+          <DecorJobAlert />
           <MorningScene />
           <Payday />
         </OutsidePhone>

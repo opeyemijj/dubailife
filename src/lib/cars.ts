@@ -13,6 +13,9 @@ export type Car = (typeof CARS.cars)[number] & { suv?: boolean; low?: boolean; e
 export type Shop = { id: string; name: string; icon: string; color: string; blurb: string; rent: boolean; cars: Car[] };
 export interface Garage {
   licence: { number: string; issuedAt: string } | null;
+  /** Accidents on your current licence (the third revokes it), and when it was revoked if it was. */
+  accidents?: number;
+  revokedAt?: string | null;
   owned: Array<{ id: number; car: string; dealer: string; plate: string; price: number; registeredUntil: string; insuredUntil: string; boughtAt: string; fuel: number; impoundedUntil: string | null }>;
   rental: { id: number; car: string; company: string; days: number; endsAt: string; deposit: number; fuel: number } | null;
 }
@@ -36,6 +39,7 @@ const ERRORS: Record<string, string> = {
   not_offered: "That car isn't available here.",
   no_rental: "You don't have a rental to return.",
   already_charged: "You already have a case open with Dubai Police.",
+  in_custody: "You're in police custody. Get released first (bail, a lawyer, or wait out the time).",
   no_car: "That car isn't yours to drive any more.",
   impounded: "That car is in the police impound.",
   not_impounded: "That car isn't impounded.",
@@ -85,7 +89,7 @@ export const refuelCost = (car: Car, fuel: number) => Math.ceil(Math.round(car.t
 
 export const refuel = (d: Drivable) => call<{ added: number; cost: number; electric: boolean }>("refuel", { p_kind: d.kind, p_id: d.id });
 export const finishDrive = (d: Drivable, metres: number, speeding: boolean) => call<{ fuel: number; fine: number }>("finish_drive", { p_kind: d.kind, p_id: d.id, p_metres: Math.round(metres), p_speeding: speeding });
-export const carAccident = (d: Drivable) => call<{ caseId: number }>("car_accident", { p_kind: d.kind, p_id: d.id });
+export const carAccident = (d: Drivable) => call<{ caseId: number; accidents: number; revoked: boolean }>("car_accident", { p_kind: d.kind, p_id: d.id });
 export const releaseCar = (id: number) => call<null>("release_car", { p_id: id });
 
 /** Parking at the destination: pay for some hours (0: didn't pay), and whether you parked inside the bay. */

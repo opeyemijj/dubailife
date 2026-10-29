@@ -50,7 +50,7 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
   const [finishing, setFinishing] = useState(false);
   const [finishError, setFinishError] = useState<string | null>(null);
   const [completionData, setCompletionData] = useState<{ userId: string; username: string } | null>(null);
-  const currentStep = ONBOARDING_STEPS.indexOf(step) + 1; // 1: Look, 2: Personality, 3: Dream, 4: Birth Lottery, 5: Your Dubai, 6: Home
+  const currentStep = ONBOARDING_STEPS.indexOf(step) + 1; // 1: Look, 2: Personality, 3: Dream, 4: Your Dubai, 5: Home
   const setCurrentStep = (n: number) => router.push(`/onboarding/${ONBOARDING_STEPS[n - 1]}`);
   // From the draft, or — if the confirmation link opened elsewhere — from the account itself.
   const meta = session?.meta as { username?: string; display_name?: string } | undefined;
@@ -135,7 +135,7 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
     setCompletionData({ userId: session?.userId || "", username: account.username });
   };
 
-  const stepTitles = ["Look", "Personality", "Dream", "Birth lottery", "Your Dubai", "Home"];
+  const stepTitles = ["Look", "Personality", "Dream", "Your Dubai", "Home"];
 
   return (
     <div className="fixed inset-0 z-50 bg-[#e2e8f0] flex flex-col font-sans select-none overflow-hidden">
@@ -187,13 +187,13 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
 
           <button
             onClick={() => {
-              if (currentStep < 6) setCurrentStep(currentStep + 1);
+              if (currentStep < 5) setCurrentStep(currentStep + 1);
               else void handleFinishOnboarding();
             }}
             disabled={currentStep === 2 && selectedTraits.length !== 2}
             className="px-4 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-bold text-xs sm:text-sm transition-all shadow-sm active:scale-95"
           >
-            {currentStep === 6 ? "Move in" : "Next"}
+            {currentStep === 5 ? "Move in" : "Next"}
           </button>
         </div>
       </div>
@@ -429,68 +429,8 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
               </>
             )}
 
-            {/* STEP 4: BIRTH LOTTERY / ARRIVAL STORY */}
+            {/* STEP 4: YOUR DUBAI — the visa ladder, money, jobs, learning, scams, friends and the tournament */}
             {currentStep === 4 && (
-              <>
-                <div>
-                  <h2 className="text-base font-black text-slate-900">
-                    Every citizen arrives in Dubai with a story.
-                  </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    What was @{username} born into?
-                  </p>
-                </div>
-
-                {/* Gold Feature Card */}
-                <div className="bg-gradient-to-b from-amber-50 to-amber-100/70 border-2 border-amber-300/80 rounded-3xl p-5 shadow-xl text-center space-y-4">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-400 to-yellow-300 flex items-center justify-center mx-auto shadow-md text-3xl">
-                    🏦
-                  </div>
-
-                  <div>
-                    <h3 className="text-xl font-black text-slate-900 tracking-tight">
-                      Dubai Dreamer!
-                    </h3>
-                    <p className="text-xs font-bold text-amber-700 mt-0.5">
-                      Self-made hits different.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2 text-left bg-white/80 backdrop-blur-md rounded-2xl p-4 border border-amber-200/60 shadow-sm text-xs font-bold text-slate-800">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-base">💼</span>
-                      <span>AED 50,000 starter capital grant to invest</span>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-base">💪</span>
-                      <span>Hustle skill starts at Level 2</span>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-base">📈</span>
-                      <span>You learn every skill 25% faster</span>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-base">🏙️</span>
-                      <span>Start in Business Bay and work your way to the Palm!</span>
-                    </div>
-                  </div>
-
-                  <p className="text-[10px] text-slate-400 font-semibold">
-                    Decided once for your account. Starting a new life won't change it.
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => setCurrentStep(5)}
-                  className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 active:scale-98 text-white font-black text-sm rounded-2xl shadow-lg transition-all"
-                >
-                  How life in Dubai works
-                </button>
-              </>
-            )}
-
-            {/* STEP 5: YOUR DUBAI — the visa ladder, money, jobs, learning, scams, friends and the tournament */}
-            {currentStep === 5 && (
               <>
                 <div>
                   <h2 className="text-base font-black text-slate-900">Welcome to Dubai, @{username}</h2>
@@ -500,7 +440,7 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
                 </div>
                 <GuideOverview />
                 <button
-                  onClick={() => setCurrentStep(6)}
+                  onClick={() => setCurrentStep(5)}
                   className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 active:scale-98 text-white font-black text-base rounded-2xl shadow-xl transition-all"
                 >
                   Choose where to live
@@ -508,8 +448,8 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
               </>
             )}
 
-            {/* STEP 6: HOME = the Blueprint housing choice (design spec section 5.1) */}
-            {currentStep === 6 && (
+            {/* STEP 5: HOME = the Blueprint housing choice (design spec section 5.1) */}
+            {currentStep === 5 && (
               <>
                 <div>
                   <h2 className="text-base font-black text-slate-900">

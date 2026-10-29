@@ -1,6 +1,8 @@
 "use client";
 
 import { useFirstDayActive } from "@/components/life/FirstDay";
+import { DecoratorSheet, DecoratorStatus } from "@/components/home/Decorator";
+import { useMyDecor } from "@/lib/decorator";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { compact, useSiteStats } from "@/lib/siteStats";
@@ -99,6 +101,9 @@ export default function HomePage() {
   const [shopCat, setShopCat] = useState<ShopCategory | "all">("all");
   const [placing, setPlacing] = useState<PlacingState | null>(null);
   const [decorating, setDecorating] = useState(false);
+  // An interior decorator: choosing one, and whether one is at work here (then the style is theirs to set).
+  const [decoratorOpen, setDecoratorOpen] = useState(false);
+  const { job: decorJob, reload: reloadDecor } = useMyDecor(citizen?.id);
   const [turns, setTurns] = useState(0);
 
   const life = useLifeLoop();
@@ -142,6 +147,7 @@ export default function HomePage() {
 
   /** Re-finish the home (floor, paint, panelling), paying for the change. */
   const restyle = (change: Partial<HomeStyle>, price: number, label: string) => {
+    if (decorJob) { showToast("🧑‍🎨 Your decorator is working on the look right now."); return; }
     if (price > 0 && !adjustBalance(-price)) {
       showToast("⚠️ Not enough AED in your wallet!");
       return;
@@ -508,6 +514,10 @@ export default function HomePage() {
         </button>
       )}
 
+      {/* An interior decorator at work here, and the reveal when they're done; choosing one. */}
+      {!cleanScreen && <DecoratorStatus tier={housingTier} job={decorJob} reload={reloadDecor} />}
+      {decoratorOpen && <DecoratorSheet tier={housingTier} current={homeStyle} onClose={() => setDecoratorOpen(false)} onHired={() => { setBuyModalOpen(false); void reloadDecor(); }} />}
+
       {/* RELATABLE HOME ACTIVITIES DOCK (Collapsible Floating Pill / Expanded Drawer) */}
       {!cleanScreen && !placing && (
         <div className="fixed bottom-[4.85rem] sm:bottom-24 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
@@ -797,6 +807,20 @@ export default function HomePage() {
 
           {shopTab === "style" ? (
             <div className="pt-3 space-y-4">
+              {decorJob ? (
+                <section className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-xs font-bold text-amber-800">
+                  🧑‍🎨 Your decorator has the key and is working on the look. You can change the style again once they&apos;re done.
+                </section>
+              ) : (
+                <button onClick={() => setDecoratorOpen(true)} className="w-full p-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-left flex items-center gap-3 active:scale-[0.99]">
+                  <span className="text-2xl">🧑‍🎨</span>
+                  <span className="flex-1">
+                    <span className="block font-black text-sm">Hire an interior decorator</span>
+                    <span className="block text-[11px] text-white/80">Pick a look, hand over your key, come back to it done.</span>
+                  </span>
+                  <span className="text-lg">›</span>
+                </button>
+              )}
               <section>
                 <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Flooring</h4>
                 <div className="grid grid-cols-2 gap-2">

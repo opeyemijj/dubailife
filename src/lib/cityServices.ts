@@ -8,9 +8,10 @@ import { useEffect, useSyncExternalStore } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { refreshCitizen } from "@/lib/citizenStore";
 import SERVICES from "@/data/economy/city-services.json";
+import DECORATORS from "@/data/home/decorators.json";
 
 export { SERVICES };
-export type Service = "doctor" | "police" | "lawyer";
+export type Service = "doctor" | "police" | "lawyer" | "decorator";
 export type IllnessKind = (typeof SERVICES.illness.kinds)[number];
 export interface Question { q: string; options: string[]; answer: number }
 
@@ -19,7 +20,7 @@ export interface CaseView {
   id: number; held: number; reason: string; status: "open" | "cleared" | "guilty"; fine: number | null;
   lawyerKind: "player" | "aid" | "senior" | null; lawyer: string | null; defence: number | null; officer: string | null;
   hearingAt: string; verdictAt: string | null; createdAt: string;
-  kind?: "transfer" | "fake_licence"; jailUntil?: string | null;
+  kind?: "transfer" | "fake_licence" | "accident"; jailUntil?: string | null;
 }
 export interface MyServices {
   service: Service | null;
@@ -36,10 +37,11 @@ export const illnessOf = (kind?: string | null) => SERVICES.illness.kinds.find((
 export const careerOf = (company: string) => SERVICES.careers.find((c) => c.name === company) ?? null;
 /** The interview for a job: the company's own questions, or the general set for player ventures. */
 export const interviewFor = (company: string, system: boolean): Question[] =>
-  (system ? (SERVICES.interviews as unknown as Record<string, Question[]>)[company] : null) ?? SERVICES.interviews._player;
+  (system ? (company === DECORATORS.career.name ? DECORATORS.interview : (SERVICES.interviews as unknown as Record<string, Question[]>)[company]) : null) ?? SERVICES.interviews._player;
 
 // Friendlier words for the database's refusals.
 const ERRORS: Record<string, string> = {
+  in_custody: "You're in police custody. You can't take a job until you're released (bail, a lawyer, or wait out the time).",
   retry_tomorrow: "You've had your interview for this job today. Try again tomorrow.",
   needs_interview: "Pass the interview first.",
   needs_course: "This job needs a finished course from Academic City.",
@@ -144,3 +146,9 @@ export function maybeFallIll(trigger: "meal" | "rundown" | "heat") {
 }
 
 export const openServices = (app: "clinic" | "court" | "jobs") => window.dispatchEvent(new CustomEvent("dubai:open-phone", { detail: app }));
+
+/** When you're held in custody until (an open case with time still to serve), or null. No job until then. */
+export function custodyUntil(s: MyServices | null, now: number): string | null {
+  const held = s?.cases.find((c) => c.status === "open" && c.jailUntil && Date.parse(c.jailUntil) > now);
+  return held?.jailUntil ?? null;
+}

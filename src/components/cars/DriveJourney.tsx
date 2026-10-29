@@ -710,7 +710,7 @@ export function DriveJourney({ drivables, metres, destination, look, balance, on
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<{ fuel: number; fine: number; hours: number; cost: number; good: boolean } | null>(null);
-  const [arrest, setArrest] = useState(false);
+  const [arrest, setArrest] = useState<{ accidents: number; revoked: boolean } | null>(null);
   const filled = phase === "leave" || (stationAt !== null && hud.s > STATION_P + 5);
 
   // No city blocks over the fuel station or the destination's car park (it has its own building behind).
@@ -784,7 +784,7 @@ export function DriveJourney({ drivables, metres, destination, look, balance, on
         const r = await carAccident(d);
         if (r.error) { setError(r.error); onCancel(); return; }
         stopLoops();
-        setArrest(true);
+        setArrest({ accidents: r.data?.accidents ?? 1, revoked: !!r.data?.revoked });
       }, 2400);
     },
     onPark: () => {
@@ -816,7 +816,7 @@ export function DriveJourney({ drivables, metres, destination, look, balance, on
     setTimeout(() => onArrive(d), 3200);
   };
 
-  if (arrest) return <ArrestScene look={look} story={accidentArrest(d.car, d.plate)} onDone={onArrested} />;
+  if (arrest) return <ArrestScene look={look} story={accidentArrest(d.car, d.plate, arrest.accidents, arrest.revoked)} onDone={onArrested} />;
 
   const kmh = hud.kmh;
   const fuelNow = Math.max(0, (filled ? 100 : d.fuel) - need * Math.min(1, hud.s / length));

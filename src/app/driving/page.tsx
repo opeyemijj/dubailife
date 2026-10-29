@@ -48,6 +48,12 @@ export default function DrivingAcademyPage() {
           </div>
         </div>
 
+        {p?.revoked_at && !p.issued_at && (
+          <section className="rounded-3xl bg-rose-600/15 border border-rose-500/40 p-4 space-y-1">
+            <p className="font-black text-rose-200">🚫 Your license was revoked</p>
+            <p className="text-sm text-rose-100/80">Revoked on {new Date(p.revoked_at).toLocaleDateString()} after three traffic accidents. Your eye test still counts: pass the theory exam and the Smart Yard again for a new license.</p>
+          </section>
+        )}
         {p?.issued_at && (
           <div className="rounded-3xl bg-gradient-to-br from-sky-600 to-indigo-700 p-4 shadow-xl">
             <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-white/70"><span>Dubai Life · Driving license</span><span>Provisional</span></div>

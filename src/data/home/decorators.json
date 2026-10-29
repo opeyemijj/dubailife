@@ -1,0 +1,150 @@
+{
+  "_note": "Interior decorators you can hire at home. Real players with the Interior decorator job do it first (they set their fee within the limits, accept your key and finish the job with a finishing touch); if none is free, or none picks up your key within acceptMinutes, a Local studio does it. Each studio has one look (a floor finish, a wall paint and panelling, and pieces from the furniture catalogue in src/lib/furniture.ts) and three finishing touches the decorator chooses from. You pay the finish and pieces up front, plus a player decorator's fee (held until they finish). Studios are fictional; each Local decorator is the Local of that name (src/lib/locals.ts). The career, fee limits, interview answers, timings and touches are mirrored in supabase/migrations/*_decorators.sql (scripts/check-life-config.mjs).",
+  "minutes": 20,
+  "studios": [
+    {
+      "id": "noor-interiors",
+      "studio": "Noor Interiors",
+      "decorator": "Noor",
+      "icon": "🕌",
+      "title": "Modern Arabic",
+      "blurb": "Travertine floors, warm greige walls with panelling, a low majlis, calligraphy and a date palm.",
+      "fee": 3500,
+      "floor": "travertine",
+      "wall": "greige",
+      "panels": true,
+      "items": [
+        "majlis",
+        "round-rug",
+        "art-calligraphy",
+        "gold-floor-lamp",
+        "indoor-palm",
+        "coffee-bar"
+      ],
+      "touches": [
+        "sculpture",
+        "vase-pampas",
+        "rug-runner"
+      ]
+    },
+    {
+      "id": "maison-lumiere",
+      "studio": "Maison Lumière",
+      "decorator": "Elena",
+      "icon": "💎",
+      "title": "Marble Luxe",
+      "blurb": "Calacatta marble, ivory panelled walls, a crystal chandelier, velvet, gold and fresh orchids.",
+      "fee": 6000,
+      "floor": "white-marble",
+      "wall": "ivory",
+      "panels": true,
+      "items": [
+        "chandelier-crystal",
+        "velvet-armchair",
+        "mirror-gold",
+        "art-abstract",
+        "rug-silk-round",
+        "orchids"
+      ],
+      "touches": [
+        "sculpture",
+        "indoor-palm",
+        "console"
+      ]
+    },
+    {
+      "id": "nest-and-oak",
+      "studio": "Nest & Oak",
+      "decorator": "Sofia",
+      "icon": "🌿",
+      "title": "Calm Scandi",
+      "blurb": "Light oak, sage walls, a lounge chair by the lamp, open shelves, plants and pampas.",
+      "fee": 2000,
+      "floor": "oak",
+      "wall": "sage",
+      "panels": false,
+      "items": [
+        "lounge-chair",
+        "floor-lamp",
+        "plant",
+        "floating-shelves",
+        "round-rug",
+        "vase-pampas"
+      ],
+      "touches": [
+        "bookcase",
+        "orchids",
+        "side-table"
+      ]
+    },
+    {
+      "id": "noir-studio",
+      "studio": "Noir Studio",
+      "decorator": "Karim",
+      "icon": "🌙",
+      "title": "Midnight Lounge",
+      "blurb": "Black marble, midnight-navy panelled walls, smoked glass pendants, brass sconces and the desert at dusk.",
+      "fee": 5000,
+      "floor": "black-marble",
+      "wall": "navy",
+      "panels": true,
+      "items": [
+        "pendant-trio",
+        "wall-sconces",
+        "art-desert",
+        "rug-runner",
+        "ottoman",
+        "sculpture"
+      ],
+      "touches": [
+        "indoor-palm",
+        "orchids",
+        "console"
+      ]
+    }
+  ],
+  "acceptMinutes": 30,
+  "career": {
+    "name": "Dubai Design District",
+    "icon": "🧑‍🎨",
+    "title": "Interior decorator",
+    "weeklyWage": 2600,
+    "shiftsPerWeek": 4,
+    "requirement": "none",
+    "service": "decorator"
+  },
+  "fee": {
+    "min": 200,
+    "max": 20000,
+    "default": 1500
+  },
+  "interview": [
+    {
+      "q": "A client wants their small studio to feel bigger. You…",
+      "options": [
+        "Fill it with dark, heavy furniture",
+        "Use light colours, mirrors and fewer, well-placed pieces",
+        "Paint every wall a different colour"
+      ],
+      "answer": 1
+    },
+    {
+      "q": "A client's budget is AED 10,000 but they love a AED 38,000 piano. You…",
+      "options": [
+        "Show options that fit the budget and explain the trade-offs",
+        "Order the piano anyway",
+        "Refuse the job"
+      ],
+      "answer": 0
+    },
+    {
+      "q": "You're handed the client's key. You…",
+      "options": [
+        "Lend it to a friend",
+        "Keep it for a spare",
+        "Use it only for the job and give it back when you're done"
+      ],
+      "answer": 2
+    }
+  ]
+}

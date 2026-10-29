@@ -203,5 +203,22 @@ fneed("kinds", `check (kind in (${fun.kinds.map((k) => `'${k}'`).join(", ")}))`)
 fneed("weekend need", `, 1), 0) < ${fun.weekend.need} then raise exception 'not_done'`);
 fneed("weekend xp", `id := 'weekend:' || sat; xp := ${fun.weekend.xp};`);
 fneed("weekend options", `kind in (${fun.weekend.options.filter((o) => o.id !== "date").map((o) => `'${o.id}'`).join(", ")})`);
-console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving, parking, goals, missions and fun config match the database.");
+// Interior decorators (src/data/home/decorators.json vs *_decorators.sql): the career, interview answers, fee limits,
+// the timings and each look's finishing touches.
+const dec = JSON.parse(readFileSync("src/data/home/decorators.json", "utf8"));
+const decFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_decorators.sql")).sort().pop();
+const decSql = readFileSync(`supabase/migrations/${decFile}`, "utf8");
+const dneed = (label, text) => { if (!decSql.includes(text)) { bad++; console.error(`decorators ${label}: differs from SQL (${text})`); } };
+const dc = dec.career;
+dneed("career", `('${dc.name}', '${dc.title}', ${dc.weeklyWage}, ${dc.shiftsPerWeek}, '${dc.requirement}', '${dc.service}')`);
+dneed("interview", `('${dc.name}', '{${dec.interview.map((q) => q.answer).join(",")}}')`);
+dneed("fee limits", `when 'decorator' then array[${dec.fee.min}, ${dec.fee.max}, ${dec.fee.default}]`);
+dneed("local minutes", `then now() + interval '${dec.minutes} minutes' end`);
+dneed("accept minutes", `j.created_at < now() - interval '${dec.acceptMinutes} minutes'`);
+for (const s of dec.studios) dneed(`touches ${s.id}`, `when '${s.id}' then array[${s.touches.map((t) => `'${t}'`).join(", ")}]`);
+// Penalties (cars.json → driving.revokeAfterAccidents vs *_penalties.sql).
+const penFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_penalties.sql")).sort().pop();
+const penSql = readFileSync(`supabase/migrations/${penFile}`, "utf8");
+if (!penSql.includes(`if n >= ${cars.driving.revokeAfterAccidents} and public.has_licence(me) then`)) { bad++; console.error("penalties: accident limit differs from SQL"); }
+console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving, parking, goals, missions, fun, decorator and penalty config match the database.");
 process.exit(bad ? 1 : 0);

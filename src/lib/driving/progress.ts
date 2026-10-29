@@ -8,6 +8,8 @@ import { gradeTheory } from "./theory";
 export interface DrivingProgress {
   eye_passed_at: string | null; theory_passed_at: string | null; theory_score: number | null;
   yard_passed_at: string | null; road_passed_at: string | null; licence_no: string | null; issued_at: string | null; attempts: number;
+  /** When a license was revoked (the third traffic accident on it); a new one needs the theory and yard again. */
+  revoked_at?: string | null;
 }
 
 export async function drivingProgress(): Promise<DrivingProgress | null> {

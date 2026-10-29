@@ -5,6 +5,7 @@
 
 import SYSTEM_JOBS from "@/data/economy/system-jobs.json";
 import SERVICES from "@/data/economy/city-services.json";
+import DECORATORS from "@/data/home/decorators.json";
 import { supabase } from "@/lib/supabase/client";
 import { refreshCitizen } from "@/lib/citizenStore";
 import VENTURES from "@/data/economy/ventures.json";
@@ -30,9 +31,10 @@ export interface Economy {
 export interface BoardJob { id: number; title: string; weeklyWage: number; shiftsPerWeek: number; requirement: Requirement; venture: string; ventureType: string; system: boolean; mine: boolean; service?: "doctor" | "police" | "lawyer" | null; interview?: "passed" | "failed" | null }
 
 /** Icon for a city (system) company, from src/data/economy/system-jobs.json. */
-export const companyIcon = (name: string) => [...SYSTEM_JOBS.companies, ...SERVICES.careers].find((c) => c.name === name)?.icon;
+export const companyIcon = (name: string) => [...SYSTEM_JOBS.companies, ...SERVICES.careers, DECORATORS.career].find((c) => c.name === name)?.icon;
 
 const ERRORS: Record<string, string> = {
+  in_custody: "You're in police custody. You can't take a job until you're released (bail, a lawyer, or wait out the time).",
   insufficient_funds: "You don't have enough AED for that.",
   too_many_ventures: "You can be part of at most 3 ventures.",
   not_friends: "You can only invite friends to your crew.",

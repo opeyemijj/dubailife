@@ -1,5 +1,5 @@
 {
-  "_note": "Car rental companies and dealerships on the map (Sheikh Zayed Road), the cars each one offers, and the costs of owning one. Real brands are shown as places to visit, marked not affiliated, like the other venues. Prices are in-game AED, close to real Dubai prices. Mirrored in supabase/migrations/*_cars.sql (checked by scripts/check-life-config.mjs). A driving licence from the Driving Academy is required to rent or buy. Fuel: each car's tank (litres, or kWh for electric) and use per 100 km (a trip burns fuelGameFactor times its map distance, for the driving around town it stands for); the drive, refuelling, speed cameras, accidents and impounding are in *_driving.sql. Parking at the destination (RTA paid parking, fines for not paying or parking outside the bay, issued a few minutes later) is in *_parking.sql.",
+  "_note": "Car rental companies and dealerships on the map (Sheikh Zayed Road), the cars each one offers, and the costs of owning one. Real brands are shown as places to visit, marked not affiliated, like the other venues. Prices are in-game AED, close to real Dubai prices. Mirrored in supabase/migrations/*_cars.sql (checked by scripts/check-life-config.mjs). A driving licence from the Driving Academy is required to rent or buy. Fuel: each car's tank (litres, or kWh for electric) and use per 100 km (a trip burns fuelGameFactor times its map distance, for the driving around town it stands for); the drive, refuelling, speed cameras, accidents and impounding are in *_driving.sql. Parking at the destination (RTA paid parking, fines for not paying or parking outside the bay, issued a few minutes later) is in *_parking.sql. A third accident since your licence was issued revokes it (*_penalties.sql); you pass the theory and Smart Yard again for a new one.",
   "rentals": [
     {
       "id": "sixt-szr",
@@ -358,7 +358,8 @@
     "fuelGameFactor": 15,
     "minGameMetres": 600,
     "maxGameMetres": 2200,
-    "gameScale": 0.5
+    "gameScale": 0.5,
+    "revokeAfterAccidents": 3
   },
   "parking": {
     "perHour": 4,

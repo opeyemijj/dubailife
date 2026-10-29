@@ -60,9 +60,13 @@ export const FAKE_LICENCE_ARREST: ArrestStory = {
   title: "Arrested", reason: "Using a fake driving license",
   lines: ["🚨 Siren outside the rental office…", "Dubai Police. Stay where you are.", "This license is fake. You're under arrest.", "You'll be held until a lawyer or the court sorts this out."],
 };
-export const accidentArrest = (car: Car, plate: string): ArrestStory => ({
-  title: "Arrested", reason: "Causing a traffic accident", car, plate,
-  lines: ["🚨 Dubai Police at the scene…", "Dubai Police. Step away from the vehicle.", "You caused this accident. You're under arrest.", "Your car goes to the impound. A lawyer or the court decides the rest."],
+/** After a crash; the third accident on a license also revokes it (*_penalties.sql). */
+export const accidentArrest = (car: Car, plate: string, accidents = 1, revoked = false): ArrestStory => ({
+  title: revoked ? "Arrested · license revoked" : "Arrested",
+  reason: revoked ? "Your third traffic accident: your driving license is revoked" : `Causing a traffic accident (${accidents} of ${CARS.driving.revokeAfterAccidents} before your license is revoked)`,
+  car, plate,
+  lines: ["🚨 Dubai Police at the scene…", "Dubai Police. Step away from the vehicle.", "You caused this accident. You're under arrest.",
+    revoked ? "That's your third accident. Your driving license is revoked, and your car goes to the impound." : "Your car goes to the impound. A lawyer or the court decides the rest."],
 });
 
 function Scene({ look, story, onSay, onDone }: { look?: AvatarLookProps; story: ArrestStory; onSay: (s: string | null) => void; onDone: () => void }) {

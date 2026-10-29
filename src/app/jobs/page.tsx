@@ -8,6 +8,8 @@ import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, Briefcase } from "lucide-react";
 import { useRequireCitizen } from "@/lib/citizenStore";
 import { monthlyPay, qualifiesFor, studyFor, useGoals } from "@/lib/goals";
+import { custodyUntil, useServices } from "@/lib/cityServices";
+import { useNow } from "@/lib/dubaiClock";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { aed, applyJob, companyIcon, daysUntil, endJob, jobBoard, myEconomy, VENTURES, ventureType, workShift, type BoardJob, type Economy } from "@/lib/economy";
 import { gameAudio } from "@/utils/gameAudio";
@@ -17,6 +19,10 @@ export default function JobBoardPage() {
   const { citizen } = useRequireCitizen();
   // Your qualifications, to show which jobs you can take now and what to study for the rest.
   const { status: goals } = useGoals(citizen?.id);
+  // Held in custody: no interviews or applications until you're released.
+  const services = useServices(citizen?.id);
+  const clock = useNow();
+  const custody = custodyUntil(services, clock);
   const [eco, setEco] = useState<Economy | null>(null);
   const [jobs, setJobs] = useState<BoardJob[] | null>(null);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
@@ -90,6 +96,12 @@ export default function JobBoardPage() {
           </section>
         )}
 
+        {custody && (
+          <div className="rounded-2xl bg-rose-600/15 border border-rose-500/40 p-3 text-sm">
+          <p className="font-black text-rose-300">🚔 You&apos;re in police custody</p>
+          <p className="text-rose-100/80">No job until you&apos;re released at {new Date(custody).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}, or sooner with bail or a lawyer in the Dubai Police app.</p>
+        </div>
+      )}
         {note && <p className={`text-sm font-bold text-center ${note.ok ? "text-emerald-300" : "text-rose-300"}`}>{note.text}</p>}
 
         <section className="space-y-2">
@@ -117,7 +129,7 @@ export default function JobBoardPage() {
                   {j.mine ? <span className="text-[10px] font-bold text-slate-500">Your venture</span>
                     : st === "pending" ? <span className="text-[11px] font-bold text-amber-300">Applied</span>
                     : st === "hired" ? <span className="text-[11px] font-bold text-emerald-300">Hired</span>
-                    : <button disabled={!!eco?.job} onClick={() => apply(j.id)} className="text-xs font-black px-3 py-1.5 rounded-full bg-sky-500 disabled:opacity-30">{st === "rejected" ? "Reapply" : j.interview === "passed" ? "Apply" : "Interview"}</button>}
+                    : <button disabled={!!eco?.job || !!custody} onClick={() => apply(j.id)} className="text-xs font-black px-3 py-1.5 rounded-full bg-sky-500 disabled:opacity-30">{st === "rejected" ? "Reapply" : j.interview === "passed" ? "Apply" : "Interview"}</button>}
                 </div>
               );
             })}
