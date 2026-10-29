@@ -7,7 +7,6 @@ import { useRequireCitizen } from "@/lib/citizenStore";
 import dynamic from "next/dynamic";
 import { SmallLoader } from "@/components/GameLoadingScreen";
 import { TopBar } from "@/components/layout/TopBar";
-import { MapSocials } from "@/components/layout/MapSocials";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Search, Coffee, Music, ShoppingBag, Trophy, Navigation, Home, X, SlidersHorizontal, Building2, Building, Sparkles } from "lucide-react";
 
@@ -75,7 +74,6 @@ function Explore() {
 
       {/* Top Navigation HUD with Safe Area Padding */}
       <TopBar />
-      <MapSocials />
 
       {/* A search icon that slides the full search in (all screen sizes) */}
       {!searchOpen && (

@@ -9,6 +9,7 @@ import { useLifeLoop, visaInfo } from "@/lib/lifeLoop";
 import { openLife } from "@/components/life/LifeHub";
 import { openPhone } from "@/components/layout/PhoneOverlay";
 import { gameAudio } from "@/utils/gameAudio";
+import { SITE } from "@/lib/site";
 import { illnessOf, useServices } from "@/lib/cityServices";
 import { useEmbedded } from "@/components/layout/Embed";
 
@@ -26,13 +27,27 @@ export function BottomNav() {
       <div className="max-w-md mx-auto">
         <ServiceAlert />
         {onMap && <VisaChip />}
-        <nav className="h-[60px] bg-white/95 backdrop-blur-2xl border border-white rounded-full p-1.5 flex items-center pointer-events-auto shadow-[0_8px_28px_rgba(15,23,42,0.25)]">
-          <NavItem href="/home" icon={<Home className="w-6 h-6" />} label="Home" active={isActive("/home")} />
-          <NavItem href="/explore" icon={<Map className="w-6 h-6" />} label="Map" active={isActive("/explore")} />
-          <NavItem href="/profile" icon={<User className="w-6 h-6" />} label="Me" active={isActive("/profile")} />
-          <PhoneButton unread={unread} />
-        </nav>
+        {/* One white bar: the buttons and, on the map, the About and social links under them. */}
+        <div className={`bg-white/95 backdrop-blur-2xl border border-white pointer-events-auto shadow-[0_8px_28px_rgba(15,23,42,0.25)] ${onMap ? "rounded-[30px]" : "rounded-full"}`}>
+          <nav className="h-[60px] p-1.5 flex items-center">
+            <NavItem href="/home" icon={<Home className="w-6 h-6" />} label="Home" active={isActive("/home")} />
+            <NavItem href="/explore" icon={<Map className="w-6 h-6" />} label="Map" active={isActive("/explore")} />
+            <NavItem href="/profile" icon={<User className="w-6 h-6" />} label="Me" active={isActive("/profile")} />
+            <PhoneButton unread={unread} />
+          </nav>
+          {onMap && <MapFooter />}
+        </div>
       </div>
+    </div>
+  );
+}
+
+/** Under the bar on the map: the same About and social links as the signed-out landing page. */
+function MapFooter() {
+  return (
+    <div className="flex items-center justify-center gap-3 pb-2 -mt-0.5 text-xs font-bold text-slate-500">
+      <Link href="/about" className="hover:text-slate-800 transition-colors">About</Link>
+      {SITE.socials.map((n) => <a key={n.label} href={n.href} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 transition-colors">{n.label}</a>)}
     </div>
   );
 }
