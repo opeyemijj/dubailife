@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Bell, ChevronDown, ChevronRight, ChevronUp, Flame, Frown, Gift, Laugh, ListChecks, MapPin, Meh, Plus, Smile, Smartphone, Sun, Moon, Thermometer, User, Users, Volume2, Wallet, X, Sparkles, Lightbulb } from "lucide-react";
+import { Bell, Eye, ChevronDown, ChevronRight, ChevronUp, Flame, Frown, Gift, Laugh, ListChecks, MapPin, Meh, Plus, Smile, Smartphone, Sun, Moon, Thermometer, User, Users, Volume2, Wallet, X, Sparkles, Lightbulb } from "lucide-react";
 import { useCitizen } from "@/lib/citizenStore";
 import { useOnlineCount, formatOnline } from "@/lib/presence";
+import { compact, useSiteStats } from "@/lib/siteStats";
 import { dubaiTime, moodOf, useNow, type Mood } from "@/lib/dubaiClock";
 import { useLifeLoop, visaInfo } from "@/lib/lifeLoop";
 import { lifeOf } from "@/lib/life";
@@ -37,6 +38,9 @@ export function TopBar({ walletBalance: walletOverride }: TopBarProps) {
   const t = now ? dubaiTime(now) : null;
   const mood = moodOf(citizen, !!useServices(citizen?.id)?.illness);
   const [open, setOpen] = useState(false);
+  // Shown beside the chevron on wider screens (as on Home); phones keep the bar compact.
+  const onlineCount = useOnlineCount();
+  const { visits } = useSiteStats();
   if (useEmbedded()) return null;
 
   return (
@@ -55,14 +59,18 @@ export function TopBar({ walletBalance: walletOverride }: TopBarProps) {
           <MoodFace mood={mood} className="w-4 h-4" />
         </button>
 
-        <button
-          onClick={() => { gameAudio.playClickSound(); setOpen((o) => !o); }}
-          aria-label={open ? "Close status" : "Open status"}
-          aria-expanded={open}
-          className={`h-8 w-10 shrink-0 rounded-full flex items-center justify-center active:scale-95 transition-all ${open ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"}`}
-        >
-          {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
+        <div className="flex items-center gap-3">
+          <span className="hidden sm:flex items-center gap-1 text-xs font-bold text-slate-500"><Eye className="w-3.5 h-3.5 text-slate-400" />{compact(visits)}</span>
+          <button
+            onClick={() => { gameAudio.playClickSound(); setOpen((o) => !o); }}
+            aria-label={open ? "Close status" : "Open status"}
+            aria-expanded={open}
+            className={`h-8 w-10 shrink-0 rounded-full flex items-center justify-center active:scale-95 transition-all ${open ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"}`}
+          >
+            {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+          <span className="hidden sm:flex items-center gap-1.5 text-xs font-extrabold text-emerald-600"><span className="w-2 h-2 rounded-full bg-emerald-500" />{formatOnline(onlineCount)} online</span>
+        </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
           <Link href="/phone?tab=alerts" aria-label="Notifications" className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:scale-90">
