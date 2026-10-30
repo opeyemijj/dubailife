@@ -3,7 +3,7 @@
 import type { PushPayload } from "./types";
 import { supabase } from "@/lib/supabase/client";
 
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BCXeb8s6jaMrCw--SxVn5zpJodf79vyXQFYF35USsQ5nuVy5rWRVyLXhTagx5ZFRJxquq-u5DAtloZkLQHRaCkc";
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
 
 /** Converts standard URL-safe Base64 string to Uint8Array for PushManager subscription. */
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -39,6 +39,25 @@ export function getNotificationPermission(): NotificationPermission | "unsupport
   return Notification.permission;
 }
 
+/** Whether this device's subscription was made with the current public key. */
+function sameKey(sub: PushSubscription): boolean {
+  const key = sub.options.applicationServerKey;
+  if (!key) return true;
+  const want = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+  const have = new Uint8Array(key);
+  return have.length === want.length && have.every((b, i) => b === want[i]);
+}
+
+/** On opening the app: a device already allowed to notify, but subscribed under an old key, moves to the new one (no prompt). */
+export async function refreshPushSubscription(userId: string) {
+  if (!isPushSupported() || !VAPID_PUBLIC_KEY || Notification.permission !== "granted") return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub && !sameKey(sub)) await subscribeToPush(userId);
+  } catch { /* try again next time */ }
+}
+
 /** Subscribes this device to push notifications and saves the subscription on the server. */
 export async function subscribeToPush(userId?: string): Promise<{ ok: boolean; error?: string }> {
   if (!isPushSupported()) {
@@ -47,6 +66,8 @@ export async function subscribeToPush(userId?: string): Promise<{ ok: boolean; e
       error: "Push notifications are not supported in this browser view. On iOS, add the game to your Home Screen first.",
     };
   }
+
+  if (!VAPID_PUBLIC_KEY) return { ok: false, error: "Notifications aren't set up right now." };
 
   try {
     // 1. Request permission if not already granted (must be in response to user gesture on iOS)
@@ -68,6 +89,17 @@ export async function subscribeToPush(userId?: string): Promise<{ ok: boolean; e
 
     // 3. Get or create push subscription
     let sub = await reg.pushManager.getSubscription();
+    // Subscribed under an old key (the keys were changed): replace it, or pushes would never arrive.
+    if (sub && !sameKey(sub)) {
+      const oldEndpoint = sub.endpoint;
+      await sub.unsubscribe();
+      sub = null;
+      await fetch("/api/push/subscribe", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ endpoint: oldEndpoint, userId }),
+      }).catch(() => {});
+    }
     if (!sub) {
       const convertedKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
       sub = await reg.pushManager.subscribe({
@@ -166,7 +198,7 @@ export async function unsubscribeFromPush(userId?: string): Promise<{ ok: boolea
 }
 
 /** Sends a push notification to another citizen (e.g. friend request, message, money). */
-export async function sendPushNotification(toUserId: string, payload: PushPayload, fromUserId?: string) {
+export async function sendPushNotification(toUserId: string, payload: PushPayload) {
   try {
     await fetch("/api/push/send", {
       method: "POST",
@@ -174,7 +206,6 @@ export async function sendPushNotification(toUserId: string, payload: PushPayloa
       body: JSON.stringify({
         toUserId,
         notification: payload,
-        fromUserId,
       }),
     });
   } catch {}

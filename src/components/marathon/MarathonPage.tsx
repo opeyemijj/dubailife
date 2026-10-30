@@ -109,7 +109,7 @@ export function MarathonPage() {
           <button disabled={busy} onClick={signUp} className="w-full h-16 rounded-full bg-emerald-700 text-white text-xl font-semibold shadow-[inset_0_-5px_0_rgba(0,0,0,0.2)] disabled:opacity-60">Sign up · free</button>
         )}
         <button onClick={share} className="w-full h-12 rounded-full bg-slate-100 font-semibold">📣 Invite friends to run with you</button>
-        <p className="text-xs text-slate-400 text-center">How it works: everyone starts together. You run at a steady pace and go faster by tapping RUN in rhythm. Top 3 win AED {MARATHON.prizes.map((p) => p.toLocaleString()).join(" / ")}; every finisher gets a medal and +{MARATHON.finisherPoints} points.</p>
+        <p className="text-xs text-slate-400 text-center">How it works: everyone starts together. Steer and set your pace with the stick, sprint while your stamina lasts, grab water, hit the crowd boosts and dodge the cones. Top 3 win AED {MARATHON.prizes.map((p) => p.toLocaleString()).join(" / ")}; every finisher gets a medal and +{MARATHON.finisherPoints} points.</p>
       </section>
 
       <section className="rounded-[28px] bg-white shadow p-5 space-y-3">

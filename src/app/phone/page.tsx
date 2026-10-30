@@ -334,7 +334,6 @@ function People({ me, online, open }: { me: string; online: ReadonlySet<string>;
           url: "/phone?tab=alerts",
           tag: `friend-req-${me}`,
         },
-        me
       );
     } else if (/\bblocked\b/.test(error.message)) {
       window.dispatchEvent(new CustomEvent("dubai:toast", { detail: "You can't add them." }));
@@ -352,7 +351,6 @@ function People({ me, online, open }: { me: string; online: ReadonlySet<string>;
           url: "/phone?tab=contacts",
           tag: `friend-acc-${me}`,
         },
-        me
       );
     }
     void refresh();

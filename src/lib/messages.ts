@@ -100,7 +100,6 @@ export async function sendMessage(me: string, to: string, body: string, place: s
             url: pushUrl ?? `/phone?tab=chats&chat=${me}`,
             tag: `chat-${me}`,
           },
-          me
         );
       } catch {}
     })();

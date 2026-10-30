@@ -7,12 +7,9 @@ export async function POST(req: Request) {
     const supabase = await supabaseServer();
     const { data: { user } } = await supabase.auth.getUser();
 
-    const body = await req.json().catch(() => ({}));
-    const targetUserId = user?.id || body?.userId;
-
-    if (!targetUserId) {
-      return NextResponse.json({ error: "Unauthorized or missing userId" }, { status: 401 });
-    }
+    // Only ever to yourself.
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const targetUserId = user.id;
 
     const result = await sendPushToUser(targetUserId, {
       title: "mydubailife.app 🏙️",

@@ -129,7 +129,6 @@ export const requestEntry = async (flatId: string, note?: string) => {
               url: `/property/${flat.building_id}`,
               tag: `knock-${flatId}`,
             },
-            visitorId
           );
         }
       } catch {}

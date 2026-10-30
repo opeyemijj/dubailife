@@ -326,7 +326,6 @@ export async function sendMoney(to: Peer, amount: number, place: string): Promis
             url: "/phone?tab=alerts",
             tag: `money-${Date.now()}`,
           },
-          meId
         );
       } catch {}
     })();
@@ -360,7 +359,6 @@ export async function befriend(myId: string, other: Peer): Promise<"sent" | "fri
           url: "/phone?tab=contacts",
           tag: `friend-acc-${myId}`,
         },
-        myId
       );
     }
     return error ? "error" : "friends";
@@ -376,7 +374,6 @@ export async function befriend(myId: string, other: Peer): Promise<"sent" | "fri
         url: "/phone?tab=alerts",
         tag: `friend-req-${myId}`,
       },
-      myId
     );
   }
   if (isBlockedError(error)) return "blocked";

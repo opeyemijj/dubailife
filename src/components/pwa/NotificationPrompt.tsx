@@ -7,6 +7,7 @@ import {
   getNotificationPermission,
   isPushSupported,
   isStandalonePwa,
+  refreshPushSubscription,
   subscribeToPush,
   testPushNotification,
 } from "@/lib/push/client";
@@ -62,6 +63,11 @@ export function NotificationPrompt() {
 
     return () => clearInterval(timer);
   }, [citizen?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // A device that already allows notifications stays subscribed if the keys are ever changed.
+  useEffect(() => {
+    if (citizen?.id) void refreshPushSubscription(citizen.id);
+  }, [citizen?.id]);
 
   if (!visible) return null;
 

@@ -118,7 +118,6 @@ export function FriendRequestListener() {
           url: "/phone?tab=contacts",
           tag: `friend-accept-${me}`,
         },
-        me
       );
     }
   };

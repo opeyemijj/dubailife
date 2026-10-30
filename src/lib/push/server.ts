@@ -2,12 +2,14 @@ import webpush from "web-push";
 import { createClient } from "@supabase/supabase-js";
 import type { PushPayload, PushSubscriptionRecord } from "./types";
 
-const PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BCXeb8s6jaMrCw--SxVn5zpJodf79vyXQFYF35USsQ5nuVy5rWRVyLXhTagx5ZFRJxquq-u5DAtloZkLQHRaCkc";
-const PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "gljytM3fbaBcPSEeaHCxtB1J5wVeJr9Q9N-LjdptPNM";
+const PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+const PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
 const SUBJECT = process.env.VAPID_SUBJECT || "mailto:support@cometodubai.com";
 
 let vapidConfigured = false;
 function ensureVapid() {
+  // The keys only ever come from the environment.
+  if (!PUBLIC_KEY || !PRIVATE_KEY) console.error("[WebPush] NEXT_PUBLIC_VAPID_PUBLIC_KEY or VAPID_PRIVATE_KEY is not set");
   if (!vapidConfigured && PUBLIC_KEY && PRIVATE_KEY) {
     try {
       webpush.setVapidDetails(SUBJECT, PUBLIC_KEY, PRIVATE_KEY);
@@ -114,4 +116,25 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
   );
 
   return { sent, failed, errors };
+}
+
+/** Sends one notification to one device. `gone`: the push service says this device no longer exists. */
+export async function sendPushToSubscription(sub: { endpoint: string; keys: { p256dh: string; auth: string } }, payload: PushPayload) {
+  ensureVapid();
+  const content = JSON.stringify({
+    title: payload.title,
+    body: payload.body,
+    icon: payload.icon || "/brand/icon-192.png",
+    badge: payload.badge || "/brand/icon-192.png",
+    url: payload.url || "/phone",
+    tag: payload.tag || `dl-${Date.now()}`,
+    data: payload.data || {},
+  });
+  try {
+    await webpush.sendNotification(sub, content, { TTL: 900, urgency: "high" });
+    return { ok: true, gone: false };
+  } catch (err: unknown) {
+    const status = (err as { statusCode?: number })?.statusCode;
+    return { ok: false, gone: status === 404 || status === 410 };
+  }
 }

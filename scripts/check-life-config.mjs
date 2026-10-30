@@ -118,6 +118,8 @@ mneed("hour", `interval '${mar.startHour} hours'`);
 mneed("window", `s + interval '${mar.windowMinutes} minutes' > p_at`);
 mneed("course", `least(p_distance, elapsed * ${mar.maxSpeed} + 25, ${mar.courseMetres})`);
 mneed("finish", `if d >= ${mar.courseMetres} then`);
+{ const f = readdirSync("supabase/migrations").filter((x) => x.endsWith("_marathon_push.sql")).sort().pop();
+  if (!readFileSync(`supabase/migrations/${f}`, "utf8").includes(`now() < r - interval '${mar.pushMinutes} minutes'`)) { bad++; console.error("marathon push minutes differ from SQL"); } }
 mneed("prizes", `prizes bigint[] := array[${mar.prizes.join(", ")}]`);
 mneed("points", `'wellbeing', ${mar.finisherPoints}, 'marathon:'`);
 // Cars (src/data/cars/cars.json vs *_cars.sql): prices, who offers what, and the fees.
