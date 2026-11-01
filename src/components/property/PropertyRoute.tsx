@@ -17,7 +17,8 @@ import {
   ACCESS_LABEL, addGuest, flatTitle, getFlat, getInterior, listFlat, listGuests, removeGuest, requestEntry, saveInterior, setAccess, watchRequest,
   type Access, type FlatView, type Listing,
 } from "@/lib/city/flats";
-import { ROSTER } from "@/components/avatar/roster";
+import { ROSTER, presetFor, rosterThumb } from "@/components/avatar/roster";
+import { openLife } from "@/components/life/LifeHub";
 import { gameAudio } from "@/utils/gameAudio";
 import { befriend, sendMoney, useRoom, type Received } from "@/lib/room";
 import { PeerPanel } from "@/components/social/PeerPanel";
@@ -315,6 +316,16 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
           <div className="text-[11px] text-slate-500 truncate">{flat.property_type} · {flat.size_sqft.toLocaleString()} sq ft{flat.view ? ` · ${flat.view}` : ""}</div>
         </div>
         <div className="flex-1" />
+        <button
+          onClick={() => { gameAudio.playClickSound(); openLife("profile"); }}
+          className="h-10 pl-1 pr-2.5 rounded-full bg-white shadow-lg flex items-center gap-1.5 text-xs font-black active:scale-95 transition-transform"
+          title="Open Profile, Visa & Budget, and League"
+          aria-label="Open Profile, Visa & Budget, and League"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={rosterThumb(presetFor(look ?? { gender: "woman" }))} alt="" className="w-7 h-7 rounded-full object-cover object-top bg-sky-100 ring-2 ring-amber-400" />
+          <span className="hidden xs:inline">Profile</span>
+        </button>
         {isManager && <button onClick={() => setManageOpen(true)} className="h-10 px-3 rounded-full bg-white shadow-lg flex items-center gap-1.5 text-xs font-black"><Settings2 className="w-4 h-4" /> Manage</button>}
         <button onClick={onExit} className="h-10 px-3 rounded-full bg-slate-900 text-white shadow-lg flex items-center gap-1.5 text-xs font-black"><LogOut className="w-3.5 h-3.5" /> Exit</button>
       </header>

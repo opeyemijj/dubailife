@@ -21,6 +21,7 @@ import { canvasQuality } from "@/lib/device";
 import { LOCALS } from "@/lib/locals";
 import { MARATHON, raceClock, reportProgress, serverNow, shownKm, type Overview } from "@/lib/marathon";
 import { gameAudio } from "@/utils/gameAudio";
+import { RaceMusic, type RaceMood } from "./raceMusic";
 
 const COURSE = MARATHON.courseMetres;
 const ROAD_W = 16;
@@ -371,6 +372,29 @@ export function MarathonRace({ o, myId, look, onExit, onFinished }: { o: Overvie
   const live = clock >= startMs;
   const countdown = Math.ceil((startMs - clock) / 1000);
 
+  // The soundtrack: it follows the race, and remembers if you've turned it off.
+  const music = useRef<RaceMusic | null>(null);
+  const [musicOn, setMusicOn] = useState(() => { try { return localStorage.getItem("dl_race_music") !== "off"; } catch { return true; } });
+  useEffect(() => {
+    const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AC) return;
+    const ctx = new AC();
+    const m = new RaceMusic(ctx);
+    music.current = m;
+    m.start();
+    // Browsers may hold sound back until a touch.
+    const wake = () => { if (ctx.state === "suspended") void ctx.resume(); };
+    wake();
+    window.addEventListener("pointerdown", wake);
+    return () => { window.removeEventListener("pointerdown", wake); m.stop(); music.current = null; void ctx.close(); };
+  }, []);
+  const mood: RaceMood = !live ? "startline" : finish ? "sprint" : run.status === "wall" ? "wall" : run.status === "sprint" || run.boost ? "sprint" : "race";
+  useEffect(() => { music.current?.setMood(mood); }, [mood]);
+  useEffect(() => {
+    music.current?.setMuted(!musicOn);
+    try { localStorage.setItem("dl_race_music", musicOn ? "on" : "off"); } catch { /* storage off */ }
+  }, [musicOn]);
+
   // The countdown's last three seconds, then the gun.
   const beeped = useRef(99);
   useEffect(() => {
@@ -435,6 +459,9 @@ export function MarathonRace({ o, myId, look, onExit, onFinished }: { o: Overvie
           <div className="mt-2 h-2 rounded-full bg-slate-100 overflow-hidden"><div className="h-full bg-emerald-500" style={{ width: `${(myS / COURSE) * 100}%` }} /></div>
         </div>
       </div>
+
+      <button onClick={() => setMusicOn((on) => !on)} aria-label={musicOn ? "Turn the music off" : "Turn the music on"}
+        className="absolute right-3 top-[calc(max(0.75rem,env(safe-area-inset-top))+9.5rem)] z-10 w-11 h-11 rounded-full bg-white/85 shadow-lg text-lg">{musicOn ? "🎵" : "🔇"}</button>
 
       {!live && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

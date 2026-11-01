@@ -28,22 +28,26 @@ function Bedroom({ look, upRef }: { look?: AvatarLookProps; upRef: React.RefObje
     // The phone's screen lights up and pulses while it buzzes.
     if (screen.current) screen.current.emissiveIntensity = up ? 1.2 : 0.4 + (Math.sin(t.current * 10) > 0 ? 1.4 : 0);
     if (me.current) {
-      if (!up) { me.current.position.set(0, 0.62, -0.1); me.current.rotation.set(-Math.PI / 2, 0, 0); }
-      else {
+      if (!up) {
+        // Feet at z = +0.95 so the head (at z - 1.7m when rotated -90° around X) rests right on the pillow at z = -0.78, y = 0.78.
+        me.current.position.set(-0.22, 0.80, 0.95);
+        me.current.rotation.set(-Math.PI / 2, 0, 0);
+        if (anim !== "sleep") setAnim("sleep");
+      } else {
         // Up and standing beside the bed, stretching.
         me.current.position.lerp(new THREE.Vector3(1.55, 0, 1.55), Math.min(1, dt * 3));
         me.current.rotation.set(0, -0.5, 0);
         if (anim !== "wave") setAnim("wave");
       }
     }
-    const cam = up ? new THREE.Vector3(3.8, 2.3, 5.2) : new THREE.Vector3(1.9, 3.4, 2.2);
+    const cam = up ? new THREE.Vector3(3.8, 2.3, 5.2) : new THREE.Vector3(1.8, 3.1, 2.0);
     camera.position.lerp(cam, Math.min(1, dt * 1.8));
-    camera.lookAt(up ? 0.9 : 0, up ? 0.7 : 0.5, up ? 0.2 : -0.4);
+    camera.lookAt(up ? 0.9 : -0.15, up ? 0.7 : 0.68, up ? 0.2 : -0.45);
   });
   return (
     <>
       <color attach="background" args={["#1c1917"]} />
-      <ambientLight intensity={0.35} color="#ffe4c4" />
+      <ambientLight intensity={0.45} color="#ffe4c4" />
       {/* the sunrise through the window */}
       <directionalLight position={[-3, 3, -4]} intensity={2.2} color="#ffb070" />
       <pointLight position={[1.6, 1.3, -1.6]} intensity={6} distance={4} color="#ffd8a8" />
@@ -54,8 +58,8 @@ function Bedroom({ look, upRef }: { look?: AvatarLookProps; upRef: React.RefObje
       {/* bed: frame, mattress, duvet, pillows, headboard */}
       <mesh position={[0, 0.22, 0]}><boxGeometry args={[1.9, 0.44, 2.3]} /><meshStandardMaterial color="#57534e" /></mesh>
       <mesh position={[0, 0.5, 0]}><boxGeometry args={[1.8, 0.16, 2.2]} /><meshStandardMaterial color="#f5f5f4" /></mesh>
-      <mesh position={[0, 0.6, 0.35]}><boxGeometry args={[1.84, 0.08, 1.5]} /><meshStandardMaterial color="#64748b" roughness={0.9} /></mesh>
-      {[-0.45, 0.45].map((x) => <mesh key={x} position={[x, 0.66, -0.85]}><boxGeometry args={[0.7, 0.14, 0.4]} /><meshStandardMaterial color="#ffffff" /></mesh>)}
+      <mesh position={[0, 0.6, 0.4]}><boxGeometry args={[1.84, 0.08, 1.35]} /><meshStandardMaterial color="#64748b" roughness={0.9} /></mesh>
+      {[-0.4, 0.4].map((x) => <mesh key={x} position={[x, 0.64, -0.82]}><boxGeometry args={[0.72, 0.12, 0.42]} /><meshStandardMaterial color="#ffffff" /></mesh>)}
       <mesh position={[0, 0.95, -1.15]}><boxGeometry args={[1.9, 1.1, 0.1]} /><meshStandardMaterial color="#44403c" /></mesh>
       {/* nightstand with the phone and a lamp */}
       <mesh position={[1.35, 0.28, -0.9]}><boxGeometry args={[0.55, 0.56, 0.45]} /><meshStandardMaterial color="#78716c" /></mesh>

@@ -22,7 +22,7 @@ export function LifeHub() {
   const { citizen } = useCitizen();
   const signedIn = !!citizen?.id;
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<LifeTab>("needs");
+  const [tab, setTab] = useState<LifeTab>("profile");
   const [toast, setToast] = useState<string | null>(null);
   const [welcome, setWelcome] = useState<(LifeStatus & LifeTick) | null>(null);
 

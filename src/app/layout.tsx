@@ -31,6 +31,7 @@ import { NextStep } from "@/components/goals/NextStep";
 import { MorningScene } from "@/components/goals/MorningScene";
 import { Payday } from "@/components/goals/Payday";
 import { EmbedBridge, OutsidePhone } from "@/components/layout/Embed";
+import { ClarityAnalytics } from "@/components/analytics/ClarityAnalytics";
 
 const fredoka = Fredoka({ subsets: ["latin"], display: 'swap' });
 
@@ -200,6 +201,7 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`antialiased min-h-screen bg-background text-foreground ${fredoka.className}`}>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA).replace(/</g, "\\u003c") }} />
+        <ClarityAnalytics />
         <ServiceWorker />
         <OutsidePhone>
           <PresenceTracker />

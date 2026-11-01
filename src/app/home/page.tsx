@@ -19,9 +19,12 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { gameAudio } from "@/utils/gameAudio";
 import { isNewCitizen, useRequireCitizen, adjustBalance, buyFurniture, setFurniturePlacement, signOut, updateCitizen, DEFAULT_NEEDS, type Needs } from "@/lib/citizenStore";
 import {
-  CATALOG, FLOOR_FINISHES, PANELS_PRICE, SHOP_CATEGORIES, WALL_PAINTS, getCatalogItem, getHousingTierFromText, withHomeItems, HOUSING_CONFIGS,
+  CATALOG, FLOOR_FINISHES, PANELS_PRICE, SHOP_CATEGORIES, WALL_PAINTS, getCatalogItem, getHousingTierFromText, housingTierFor, withHomeItems, HOUSING_CONFIGS,
   type CatalogItem, type HomeStyle, type Interaction, type Placement, type Rotation, type HousingTier, type HomeActivityDef, type ShopCategory,
 } from "@/lib/furniture";
+import { myFlats, type FlatView } from "@/lib/city/flats";
+import { getEntity } from "@/lib/city/geo";
+import { openLife } from "@/components/life/LifeHub";
 import { useOnlineCount, useOnlineUsernames, formatOnline } from "@/lib/presence";
 import { matesInRoom, useBedspace } from "@/lib/bedspace";
 import { openPhone } from "@/components/layout/PhoneOverlay";
@@ -34,7 +37,6 @@ import { FixtureProgress, FixtureSheet, completeFixtureAction } from "@/componen
 import { applyRun, RUNS, RunJourney, type RouteId } from "@/components/home/RunJourney";
 import { Sheet } from "@/components/ui/sheet";
 import type { Fixture, FixtureAction } from "@/lib/homeFixtures";
-import BLUEPRINT from "@/data/life/blueprint.json";
 
 /** Small previews of the floor finishes in the Style tab. */
 const FLOOR_SWATCH: Record<string, string> = {
@@ -107,14 +109,68 @@ export default function HomePage() {
   const [turns, setTurns] = useState(0);
 
   const life = useLifeLoop();
-  const rawTier = (life?.blueprint?.housing || citizen?.home || "studio").toLowerCase();
-  const housingTier: HousingTier = getHousingTierFromText(rawTier);
+  // Owned and rented properties from the city map (`flats` table).
+  const [flats, setFlats] = useState<FlatView[] | null>(null);
+  useEffect(() => {
+    if (!citizen?.id) return;
+    let live = true;
+    void myFlats(citizen.id).then((list) => {
+      if (live) setFlats(list);
+    });
+    return () => { live = false; };
+  }, [citizen?.id]);
+
+  // Rank properties so owned mansions/villas/penthouses lead by default unless the player picked another.
+  const TIER_RANK: Record<HousingTier, number> = {
+    bed_space: 1,
+    studio: 2,
+    one_bedroom: 3,
+    two_bedroom: 4,
+    three_bedroom: 5,
+    duplex: 6,
+    townhouse: 7,
+    penthouse: 8,
+    villa: 9,
+  };
+  const sortedFlats = React.useMemo(() => {
+    if (!flats) return [];
+    return [...flats].sort((a, b) => {
+      const aOwned = a.owner_id === citizen?.id ? 1 : 0;
+      const bOwned = b.owner_id === citizen?.id ? 1 : 0;
+      if (aOwned !== bOwned) return bOwned - aOwned;
+      const aTier = housingTierFor(a.property_type, a.bedrooms);
+      const bTier = housingTierFor(b.property_type, b.bedrooms);
+      return TIER_RANK[bTier] - TIER_RANK[aTier];
+    });
+  }, [flats, citizen?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const activeFlat = React.useMemo(() => {
+    if (!sortedFlats.length) return null;
+    if (citizen?.activeFlatId === "starter") return null;
+    if (citizen?.activeFlatId) {
+      const match = sortedFlats.find((f) => f.id === citizen.activeFlatId);
+      if (match) return match;
+    }
+    return sortedFlats[0];
+  }, [sortedFlats, citizen?.activeFlatId]);
+
+  const rawTier = (citizen?.home || life?.blueprint?.housing || "studio").toLowerCase();
+  const housingTier: HousingTier = activeFlat
+    ? housingTierFor(activeFlat.property_type, activeFlat.bedrooms)
+    : getHousingTierFromText(rawTier);
   // A bed space is shared with up to three other players, each at their own bed.
   const bedspace = useBedspace(housingTier === "bed_space");
   const onlineNames = useOnlineUsernames();
   const unread = useUnreadTotal(citizen?.id);
 
   const housingConfig = HOUSING_CONFIGS[housingTier] ?? HOUSING_CONFIGS.studio;
+  const activeBuildingName = activeFlat ? (getEntity(activeFlat.building_id)?.name ?? activeFlat.building_id.replace(/-/g, " ")) : null;
+  const activeHomeTitle = activeFlat
+    ? (/^\d/.test(activeFlat.unit) ? `${activeFlat.property_type} ${activeFlat.unit}` : activeFlat.property_type)
+    : housingConfig.label;
+  const activeHomeArea = activeFlat
+    ? `${activeBuildingName}${activeFlat.owner_id === citizen?.id ? " · Owned" : " · Rented"}`
+    : housingConfig.area;
   // Two-storey homes (duplex, townhouse, penthouse, villa) show one floor at a time.
   const levels = housingConfig.levels;
   const [level, setLevel] = useState(0);
@@ -357,10 +413,50 @@ export default function HomePage() {
       {/* TOP BAR (Image 2) */}
       {!cleanScreen && (
         <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] sm:top-5 left-0 w-full z-40 pointer-events-none px-3 sm:px-6">
-          <div className="max-w-4xl mx-auto flex items-center justify-between pointer-events-auto bg-white/95 hover:bg-white backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] px-3 sm:px-4 py-2 rounded-full transition-all">
+          <div className="max-w-4xl mx-auto flex items-center justify-between pointer-events-auto bg-white/95 hover:bg-white backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] pl-1.5 pr-2.5 sm:pr-4 py-1.5 rounded-full transition-all">
             
-            {/* Clock & Mood */}
-            <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-bold text-slate-800">
+            {/* Avatar (Opens Profile, Visa & Budget, League Modal) + Clock & Mood */}
+            <div className="flex items-center gap-1.5 sm:gap-2.5 text-xs sm:text-sm font-bold text-slate-800 min-w-0">
+              <button
+                onClick={() => {
+                  gameAudio.playClickSound();
+                  openLife("profile");
+                }}
+                title="Open Profile, Visa & Budget, and League"
+                aria-label="Open Profile, Visa & Budget, and League"
+                className="relative flex items-center gap-1.5 pr-2 pl-0.5 py-0.5 rounded-full bg-slate-900/5 hover:bg-slate-900/10 border border-slate-200/80 active:scale-95 transition-all shrink-0 cursor-pointer"
+              >
+                <div className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={rosterThumb(presetFor(citizen?.look ?? { gender: "woman" }))}
+                    alt=""
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover object-top bg-sky-100 ring-2 ring-amber-400"
+                  />
+                  <span
+                    className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-white ${
+                      life && life.visaTier !== "GOLDEN" && life.visaDaysLeft <= 7 ? "bg-rose-500 animate-pulse" : "bg-emerald-500"
+                    }`}
+                  />
+                </div>
+                {life ? (
+                  <span className="hidden xs:flex flex-col items-start leading-none">
+                    <span className="text-[10px] font-black text-slate-900 flex items-center gap-0.5">
+                      🔥{life.streak}d
+                    </span>
+                    <span
+                      className={`text-[8px] font-extrabold ${
+                        life.visaTier !== "GOLDEN" && life.visaDaysLeft <= 7 ? "text-rose-600" : "text-slate-500"
+                      }`}
+                    >
+                      {life.visaTier === "GOLDEN" ? "Golden" : `${life.visaDaysLeft}d visa`}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="hidden xs:inline text-[10px] font-black text-slate-800">Profile</span>
+                )}
+              </button>
+
               <span className="flex items-center gap-1 font-mono whitespace-nowrap">
                 {(() => { const h = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Dubai", hour: "numeric", hour12: false }).format(new Date())); return h >= 6 && h < 19 ? "☀️" : "🌙"; })()} {clock}
               </span>
@@ -368,7 +464,7 @@ export default function HomePage() {
               {(() => {
                 const avg = (needs.hunger + needs.energy + needs.fun + needs.social + needs.hygiene + needs.bladder) / 6;
                 const [label, tone] = avg >= 70 ? ["🙂 Happy", "text-emerald-600"] : avg >= 40 ? ["😐 Okay", "text-amber-600"] : ["😟 Low", "text-rose-600"];
-                return <span className={`flex items-center gap-1 font-extrabold text-xs whitespace-nowrap ${tone}`}><span>{label.split(" ")[0]}</span><span className="hidden xs:inline sm:inline">{label.split(" ")[1]}</span></span>;
+                return <button onClick={() => { gameAudio.playClickSound(); openLife("needs"); }} className={`flex items-center gap-1 font-extrabold text-xs whitespace-nowrap ${tone} hover:opacity-80 cursor-pointer`}><span>{label.split(" ")[0]}</span><span className="hidden xs:inline sm:inline">{label.split(" ")[1]}</span></button>;
               })()}
             </div>
 
@@ -419,19 +515,30 @@ export default function HomePage() {
       {/* TOP HOUSING STATUS & MULTI-ROOM PILLS */}
       {!cleanScreen && (
         <div className="absolute top-[4.5rem] sm:top-20 left-1/2 -translate-x-1/2 z-30 pointer-events-auto flex flex-col items-center gap-1.5 max-w-[96vw] px-2">
-          <div className="flex items-center gap-1.5 bg-slate-950/90 backdrop-blur-xl text-white pl-3.5 pr-2 py-1.5 rounded-full shadow-2xl border border-white/10 text-xs font-bold">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 bg-slate-950/90 backdrop-blur-xl text-white pl-3.5 pr-2 py-1.5 rounded-full shadow-2xl border border-white/10 text-xs font-bold">
             <button
               onClick={() => {
                 setTierModalOpen(true);
                 gameAudio.playClickSound();
               }}
-              className="flex items-center gap-2 hover:opacity-90 transition-opacity active:scale-95"
-              title="Change or inspect housing tier"
+              className="flex items-center gap-1.5 hover:opacity-90 transition-opacity active:scale-95 cursor-pointer"
+              title="Switch between your owned and rented properties"
             >
               <span className="text-sm">{housingConfig.icon}</span>
-              <span className="font-extrabold text-amber-300">{housingConfig.label}</span>
-              <span className="text-slate-400 text-[10px] hidden xs:inline">• {housingConfig.area}</span>
+              <span className="font-extrabold text-amber-300">{activeHomeTitle}</span>
+              <span className="text-slate-400 text-[10px] hidden sm:inline">• {activeHomeArea}</span>
               <ChevronDown className="w-3.5 h-3.5 text-amber-400/80 ml-0.5" />
+            </button>
+            <button
+              onClick={() => {
+                gameAudio.playClickSound();
+                setDecoratorOpen(true);
+              }}
+              className="ml-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-sm flex items-center gap-1 active:scale-95 transition-all cursor-pointer"
+              title="Employ an interior decorator to style and furnish your home"
+            >
+              <span>🧑‍🎨</span>
+              <span>{decorJob ? "Decorator Working" : "Employ Decorator"}</span>
             </button>
             {housingConfig.hasDollhouseUpView && (
               <button
@@ -439,11 +546,11 @@ export default function HomePage() {
                   setUpView(!upView);
                   gameAudio.playClickSound();
                 }}
-                className={`ml-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black transition-all ${
+                className={`px-2.5 py-0.5 rounded-full text-[10px] font-black transition-all ${
                   upView ? "bg-emerald-500 text-white shadow-sm" : "bg-white/20 text-slate-200 hover:bg-white/30"
                 }`}
               >
-                {upView ? "📐 Up-View (All Rooms)" : "🔍 In-Room Focus"}
+                {upView ? "📐 Up-View" : "🔍 Focus"}
               </button>
             )}
           </div>
@@ -938,15 +1045,15 @@ export default function HomePage() {
         </DialogContent>
       </Dialog>
 
-      {/* 3. HOUSING TIER SELECTOR & PREVIEW MODAL */}
+      {/* 3. MY PROPERTIES (OWNED & RENTED) SWITCHER MODAL */}
       <Dialog open={tierModalOpen} onOpenChange={setTierModalOpen}>
         <DialogContent className="bg-white text-slate-900 border-none shadow-2xl w-[92vw] max-w-md max-h-[85dvh] overflow-y-auto z-50 rounded-3xl p-6">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
               <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                <span>🏙️</span> Dubai Housing Tiers
+                <span>🏠</span> My Properties
               </h3>
-              <p className="text-xs text-slate-500">Select your residence type to explore its 3D layout & rooms</p>
+              <p className="text-xs text-slate-500">Switch between your owned & rented residences in Dubai</p>
             </div>
             <button onClick={() => setTierModalOpen(false)} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors">
               <X className="w-4 h-4" />
@@ -954,36 +1061,169 @@ export default function HomePage() {
           </div>
 
           <div className="space-y-2.5 pt-3">
-            {BLUEPRINT.housing.map((h) => {
-              const isCurrent = h.id === housingTier;
+            {/* Prominent Employ Interior Decorator CTA */}
+            <button
+              onClick={() => {
+                setTierModalOpen(false);
+                setDecoratorOpen(true);
+                gameAudio.playClickSound();
+              }}
+              className="w-full p-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-left flex items-center gap-3 shadow-md active:scale-[0.99] transition-transform cursor-pointer"
+            >
+              <span className="text-2xl">🧑‍🎨</span>
+              <span className="flex-1 min-w-0">
+                <span className="block font-black text-xs sm:text-sm">
+                  {decorJob ? "Interior Decorator at Work" : "Employ an Interior Decorator"}
+                </span>
+                <span className="block text-[11px] text-white/85">
+                  {decorJob
+                    ? "Your decorator has the key and is transforming this home."
+                    : "Drop your key — they'll shop, paint and furnish your home."}
+                </span>
+              </span>
+              <span className="text-lg font-black">›</span>
+            </button>
+
+            {/* Owned & Rented Properties from `flats` */}
+            {sortedFlats.length > 0 ? (
+              sortedFlats.map((f) => {
+                const isOwned = f.owner_id === citizen?.id;
+                const fTier = housingTierFor(f.property_type, f.bedrooms);
+                const cfg = HOUSING_CONFIGS[fTier] ?? HOUSING_CONFIGS.studio;
+                const bldgName = getEntity(f.building_id)?.name ?? f.building_id.replace(/-/g, " ");
+                const isCurrent = activeFlat?.id === f.id;
+                const unitLabel = /^\d/.test(f.unit) ? `${f.property_type} · Unit ${f.unit}` : `${f.property_type} (${f.unit})`;
+
+                return (
+                  <div
+                    key={f.id}
+                    className={`w-full p-3.5 rounded-2xl border text-left transition-all ${
+                      isCurrent
+                        ? "border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20 shadow-sm"
+                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                  >
+                    <button
+                      onClick={() => {
+                        updateCitizen((c) => ({
+                          ...c,
+                          activeFlatId: f.id,
+                          home: `${cfg.label}, ${bldgName}`,
+                        }));
+                        if (cfg.rooms?.length || cfg.levels) {
+                          setUpView(true);
+                          setActiveRoomId(fTier === "one_bedroom" ? "bedroom" : "living");
+                        } else {
+                          setUpView(false);
+                        }
+                        setTierModalOpen(false);
+                        showToast(`Switched home to ${unitLabel} at ${bldgName}!`);
+                        gameAudio.playConfirmSound();
+                      }}
+                      className="w-full flex items-center justify-between gap-3 text-left cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-2xl shrink-0">{cfg.icon}</span>
+                        <div className="min-w-0">
+                          <div className="text-xs sm:text-sm font-black text-slate-900 flex flex-wrap items-center gap-1.5">
+                            <span className="truncate">{unitLabel}</span>
+                            <span
+                              className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full ${
+                                isOwned ? "bg-amber-100 text-amber-800" : "bg-sky-100 text-sky-800"
+                              }`}
+                            >
+                              {isOwned ? "Owned" : "Rented"}
+                            </span>
+                            {isCurrent && (
+                              <span className="text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-200/70 px-1.5 py-0.5 rounded-full">
+                                Active
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-slate-500 truncate">
+                            {bldgName} · {f.size_sqft?.toLocaleString() ?? ""} sq ft
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        {isOwned ? (
+                          <div className="text-[11px] font-black text-emerald-700">Deed Owned</div>
+                        ) : (
+                          <>
+                            <div className="text-xs font-black text-slate-900">
+                              AED {(f.rent_price ?? cfg.monthly).toLocaleString()}
+                            </div>
+                            <div className="text-[10px] text-slate-400">/month</div>
+                          </>
+                        )}
+                      </div>
+                    </button>
+                  </div>
+                );
+              })
+            ) : (
+              /* Fallback when the player hasn't rented or bought a map property yet: show their current starter/blueprint residence */
+              (() => {
+                const starterTier = getHousingTierFromText(citizen?.home || life?.blueprint?.housing || "studio");
+                const h = HOUSING_CONFIGS[starterTier] ?? HOUSING_CONFIGS.studio;
+                return (
+                  <div className="p-3.5 rounded-2xl border border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{h.icon}</span>
+                      <div>
+                        <div className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1.5">
+                          <span>{h.label}</span>
+                          <span className="text-[9px] font-black uppercase tracking-wider text-sky-800 bg-sky-100 px-1.5 py-0.5 rounded-full">
+                            Rented
+                          </span>
+                          <span className="text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-200/60 px-1.5 py-0.5 rounded-full">
+                            Active
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-500">{h.area}</div>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-xs font-black text-slate-900">AED {h.monthly.toLocaleString()}</div>
+                      <div className="text-[10px] text-slate-400">/month</div>
+                    </div>
+                  </div>
+                );
+              })()
+            )}
+
+            {/* Option to switch back to starter residence if they own/rent flats but want their starter apartment */}
+            {sortedFlats.length > 0 && (() => {
+              const starterTier = getHousingTierFromText(life?.blueprint?.housing || "studio");
+              const h = HOUSING_CONFIGS[starterTier] ?? HOUSING_CONFIGS.studio;
+              const isStarterActive = !activeFlat;
               return (
                 <button
-                  key={h.id}
                   onClick={() => {
-                    updateCitizen((c) => ({ ...c, home: `${h.label}, ${h.area.split(" · ")[0]}` }));
-                    const cfg = HOUSING_CONFIGS[h.id as HousingTier];
-                    if (cfg?.rooms?.length || cfg?.levels) {
-                      setUpView(true);
-                      setActiveRoomId(h.id === "one_bedroom" ? "bedroom" : "living");
-                    } else {
-                      setUpView(false);
-                    }
+                    updateCitizen((c) => ({
+                      ...c,
+                      activeFlatId: "starter",
+                      home: `${h.label}, ${h.area.split(" · ")[0]}`,
+                    }));
                     setTierModalOpen(false);
-                    showToast(`Switched home to ${h.label}!`);
+                    showToast(`Switched to ${h.label}!`);
                     gameAudio.playConfirmSound();
                   }}
-                  className={`w-full p-3.5 rounded-2xl border text-left transition-all flex items-center justify-between group ${
-                    isCurrent
-                      ? "border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20 shadow-sm"
-                      : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                  className={`w-full p-3 rounded-2xl border text-left transition-all flex items-center justify-between ${
+                    isStarterActive
+                      ? "border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20"
+                      : "border-slate-200 hover:bg-slate-50"
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl group-hover:scale-110 transition-transform">{h.icon}</span>
+                    <span className="text-xl">{h.icon}</span>
                     <div>
-                      <div className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1.5">
+                      <div className="text-xs font-black text-slate-900 flex items-center gap-1.5">
                         <span>{h.label}</span>
-                        {isCurrent && (
+                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                          Blueprint Residence
+                        </span>
+                        {isStarterActive && (
                           <span className="text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-200/60 px-1.5 py-0.5 rounded-full">
                             Active
                           </span>
@@ -998,7 +1238,16 @@ export default function HomePage() {
                   </div>
                 </button>
               );
-            })}
+            })()}
+
+            <Link
+              href="/explore"
+              onClick={() => setTierModalOpen(false)}
+              className="w-full mt-2 py-3 px-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs flex items-center justify-center gap-2 transition-colors"
+            >
+              <Map className="w-4 h-4" />
+              <span>Find More Villas, Mansions & Flats on the Map</span>
+            </Link>
           </div>
         </DialogContent>
       </Dialog>

@@ -65,6 +65,8 @@ export interface Citizen {
   traits?: string[];
   dream?: string;
   home?: string;
+  /** Currently selected flat ID from `flats` (owned or rented) when at /home. */
+  activeFlatId?: string;
   balance: number;
   furniture?: OwnedFurniture[];
   /** Floor, wall paint and panelling chosen for each home (absent: as the home came). */

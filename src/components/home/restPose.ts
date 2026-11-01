@@ -17,7 +17,7 @@ export type RestPose = {
 const CLIP_SEAT_HEIGHT = 0.46;
 const CLIP_SEAT_BACK = 0.12;
 // How far the back of a lying body is below its feet line once laid flat.
-const LYING_BACK = 0.11;
+const LYING_BACK = 0.22;
 
 type Seat = { x: number; z: number; h: number; face: 1 | -1; /** Where to stand (z), when not just in front. */ standZ?: number };
 type Bed = { along: "z" | "x"; h: number; across: number };
@@ -38,9 +38,9 @@ const SEATS: Record<string, Seat> = {
 };
 /** Beds by model: which way the body lies (head at the negative end) and the mattress height. */
 const BEDS: Record<string, Bed> = {
-  "/models/furniture/bed.glb": { along: "z", h: 0.42, across: 0 },
-  "/models/furniture/couch.glb": { along: "x", h: 0.4, across: 0.12 },
-  "visual:canopy-bed": { along: "z", h: 0.48, across: 0 },
+  "/models/furniture/bed.glb": { along: "z", h: 0.52, across: 0 },
+  "/models/furniture/couch.glb": { along: "x", h: 0.44, across: 0.12 },
+  "visual:canopy-bed": { along: "z", h: 0.54, across: -0.35 },
 };
 
 function toRoom(item: CatalogItem, placement: Placement & { kind: "floor" }, x: number, z: number): [number, number] {
@@ -57,12 +57,12 @@ export function restPose(item: CatalogItem, placement: Placement | null | undefi
   const turn = -placement.rot * (Math.PI / 2);
 
   if (kind === "bed") {
-    const bed = BEDS[key] ?? { along: "z", h: 0.42, across: 0 };
+    const bed = BEDS[key] ?? { along: "z", h: 0.52, across: 0 };
     const half = ((bed.along === "z" ? item.size[1] : item.size[0]) * CELL * 0.94) / 2;
-    const head = -half + 0.1;                              // top of the head, just short of the headboard
-    const feet = Math.min(half - 0.05, head + height);
+    const head = -half + 0.24;                             // top of the head resting on the pillow, forward of the headboard
+    const feet = Math.min(half + 0.08, head + height);
     const side = ((bed.along === "z" ? item.size[0] : item.size[1]) * CELL * 0.94) / 2 + 0.35;
-    const [fx, fz] = bed.along === "z" ? toRoom(item, placement, 0, feet) : toRoom(item, placement, feet, bed.across);
+    const [fx, fz] = bed.along === "z" ? toRoom(item, placement, bed.across, feet) : toRoom(item, placement, feet, bed.across);
     const stand = bed.along === "z" ? toRoom(item, placement, side, 0) : toRoom(item, placement, 0, side);
     // Laid flat, the body's head points along its -z, so the yaw turns that towards the headboard end.
     const yaw = turn + (bed.along === "z" ? 0 : Math.PI / 2);

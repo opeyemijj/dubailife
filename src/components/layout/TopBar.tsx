@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Bell, Eye, ChevronDown, ChevronRight, ChevronUp, Flame, Frown, Gift, Laugh, ListChecks, MapPin, Meh, Plus, Smile, Smartphone, Sun, Moon, Thermometer, User, Users, Volume2, Wallet, X, Sparkles, Lightbulb } from "lucide-react";
 import { useCitizen } from "@/lib/citizenStore";
+import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { useOnlineCount, formatOnline } from "@/lib/presence";
 import { compact, useSiteStats } from "@/lib/siteStats";
 import { dubaiTime, moodOf, useNow, type Mood } from "@/lib/dubaiClock";
@@ -37,27 +38,57 @@ export function TopBar({ walletBalance: walletOverride }: TopBarProps) {
   const now = useNow();
   const t = now ? dubaiTime(now) : null;
   const mood = moodOf(citizen, !!useServices(citizen?.id)?.illness);
+  const life = useLifeLoop();
   const [open, setOpen] = useState(false);
   // Shown beside the chevron on wider screens (as on Home); phones keep the bar compact.
   const onlineCount = useOnlineCount();
   const { visits } = useSiteStats();
   if (useEmbedded()) return null;
+  const avatarSrc = rosterThumb(presetFor(citizen?.look ?? { gender: "woman" }));
+  const visaUrgent = !!(life && life.visaTier !== "GOLDEN" && life.visaDaysLeft <= 7);
 
   return (
     <div className="fixed top-0 left-0 w-full z-50 px-3 sm:px-6 pt-[max(0.6rem,env(safe-area-inset-top))] pb-1.5 pointer-events-none select-none text-slate-900">
-      {/* One slim bar, like Home's: time and mood, the status chevron, alerts and the wallet. */}
-      <div className="max-w-4xl mx-auto pointer-events-auto flex items-center justify-between gap-2 bg-white/95 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] pl-3 pr-1.5 py-1.5 rounded-full">
-        <button
-          onClick={() => { gameAudio.playClickSound(); setOpen((o) => !o); }}
-          aria-label="Time, weather and mood"
-          className="flex items-center gap-1.5 min-w-0 active:scale-95 transition-transform"
-        >
-          {t?.night ? <Moon className="w-3.5 h-3.5 text-indigo-500" /> : <Sun className="w-3.5 h-3.5 text-amber-500" />}
-          <span className="text-sm font-black tabular-nums leading-none">{t?.clock ?? "--:--"}<span className="text-[9px] font-bold text-slate-500 ml-0.5">{t?.ampm}</span></span>
-          <span className="hidden min-[360px]:flex items-center text-[10px] font-bold text-orange-500"><Thermometer className="w-3 h-3" />{t ? `${t.tempC}°` : ""}</span>
-          <span className="w-px h-3.5 bg-slate-200" />
-          <MoodFace mood={mood} className="w-4 h-4" />
-        </button>
+      {/* One slim bar, like Home's: avatar (opens LifePanel), time and mood, the status chevron, alerts and the wallet. */}
+      <div className="max-w-4xl mx-auto pointer-events-auto flex items-center justify-between gap-2 bg-white/95 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] pl-1.5 pr-1.5 py-1.5 rounded-full">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <button
+            onClick={() => { gameAudio.playClickSound(); openLife("profile"); }}
+            title="Open Profile, Visa & Budget, and League"
+            aria-label="Open Profile, Visa & Budget, and League"
+            className="relative flex items-center gap-1.5 pr-2 pl-0.5 py-0.5 rounded-full bg-slate-900/5 hover:bg-slate-900/10 border border-slate-200/80 active:scale-95 transition-all shrink-0 cursor-pointer"
+          >
+            <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={avatarSrc} alt="" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover object-top bg-sky-100 ring-2 ring-amber-400" />
+              <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-white ${visaUrgent ? "bg-rose-500 animate-pulse" : "bg-emerald-500"}`} />
+            </div>
+            {life ? (
+              <span className="hidden xs:flex flex-col items-start leading-none">
+                <span className="text-[10px] font-black text-slate-900 flex items-center gap-0.5">
+                  🔥{life.streak}d
+                </span>
+                <span className={`text-[8px] font-extrabold ${visaUrgent ? "text-rose-600" : "text-slate-500"}`}>
+                  {life.visaTier === "GOLDEN" ? "Golden" : `${life.visaDaysLeft}d visa`}
+                </span>
+              </span>
+            ) : (
+              <span className="hidden xs:inline text-[10px] font-black text-slate-800">Profile</span>
+            )}
+          </button>
+
+          <button
+            onClick={() => { gameAudio.playClickSound(); setOpen((o) => !o); }}
+            aria-label="Time, weather and mood"
+            className="flex items-center gap-1.5 min-w-0 active:scale-95 transition-transform"
+          >
+            {t?.night ? <Moon className="w-3.5 h-3.5 text-indigo-500" /> : <Sun className="w-3.5 h-3.5 text-amber-500" />}
+            <span className="text-sm font-black tabular-nums leading-none">{t?.clock ?? "--:--"}<span className="text-[9px] font-bold text-slate-500 ml-0.5">{t?.ampm}</span></span>
+            <span className="hidden min-[390px]:flex items-center text-[10px] font-bold text-orange-500"><Thermometer className="w-3 h-3" />{t ? `${t.tempC}°` : ""}</span>
+            <span className="w-px h-3.5 bg-slate-200" />
+            <MoodFace mood={mood} className="w-4 h-4" />
+          </button>
+        </div>
 
         <div className="flex items-center gap-3">
           <span className="hidden sm:flex items-center gap-1 text-xs font-bold text-slate-500"><Eye className="w-3.5 h-3.5 text-slate-400" />{compact(visits)}</span>
@@ -142,7 +173,7 @@ function StatusPanel({ onClose, mood, balance }: { onClose: () => void; mood: Mo
           <Tile icon={<Smartphone className="w-5 h-5" />} label="Phone" onClick={act(() => openPhone())} />
           <Tile icon={<Sparkles className="w-5 h-5" />} label="What's new" onClick={act(() => openSheet("whats-new"))} />
           <Tile icon={<Lightbulb className="w-5 h-5" />} label="Suggest" onClick={act(() => openSheet("suggest"))} />
-          <Tile icon={<User className="w-5 h-5" />} label="Profile" href="/profile" onClick={onClose} />
+          <Tile icon={<User className="w-5 h-5" />} label="Profile" onClick={act(() => openLife("profile"))} />
         </div>
       </div>
     </>
