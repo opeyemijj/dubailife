@@ -127,7 +127,7 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
     { id: "ideas", name: "Ideas", icon: "💡", bg: "from-yellow-200 to-amber-400", run: () => openSheet("suggest") },
     { id: "alerts", name: "Alerts", icon: "🔔", bg: "from-rose-300 to-pink-600", screen: "page:/phone?tab=alerts" },
     { id: "guide", name: "Guide", icon: "🧭", bg: "from-sky-300 to-cyan-600", screen: "page:/guide" },
-    { id: "profile", name: "Profile", icon: "🙂", bg: "from-zinc-300 to-zinc-500", screen: "page:/profile" },
+    { id: "profile", name: "Profile", icon: "🙂", bg: "from-zinc-300 to-zinc-500", run: () => openLife("profile") },
   ], [unread, clinicBadge, courtBadge, loveBadge]);
 
   const home = () => setScreen("home");

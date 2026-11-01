@@ -1,10 +1,17 @@
 "use client";
 
-// Pool (8-ball) on a canvas table with simple real physics: friction, cushions, ball-to-ball collisions
-// and six pockets. Drag back from anywhere to aim (the cue points from your finger through the white)
-// and set power; let go to shoot. Every shot is saved with its aim and power and replayed for everyone.
+// Pool (8-ball) — Upgraded with a full 3D Billiard Lounge Table + Live 3D Player Avatars!
+// Uses the same deterministic 2D physics (friction, cushions, ball-to-ball collisions, 6 pockets)
+// so multiplayer replays stay 100% synced, while rendering glossy 3D spheres, a 3D wooden table,
+// 3D cue stick, and player avatars cheering/watching beside the table. Includes a one-tap 3D / 2D toggle.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import * as THREE from "three";
+import { CitizenAvatar } from "@/components/avatar/CitizenAvatar";
+import { canvasQuality } from "@/lib/device";
+import { useCitizen } from "@/lib/citizenStore";
+import { LOCALS } from "@/lib/locals";
 import type { BoardProps, GameModule } from "./types";
 
 interface Ball { n: number; x: number; y: number; in: boolean }
@@ -101,7 +108,6 @@ function shoot(s: PoolState, angle: number, power: number): PoolState {
   const mine = groups[seat];
   const scratch = sim.potted.includes(0);
   if (scratch) {
-    // Respot the white on the head spot (or the nearest free place behind it).
     const cue = balls.find((b) => b.n === 0)!;
     cue.in = false; cue.y = HEAD[1];
     cue.x = HEAD[0];
@@ -135,7 +141,6 @@ function init(): PoolState {
   return { balls: rack(), turn: 0, groups: [null, null], winner: null };
 }
 
-/** Pick the easiest pot: aim at the ghost-ball position for each target ball and pocket. */
 function ai(s: PoolState, seat: number): PoolState {
   const cue = s.balls.find((b) => b.n === 0)!;
   const mine = s.groups[seat];
@@ -148,7 +153,6 @@ function ai(s: PoolState, seat: number): PoolState {
     const aim = Math.atan2(gy - cue.y, gx - cue.x), path = Math.atan2(py - t.y, px - t.x);
     const cut = Math.abs(Math.atan2(Math.sin(path - aim), Math.cos(path - aim)));
     if (cut > 1.2) continue;
-    // Skip shots with a ball in the way of the white.
     const blocked = s.balls.some((o) => !o.in && o.n !== 0 && o.n !== t.n && distToSegment(o.x, o.y, cue.x, cue.y, gx, gy) < 2 * R);
     if (blocked) continue;
     const cost = cut * 300 + cg * 0.4 + tp * 0.5;
@@ -169,27 +173,182 @@ function distToSegment(x: number, y: number, ax: number, ay: number, bx: number,
 
 const turnOf = (s: PoolState) => (s.winner === null ? s.turn : null);
 const result = (s: PoolState) => (s.winner === null ? null : { winners: [s.winner] });
-/** Wait for the last shot to finish rolling before the computer plays. */
 export const poolDelay = (s: PoolState) => (s.shot?.ms ?? 0) + 700;
 
-// ---------------------------------------------------------------- drawing
+// ---------------------------------------------------------------- 2D & 3D rendering
 
 const BALL_COLORS = ["#fafaf9", "#facc15", "#2563eb", "#dc2626", "#7c3aed", "#f97316", "#16a34a", "#7f1d1d", "#111827"];
 const colorOf = (n: number) => BALL_COLORS[n === 8 ? 8 : n > 8 ? n - 8 : n];
 
+// 1000x500 table -> 3.0m x 1.5m 3D table at y = 0.82m
+const S3 = 0.003;
+const to3 = (x: number, y: number): [number, number] => [(x - W / 2) * S3, (y - H / 2) * S3];
+const TABLE_Y = 0.82;
+const BALL_R3 = R * S3 * 1.12;
+
+function Pool3DScene({
+  livePosRef,
+  ns,
+  aim,
+  myLook,
+  turn,
+}: {
+  livePosRef: React.RefObject<Array<[number, number]>>;
+  ns: number[];
+  aim: { angle: number; power: number } | null;
+  myLook?: any;
+  turn: number;
+}) {
+  const ballsGroup = useRef<THREE.Group>(null);
+  const cueStick = useRef<THREE.Group>(null);
+  const aimLine = useRef<THREE.Mesh>(null);
+  const rivalLook = useMemo(() => LOCALS[4].look, []);
+
+  useFrame(({ camera }, rawDt) => {
+    const dt = Math.min(rawDt, 0.05);
+    const pos = livePosRef.current;
+    if (pos && ballsGroup.current) {
+      ballsGroup.current.children.forEach((child, idx) => {
+        const p = pos[idx];
+        if (!p || p[0] < -100) {
+          child.visible = false;
+          return;
+        }
+        child.visible = true;
+        const [x3, z3] = to3(p[0], p[1]);
+        child.position.set(x3, TABLE_Y + BALL_R3, z3);
+      });
+    }
+
+    const cuePos = pos?.[0];
+    if (aim && cuePos && cuePos[0] > -100) {
+      const [cx, cz] = to3(cuePos[0], cuePos[1]);
+      if (cueStick.current) {
+        cueStick.current.visible = true;
+        const back = (28 + aim.power * 110) * S3;
+        cueStick.current.position.set(cx - Math.cos(aim.angle) * back, TABLE_Y + BALL_R3 * 1.15, cz - Math.sin(aim.angle) * back);
+        cueStick.current.rotation.set(0, -aim.angle, -0.09);
+      }
+      if (aimLine.current) {
+        aimLine.current.visible = true;
+        const len = 1.15;
+        aimLine.current.position.set(cx + Math.cos(aim.angle) * (len / 2), TABLE_Y + 0.008, cz + Math.sin(aim.angle) * (len / 2));
+        aimLine.current.rotation.set(-Math.PI / 2, 0, -aim.angle);
+      }
+    } else {
+      if (cueStick.current) cueStick.current.visible = false;
+      if (aimLine.current) aimLine.current.visible = false;
+    }
+
+    // Elevated lounge perspective so the entire table and standing avatars are visible
+    camera.position.lerp(new THREE.Vector3(0, 3.05, 1.95), Math.min(1, dt * 4));
+    camera.lookAt(0, TABLE_Y - 0.05, -0.1);
+  });
+
+  return (
+    <>
+      <color attach="background" args={["#090d16"]} />
+      <hemisphereLight args={["#fef3c7", "#1e293b", 1.1]} />
+      <spotLight position={[0, 4.2, 0]} angle={0.75} penumbra={0.5} intensity={45} color="#fffbeb" castShadow />
+      <pointLight position={[-2, 2.5, -1.5]} intensity={10} color="#38bdf8" />
+
+      {/* Lounge Floor */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[12, 10]} />
+        <meshStandardMaterial color="#1e1b18" roughness={0.6} />
+      </mesh>
+
+      {/* 3D Billiard Table */}
+      <group position={[0, 0, 0]}>
+        {/* Table Legs */}
+        {[
+          [-1.25, -0.55],
+          [1.25, -0.55],
+          [-1.25, 0.55],
+          [1.25, 0.55],
+        ].map(([lx, lz], i) => (
+          <mesh key={i} position={[lx, TABLE_Y / 2, lz]}>
+            <cylinderGeometry args={[0.1, 0.08, TABLE_Y, 16]} />
+            <meshStandardMaterial color="#29180c" roughness={0.5} />
+          </mesh>
+        ))}
+        {/* Mahogany Body & Rails */}
+        <mesh position={[0, TABLE_Y - 0.09, 0]} castShadow receiveShadow>
+          <boxGeometry args={[W * S3 + 0.14, 0.18, H * S3 + 0.14]} />
+          <meshStandardMaterial color="#451a03" roughness={0.35} metalness={0.15} />
+        </mesh>
+        {/* Emerald Felt Surface */}
+        <mesh position={[0, TABLE_Y + 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <planeGeometry args={[(W - RAIL * 1.6) * S3, (H - RAIL * 1.6) * S3]} />
+          <meshStandardMaterial color="#15803d" roughness={0.85} />
+        </mesh>
+        {/* 6 Pockets */}
+        {POCKETS.map(([px, py], i) => {
+          const [x3, z3] = to3(px, py);
+          return (
+            <mesh key={i} position={[x3, TABLE_Y + 0.004, z3]} rotation={[-Math.PI / 2, 0, 0]}>
+              <circleGeometry args={[POCKET * S3 * 1.05, 20]} />
+              <meshBasicMaterial color="#050505" />
+            </mesh>
+          );
+        })}
+      </group>
+
+      {/* Aim Line on Felt */}
+      <mesh ref={aimLine} visible={false}>
+        <planeGeometry args={[1.15, 0.018]} />
+        <meshBasicMaterial color="#fef08a" transparent opacity={0.85} />
+      </mesh>
+
+      {/* 3D Cue Stick */}
+      <group ref={cueStick} visible={false}>
+        <mesh position={[-0.55, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.008, 0.016, 1.1, 12]} />
+          <meshStandardMaterial color="#fde68a" roughness={0.3} />
+        </mesh>
+      </group>
+
+      {/* 16 Glossy 3D Billiard Balls */}
+      <group ref={ballsGroup}>
+        {ns.map((n) => (
+          <mesh key={n} castShadow>
+            <sphereGeometry args={[BALL_R3, 20, 20]} />
+            <meshPhysicalMaterial
+              color={colorOf(n)}
+              roughness={0.12}
+              metalness={0.08}
+              clearcoat={1}
+              clearcoatRoughness={0.08}
+            />
+          </mesh>
+        ))}
+      </group>
+
+      {/* Player & Opponent 3D Avatars Watching Tableside */}
+      <group position={[-1.05, 0, -1.18]} rotation={[0, 0.25, 0]}>
+        <Suspense fallback={null}>
+          <CitizenAvatar look={myLook} animation={turn === 0 ? "wave" : "idle"} />
+        </Suspense>
+      </group>
+      <group position={[1.05, 0, -1.18]} rotation={[0, -0.25, 0]}>
+        <Suspense fallback={null}>
+          <CitizenAvatar look={rivalLook} animation={turn === 1 ? "talk" : "idle"} />
+        </Suspense>
+      </group>
+    </>
+  );
+}
+
 function draw(ctx: CanvasRenderingContext2D, scale: number, positions: Array<[number, number]>, ns: number[], aim: { angle: number; power: number } | null, cue: [number, number] | null) {
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
-  // wood rail, felt, cushions
   ctx.fillStyle = "#5b3a1e"; ctx.fillRect(0, 0, W, H);
   ctx.fillStyle = "#15803d"; ctx.fillRect(RAIL - 6, RAIL - 6, W - 2 * RAIL + 12, H - 2 * RAIL + 12);
   ctx.fillStyle = "#16a34a"; ctx.fillRect(RAIL, RAIL, W - 2 * RAIL, H - 2 * RAIL);
   ctx.strokeStyle = "rgba(255,255,255,0.12)"; ctx.beginPath(); ctx.moveTo(HEAD[0], RAIL); ctx.lineTo(HEAD[0], H - RAIL); ctx.stroke();
   for (const [px, py] of POCKETS) { ctx.fillStyle = "#0a0a0a"; ctx.beginPath(); ctx.arc(px, py, POCKET, 0, Math.PI * 2); ctx.fill(); }
-  // aim line
   if (aim && cue) {
     ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.setLineDash([8, 8]); ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(cue[0], cue[1]); ctx.lineTo(cue[0] + Math.cos(aim.angle) * 420, cue[1] + Math.sin(aim.angle) * 420); ctx.stroke(); ctx.setLineDash([]);
-    // the cue stick behind the white
     const back = 24 + aim.power * 120;
     ctx.strokeStyle = "#d6a76c"; ctx.lineWidth = 7; ctx.lineCap = "round";
     ctx.beginPath(); ctx.moveTo(cue[0] - Math.cos(aim.angle) * back, cue[1] - Math.sin(aim.angle) * back); ctx.lineTo(cue[0] - Math.cos(aim.angle) * (back + 300), cue[1] - Math.sin(aim.angle) * (back + 300)); ctx.stroke();
@@ -205,17 +364,22 @@ function draw(ctx: CanvasRenderingContext2D, scale: number, positions: Array<[nu
 }
 
 function Board({ state, me, seats, onMove, canMove }: BoardProps<PoolState>) {
+  const { citizen } = useCitizen();
+  const quality = useMemo(() => canvasQuality(), []);
   const wrap = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [width, setWidth] = useState(600);
-  // Sharp on high-density screens (capped at 2× to save memory).
   const [dpr] = useState(() => (typeof window === "undefined" ? 1 : Math.min(2, window.devicePixelRatio || 1)));
   const [playing, setPlaying] = useState(false);
   const [aim, setAim] = useState<{ angle: number; power: number } | null>(null);
+  const [mode3D, setMode3D] = useState(true);
   const seen = useRef<number>(state.shot?.id ?? 0);
   const ns = useMemo(() => state.balls.map((b) => b.n), [state.balls]);
   const scale = (width / W) * dpr;
   const cue = state.balls.find((b) => b.n === 0)!;
+
+  // Live ball positions shared with the 3D scene
+  const livePosRef = useRef<Array<[number, number]>>(state.balls.map((b) => [b.in ? -999 : b.x, b.y]));
 
   useEffect(() => {
     const el = wrap.current;
@@ -225,16 +389,14 @@ function Board({ state, me, seats, onMove, canMove }: BoardProps<PoolState>) {
     return () => ro.disconnect();
   }, []);
 
-  // The latest values for the animation loop, without restarting it.
   const latest = useRef({ state, scale, ns, aim });
   useEffect(() => { latest.current = { state, scale, ns, aim }; });
   const shotId = state.shot?.id ?? 0;
 
-  // Replay a new shot (once), then show where the balls ended up.
+  // Replay a new shot (once), updating both 3D livePosRef and 2D canvas if visible
   useEffect(() => {
-    const ctx = canvas.current?.getContext("2d");
     const shot = latest.current.state.shot;
-    if (!ctx || !shot || shot.id === seen.current) return;
+    if (!shot || shot.id === seen.current) return;
     seen.current = shot.id;
     const sim = simulate(shot.from, shot.angle, shot.power);
     const order = shot.from.map((b) => b.n);
@@ -242,27 +404,37 @@ function Board({ state, me, seats, onMove, canMove }: BoardProps<PoolState>) {
     setPlaying(true);
     const tick = () => {
       const { state: s, scale: sc, ns: n } = latest.current;
-      if (f < sim.frames.length) { draw(ctx, sc, sim.frames[f], order, null, null); f++; raf = requestAnimationFrame(tick); return; }
-      draw(ctx, sc, s.balls.map((b) => [b.in ? -999 : b.x, b.y]), n, null, null);
+      const ctx = canvas.current?.getContext("2d");
+      if (f < sim.frames.length) {
+        livePosRef.current = sim.frames[f];
+        if (ctx) draw(ctx, sc, sim.frames[f], order, null, null);
+        f++;
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+      const rest = s.balls.map((b): [number, number] => [b.in ? -999 : b.x, b.y]);
+      livePosRef.current = rest;
+      if (ctx) draw(ctx, sc, rest, n, null, null);
       setPlaying(false);
     };
     raf = requestAnimationFrame(tick);
     return () => { cancelAnimationFrame(raf); seen.current = -1; setPlaying(false); };
   }, [shotId]);
 
-  // The table at rest (and the aim line while aiming).
   useEffect(() => {
+    if (playing) return;
+    const rest = state.balls.map((b): [number, number] => [b.in ? -999 : b.x, b.y]);
+    livePosRef.current = rest;
     const ctx = canvas.current?.getContext("2d");
-    if (!ctx || playing) return;
-    draw(ctx, scale, state.balls.map((b) => [b.in ? -999 : b.x, b.y]), ns, aim, aim ? [cue.x, cue.y] : null);
-  }, [state, scale, ns, aim, cue.x, cue.y, playing]);
+    if (ctx) draw(ctx, scale, rest, ns, aim, aim ? [cue.x, cue.y] : null);
+  }, [state, scale, ns, aim, cue.x, cue.y, playing, mode3D]);
 
   const myTurn = canMove && !playing && state.turn === me && state.winner === null;
-  const toTable = (e: React.PointerEvent) => {
-    const r = canvas.current!.getBoundingClientRect();
+  const toTable = (e: React.PointerEvent<HTMLElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
     return [((e.clientX - r.left) / r.width) * W, ((e.clientY - r.top) / r.height) * H];
   };
-  const onPointer = (e: React.PointerEvent) => {
+  const onPointer = (e: React.PointerEvent<HTMLElement>) => {
     if (!myTurn || (e.type === "pointermove" && !aim && e.buttons === 0)) return;
     const [x, y] = toTable(e);
     const angle = Math.atan2(cue.y - y, cue.x - x);
@@ -276,23 +448,52 @@ function Board({ state, me, seats, onMove, canMove }: BoardProps<PoolState>) {
     onMove(shoot(state, a.angle, a.power));
   };
   const myGroup = state.groups[me];
+
   return (
     <div className="max-w-3xl mx-auto space-y-2">
-      <div className="flex flex-wrap justify-center gap-2 text-xs font-bold">
-        {seats.map((s, i) => (
-          <span key={i} className={`px-2.5 py-1 rounded-full ${state.turn === i && state.winner === null ? "bg-emerald-700 text-white" : "bg-slate-100 text-slate-600"}`}>
-            {i === me ? "You" : s.name}{state.groups[i] ? ` · ${state.groups[i]}` : ""}
-          </span>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
+        <div className="flex flex-wrap gap-1.5">
+          {seats.map((s, i) => (
+            <span key={i} className={`px-2.5 py-1 rounded-full ${state.turn === i && state.winner === null ? "bg-emerald-700 text-white" : "bg-slate-100 text-slate-600"}`}>
+              {i === me ? "You" : s.name}{state.groups[i] ? ` · ${state.groups[i]}` : ""}
+            </span>
+          ))}
+        </div>
+        <button
+          onClick={() => setMode3D((v) => !v)}
+          className="px-3 py-1 rounded-full bg-slate-900 text-amber-300 font-black text-[11px]"
+        >
+          {mode3D ? "🎱 3D Lounge View" : "📐 2D Top View"}
+        </button>
       </div>
-      <div ref={wrap} className="w-full">
-        <canvas ref={canvas} width={Math.round(width * dpr)} height={Math.round((width / 2) * dpr)}
-          style={{ width, height: width / 2, touchAction: "none" }} className="rounded-2xl shadow-xl"
-          onPointerDown={(e) => { (e.target as HTMLElement).setPointerCapture(e.pointerId); onPointer(e); }} onPointerMove={onPointer} onPointerUp={release} onPointerCancel={() => setAim(null)} />
+
+      <div
+        ref={wrap}
+        className="w-full relative rounded-2xl overflow-hidden shadow-xl select-none"
+        style={{ height: Math.max(240, Math.round(width * 0.56)), touchAction: "none" }}
+        onPointerDown={(e) => { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); onPointer(e); }}
+        onPointerMove={onPointer}
+        onPointerUp={release}
+        onPointerCancel={() => setAim(null)}
+      >
+        {mode3D ? (
+          <Canvas dpr={quality.dpr} shadows={quality.shadows} camera={{ position: [0, 3.05, 1.95], fov: 42 }}>
+            <Pool3DScene livePosRef={livePosRef} ns={ns} aim={aim} myLook={citizen?.look} turn={state.turn} />
+          </Canvas>
+        ) : (
+          <canvas
+            ref={canvas}
+            width={Math.round(width * dpr)}
+            height={Math.round((width / 2) * dpr)}
+            style={{ width, height: width / 2 }}
+            className="w-full h-full"
+          />
+        )}
       </div>
+
       <p className="text-center text-sm font-bold min-h-5">
         {state.shot?.note && !playing ? `${state.shot.note} · ` : ""}
-        {playing ? "…" : myTurn ? (aim ? `Power ${Math.round(aim.power * 100)}% — let go to shoot` : `Your shot${myGroup ? ` (${cleared(state.balls, myGroup) ? "the 8-ball" : myGroup})` : ""} — drag back from the white to aim`) : state.winner === null ? `${seats[state.turn]?.name ?? "…"} is shooting…` : ""}
+        {playing ? "…" : myTurn ? (aim ? `Power ${Math.round(aim.power * 100)}% — let go to shoot` : `Your shot${myGroup ? ` (${cleared(state.balls, myGroup) ? "the 8-ball" : myGroup})` : ""} — drag anywhere on the table to aim`) : state.winner === null ? `${seats[state.turn]?.name ?? "…"} is shooting…` : ""}
       </p>
     </div>
   );

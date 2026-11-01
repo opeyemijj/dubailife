@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { aed as aedEco, applyJob, companyIcon, daysUntil, endJob, jobBoard, myEconomy, VENTURES, ventureType, workShift, type BoardJob, type Economy } from "@/lib/economy";
 import { gameAudio } from "@/utils/gameAudio";
 import { InterviewScene } from "@/components/jobs/InterviewScene";
+import { ShiftScene } from "@/components/jobs/ShiftScene";
 import { useRouter } from "next/navigation";
 import { useCitizen } from "@/lib/citizenStore";
 import { monthlyPay, qualifiesFor, studyFor, useGoals } from "@/lib/goals";
@@ -32,6 +33,7 @@ export function JobsApp({ onBack, onClose }: { onBack: () => void; onClose?: () 
   const [jobs, setJobs] = useState<BoardJob[] | null>(null);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   const [interview, setInterview] = useState<BoardJob | null>(null);
+  const [inShift, setInShift] = useState(false);
   const [now] = useState(() => Date.now());
 
   const load = useCallback(async () => {
@@ -49,12 +51,9 @@ export function JobsApp({ onBack, onClose }: { onBack: () => void; onClose?: () 
     setNote({ ok: true, text: j.system ? `🎉 You're hired as ${j.title} at ${j.venture}. Work your first shift above.` : `Interview passed. ${j.venture} will review your application.` });
     void load();
   };
-  const shift = async () => {
-    const r = await workShift();
-    if (r.error) return setNote({ ok: false, text: r.error });
-    gameAudio.playCoinSound();
-    setNote({ ok: true, text: `Shift done: ${r.data!.shifts}/${r.data!.shiftsPerWeek} this week. Paid on Friday.` });
-    void load();
+  const shift = () => {
+    gameAudio.playClickSound();
+    setInShift(true);
   };
   const quit = async () => {
     if (!confirm("Quit your job? Earlier weeks are paid now, but shifts worked this week won't be.")) return;
@@ -95,6 +94,18 @@ export function JobsApp({ onBack, onClose }: { onBack: () => void; onClose?: () 
           if (hired) setNote({ ok: true, text: `🎉 You're hired as ${interview.title} at ${interview.venture}. Work your first shift above.` });
           void load();
         }} />
+      )}
+      {inShift && eco?.job && (
+        <ShiftScene
+          job={eco.job}
+          look={citizen?.look}
+          onCancel={() => setInShift(false)}
+          onDone={(res) => {
+            setInShift(false);
+            setNote({ ok: true, text: `Shift done: ${res.shifts}/${res.shiftsPerWeek} this week${res.bonusAed > 0 ? ` · +${aedEco(res.bonusAed)} tips!` : "."}` });
+            void load();
+          }}
+        />
       )}
 
       {jobs === null ? <p className="text-slate-500 text-center py-8">Loading jobs…</p> : jobs.filter((j) => !j.mine).map((j) => {

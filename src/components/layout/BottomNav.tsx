@@ -12,6 +12,7 @@ import { gameAudio } from "@/utils/gameAudio";
 import { SITE } from "@/lib/site";
 import { illnessOf, useServices } from "@/lib/cityServices";
 import { useEmbedded } from "@/components/layout/Embed";
+import { useMissions } from "@/lib/missions";
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -32,7 +33,19 @@ export function BottomNav() {
           <nav className="h-[60px] p-1.5 flex items-center">
             <NavItem href="/home" icon={<Home className="w-6 h-6" />} label="Home" active={isActive("/home")} />
             <NavItem href="/explore" icon={<Map className="w-6 h-6" />} label="Map" active={isActive("/explore")} />
-            <NavItem href="/profile" icon={<User className="w-6 h-6" />} label="Me" active={isActive("/profile")} />
+            <button
+              onClick={() => {
+                gameAudio.playClickSound();
+                openLife("profile");
+              }}
+              aria-label="Me"
+              className={`h-full rounded-full flex items-center justify-center gap-2 transition-all active:scale-95 ${
+                isActive("/profile") ? "flex-[1.6] bg-emerald-50 text-emerald-700 font-bold text-lg" : "flex-1 text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <User className="w-6 h-6" />
+              {isActive("/profile") && <span>Me</span>}
+            </button>
             <PhoneButton unread={unread} />
           </nav>
           {onMap && <MapFooter />}
@@ -52,18 +65,39 @@ function MapFooter() {
   );
 }
 
-/** On the map, only when the visa is running out (10 days or fewer): your face and mood are in the top bar. */
+/** On the map: a compact "Next Reward / Visa" micro-progress pill so players always see their closest goal. */
 function VisaChip() {
+  const { citizen } = useCitizen();
   const life = useLifeLoop();
+  const { missions } = useMissions(citizen?.id);
   const visa = life && life.visaTier !== "GOLDEN" ? visaInfo(life.visaTier) : null;
-  if (!visa || !life || life.visaDaysLeft > 10) return null;
+
+  if (visa && life && life.visaDaysLeft <= 10) {
+    return (
+      <button
+        onClick={() => { gameAudio.playClickSound(); openLife("visa"); }}
+        aria-label={`${visa.label}: ${life.visaDaysLeft} days left`}
+        className={`pointer-events-auto mb-2 h-9 px-3 rounded-full shadow-md flex items-center gap-1 font-bold text-sm active:scale-95 ${life.visaDaysLeft <= 5 ? "bg-rose-500 text-white" : "bg-white/95 text-slate-800"}`}
+      >
+        {visa.icon} Visa: {life.visaDaysLeft}d left
+      </button>
+    );
+  }
+
+  if (!missions || missions.box.claimed) return null;
+  const doneCount = missions.missions.filter((m) => m.done).length;
+  const pct = Math.min(100, Math.round((doneCount / 3) * 100));
   return (
     <button
-      onClick={() => { gameAudio.playClickSound(); openLife("visa"); }}
-      aria-label={`${visa.label}: ${life.visaDaysLeft} days left`}
-      className={`pointer-events-auto mb-2 h-9 px-3 rounded-full shadow-md flex items-center gap-1 font-bold text-sm active:scale-95 ${life.visaDaysLeft <= 5 ? "bg-rose-500 text-white" : "bg-white/95 text-slate-800"}`}
+      onClick={() => { gameAudio.playClickSound(); openLife("goals"); }}
+      aria-label={`Daily Mystery Vault: ${doneCount} of 3 missions complete`}
+      className="pointer-events-auto mb-2 h-9 px-3.5 rounded-full bg-slate-900/95 text-white border border-white/15 shadow-lg flex items-center gap-2 font-bold text-xs active:scale-95"
     >
-      {visa.icon} Visa: {life.visaDaysLeft}d left
+      <span>🎁</span>
+      <span>{doneCount >= 3 ? "Unlock Daily Vault!" : `${doneCount}/3 to Mystery Vault`}</span>
+      <span className="w-12 h-2 rounded-full bg-white/15 overflow-hidden">
+        <span className="block h-full bg-amber-400 transition-all" style={{ width: `${Math.max(15, pct)}%` }} />
+      </span>
     </button>
   );
 }

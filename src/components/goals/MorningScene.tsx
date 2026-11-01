@@ -2,7 +2,8 @@
 
 // Good morning: once a game day (they start at 09:00 Dubai time), the first time you open the map or your
 // home. You're asleep in bed with the sun coming up through the window; the phone on the nightstand buzzes,
-// you get up, and today's three missions are on the screen.
+// you get up, and today's 7-Day Residency Stamp Card, Overnight Ledger ("While You Were Away"), and three
+// daily missions are on the screen.
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
@@ -12,10 +13,22 @@ import { CitizenAvatar, type AvatarAnimation } from "@/components/avatar/Citizen
 import type { AvatarLookProps } from "@/components/onboarding/AvatarCanvas";
 import { phoneRing } from "@/components/transit/transitAudio";
 import { canvasQuality } from "@/lib/device";
-import { dialogOpen, useCitizen } from "@/lib/citizenStore";
+import { adjustBalance, dialogOpen, useCitizen } from "@/lib/citizenStore";
 import { useGoals } from "@/lib/goals";
+import { useLifeLoop, visaInfo } from "@/lib/lifeLoop";
 import { useMissions } from "@/lib/missions";
+import { gameAudio } from "@/utils/gameAudio";
 import { DailyMissions } from "./DailyMissions";
+
+const STAMP_REWARDS = [
+  { day: 1, icon: "🚇", label: "Nol Top-Up", aed: 150 },
+  { day: 2, icon: "☕", label: "Karak & Croissant", aed: 220 },
+  { day: 3, icon: "🏎️", label: "Supercar Lease Bonus", aed: 500 },
+  { day: 4, icon: "🛍️", label: "Mall Voucher", aed: 320 },
+  { day: 5, icon: "🧑‍🎨", label: "Decor Grant", aed: 650 },
+  { day: 6, icon: "🏖️", label: "VIP Beach Pass", aed: 800 },
+  { day: 7, icon: "👑", label: "Golden Vault", aed: 2000 },
+];
 
 function Bedroom({ look, upRef }: { look?: AvatarLookProps; upRef: React.RefObject<number> }) {
   const me = useRef<THREE.Group>(null);
@@ -71,9 +84,11 @@ function Bedroom({ look, upRef }: { look?: AvatarLookProps; upRef: React.RefObje
 }
 
 const KEY = (day: number) => `dl_morning:${day}`;
+const STAMP_KEY = (day: number) => `dl_stamp_claimed:${day}`;
 
 export function MorningScene() {
   const { citizen } = useCitizen();
+  const life = useLifeLoop();
   const path = usePathname() ?? "";
   const { status } = useGoals(citizen?.id);
   const { missions } = useMissions(citizen?.id);
@@ -81,6 +96,7 @@ export function MorningScene() {
   const up = useRef(0);
   const [show, setShow] = useState(false);
   const [awake, setAwake] = useState(false);
+  const [stampClaimed, setStampClaimed] = useState(false);
 
   // Once a game day, on the map or at home, when nothing else is on screen.
   useEffect(() => {
@@ -88,9 +104,18 @@ export function MorningScene() {
     let seen = false;
     try { seen = localStorage.getItem(KEY(missions.day)) === "1"; } catch { seen = true; }
     if (seen) return;
-    const t = setTimeout(() => { if (!dialogOpen()) { setShow(true); try { localStorage.setItem(KEY(missions.day), "1"); } catch { /* storage blocked */ } } }, 1200);
+    const t = setTimeout(() => {
+      if (!dialogOpen()) {
+        setShow(true);
+        try {
+          localStorage.setItem(KEY(missions.day), "1");
+          setStampClaimed(localStorage.getItem(STAMP_KEY(missions.day)) === "1");
+        } catch { /* storage blocked */ }
+      }
+    }, 1200);
     return () => clearTimeout(t);
   }, [missions, status?.order, path]);
+
   useEffect(() => {
     if (!show) return;
     phoneRing();
@@ -100,23 +125,98 @@ export function MorningScene() {
 
   if (!show || !citizen) return null;
   const name = (citizen.username ?? "").replace(/^@/, "");
+  const streak = Math.max(1, life?.streak ?? 1);
+  const cycleDay = ((streak - 1) % 7) + 1;
+  const todayStamp = STAMP_REWARDS[cycleDay - 1] ?? STAMP_REWARDS[0];
+  const visa = life ? visaInfo(life.visaTier) : null;
+
+  const claimStamp = () => {
+    if (stampClaimed || !missions) return;
+    setStampClaimed(true);
+    adjustBalance(todayStamp.aed);
+    gameAudio.playCoinSound();
+    try { localStorage.setItem(STAMP_KEY(missions.day), "1"); } catch { /* blocked */ }
+  };
+
   return (
     <div className="fixed inset-0 z-[204] bg-stone-900 text-white" role="dialog" aria-modal="true" aria-label="Good morning">
       <Canvas dpr={quality.dpr} camera={{ position: [1.9, 3.4, 2.2], fov: 50 }} className="!absolute inset-0">
         <Bedroom look={citizen.look} upRef={up} />
       </Canvas>
-      <div className="absolute top-[max(1rem,env(safe-area-inset-top))] inset-x-0 text-center pointer-events-none">
-        <p className="text-xs font-black uppercase tracking-widest text-amber-300">9:00 AM · Dubai</p>
+      <div className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-0 text-center pointer-events-none px-4">
+        <p className="text-[11px] font-black uppercase tracking-widest text-amber-300">9:00 AM · Dubai · 🔥 {streak}-Day Streak</p>
         <p className="text-2xl font-black">{awake ? `Good morning${name ? `, ${name}` : ""} ☀️` : "📳 Bzzz…"}</p>
       </div>
-      <div className="absolute inset-x-0 bottom-0 p-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <div className="max-w-md mx-auto space-y-2">
+      <div className="absolute inset-x-0 bottom-0 p-3 pb-[max(1rem,env(safe-area-inset-bottom))] max-h-[82dvh] overflow-y-auto">
+        <div className="max-w-md mx-auto space-y-2.5">
           {awake && (
-            <div className="rounded-[26px] bg-white text-slate-900 p-4 shadow-2xl animate-[sheetUp_0.25s_ease-out]">
-              <DailyMissions onGo={() => setShow(false)} />
-            </div>
+            <>
+              {/* 7-Day Residency Stamp Card + Overnight Dubai Pulse */}
+              <div className="rounded-[24px] bg-slate-950/90 backdrop-blur-xl border border-white/15 p-3.5 text-white shadow-2xl space-y-2.5 animate-[sheetUp_0.2s_ease-out]">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-wider text-amber-400">7-Day Dubai Residency Card</p>
+                    <p className="text-xs text-slate-300">Day {cycleDay} of 7 · {todayStamp.label}</p>
+                  </div>
+                  {!stampClaimed ? (
+                    <button
+                      onClick={claimStamp}
+                      className="px-3 py-1.5 rounded-full bg-emerald-500 text-slate-950 font-black text-xs animate-pulse active:scale-95"
+                    >
+                      Claim +AED {todayStamp.aed}
+                    </button>
+                  ) : (
+                    <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-black text-[11px]">
+                      ✓ Stamp Claimed
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-7 gap-1">
+                  {STAMP_REWARDS.map((r) => {
+                    const done = r.day < cycleDay || (r.day === cycleDay && stampClaimed);
+                    const current = r.day === cycleDay;
+                    return (
+                      <div
+                        key={r.day}
+                        className={`rounded-xl py-1.5 px-1 text-center border ${
+                          current
+                            ? "bg-amber-400/20 border-amber-400 text-amber-200"
+                            : done
+                            ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
+                            : "bg-white/5 border-white/10 text-slate-400"
+                        }`}
+                      >
+                        <div className="text-[9px] font-black">D{r.day}</div>
+                        <div className="text-sm leading-tight my-0.5">{done ? "✅" : r.icon}</div>
+                        <div className="text-[8px] font-bold truncate">{r.aed}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {life && (
+                  <div className="pt-1.5 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-300">
+                    <span>🛂 {visa?.label ?? "Visa"}: <b className={life.visaDaysLeft <= 5 ? "text-rose-400" : "text-white"}>{life.visaTier === "GOLDEN" ? "10yr Golden" : `${life.visaDaysLeft}d left`}</b></span>
+                    <span>💳 Living cost: <b className="text-amber-300">AED {life.daily}/day</b></span>
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-[24px] bg-white text-slate-900 p-3.5 shadow-2xl animate-[sheetUp_0.25s_ease-out]">
+                <DailyMissions onGo={() => setShow(false)} />
+              </div>
+            </>
           )}
-          <button onClick={() => setShow(false)} className="w-full h-12 rounded-2xl bg-amber-400 text-slate-950 font-black">{awake ? "Let's go" : "Skip"}</button>
+          <button
+            onClick={() => {
+              if (!stampClaimed && awake) claimStamp();
+              setShow(false);
+            }}
+            className="w-full h-12 rounded-2xl bg-amber-400 text-slate-950 font-black"
+          >
+            {awake ? (stampClaimed ? "Let's go" : `Collect +AED ${todayStamp.aed} & Start Day`) : "Skip"}
+          </button>
         </div>
       </div>
     </div>

@@ -1158,6 +1158,41 @@ export default function HomePage() {
                         )}
                       </div>
                     </button>
+
+                    {/* Holiday Home Subletting Payout for Extra Owned Properties (24h Return Hook) */}
+                    {isOwned && !isCurrent && (() => {
+                      const subletYield = Math.max(250, Math.round((cfg.monthly || 6000) / 18));
+                      const dayBucket = Math.floor(Date.now() / 86_400_000);
+                      const claimKey = `dl_sublet:${f.id}:${dayBucket}`;
+                      let claimedToday = false;
+                      try { claimedToday = localStorage.getItem(claimKey) === "1"; } catch { /* blocked */ }
+                      return (
+                        <div className="mt-2.5 pt-2.5 border-t border-slate-200/80 flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-bold text-slate-600">
+                            🏖️ Holiday Home Guest Payout: <b className="text-emerald-700">+AED {subletYield.toLocaleString()}/day</b>
+                          </span>
+                          {claimedToday ? (
+                            <span className="text-[10px] font-black text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full">
+                              ✓ Collected today
+                            </span>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                try { localStorage.setItem(claimKey, "1"); } catch { /* blocked */ }
+                                adjustBalance(subletYield);
+                                gameAudio.playCoinSound();
+                                showToast(`💸 Collected +AED ${subletYield.toLocaleString()} Holiday Home rent from ${unitLabel}!`);
+                                setTurns((n) => n + 1);
+                              }}
+                              className="px-3 py-1 rounded-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-[11px] shrink-0 active:scale-95 transition-transform"
+                            >
+                              Collect +AED {subletYield.toLocaleString()}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })

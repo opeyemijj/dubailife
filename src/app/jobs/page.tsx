@@ -14,6 +14,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { aed, applyJob, companyIcon, daysUntil, endJob, jobBoard, myEconomy, VENTURES, ventureType, workShift, type BoardJob, type Economy } from "@/lib/economy";
 import { gameAudio } from "@/utils/gameAudio";
 import { InterviewScene } from "@/components/jobs/InterviewScene";
+import { ShiftScene } from "@/components/jobs/ShiftScene";
 
 export default function JobBoardPage() {
   const { citizen } = useRequireCitizen();
@@ -28,6 +29,7 @@ export default function JobBoardPage() {
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   const [now] = useState(() => Date.now());
   const [interview, setInterview] = useState<BoardJob | null>(null);
+  const [inShift, setInShift] = useState(false);
 
   const load = useCallback(async () => {
     const [e, j] = await Promise.all([myEconomy(), jobBoard()]);
@@ -37,12 +39,9 @@ export default function JobBoardPage() {
   useEffect(() => { const t = setTimeout(() => void load(), 0); return () => clearTimeout(t); }, [load]);
 
   const say = (ok: boolean, text: string) => setNote({ ok, text });
-  const shift = async () => {
-    const r = await workShift();
-    if (r.error) return say(false, r.error);
-    gameAudio.playCoinSound();
-    say(true, `Shift done: ${r.data!.shifts}/${r.data!.shiftsPerWeek} this week. +20 career points.`);
-    void load();
+  const shift = () => {
+    gameAudio.playClickSound();
+    setInShift(true);
   };
   const apply = async (id: number) => {
     // Every job starts with an interview, at the recruitment centre in 3D.
@@ -142,6 +141,18 @@ export default function JobBoardPage() {
           if (hired) say(true, `🎉 You're hired as ${interview.title} at ${interview.venture}. Work your first shift below.`);
           void load();
         }} />
+      )}
+      {inShift && eco?.job && (
+        <ShiftScene
+          job={eco.job}
+          look={citizen?.look}
+          onCancel={() => setInShift(false)}
+          onDone={(res) => {
+            setInShift(false);
+            say(true, `Shift done (${res.shifts}/${res.shiftsPerWeek} this week)${res.bonusAed > 0 ? ` · +${aed(res.bonusAed)} tips!` : "!"}`);
+            void load();
+          }}
+        />
       )}
       <BottomNav />
     </main>
