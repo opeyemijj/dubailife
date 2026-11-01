@@ -15,7 +15,7 @@ import { doorThud, footstep } from "@/components/transit/transitAudio";
 import { canvasQuality } from "@/lib/device";
 import { useNow } from "@/lib/dubaiClock";
 import { useCitizen } from "@/lib/citizenStore";
-import { usePresentCitizens } from "@/lib/presence";
+import { broadcastCityPulse, usePresentCitizens } from "@/lib/presence";
 import { CATALOG, FLOOR_FINISHES, WALL_PAINTS, type HomeStyle, type HousingTier } from "@/lib/furniture";
 import { applyDecor, cancelDecor, DECORATORS, decorators, hireDecor, localDecoratorLook, quote, studioOf, type DecoratorPro, type DecorJob, type Studio } from "@/lib/decorator";
 import { gameAudio } from "@/utils/gameAudio";
@@ -129,6 +129,17 @@ export function DecoratorSheet({ tier, current, onClose, onHired }: { tier: Hous
     setBusy(false);
     if (r.error) { setError(r.error); return; }
     gameAudio.playCoinSound();
+    if (pro) {
+      broadcastCityPulse({
+        kind: "decor",
+        icon: "🧑‍🎨",
+        title: `@${citizen?.username ?? "someone"} hired @${pro.username} to decorate!`,
+        subtitle: `${s.icon} ${s.title} look · Fee ${aed(pro.fee)} waiting in Decor App`,
+        href: "phone:decor",
+        cta: "Open Decor ›",
+        from: citizen?.username ?? "someone",
+      });
+    }
     setHandover(pro ? { studio: s, name: pro.username, look: pro.look ?? localDecoratorLook(s), local: false } : { studio: s, name: s.decorator, look: localDecoratorLook(s), local: true });
   };
   // Players working as decorators, the ones in the game right now first.

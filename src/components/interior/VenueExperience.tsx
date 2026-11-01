@@ -7,7 +7,8 @@
 import { askForPush } from "@/lib/push/engage";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Briefcase, Check, HelpCircle, LogOut, Megaphone, MessageCircle, MessagesSquare, Search, Shirt, ShoppingBag, Sparkles, X } from "lucide-react";
+import { ArrowLeft, Briefcase, Check, HelpCircle, LogOut, Megaphone, MessageCircle, MessagesSquare, Search, Share2, Shirt, ShoppingBag, Sparkles, Users, X } from "lucide-react";
+import { broadcastCityPulse } from "@/lib/presence";
 import type { Place, Product, StationKind, Venue } from "@/lib/city/types";
 import { adjustBalance, boostNeed, updateCitizen, useCitizen, type InventoryItem } from "@/lib/citizenStore";
 import { funKindOf, isStaycation, logFun } from "@/lib/fun";
@@ -348,6 +349,15 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       startBottleService(station, id, { username: citizen?.username ?? "you", mine: true });
       // Everyone in the club sees it arrive.
       emitRef.current?.({ type: "bottle", station: station.id });
+      broadcastCityPulse({
+        kind: "bottle",
+        icon: "🍾",
+        title: `@${citizen?.username ?? "someone"} popped VIP Bottles at ${venue.name}!`,
+        subtitle: "Teleport to their 3D room now for +20 Social & +15 Energy!",
+        href: `/place/${place.id}/${venue.id}`,
+        cta: "Join Room ›",
+        from: citizen?.username ?? "someone",
+      });
       return;
     }
     const base = product.id.split(":").pop() ?? "";
@@ -461,6 +471,10 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     if (e.type === "bottle") {
       const station = plan.stations.find((s) => s.id === e.station);
       if (station) startBottleService(station, e.id, { username: e.from.username, mine: false });
+      boostNeed("social", 20);
+      boostNeed("fun", 15);
+      boostNeed("energy", 15);
+      say(`🥂 @${e.from.username} popped VIP Bottles for the room! +20 Social · +15 Fun · +15 Energy`);
     }
     if (e.type === "served") {
       const item = e.item;
@@ -776,16 +790,61 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     setPanel(null);
   };
 
+  // Co-Presence Crowd Multiplier: +25% AED & XP per real player in the room (+25% if this is a live Happy Hour hotspot)
+  const crowdMultiplier = Math.min(2.5, 1 + peers.length * 0.25 + (hasLocals ? 0.25 : 0));
+
+  const shareVenueInvite = async () => {
+    gameAudio.playClickSound();
+    const refPart = citizen?.username ? `ref=${encodeURIComponent(citizen.username)}&` : "";
+    const url = `${window.location.origin}/?${refPart}go=${encodeURIComponent(`/place/${place.id}/${venue.id}`)}`;
+    const text = `Meet me in 3D at ${venue.name} (${place.name}) in Dubai Life! 🔥 Every friend in the room gives us +25% AED & XP Crowd Bonus!`;
+    if (navigator.share) {
+      try { await navigator.share({ title: `${venue.name} · Dubai Life`, text, url }); return; } catch { /* cancelled */ }
+    }
+    try { await navigator.clipboard.writeText(`${text} ${url}`); } catch { /* blocked */ }
+    say("🔗 Room invite link copied — send it to friends for +25% Crowd Bonus!");
+  };
+
+  const buyRoundForRoom = () => {
+    const roundCost = 120;
+    if (!adjustBalance(-roundCost)) {
+      say(`Not enough AED — a round for the room costs AED ${roundCost}.`);
+      return;
+    }
+    gameAudio.playCoinSound();
+    boostNeed("social", 25);
+    boostNeed("fun", 15);
+    boostNeed("energy", 15);
+    gainSkill("charisma", 25);
+    bubble("me", "🥂 Rounds on me, everyone!");
+    for (const p of peers) {
+      emit({ type: "gift", gift: { name: "House Round", icon: "🥂" } }, p.userId);
+    }
+    broadcastCityPulse({
+      kind: "bottle",
+      icon: "🥂",
+      title: `@${citizen?.username ?? "someone"} bought a round for ${venue.name}!`,
+      subtitle: "Join the room for +25% Crowd Bonus & free vibes!",
+      href: `/place/${place.id}/${venue.id}`,
+      cta: "Join Room ›",
+      from: citizen?.username ?? "someone",
+    });
+    say("🥂 You treated the whole room! +25 Social · +15 Energy · +25 Charisma XP");
+    setPeopleOpen(false);
+  };
+
   const finishShift = (correct: number) => {
     if (!job || !citizen?.job) return;
-    const pay = Math.round((job.wage * correct) / job.shift.length);
+    const basePay = Math.round((job.wage * correct) / job.shift.length);
+    const pay = Math.round(basePay * crowdMultiplier);
     if (pay > 0) adjustBalance(pay);
     updateCitizen((c) => (c.job ? { ...c, job: { ...c.job, lastShiftAt: new Date().toISOString() } } : c));
     boostNeed("energy", -15);
     lifeEvent("shift");
-    gainSkill("hustle", 10 + correct * 5);
+    gainSkill("hustle", Math.round((10 + correct * 5) * crowdMultiplier));
     gameAudio.playCoinSound();
-    say(`Shift done: ${correct}/${job.shift.length} customers happy · earned AED ${pay}.`);
+    const bonusNote = crowdMultiplier > 1 ? ` (🔥 ${crowdMultiplier.toFixed(2)}× Crowd Bonus!)` : "";
+    say(`Shift done: ${correct}/${job.shift.length} happy · earned AED ${pay}${bonusNote}`);
     setPanel(null);
   };
 
@@ -867,9 +926,11 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     const a = activeActivity;
 
     if (a.reward && !rewarded.has(a.id)) {
-      adjustBalance(a.reward);
+      const boostedReward = Math.round(a.reward * crowdMultiplier);
+      adjustBalance(boostedReward);
       setRewarded(new Set(rewarded).add(a.id));
-      say(`${a.icon} ${a.label} — Challenge completed! +AED ${a.reward}`);
+      const bonusNote = crowdMultiplier > 1 ? ` (${crowdMultiplier.toFixed(2)}× Crowd Bonus!)` : "";
+      say(`${a.icon} ${a.label} — Challenge completed! +AED ${boostedReward}${bonusNote}`);
     } else {
       say(`${a.icon} ${a.label} completed!`);
     }
@@ -881,10 +942,10 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     }
 
     const cat = detectActivityCategory(a);
-    if (cat === "dance") { lifeEvent("dance"); gainSkill("dance", 25); }
-    else if (cat === "workout") { lifeEvent("workout"); gainSkill("fitness", 25); }
-    else if (cat === "taste") { gainSkill("culture", 15); }
-    else { gainSkill("culture", 20); }
+    if (cat === "dance") { lifeEvent("dance"); gainSkill("dance", Math.round(25 * crowdMultiplier)); }
+    else if (cat === "workout") { lifeEvent("workout"); gainSkill("fitness", Math.round(25 * crowdMultiplier)); }
+    else if (cat === "taste") { gainSkill("culture", Math.round(15 * crowdMultiplier)); }
+    else { gainSkill("culture", Math.round(20 * crowdMultiplier)); }
 
     setActivityFX((prev) => ({ ...prev, burstKey: prev.burstKey + 1 }));
     gameAudio.playCoinSound();
@@ -1281,6 +1342,17 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
           <div className="text-[11px] text-slate-500 truncate">{venue.category}{venue.zone ? ` · ${venue.zone}` : ""} · {place.name}{pub && !pub.claimed ? " · not affiliated" : ""}</div>
         </div>
         <div className="flex-1" />
+        {/* Co-Presence Crowd Bonus Pill: shows live multiplayer multiplier & opens People/Invite sheet */}
+        <button
+          onClick={() => { gameAudio.playClickSound(); setPeopleOpen(true); }}
+          title="Co-Presence Crowd Bonus: +25% AED & XP per real player in this room"
+          className="pointer-events-auto shrink-0 whitespace-nowrap bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-full px-2.5 py-1.5 text-xs font-black shadow flex items-center gap-1 active:scale-95 transition-transform"
+        >
+          <span>🔥</span>
+          <span>{crowdMultiplier.toFixed(2).replace(/\.00$/, ".0").replace(/(\.\d)0$/, "$1")}×</span>
+          <span className="hidden md:inline">Crowd Bonus</span>
+          {peers.length > 0 && <span className="px-1.5 py-0.2 rounded-full bg-slate-950/15 text-[10px]">+{peers.length}</span>}
+        </button>
         {/* Phones show the balance short (2.2M) so the header fits on one line. */}
         <div className="pointer-events-auto shrink-0 whitespace-nowrap bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-full px-2.5 sm:px-3 py-1.5 text-xs font-black font-mono shadow">
           <span className="sm:hidden">AED {new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(citizen?.balance ?? 0)}</span>
@@ -1330,10 +1402,42 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         </div>
       )}
 
-      {/* Who's here: open a chat with anyone in the venue */}
+      {/* Who's here: open a chat with anyone in the venue + Co-Op Crowd Multiplier & Invite */}
       {peopleOpen && (
-        <Sheet onClose={() => setPeopleOpen(false)} title="People here" subtitle={peers.length ? `${peers.length} in ${venue.name}` : venue.name}>
-          {peers.length === 0 && <p className="text-sm text-slate-500">No other players here right now. Invite a friend from your phone!</p>}
+        <Sheet onClose={() => setPeopleOpen(false)} title="People & Co-Op Boost" subtitle={peers.length ? `${peers.length} citizen${peers.length === 1 ? "" : "s"} in ${venue.name}` : venue.name}>
+          <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-3.5 space-y-2.5 border border-amber-400/30">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🔥</span>
+                <div>
+                  <div className="text-xs font-black uppercase tracking-wider text-amber-300">Active Crowd Multiplier</div>
+                  <div className="text-sm font-black">{crowdMultiplier.toFixed(2)}× Shift Pay, Activity AED & XP</div>
+                </div>
+              </div>
+              <span className="px-2.5 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-xs">
+                {peers.length} live
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-300 leading-snug">
+              Every real player in this 3D room adds <b className="text-amber-300">+25% AED & Skill XP</b> for everyone here (up to 2.5×). Bring friends in now!
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
+              <button
+                onClick={shareVenueInvite}
+                className="h-10 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 active:scale-95"
+              >
+                <Share2 className="w-3.5 h-3.5" /> Invite Friend (+25% Pay)
+              </button>
+              <button
+                onClick={buyRoundForRoom}
+                className="h-10 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-black text-xs flex items-center justify-center gap-1.5 border border-white/15 active:scale-95"
+              >
+                <span>🥂</span> Treat Room (AED 120)
+              </button>
+            </div>
+          </div>
+
+          {peers.length === 0 && <p className="text-xs text-slate-500 pt-1">No other real players in this room yet — tap <b>Invite Friend</b> above to summon friends straight here!</p>}
           {peers.map((p) => (
             <button key={p.userId} onClick={() => { setPeopleOpen(false); setPanel({ kind: "peer", userId: p.userId, startIn: "chat" }); }}
               className="w-full flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100 text-left">

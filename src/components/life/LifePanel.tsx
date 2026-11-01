@@ -49,7 +49,7 @@ const WISH_VENUES: WishVenue[] = PLACES.flatMap((p) =>
     ? p.venues.filter((v) => !v.comingSoon && ["club", "dining", "theatre", "beach", "waterpark", "rink", "bowling", "bar", "pooldeck"].includes(v.layout)).map((v) => ({ key: `${p.id}/${v.id}`, name: v.name, placeId: p.id }))
     : []);
 
-export function LifePanel({ open, tab, onTab, onClose }: { open: boolean; tab: LifeTab; onTab: (t: LifeTab) => void; onClose: () => void }) {
+export function LifePanel({ open, tab, onTab, onClose, inline = false }: { open: boolean; tab: LifeTab; onTab: (t: LifeTab) => void; onClose: () => void; inline?: boolean }) {
   const { citizen } = useCitizen();
   const life = useLifeLoop();
   const tabs = useRef<HTMLDivElement>(null);
@@ -63,11 +63,11 @@ export function LifePanel({ open, tab, onTab, onClose }: { open: boolean; tab: L
   }, [tab, open]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || inline) return;
     const esc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", esc);
     return () => window.removeEventListener("keydown", esc);
-  }, [open, onClose]);
+  }, [open, inline, onClose]);
 
   if (!open || !citizen) return null;
   const feelings = feelingsOf(citizen);
@@ -75,92 +75,98 @@ export function LifePanel({ open, tab, onTab, onClose }: { open: boolean; tab: L
   const visa = life ? visaInfo(life.visaTier) : null;
   const runway = life ? runwayDays(life.balance, life.daily || dailyBurn(life.monthly)) : null;
 
+  const panelCard = (
+    <div className={`relative w-full sm:max-w-lg bg-white text-slate-900 rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl flex flex-col ${inline ? "mx-auto rounded-[2rem]" : "max-h-[88dvh] animate-in slide-in-from-bottom-8 duration-300 pb-[env(safe-area-inset-bottom)]"}`}>
+      {!inline && <div className="pt-2.5 pb-1 flex justify-center sm:hidden" aria-hidden><span className="w-12 h-1.5 rounded-full bg-slate-200" /></div>}
+      <button onClick={onClose} className="absolute top-3 right-3 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600" aria-label="Close"><X className="w-4 h-4" /></button>
+
+      <header className="flex items-center gap-3.5 px-5 sm:px-6 pt-4 sm:pt-6 pb-2.5 pr-14">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={rosterThumb(presetFor(citizen.look ?? { gender: "woman" }))} alt="" className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover object-top bg-sky-100 ring-2 ring-amber-400/80 shrink-0" />
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xl sm:text-2xl font-black truncate">{citizen.username}</h2>
+          <p className="text-sm sm:text-base text-slate-500 truncate"><span className={mood.tone}>{mood.label}</span>{mood.top ? ` · ${mood.top.name}` : ""}</p>
+          <MyStyle onOpen={() => onTab("season")} />
+        </div>
+      </header>
+
+      {/* Daily Streak, Visa Countdown & Runway Strip (Return-to-Dubai Retention Pulse) */}
+      {life && (
+        <div className="px-5 sm:px-6 pb-3 grid grid-cols-3 gap-1.5 shrink-0">
+          <button
+            onClick={() => { gameAudio.playClickSound(); onTab("season"); }}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-orange-50 hover:bg-orange-100 border border-orange-200/80 text-left transition-colors"
+          >
+            <span className="text-base">🔥</span>
+            <div className="min-w-0">
+              <div className="text-[11px] font-black text-orange-900 leading-tight truncate">{life.streak}-day streak</div>
+              <div className="text-[9px] font-bold text-orange-600 truncate">Log in daily</div>
+            </div>
+          </button>
+          <button
+            onClick={() => { gameAudio.playClickSound(); onTab("visa"); }}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border text-left transition-colors ${
+              life.visaTier !== "GOLDEN" && life.visaDaysLeft <= 7
+                ? "bg-rose-50 hover:bg-rose-100 border-rose-200"
+                : "bg-sky-50 hover:bg-sky-100 border-sky-200/80"
+            }`}
+          >
+            <span className="text-base">🛂</span>
+            <div className="min-w-0">
+              <div className={`text-[11px] font-black leading-tight truncate ${life.visaTier !== "GOLDEN" && life.visaDaysLeft <= 7 ? "text-rose-900" : "text-sky-900"}`}>
+                {life.visaTier === "GOLDEN" ? "Golden Visa" : `${life.visaDaysLeft}d visa left`}
+              </div>
+              <div className={`text-[9px] font-bold truncate ${life.visaTier !== "GOLDEN" && life.visaDaysLeft <= 7 ? "text-rose-600" : "text-sky-600"}`}>
+                {visa?.label ?? "Residency"}
+              </div>
+            </div>
+          </button>
+          <button
+            onClick={() => { gameAudio.playClickSound(); onTab("league"); }}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-left transition-colors"
+          >
+            <span className="text-base">🏆</span>
+            <div className="min-w-0">
+              <div className="text-[11px] font-black text-amber-900 leading-tight truncate">
+                {runway !== null && Number.isFinite(runway) ? `${runway}d runway` : "League"}
+              </div>
+              <div className="text-[9px] font-bold text-amber-700 truncate">AED {life.daily}/day</div>
+            </div>
+          </button>
+        </div>
+      )}
+
+      <div ref={tabs} className="flex gap-2 overflow-x-auto px-5 sm:px-6 pb-3 shrink-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {TABS.map((t) => (
+          <button key={t.id} data-tab={t.id} onClick={() => { gameAudio.playClickSound(); onTab(t.id); }}
+            className={`shrink-0 h-10 px-4 rounded-full text-sm font-bold transition-colors ${tab === t.id ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className={`${inline ? "" : "flex-1 overflow-y-auto overscroll-contain"} px-5 sm:px-6 pb-6`}>
+        {tab === "profile" && <ProfileTab c={citizen} onClose={onClose} />}
+        {tab === "visa" && <VisaBudgetTab onClose={onClose} />}
+        {tab === "league" && <LeagueTab onClose={onClose} />}
+        {tab === "season" && <SeasonTab />}
+        {tab === "needs" && <NeedsTab c={citizen} feelings={feelings} onClose={onClose} />}
+        {tab === "goals" && <GoalsTab c={citizen} onClose={onClose} />}
+        {tab === "skills" && <SkillsTab c={citizen} />}
+        {tab === "people" && <PeopleTab c={citizen} onClose={onClose} />}
+        {tab === "career" && <CareerTab c={citizen} onClose={onClose} />}
+        {tab === "settings" && <SettingsTab onClose={onClose} onProfile={() => onTab("profile")} />}
+      </div>
+    </div>
+  );
+
+  if (inline) return panelCard;
+
   return (
     <ModalPortal>
       <div className="fixed inset-0 z-[160] flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-label="Your life">
         <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" onClick={onClose} aria-hidden />
-        <div className="relative w-full sm:max-w-lg bg-white text-slate-900 rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl max-h-[88dvh] flex flex-col animate-in slide-in-from-bottom-8 duration-300 pb-[env(safe-area-inset-bottom)]">
-          <div className="pt-2.5 pb-1 flex justify-center sm:hidden" aria-hidden><span className="w-12 h-1.5 rounded-full bg-slate-200" /></div>
-          <button onClick={onClose} className="absolute top-3 right-3 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600" aria-label="Close"><X className="w-4 h-4" /></button>
-
-          <header className="flex items-center gap-3.5 px-5 sm:px-6 pt-2 sm:pt-6 pb-2.5 pr-14">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={rosterThumb(presetFor(citizen.look ?? { gender: "woman" }))} alt="" className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover object-top bg-sky-100 ring-2 ring-amber-400/80 shrink-0" />
-            <div className="min-w-0 flex-1">
-              <h2 className="text-xl sm:text-2xl font-black truncate">{citizen.username}</h2>
-              <p className="text-sm sm:text-base text-slate-500 truncate"><span className={mood.tone}>{mood.label}</span>{mood.top ? ` · ${mood.top.name}` : ""}</p>
-              <MyStyle onOpen={() => onTab("season")} />
-            </div>
-          </header>
-
-          {/* Daily Streak, Visa Countdown & Runway Strip (Return-to-Dubai Retention Pulse) */}
-          {life && (
-            <div className="px-5 sm:px-6 pb-3 grid grid-cols-3 gap-1.5 shrink-0">
-              <button
-                onClick={() => { gameAudio.playClickSound(); onTab("season"); }}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-orange-50 hover:bg-orange-100 border border-orange-200/80 text-left transition-colors"
-              >
-                <span className="text-base">🔥</span>
-                <div className="min-w-0">
-                  <div className="text-[11px] font-black text-orange-900 leading-tight truncate">{life.streak}-day streak</div>
-                  <div className="text-[9px] font-bold text-orange-600 truncate">Log in daily</div>
-                </div>
-              </button>
-              <button
-                onClick={() => { gameAudio.playClickSound(); onTab("visa"); }}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border text-left transition-colors ${
-                  life.visaTier !== "GOLDEN" && life.visaDaysLeft <= 7
-                    ? "bg-rose-50 hover:bg-rose-100 border-rose-200"
-                    : "bg-sky-50 hover:bg-sky-100 border-sky-200/80"
-                }`}
-              >
-                <span className="text-base">🛂</span>
-                <div className="min-w-0">
-                  <div className={`text-[11px] font-black leading-tight truncate ${life.visaTier !== "GOLDEN" && life.visaDaysLeft <= 7 ? "text-rose-900" : "text-sky-900"}`}>
-                    {life.visaTier === "GOLDEN" ? "Golden Visa" : `${life.visaDaysLeft}d visa left`}
-                  </div>
-                  <div className={`text-[9px] font-bold truncate ${life.visaTier !== "GOLDEN" && life.visaDaysLeft <= 7 ? "text-rose-600" : "text-sky-600"}`}>
-                    {visa?.label ?? "Residency"}
-                  </div>
-                </div>
-              </button>
-              <button
-                onClick={() => { gameAudio.playClickSound(); onTab("league"); }}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-left transition-colors"
-              >
-                <span className="text-base">🏆</span>
-                <div className="min-w-0">
-                  <div className="text-[11px] font-black text-amber-900 leading-tight truncate">
-                    {runway !== null && Number.isFinite(runway) ? `${runway}d runway` : "League"}
-                  </div>
-                  <div className="text-[9px] font-bold text-amber-700 truncate">AED {life.daily}/day</div>
-                </div>
-              </button>
-            </div>
-          )}
-
-          <div ref={tabs} className="flex gap-2 overflow-x-auto px-5 sm:px-6 pb-3 shrink-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {TABS.map((t) => (
-              <button key={t.id} data-tab={t.id} onClick={() => { gameAudio.playClickSound(); onTab(t.id); }}
-                className={`shrink-0 h-10 px-4 rounded-full text-sm font-bold transition-colors ${tab === t.id ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex-1 overflow-y-auto overscroll-contain px-5 sm:px-6 pb-6">
-            {tab === "profile" && <ProfileTab c={citizen} onClose={onClose} />}
-            {tab === "visa" && <VisaBudgetTab onClose={onClose} />}
-            {tab === "league" && <LeagueTab onClose={onClose} />}
-            {tab === "season" && <SeasonTab />}
-            {tab === "needs" && <NeedsTab c={citizen} feelings={feelings} onClose={onClose} />}
-            {tab === "goals" && <GoalsTab c={citizen} onClose={onClose} />}
-            {tab === "skills" && <SkillsTab c={citizen} />}
-            {tab === "people" && <PeopleTab c={citizen} onClose={onClose} />}
-            {tab === "career" && <CareerTab c={citizen} onClose={onClose} />}
-            {tab === "settings" && <SettingsTab onClose={onClose} onProfile={() => onTab("profile")} />}
-          </div>
-        </div>
+        {panelCard}
       </div>
     </ModalPortal>
   );

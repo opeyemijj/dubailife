@@ -14,9 +14,10 @@ import { ModalPortal } from "@/components/ui/modal-portal";
 import { footstep } from "@/components/transit/transitAudio";
 import { canvasQuality } from "@/lib/device";
 import { LOCALS } from "@/lib/locals";
-import { adjustBalance, boostNeed } from "@/lib/citizenStore";
+import { adjustBalance, boostNeed, useCitizen } from "@/lib/citizenStore";
 import { gainSkill, type SkillId } from "@/lib/life";
 import { aed, companyIcon, ventureType, workShift, type MyJob } from "@/lib/economy";
+import { usePresentCitizens } from "@/lib/presence";
 import { gameAudio } from "@/utils/gameAudio";
 
 interface StationOrder {
@@ -284,6 +285,21 @@ export function ShiftScene({
   const [floatingText, setFloatingText] = useState<string | null>(null);
   const [serverResult, setServerResult] = useState<{ shifts: number; shiftsPerWeek: number } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const { citizen } = useCitizen();
+  const present = usePresentCitizens();
+  const coopMultiplier = Math.min(1.6, 1 + Math.max(1, present.length) * 0.15);
+
+  const shareCoworkerInvite = async () => {
+    gameAudio.playClickSound();
+    const refPart = citizen?.username ? `ref=${encodeURIComponent(citizen.username)}&` : "";
+    const url = `${window.location.origin}/?${refPart}go=${encodeURIComponent("/jobs")}`;
+    const text = `Come work shifts with me at ${job.venture} in Dubai Life! 💼 Each co-worker boosts venture revenue by +0.5× (up to 3×) and gives us Co-Op Tip Multipliers!`;
+    if (navigator.share) {
+      try { await navigator.share({ title: `${job.venture} · Dubai Life`, text, url }); return; } catch { /* cancelled */ }
+    }
+    try { await navigator.clipboard.writeText(`${text} ${url}`); } catch { /* blocked */ }
+    window.dispatchEvent(new CustomEvent("dubai:toast", { detail: "🔗 Co-worker invite link copied!" }));
+  };
 
   const guestSeq = useRef(1);
 
@@ -388,11 +404,11 @@ export function ShiftScene({
 
     const nextCombo = combo + 1;
     const baseTip = order.vip ? 45 : 20;
-    const earned = baseTip + Math.min(40, (nextCombo - 1) * 5);
+    const earned = Math.round((baseTip + Math.min(40, (nextCombo - 1) * 5)) * coopMultiplier);
     setCombo(nextCombo);
     setServedCount((n) => n + 1);
     setTipsAed((t) => t + earned);
-    setFloatingText(`${order.vip ? "👑 VIP " : ""}+AED ${earned}${nextCombo > 1 ? ` · ${nextCombo}× COMBO!` : ""}`);
+    setFloatingText(`${order.vip ? "👑 VIP " : ""}+AED ${earned}${nextCombo > 1 ? ` · ${nextCombo}× COMBO!` : ""} (${coopMultiplier.toFixed(2)}× Co-Op)`);
     gameAudio.playCoinSound();
   };
 
@@ -408,8 +424,8 @@ export function ShiftScene({
           <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-slate-950/85 backdrop-blur-md border border-white/15 shadow-xl">
             <span className="text-xl">{companyIcon(job.venture) ?? ventureType(job.ventureType)?.icon ?? "💼"}</span>
             <div>
-              <div className="text-xs font-black leading-tight truncate max-w-[150px]">{job.venture}</div>
-              <div className="text-[10px] font-bold text-emerald-400">{job.title}</div>
+              <div className="text-xs font-black leading-tight truncate max-w-[140px]">{job.venture}</div>
+              <div className="text-[10px] font-bold text-emerald-400">{job.title} · 🔥 {coopMultiplier.toFixed(2)}× Co-Op</div>
             </div>
           </div>
 
@@ -541,6 +557,13 @@ export function ShiftScene({
                       </div>
                     )}
                   </div>
+
+                  <button
+                    onClick={shareCoworkerInvite}
+                    className="w-full h-10 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-amber-300 font-black text-xs active:scale-95 transition-transform"
+                  >
+                    📲 Recruit Co-Worker (+0.5× Venture Revenue)
+                  </button>
 
                   <button
                     onClick={() =>

@@ -34,11 +34,13 @@ export function LandingOverlay({
 }: LandingOverlayProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // An invite (?ref=username) is remembered until the new citizen exists, then redeemed (LifeHub).
+  // An invite (?ref=username) and optional deep-link destination (?go=/place/...) are remembered until signed in.
   const ref = searchParams.get("ref");
+  const go = searchParams.get("go");
   useEffect(() => {
     if (ref && /^[a-z0-9_]{3,24}$/.test(ref)) { try { localStorage.setItem("dl_ref", ref); } catch { /* storage blocked */ } }
-  }, [ref]);
+    if (go && go.startsWith("/") && !go.startsWith("//")) { try { localStorage.setItem("dl_go", go); } catch { /* storage blocked */ } }
+  }, [ref, go]);
   const onlineCount = useOnlineCount();
   const { visits } = useSiteStats();
   const placeCount = PLACES.reduce((n, p) => n + p.venues.filter((v) => !v.comingSoon).length, 0);

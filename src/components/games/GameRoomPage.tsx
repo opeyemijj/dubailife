@@ -17,6 +17,7 @@ import {
 } from "@/lib/games/rooms";
 import { supabase } from "@/lib/supabase/client";
 import { presetFor, rosterThumb, type AvatarLookProps } from "@/components/avatar/roster";
+import { broadcastCityPulse } from "@/lib/presence";
 import { gameAudio } from "@/utils/gameAudio";
 import { MODULES } from "./index";
 import type { Result, Seat } from "./types";
@@ -75,8 +76,19 @@ export function GameRoomPage({ game }: { game: string }) {
     const { data, error: e } = await p;
     setBusy(null);
     if (e || !data) { setError(e ?? "Something went wrong."); return; }
+    if (info && data.status === "lobby" && (label === "quick" || label.startsWith("create"))) {
+      broadcastCityPulse({
+        kind: "game",
+        icon: info.icon,
+        title: `@${citizen?.username ?? "someone"} opened a ${info.name} room (${data.code})!`,
+        subtitle: `Waiting for players · Win +30 League pts`,
+        href: `/games/${info.id}?room=${data.code}`,
+        cta: "Join Table ›",
+        from: citizen?.username ?? "someone",
+      });
+    }
     setView({ kind: "room", room: data });
-  }, []);
+  }, [info, citizen?.username]);
 
   // Invite links: /games/<game>?room=CODE
   const invite = params.get("room");

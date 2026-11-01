@@ -11,7 +11,9 @@ import * as THREE from "three";
 import { CitizenAvatar } from "@/components/avatar/CitizenAvatar";
 import { canvasQuality } from "@/lib/device";
 import { useCitizen } from "@/lib/citizenStore";
+import { broadcastCityPulse } from "@/lib/presence";
 import { LOCALS } from "@/lib/locals";
+import { gameAudio } from "@/utils/gameAudio";
 import type { BoardProps, GameModule } from "./types";
 
 interface Ball { n: number; x: number; y: number; in: boolean }
@@ -459,12 +461,39 @@ function Board({ state, me, seats, onMove, canMove }: BoardProps<PoolState>) {
             </span>
           ))}
         </div>
-        <button
-          onClick={() => setMode3D((v) => !v)}
-          className="px-3 py-1 rounded-full bg-slate-900 text-amber-300 font-black text-[11px]"
-        >
-          {mode3D ? "🎱 3D Lounge View" : "📐 2D Top View"}
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={async () => {
+              gameAudio.playClickSound();
+              broadcastCityPulse({
+                kind: "game",
+                icon: "🎱",
+                title: `@${citizen?.username ?? "someone"} opened a 3D 8-Ball Pool Challenge!`,
+                subtitle: "Step up to the 3D Pool Table for +30 League pts!",
+                href: "/games/pool",
+                cta: "Play Now ›",
+                from: citizen?.username ?? "someone",
+              });
+              const refPart = citizen?.username ? `ref=${encodeURIComponent(citizen.username)}&` : "";
+              const url = `${window.location.origin}/?${refPart}go=${encodeURIComponent("/games/pool")}`;
+              const text = `Play me in 3D 8-Ball Pool in Dubai Life! 🎱 Tap to join my table right now:`;
+              if (navigator.share) {
+                try { await navigator.share({ title: "3D Pool Challenge · Dubai Life", text, url }); return; } catch { /* cancelled */ }
+              }
+              try { await navigator.clipboard.writeText(`${text} ${url}`); } catch { /* blocked */ }
+              window.dispatchEvent(new CustomEvent("dubai:toast", { detail: "🎱 3D Pool challenge broadcast & link copied!" }));
+            }}
+            className="px-2.5 py-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[11px] active:scale-95"
+          >
+            📲 Challenge Friend
+          </button>
+          <button
+            onClick={() => setMode3D((v) => !v)}
+            className="px-3 py-1 rounded-full bg-slate-900 text-amber-300 font-black text-[11px]"
+          >
+            {mode3D ? "🎱 3D Lounge View" : "📐 2D Top View"}
+          </button>
+        </div>
       </div>
 
       <div

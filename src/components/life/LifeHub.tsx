@@ -5,6 +5,7 @@
 
 import { supabase } from "@/lib/supabase/client";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { dialogOpen, useCitizen } from "@/lib/citizenStore";
 import { tickNeeds } from "@/lib/life";
@@ -20,6 +21,7 @@ export const openLife = (tab?: LifeTab) => window.dispatchEvent(new CustomEvent(
 
 export function LifeHub() {
   const { citizen } = useCitizen();
+  const router = useRouter();
   const signedIn = !!citizen?.id;
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<LifeTab>("profile");
@@ -50,10 +52,19 @@ export function LifeHub() {
       }
     };
     void syncLife().then((r) => after(r as (LifeStatus & LifeTick) | null));
-    // Redeem an invite saved on the landing page.
+    // Redeem an invite saved on the landing page, and route to any deep-link destination (?go=...).
     try {
       const ref = localStorage.getItem("dl_ref");
       if (ref) void supabase().rpc("claim_referral", { p_username: ref }).then(() => { try { localStorage.removeItem("dl_ref"); } catch { /* blocked */ } });
+      const urlGo = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("go") : null;
+      const go = urlGo || localStorage.getItem("dl_go");
+      if (go && go.startsWith("/") && !go.startsWith("//")) {
+        try { localStorage.removeItem("dl_go"); } catch { /* blocked */ }
+        if (window.location.pathname !== go.split("?")[0]) {
+          window.dispatchEvent(new CustomEvent("dubai:toast", { detail: ref ? `🚀 Joining @${ref} now…` : "🚀 Teleporting to your invite…" }));
+          router.push(go);
+        }
+      }
     } catch { /* storage blocked */ }
     const onShow = () => { if (document.visibilityState === "visible") void syncIfDue().then((r) => after(r as (LifeStatus & LifeTick) | null)); };
     document.addEventListener("visibilitychange", onShow);

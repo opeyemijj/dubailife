@@ -7,10 +7,11 @@
 import { useLifeLoop } from "@/lib/lifeLoop";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Plus, Users } from "lucide-react";
+import { ArrowLeft, Plus, Share2, Users } from "lucide-react";
 import { useRequireCitizen } from "@/lib/citizenStore";
 import { supabase } from "@/lib/supabase/client";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { broadcastCityPulse } from "@/lib/presence";
 import {
   aed, answerCrewInvite, buyVenture, closeJob, collectProfit, daysUntil, endJob, inviteToCrew, myEconomy, postJob, reviewApplication,
   VENTURES, ventureType, type Economy, type Requirement, type Venture,
@@ -120,8 +121,33 @@ function VentureCard({ v, me, say, reload }: { v: Venture; me: string; say: (ok:
       </button>
 
       <div>
-        <div className="flex items-center justify-between mb-1.5"><p className="text-xs font-black uppercase tracking-wider text-slate-400">Crew</p>
-          {v.members.length < VENTURES.maxPartners && <button onClick={() => setInviting(!inviting)} className="text-xs font-black text-sky-300 flex items-center gap-1"><Users className="w-3 h-3" /> Invite a friend</button>}</div>
+        <div className="flex items-center justify-between mb-1.5">
+          <p className="text-xs font-black uppercase tracking-wider text-slate-400">Crew</p>
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={async () => {
+                gameAudio.playClickSound();
+                const myHandle = v.members.find((m) => m.id === me)?.username ?? "";
+                const refPart = myHandle ? `ref=${encodeURIComponent(myHandle)}&` : "";
+                const url = `${window.location.origin}/?${refPart}go=${encodeURIComponent("/ventures")}`;
+                const text = `Join my Dubai Venture "${v.name}" (${t?.label})! 🏢 Each partner & staff member boosts our daily profit up to 3×!`;
+                if (navigator.share) {
+                  try { await navigator.share({ title: `${v.name} · Dubai Venture`, text, url }); return; } catch { /* cancelled */ }
+                }
+                try { await navigator.clipboard.writeText(`${text} ${url}`); } catch { /* blocked */ }
+                say(true, "🔗 Venture recruitment link copied!");
+              }}
+              className="text-xs font-black text-amber-300 flex items-center gap-1"
+            >
+              <Share2 className="w-3 h-3" /> Share link
+            </button>
+            {v.members.length < VENTURES.maxPartners && (
+              <button onClick={() => setInviting(!inviting)} className="text-xs font-black text-sky-300 flex items-center gap-1">
+                <Users className="w-3 h-3" /> Invite a friend
+              </button>
+            )}
+          </div>
+        </div>
         <div className="flex flex-wrap gap-1.5">
           {v.members.map((m) => <span key={m.id} className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${m.role === "invited" ? "bg-white/5 text-slate-400" : "bg-white/10"}`}>@{m.username}{m.id === me ? " (you)" : ""} · {m.role}</span>)}
         </div>
@@ -142,7 +168,24 @@ function VentureCard({ v, me, say, reload }: { v: Venture; me: string; say: (ok:
       <div>
         <div className="flex items-center justify-between mb-1.5"><p className="text-xs font-black uppercase tracking-wider text-slate-400">Jobs</p>
           <button onClick={() => setPosting(!posting)} className="text-xs font-black text-sky-300">+ Post a job</button></div>
-        {posting && <PostJob roles={t?.roles ?? ["Staff"]} onPost={(title, wage, shifts, req) => { setPosting(false); void run(postJob(v.id, title, wage, shifts, req), "Job posted on the Job Board"); }} />}
+        {posting && (
+          <PostJob
+            roles={t?.roles ?? ["Staff"]}
+            onPost={(title, wage, shifts, req) => {
+              setPosting(false);
+              void run(postJob(v.id, title, wage, shifts, req), "Job posted on the Job Board & broadcast to online citizens!");
+              broadcastCityPulse({
+                kind: "venture",
+                icon: t?.icon ?? "💼",
+                title: `${v.name} is hiring a ${title} (${aed(wage)}/wk)!`,
+                subtitle: `${shifts} shifts/wk · Apply on the Dubai Job Board now`,
+                href: "/jobs",
+                cta: "Apply ›",
+                from: v.name,
+              });
+            }}
+          />
+        )}
         {v.jobs.map((j) => (
           <div key={j.id} className="rounded-xl bg-white/5 p-2.5 mb-1 space-y-1.5">
             <div className="flex items-center gap-2"><span className="flex-1 text-sm font-bold">{j.title} · {aed(j.weeklyWage)}/wk · {j.shiftsPerWeek} shifts</span>

@@ -22,10 +22,10 @@ import {
   CATALOG, FLOOR_FINISHES, PANELS_PRICE, SHOP_CATEGORIES, WALL_PAINTS, getCatalogItem, getHousingTierFromText, housingTierFor, withHomeItems, HOUSING_CONFIGS,
   type CatalogItem, type HomeStyle, type Interaction, type Placement, type Rotation, type HousingTier, type HomeActivityDef, type ShopCategory,
 } from "@/lib/furniture";
-import { myFlats, type FlatView } from "@/lib/city/flats";
+import { flatRoute, myFlats, setAccess, type FlatView } from "@/lib/city/flats";
 import { getEntity } from "@/lib/city/geo";
 import { openLife } from "@/components/life/LifeHub";
-import { useOnlineCount, useOnlineUsernames, formatOnline } from "@/lib/presence";
+import { broadcastCityPulse, useOnlineCount, useOnlineUsernames, formatOnline } from "@/lib/presence";
 import { matesInRoom, useBedspace } from "@/lib/bedspace";
 import { openPhone } from "@/components/layout/PhoneOverlay";
 import { useUnreadTotal } from "@/lib/unread";
@@ -539,6 +539,40 @@ export default function HomePage() {
             >
               <span>🧑‍🎨</span>
               <span>{decorJob ? "Decorator Working" : "Employ Decorator"}</span>
+            </button>
+            <button
+              onClick={async () => {
+                gameAudio.playCoinSound();
+                const targetHref = activeFlat ? flatRoute(activeFlat) : "/home";
+                if (activeFlat) {
+                  void setAccess(activeFlat.id, "public");
+                }
+                broadcastCityPulse({
+                  kind: "party",
+                  icon: "🎉",
+                  title: `@${citizen?.username ?? "someone"} is hosting an Open House at ${activeHomeTitle}!`,
+                  subtitle: `${activeHomeArea} · Doors open now for +25 Social & vibes!`,
+                  href: targetHref,
+                  cta: "Visit Home ›",
+                  from: citizen?.username ?? "someone",
+                });
+                gainSkill("charisma", 15);
+                const refPart = citizen?.username ? `ref=${encodeURIComponent(citizen.username)}&` : "";
+                const url = `${window.location.origin}/?${refPart}go=${encodeURIComponent(targetHref)}`;
+                const text = `Come visit my 3D ${activeHomeTitle} (${activeHomeArea}) in Dubai Life! 🎉 Doors are open right now!`;
+                if (navigator.share) {
+                  try { await navigator.share({ title: `${activeHomeTitle} · Open House`, text, url }); } catch { /* cancelled */ }
+                } else {
+                  try { await navigator.clipboard.writeText(`${text} ${url}`); } catch { /* blocked */ }
+                }
+                setToastMsg(`🎉 Open House broadcast to all online citizens & invite link ready! (+15 Charisma XP)`);
+                setTimeout(() => setToastMsg(null), 4500);
+              }}
+              className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 text-slate-950 shadow-sm flex items-center gap-1 active:scale-95 transition-all cursor-pointer"
+              title="Broadcast a Live Open House Party to online players & share invite link"
+            >
+              <span>🎉</span>
+              <span>Host Party</span>
             </button>
             {housingConfig.hasDollhouseUpView && (
               <button

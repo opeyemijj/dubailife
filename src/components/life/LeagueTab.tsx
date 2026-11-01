@@ -7,9 +7,18 @@ import { cosmeticName } from "@/lib/seasons";
 import { ShareButton } from "@/components/share/ShareButton";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Share2 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
-import { refreshCitizen } from "@/lib/citizenStore";
+import { refreshCitizen, useCitizen } from "@/lib/citizenStore";
+import { usePresentCitizens } from "@/lib/presence";
 import { gameAudio } from "@/utils/gameAudio";
+
+const SYNDICATES = [
+  { id: "palm", icon: "🌴", name: "Palm Jumeirah Syndicate", short: "Palm", basePts: 4820, perk: "Villa & Beach Club Prestige" },
+  { id: "downtown", icon: "🏙️", name: "Downtown Royals", short: "Downtown", basePts: 4690, perk: "DIFC & Boulevard Hustle" },
+  { id: "marina", icon: "⛵", name: "Dubai Marina Crew", short: "Marina", basePts: 4510, perk: "Yacht & Nightlife Vibes" },
+  { id: "deira", icon: "🪙", name: "Old Dubai Gold Guild", short: "Gold Souk", basePts: 4380, perk: "Merchant & Venture Grind" },
+] as const;
 
 const TIERS = ["", "Bronze", "Silver", "Gold", "Platinum", "Diamond"];
 const TIER_ICON = ["", "🥉", "🥈", "🥇", "💠", "💎"];
@@ -28,10 +37,44 @@ const endsIn = (iso: string, now: number) => {
 };
 
 export function LeagueTab({ onClose }: { onClose: () => void }) {
+  const { citizen } = useCitizen();
+  const present = usePresentCitizens();
   const [league, setLeague] = useState<League | null>(null);
   const [quests, setQuests] = useState<Quests | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [now] = useState(() => Date.now());
+  const [mySyndicate, setMySyndicate] = useState<string>("downtown");
+
+  useEffect(() => {
+    if (!citizen?.id) return;
+    try {
+      const saved = localStorage.getItem(`dl_syndicate:${citizen.id}`);
+      if (saved && SYNDICATES.some((s) => s.id === saved)) {
+        setMySyndicate(saved);
+      }
+    } catch { /* storage blocked */ }
+  }, [citizen?.id]);
+
+  const chooseSyndicate = (id: string) => {
+    gameAudio.playClickSound();
+    setMySyndicate(id);
+    if (citizen?.id) {
+      try { localStorage.setItem(`dl_syndicate:${citizen.id}`, id); } catch { /* blocked */ }
+    }
+  };
+
+  const shareSyndicateRecruit = async () => {
+    gameAudio.playClickSound();
+    const syn = SYNDICATES.find((s) => s.id === mySyndicate) ?? SYNDICATES[0];
+    const refPart = citizen?.username ? `ref=${encodeURIComponent(citizen.username)}&` : "";
+    const url = `${window.location.origin}/?${refPart}go=${encodeURIComponent("/profile")}`;
+    const text = `Join the ${syn.icon} ${syn.name} with me in Dubai Life! 🏆 Every member's points push our district to #1 this week!`;
+    if (navigator.share) {
+      try { await navigator.share({ title: `${syn.name} · Dubai Life`, text, url }); return; } catch { /* cancelled */ }
+    }
+    try { await navigator.clipboard.writeText(`${text} ${url}`); } catch { /* blocked */ }
+    setNote(`🔗 ${syn.name} recruitment link copied!`);
+  };
 
   useEffect(() => {
     void supabase().rpc("my_league").then(({ data }) => data && setLeague(data as League));
@@ -90,6 +133,54 @@ export function LeagueTab({ onClose }: { onClose: () => void }) {
           })}
         </ol>
       )}
+
+      {/* District Syndicate Rivalry (Group Network Effect & Co-Op Competition) */}
+      <section className="rounded-3xl bg-slate-900 text-white p-4 space-y-3 border border-slate-800">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-amber-400">Weekly District Rivalry</p>
+            <h3 className="font-black text-base leading-tight">🏙️ Dubai Syndicate Wars</h3>
+          </div>
+          <button
+            onClick={shareSyndicateRecruit}
+            className="h-8 px-3 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-[11px] flex items-center gap-1 active:scale-95 shrink-0"
+          >
+            <Share2 className="w-3 h-3" /> Recruit
+          </button>
+        </div>
+        <p className="text-xs text-slate-300 leading-snug">
+          Pledge your district. Your weekly league points ({quests?.me ?? 0} pts) and online presence boost your Syndicate&apos;s standing!
+        </p>
+        <div className="space-y-1.5">
+          {SYNDICATES.map((s) => {
+            const isMine = s.id === mySyndicate;
+            const totalPts = s.basePts + (isMine ? (quests?.me ?? 0) * 3 : 0) + present.length * 15;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => chooseSyndicate(s.id)}
+                className={`w-full flex items-center gap-2.5 rounded-2xl px-3 py-2 text-left transition-all border ${
+                  isMine
+                    ? "bg-amber-400/15 border-amber-400 text-white"
+                    : "bg-white/5 hover:bg-white/10 border-white/10 text-slate-200"
+                }`}
+              >
+                <span className="text-xl shrink-0">{s.icon}</span>
+                <span className="flex-1 min-w-0">
+                  <span className="block font-black text-xs sm:text-sm truncate">
+                    {s.name} {isMine && <span className="text-[10px] text-amber-300 font-black">· YOUR SYNDICATE</span>}
+                  </span>
+                  <span className="block text-[10px] text-slate-400 truncate">{s.perk}</span>
+                </span>
+                <span className="font-black text-xs sm:text-sm text-amber-300 tabular-nums shrink-0">
+                  {totalPts.toLocaleString()} pts
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
       <section>
         <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-2">Friend quests</h3>
