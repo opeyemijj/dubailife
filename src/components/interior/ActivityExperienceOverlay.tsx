@@ -172,7 +172,7 @@ export function ActivityExperienceOverlay({
 
     // Audio & Combo multiplier
     if (rating === "perfect") {
-      gameAudio.playConfirmSound();
+      gameAudio.sfx("mgPerfect");
       setFeedback({ text: "PERFECT! 🔥", color: "text-amber-300", key: Date.now() });
       setCombo((c) => {
         const next = c + 1;
@@ -180,7 +180,7 @@ export function ActivityExperienceOverlay({
         return next;
       });
     } else if (rating === "great") {
-      gameAudio.playClickSound();
+      gameAudio.sfx(`mgHit${combo % 8}`);
       setFeedback({ text: "GREAT! ✨", color: "text-emerald-300", key: Date.now() });
       setCombo((c) => {
         const next = c + 1;
@@ -188,7 +188,7 @@ export function ActivityExperienceOverlay({
         return next;
       });
     } else {
-      gameAudio.playClickSound();
+      gameAudio.sfx(`mgHit${combo % 8}`);
       setFeedback({ text: "NICE! 👍", color: "text-sky-300", key: Date.now() });
       setCombo(0);
     }

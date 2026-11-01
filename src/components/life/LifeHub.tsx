@@ -11,6 +11,7 @@ import { dialogOpen, useCitizen } from "@/lib/citizenStore";
 import { tickNeeds } from "@/lib/life";
 import { currentLife, dailyBurn, runwayDays, syncIfDue, syncLife, visaInfo, type LifeStatus, type LifeTick } from "@/lib/lifeLoop";
 import { ModalPortal } from "@/components/ui/modal-portal";
+import { gameAudio } from "@/utils/gameAudio";
 import type { LifeTab } from "./LifePanel";
 
 // The panel brings in the city directory and course list, so it loads the first time it's opened.
@@ -82,10 +83,20 @@ export function LifeHub() {
     const show = (e: Event) => {
       const want = (e as CustomEvent<LifeTab | undefined>).detail;
       if (typeof want === "string") setTab(want);
-      setOpen((o) => (typeof want === "string" ? true : !o));
+      setOpen((o) => {
+        const next = typeof want === "string" ? true : !o;
+        if (next) gameAudio.sfx("open");
+        return next;
+      });
     };
     const say = (e: Event) => {
-      setToast(String((e as CustomEvent).detail));
+      const msg = String((e as CustomEvent).detail);
+      setToast(msg);
+      if (/level \d+/i.test(msg)) gameAudio.sfx("levelup");
+      else if (/✨|\bclaimed\b/i.test(msg)) gameAudio.sfx("wish");
+      else if (/\+AED|paid|cash|bonus/i.test(msg)) gameAudio.sfx("cash");
+      else if (/⚠️|overdue|expired|short/i.test(msg)) gameAudio.sfx("warn");
+      else gameAudio.sfx("notice");
       setTimeout(() => setToast(null), 3200);
     };
     window.addEventListener("dubai:open-skills", show);

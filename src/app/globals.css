@@ -169,3 +169,148 @@ html, body { overscroll-behavior: none; }
   from { transform: translateY(24px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
+/* Official Dubai Life Wiki · How to play (matches lagoslife.app/wiki design system) */
+.wk {
+  --wk-gold-1: #fbcb4c;
+  --wk-gold-2: #ebab1b;
+  --wk-cream: #fff6dc;
+  --wk-emerald: #128a55;
+  --wk-emerald-lite: #4ade80;
+  --wk-naija: #008751;
+  --wk-bronze: #b97b06;
+  --wk-action: #22b573;
+  --wk-pill: #1d2433;
+  --wk-alert: #ef5a6f;
+  --wk-bg: #eef2f7;
+  --wk-surface: #ffffff;
+  --wk-surface-2: #f6f8fb;
+  --wk-text: #1d2433;
+  --wk-text-soft: #5b6475;
+  --wk-line: #1d243314;
+  --wk-link: #0f7d4c;
+  --wk-shadow: 0 1px 2px #1d24330f, 0 8px 24px -12px #1d24332e;
+  --wk-shadow-lift: 0 2px 4px #1d24330f, 0 18px 40px -18px #1d243352;
+  --wk-gold: linear-gradient(135deg, var(--wk-gold-1), var(--wk-gold-2));
+  background: var(--wk-bg);
+  color: var(--wk-text);
+}
+.wk[data-theme="dark"] {
+  --wk-bg: #16120f;
+  --wk-surface: #221d19;
+  --wk-surface-2: #2b2520;
+  --wk-text: #f6efe4;
+  --wk-text-soft: #c2b8a8;
+  --wk-line: #fff6dc1a;
+  --wk-link: #4ade80;
+  --wk-shadow: 0 1px 2px #0006, 0 8px 24px -12px #0009;
+  --wk-shadow-lift: 0 2px 4px #0006, 0 18px 40px -18px #000c;
+}
+.wk .grid > * {
+  min-width: 0;
+}
+.wk-tone {
+  background: linear-gradient(160deg, var(--tone-a), var(--tone-b));
+}
+.wk[data-theme="dark"] .wk-tone {
+  background: linear-gradient(
+    160deg,
+    color-mix(in oklab, var(--tone-a) 14%, #221d19),
+    color-mix(in oklab, var(--tone-b) 10%, #16120f)
+  );
+}
+.wk-card {
+  background: var(--wk-surface);
+  border: 1px solid var(--wk-line);
+  box-shadow: var(--wk-shadow);
+  border-radius: 20px;
+}
+.wk-lift {
+  transition: transform 0.16s, box-shadow 0.16s;
+}
+.wk-lift:hover {
+  box-shadow: var(--wk-shadow-lift);
+  transform: translateY(-2px);
+}
+.wk-tile {
+  background: radial-gradient(120% 90% at 30% 20%, #fffffff2, #fff0 60%), var(--tile, var(--wk-gold));
+  border-radius: 18px;
+  place-items: center;
+  display: grid;
+  box-shadow: inset 0 -3px #00000014, 0 6px 14px -6px #00000059;
+}
+.wk a.wk-link,
+.wk-prose a {
+  color: var(--wk-link);
+  text-underline-offset: 2px;
+  font-weight: 600;
+  text-decoration: underline;
+}
+.wk-prose {
+  font-size: 15.5px;
+  line-height: 1.65;
+}
+.wk-prose > * + * {
+  margin-top: 0.8em;
+}
+.wk-prose h3,
+.wk-prose h4 {
+  margin-top: 1.6em;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.wk-prose h3 {
+  font-size: 1.2em;
+}
+.wk-prose h4 {
+  font-size: 1.05em;
+}
+.wk-prose ul,
+.wk-prose ol {
+  padding-left: 1.3em;
+}
+.wk-prose ul {
+  list-style: outside;
+}
+.wk-prose ol {
+  list-style: decimal;
+}
+.wk-prose li + li,
+.wk-prose li > ul,
+.wk-prose li > ol {
+  margin-top: 0.3em;
+}
+.wk-prose strong {
+  font-weight: 700;
+}
+.wk-prose code {
+  background: var(--wk-surface-2);
+  border-radius: 6px;
+  padding: 0.1em 0.35em;
+  font-size: 0.9em;
+}
+.wk-prose blockquote {
+  border-left: 4px solid var(--wk-gold-1);
+  background: var(--wk-cream);
+  color: #3b3220;
+  border-radius: 0 14px 14px 0;
+  padding: 0.6em 1em;
+}
+.wk-prose table {
+  border-collapse: collapse;
+  max-width: 100%;
+  font-size: 0.93em;
+  display: block;
+  overflow-x: auto;
+}
+.wk-prose th,
+.wk-prose td {
+  text-align: left;
+  border-bottom: 1px solid var(--wk-line);
+  vertical-align: top;
+  padding: 0.45em 0.7em;
+}
+.wk-prose th {
+  background: var(--wk-surface-2);
+  font-weight: 700;
+}

@@ -6,6 +6,7 @@
 
 import { DEFAULT_NEEDS, getCitizenState, updateCitizen, type Citizen, type NeedKey, type Needs } from "@/lib/citizenStore";
 import { isIll, maybeFallIll, SERVICES } from "@/lib/cityServices";
+import { gameAudio } from "@/utils/gameAudio";
 
 // ---------------------------------------------------------------- state
 
@@ -168,6 +169,7 @@ export function buyPerk(id: string): boolean {
   const l = lifeOf(getCitizenState().citizen);
   if (!perk || l.perks.includes(id) || l.points < perk.cost) return false;
   updateLife((x) => ({ ...x, points: x.points - perk.cost, perks: [...x.perks, id] }));
+  gameAudio.sfx("buy");
   return true;
 }
 
@@ -339,5 +341,6 @@ export function claimWish(id: string, venues: WishVenue[]): number {
     ...x, points: x.points + w.reward,
     wishes: x.wishes.map((y) => (y.id === id ? makeWish(cit, x.wishes.map((z) => z.kind), venues) : y)),
   }));
+  gameAudio.sfx("wish");
   return w.reward;
 }

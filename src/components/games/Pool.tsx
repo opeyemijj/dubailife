@@ -401,6 +401,9 @@ function Board({ state, me, seats, onMove, canMove }: BoardProps<PoolState>) {
     if (!shot || shot.id === seen.current) return;
     seen.current = shot.id;
     const sim = simulate(shot.from, shot.angle, shot.power);
+    gameAudio.sfx("cue");
+    if (sim.firstHit !== null) setTimeout(() => gameAudio.sfx("clack"), 80);
+    if (sim.potted.length > 0) setTimeout(() => gameAudio.sfx("pocket"), Math.max(180, Math.round((sim.frames.length * 1000) / 110)));
     const order = shot.from.map((b) => b.n);
     let f = 0, raf = 0;
     setPlaying(true);

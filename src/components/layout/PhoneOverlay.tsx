@@ -29,6 +29,8 @@ import { NAVIGATE } from "@/components/layout/Embed";
 import { HayatiApp } from "@/components/phone/HayatiApp";
 import { CarsApp } from "@/components/phone/CarsApp";
 import { DecorApp } from "@/components/phone/DecorApp";
+import { SpacesApp } from "@/components/phone/SpacesApp";
+import { useSpacesStore } from "@/lib/spaces";
 import { useLove } from "@/lib/love";
 import APPS from "@/data/phone/apps.json";
 
@@ -36,7 +38,7 @@ import APPS from "@/data/phone/apps.json";
 export const openPhone = (app?: Screen) => window.dispatchEvent(new CustomEvent("dubai:open-phone", { detail: app }));
 
 /** Apps that open inside the phone (the rest open their page). */
-type Screen = "home" | "games" | "jobs" | "clinic" | "court" | "food" | "grocery" | "rides" | "hayati" | "cars" | "decor" | `store:${string}` | `page:${string}`;
+type Screen = "home" | "spaces" | "games" | "jobs" | "clinic" | "court" | "food" | "grocery" | "rides" | "hayati" | "cars" | "decor" | `store:${string}` | `page:${string}`;
 
 interface App { id: string; name: string; icon: string; bg: string; href?: string; screen?: Screen; run?: () => void; badge?: number; isNew?: boolean }
 
@@ -46,7 +48,7 @@ export function PhoneOverlay() {
   const [open, setOpen] = useState<Screen | null>(null);
   const [metro, setMetro] = useState<MetroTrip | null>(null);
   useEffect(() => {
-    const show = (e: Event) => { gameAudio.playClickSound(); setOpen((e as CustomEvent<Screen | undefined>).detail ?? "home"); };
+    const show = (e: Event) => { gameAudio.sfx("open"); setOpen((e as CustomEvent<Screen | undefined>).detail ?? "home"); };
     // A page inside the phone asked to open somewhere in the city: put the phone away and go there.
     const out = (e: MessageEvent) => {
       if (e.origin !== window.location.origin || e.data?.type !== NAVIGATE) return;
@@ -94,8 +96,11 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
 
   const clinicBadge = (services?.illness ? 1 : 0) + (services?.patients.length ?? 0);
   const courtBadge = (services?.cases.filter((c) => c.status === "open").length ?? 0) + (services?.clients.filter((c) => c.status === "open" && c.defence === null).length ?? 0);
+  const { rooms: spaceRooms } = useSpacesStore();
+  const liveSpacesBadge = spaceRooms.filter((r) => !r.scheduledFor).length;
   const apps: App[] = useMemo(() => [
     // The apps people in Dubai open every day.
+    { id: "spaces", name: "Spaces", icon: "🎙️", bg: "from-purple-600 to-slate-900", screen: "spaces", badge: liveSpacesBadge, isNew: true },
     { id: "food", name: APPS.delivery.app.name, icon: APPS.delivery.app.icon, bg: APPS.delivery.app.bg, screen: "food", isNew: true },
     ...APPS.delivery.stores.filter((st) => st.home).map((st): App => ({ id: st.id, name: st.name, icon: st.icon, bg: st.bg, screen: `store:${st.id}`, isNew: true })),
     { id: "rides", name: APPS.rides.app.name, icon: APPS.rides.app.icon, bg: APPS.rides.app.bg, screen: "rides", isNew: true },
@@ -128,7 +133,7 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
     { id: "alerts", name: "Alerts", icon: "🔔", bg: "from-rose-300 to-pink-600", screen: "page:/phone?tab=alerts" },
     { id: "guide", name: "Guide", icon: "🧭", bg: "from-sky-300 to-cyan-600", screen: "page:/guide" },
     { id: "profile", name: "Profile", icon: "🙂", bg: "from-zinc-300 to-zinc-500", run: () => openLife("profile") },
-  ], [unread, clinicBadge, courtBadge, loveBadge]);
+  ], [unread, clinicBadge, courtBadge, loveBadge, liveSpacesBadge]);
 
   const home = () => setScreen("home");
   // App screens are white, so the status bar and home bar turn dark on them.
@@ -162,7 +167,8 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
               <span className="flex items-center gap-1.5">●●● 5G <span className="inline-block w-6 h-3 rounded-[3px] border-2 border-current relative"><span className="absolute inset-0.5 right-1 bg-current rounded-[1px]" /></span></span>
             </div>
 
-            {screen === "jobs" ? <JobsApp onBack={home} onClose={onClose} />
+            {screen === "spaces" ? <SpacesApp onBack={home} onClosePhone={onClose} />
+            : screen === "jobs" ? <JobsApp onBack={home} onClose={onClose} />
             : screen === "clinic" ? <ClinicApp onBack={home} />
             : screen === "court" ? <PoliceApp onBack={home} />
             : screen === "food" ? <DeliveryApp mode="food" onBack={home} />

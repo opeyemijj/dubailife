@@ -439,7 +439,9 @@ function ResultCard({ info, result, seats, me, mode, roomId, onAgain, onExit }: 
     if (saved.current) return;
     saved.current = true;
     void recordResult(info.id, mode, outcome, result.scores?.[me] ?? (outcome === "win" ? 1 : 0), roomId);
-    if (outcome === "win") gameAudio.playCoinSound();
+    if (outcome === "win") gameAudio.sfx("win");
+    else if (outcome === "draw") gameAudio.sfx("draw");
+    else gameAudio.sfx("lose");
   }, [info.id, mode, outcome, result, me, roomId]);
 
   const finalScore = result.scores?.[me];

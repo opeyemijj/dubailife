@@ -82,7 +82,7 @@ export function MysteryBox({ prize, xp, onDone }: { prize: number; xp: number; o
   const quality = useMemo(() => canvasQuality(), []);
   const open = useRef(0);
   const [opened, setOpened] = useState(false);
-  const tap = () => { if (opened) return; open.current = 0.001; setOpened(true); gameAudio.playCoinSound(); };
+  const tap = () => { if (opened) return; open.current = 0.001; setOpened(true); gameAudio.sfx("mgJackpot"); };
 
   // Build a visual 5-slot Luxury Reel with the winning prize in the center and high-value jackpots right beside it
   const reel = useMemo(() => {

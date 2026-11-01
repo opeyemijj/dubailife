@@ -301,7 +301,11 @@ export function LandingOverlay({
           <div className="flex justify-center"><InstallApp /></div>
 
           {/* What Dubai Life is, and the social accounts */}
-          <div className="flex items-center justify-center gap-3 pt-1 text-xs font-bold text-slate-500">
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-1 text-xs font-bold text-slate-500">
+            <Link href="/wiki" className="px-3 py-1 rounded-full bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-black flex items-center gap-1 transition-colors">
+              <span aria-hidden="true">📖</span>
+              <span>How to play · Wiki</span>
+            </Link>
             <Link href="/about" className="hover:text-slate-800 transition-colors">About</Link>
             {SOCIALS.map((n) => n.href
               ? <a key={n.label} href={n.href} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 transition-colors">{n.label}</a>

@@ -32,6 +32,7 @@ import { MorningScene } from "@/components/goals/MorningScene";
 import { Payday } from "@/components/goals/Payday";
 import { EmbedBridge, OutsidePhone } from "@/components/layout/Embed";
 import { ClarityAnalytics } from "@/components/analytics/ClarityAnalytics";
+import { FloatingSpaceOverlay } from "@/components/social/FloatingSpaceOverlay";
 
 const fredoka = Fredoka({ subsets: ["latin"], display: 'swap' });
 
@@ -222,6 +223,7 @@ export default function RootLayout({
         <LifeHub />
         <OutsidePhone>
           <KeyboardShortcuts />
+          <FloatingSpaceOverlay />
           <PhoneOverlay />
           <HudSheets />
           <LoveListener />

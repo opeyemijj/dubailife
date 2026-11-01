@@ -27,9 +27,9 @@ export function WelcomeBack({ citizen }: { citizen: Citizen }) {
   const today = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Dubai", weekday: "long", day: "numeric", month: "short" });
 
   return (
-    <main className="fixed inset-0 h-[100dvh] w-screen overflow-hidden bg-gradient-to-b from-sky-200 via-sky-100 to-emerald-100 text-slate-900 select-none">
-      {/* Your home, a little below the middle, behind everything. */}
-      <div className="absolute inset-x-0 top-[14%] bottom-[24%] pointer-events-none">
+    <main className="fixed inset-0 h-[100dvh] w-screen overflow-hidden bg-[#eef6ff] text-slate-900 select-none">
+      {/* Your home, full-bleed behind everything with no bottom cutoff. */}
+      <div className="absolute inset-0 pointer-events-none">
         <ApartmentRoom housingTier={tier} furniture={withHomeItems(citizen.furniture ?? [], tier)} homeStyle={style} look={citizen.look} background="transparent" loadingLabel="Opening your home" />
       </div>
 
@@ -64,7 +64,17 @@ export function WelcomeBack({ citizen }: { citizen: Citizen }) {
           </div>
         </div>
 
-        <nav aria-label="Dubai Life on social media" className="mt-3 flex items-center justify-center gap-2">
+        <div className="mt-3 flex justify-center">
+          <Link
+            href="/wiki"
+            className="h-10 px-4 rounded-full bg-white/95 hover:bg-white shadow flex items-center gap-2 text-[14px] font-semibold text-slate-800 transition-transform active:scale-95"
+          >
+            <span aria-hidden="true">📖</span>
+            <span>How to play · Wiki</span>
+          </Link>
+        </div>
+
+        <nav aria-label="Dubai Life on social media" className="mt-2.5 flex items-center justify-center gap-2">
           <Link href="/about" className="h-11 px-4 rounded-full bg-white/90 shadow flex items-center gap-1.5 font-semibold text-slate-700">
             <BadgeCheck className="w-5 h-5 text-emerald-600" /> Official
           </Link>

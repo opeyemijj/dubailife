@@ -381,7 +381,8 @@ export function ShiftScene({
       if (totalBonus > 0) adjustBalance(totalBonus);
       gainSkill(theme.skill, 18 + Math.min(20, servedCount * 2));
       boostNeed("social", 12);
-      gameAudio.playCoinSound();
+      if (vip) gameAudio.sfx("mgJackpot");
+      else gameAudio.playCoinSound();
       setServerResult({ shifts: r.data!.shifts, shiftsPerWeek: r.data!.shiftsPerWeek });
       setPhase("done");
     })();
@@ -409,7 +410,8 @@ export function ShiftScene({
     setServedCount((n) => n + 1);
     setTipsAed((t) => t + earned);
     setFloatingText(`${order.vip ? "👑 VIP " : ""}+AED ${earned}${nextCombo > 1 ? ` · ${nextCombo}× COMBO!` : ""} (${coopMultiplier.toFixed(2)}× Co-Op)`);
-    gameAudio.playCoinSound();
+    gameAudio.sfx("mgServe");
+    if (nextCombo >= 3 || order.vip) gameAudio.sfx("mgPerfect");
   };
 
   return (

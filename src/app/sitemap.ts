@@ -2,19 +2,33 @@ import type { MetadataRoute } from "next";
 import { PLACES } from "@/lib/city/places";
 import { GAMES } from "@/lib/games/registry";
 import { SITE } from "@/lib/site";
+import { WIKI_HUBS } from "@/components/wiki/WikiData";
 
-// Every indexable public page: city landmarks, venues, arcade games, courses and businesses.
+// Every indexable public page: city landmarks, venues, wiki guides, arcade games, courses and businesses.
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   const pages: MetadataRoute.Sitemap = [
     { url: `${SITE.url}/`, lastModified: now, changeFrequency: "daily", priority: 1.0 },
     { url: `${SITE.url}/explore`, lastModified: now, changeFrequency: "daily", priority: 0.95 },
+    { url: `${SITE.url}/wiki`, lastModified: now, changeFrequency: "weekly", priority: 0.95 },
+    { url: `${SITE.url}/wiki/places`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
+    { url: `${SITE.url}/guide`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE.url}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.9 },
     { url: `${SITE.url}/business`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE.url}/academics`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE.url}/scam-check`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
     { url: `${SITE.url}/tournament/rules`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
   ];
+
+  // Official Dubai Life Wiki Guides (/wiki/[slug])
+  for (const hub of WIKI_HUBS) {
+    pages.push({
+      url: `${SITE.url}/wiki/${hub.slug}`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.85,
+    });
+  }
 
   // Games in Game City (high-intent SEO landing pages)
   for (const game of GAMES) {
