@@ -45,7 +45,7 @@ const ERRORS: Record<string, string> = {
   insufficient: "You don't have enough AED for that.",
   already_decorating: "A decorator is already working on your home.",
   not_a_decorator: "That player isn't a decorator any more. Choose someone else.",
-  not_available: "That job has gone to a Local: the client waited too long.",
+  not_available: "The client cancelled that request.",
   not_cancellable: "Your decorator has already picked up the key.",
 };
 const friendly = (m: string) => ERRORS[Object.keys(ERRORS).find((k) => m.includes(k)) ?? ""] ?? "Something went wrong. Try again.";

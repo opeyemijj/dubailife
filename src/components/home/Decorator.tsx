@@ -196,7 +196,7 @@ export function DecoratorSheet({ tier, current, onClose, onHired }: { tier: Hous
                 </div>
                 <button disabled={busy} onClick={() => hire(look, null)} className="h-9 px-3 rounded-xl bg-slate-900 text-white text-xs font-black disabled:opacity-50">🔑 Hire</button>
               </div>
-              <p className="text-[11px] text-slate-400">A player has {DECORATORS.acceptMinutes} minutes to pick up your key; if they don&apos;t, a Local takes over and their fee comes back to you.</p>
+              <p className="text-[11px] text-slate-400">Your request stays open until your decorator picks up the key, or until you cancel it (which refunds your AED in full).</p>
             </>
           )}
           {error && <p className="text-sm font-bold text-rose-600">{error}</p>}
@@ -244,7 +244,7 @@ export function DecoratorStatus({ tier, job, reload }: { tier: HousingTier; job:
     ? `🔑 Waiting for @${job.decorator} to pick up your key`
     : job.decorator
       ? `🧑‍🎨 @${job.decorator} is decorating${elsewhere}`
-      : `🧑‍🎨 ${studio?.decorator ?? "Your decorator"} is decorating${elsewhere}${job.fallback ? " (your decorator didn't come)" : ""} · ${mins ? `ready in ${mins} min` : "almost done"}`;
+      : `🧑‍🎨 ${studio?.decorator ?? "Your decorator"} is decorating${elsewhere} · ${mins ? `ready in ${mins} min` : "almost done"}`;
   return (
     <div className="fixed left-1/2 -translate-x-1/2 top-[calc(max(0.75rem,env(safe-area-inset-top))+7rem)] z-[45] flex items-center gap-2">
       <p className="rounded-full bg-white/95 shadow-lg px-4 py-2 text-xs font-black text-slate-800 whitespace-nowrap">{text}</p>

@@ -95,7 +95,6 @@ export function DecorApp({ onBack, onClose }: { onBack: () => void; onClose?: ()
         : jobs.map((j) => {
           const s = studioOf(j.studio);
           if (!s) return null;
-          const left = now ? Math.max(0, DECORATORS.acceptMinutes - Math.floor((now - Date.parse(j.createdAt)) / 60000)) : DECORATORS.acceptMinutes;
           return (
             <Card key={j.id}>
               <div className="flex items-start gap-3">
@@ -108,7 +107,7 @@ export function DecorApp({ onBack, onClose }: { onBack: () => void; onClose?: ()
               </div>
               {j.status === "requested" ? (
                 <>
-                  <p className="text-xs text-amber-700 font-bold">Pick up the key within {left} min, or a Local takes the job.</p>
+                  <p className="text-xs text-amber-700 font-bold">Waiting for you to pick up the key (unless the client cancels).</p>
                   <Big onClick={() => accept(j)}>🔑 Pick up the key</Big>
                 </>
               ) : (

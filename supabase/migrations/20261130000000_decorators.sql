@@ -98,8 +98,7 @@ begin
 end $$;
 grant execute on function public.hire_decor(uuid, text, text, bigint) to authenticated;
 
-/** Your decorator job (the latest not yet in your home). A player who hasn't picked up your key within 30
-    minutes is replaced by a Local, and their held fee comes back. */
+/** Your decorator job (the latest not yet in your home). Player requests wait until the decorator picks up the key or you cancel. */
 create or replace function public.my_decor() returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare me uuid := auth.uid(); j decor_jobs;
@@ -107,11 +106,6 @@ begin
   if me is null then raise exception 'not_signed_in'; end if;
   select * into j from decor_jobs where client_id = me and not applied and status <> 'cancelled' order by created_at desc limit 1 for update;
   if j.id is null then return null; end if;
-  if j.status = 'requested' and j.created_at < now() - interval '30 minutes' then
-    if j.fee > 0 then perform coin_move(me, j.fee, 'refund', 'Decorator fee back: a Local took over', 'decor-refund:' || j.id); end if;
-    update decor_jobs set decorator_id = null, fee = 0, status = 'working', fallback = true, ready_at = now() + interval '10 minutes'
-      where id = j.id returning * into j;
-  end if;
   return jsonb_build_object('id', j.id, 'studio', j.studio, 'tier', j.tier, 'status', j.status, 'touch', j.touch, 'fallback', j.fallback,
     'readyAt', j.ready_at, 'fee', j.fee, 'createdAt', j.created_at,
     'decorator', (select username from profiles where id = j.decorator_id),
@@ -151,7 +145,7 @@ language sql stable security definer set search_path = public as $$
     'tier', j.tier, 'fee', j.fee, 'status', j.status, 'createdAt', j.created_at) order by j.created_at), '[]'::jsonb)
   from decor_jobs j join profiles p on p.id = j.client_id
   where j.decorator_id = auth.uid()
-    and ((j.status = 'requested' and j.created_at > now() - interval '30 minutes') or j.status = 'working')
+    and j.status in ('requested', 'working')
 $$;
 grant execute on function public.decor_jobs_for_me() to authenticated;
 
@@ -160,7 +154,7 @@ create or replace function public.decor_accept(p_job bigint) returns void
 language plpgsql security definer set search_path = public as $$
 begin
   update decor_jobs set status = 'working', accepted_at = now()
-    where id = p_job and decorator_id = auth.uid() and status = 'requested' and created_at > now() - interval '30 minutes';
+    where id = p_job and decorator_id = auth.uid() and status = 'requested';
   if not found then raise exception 'not_available'; end if;
 end $$;
 grant execute on function public.decor_accept(bigint) to authenticated;

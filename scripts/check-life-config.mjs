@@ -216,7 +216,6 @@ dneed("career", `('${dc.name}', '${dc.title}', ${dc.weeklyWage}, ${dc.shiftsPerW
 dneed("interview", `('${dc.name}', '{${dec.interview.map((q) => q.answer).join(",")}}')`);
 dneed("fee limits", `when 'decorator' then array[${dec.fee.min}, ${dec.fee.max}, ${dec.fee.default}]`);
 dneed("local minutes", `then now() + interval '${dec.minutes} minutes' end`);
-dneed("accept minutes", `j.created_at < now() - interval '${dec.acceptMinutes} minutes'`);
 for (const s of dec.studios) dneed(`touches ${s.id}`, `when '${s.id}' then array[${s.touches.map((t) => `'${t}'`).join(", ")}]`);
 // Penalties (cars.json → driving.revokeAfterAccidents vs *_penalties.sql).
 const penFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_penalties.sql")).sort().pop();
