@@ -71,7 +71,6 @@ export interface SpaceRoom {
   participants: SpaceParticipant[];
   activity: SpaceActivityState;
   aiSafetyCheck: boolean;
-  isSimulated?: boolean;
 }
 
 const ICE_SERVERS: RTCIceServer[] = [
@@ -125,7 +124,8 @@ const peerMeta = new Map<string, { makingOffer: boolean; ignoreOffer: boolean; p
 // When each room's host was last heard from: hosts re-announce, so a room whose host has gone disappears.
 const roomLastSeen = new Map<string, number>();
 const HOST_BEAT_MS = 20000;
-const HOST_GONE_MS = 65000;
+// Long enough that a host whose phone goes to the background for a bit doesn't lose their room.
+const HOST_GONE_MS = 180000;
 let beatInterval: ReturnType<typeof setInterval> | null = null;
 let micStarting = false;
 let pendingJoinId: string | null = null;
@@ -839,7 +839,7 @@ export function leaveSpace() {
       .catch(() => {});
   }
 
-  if (room && room.hostId === me.id && !room.isSimulated && lobbyChannel) {
+  if (room && room.hostId === me.id && lobbyChannel) {
     lobbyChannel
       .send({ type: "broadcast", event: "space-end", payload: { id: spaceId } })
       .catch(() => {});
@@ -858,7 +858,7 @@ export function leaveSpace() {
           participants: r.participants.filter((p) => p.id !== me.id),
         };
       })
-      .filter((r) => r.isSimulated || r.hostId !== me.id || r.id !== spaceId),
+      .filter((r) => r.hostId !== me.id || r.id !== spaceId),
   };
   gameAudio.sfx("tap");
   emit();

@@ -26,6 +26,7 @@ import { Custody } from "@/components/cars/Custody";
 import { FineNotice } from "@/components/cars/FineNotice";
 import { DecorFirstNudge } from "@/components/home/MoveInGuide";
 import { LogoutConfirm } from "@/components/layout/LogoutConfirm";
+import { LiveSpaceBanner } from "@/components/social/LiveSpaceBanner";
 import { GoalSetup } from "@/components/goals/GoalSetup";
 import { DecorJobAlert } from "@/components/home/DecorJobAlert";
 import { NextStep } from "@/components/goals/NextStep";
@@ -225,6 +226,7 @@ export default function RootLayout({
         <OutsidePhone>
           <KeyboardShortcuts />
           <FloatingSpaceOverlay />
+          <LiveSpaceBanner />
           <PhoneOverlay />
           <HudSheets />
           <LoveListener />

@@ -117,7 +117,7 @@ export function SpacesApp({
   const handleCreateSpace = (e: React.FormEvent) => {
     e.preventDefault();
     const created = hostNewSpace({
-      title: newTitle || `1b for the first 50 people`,
+      title: newTitle,
       activityKind: newActivity,
       dropAmount: newDropAmount,
     });
@@ -162,7 +162,7 @@ export function SpacesApp({
               maxLength={70}
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              placeholder="e.g. 1b for the first 50 people, Talent Night, Truth or Dare…"
+              placeholder="e.g. Talent Night, Truth or Dare…"
               className="w-full h-12 px-4 rounded-2xl bg-slate-100 text-slate-900 font-semibold text-sm outline-none focus:ring-2 focus:ring-slate-900"
             />
           </div>
