@@ -49,7 +49,7 @@
       "title": "Learn and level up",
       "summary": "Study in Academic City and pass the driving test to unlock better jobs and visas.",
       "points": [
-        "Brain University, Crescent and Falcon universities, and the Foundation Academy: one new lesson a day per course.",
+        "Brain University, American University in Dubai, University of Dubai, Dubai College and GEMS Wellington: one new lesson a day per course.",
         "Graduating unlocks the student visa and raises your pay; books are summarised chapter by chapter.",
         "The Driving Academy: eye test, theory and Smart Yard parking. A license unlocks cars and driving jobs.",
         "Certificates are in-game achievements, not accredited qualifications."
@@ -62,7 +62,7 @@
       "title": "Spot the scams",
       "summary": "Scam calls and texts will try to trick you. Report them for a bounty.",
       "points": [
-        "A few times a week, a fake call or text arrives on your in-game phone (always marked SIMULATION).",
+        "At random moments, a scam call or text arrives on your in-game phone, and it looks real.",
         "Report it to e-Crime for an AED 500–1,000 bounty. Fall for it and you lose up to 10% of your wallet (never more than AED 5,000).",
         "Every scam ends with the red flags and what the real version looks like."
       ],
@@ -93,6 +93,21 @@
         "The season pass and Dubai Plus add titles, frames and badges for your profile."
       ],
       "cta": { "label": "See the tournament", "href": "/tournament" }
+    },
+    {
+      "id": "game",
+      "icon": "🎮",
+      "title": "Live the game",
+      "summary": "Get a license, drive your own car and play multiplayer games.",
+      "points": [
+        "Pass your driving test to get a license, then buy your own car and drive it around Dubai.",
+        "Play multiplayer games with other players and win points for the league.",
+        "Join the marathon, host a live Space on your phone and make Dubai yours."
+      ],
+      "cta": {
+        "label": "Open the map",
+        "href": "/explore"
+      }
     },
     {
       "id": "wellbeing",

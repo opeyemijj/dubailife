@@ -81,7 +81,7 @@ export const DEFAULT_VENUE_ADS: Record<string, VenueWallAd> = {
     panelId: "panel_main",
     headline: "Spring Career Accelerators & AI Bootcamps",
     subtext: "Fast-track your skills in Coding, Real Estate, and Wealth Management.",
-    sponsorName: "Crescent University",
+    sponsorName: "Academic City",
     imageUrl: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80",
     ctaLabel: "Enroll in Short Courses",
     ctaUrl: "#courses",

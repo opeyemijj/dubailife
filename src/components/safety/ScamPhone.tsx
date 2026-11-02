@@ -1,13 +1,13 @@
 "use client";
 
-// The anti-scam phone simulator (design spec section 7): when today's scam arrives, an incoming call or
-// text slides in. The player can fall for it, report it to e-Crime for a bounty, or ignore it; then a short
-// debrief shows the red flags and what the real-world version looks like. Every screen says SIMULATION.
+// Scams on your phone (design spec section 7): at a random moment an incoming call or text slides in, looking
+// like the real thing. The player can fall for it (and lose money), report it to e-Crime or reject it (and be paid);
+// then they're told plainly what happened, with the red flags and what the real-world version looks like.
 
 import { ShareButton } from "@/components/share/ShareButton";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Flag, Phone, PhoneOff, ShieldAlert, X } from "lucide-react";
+import { Flag, Phone, PhoneOff, X } from "lucide-react";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { dialogOpen, useCitizen } from "@/lib/citizenStore";
 import { resolveScam, SCAM_POINTS, scamDue, type OpenScam, type ScamOutcome } from "@/lib/scams";
@@ -19,8 +19,6 @@ const CHANNEL = {
   chat: { icon: "🟢", label: "ChatApp message", ignore: "Ignore" },
   telegram: { icon: "✈️", label: "Telegram message", ignore: "Block & delete" },
 } as const;
-
-const Simulation = () => <span className="text-[9px] font-black tracking-widest px-1.5 py-0.5 rounded bg-amber-400 text-slate-950">SIMULATION</span>;
 
 export function ScamPhone() {
   const { citizen } = useCitizen();
@@ -72,7 +70,7 @@ export function ScamPhone() {
           <button onClick={() => setStage("open")} className="flex items-center gap-3 flex-1 min-w-0 text-left">
             <span className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl shrink-0 ${s.channel === "call" ? "bg-emerald-600 animate-pulse" : "bg-sky-600"}`}>{ch.icon}</span>
             <span className="min-w-0">
-              <span className="flex items-center gap-1.5"><span className="text-[11px] font-bold text-white/60">{ch.label}</span><Simulation /></span>
+              <span className="block text-[11px] font-bold text-white/60">{ch.label}</span>
               <span className="block text-sm font-black truncate">{s.preview}</span>
             </span>
           </button>
@@ -84,12 +82,12 @@ export function ScamPhone() {
 
   return (
     <ModalPortal>
-      <div className="fixed inset-0 z-[176] flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-label="Scam simulation">
+      <div className="fixed inset-0 z-[176] flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-label={stage === "open" ? ch.label : "What happened"}>
         <div className="absolute inset-0 bg-black/60" aria-hidden />
         <div className="relative w-full sm:max-w-sm bg-slate-950 text-white rounded-t-[2rem] sm:rounded-[2rem] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] space-y-4 shadow-2xl animate-in slide-in-from-bottom-8 duration-300 max-h-[90dvh] overflow-y-auto">
           {stage === "open" ? (
             <>
-              <div className="flex items-center justify-between"><Simulation /><span className="text-[11px] text-white/50">{ch.label}</span></div>
+              <p className="text-[11px] text-center text-white/50">{ch.label}</p>
               <div className="text-center space-y-1">
                 <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center text-3xl ${s.channel === "call" ? "bg-emerald-600" : "bg-sky-600"}`}>{ch.icon}</div>
                 <p className="font-black text-lg leading-tight">{s.sender}</p>
@@ -113,23 +111,30 @@ export function ScamPhone() {
                   {s.channel === "call" ? <PhoneOff className="w-4 h-4" /> : null} {ch.ignore}
                 </button>
               </div>
-              <p className="text-[10px] text-center text-white/40">A training simulation inside Dubai Life. No real money, codes or personal details are ever involved.</p>
             </>
           ) : result && (
             <>
-              <div className="flex items-center justify-between"><Simulation /><ShieldAlert className="w-5 h-5 text-amber-400" /></div>
               <div className="text-center space-y-1">
                 <div className="text-4xl">{result.outcome === "fell" ? "😬" : result.outcome === "reported" ? "🛡️" : "👍"}</div>
                 <p className="font-black text-xl">
-                  {result.outcome === "fell" ? "That was a scam" : result.outcome === "reported" ? "Scam reported!" : "Good call"}
+                  {result.outcome === "fell" ? "You've been scammed!" : result.outcome === "reported" ? "You caught a scammer!" : "You spotted the scam!"}
                 </p>
-                <p className="text-sm text-white/70">
-                  {result.outcome === "fell"
-                    ? `${result.loss > 0 ? `You lost AED ${result.loss.toLocaleString()}. ` : ""}${s.id === "chat_code" ? "Your phone was hacked: chat is paused for 2 hours." : s.id === "police_otp" ? "Your bank froze transfers for 1 hour." : ""}`
-                    : result.outcome === "reported"
-                      ? `e-Crime paid you an AED ${result.bounty.toLocaleString()} bounty · +${SCAM_POINTS.reported} Scam Defence points`
-                      : `You ignored it · +${SCAM_POINTS.avoided} Scam Defence points. Reporting it pays a bounty next time.`}
-                </p>
+                {result.outcome === "fell" ? (
+                  <>
+                    {result.loss > 0 && <p className="text-3xl font-black text-rose-400">−AED {result.loss.toLocaleString()}</p>}
+                    <p className="text-sm text-white/70">{`${result.loss > 0 ? "The scammer took this from your wallet. " : ""}${s.id === "chat_code" ? "Your phone was hacked: chat is paused for 2 hours." : s.id === "police_otp" ? "Your bank froze transfers for 1 hour." : ""}`}</p>
+                  </>
+                ) : (
+                  <>
+                    {result.bounty > 0 && <p className="text-3xl font-black text-emerald-400">+AED {result.bounty.toLocaleString()}</p>}
+                    <p className="text-sm text-white/70">
+                      {result.outcome === "reported"
+                        ? `e-Crime paid you this bounty for reporting it · +${SCAM_POINTS.reported} Scam Defence points`
+                        : `${result.bounty > 0 ? "Your reward for not falling for it" : "You didn't fall for it"} · +${SCAM_POINTS.avoided} Scam Defence points. Report it next time for a bigger reward.`}
+                    </p>
+                  </>
+                )}
+                <p className="text-[11px] text-white/40">It was a scam in the game: only in-game money is involved.</p>
               </div>
               <div className="rounded-2xl bg-white/5 p-3.5 space-y-2">
                 <p className="text-xs font-black uppercase tracking-wider text-amber-300">Red flags</p>

@@ -77,7 +77,7 @@ export function ScamCheck({ start, referrer }: { start: string; referrer: string
 
         <div className="rounded-3xl bg-slate-900 border border-white/10 p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-black tracking-widest px-1.5 py-0.5 rounded bg-amber-400 text-slate-950">SIMULATION</span>
+            <span className="text-[9px] font-black tracking-widest px-1.5 py-0.5 rounded bg-amber-400 text-slate-950">SCAM CHECK</span>
             <span className="text-xs text-slate-400">{s.channel === "call" ? "📞 Incoming call" : s.channel === "telegram" ? "✈️ Telegram" : "💬 Message"}</span>
           </div>
           <p className="font-black">{s.sender}</p>

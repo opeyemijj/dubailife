@@ -1,16 +1,16 @@
 "use client";
 
-import { useFirstDayActive } from "@/components/life/FirstDay";
 import { DecoratorSheet, DecoratorStatus } from "@/components/home/Decorator";
+import { HomeActions } from "@/components/home/HomeActions";
+import { MoveInGuide } from "@/components/home/MoveInGuide";
 import { useMyDecor } from "@/lib/decorator";
-import { ModalPortal } from "@/components/ui/modal-portal";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { compact, useSiteStats } from "@/lib/siteStats";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
-  Volume2, VolumeX, Plus, Eye, Check, ChevronUp, ChevronDown,
+  Volume2, VolumeX, Plus, Eye, EyeOff, ChevronUp, ChevronDown,
   Home, ShoppingBag, Map, Smartphone, Sparkles, X, Megaphone,
   RotateCw, RotateCcw, Keyboard, Move, Package, LogOut, Shirt, Bell
 } from "lucide-react";
@@ -64,22 +64,6 @@ export default function HomePage() {
       setWardrobeModalOpen(true);
     }
   }, [searchParams]);
-  const firstDayActive = useFirstDayActive();
-  // The welcome only appears the first time this citizen opens their home.
-  const [welcomeModalOpen, setWelcomeModalOpenState] = useState(false);
-  const welcomeKey = `welcome-seen:${citizen?.id ?? ""}`;
-  useEffect(() => {
-    if (!citizen?.id) return;
-    let seen = false;
-    try { seen = localStorage.getItem(welcomeKey) === "1"; } catch { /* storage blocked */ }
-    // Reads browser storage once the citizen is known.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!seen && isNewCitizen(citizen)) setWelcomeModalOpenState(true);
-  }, [citizen?.id, welcomeKey]); // eslint-disable-line react-hooks/exhaustive-deps
-  const setWelcomeModalOpen = (open: boolean) => {
-    setWelcomeModalOpenState(open);
-    if (!open) { try { localStorage.setItem(welcomeKey, "1"); } catch { /* storage blocked */ } }
-  };
   // Dubai time, ticking every minute.
   const [clock, setClock] = useState<string>("");
   useEffect(() => {
@@ -214,6 +198,24 @@ export default function HomePage() {
   };
 
   const furniture = citizen?.furniture ?? [];
+  // A new player's first job here: buy something, move things or hire a decorator. Their goals wait for that,
+  // and follow as soon as they've done it (on leaving home, if they don't tap through to them here).
+  const decorFirst = !!citizen?.decorFirst && isNewCitizen(citizen);
+  const [triedMoving, setTriedMoving] = useState(false);
+  useEffect(() => {
+    if (!decorating) return;
+    const t = setTimeout(() => setTriedMoving(true), 0);
+    return () => clearTimeout(t);
+  }, [decorating]);
+  const decorated = triedMoving || !!decorJob
+    || furniture.some((f) => !f.uid.startsWith("builtin:") && f.placement)
+    || Object.keys(citizen?.homeStyle ?? {}).length > 0;
+  const finishDecorFirst = () => updateCitizen((c) => ({ ...c, decorFirst: false }));
+  useEffect(() => {
+    if (!decorFirst || !decorated) return;
+    return () => updateCitizen((c) => ({ ...c, decorFirst: false }));
+  }, [decorFirst, decorated]);
+  const openShop = () => { setShopTab("shop"); setBuyModalOpen(true); };
   const stored = withHomeItems(furniture, housingTier).filter((f) => !f.placement);
   const placingItem = placing ? getCatalogItem(placing.itemId) : undefined;
   const placingIsPlaced = !!(placing && furniture.find((f) => f.uid === placing.uid)?.placement);
@@ -349,7 +351,12 @@ export default function HomePage() {
       />
 
       {/* Camera controls */}
-      <div className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-2 pointer-events-auto">
+      <div className="absolute right-3 sm:right-6 top-[36%] -translate-y-1/2 z-30 flex flex-col items-center gap-2 pointer-events-auto">
+        {!cleanScreen && (
+          <button onClick={() => setCleanScreen(true)} className="w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 active:scale-90 transition-transform" title="Clean screen" aria-label="Clean screen">
+            <EyeOff className="w-4 h-4" />
+          </button>
+        )}
         <button onClick={() => { setView((v) => (v === "inside" ? "above" : "inside")); setUpView(false); }} className="w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg border border-slate-200 flex items-center justify-center text-lg active:scale-90 transition-all" title={view === "inside" ? "View from above" : "View from inside"} aria-label={view === "inside" ? "View from above" : "View from inside"}>{view === "inside" ? "🏠" : "👤"}</button>
         <button
           onClick={() => setTurns((t) => t - 1)}
@@ -631,20 +638,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* TOP LEFT QUESTS & OBJECTIVES (Image 2) */}
-      {!cleanScreen && (
-        <div className="absolute top-[4.75rem] sm:top-24 left-3 sm:left-6 z-30 pointer-events-auto space-y-1.5">
-
-          <button
-            onClick={() => setCleanScreen(!cleanScreen)}
-            className="flex items-center gap-1 bg-white/90 hover:bg-white px-3 py-2 rounded-full text-[11px] font-bold text-slate-600 shadow-sm border border-slate-200 transition-colors"
-          >
-            <ChevronUp className="w-3 h-3" />
-            <span>Clean screen</span>
-          </button>
-        </div>
-      )}
-
       {cleanScreen && (
         <button
           onClick={() => setCleanScreen(false)}
@@ -709,8 +702,7 @@ export default function HomePage() {
                     </button>
                   </div>
                 </div>
-                {/* Today's to-dos live here rather than as cards over the room (quiet during the first-day checklist). */}
-                {!firstDayActive && (
+                {/* Today's to-dos live here rather than as cards over the room . */}
                   <div className="grid grid-cols-2 gap-1.5 mb-1.5">
                     <div className={`flex items-center gap-2 p-2 rounded-xl border ${needs.hunger < 50 ? "bg-amber-50 border-amber-200" : "bg-slate-50 border-slate-100"}`}>
                       <span className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center text-sm shrink-0">🍎</span>
@@ -735,7 +727,6 @@ export default function HomePage() {
                       </div>
                     </div>
                   </div>
-                )}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                   {(rooms
                     ? housingConfig.activities.filter((a) => !a.room || a.room === activeRoomId || a.room === "living" || a.room === "bedroom")
@@ -872,64 +863,17 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* 1. FIRST ARRIVAL / REGULATIONS POPUP (Image 1) */}
-      {/* First visit only. A plain card (not a dialog) so nothing is left covering the screen once it's closed. */}
-      {welcomeModalOpen && (
-        <ModalPortal>
-          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Welcome to mydubailife.app">
-            <div className="absolute inset-0 bg-black/30" onClick={() => setWelcomeModalOpen(false)} aria-hidden />
-            <div className="relative bg-white text-slate-900 shadow-2xl w-[92vw] max-w-md rounded-3xl p-6 sm:p-7 text-left space-y-4">
-              <button onClick={() => setWelcomeModalOpen(false)} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600" aria-label="Close">✕</button>
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-amber-50 text-2xl flex items-center justify-center shadow-sm border border-amber-100">
-              📣
-            </div>
-            <div>
-              <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                Welcome to mydubailife.app!
-              </h3>
-              <p className="text-xs text-slate-400 font-semibold">From the mydubailife.app team</p>
-            </div>
-          </div>
-
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-            Your starter residence in <strong>{citizen?.home || "Dubai"}</strong> is ready, and you have <strong>AED {walletBalance.toLocaleString()}</strong> in your wallet to get started.
-          </p>
-
-          <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-xs font-semibold text-slate-700 leading-relaxed">
-            <div className="flex items-start gap-2">
-              <span className="text-emerald-500 font-black">◆</span>
-              <span><strong>Your Apartment:</strong> Tap the cooler to eat, the bed to rest, or the door to step out into the city.</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <span className="text-emerald-500 font-black">◆</span>
-              <span><strong>City Map:</strong> Explore Downtown Dubai, ride the Metro, discover luxury clubs, and build your fortune!</span>
-            </div>
-          </div>
-
-          <div className="bg-amber-50 p-3.5 rounded-2xl border border-amber-200 text-xs font-semibold text-amber-900 leading-relaxed">
-            🌅 <strong>Your first day:</strong> plan your budget, work a shift, pass a lesson and add a friend. The checklist in the corner pays a bonus when you finish.
-            <button onClick={() => router.push("/guide")} className="block mt-1.5 font-black text-sky-700">📖 How Dubai works: visas, jobs and prizes ›</button>
-          </div>
-
-          <div className="space-y-2 pt-2">
-            <button
-              onClick={() => router.push("/explore")}
-              className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm shadow-md shadow-emerald-500/25 transition-all active:scale-98 flex items-center justify-center gap-1.5"
-            >
-              <span>Explore the City</span>
-              <span>›</span>
-            </button>
-            <button
-              onClick={() => setWelcomeModalOpen(false)}
-              className="w-full py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition-all active:scale-98"
-            >
-              Got it
-            </button>
-          </div>
-                    </div>
-          </div>
-        </ModalPortal>
+      {!decorFirst && !cleanScreen && !placing && !decorating && <HomeActions onShop={openShop} />}
+      {decorFirst && !cleanScreen && !placing && !decorating && !buyModalOpen && !decoratorOpen && (
+        <MoveInGuide
+          name={citizen?.username ?? ""}
+          decorated={decorated}
+          hired={!!decorJob}
+          onShop={openShop}
+          onMove={() => setDecorating(true)}
+          onDecorator={() => setDecoratorOpen(true)}
+          onDone={finishDecorFirst}
+        />
       )}
 
       {/* 2. BUY FURNITURE MODAL */}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Hand, Mic, MicOff, X } from "lucide-react";
 import { rosterThumb } from "@/components/avatar/roster";
 import { useCitizen } from "@/lib/citizenStore";
@@ -27,11 +27,14 @@ export function FloatingSpaceOverlay() {
   }, [activeSpaceId]);
 
   // Support deep-linking into a Space via ?space=<id>
+  const linkedSpace = useRef<string | null>(null);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const spaceParam = params.get("space");
-    if (spaceParam && spaceParam !== activeSpaceId) {
+    // Once only: leaving the Space must not rejoin it from the same link.
+    if (spaceParam && spaceParam !== activeSpaceId && linkedSpace.current !== spaceParam) {
+      linkedSpace.current = spaceParam;
       const res = joinSpace(spaceParam);
       if (res.ok) {
         openPhone("spaces");

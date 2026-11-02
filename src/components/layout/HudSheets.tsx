@@ -13,7 +13,7 @@ import NEWS from "@/data/guide/whats-new.json";
 type SheetId = "whats-new" | "suggest";
 export const openSheet = (id: SheetId) => window.dispatchEvent(new CustomEvent("dubai:open-sheet", { detail: id }));
 
-const SEEN_KEY = "dubai_news_seen";
+export const SEEN_KEY = "dubai_news_seen";
 const ASKED_KEY = "dubai_suggest_asked";
 const WEEK = 7 * 86_400_000;
 

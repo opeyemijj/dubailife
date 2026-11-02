@@ -91,7 +91,7 @@ export default function AcademicDistrictPage() {
               <div>
                 <div className="text-xs font-black text-purple-300 uppercase tracking-wider">Academic Pathway Tip</div>
                 <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">
-                  Complete a foundation diploma at Desert Rose College or the Foundation Academy first to unlock a permanent <strong className="text-white">20% scholarship</strong> on all university and accelerator courses!
+                  Complete a foundation diploma at Dubai College or GEMS Wellington first to unlock a permanent <strong className="text-white">20% scholarship</strong> on all university and accelerator courses!
                 </p>
               </div>
             </div>

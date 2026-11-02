@@ -4,7 +4,7 @@
 // Used in onboarding and on the profile.
 
 import { Check } from "lucide-react";
-import { outfitsFor, presetFor, rosterFor, rosterThumb, type AvatarLookProps } from "./roster";
+import { facesFor, outfitsFor, presetFor, rosterThumb, type AvatarLookProps } from "./roster";
 
 export function LookPicker({ look, onChange, dark = false }: { look: AvatarLookProps; onChange: (look: AvatarLookProps) => void; dark?: boolean }) {
   const face = presetFor(look);
@@ -12,7 +12,7 @@ export function LookPicker({ look, onChange, dark = false }: { look: AvatarLookP
   const label = dark ? "text-white/60" : "text-slate-500";
   const tile = (active: boolean) => `relative rounded-2xl overflow-hidden border-2 bg-slate-800 transition-all ${active ? "border-emerald-500 ring-2 ring-emerald-500/30" : dark ? "border-transparent hover:border-white/30" : "border-transparent hover:border-slate-300"}`;
   const tick = <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center"><Check className="w-3 h-3" /></span>;
-  const people = rosterFor(look.gender);
+  const people = facesFor(look.gender);
   return (
     <div className="space-y-4">
       <div>

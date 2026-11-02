@@ -84,6 +84,7 @@ class GameAudioEngine {
   private music: HTMLAudioElement | null = null;
   private track = 0;
   private wanted = false;
+  private held = false;
   private isMuted = false;
   private fade: ReturnType<typeof setInterval> | null = null;
 
@@ -143,7 +144,7 @@ class GameAudioEngine {
     el.addEventListener("ended", () => {
       this.track = (this.track + 1) % MUSIC.length;
       el.src = MUSIC[this.track];
-      if (this.wanted && !this.isMuted) el.play().catch(() => {});
+      if (this.wanted && !this.isMuted && !this.held) el.play().catch(() => {});
     });
     this.music = el;
     return el;
@@ -169,11 +170,12 @@ class GameAudioEngine {
 
   public start() {
     this.wanted = true;
-    if (this.isMuted) return;
+    if (this.isMuted || this.held) return;
     const el = this.ensureMusic();
     if (!el) return;
     el.play()
       .then(() => {
+        if (this.held) return this.fadeTo(0, 300);
         this.fadeTo(MUSIC_VOLUME, 1200);
         this.ensureCtx();
       })
@@ -188,6 +190,14 @@ class GameAudioEngine {
   public stop() {
     this.wanted = false;
     this.fadeTo(0, 600);
+  }
+
+  /** Live voice (Spaces): the music stops however the rest of the app asks for it, and returns afterwards. */
+  public holdMusic(hold: boolean) {
+    if (this.held === hold) return;
+    this.held = hold;
+    if (hold) this.fadeTo(0, 300);
+    else if (this.wanted) this.start();
   }
 
   public setMuted(muted: boolean) {

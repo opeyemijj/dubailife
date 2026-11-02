@@ -31,7 +31,7 @@ function Reset() {
     setState("done");
     const signed = await logIn(r.email!, pw);
     setBusy(false);
-    if (signed.ok) setTimeout(() => router.replace("/explore"), 1200);
+    if (signed.ok) setTimeout(() => router.replace("/home"), 1200);
   };
 
   return (

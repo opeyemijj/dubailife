@@ -3,6 +3,7 @@
 import { ACADEMIC_MAP_CENTER } from "@/lib/city/academic";
 import { memo, useCallback, useDeferredValue, useState, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
+import { CampusCard } from "./CampusCard";
 import { TransformWrapper, TransformComponent, type ReactZoomPanPinchRef } from "react-zoom-pan-pinch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -234,6 +235,7 @@ export function InteractiveMap({
   const router = useRouter();
   const { citizen } = useCitizen();
   // Destination picking and travel (see components/city/CityNavigator).
+  const [campusCard, setCampusCard] = useState<{ campus?: string; name: string } | null>(null);
   const [navPlace, setNavPlace] = useState<Place | null>(null);
   const [navVenueId, setNavVenueId] = useState<string | undefined>(undefined);
   const [travel, setTravel] = useState<{ mode: TravelMode; ms: number } | null>(null);
@@ -498,11 +500,10 @@ export function InteractiveMap({
       setMetroModalOpen(true);
       return;
     }
-    // Academic City: each campus tile opens its hub.
+    // Academic City: each campus tile shows what it is, then its button goes in.
     if (loc.type === 'academic-tile') {
       gameAudio.playClickSound();
-      // The Driving Academy has its own page; every other campus opens its Academic City hub.
-      router.push(loc.campus === 'driving' ? '/driving' : loc.campus ? `/academics/${loc.campus}` : '/academics');
+      setCampusCard({ campus: loc.campus, name: loc.name });
       return;
     }
     // Game City: each tile opens its game's room.
@@ -1227,6 +1228,7 @@ export function InteractiveMap({
         </div>
       )}
 
+      {campusCard && <CampusCard campusId={campusCard.campus} name={campusCard.name} onClose={() => setCampusCard(null)} />}
       {navPlace && (
         <CityNavigator
           key={`${navPlace.id}:${navVenueId ?? ''}`}

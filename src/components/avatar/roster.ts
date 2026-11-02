@@ -52,6 +52,19 @@ export const ROSTER: RosterEntry[] = [
 
 export const rosterFor = (gender: Gender) => ROSTER.filter((r) => r.gender === gender);
 
+/** Faces players can choose: the roster and more from the same set, so Dubai's mix of people is all there. */
+export const FACES: RosterEntry[] = [
+  ...ROSTER,
+  { id: "Business_Female_01", gender: "woman", label: "Face" },
+  { id: "Medical_Female_01", gender: "woman", label: "Face" },
+  { id: "Female_Adult_03", gender: "woman", label: "Face" },
+  { id: "Sports_Female_02", gender: "woman", label: "Face" },
+  { id: "Business_Male_05", gender: "man", label: "Face" },
+  { id: "Business_Male_02", gender: "man", label: "Face" },
+  { id: "Medical_Male_01", gender: "man", label: "Face" },
+];
+export const facesFor = (gender: Gender) => FACES.filter((r) => r.gender === gender);
+
 // ---------------------------------------------------------------- outfits
 
 /** What an outfit is for, in the order the wardrobe shows them. */
@@ -148,6 +161,6 @@ export const rosterAnimations = (gender: Gender) => {
 
 /** The roster citizen a look resolves to (old looks without a preset get the gender default). */
 export function presetFor(look: AvatarLookProps) {
-  const found = look.preset && ROSTER.find((r) => r.id === look.preset);
+  const found = look.preset && FACES.find((r) => r.id === look.preset);
   return found ? found.id : defaultPreset(look.gender);
 }

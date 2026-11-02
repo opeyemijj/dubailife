@@ -104,7 +104,7 @@ export const SCREEN_CALLOUTS = [
   {
     id: 5,
     title: "🌅 First Day, Goals & 3D Luxury Vault",
-    text: "Top-left pills track your **First Day in Dubai** checklist (one-time AED reward), your active **Life Goal**, **3 Daily Missions**, and the **3D Dubai Luxury Vault** jackpot spin.",
+    text: "Top-left pills track your active **Life Goal**, **3 Daily Missions**, and the **3D Dubai Luxury Vault** jackpot spin.",
     box: { left: "68%", top: "14%", width: "28%", height: "8%" },
     pin: { top: "calc(18% * 0.98 + 1%)", right: "0" },
   },
@@ -153,16 +153,15 @@ export const WIKI_HUBS: WikiHub[] = [
       {
         id: "first-day",
         icon: "🌅",
-        title: "Your First Day in Dubai Checklist",
-        badge: "Starter Bonus",
+        title: "Your First Day in Dubai",
+        badge: "Getting started",
         summary:
-          "During your first 24 hours, a floating '🌅 First day' checklist guides you through 4 essential steps and pays a one-time starter AED bonus.",
+          "Four things worth doing in your first 24 hours.",
         bullets: [
           "**1. Set your Sustainability Blueprint**: Choose your housing tier, daily food plan, and transport mode in the **Visa & Budget** tab so you know your exact daily burn.",
           "**2. Visit a place in the city**: Tap any landmark on the map (like The Dubai Mall, JBR Beach, or Dubai Frame) and step inside.",
           "**3. Enrol or get a job**: Open **Dubai Academic City** (`/academics`) to start a course OR open your **Phone → Jobs** to apply for a career.",
           "**4. Meet someone or play a game**: Chat with a citizen in a venue or play a quick game in **Game City**.",
-          "**Optional Bonus**: Enable Push Notifications or install Dubai Life to your Home Screen for an extra instant AED payout!",
         ],
         tip: "Never let your bank balance hit AED 0 before 09:00 GST! Keep at least 7–14 days of runway while you get your first job.",
         cta: { label: "Open My Home", href: "/home" },

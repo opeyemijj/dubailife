@@ -1,22 +1,22 @@
 "use client";
 
 import { sendVerification } from "@/lib/email";
-import React, { useCallback, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, Shuffle, Check, Sparkles, Building, Briefcase, 
   Utensils, PartyPopper, Dumbbell, Smile, Moon, Sparkle, Trophy,
-  Star, Heart, Shield, CheckCircle2, Home, Landmark, Camera, X,
+  Star, Heart, Shield, CheckCircle2, Home, Landmark, Camera,
   Bell, Download, Share, SquarePlus, Smartphone
 } from "lucide-react";
 import { AvatarCanvas, type AvatarLookProps } from "./AvatarCanvas";
 import { BODY_TYPES, defaultBodyType } from "@/components/avatar/bodyShape";
 import { ROSTER, defaultPreset } from "@/components/avatar/roster";
 import { LookPicker } from "@/components/avatar/LookPicker";
-import { AvaturnCreator, type CreatedAvatar } from "@/components/avatar/AvaturnCreator";
 import { createProfile, useCitizen } from "@/lib/citizenStore";
 import { BLUEPRINT, dailyBurn, saveBlueprint, type Blueprint } from "@/lib/lifeLoop";
 import { GuideOverview } from "@/components/guide/HowItWorks";
+import { MoveInWalk } from "@/components/onboarding/MoveInWalk";
 import { clearSignupDraft, updateSignupDraft, useSignupDraft } from "@/lib/signupDraft";
 import { ONBOARDING_STEPS, type OnboardingStep } from "@/lib/onboardingSteps";
 
@@ -44,12 +44,11 @@ const resolve = <T,>(u: Updater<T>, prev: T): T => (typeof u === "function" ? (u
 
 export function OnboardingFlow({ step }: { step: OnboardingStep }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const draft = useSignupDraft();
   const { isLoggedIn, hydrated, session } = useCitizen();
   const [finishing, setFinishing] = useState(false);
   const [finishError, setFinishError] = useState<string | null>(null);
-  const [completionData, setCompletionData] = useState<{ userId: string; username: string } | null>(null);
+  const [movedInto, setMovedInto] = useState<{ id: string; label: string } | null>(null);
   const currentStep = ONBOARDING_STEPS.indexOf(step) + 1; // 1: Look, 2: Personality, 3: Dream, 4: Your Dubai, 5: Home
   const setCurrentStep = (n: number) => router.push(`/onboarding/${ONBOARDING_STEPS[n - 1]}`);
   // From the draft, or — if the confirmation link opened elsewhere — from the account itself.
@@ -70,10 +69,6 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
   const selectedHome = BLUEPRINT.housing.some((h) => h.id === draft?.home) ? draft!.home! : DEFAULT_HOME;
   const setSelectedHome = (home: string) => updateSignupDraft({ home });
 
-  // The selfie creator has its own URL too (/onboarding/look?selfie=open).
-  const selfieOpen = step === "look" && searchParams.get("selfie") === "open";
-  const setSelfieOpen = (open: boolean) => router.replace(open ? "/onboarding/look?selfie=open" : "/onboarding/look", { scroll: false });
-
   // Onboarding needs a signed-in account without a profile yet. Finished citizens go home;
   // unconfirmed sign-ups wait for their email; skipping past an unfinished personality step goes back.
   useEffect(() => {
@@ -82,11 +77,6 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
     else if (!session) router.replace(draft.account ? "/?signup=true&confirm=email" : "/?signup=true");
     else if (currentStep > 2 && (draft.traits ?? DEFAULT_TRAITS).length !== 2) router.replace("/onboarding/personality");
   }, [draft, hydrated, session, isLoggedIn, finishing, currentStep, router]);
-
-  const handleSelfieCreated = useCallback((created: CreatedAvatar) => {
-    updateSignupDraft((d) => ({ look: { ...(d.look ?? DEFAULT_LOOK), gender: created.gender, custom: { avatarId: created.avatarId, url: created.url } } }));
-    router.replace("/onboarding/look", { scroll: false });
-  }, [router]);
 
   const chooseGender = (gender: "woman" | "man") =>
     setLook((prev) => prev.gender === gender ? prev : { gender, preset: defaultPreset(gender), bodyType: defaultBodyType(gender) });
@@ -120,7 +110,7 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
       username: account.username,
       name: account.name,
       balance: 50000,
-      game: { look, traits: selectedTraits, dream: selectedDream, home: `${home.label}, ${home.area.split(" · ")[0]}` },
+      game: { look, traits: selectedTraits, dream: selectedDream, home: `${home.label}, ${home.area.split(" · ")[0]}`, decorFirst: true },
     });
     if (!result.ok) {
       setFinishing(false);
@@ -132,7 +122,7 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
     void sendVerification();
     clearSignupDraft();
     setFinishing(false);
-    setCompletionData({ userId: session?.userId || "", username: account.username });
+    setMovedInto({ id: home.id, label: home.label });
   };
 
   const stepTitles = ["Look", "Personality", "Dream", "Your Dubai", "Home"];
@@ -238,44 +228,20 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
                   </div>
                 </div>
 
-                {/* Selfie avatar */}
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Look like you</label>
-                  {look.custom ? (
-                    <div className="flex items-center justify-between gap-3 p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-50/60">
-                      <div className="flex items-center gap-2.5">
-                        <span className="w-9 h-9 rounded-full bg-emerald-500 text-white flex items-center justify-center"><Camera className="w-4 h-4" /></span>
-                        <div>
-                          <div className="font-black text-sm text-slate-900">Your selfie avatar</div>
-                          <div className="text-[11px] text-slate-500">Made from your photos. Tap Redo to change your outfit.</div>
-                        </div>
-                      </div>
-                      <div className="flex gap-1.5">
-                        <button onClick={() => setSelfieOpen(true)} className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50">Redo</button>
-                        <button onClick={() => setLook((prev) => ({ ...prev, custom: undefined }))} className="w-8 h-8 rounded-xl bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 flex items-center justify-center" aria-label="Remove selfie avatar"><X className="w-3.5 h-3.5" /></button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setSelfieOpen(true)}
-                      className="w-full flex items-center gap-3 p-3 rounded-2xl border-2 border-dashed border-slate-300 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-colors"
-                    >
-                      <span className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center shrink-0"><Camera className="w-4 h-4" /></span>
-                      <div>
-                        <div className="font-black text-sm text-slate-900">Create from a selfie or photo</div>
-                        <div className="text-[11px] text-slate-500">Take a selfie or upload pictures for a realistic avatar that looks like you. Free.</div>
-                        <div className="mt-1.5 inline-flex items-center gap-1 rounded-lg bg-amber-50 border border-amber-200 px-2 py-1 text-[11px] font-semibold text-amber-800">
-                          👗 Choose your outfit, hair, shoes and glasses inside the creator. That&apos;s the only place you can customise them.
-                        </div>
-                      </div>
-                    </button>
-                  )}
+                {/* Selfie avatars are coming soon: ready-made citizens only for now */}
+                <div className="flex items-center gap-3 p-3 rounded-2xl border border-slate-200 bg-slate-50 opacity-70" aria-disabled="true">
+                  <span className="w-10 h-10 rounded-full bg-slate-300 text-white flex items-center justify-center shrink-0"><Camera className="w-4 h-4" /></span>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-black text-sm text-slate-600">Avatar from a selfie</div>
+                    <div className="text-[11px] text-slate-500">Choose a ready-made citizen below for now.</div>
+                  </div>
+                  <span className="shrink-0 text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-100 px-2 py-1 rounded-full">Coming soon</span>
                 </div>
 
                 {/* Ready-made citizens: a face, and any outfit */}
                 <div>
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">
-                    {look.custom ? "Or use a ready-made citizen" : "Your citizen"}
+                    Your citizen
                   </label>
                   <LookPicker look={look} onChange={setLook} />
                 </div>
@@ -309,7 +275,6 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
                   Continue
                 </button>
 
-                {selfieOpen && <AvaturnCreator onCreated={handleSelfieCreated} onClose={() => setSelfieOpen(false)} />}
               </>
             )}
 
@@ -511,42 +476,13 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
         </div>
       </div>
       {/* Post-Registration App & Push Notification Setup Modal */}
-      {completionData && (
-        <div className="fixed inset-0 z-[200] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-white text-slate-900 rounded-3xl p-6 sm:p-7 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
-            <div className="text-center space-y-1">
-              <span className="text-4xl block">🎉</span>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-                Welcome, @{completionData.username}!
-              </h2>
-              <p className="text-xs text-slate-500 font-medium">
-                Your residency and starter grant are confirmed.
-              </p>
-            </div>
-
-            <div className="space-y-2 text-sm">
-              {[
-                ["🛬", "Visit visa: 30 days", "The clock runs on days you play. Study or get a job to stay."],
-                ["💰", "AED 50,000 in your wallet", "Living costs come out at 09:00 GST. Watch your runway."],
-                ["🌅", "Your first day", "Plan your budget, work a shift, pass a lesson, add a friend: AED 10,000 bonus."],
-              ].map(([icon, title, text]) => (
-                <div key={title} className="flex items-start gap-3 rounded-2xl bg-slate-50 p-3">
-                  <span className="text-2xl">{icon}</span>
-                  <span><span className="block font-black text-slate-900">{title}</span><span className="block text-xs text-slate-500">{text}</span></span>
-                </div>
-              ))}
-            </div>
-
-            {/* Proceed to Home */}
-            <button
-              onClick={() => router.push("/home")}
-              className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm shadow-lg shadow-emerald-500/25 transition-all active:scale-98 flex items-center justify-center gap-1.5"
-            >
-              <span>Start my first day</span>
-              <span>›</span>
-            </button>
-          </div>
-        </div>
+      {movedInto && (
+        <MoveInWalk
+          look={look}
+          homeId={movedInto.id}
+          homeLabel={movedInto.label}
+          onDone={() => router.push("/home")}
+        />
       )}
     </div>
   );

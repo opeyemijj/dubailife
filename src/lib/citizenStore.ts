@@ -88,6 +88,8 @@ export interface Citizen {
   /** Last place on the city map (world units), so travel continues across pages. */
   location?: { x: number; y: number; placeId?: string };
   createdAt: string;
+  /** Just signed up: making their home theirs comes first, then their goals. */
+  decorFirst?: boolean;
 }
 
 /** Fields the client may save into profiles.citizen (identity and wallet live in their own columns). */
@@ -304,6 +306,8 @@ export async function createProfile(input: { username: string; name: string; bal
 
 export async function signOut() {
   signedOutOnPurpose = true;
+  // The next log-in gets what's new and what to do, at home and on the map.
+  try { sessionStorage.removeItem("home-actions-hidden"); sessionStorage.removeItem("map-actions-seen"); } catch { /* storage blocked */ }
   setState({ ...state, citizen: null, isLoggedIn: false, needsOnboarding: false, session: null });
   await supabase().auth.signOut();
 }

@@ -1,6 +1,6 @@
 "use client";
 
-// The anti-scam phone simulator (design spec section 7). Scripts come from src/data/scams/scams.json; the
+// Scams that arrive on your phone in the game (design spec section 7). Scripts come from src/data/scams/scams.json; the
 // server decides when a scam arrives (scam_due) and what it costs or pays (scam_resolve).
 
 import { supabase } from "@/lib/supabase/client";

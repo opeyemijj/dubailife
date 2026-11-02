@@ -18,6 +18,8 @@ import { GAMES } from "@/lib/games/registry";
 import { getPlace } from "@/lib/city/places";
 import ACTIVITIES from "@/data/guide/activities.json";
 import VISIT from "@/data/guide/places-to-visit.json";
+import PICKS from "@/data/guide/city-picks.json";
+import { DEFAULT_ORDER, goalClaimed, goalDone, goalOf, stepDone, useGoals } from "@/lib/goals";
 import { gameAudio } from "@/utils/gameAudio";
 
 const INTRO = "dl_discover_intro";   // {count, at}
@@ -122,6 +124,11 @@ export function DiscoverHost() {
   const [now] = useState(() => Date.now());
   const [seed, setSeed] = useState(newSeed);
   const signedIn = !!citizen?.id;
+  // A new player's first look at the map: their next goal, then our picks of the city.
+  const { status: goals } = useGoals(citizen?.id);
+  const goal = (goals?.order ?? DEFAULT_ORDER).map(goalOf).find((g) => !!g && !goalClaimed(goals, g.id) && !goalDone(goals, g));
+  const goalStep = goal?.steps.find((st) => !stepDone(goals, st) && "href" in st && st.href) as { title: string; href: string } | undefined;
+  const welcome = isNewCitizen(citizen);
 
   useEffect(() => {
     if (!signedIn) return;
@@ -176,8 +183,8 @@ export function DiscoverHost() {
         <div className="relative w-full sm:max-w-lg bg-slate-50 text-slate-900 rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl max-h-[88dvh] flex flex-col animate-in slide-in-from-bottom-8 duration-300 pb-[env(safe-area-inset-bottom)]">
           <button onClick={close} className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white flex items-center justify-center text-slate-600 shadow" aria-label="Close"><X className="w-4 h-4" /></button>
           <header className="px-5 pt-5 pb-3 pr-14">
-            <h2 className="text-xl font-black">{showIntro ? "Things you can do in Dubai" : tab === "do" ? "Things to do" : "Places to visit"}</h2>
-            <p className="text-sm text-slate-500">{showIntro ? "A few ideas to start. Find them all under To do and Places in your phone, or the arrow at the top." : tab === "do" ? `${todo.length} to try · ${done.length} done` : `${VISIT.places.length - placesLeft} of ${VISIT.places.length} visited`}</p>
+            <h2 className="text-xl font-black">{showIntro ? (welcome ? `Welcome to the city, @${citizen?.username}` : "Things you can do in Dubai") : tab === "do" ? "Things to do" : "Places to visit"}</h2>
+            <p className="text-sm text-slate-500">{showIntro ? (welcome ? "Work on your goals and enjoy the town. Here's what we'd do first." : "A few ideas to start.") + " Find them all under To do and Places in your phone, or the arrow at the top." : tab === "do" ? `${todo.length} to try · ${done.length} done` : `${VISIT.places.length - placesLeft} of ${VISIT.places.length} visited`}</p>
             {!showIntro && (
               <div className="flex gap-1.5 mt-3 bg-white rounded-full p-1 border border-slate-200">
                 {([["do", `✅ To do · ${todo.length}`], ["places", `📍 Places · ${placesLeft}`]] as const).map(([id, label]) => (
@@ -195,9 +202,16 @@ export function DiscoverHost() {
             )}
             {showIntro ? (
               <>
-                {todo.slice(0, 4).map((a) => <TodoRow key={a.item.id} a={a} now={now} onGo={close} />)}
+                {welcome && goal && (
+                  <button onClick={() => { close(); router.push(goalStep?.href ?? "/goals"); }} className="w-full text-left rounded-2xl bg-teal-600 text-white p-3.5">
+                    <span className="block text-[11px] font-black uppercase tracking-wider text-white/75">Your next goal</span>
+                    <span className="block text-sm font-black">{goal.icon} {goal.title} ›</span>
+                    {goalStep && <span className="block text-xs mt-0.5 text-white/85">{goalStep.title}</span>}
+                  </button>
+                )}
+                {(welcome ? PICKS.todo.flatMap((id) => todo.filter((a) => a.item.id === id)) : todo).slice(0, 4).map((a) => <TodoRow key={a.item.id} a={a} now={now} onGo={close} />)}
                 <p className="text-xs font-black uppercase tracking-wider text-slate-400 pt-2">Places to visit</p>
-                {allSpots.filter((sp) => !visited(sp.id)).slice(0, 3).map((sp) => <PlaceRow key={sp.id} spot={sp} visited={false} onGo={close} />)}
+                {(welcome ? PICKS.places.flatMap((id) => allSpots.filter((sp) => sp.id === id)) : allSpots).filter((sp) => !visited(sp.id)).slice(0, 3).map((sp) => <PlaceRow key={sp.id} spot={sp} visited={false} onGo={close} />)}
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <button onClick={() => openAll("do")} className="h-12 rounded-2xl bg-slate-900 text-white font-black text-xs">All things to do ({todo.length})</button>
                   <button onClick={() => openAll("places")} className="h-12 rounded-2xl bg-sky-600 text-white font-black text-xs">All places ({placesLeft})</button>

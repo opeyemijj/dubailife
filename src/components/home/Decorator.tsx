@@ -1,14 +1,14 @@
 "use client";
 
-// Hiring an interior decorator at home: choose a look (with what it costs in this home), then who does it, a
-// player decorator (with their fee) or a Local studio, and hand over your key at the front door in 3D. A
+// Hiring an interior decorator at home: choose a look (with what it costs in this home), then which player
+// decorator does it (with their fee), and hand over your key at the front door in 3D. A
 // banner says how it's going (waiting for them to pick up the key, decorating); when it's done and you're
 // home, the new look is in and you get your key back.
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { CitizenAvatar, type AvatarAnimation } from "@/components/avatar/CitizenAvatar";
+import { CitizenAvatar, DEFAULT_LOOK, type AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 import type { AvatarLookProps } from "@/components/onboarding/AvatarCanvas";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { doorThud, footstep } from "@/components/transit/transitAudio";
@@ -17,7 +17,7 @@ import { useNow } from "@/lib/dubaiClock";
 import { useCitizen } from "@/lib/citizenStore";
 import { broadcastCityPulse, usePresentCitizens } from "@/lib/presence";
 import { CATALOG, FLOOR_FINISHES, WALL_PAINTS, type HomeStyle, type HousingTier } from "@/lib/furniture";
-import { applyDecor, cancelDecor, DECORATORS, decorators, hireDecor, localDecoratorLook, quote, studioOf, type DecoratorPro, type DecorJob, type Studio } from "@/lib/decorator";
+import { applyDecor, cancelDecor, DECORATORS, decorators, hireDecor, quote, studioOf, type DecoratorPro, type DecorJob, type Studio } from "@/lib/decorator";
 import { gameAudio } from "@/utils/gameAudio";
 
 const aed = (n: number) => `AED ${n.toLocaleString()}`;
@@ -82,16 +82,16 @@ function Doorway({ look, decorator, onDone }: { look?: AvatarLookProps; decorato
   );
 }
 
-export function KeyHandover({ studio, name, decoratorLook, look, local, onDone }: {
-  studio: Studio; name: string; decoratorLook: AvatarLookProps; look?: AvatarLookProps; local: boolean; onDone: () => void;
+export function KeyHandover({ studio, name, decoratorLook, look, onDone }: {
+  studio: Studio; name: string; decoratorLook: AvatarLookProps; look?: AvatarLookProps; onDone: () => void;
 }) {
   const quality = useMemo(() => canvasQuality(), []);
-  const [say, setSay] = useState(local ? `${name} from ${studio.studio} is here.` : `@${name} the decorator is here.`);
+  const [say, setSay] = useState(`@${name} the decorator is here.`);
   useEffect(() => {
     const a = setTimeout(() => setSay("Here's my key. Make it beautiful!"), 3000);
-    const b = setTimeout(() => setSay(local ? `Leave it with me. It'll be ready in about ${DECORATORS.minutes} minutes.` : `I'll get to work on your ${studio.title} look. You'll hear when it's done.`), 4400);
+    const b = setTimeout(() => setSay(`I'll get to work on your ${studio.title} look. You'll hear when it's done.`), 4400);
     return () => { clearTimeout(a); clearTimeout(b); };
-  }, [local, studio]);
+  }, [studio]);
   return (
     <ModalPortal>
       <div className="fixed inset-0 z-[205] bg-stone-200" role="dialog" aria-modal="true" aria-label="Handing over your key">
@@ -115,32 +115,30 @@ export function DecoratorSheet({ tier, current, onClose, onHired }: { tier: Hous
   const [look, setLook] = useState<Studio | null>(null);
   const [pros, setPros] = useState<DecoratorPro[] | null>(null);
   const [busy, setBusy] = useState(false);
-  const [handover, setHandover] = useState<{ studio: Studio; name: string; look: AvatarLookProps; local: boolean } | null>(null);
+  const [handover, setHandover] = useState<{ studio: Studio; name: string; look: AvatarLookProps } | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => { void decorators().then((r) => setPros(r.data ?? [])); }, []);
-  if (handover) return <KeyHandover studio={handover.studio} name={handover.name} decoratorLook={handover.look} look={citizen?.look} local={handover.local} onDone={() => { onHired?.(); onClose(); }} />;
+  if (handover) return <KeyHandover studio={handover.studio} name={handover.name} decoratorLook={handover.look} look={citizen?.look} onDone={() => { onHired?.(); onClose(); }} />;
 
-  const hire = async (s: Studio, pro: DecoratorPro | null) => {
+  const hire = async (s: Studio, pro: DecoratorPro) => {
     setError(null);
     const q = quote(s, current);
-    if ((citizen?.balance ?? 0) < q.costs + (pro?.fee ?? 0)) { setError(`You need ${aed(q.costs + (pro?.fee ?? 0))} for that.`); return; }
+    if ((citizen?.balance ?? 0) < q.costs + pro.fee) { setError(`You need ${aed(q.costs + pro.fee)} for that.`); return; }
     setBusy(true);
-    const r = await hireDecor(pro?.id ?? null, s.id, tier, q.costs);
+    const r = await hireDecor(pro.id, s.id, tier, q.costs);
     setBusy(false);
     if (r.error) { setError(r.error); return; }
     gameAudio.playCoinSound();
-    if (pro) {
-      broadcastCityPulse({
-        kind: "decor",
-        icon: "🧑‍🎨",
-        title: `@${citizen?.username ?? "someone"} hired @${pro.username} to decorate!`,
-        subtitle: `${s.icon} ${s.title} look · Fee ${aed(pro.fee)} waiting in Decor App`,
-        href: "phone:decor",
-        cta: "Open Decor ›",
-        from: citizen?.username ?? "someone",
-      });
-    }
-    setHandover(pro ? { studio: s, name: pro.username, look: pro.look ?? localDecoratorLook(s), local: false } : { studio: s, name: s.decorator, look: localDecoratorLook(s), local: true });
+    broadcastCityPulse({
+      kind: "decor",
+      icon: "🧑‍🎨",
+      title: `@${citizen?.username ?? "someone"} hired @${pro.username} to decorate!`,
+      subtitle: `${s.icon} ${s.title} look · Fee ${aed(pro.fee)} waiting in Decor App`,
+      href: "phone:decor",
+      cta: "Open Decor ›",
+      from: citizen?.username ?? "someone",
+    });
+    setHandover({ studio: s, name: pro.username, look: pro.look ?? DEFAULT_LOOK });
   };
   // Players working as decorators, the ones in the game right now first.
   const isOnline = (u: string) => online.some((p) => p.username === u);
@@ -154,7 +152,7 @@ export function DecoratorSheet({ tier, current, onClose, onHired }: { tier: Hous
             {look ? <button onClick={() => setLook(null)} className="w-8 h-8 rounded-full bg-slate-100 font-black text-slate-500" aria-label="Back">‹</button> : <span className="text-3xl">🧑‍🎨</span>}
             <div className="flex-1">
               <h3 className="text-lg font-black leading-tight">{look ? `Who decorates? ${look.icon} ${look.title}` : "Hire an interior decorator"}</h3>
-              <p className="text-xs text-slate-500">{look ? "A player decorator does it for their fee; if none is free, a Local studio does it." : "Pick a look, then who does it. You hand over your key and come back to it done."}</p>
+              <p className="text-xs text-slate-500">{look ? "A player working as a decorator does it for their fee." : "Pick a look, then who does it. You hand over your key and come back to it done."}</p>
             </div>
             <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 font-black text-slate-500" aria-label="Close">✕</button>
           </div>
@@ -187,7 +185,7 @@ export function DecoratorSheet({ tier, current, onClose, onHired }: { tier: Hous
             <>
               <p className="text-xs font-black uppercase tracking-wider text-slate-400">Player decorators</p>
               {pros === null ? <p className="text-sm text-slate-500">Finding decorators…</p>
-                : sorted.length === 0 ? <p className="text-sm text-slate-500">No players are working as decorators right now. A Local studio will do it (or take the job yourself on the Job Board).</p>
+                : sorted.length === 0 ? <p className="text-sm text-slate-500">No players are working as decorators right now. Check back soon, or take the job yourself on the Job Board.</p>
                 : sorted.map((p) => (
                   <div key={p.id} className="flex items-center gap-3 rounded-2xl border border-slate-200 p-2.5">
                     <span className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-xl">🧑‍🎨</span>
@@ -198,15 +196,6 @@ export function DecoratorSheet({ tier, current, onClose, onHired }: { tier: Hous
                     <button disabled={busy} onClick={() => hire(look, p)} className="h-9 px-3 rounded-xl bg-emerald-600 text-white text-xs font-black disabled:opacity-50">🔑 Hire</button>
                   </div>
                 ))}
-              <p className="text-xs font-black uppercase tracking-wider text-slate-400 pt-1">Or a Local studio</p>
-              <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-2.5">
-                <span className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-xl">{look.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-black text-sm">{look.decorator} · {look.studio}</p>
-                  <p className="text-[11px] text-slate-500">No fee · ready in about {DECORATORS.minutes} min · total {aed(quote(look, current).costs)}</p>
-                </div>
-                <button disabled={busy} onClick={() => hire(look, null)} className="h-9 px-3 rounded-xl bg-slate-900 text-white text-xs font-black disabled:opacity-50">🔑 Hire</button>
-              </div>
               <p className="text-[11px] text-slate-400">Your request stays open until your decorator picks up the key, or until you cancel it (which refunds your AED in full).</p>
             </>
           )}
@@ -224,6 +213,7 @@ export function DecoratorStatus({ tier, job, reload }: { tier: HousingTier; job:
   const now = useNow();
   const [reveal, setReveal] = useState<{ studio: Studio; placed: number; stored: number; by: string } | null>(null);
   const applying = useRef(false);
+  // Jobs a Local studio took before decorators became players only still finish here.
   const ready = !!job && job.tier === tier && (job.ready || (job.status === "working" && !job.decorator && !!job.readyAt && now > 0 && Date.parse(job.readyAt) <= now));
   useEffect(() => {
     if (!ready || !job || applying.current) return;

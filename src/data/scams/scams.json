@@ -1,6 +1,7 @@
 {
-  "_note": "Anti-scam phone simulator (design spec section 7). Senders are fictional; every screen is labelled SIMULATION. Loss and bounty amounts are mirrored in public.scam_rule() (migration *_scam_simulator.sql) and checked by scripts/check-life-config.mjs. Losses are always capped at 10% of the balance and AED 5,000.",
-  "schedule": { "hourGst": 15, "graceDays": 3, "daysOfWeek": [1, 2, 4, 5] },
+  "_note": "Scams that arrive on your phone in the game (design spec section 7). Senders are fictional, and it looks real until you choose; the result then says it was a scam in the game. Each player's scam, day and time are random (schedule, mirrored in public.scam_due(), migration *_scam_random.sql). Loss and bounty amounts are mirrored in public.scam_rule() (migration *_scam_simulator.sql), and rejectReward in public.scam_resolve(); all checked by scripts/check-life-config.mjs. Losses are always capped at 10% of the balance and AED 5,000.",
+  "schedule": { "chancePct": 60, "fromHour": 1, "hoursWindow": 14, "graceDays": 3 },
+  "rejectReward": 200,
   "lossCap": { "pct": 10, "max": 5000 },
   "points": { "reported": 50, "avoided": 20 },
   "scams": [

@@ -7,12 +7,11 @@ import { askForPush } from "@/lib/push/engage";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, DoorClosed, KeyRound, Loader2, LogOut, MapPin, Navigation, Settings2, ShoppingBag, UserPlus, X, Zap } from "lucide-react";
+import { ArrowLeft, DoorClosed, KeyRound, Loader2, LogOut, Settings2, ShoppingBag, UserPlus, X } from "lucide-react";
 import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoom";
 import { CATALOG, getCatalogItem, housingTierFor, withHomeItems, HOUSING_CONFIGS, type CatalogItem, type OwnedFurniture, type Placement, type Rotation, type HousingTier } from "@/lib/furniture";
-import { adjustBalance, updateCitizen, useCitizen, useRequireCitizen } from "@/lib/citizenStore";
-import { distanceMetres, entranceOf, getEntity } from "@/lib/city/geo";
-import { instantFare } from "@/lib/transit";
+import { adjustBalance, useCitizen, useRequireCitizen } from "@/lib/citizenStore";
+import { getEntity } from "@/lib/city/geo";
 import {
   ACCESS_LABEL, addGuest, flatTitle, getFlat, getInterior, listFlat, listGuests, removeGuest, requestEntry, saveInterior, setAccess, watchRequest,
   type Access, type FlatView, type Listing,
@@ -60,30 +59,15 @@ export function PropertyRoute({ buildingId, unit }: { buildingId: string; unit: 
     if (hydrated && citizen && atBuilding) void load();
   }, [hydrated, citizen?.id, atBuilding, load]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (hydrated && citizen && building && !atBuilding) router.replace(`/explore?open=${buildingId}`);
+  }, [hydrated, citizen, building, atBuilding, buildingId, router]);
+
   if (!hydrated || !citizen) return <Blank />;
   if (!building) return <Card><h1 className="text-xl font-black">This home doesn&apos;t exist</h1><Link href="/explore" className="mt-4 inline-block px-4 py-2 rounded-xl bg-emerald-500 text-white font-black">Back to the city</Link></Card>;
 
-  // Travel first (or skip on purpose).
-  if (!atBuilding) {
-    // Skipping the trip costs a premium (more than a taxi); only walking is free.
-    const at = entranceOf(buildingId);
-    const premium = instantFare(at && citizen.location ? distanceMetres(citizen.location, at) : 0);
-    const goDirectly = () => {
-      if (!adjustBalance(-premium)) return;
-      updateCitizen((c) => ({ ...c, location: { ...(at ?? c.location ?? { x: 0, y: 0 }), placeId: buildingId } }));
-    };
-    return (
-      <Card>
-        <MapPin className="w-8 h-8 text-emerald-500 mx-auto" />
-        <h1 className="text-xl font-black mt-2">You&apos;re not at {building.name} yet</h1>
-        <div className="mt-4 space-y-2">
-          <Link href={`/explore?open=${buildingId}`} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-500 text-white font-black"><Navigation className="w-4 h-4" /> Plan the journey</Link>
-          <button onClick={goDirectly} disabled={(citizen.balance ?? 0) < premium} className="disabled:opacity-50 w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold"><Zap className="w-4 h-4" /> Go directly · AED {premium}</button>
-          {(citizen.balance ?? 0) < premium && <p className="text-xs text-rose-600 font-bold">You need AED {premium} to skip the trip. Walking is free.</p>}
-        </div>
-      </Card>
-    );
-  }
+  // Not there yet: the effect above opens the building's description on the map.
+  if (!atBuilding) return <Blank spinner />;
 
   if (flat === undefined || door.state === "checking") return <Blank spinner />;
   if (flat === null) return <Card><h1 className="text-xl font-black">That home isn&apos;t in this building</h1><Link href={`/explore?open=${buildingId}`} className="mt-4 inline-block px-4 py-2 rounded-xl bg-emerald-500 text-white font-black">See the homes here</Link></Card>;

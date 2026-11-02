@@ -9,7 +9,6 @@ import { FriendRequestListener } from "@/components/social/FriendRequestListener
 import { NotificationPrompt } from "@/components/pwa/NotificationPrompt";
 import { PushCoach } from "@/components/pwa/PushCoach";
 import { AgeGate } from "@/components/safety/AgeGate";
-import { FirstDay } from "@/components/life/FirstDay";
 import { ScamPhone } from "@/components/safety/ScamPhone";
 import { DiscoverHost } from "@/components/guide/Discover";
 import { Suspense } from "react";
@@ -25,6 +24,7 @@ import { GameInviteListener } from "@/components/games/GameInviteListener";
 import { MarathonBanner } from "@/components/marathon/MarathonBanner";
 import { Custody } from "@/components/cars/Custody";
 import { FineNotice } from "@/components/cars/FineNotice";
+import { DecorFirstNudge } from "@/components/home/MoveInGuide";
 import { GoalSetup } from "@/components/goals/GoalSetup";
 import { DecorJobAlert } from "@/components/home/DecorJobAlert";
 import { NextStep } from "@/components/goals/NextStep";
@@ -213,7 +213,6 @@ export default function RootLayout({
           <NotificationPrompt />
           <PushCoach />
           <AgeGate />
-          <FirstDay />
           <NextStep />
           <ScamPhone />
           <DiscoverHost />
@@ -232,6 +231,7 @@ export default function RootLayout({
           <Custody />
           <FineNotice />
           <GoalSetup />
+          <DecorFirstNudge />
           <DecorJobAlert />
           <MorningScene />
           <Payday />

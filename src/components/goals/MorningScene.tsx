@@ -101,6 +101,8 @@ export function MorningScene() {
   // Once a game day, on the map or at home, when nothing else is on screen.
   useEffect(() => {
     if (!missions || !status?.order || !/^\/(explore|home)\b/.test(path)) return;
+    // Someone who has only just moved in hasn't slept here yet: their first morning is the next one.
+    if (citizen?.createdAt && Date.now() - Date.parse(citizen.createdAt) < 6 * 3_600_000) return;
     let seen = false;
     try { seen = localStorage.getItem(KEY(missions.day)) === "1"; } catch { seen = true; }
     if (seen) return;
@@ -114,7 +116,7 @@ export function MorningScene() {
       }
     }, 1200);
     return () => clearTimeout(t);
-  }, [missions, status?.order, path]);
+  }, [missions, status?.order, path, citizen?.createdAt]);
 
   useEffect(() => {
     if (!show) return;

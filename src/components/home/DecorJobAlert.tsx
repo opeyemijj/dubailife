@@ -1,7 +1,7 @@
 "use client";
 
 // For players working as interior decorators: an alert when someone hires you (you have a little while to
-// pick up their key before a Local takes the job), opening the Decor app.
+// pick up their key), opening the Decor app.
 
 import { useEffect, useState } from "react";
 import { useCitizen } from "@/lib/citizenStore";
@@ -43,7 +43,7 @@ export function DecorJobAlert() {
         <div className="bg-emerald-600 text-white px-4 py-2 text-sm font-black">🧑‍🎨 New decorating job</div>
         <div className="p-4 space-y-1">
           <p className="font-black leading-tight">@{job.client} wants a {s?.icon} {s?.title ?? "new"} home</p>
-          <p className="text-sm text-slate-600">Fee AED {job.fee.toLocaleString()}. Pick up their key soon, or a Local takes the job.</p>
+          <p className="text-sm text-slate-600">Fee AED {job.fee.toLocaleString()}. Pick up their key to start.</p>
         </div>
         <div className="px-4 pb-4 flex gap-2">
           <button onClick={() => setJob(null)} className="flex-1 h-11 rounded-full bg-slate-100 font-black text-slate-700">Later</button>

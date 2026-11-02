@@ -1,0 +1,5 @@
+{
+  "_note": "What a new player's first look at the map recommends (Discover's first pop-up): ids from activities.json and places-to-visit.json. Anything already done is left out.",
+  "todo": ["burj", "mall", "beach", "club", "ludo"],
+  "places": ["barasti", "motf", "dubai-fountain"]
+}

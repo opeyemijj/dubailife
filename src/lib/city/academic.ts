@@ -1,6 +1,6 @@
 // Academic City: Dubai's premier higher education and skills ecosystem.
-// Combines fictional in-game institutions (Crescent University, Falcon University, Desert Rose College and the
-// Foundation Academy; ids kept from earlier names so enrolments still match)
+// Combines in-game courses at Dubai's real schools (American University in Dubai, University of Dubai, Dubai College
+// and GEMS Wellington; the courses, certificates and staff are the game's own, not theirs)
 // with Brain University — the high-impact new-economy accelerator for AI, Crypto, Forex and Coding, and its
 // library of best-selling motivational books, each chapter summarised as a module.
 // Course content is strictly separated from the database and loaded from dedicated JSON files in @/data/courses/.
@@ -184,11 +184,12 @@ export const ACADEMIC_CAMPUSES: Record<string, AcademicInstitution> = {
   },
   aud: {
     id: "aud",
-    name: "Crescent University",
-    shortName: "Crescent U",
+    name: "American University in Dubai",
+    shortName: "AUD",
     tier: "university",
     crestIcon: "🦅",
-    badge: "Top-rated university in Academic City",
+    badge: "University · Dubai Media City",
+    description: "A private American-style university in Dubai, founded in 1995. In the game, study business and real estate here.",
     tagline: "Global leadership, liberal arts excellence, and Dubai innovation.",
     motto: "Excellence in Education, Leadership in Society",
     color: "#d97706",
@@ -197,9 +198,9 @@ export const ACADEMIC_CAMPUSES: Record<string, AcademicInstitution> = {
     location: "Academic City · West Quad",
     dean: {
       name: "Dr. Amira Haddad",
-      title: "President & Dean of Business",
+      title: "In-game course lead, Business",
       avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
-      quote: "Crescent is where tomorrow's business leaders cut their teeth and turn vision into sustainable industry.",
+      quote: "This is where tomorrow's business leaders cut their teeth and turn vision into sustainable industry.",
     },
     features: [
       "In-game certificates (not an accredited qualification)",
@@ -210,11 +211,12 @@ export const ACADEMIC_CAMPUSES: Record<string, AcademicInstitution> = {
   },
   ud: {
     id: "ud",
-    name: "Falcon University",
-    shortName: "Falcon U",
+    name: "University of Dubai",
+    shortName: "UD",
     tier: "university",
     crestIcon: "🏛️",
-    badge: "Founded by the city's business community",
+    badge: "University · Academic City",
+    description: "A Dubai university founded by the Dubai Chamber of Commerce and Industry. In the game, study cybersecurity here.",
     tagline: "Pioneering business acumen, enterprise cybersecurity, and global trade corridors.",
     motto: "Advancing Knowledge, Driving Dubai's Economy",
     color: "#0284c7",
@@ -223,7 +225,7 @@ export const ACADEMIC_CAMPUSES: Record<string, AcademicInstitution> = {
     location: "Academic City · South Quad",
     dean: {
       name: "Dr. Omar Nasser",
-      title: "President & Professor of Engineering",
+      title: "In-game course lead, Cybersecurity",
       avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
       quote: "We connect the classroom directly with the leaders of international commerce and cybersecurity.",
     },
@@ -236,11 +238,12 @@ export const ACADEMIC_CAMPUSES: Record<string, AcademicInstitution> = {
   },
   dc: {
     id: "dc",
-    name: "Desert Rose College",
-    shortName: "Desert Rose",
+    name: "Dubai College",
+    shortName: "Dubai College",
     tier: "secondary",
     crestIcon: "🦁",
-    badge: "Outstanding foundation results",
+    badge: "British school · Al Sufouh",
+    description: "A long-established British-curriculum school in Dubai. In the game, take UAE Studies and National Heritage here.",
     tagline: "Academic excellence in a British-style foundation programme for adults.",
     motto: "Excellence, Integrity, Community",
     color: "#15803d",
@@ -249,7 +252,7 @@ export const ACADEMIC_CAMPUSES: Record<string, AcademicInstitution> = {
     location: "Academic City · Heritage Green",
     dean: {
       name: "Mr. James Whitfield",
-      title: "Head of College",
+      title: "In-game course lead",
       avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80",
       quote: "Our graduates leave with rigour, a deep understanding of our host nation's history, and the highest standards of scholarship.",
     },
@@ -262,11 +265,12 @@ export const ACADEMIC_CAMPUSES: Record<string, AcademicInstitution> = {
   },
   "gems-wellington": {
     id: "gems-wellington",
-    name: "Foundation Academy",
-    shortName: "Foundation Academy",
+    name: "GEMS Wellington International School",
+    shortName: "GEMS Wellington",
     tier: "secondary",
     crestIcon: "👑",
-    badge: "Foundation programme for new arrivals",
+    badge: "International school · Al Sufouh",
+    description: "A GEMS school in Dubai teaching British and International Baccalaureate programmes. In the game, learn Arabic, maths, science and general knowledge here.",
     tagline: "Foundation skills for new arrivals: culture, Arabic, maths, science and English.",
     motto: "Knowledge Through Integrity",
     color: "#2563eb",
@@ -275,7 +279,7 @@ export const ACADEMIC_CAMPUSES: Record<string, AcademicInstitution> = {
     location: "Academic City · Sheikh Zayed Pavilion",
     dean: {
       name: "Laura",
-      title: "Principal & CEO",
+      title: "In-game course lead",
       avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
       quote: "From fluent Arabic communication to financial independence, we instill skills that make our students thrive across the globe.",
     },
@@ -424,14 +428,14 @@ export const ACADEMIC_COURSES: AcademicCourse[] = [
   mapCourseJson(onebrainDataJson),
   mapCourseJson(onebrainSalesJson),
 
-  // Crescent University degrees
+  // American University in Dubai courses
   mapCourseJson(audBusinessJson),
   mapCourseJson(audRealEstateJson),
 
-  // Falcon University degree
+  // University of Dubai course
   mapCourseJson(udCybersecurityJson),
 
-  // Foundation diplomas (Desert Rose College, Foundation Academy)
+  // Diplomas (Dubai College, GEMS Wellington)
   mapCourseJson(dcUaeStudiesJson),
   mapCourseJson(gemsArabicJson),
   mapCourseJson(gemsMathsJson),
@@ -452,7 +456,7 @@ export const ACADEMIC_TILES = [
   // --- 3D Higher Education & Skills Institutions ---
   {
     id: "academic-aud",
-    name: "Crescent University",
+    name: "American University in Dubai",
     type: "academic-tile",
     campus: "aud",
     virtualX: ACADEMIC_MAP_CENTER.x - 300,
@@ -476,7 +480,7 @@ export const ACADEMIC_TILES = [
   },
   {
     id: "academic-ud",
-    name: "Falcon University",
+    name: "University of Dubai",
     type: "academic-tile",
     campus: "ud",
     virtualX: ACADEMIC_MAP_CENTER.x - 60,
@@ -488,7 +492,7 @@ export const ACADEMIC_TILES = [
   },
   {
     id: "academic-dc",
-    name: "Desert Rose College",
+    name: "Dubai College",
     type: "academic-tile",
     campus: "dc",
     virtualX: ACADEMIC_MAP_CENTER.x - 310,
@@ -500,7 +504,7 @@ export const ACADEMIC_TILES = [
   },
   {
     id: "academic-gems",
-    name: "Foundation Academy",
+    name: "GEMS Wellington International School",
     type: "academic-tile",
     campus: "gems-wellington",
     virtualX: ACADEMIC_MAP_CENTER.x + 180,

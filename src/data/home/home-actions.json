@@ -1,0 +1,15 @@
+{
+  "_note": "Things to do next, shown when you arrive home (src/components/home/HomeActions.tsx). Each has an href, or an action: 'shop' (the furniture shop) or 'invite' (invite friends).",
+  "title": "What do you want to do today?",
+  "actions": [
+    { "id": "job", "icon": "💼", "label": "Get a job", "text": "Start earning today", "href": "/jobs" },
+    { "id": "map", "icon": "🗺️", "label": "Explore Dubai", "text": "Malls, clubs, beaches", "href": "/explore" },
+    { "id": "shop", "icon": "🛋️", "label": "Decorate", "text": "Furnish your home", "action": "shop" },
+    { "id": "invite", "icon": "👥", "label": "Invite friends", "text": "It's only fun together", "action": "invite" },
+    { "id": "games", "icon": "🎮", "label": "Play games", "text": "With other players", "href": "/games/ludo" },
+    { "id": "license", "icon": "🚗", "label": "Get a license", "text": "Then drive your own car", "href": "/driving" },
+    { "id": "learn", "icon": "🎓", "label": "Learn", "text": "Courses for better jobs", "href": "/academics" },
+    { "id": "friends", "icon": "📱", "label": "Open your phone", "text": "Chat, Spaces and more", "href": "/phone" },
+    { "id": "goals", "icon": "🎯", "label": "My goals", "text": "See your Dubai plan", "href": "/goals" }
+  ]
+}

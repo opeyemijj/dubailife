@@ -1,15 +1,13 @@
 "use client";
 
 // The goal you're on now, on the map: a small pill ("Get a job · 1/3") that opens to the goal's
-// steps, each with a button to go and do it, and the reward to collect when they're done. Sits under the
-// first-day checklist while that's still running.
+// steps, each with a button to go and do it, and the reward to collect when they're done.
 
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { useCitizen } from "@/lib/citizenStore";
-import { useFirstDayActive } from "@/components/life/FirstDay";
 import { currentGoal, goalDone, lifeProgress, stepDone, useGoals } from "@/lib/goals";
 import { gameAudio } from "@/utils/gameAudio";
 import { GoalSteps } from "./GoalSteps";
@@ -22,7 +20,6 @@ export function NextStep() {
   const { citizen } = useCitizen();
   const path = usePathname() ?? "";
   const { status } = useGoals(citizen?.id);
-  const firstDay = useFirstDayActive();
   const { missions } = useMissions(citizen?.id);
   const todo = missions ? missions.missions.filter((m) => !m.done).length : null;
   // On Saturdays and Sundays the weekend card joins the goal and the missions.
@@ -36,8 +33,8 @@ export function NextStep() {
   const goal = currentGoal(status);
   const done = goal ? goal.steps.filter((s) => stepDone(status, s)).length : 0;
   const ready = !!goal && goalDone(status, goal);
-  // It sits under the map's Search button (and the first-day checklist while that's running).
-  const place = `fixed z-[59] w-[min(320px,calc(100vw-1.5rem))] flex flex-col left-3 items-start ${firstDay ? "top-[calc(env(safe-area-inset-top)+10.25rem)]" : "top-[calc(env(safe-area-inset-top)+7.5rem)]"}`;
+  // It sits under the map's Search button .
+  const place = `fixed z-[59] w-[min(320px,calc(100vw-1.5rem))] flex flex-col left-3 items-start top-[calc(env(safe-area-inset-top)+7.5rem)]`;
 
   if (!goal) {
     return (

@@ -175,7 +175,7 @@ export function LandingOverlay({
     setBusy(false);
     if (!result.ok) return setAuthError(result.error);
     setLoginPassword("");
-    router.push(getCitizenState().needsOnboarding ? "/onboarding/look" : "/explore");
+    router.push(getCitizenState().needsOnboarding ? "/onboarding/look" : "/home");
   };
 
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

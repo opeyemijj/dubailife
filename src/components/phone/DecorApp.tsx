@@ -1,7 +1,7 @@
 "use client";
 
-// Decor: the interior decorator's app. Jobs from players who've hired you (pick up their key within the time
-// or a Local takes it), the look they chose, and the finishing touch you add to finish the job and get paid.
+// Decor: the interior decorator's app. Jobs from players who've hired you (pick up their key to start),
+// the look they chose, and the finishing touch you add to finish the job and get paid.
 // Your fee is set here. Not a decorator? How to become one.
 
 import { useCallback, useEffect, useState } from "react";

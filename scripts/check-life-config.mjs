@@ -19,12 +19,17 @@ for (const kind of ["housing", "commute", "telecom", "fitness"]) {
 const vblock = sql.match(/visa_days\(p_tier text\)[\s\S]*?select case p_tier (.*?) end/)?.[1] ?? "";
 const vdb = Object.fromEntries([...vblock.matchAll(/when '(\w+)' then (\d+)/g)].map((m) => [m[1], Number(m[2])]));
 for (const t of visas.tiers) if (vdb[t.id] !== t.days) { bad++; console.error(`visa ${t.id}: JSON ${t.days} vs SQL ${vdb[t.id]}`); }
-// Scam money rules (src/data/scams/scams.json vs public.scam_rule()).
+// Scam money rules (src/data/scams/scams.json vs public.scam_rule(), and the schedule and reject reward).
 const scams = JSON.parse(readFileSync("src/data/scams/scams.json", "utf8"));
 const scamFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_scam_simulator.sql")).sort().pop();
 const scamSql = readFileSync(`supabase/migrations/${scamFile}`, "utf8");
 const order = scamSql.match(/array\[([^\]]+)\]\)\[\(d % 5\)/)?.[1].match(/'(\w+)'/g)?.map((x) => x.slice(1, -1)) ?? [];
 if (order.join() !== scams.scams.map((x) => x.id).join()) { bad++; console.error(`scam order: JSON ${scams.scams.map((x) => x.id)} vs SQL ${order}`); }
+const scamRandFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_scam_random.sql")).sort().pop();
+const scamRandSql = readFileSync(`supabase/migrations/${scamRandFile}`, "utf8");
+for (const text of [`v_bounty := ${scams.rejectReward};`, `>= ${scams.schedule.chancePct} then`, `interval '${scams.schedule.graceDays} days'`, `${scams.schedule.fromHour} * 3600 + public.scam_roll(uid, d, 'when') * ${scams.schedule.hoursWindow} * 36 / 10`]) {
+  if (!scamRandSql.includes(text)) { bad++; console.error(`scam schedule: differs from SQL (${text})`); }
+}
 for (const sc of scams.scams) {
   const rule = JSON.parse(scamSql.match(new RegExp(`when '${sc.id}'\\s+then '([^']+)'`))?.[1] ?? "null");
   if (!rule) { bad++; console.error(`scam ${sc.id}: missing in SQL`); continue; }

@@ -1,7 +1,7 @@
 "use client";
 
 // The front page for someone already signed in: their own home in 3D under the Dubai Life name, and one
-// big Continue back into the city. Logging out and the official accounts sit underneath.
+// big Continue back home. Logging out and the official accounts sit underneath.
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -53,7 +53,7 @@ export function WelcomeBack({ citizen }: { citizen: Citizen }) {
             </div>
           </div>
           <button
-            onClick={() => { gameAudio.playClickSound(); router.push("/explore"); }}
+            onClick={() => { gameAudio.playClickSound(); router.push("/home"); }}
             className="w-full h-16 rounded-full bg-emerald-700 hover:bg-emerald-800 active:scale-[0.98] text-white text-2xl font-semibold shadow-[inset_0_-5px_0_rgba(0,0,0,0.22)] transition-all"
           >
             Continue

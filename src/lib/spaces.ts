@@ -91,209 +91,6 @@ export const TRUTH_OR_DARE_PROMPTS = [
   "DARE: Give a 10-second luxury real estate tour of your current apartment!",
 ];
 
-// Seed rooms so the Spaces tab has vibrant live and upcoming rooms out of the box,
-// alongside any real player-hosted rooms broadcast over Supabase Realtime.
-function createSeedRooms(): SpaceRoom[] {
-  const now = Date.now();
-  return [
-    {
-      id: "seed-talent-night",
-      title: "AED 50k Talent Night & Vibes 🎤🌴",
-      hostId: "seed-host-1",
-      hostUsername: "nikkypela",
-      hostPreset: "Female_Party_02",
-      placeId: "dubai-mall",
-      startedAt: now - (6 * 60 + 11) * 1000, // ~53:49 remaining!
-      expiresAt: now + (53 * 60 + 49) * 1000,
-      aiSafetyCheck: true,
-      isSimulated: true,
-      activity: {
-        kind: "talent",
-        title: "Talent Night",
-        subtitle: "Hold Applause for who's on the stage",
-        applauseCount: 142,
-      },
-      participants: [
-        {
-          id: "seed-host-1",
-          username: "nikkypela",
-          preset: "Female_Party_02",
-          role: "host",
-          muted: false,
-          handRaised: false,
-          speaking: true,
-          joinedAt: now - 360000,
-        },
-        {
-          id: "seed-co-1",
-          username: "Holl_ba",
-          preset: "Male_Adult_08",
-          role: "cohost",
-          muted: false,
-          handRaised: false,
-          speaking: false,
-          joinedAt: now - 340000,
-        },
-        {
-          id: "seed-sp-1",
-          username: "Engineer_DXB",
-          preset: "Male_Adult_12",
-          role: "speaker",
-          muted: true,
-          handRaised: false,
-          speaking: false,
-          joinedAt: now - 300000,
-        },
-        ...Array.from({ length: 24 }, (_, i) => ({
-          id: `seed-list-1-${i}`,
-          username: `citizen_${i + 10}`,
-          preset: i % 2 === 0 ? "Female_Adult_05" : "Male_Adult_04",
-          role: "listener" as SpaceRole,
-          muted: true,
-          handRaised: i === 0,
-          speaking: false,
-          joinedAt: now - i * 10000,
-        })),
-      ],
-    },
-    {
-      id: "seed-truth-dare",
-      title: "TRUTH OR DARE 💀😏 Marina Afterhours",
-      hostId: "seed-host-2",
-      hostUsername: "Agent1",
-      hostPreset: "Male_Adult_04",
-      placeId: "marina-walk",
-      startedAt: now - 14 * 60 * 1000,
-      expiresAt: now + 46 * 60 * 1000,
-      aiSafetyCheck: true,
-      isSimulated: true,
-      activity: {
-        kind: "truth-or-dare",
-        title: "Truth or Dare",
-        subtitle: "TRUTH: What was your biggest AED splurge in Dubai so far?",
-        applauseCount: 89,
-        promptText: "TRUTH: What was your biggest AED splurge in Dubai so far?",
-      },
-      participants: [
-        {
-          id: "seed-host-2",
-          username: "Agent1",
-          preset: "Male_Adult_04",
-          role: "host",
-          muted: false,
-          handRaised: false,
-          speaking: true,
-          joinedAt: now - 800000,
-        },
-        {
-          id: "seed-co-2",
-          username: "layla_dxb",
-          preset: "Female_Adult_06",
-          role: "cohost",
-          muted: false,
-          handRaised: false,
-          speaking: false,
-          joinedAt: now - 750000,
-        },
-        {
-          id: "seed-sp-2",
-          username: "karim_gold",
-          preset: "Male_Adult_21",
-          role: "speaker",
-          muted: false,
-          handRaised: false,
-          speaking: false,
-          joinedAt: now - 700000,
-        },
-        ...Array.from({ length: 19 }, (_, i) => ({
-          id: `seed-list-2-${i}`,
-          username: `marina_vip_${i + 1}`,
-          preset: i % 2 === 0 ? "Female_Adult_11" : "Male_Adult_08",
-          role: "listener" as SpaceRole,
-          muted: true,
-          handRaised: false,
-          speaking: false,
-          joinedAt: now - i * 12000,
-        })),
-      ],
-    },
-    {
-      id: "seed-pool-party",
-      title: "Golden Visa Hustlers & 3D Pool Tourney 🎱🏆",
-      hostId: "seed-host-3",
-      hostUsername: "yimizy45",
-      hostPreset: "Female_Adult_11",
-      placeId: "palm-jumeirah",
-      startedAt: now - 22 * 60 * 1000,
-      expiresAt: now + 38 * 60 * 1000,
-      aiSafetyCheck: true,
-      isSimulated: true,
-      activity: {
-        kind: "game",
-        title: "3D 8-Ball Pool Match",
-        subtitle: "Play Pool with the Space while chatting live",
-        applauseCount: 64,
-        gameId: "pool",
-        gameName: "8-Ball Pool",
-      },
-      participants: [
-        {
-          id: "seed-host-3",
-          username: "yimizy45",
-          preset: "Female_Adult_11",
-          role: "host",
-          muted: false,
-          handRaised: false,
-          speaking: true,
-          joinedAt: now - 1200000,
-        },
-        {
-          id: "seed-co-3",
-          username: "tariq_difc",
-          preset: "Male_Adult_12",
-          role: "cohost",
-          muted: true,
-          handRaised: false,
-          speaking: false,
-          joinedAt: now - 1100000,
-        },
-        ...Array.from({ length: 14 }, (_, i) => ({
-          id: `seed-list-3-${i}`,
-          username: `palm_guest_${i + 1}`,
-          preset: i % 2 === 0 ? "Female_Adult_05" : "Male_Adult_21",
-          role: "listener" as SpaceRole,
-          muted: true,
-          handRaised: false,
-          speaking: false,
-          joinedAt: now - i * 15000,
-        })),
-      ],
-    },
-    {
-      id: "seed-upcoming-1",
-      title: "Dubai Syndicate Wars Strategy & Cash Drop 💎",
-      hostId: "seed-host-4",
-      hostUsername: "difc_whale",
-      hostPreset: "Male_Adult_21",
-      placeId: "difc",
-      startedAt: now + 45 * 60 * 1000,
-      expiresAt: now + 105 * 60 * 1000,
-      scheduledFor: now + 45 * 60 * 1000,
-      aiSafetyCheck: true,
-      isSimulated: true,
-      activity: {
-        kind: "cash-drop",
-        title: "AED Cash Drop",
-        subtitle: "First 20 listeners get AED 1,500",
-        applauseCount: 0,
-        dropAmount: 1500,
-        dropClaimedBy: [],
-      },
-      participants: [],
-    },
-  ];
-}
-
 interface SpacesStoreState {
   rooms: SpaceRoom[];
   activeSpaceId: string | null;
@@ -303,7 +100,7 @@ interface SpacesStoreState {
 }
 
 let state: SpacesStoreState = {
-  rooms: createSeedRooms(),
+  rooms: [],
   activeSpaceId: null,
   comments: [],
   reactions: [],
@@ -323,6 +120,15 @@ let audioCtx: AudioContext | null = null;
 let vadInterval: ReturnType<typeof setInterval> | null = null;
 let expiryInterval: ReturnType<typeof setInterval> | null = null;
 const peerConnections = new Map<string, RTCPeerConnection>();
+// Per-peer negotiation state (the "perfect negotiation" pattern), and candidates that beat their description here.
+const peerMeta = new Map<string, { makingOffer: boolean; ignoreOffer: boolean; pendingIce: RTCIceCandidateInit[] }>();
+// When each room's host was last heard from: hosts re-announce, so a room whose host has gone disappears.
+const roomLastSeen = new Map<string, number>();
+const HOST_BEAT_MS = 20000;
+const HOST_GONE_MS = 65000;
+let beatInterval: ReturnType<typeof setInterval> | null = null;
+let micStarting = false;
+let pendingJoinId: string | null = null;
 const remoteAudioElements = new Map<string, HTMLAudioElement>();
 
 function meInfo(): { id: string; username: string; preset: string; placeId: string | null } {
@@ -345,18 +151,34 @@ function connectLobby() {
     .on("broadcast", { event: "space-upsert" }, ({ payload }) => {
       if (!payload || !payload.id) return;
       const incoming = payload as SpaceRoom;
+      roomLastSeen.set(incoming.id, Date.now());
       const exists = state.rooms.some((r) => r.id === incoming.id);
+      const myId = meInfo().id;
       state = {
         ...state,
         rooms: exists
-          ? state.rooms.map((r) => (r.id === incoming.id ? { ...r, ...incoming } : r))
+          ? state.rooms.map((r) => {
+              if (r.id !== incoming.id) return r;
+              // The host's roster wins, but I know my own seat best (it may not have reached them yet).
+              const mine = incoming.id === state.activeSpaceId ? r.participants.find((p) => p.id === myId) : undefined;
+              const others = incoming.participants.filter((p) => p.id !== myId);
+              return { ...r, ...incoming, participants: mine ? [...others, mine] : incoming.participants };
+            })
           : [incoming, ...state.rooms],
       };
       emit();
+      if (pendingJoinId === incoming.id) {
+        pendingJoinId = null;
+        joinSpace(incoming.id);
+      } else if (incoming.id === state.activeSpaceId) {
+        syncPeers();
+      }
     })
+    .on("broadcast", { event: "space-list" }, () => announceMyRoom())
     .on("broadcast", { event: "space-end" }, ({ payload }) => {
       if (!payload?.id) return;
       const endedId = payload.id as string;
+      roomLastSeen.delete(endedId);
       if (state.activeSpaceId === endedId) {
         cleanupActiveRoom();
       }
@@ -367,7 +189,35 @@ function connectLobby() {
       };
       emit();
     })
-    .subscribe();
+    .subscribe((status) => {
+      // Rooms aren't stored anywhere: ask the hosts who are live to say so.
+      if (status === "SUBSCRIBED") {
+        lobbyChannel?.send({ type: "broadcast", event: "space-list", payload: {} }).catch(() => {});
+        announceMyRoom();
+      }
+    });
+
+  if (!beatInterval) {
+    beatInterval = setInterval(() => {
+      announceMyRoom();
+      const now = Date.now();
+      const gone = state.rooms.filter((r) => r.hostId !== meInfo().id && now - (roomLastSeen.get(r.id) ?? now) > HOST_GONE_MS);
+      if (!gone.length) return;
+      if (gone.some((r) => r.id === state.activeSpaceId)) cleanupActiveRoom();
+      state = {
+        ...state,
+        rooms: state.rooms.filter((r) => !gone.includes(r)),
+        activeSpaceId: gone.some((r) => r.id === state.activeSpaceId) ? null : state.activeSpaceId,
+      };
+      emit();
+    }, HOST_BEAT_MS);
+  }
+}
+
+/** The host says their room is live, with who's in it. */
+function announceMyRoom() {
+  const room = state.rooms.find((r) => r.id === state.activeSpaceId);
+  if (room && room.hostId === meInfo().id) broadcastRoomToLobby(room);
 }
 
 function broadcastRoomToLobby(room: SpaceRoom) {
@@ -401,6 +251,7 @@ function closeAllPeers() {
     }
   });
   peerConnections.clear();
+  peerMeta.clear();
   remoteAudioElements.forEach((el) => {
     try {
       el.pause();
@@ -414,6 +265,7 @@ function closeAllPeers() {
 }
 
 function cleanupActiveRoom() {
+  gameAudio.holdMusic(false);
   stopLocalMic();
   closeAllPeers();
   if (expiryInterval) {
@@ -421,9 +273,22 @@ function cleanupActiveRoom() {
     expiryInterval = null;
   }
   if (roomChannel) {
-    roomChannel.unsubscribe().catch(() => {});
+    supabase().removeChannel(roomChannel).catch(() => {});
     roomChannel = null;
   }
+}
+
+/** Mic on or off. If it can't be on, you're shown as muted and told why, rather than talking to nobody. */
+function micBlocked(text: string) {
+  const spaceId = state.activeSpaceId;
+  state = { ...state, micPermissionError: text };
+  emit();
+  if (!spaceId) return;
+  const me = meInfo();
+  updateParticipantInRoom(spaceId, me.id, { muted: true, speaking: false });
+  roomChannel
+    ?.send({ type: "broadcast", event: "participant-patch", payload: { userId: me.id, patch: { muted: true, speaking: false } } })
+    .catch(() => {});
 }
 
 async function ensureLocalMic(unmuted: boolean) {
@@ -445,8 +310,11 @@ async function ensureLocalMic(unmuted: boolean) {
   }
 
   if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+    micBlocked("This browser can't use the microphone. You can still listen, comment and react.");
     return;
   }
+  if (micStarting) return;
+  micStarting = true;
 
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -457,21 +325,23 @@ async function ensureLocalMic(unmuted: boolean) {
       },
       video: false,
     });
+    // Left the Space while the permission prompt was up.
+    if (!state.activeSpaceId) {
+      stream.getTracks().forEach((t) => t.stop());
+      return;
+    }
     localStream = stream;
     state = { ...state, micPermissionError: null };
     emit();
 
-    // Attach track to any existing peer connections
-    peerConnections.forEach((pc) => {
-      stream.getTracks().forEach((track) => {
-        pc.addTrack(track, stream);
-      });
-    });
+    // Everyone in the room gets the voice (adding a track renegotiates by itself).
+    syncPeers();
 
     // Voice Activity Detection (VAD) for green pulsing speaking ring
     const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (Ctx) {
       audioCtx = new Ctx();
+      audioCtx.resume().catch(() => {});
       const source = audioCtx.createMediaStreamSource(stream);
       const analyser = audioCtx.createAnalyser();
       analyser.fftSize = 256;
@@ -491,11 +361,9 @@ async function ensureLocalMic(unmuted: boolean) {
       }, 220);
     }
   } catch {
-    state = {
-      ...state,
-      micPermissionError: "Microphone access was blocked — you can still listen, comment, and react.",
-    };
-    emit();
+    micBlocked("Microphone access is blocked. Allow it for this site to speak. You can still listen, comment and react.");
+  } finally {
+    micStarting = false;
   }
 }
 
@@ -538,30 +406,69 @@ function updateParticipantInRoom(
   emit();
 }
 
+function sendSignal(event: string, payload: Record<string, unknown>) {
+  roomChannel?.send({ type: "broadcast", event, payload: { from: meInfo().id, ...payload } }).catch(() => {});
+}
+
+function addLocalTracks(pc: RTCPeerConnection) {
+  if (!localStream) return;
+  const sending = pc.getSenders().map((s) => s.track);
+  localStream.getTracks().forEach((track) => {
+    if (!sending.includes(track)) pc.addTrack(track, localStream!);
+  });
+}
+
+/** If I have a mic going, make sure everyone in the room is connected to it. */
+function syncPeers() {
+  if (!localStream) return;
+  const me = meInfo();
+  state.rooms
+    .find((r) => r.id === state.activeSpaceId)
+    ?.participants.forEach((p) => {
+      if (p.id !== me.id) addLocalTracks(getOrCreatePeerConnection(p.id));
+    });
+}
+
+function dropPeer(peerId: string) {
+  peerConnections.get(peerId)?.close();
+  peerConnections.delete(peerId);
+  peerMeta.delete(peerId);
+  const audio = remoteAudioElements.get(peerId);
+  if (audio) {
+    audio.pause();
+    audio.srcObject = null;
+    audio.remove();
+    remoteAudioElements.delete(peerId);
+  }
+}
+
 function getOrCreatePeerConnection(peerId: string): RTCPeerConnection {
   const existing = peerConnections.get(peerId);
   if (existing) return existing;
 
   const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
   peerConnections.set(peerId, pc);
+  const meta = { makingOffer: false, ignoreOffer: false, pendingIce: [] as RTCIceCandidateInit[] };
+  peerMeta.set(peerId, meta);
 
-  if (localStream) {
-    localStream.getTracks().forEach((track) => {
-      pc.addTrack(track, localStream!);
-    });
-  }
+  pc.onnegotiationneeded = async () => {
+    try {
+      meta.makingOffer = true;
+      await pc.setLocalDescription();
+      sendSignal("webrtc-offer", { to: peerId, sdp: pc.localDescription?.toJSON() });
+    } catch {
+      /* the next change renegotiates */
+    } finally {
+      meta.makingOffer = false;
+    }
+  };
 
   pc.onicecandidate = (e) => {
-    if (e.candidate && roomChannel) {
-      const me = meInfo();
-      roomChannel
-        .send({
-          type: "broadcast",
-          event: "webrtc-ice",
-          payload: { from: me.id, to: peerId, candidate: e.candidate.toJSON() },
-        })
-        .catch(() => {});
-    }
+    if (e.candidate) sendSignal("webrtc-ice", { to: peerId, candidate: e.candidate.toJSON() });
+  };
+
+  pc.onconnectionstatechange = () => {
+    if (pc.connectionState === "failed") pc.restartIce();
   };
 
   pc.ontrack = (e) => {
@@ -577,18 +484,29 @@ function getOrCreatePeerConnection(peerId: string): RTCPeerConnection {
       remoteAudioElements.set(peerId, audio);
     }
     audio.srcObject = remoteStream;
-    audio.play().catch(() => {});
+    const el = audio;
+    // Phones can refuse to play until the next tap.
+    el.play().catch(() => {
+      window.addEventListener("pointerdown", () => el.play().catch(() => {}), { once: true });
+    });
   };
 
+  addLocalTracks(pc);
   return pc;
 }
 
-function subscribeToSpaceChannel(spaceId: string) {
+async function flushIce(peerId: string, pc: RTCPeerConnection) {
+  const meta = peerMeta.get(peerId);
+  if (!meta) return;
+  for (const c of meta.pendingIce.splice(0)) await pc.addIceCandidate(c).catch(() => {});
+}
+
+function subscribeToSpaceChannel(spaceId: string, onReady?: () => void) {
   if (typeof window === "undefined") return;
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return;
 
   if (roomChannel) {
-    roomChannel.unsubscribe().catch(() => {});
+    supabase().removeChannel(roomChannel).catch(() => {});
     roomChannel = null;
   }
 
@@ -619,40 +537,20 @@ function subscribeToSpaceChannel(spaceId: string) {
       };
       emit();
 
-      // Initiate WebRTC offer if I am an unmuted speaker on stage
-      const myRoom = state.rooms.find((r) => r.id === spaceId);
-      const mePart = myRoom?.participants.find((x) => x.id === me.id);
-      if (mePart && mePart.role !== "listener" && p.id !== me.id) {
-        const pc = getOrCreatePeerConnection(p.id);
-        pc.createOffer()
-          .then((offer) => pc.setLocalDescription(offer).then(() => offer))
-          .then((offer) => {
-            roomChannel?.send({
-              type: "broadcast",
-              event: "webrtc-offer",
-              payload: { from: me.id, to: p.id, sdp: offer },
-            });
-          })
-          .catch(() => {});
-      }
+      // The host tells the lobby who's here, and anyone with a mic going connects to the newcomer.
+      announceMyRoom();
+      syncPeers();
     })
     .on("broadcast", { event: "participant-patch" }, ({ payload }) => {
       if (!payload?.userId) return;
       updateParticipantInRoom(spaceId, payload.userId, payload.patch);
+      // Moved to the audience by the host: my mic goes off.
+      if (payload.userId === me.id && payload.patch?.role === "listener") ensureLocalMic(false);
     })
     .on("broadcast", { event: "participant-leave" }, ({ payload }) => {
       if (!payload?.userId) return;
       const uid = payload.userId as string;
-      const pc = peerConnections.get(uid);
-      if (pc) {
-        pc.close();
-        peerConnections.delete(uid);
-      }
-      const audio = remoteAudioElements.get(uid);
-      if (audio) {
-        audio.remove();
-        remoteAudioElements.delete(uid);
-      }
+      dropPeer(uid);
       state = {
         ...state,
         rooms: state.rooms.map((r) =>
@@ -660,6 +558,7 @@ function subscribeToSpaceChannel(spaceId: string) {
         ),
       };
       emit();
+      announceMyRoom();
     })
     .on("broadcast", { event: "speaking" }, ({ payload }) => {
       if (!payload?.userId) return;
@@ -691,14 +590,15 @@ function subscribeToSpaceChannel(spaceId: string) {
       if (!payload || payload.to !== me.id) return;
       try {
         const pc = getOrCreatePeerConnection(payload.from);
-        await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        roomChannel?.send({
-          type: "broadcast",
-          event: "webrtc-answer",
-          payload: { from: me.id, to: payload.from, sdp: answer },
-        });
+        const meta = peerMeta.get(payload.from)!;
+        // Both sides offered at once: one politely gives way.
+        const collision = meta.makingOffer || pc.signalingState !== "stable";
+        meta.ignoreOffer = me.id < payload.from && collision;
+        if (meta.ignoreOffer) return;
+        await pc.setRemoteDescription(payload.sdp);
+        await flushIce(payload.from, pc);
+        await pc.setLocalDescription();
+        sendSignal("webrtc-answer", { to: payload.from, sdp: pc.localDescription?.toJSON() });
       } catch {
         /* ignore */
       }
@@ -708,7 +608,8 @@ function subscribeToSpaceChannel(spaceId: string) {
       try {
         const pc = peerConnections.get(payload.from);
         if (pc) {
-          await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+          await pc.setRemoteDescription(payload.sdp);
+          await flushIce(payload.from, pc);
         }
       } catch {
         /* ignore */
@@ -718,12 +619,19 @@ function subscribeToSpaceChannel(spaceId: string) {
       if (!payload || payload.to !== me.id || !payload.candidate) return;
       try {
         const pc = getOrCreatePeerConnection(payload.from);
-        await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
-      } catch {
-        /* ignore */
+        const meta = peerMeta.get(payload.from)!;
+        if (!pc.remoteDescription) {
+          meta.pendingIce.push(payload.candidate);
+          return;
+        }
+        await pc.addIceCandidate(payload.candidate);
+      } catch (err) {
+        if (!peerMeta.get(payload.from)?.ignoreOffer) console.warn("Space ICE candidate failed", err);
       }
     })
-    .subscribe();
+    .subscribe((status) => {
+      if (status === "SUBSCRIBED") onReady?.();
+    });
 }
 
 function startExpiryWatcher() {
@@ -808,7 +716,7 @@ export function hostNewSpace(opts: {
         role: "host",
         muted: false,
         handRaised: false,
-        speaking: true,
+        speaking: false,
         joinedAt: now,
       },
     ],
@@ -831,9 +739,12 @@ export function hostNewSpace(opts: {
   };
   emit();
 
+  roomLastSeen.set(id, now);
   subscribeToSpaceChannel(id);
   broadcastRoomToLobby(newRoom);
   startExpiryWatcher();
+  // The city music stops while you're in a Space, and your mic goes live.
+  gameAudio.holdMusic(true);
   ensureLocalMic(true);
   gameAudio.sfx("chime");
 
@@ -854,7 +765,12 @@ export function hostNewSpace(opts: {
 export function joinSpace(spaceId: string): { ok: boolean; reason?: string } {
   connectLobby();
   const room = state.rooms.find((r) => r.id === spaceId);
-  if (!room) return { ok: false, reason: "Space not found." };
+  if (!room) {
+    // Opened from a link before the host has announced it: join as soon as they do.
+    pendingJoinId = spaceId;
+    lobbyChannel?.send({ type: "broadcast", event: "space-list", payload: {} }).catch(() => {});
+    return { ok: false, reason: "Space not found. It may have ended." };
+  }
 
   const me = meInfo();
   const alreadyIn = room.participants.some((p) => p.id === me.id);
@@ -897,15 +813,14 @@ export function joinSpace(spaceId: string): { ok: boolean; reason?: string } {
   };
   emit();
 
-  subscribeToSpaceChannel(spaceId);
+  // Say hello once connected (also after a dropped connection), so the host adds you and speakers connect to you.
+  subscribeToSpaceChannel(spaceId, () => {
+    roomChannel?.send({ type: "broadcast", event: "participant-join", payload: myParticipant }).catch(() => {});
+  });
   startExpiryWatcher();
+  gameAudio.holdMusic(true);
   if (myRole !== "listener") {
     ensureLocalMic(true);
-  }
-  if (roomChannel) {
-    roomChannel
-      .send({ type: "broadcast", event: "participant-join", payload: myParticipant })
-      .catch(() => {});
   }
   gameAudio.sfx("open");
   return { ok: true };

@@ -2,14 +2,13 @@
 
 // Interior decorators (src/data/home/decorators.json, enforced in *_decorators.sql). Players with the
 // Interior decorator job do the work: you pick a look and a decorator, pay the finish and pieces (and their
-// fee, held until they finish), they pick up your key, choose a finishing touch and finish. If no player is
-// free, or none picks up your key in time, a Local studio does it. The new look is applied to your home
+// fee, held until they finish), they pick up your key, choose a finishing touch and finish. Only players
+// decorate: the request waits for them until you cancel it. The new look is applied to your home
 // here, when you're next there.
 
 import { useCallback, useEffect, useState } from "react";
 import DECORATORS from "@/data/home/decorators.json";
 import { refreshCitizen, updateCitizen } from "@/lib/citizenStore";
-import { LOCALS } from "@/lib/locals";
 import { supabase } from "@/lib/supabase/client";
 import type { AvatarLookProps } from "@/components/onboarding/AvatarCanvas";
 import {
@@ -20,8 +19,6 @@ import {
 export { DECORATORS };
 export type Studio = (typeof DECORATORS.studios)[number];
 export const studioOf = (id: string) => DECORATORS.studios.find((s) => s.id === id);
-/** A Local decorator in person: the Local of that name. */
-export const localDecoratorLook = (s: Studio) => (LOCALS.find((l) => l.name === s.decorator) ?? LOCALS[0]).look;
 
 const paintOf = (id: string) => WALL_PAINTS.find((w) => w.id === id);
 /** What the look costs in this home: each finish only if it changes, and the pieces (plus a player's fee). */
@@ -56,7 +53,7 @@ async function call<T>(fn: string, args: Record<string, unknown> = {}): Promise<
 }
 
 export const decorators = () => call<DecoratorPro[]>("professionals", { p_service: "decorator" });
-export const hireDecor = (decorator: string | null, studio: string, tier: HousingTier, costs: number) =>
+export const hireDecor = (decorator: string, studio: string, tier: HousingTier, costs: number) =>
   call<{ id: number; fee: number }>("hire_decor", { p_decorator: decorator, p_studio: studio, p_tier: tier, p_costs: costs });
 export const cancelDecor = (job: number) => call<null>("cancel_decor", { p_job: job });
 export const decorJobsForMe = () => call<DecorRequest[]>("decor_jobs_for_me");

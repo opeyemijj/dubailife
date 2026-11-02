@@ -1,0 +1,11 @@
+{
+  "_note": "The slides on the map once per login, for everyone (src/components/onboarding/FirstTimeTour.tsx): each takes you somewhere to do something. A slide with a goal is left out once that goal is done.",
+  "together": "This game is only fun with other players. Bring your friends!",
+  "slides": [
+    { "icon": "💼", "goal": "job", "title": "Explore jobs", "text": "Companies across Dubai are hiring today. A job pays your rent and keeps your visa alive.", "cta": "Find a job", "href": "/jobs" },
+    { "icon": "🚗", "goal": "license", "title": "Go to driving school", "text": "Pass the eye test, theory and parking, get your license, then drive your own car around Dubai.", "cta": "Start driving school", "href": "/driving" },
+    { "icon": "🎓", "goal": "school", "title": "Start a course", "text": "Study at Academic City to unlock better jobs and better visas. Your first lesson takes minutes.", "cta": "Choose a course", "href": "/academics" },
+    { "icon": "🪩", "title": "Go to a club", "text": "Dance, meet real players and make your first friends in Dubai tonight.", "cta": "Go to BLU Dubai", "href": "/place/blu-dubai" },
+    { "icon": "🎮", "title": "Play with other players", "text": "Ludo, chess and more, live against real people. Wins score points for the monthly tournament.", "cta": "Play Ludo", "href": "/games/ludo" }
+  ]
+}
