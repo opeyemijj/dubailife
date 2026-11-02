@@ -534,8 +534,9 @@ function getOrCreatePeerConnection(peerId: string): RTCPeerConnection {
   };
 
   pc.ontrack = (e) => {
-    const [remoteStream] = e.streams;
-    if (!remoteStream || typeof document === "undefined") return;
+    if (typeof document === "undefined") return;
+    // Some browsers (older Safari) don't say which stream a voice belongs to.
+    const remoteStream = e.streams[0] ?? new MediaStream([e.track]);
     let audio = remoteAudioElements.get(peerId);
     if (!audio) {
       audio = audioPool.pop() ?? document.createElement("audio");

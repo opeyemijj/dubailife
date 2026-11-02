@@ -103,7 +103,7 @@ export const SCREEN_CALLOUTS = [
   },
   {
     id: 5,
-    title: "🌅 First Day, Goals & 3D Luxury Vault",
+    title: "🎯 Goals, Missions & 3D Luxury Vault",
     text: "Top-left pills track your active **Life Goal**, **3 Daily Missions**, and the **3D Dubai Luxury Vault** jackpot spin.",
     box: { left: "68%", top: "14%", width: "28%", height: "8%" },
     pin: { top: "calc(18% * 0.98 + 1%)", right: "0" },

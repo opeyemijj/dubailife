@@ -52,6 +52,8 @@ export interface ApartmentRoomProps {
   housingTier?: HousingTier;
   /** High-angle isometric dollhouse cutaway up-view */
   upView?: boolean;
+  /** How far back the camera sits, when something needs the whole home in a smaller space. */
+  viewDistance?: number;
   /** "inside": an over-the-shoulder camera in the room with the citizen, instead of looking down on the home. */
   view?: "above" | "inside";
   /** Active room focus in multi-room flats (e.g. 2-bedroom) */
@@ -944,6 +946,7 @@ function LevelPartitions({ def, upView, activeRoomId, onSelectRoom, onFloorClick
 function CameraRig({
   turns,
   upView,
+  viewDistance,
   targetPos,
   follow,
   followYaw = 0,
@@ -952,6 +955,7 @@ function CameraRig({
 }: {
   turns: number;
   upView?: boolean;
+  viewDistance?: number;
   targetPos?: [number, number, number];
   /** Where the citizen is: the camera follows them from room to room. */
   follow?: [number, number, number];
@@ -969,11 +973,11 @@ function CameraRig({
   // Pull back on narrow (portrait) screens so the whole room fits.
   useEffect(() => {
     if (!controls) return;
-    const dist = inside ? 4.4 : size.width / size.height < 0.8 ? 19 : 14;
+    const dist = inside ? 4.4 : viewDistance ?? (size.width / size.height < 0.8 ? 19 : 14);
     const dir = camera.position.clone().sub(controls.target).normalize();
     camera.position.copy(controls.target).addScaledVector(dir, dist);
     controls.update();
-  }, [controls, camera, size.width, size.height, inside]);
+  }, [controls, camera, size.width, size.height, inside, viewDistance]);
   // Where the citizen was last frame, so the camera can move along with them.
   const lastFollow = useRef<[number, number, number] | null>(null);
   // Walls faded because they stand between the camera and the citizen (inside view).
@@ -1099,6 +1103,7 @@ function RoomScene({
   turns = 0,
   housingTier = "studio",
   upView = false,
+  viewDistance,
   view = "above",
   activeRoomId,
   onSelectRoom,
@@ -1399,6 +1404,7 @@ function RoomScene({
       <CameraRig
         turns={turns}
         upView={upView}
+        viewDistance={viewDistance}
         targetPos={targetPos}
         follow={upView ? undefined : pose.position}
         followYaw={pose.yaw}

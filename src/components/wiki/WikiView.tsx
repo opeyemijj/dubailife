@@ -57,10 +57,21 @@ function RichInline({ text }: { text: string }) {
   );
 }
 
+// The numbered pins: each sits in the middle of the part of the screen it describes.
+const centre = (start: string, size: string) => `${parseFloat(start) + parseFloat(size) / 2}%`;
+const CALLOUTS = SCREEN_CALLOUTS.map((c) => ({
+  num: c.id,
+  x: centre(c.box.left, c.box.width),
+  y: centre(c.box.top, c.box.height),
+  title: c.title,
+  short: c.title,
+  detail: c.text,
+}));
+
 /** Interactive HUD Architecture Explorer */
 function InteractiveScreenGuide({ compact = false }: { compact?: boolean }) {
   const [selected, setSelected] = useState<number>(1);
-  const active = SCREEN_CALLOUTS.find((c) => c.num === selected) ?? SCREEN_CALLOUTS[0];
+  const active = CALLOUTS.find((c) => c.num === selected) ?? CALLOUTS[0];
 
   return (
     <div className="dl-bento overflow-hidden p-5 sm:p-7">
@@ -154,7 +165,7 @@ function InteractiveScreenGuide({ compact = false }: { compact?: boolean }) {
             </div>
 
             {/* Numbered Interactive Callout Pins */}
-            {SCREEN_CALLOUTS.map((c) => {
+            {CALLOUTS.map((c) => {
               const isSelected = c.num === selected;
               return (
                 <button
@@ -191,12 +202,12 @@ function InteractiveScreenGuide({ compact = false }: { compact?: boolean }) {
               </div>
             </div>
             <p className="mt-3 text-sm text-[var(--dl-text-soft)] leading-relaxed">
-              {active.detail}
+              <RichInline text={active.detail} />
             </p>
           </div>
 
           <div className="grid gap-2 sm:grid-cols-2">
-            {SCREEN_CALLOUTS.map((c) => {
+            {CALLOUTS.map((c) => {
               const isSelected = c.num === selected;
               return (
                 <button
