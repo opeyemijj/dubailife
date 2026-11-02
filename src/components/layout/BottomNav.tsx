@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Map, Smartphone, User, X } from "lucide-react";
+import { Home, ListChecks, Map, Smartphone, User, X } from "lucide-react";
 import { useCitizen } from "@/lib/citizenStore";
+import { openDiscover, toTryCount, useDiscover } from "@/lib/discover";
 import { useUnreadTotal } from "@/lib/unread";
 import { useLifeLoop, visaInfo } from "@/lib/lifeLoop";
 import { openLife } from "@/components/life/LifeHub";
@@ -42,6 +43,7 @@ export function BottomNav() {
           <nav className="h-[60px] p-1.5 flex items-center">
             <NavItem href="/home" icon={<Home className="w-6 h-6" />} label="Home" active={isActive("/home")} />
             <NavItem href="/explore" icon={<Map className="w-6 h-6" />} label="Map" active={isActive("/explore")} />
+            {citizen?.id && <TodoButton />}
             <button
               onClick={() => {
                 gameAudio.playClickSound();
@@ -61,6 +63,29 @@ export function BottomNav() {
         </div>
       </div>
     </div>
+  );
+}
+
+/** To do: the same list as on the phone, with how many things are still to try. */
+function TodoButton() {
+  useDiscover();
+  const count = toTryCount();
+  return (
+    <button
+      onClick={() => {
+        gameAudio.playClickSound();
+        openDiscover("do");
+      }}
+      aria-label={count ? `To do, ${count} to try` : "To do"}
+      className="relative flex-1 h-full rounded-full flex items-center justify-center text-slate-600 hover:text-slate-900 transition-all active:scale-95"
+    >
+      <ListChecks className="w-6 h-6" />
+      {count > 0 && (
+        <span className="absolute top-1 left-1/2 ml-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center ring-2 ring-white">
+          {count > 99 ? "99+" : count}
+        </span>
+      )}
+    </button>
   );
 }
 
