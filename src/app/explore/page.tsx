@@ -1,5 +1,6 @@
 "use client";
 
+import { openDiscover } from "@/lib/discover";
 import { FirstTimeTour } from "@/components/onboarding/FirstTimeTour";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -8,7 +9,7 @@ import dynamic from "next/dynamic";
 import { SmallLoader } from "@/components/GameLoadingScreen";
 import { TopBar } from "@/components/layout/TopBar";
 import { BottomNav } from "@/components/layout/BottomNav";
-import { Search, Coffee, Music, ShoppingBag, Trophy, Navigation, Home, X, SlidersHorizontal, Building2, Building, Sparkles } from "lucide-react";
+import { ListChecks, Search, Coffee, Music, ShoppingBag, Trophy, Navigation, Home, X, SlidersHorizontal, Building2, Building, Sparkles } from "lucide-react";
 
 const InteractiveMap = dynamic(
   () => import("@/components/map/InteractiveMap").then((mod) => mod.InteractiveMap),
@@ -84,6 +85,13 @@ function Explore() {
         >
           <Search className="w-4 h-4 text-emerald-700" /> Search
           {(searchQuery || activeFilter !== "all") && <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />}
+        </button>
+      )}
+
+      {/* Things to do: the same list as To do on the phone */}
+      {!searchOpen && (
+        <button onClick={() => openDiscover("do")} className="absolute top-[max(4.25rem,calc(env(safe-area-inset-top)+3.6rem))] left-[6.75rem] sm:left-[7.75rem] z-20 h-9 pl-2.5 pr-3.5 gap-1.5 rounded-full bg-white/95 hover:bg-white border border-white shadow-[0_4px_18px_rgba(15,23,42,0.18)] flex items-center justify-center text-slate-800 font-bold text-sm active:scale-95 transition-transform" aria-label="Things to do">
+          <ListChecks className="w-4 h-4 text-emerald-700" /> To do
         </button>
       )}
 

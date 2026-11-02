@@ -32,6 +32,19 @@ function shuffled<T>(items: T[], seed: number): T[] {
   for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
   return out;
 }
+/** Shuffled so that every kind of thing gets a turn before any repeats: reading, then clubbing, then the beach. */
+function contrasted(items: ActivityView[], seed: number): ActivityView[] {
+  const groups = new Map<string, ActivityView[]>();
+  for (const a of shuffled(items, seed)) groups.set(a.item.cat, [...(groups.get(a.item.cat) ?? []), a]);
+  const out: ActivityView[] = [];
+  for (let round = 0; out.length < items.length; round++) {
+    const turn = shuffled([...groups.values()].filter((g) => g.length), seed + round);
+    // A round doesn't start with the kind of thing the last one ended on.
+    if (turn.length > 1 && turn[0][0].item.cat === out[out.length - 1]?.item.cat) turn.push(turn.shift()!);
+    for (const g of turn) out.push(g.shift()!);
+  }
+  return out;
+}
 const newSeed = () => Math.floor(Math.random() * 4294967295) + 1;
 type Spot = (typeof VISIT.places)[number];
 
@@ -162,9 +175,9 @@ export function DiscoverHost() {
   }, [signedIn, path]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!signedIn || (!sheet && !intro)) return null;
-  // Mixed up on every visit (not grouped by category); things still to try stay above finished ones.
+  // Mixed up on every visit, with different kinds of thing side by side; things still to try stay above finished ones.
   const list = shuffled(activities(), seed);
-  const todo = list.filter((a) => !a.done && !a.hidden);
+  const todo = contrasted(list.filter((a) => !a.done && !a.hidden), seed);
   const done = list.filter((a) => a.done);
   const hidden = list.filter((a) => !a.done && a.hidden);
   const close = () => { setSheet(false); setIntro(false); };
