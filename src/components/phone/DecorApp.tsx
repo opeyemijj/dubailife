@@ -1,16 +1,14 @@
 "use client";
 
-// Decor: the interior decorator's app. Jobs from players who've hired you (pick up their key to start),
-// the look they chose, and the finishing touch you add to finish the job and get paid.
+// Decor: the interior decorator's app. Requests from players (accept or decline), and the way into their home to
+// spend their budget and do the work (/decorate/<job>).
 // Your fee is set here. Not a decorator? How to become one.
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCitizen } from "@/lib/citizenStore";
-import { useNow } from "@/lib/dubaiClock";
 import { setServiceFee, useServices } from "@/lib/cityServices";
-import { acceptDecor, decorJobsForMe, DECORATORS, finishDecor, studioOf, type DecorRequest } from "@/lib/decorator";
-import { CATALOG, FLOOR_FINISHES, WALL_PAINTS } from "@/lib/furniture";
+import { acceptDecor, declineDecor, decorJobsForMe, DECORATORS, studioOf, type DecorRequest } from "@/lib/decorator";
 import { gameAudio } from "@/utils/gameAudio";
 import { AppScreen, Big, Card, Note } from "./AppScreen";
 
@@ -23,9 +21,7 @@ export function DecorApp({ onBack, onClose }: { onBack: () => void; onClose?: ()
   const isDecorator = svc?.service === "decorator";
   const [jobs, setJobs] = useState<DecorRequest[] | null>(null);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
-  const [pick, setPick] = useState<Record<number, string>>({});
   const [fee, setFee] = useState("");
-  const now = useNow();
 
   const load = useCallback(async () => { const r = await decorJobsForMe(); setJobs(r.data ?? []); }, []);
   useEffect(() => {
@@ -42,28 +38,24 @@ export function DecorApp({ onBack, onClose }: { onBack: () => void; onClose?: ()
         <Card className="bg-emerald-50">
           <p className="text-3xl">🧑‍🎨</p>
           <p className="font-black text-lg leading-tight">Decorate other players&apos; homes</p>
-          <p className="text-slate-600">{DECORATORS.career.name} hires Interior decorators ({aed(Math.round((DECORATORS.career.weeklyWage * 52) / 12 / 100) * 100)} a month). Players hire you for the fee you set, hand you their key, and you finish the look.</p>
+          <p className="text-slate-600">{DECORATORS.career.name} hires Interior decorators ({aed(Math.round((DECORATORS.career.weeklyWage * 52) / 12 / 100) * 100)} a month). Players send you requests with a budget. You go to their home, buy from the store, arrange it all and earn the fee you set.</p>
           <Big onClick={() => { onClose?.(); router.push("/jobs"); }}>Apply on the Job Board</Big>
         </Card>
-        <p className="text-center text-xs text-slate-400">Want your own home decorated? Go home → Buy → ✨ Style.</p>
+        <p className="text-center text-xs text-slate-400">Want your own home decorated? Go home and tap Employ Decorator.</p>
       </AppScreen>
     );
   }
 
+  const goTo = (j: DecorRequest) => { onClose?.(); router.push(`/decorate/${j.id}`); };
   const accept = async (j: DecorRequest) => {
     const r = await acceptDecor(j.id);
     if (r.error) { setNote({ ok: false, text: r.error }); void load(); return; }
-    gameAudio.playClickSound();
-    setNote({ ok: true, text: `🔑 You have @${j.client}'s key. Choose your finishing touch and finish the job.` });
-    void load();
-  };
-  const finish = async (j: DecorRequest) => {
-    const touch = pick[j.id];
-    if (!touch) { setNote({ ok: false, text: "Choose a finishing touch first." }); return; }
-    const r = await finishDecor(j.id, touch);
-    if (r.error) { setNote({ ok: false, text: r.error }); return; }
     gameAudio.playCoinSound();
-    setNote({ ok: true, text: `✨ Done! @${j.client}'s home is ready. ${r.data ? `You earned ${aed(r.data)}.` : ""}` });
+    goTo(j);
+  };
+  const decline = async (j: DecorRequest) => {
+    const r = await declineDecor(j.id);
+    setNote(r.error ? { ok: false, text: r.error } : { ok: true, text: `You turned down @${j.client}'s job. They got their AED back.` });
     void load();
   };
   const saveFee = async () => {
@@ -91,43 +83,26 @@ export function DecorApp({ onBack, onClose }: { onBack: () => void; onClose?: ()
       {note && <Note ok={note.ok}>{note.text}</Note>}
 
       {jobs === null ? <p className="text-center text-slate-500 py-6">Loading jobs…</p>
-        : jobs.length === 0 ? <p className="text-center text-slate-500 py-6">No jobs right now. When a player hires you, it shows up here (and you&apos;ll get an alert).</p>
+        : jobs.length === 0 ? <p className="text-center text-slate-500 py-6">No jobs right now. When a player sends you a request, it shows up here (and you&apos;ll get an alert).</p>
         : jobs.map((j) => {
-          const s = studioOf(j.studio);
-          if (!s) return null;
+          const s = j.studio ? studioOf(j.studio) : null;
           return (
             <Card key={j.id}>
               <div className="flex items-start gap-3">
-                <span className="text-3xl">{s.icon}</span>
+                <span className="text-3xl">{s?.icon ?? "🏠"}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="font-black leading-tight">@{j.client} · {s.title}</p>
-                  <p className="text-sm text-slate-600">{FLOOR_FINISHES.find((f) => f.id === s.floor)?.label}, {WALL_PAINTS.find((w) => w.id === s.wall)?.label.toLowerCase()} walls{s.panels ? ", panelling" : ""} · {s.items.map((i) => CATALOG.find((c) => c.id === i)?.icon).join(" ")}</p>
-                  <p className="text-sm font-bold text-emerald-700">Fee {aed(j.fee)}</p>
+                  <p className="font-black leading-tight">@{j.client}&apos;s home</p>
+                  <p className="text-sm text-slate-600">{s ? `They'd like: ${s.title}` : "Style is your choice"}</p>
+                  <p className="text-sm font-bold text-emerald-700">Budget {aed(j.budget)} · your fee {aed(j.fee)}</p>
                 </div>
               </div>
               {j.status === "requested" ? (
-                <>
-                  <p className="text-xs text-amber-700 font-bold">Waiting for you to pick up the key (unless the client cancels).</p>
-                  <Big onClick={() => accept(j)}>🔑 Pick up the key</Big>
-                </>
+                <div className="flex gap-2">
+                  <button onClick={() => decline(j)} className="h-12 px-4 rounded-full bg-white font-black text-slate-600">Decline</button>
+                  <div className="flex-1"><Big onClick={() => accept(j)}>🔑 Accept and go there</Big></div>
+                </div>
               ) : (
-                <>
-                  <p className="text-sm font-bold">Your finishing touch: one piece you add to the look.</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {s.touches.map((t) => {
-                      const item = CATALOG.find((c) => c.id === t);
-                      if (!item) return null;
-                      return (
-                        <button key={t} onClick={() => setPick((p) => ({ ...p, [j.id]: t }))}
-                          className={`rounded-2xl p-2 text-center ${pick[j.id] === t ? "bg-emerald-600 text-white" : "bg-white"}`}>
-                          <span className="block text-2xl">{item.icon}</span>
-                          <span className="block text-[11px] font-bold leading-tight">{item.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <Big onClick={() => finish(j)} disabled={!pick[j.id]}>✨ Finish and hand back the key</Big>
-                </>
+                <Big onClick={() => goTo(j)}>🏠 Go to @{j.client}&apos;s home · AED {(j.budget - j.spent).toLocaleString()} left</Big>
               )}
             </Card>
           );

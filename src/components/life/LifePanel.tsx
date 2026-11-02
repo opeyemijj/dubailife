@@ -3,6 +3,7 @@
 // The citizen's life at a glance, opened from the needs dock at home (or S on a keyboard): Profile,
 // Needs and feelings, Goals (wishes, certificates, perks), Skills, People, Career and Settings.
 
+import { askLogout } from "@/components/layout/LogoutConfirm";
 import { emailStatus, sendVerification, type EmailStatus } from "@/lib/email";
 import { InviteFriends } from "@/components/share/InviteFriends";
 import { Roommates } from "./Roommates";
@@ -18,7 +19,7 @@ import { SeasonTab } from "./SeasonTab";
 import { MyStyle } from "./MyStyle";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
-import { boostNeed, DEFAULT_NEEDS, signOut, updateCitizen, useCitizen, type Citizen, type NeedKey } from "@/lib/citizenStore";
+import { boostNeed, DEFAULT_NEEDS, updateCitizen, useCitizen, type Citizen, type NeedKey } from "@/lib/citizenStore";
 import { useLifeLoop, visaInfo, runwayDays, dailyBurn } from "@/lib/lifeLoop";
 import { LookPicker } from "@/components/avatar/LookPicker";
 import { InstallApp } from "@/components/pwa/InstallApp";
@@ -290,7 +291,7 @@ function ProfileTab({ c, onClose }: { c: Citizen; onClose: () => void }) {
       </Section>
 
       <InstallApp variant="light-row" />
-      <button onClick={() => { onClose(); void signOut(); }} className="w-full flex items-center justify-center gap-2 h-12 rounded-2xl bg-rose-50 text-rose-600 font-black text-sm"><LogOut className="w-4 h-4" /> Log out</button>
+      <button onClick={() => { onClose(); askLogout(); }} className="w-full flex items-center justify-center gap-2 h-12 rounded-2xl bg-rose-50 text-rose-600 font-black text-sm"><LogOut className="w-4 h-4" /> Log out</button>
     </div>
   );
 }
@@ -627,7 +628,7 @@ function SettingsTab({ onClose, onProfile }: { onClose: () => void; onProfile: (
       <div className="hidden sm:flex items-center gap-3 rounded-3xl bg-slate-100/80 p-4 text-sm text-slate-600">⌨️ <span className="flex-1">Press <kbd className="px-1.5 py-0.5 rounded bg-white font-mono font-bold">S</kbd> anywhere to open this panel, <kbd className="px-1.5 py-0.5 rounded bg-white font-mono font-bold">?</kbd> for all shortcuts.</span></div>
       <EmailRow />
       <BlockedPlayers />
-      <button onClick={() => { onClose(); void signOut(); }} className="w-full flex items-center justify-center gap-2 h-12 rounded-2xl bg-rose-50 text-rose-600 font-black text-sm mt-3"><LogOut className="w-4 h-4" /> Log out</button>
+      <button onClick={() => { onClose(); askLogout(); }} className="w-full flex items-center justify-center gap-2 h-12 rounded-2xl bg-rose-50 text-rose-600 font-black text-sm mt-3"><LogOut className="w-4 h-4" /> Log out</button>
       <DeleteAccount />
     </div>
   );

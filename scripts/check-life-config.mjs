@@ -222,6 +222,11 @@ dneed("interview", `('${dc.name}', '{${dec.interview.map((q) => q.answer).join("
 dneed("fee limits", `when 'decorator' then array[${dec.fee.min}, ${dec.fee.max}, ${dec.fee.default}]`);
 dneed("local minutes", `then now() + interval '${dec.minutes} minutes' end`);
 for (const s of dec.studios) dneed(`touches ${s.id}`, `when '${s.id}' then array[${s.touches.map((t) => `'${t}'`).join(", ")}]`);
+const decCallFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_decor_house_calls.sql")).sort().pop();
+const decCallSql = readFileSync(`supabase/migrations/${decCallFile}`, "utf8");
+for (const text of [`p_budget < ${dec.budget.min} or p_budget > ${dec.budget.max}`, `interval '${dec.abandonHours} hours'`]) {
+  if (!decCallSql.includes(text)) { bad++; console.error(`decorators: differs from SQL (${text})`); }
+}
 // Penalties (cars.json → driving.revokeAfterAccidents vs *_penalties.sql).
 const penFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_penalties.sql")).sort().pop();
 const penSql = readFileSync(`supabase/migrations/${penFile}`, "utf8");

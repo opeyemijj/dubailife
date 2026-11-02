@@ -25,6 +25,7 @@ import { MarathonBanner } from "@/components/marathon/MarathonBanner";
 import { Custody } from "@/components/cars/Custody";
 import { FineNotice } from "@/components/cars/FineNotice";
 import { DecorFirstNudge } from "@/components/home/MoveInGuide";
+import { LogoutConfirm } from "@/components/layout/LogoutConfirm";
 import { GoalSetup } from "@/components/goals/GoalSetup";
 import { DecorJobAlert } from "@/components/home/DecorJobAlert";
 import { NextStep } from "@/components/goals/NextStep";
@@ -218,6 +219,7 @@ export default function RootLayout({
           <DiscoverHost />
         </OutsidePhone>
         <EmbedBridge />
+        <LogoutConfirm />
         {children}
         <LifeHub />
         <OutsidePhone>

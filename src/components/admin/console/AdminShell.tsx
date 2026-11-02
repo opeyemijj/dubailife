@@ -1,5 +1,6 @@
 "use client";
 
+import { askLogout } from "@/components/layout/LogoutConfirm";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -62,7 +63,7 @@ export function AdminShell({ email, role, children }: { email: string; role: str
             <KeyRound className="w-4 h-4" /> My account
           </Link>
           <div className="px-3 text-[11px] text-slate-500">Role: <span className="text-slate-300 font-bold">{role.replace("_", " ")}</span></div>
-          <button onClick={signOut} className="w-full flex items-center gap-3 px-3 h-10 rounded-xl text-sm font-bold text-rose-300 hover:bg-white/5"><LogOut className="w-4 h-4" /> Sign out</button>
+          <button onClick={() => askLogout(signOut)} className="w-full flex items-center gap-3 px-3 h-10 rounded-xl text-sm font-bold text-rose-300 hover:bg-white/5"><LogOut className="w-4 h-4" /> Sign out</button>
         </div>
       </aside>
       {open && <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setOpen(false)} />}

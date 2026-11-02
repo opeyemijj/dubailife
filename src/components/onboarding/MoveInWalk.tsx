@@ -100,7 +100,7 @@ function Walk({ look, outdoor, onInside }: { look: AvatarLookProps; outdoor: boo
   );
 }
 
-export function MoveInWalk({ look, homeId, homeLabel, onDone }: { look: AvatarLookProps; homeId: string; homeLabel: string; onDone: () => void }) {
+export function MoveInWalk({ look, homeId, homeLabel, caption, onDone }: { look: AvatarLookProps; homeId: string; homeLabel: string; caption?: string; onDone: () => void }) {
   const quality = useMemo(() => canvasQuality(), []);
   const [fading, setFading] = useState(false);
   const finished = useRef(false);
@@ -127,7 +127,7 @@ export function MoveInWalk({ look, homeId, homeLabel, onDone }: { look: AvatarLo
           <Walk look={look} outdoor={OUTDOOR.includes(homeId)} onInside={inside} />
         </Canvas>
         <div className="absolute top-[max(1rem,env(safe-area-inset-top))] inset-x-3 flex justify-center pointer-events-none">
-          <p className="max-w-sm rounded-2xl bg-white px-4 py-2.5 font-semibold text-slate-900 shadow-xl">🔑 Welcome to your new home: {homeLabel}</p>
+          <p className="max-w-sm rounded-2xl bg-white px-4 py-2.5 font-semibold text-slate-900 shadow-xl">🔑 {caption ?? `Welcome to your new home: ${homeLabel}`}</p>
         </div>
         <div className={`absolute inset-0 bg-white pointer-events-none transition-opacity duration-500 ${fading ? "opacity-100" : "opacity-0"}`} />
         <button onClick={leave} className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 h-11 px-5 rounded-full bg-white/90 font-bold text-slate-800 shadow-lg">Skip ›</button>

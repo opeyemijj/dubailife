@@ -3,12 +3,13 @@
 // The front page for someone already signed in: their own home in 3D under the Dubai Life name, and one
 // big Continue back home. Logging out and the official accounts sit underneath.
 
+import { askLogout } from "@/components/layout/LogoutConfirm";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { BadgeCheck } from "lucide-react";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
-import { signOut, type Citizen } from "@/lib/citizenStore";
+import type { Citizen } from "@/lib/citizenStore";
 import { useLifeLoop } from "@/lib/lifeLoop";
 import { getHousingTierFromText, HOUSING_CONFIGS, withHomeItems } from "@/lib/furniture";
 import { SITE } from "@/lib/site";
@@ -60,7 +61,7 @@ export function WelcomeBack({ citizen }: { citizen: Citizen }) {
           </button>
           <div className="flex items-center justify-between px-1 text-[15px]">
             <span className="text-slate-500 truncate">Signed in as <strong className="text-slate-900">@{citizen.username}</strong></span>
-            <button onClick={signOut} className="font-semibold text-sky-600 hover:underline shrink-0">Log out</button>
+            <button onClick={() => askLogout()} className="font-semibold text-sky-600 hover:underline shrink-0">Log out</button>
           </div>
         </div>
 

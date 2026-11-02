@@ -1,5 +1,6 @@
 "use client";
 
+import { askLogout } from "@/components/layout/LogoutConfirm";
 import { DecoratorSheet, DecoratorStatus } from "@/components/home/Decorator";
 import { HomeActions } from "@/components/home/HomeActions";
 import { MoveInGuide } from "@/components/home/MoveInGuide";
@@ -17,7 +18,7 @@ import {
 import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { gameAudio } from "@/utils/gameAudio";
-import { isNewCitizen, useRequireCitizen, adjustBalance, buyFurniture, setFurniturePlacement, signOut, updateCitizen, DEFAULT_NEEDS, type Needs } from "@/lib/citizenStore";
+import { isNewCitizen, useRequireCitizen, adjustBalance, buyFurniture, setFurniturePlacement, updateCitizen, DEFAULT_NEEDS, type Needs } from "@/lib/citizenStore";
 import {
   CATALOG, FLOOR_FINISHES, PANELS_PRICE, SHOP_CATEGORIES, WALL_PAINTS, getCatalogItem, getHousingTierFromText, housingTierFor, withHomeItems, HOUSING_CONFIGS,
   type CatalogItem, type HomeStyle, type Interaction, type Placement, type Rotation, type HousingTier, type HomeActivityDef, type ShopCategory,
@@ -352,11 +353,9 @@ export default function HomePage() {
 
       {/* Camera controls */}
       <div className="absolute right-3 sm:right-6 top-[36%] -translate-y-1/2 z-30 flex flex-col items-center gap-2 pointer-events-auto">
-        {!cleanScreen && (
-          <button onClick={() => setCleanScreen(true)} className="w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 active:scale-90 transition-transform" title="Clean screen" aria-label="Clean screen">
-            <EyeOff className="w-4 h-4" />
-          </button>
-        )}
+        <button onClick={() => setCleanScreen((c) => !c)} className="w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 active:scale-90 transition-transform" title={cleanScreen ? "Show everything" : "Clean screen"} aria-label={cleanScreen ? "Show everything" : "Clean screen"}>
+          {cleanScreen ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+        </button>
         <button onClick={() => { setView((v) => (v === "inside" ? "above" : "inside")); setUpView(false); }} className="w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg border border-slate-200 flex items-center justify-center text-lg active:scale-90 transition-all" title={view === "inside" ? "View from above" : "View from inside"} aria-label={view === "inside" ? "View from above" : "View from inside"}>{view === "inside" ? "🏠" : "👤"}</button>
         <button
           onClick={() => setTurns((t) => t - 1)}
@@ -506,7 +505,7 @@ export default function HomePage() {
               </Link>
 
               <button
-                onClick={signOut}
+                onClick={() => askLogout()}
                 className="w-9 h-9 shrink-0 flex items-center justify-center rounded-full bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 transition-colors"
                 title="Log out"
                 aria-label="Log out"
@@ -638,19 +637,9 @@ export default function HomePage() {
         </div>
       )}
 
-      {cleanScreen && (
-        <button
-          onClick={() => setCleanScreen(false)}
-          className="absolute top-4 left-4 z-40 bg-white/90 px-3 py-1.5 rounded-full text-xs font-bold text-slate-800 shadow-md border border-slate-200 flex items-center gap-1"
-        >
-          <ChevronDown className="w-3.5 h-3.5" />
-          <span>Show UI</span>
-        </button>
-      )}
-
       {/* An interior decorator at work here, and the reveal when they're done; choosing one. */}
       {!cleanScreen && <DecoratorStatus tier={housingTier} job={decorJob} reload={reloadDecor} />}
-      {decoratorOpen && <DecoratorSheet tier={housingTier} current={homeStyle} onClose={() => setDecoratorOpen(false)} onHired={() => { setBuyModalOpen(false); void reloadDecor(); }} />}
+      {decoratorOpen && <DecoratorSheet tier={housingTier} onClose={() => setDecoratorOpen(false)} onHired={() => { setBuyModalOpen(false); void reloadDecor(); }} />}
 
       {/* RELATABLE HOME ACTIVITIES DOCK (Collapsible Floating Pill / Expanded Drawer) */}
       {!cleanScreen && !placing && (
@@ -863,7 +852,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {!decorFirst && !cleanScreen && !placing && !decorating && <HomeActions onShop={openShop} />}
+      {citizen && !decorFirst && !cleanScreen && !placing && !decorating && <HomeActions onShop={openShop} />}
       {decorFirst && !cleanScreen && !placing && !decorating && !buyModalOpen && !decoratorOpen && (
         <MoveInGuide
           name={citizen?.username ?? ""}
@@ -901,7 +890,7 @@ export default function HomePage() {
                   <span className="text-2xl">🧑‍🎨</span>
                   <span className="flex-1">
                     <span className="block font-black text-sm">Hire an interior decorator</span>
-                    <span className="block text-[11px] text-white/80">Pick a look, hand over your key, come back to it done.</span>
+                    <span className="block text-[11px] text-white/80">Set a budget, and a player does it all while you're out.</span>
                   </span>
                   <span className="text-lg">›</span>
                 </button>

@@ -1,5 +1,6 @@
 "use client";
 
+import { askLogout } from "@/components/layout/LogoutConfirm";
 import React from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -7,7 +8,7 @@ import { SmallLoader } from "@/components/GameLoadingScreen";
 import { LandingOverlay } from "@/components/landing/LandingOverlay";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { placeForEntity } from "@/lib/city/places";
-import { useCitizen, signOut } from "@/lib/citizenStore";
+import { useCitizen } from "@/lib/citizenStore";
 import { WelcomeBack } from "@/components/landing/WelcomeBack";
 
 const InteractiveMap = dynamic(
@@ -71,7 +72,7 @@ export function HomeContent() {
       <LandingOverlay
         isLoggedIn={isLoggedIn}
         citizen={citizen}
-        onLogout={signOut}
+        onLogout={() => askLogout()}
       />
     </main>
   );

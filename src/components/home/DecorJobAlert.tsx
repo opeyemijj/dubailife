@@ -36,14 +36,14 @@ export function DecorJobAlert() {
   }, [on]);
 
   if (!job) return null;
-  const s = studioOf(job.studio);
+  const s = job.studio ? studioOf(job.studio) : null;
   return (
     <div className="fixed inset-x-3 top-[max(0.75rem,env(safe-area-inset-top))] z-[210] flex justify-center">
       <div className="w-full max-w-md rounded-[24px] bg-white text-slate-900 shadow-2xl overflow-hidden">
         <div className="bg-emerald-600 text-white px-4 py-2 text-sm font-black">🧑‍🎨 New decorating job</div>
         <div className="p-4 space-y-1">
-          <p className="font-black leading-tight">@{job.client} wants a {s?.icon} {s?.title ?? "new"} home</p>
-          <p className="text-sm text-slate-600">Fee AED {job.fee.toLocaleString()}. Pick up their key to start.</p>
+          <p className="font-black leading-tight">@{job.client} wants you to decorate their home{s ? `: ${s.icon} ${s.title}` : ""}</p>
+          <p className="text-sm text-slate-600">Budget AED {job.budget.toLocaleString()} · your fee AED {job.fee.toLocaleString()}. Accept it in the Decor app.</p>
         </div>
         <div className="px-4 pb-4 flex gap-2">
           <button onClick={() => setJob(null)} className="flex-1 h-11 rounded-full bg-slate-100 font-black text-slate-700">Later</button>

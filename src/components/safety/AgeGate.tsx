@@ -3,6 +3,7 @@
 // Dubai Life is 21+ (design spec section 4). Accounts made before the age gate are asked for a date of
 // birth once; anyone under 21 sees a closed door with only a log-out button. Admin pages are left alone.
 
+import { askLogout } from "@/components/layout/LogoutConfirm";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ModalPortal } from "@/components/ui/modal-portal";
@@ -62,7 +63,7 @@ export function AgeGate() {
               <div className="text-4xl">🔞</div>
               <h2 className="text-xl font-black">Dubai Life is 21+</h2>
               <p className="text-sm text-slate-600">Sorry, this game is only for players aged 21 and over, so this account can&apos;t be used.</p>
-              <button onClick={() => void signOut().then(() => window.location.replace("/"))} className="w-full h-12 rounded-2xl bg-slate-900 text-white font-black">Log out</button>
+              <button onClick={() => askLogout(() => signOut().then(() => window.location.replace("/")))} className="w-full h-12 rounded-2xl bg-slate-900 text-white font-black">Log out</button>
             </>
           ) : (
             <>
@@ -82,7 +83,7 @@ export function AgeGate() {
               </div>
               {error && <p className="text-xs font-bold text-rose-600">{error}</p>}
               <button onClick={save} disabled={busy} className="w-full h-12 rounded-2xl bg-emerald-700 text-white font-black disabled:opacity-60">{busy ? "Saving…" : "Confirm"}</button>
-              <button onClick={() => void signOut().then(() => window.location.replace("/"))} className="text-xs font-bold text-slate-400">Log out instead</button>
+              <button onClick={() => askLogout(() => signOut().then(() => window.location.replace("/")))} className="text-xs font-bold text-slate-400">Log out instead</button>
             </>
           )}
         </div>
