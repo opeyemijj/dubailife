@@ -4,6 +4,7 @@ import { askLogout } from "@/components/layout/LogoutConfirm";
 import { DecoratorSheet, DecoratorStatus } from "@/components/home/Decorator";
 import { HomeActions } from "@/components/home/HomeActions";
 import { MoveInGuide } from "@/components/home/MoveInGuide";
+import { inviteFriends } from "@/lib/invite";
 import { useMyDecor } from "@/lib/decorator";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { compact, useSiteStats } from "@/lib/siteStats";
@@ -11,7 +12,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
-  Volume2, VolumeX, Plus, Eye, EyeOff, ChevronUp, ChevronDown,
+  Volume2, VolumeX, Plus, Eye, EyeOff, Menu, ChevronUp, ChevronDown,
   Home, ShoppingBag, Map, Smartphone, Sparkles, X, Megaphone,
   RotateCw, RotateCcw, Keyboard, Move, Package, LogOut, Shirt, Bell
 } from "lucide-react";
@@ -48,6 +49,19 @@ const FLOOR_SWATCH: Record<string, string> = {
   "white-marble": "linear-gradient(135deg,#f5f3ef 40%,#c9c9cf 45%,#f5f3ef 50%)",
   "black-marble": "linear-gradient(135deg,#17171a 40%,#d9d9d9 44%,#17171a 48%)",
 };
+
+function HomeMenuRow({ icon, title, text, onClick }: { icon: string; title: string; text: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="w-full flex items-center gap-3 rounded-2xl bg-slate-50 hover:bg-slate-100 p-3 text-left active:scale-[0.99]">
+      <span className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-xl shrink-0">{icon}</span>
+      <span className="flex-1 min-w-0">
+        <span className="block font-black text-sm truncate">{title}</span>
+        <span className="block text-[11px] text-slate-500 truncate">{text}</span>
+      </span>
+      <span className="text-slate-400 font-black">›</span>
+    </button>
+  );
+}
 
 export default function HomePage() {
   const router = useRouter();
@@ -90,6 +104,7 @@ export default function HomePage() {
   const [decorating, setDecorating] = useState(false);
   // An interior decorator: choosing one, and whether one is at work here (then the style is theirs to set).
   const [decoratorOpen, setDecoratorOpen] = useState(false);
+  const [homeMenuOpen, setHomeMenuOpen] = useState(false);
   const { job: decorJob, reload: reloadDecor } = useMyDecor(citizen?.id);
   const [turns, setTurns] = useState(0);
 
@@ -216,6 +231,48 @@ export default function HomePage() {
     if (!decorFirst || !decorated) return;
     return () => updateCitizen((c) => ({ ...c, decorFirst: false }));
   }, [decorFirst, decorated]);
+  const hostParty = async () => {
+                gameAudio.playCoinSound();
+                const targetHref = activeFlat ? flatRoute(activeFlat) : "/home";
+                if (activeFlat) {
+                  void setAccess(activeFlat.id, "public");
+                }
+                broadcastCityPulse({
+                  kind: "party",
+                  icon: "🎉",
+                  title: `@${citizen?.username ?? "someone"} is hosting an Open House at ${activeHomeTitle}!`,
+                  subtitle: `${activeHomeArea} · Doors open now for +25 Social & vibes!`,
+                  href: targetHref,
+                  cta: "Visit Home ›",
+                  from: citizen?.username ?? "someone",
+                });
+                gainSkill("charisma", 15);
+                const refPart = citizen?.username ? `ref=${encodeURIComponent(citizen.username)}&` : "";
+                const url = `${window.location.origin}/?${refPart}go=${encodeURIComponent(targetHref)}`;
+                const text = `Come visit my 3D ${activeHomeTitle} (${activeHomeArea}) in Dubai Life! 🎉 Doors are open right now!`;
+                if (navigator.share) {
+                  try { await navigator.share({ title: `${activeHomeTitle} · Open House`, text, url }); } catch { /* cancelled */ }
+                } else {
+                  try { await navigator.clipboard.writeText(`${text} ${url}`); } catch { /* blocked */ }
+                }
+                setToastMsg(`🎉 Open House broadcast to all online citizens & invite link ready! (+15 Charisma XP)`);
+                setTimeout(() => setToastMsg(null), 4500);
+  };
+  const shareHome = async () => {
+    gameAudio.playClickSound();
+    if (!activeFlat) {
+      const r = await inviteFriends(citizen?.username);
+      if (r === "copied") showToast("Invite link copied. Send it to your friends!");
+      return;
+    }
+    const refPart = citizen?.username ? `ref=${encodeURIComponent(citizen.username)}&` : "";
+    const url = `${window.location.origin}/?${refPart}go=${encodeURIComponent(flatRoute(activeFlat))}`;
+    const text = `Come and visit my ${activeHomeTitle} (${activeHomeArea}) in Dubai Life!`;
+    if (navigator.share) {
+      try { await navigator.share({ title: activeHomeTitle, text, url }); return; } catch { /* cancelled */ }
+    }
+    try { await navigator.clipboard.writeText(`${text} ${url}`); showToast("Invite link copied. Send it to your friends!"); } catch { /* blocked */ }
+  };
   const openShop = () => { setShopTab("shop"); setBuyModalOpen(true); };
   const stored = withHomeItems(furniture, housingTier).filter((f) => !f.placement);
   const placingItem = placing ? getCatalogItem(placing.itemId) : undefined;
@@ -353,6 +410,11 @@ export default function HomePage() {
 
       {/* Camera controls */}
       <div className="absolute right-3 sm:right-6 top-[36%] -translate-y-1/2 z-30 flex flex-col items-center gap-2 pointer-events-auto">
+        {!cleanScreen && (
+          <button onClick={() => { gameAudio.playClickSound(); setHomeMenuOpen(true); }} className="w-10 h-10 rounded-full bg-slate-900 text-white shadow-lg flex items-center justify-center active:scale-90 transition-transform" title="Home menu" aria-label="Home menu">
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
         <button onClick={() => setCleanScreen((c) => !c)} className="w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 active:scale-90 transition-transform" title={cleanScreen ? "Show everything" : "Clean screen"} aria-label={cleanScreen ? "Show everything" : "Clean screen"}>
           {cleanScreen ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
         </button>
@@ -518,122 +580,48 @@ export default function HomePage() {
         </header>
       )}
 
-      {/* TOP HOUSING STATUS & MULTI-ROOM PILLS */}
-      {!cleanScreen && (
-        <div className="absolute top-[4.5rem] sm:top-20 left-1/2 -translate-x-1/2 z-30 pointer-events-auto flex flex-col items-center gap-1.5 max-w-[96vw] px-2">
-          <div className="flex flex-wrap items-center justify-center gap-1.5 bg-slate-950/90 backdrop-blur-xl text-white pl-3.5 pr-2 py-1.5 rounded-full shadow-2xl border border-white/10 text-xs font-bold">
-            <button
-              onClick={() => {
-                setTierModalOpen(true);
-                gameAudio.playClickSound();
-              }}
-              className="flex items-center gap-1.5 hover:opacity-90 transition-opacity active:scale-95 cursor-pointer"
-              title="Switch between your owned and rented properties"
-            >
-              <span className="text-sm">{housingConfig.icon}</span>
-              <span className="font-extrabold text-amber-300">{activeHomeTitle}</span>
-              <span className="text-slate-400 text-[10px] hidden sm:inline">• {activeHomeArea}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-amber-400/80 ml-0.5" />
-            </button>
-            <button
-              onClick={() => {
-                gameAudio.playClickSound();
-                setDecoratorOpen(true);
-              }}
-              className="ml-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-sm flex items-center gap-1 active:scale-95 transition-all cursor-pointer"
-              title="Employ an interior decorator to style and furnish your home"
-            >
-              <span>🧑‍🎨</span>
-              <span>{decorJob ? "Decorator Working" : "Employ Decorator"}</span>
-            </button>
-            <button
-              onClick={async () => {
-                gameAudio.playCoinSound();
-                const targetHref = activeFlat ? flatRoute(activeFlat) : "/home";
-                if (activeFlat) {
-                  void setAccess(activeFlat.id, "public");
-                }
-                broadcastCityPulse({
-                  kind: "party",
-                  icon: "🎉",
-                  title: `@${citizen?.username ?? "someone"} is hosting an Open House at ${activeHomeTitle}!`,
-                  subtitle: `${activeHomeArea} · Doors open now for +25 Social & vibes!`,
-                  href: targetHref,
-                  cta: "Visit Home ›",
-                  from: citizen?.username ?? "someone",
-                });
-                gainSkill("charisma", 15);
-                const refPart = citizen?.username ? `ref=${encodeURIComponent(citizen.username)}&` : "";
-                const url = `${window.location.origin}/?${refPart}go=${encodeURIComponent(targetHref)}`;
-                const text = `Come visit my 3D ${activeHomeTitle} (${activeHomeArea}) in Dubai Life! 🎉 Doors are open right now!`;
-                if (navigator.share) {
-                  try { await navigator.share({ title: `${activeHomeTitle} · Open House`, text, url }); } catch { /* cancelled */ }
-                } else {
-                  try { await navigator.clipboard.writeText(`${text} ${url}`); } catch { /* blocked */ }
-                }
-                setToastMsg(`🎉 Open House broadcast to all online citizens & invite link ready! (+15 Charisma XP)`);
-                setTimeout(() => setToastMsg(null), 4500);
-              }}
-              className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 text-slate-950 shadow-sm flex items-center gap-1 active:scale-95 transition-all cursor-pointer"
-              title="Broadcast a Live Open House Party to online players & share invite link"
-            >
-              <span>🎉</span>
-              <span>Host Party</span>
-            </button>
-            {housingConfig.hasDollhouseUpView && (
+      {/* Floors and rooms, one scrolling row. Everything else about the home is in the menu on the right. */}
+      {!cleanScreen && (levels || (rooms && rooms.length > 0)) && (
+        <div className="absolute top-[4.5rem] sm:top-20 left-1/2 -translate-x-1/2 z-30 pointer-events-auto max-w-[96vw]">
+          <div className="flex items-center gap-1 bg-white/95 backdrop-blur-md px-2 py-1 rounded-full shadow-lg border border-slate-200 overflow-x-auto [scrollbar-width:none]">
+            {levels?.map((l, i) => (
               <button
-                onClick={() => {
-                  setUpView(!upView);
-                  gameAudio.playClickSound();
-                }}
-                className={`px-2.5 py-0.5 rounded-full text-[10px] font-black transition-all ${
-                  upView ? "bg-emerald-500 text-white shadow-sm" : "bg-white/20 text-slate-200 hover:bg-white/30"
-                }`}
+                key={l.label}
+                onClick={() => { changeLevel(i); gameAudio.playClickSound(); }}
+                className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-black whitespace-nowrap transition-all ${level === i ? "bg-amber-400 text-slate-900 shadow-sm" : "text-slate-600 hover:bg-slate-100"}`}
               >
-                {upView ? "📐 Up-View" : "🔍 Focus"}
+                {l.icon} {l.label}
               </button>
-            )}
+            ))}
+            {levels && rooms && rooms.length > 0 && <span className="shrink-0 w-px h-5 bg-slate-200 mx-0.5" />}
+            {rooms?.map((r) => (
+              <button
+                key={r.id}
+                onClick={() => { setActiveRoomId(r.id); gameAudio.playClickSound(); }}
+                className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-black whitespace-nowrap transition-all flex items-center gap-1 ${activeRoomId === r.id ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
+              >
+                <span>{r.icon}</span>
+                <span>{r.label}</span>
+              </button>
+            ))}
           </div>
+        </div>
+      )}
 
-          {/* Room Pills for Multi-Room Layouts (1-Bed, 2-Bed, 3-Bed) */}
-          {levels && (
-            <div className="flex items-center gap-1 bg-slate-900/90 backdrop-blur-md p-1 rounded-full shadow-lg">
-              {levels.map((l, i) => (
-                <button
-                  key={l.label}
-                  onClick={() => { changeLevel(i); gameAudio.playClickSound(); }}
-                  className={`px-3 py-1 rounded-full text-[11px] font-black whitespace-nowrap transition-all ${level === i ? "bg-amber-400 text-slate-900 shadow" : "text-slate-200 hover:bg-white/10"}`}
-                >
-                  {l.icon} {l.label}
-                </button>
-              ))}
+      {homeMenuOpen && (
+        <div className="fixed inset-0 z-[200] bg-black/40 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-label="Home menu" onClick={() => setHomeMenuOpen(false)}>
+          <div className="w-full max-w-md bg-white text-slate-900 rounded-t-[28px] sm:rounded-[28px] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-2" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-1 pb-1">
+              <p className="text-lg font-black">Your home</p>
+              <button onClick={() => setHomeMenuOpen(false)} aria-label="Close" className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500"><X className="w-4 h-4" /></button>
             </div>
-          )}
-          {rooms && rooms.length > 0 && (
-            <div className="flex items-center gap-1 bg-white/95 backdrop-blur-md px-2 py-1 rounded-full shadow-lg border border-slate-200 overflow-x-auto max-w-[92vw]">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-1.5 pr-0.5">Rooms:</span>
-              {rooms.map((r) => {
-                const isSelected = activeRoomId === r.id;
-                return (
-                  <button
-                    key={r.id}
-                    onClick={() => {
-                      setActiveRoomId(r.id);
-                      gameAudio.playClickSound();
-                    }}
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-black whitespace-nowrap transition-all flex items-center gap-1 ${
-                      isSelected
-                        ? "bg-slate-900 text-white shadow-sm scale-105"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                    }`}
-                  >
-                    <span>{r.icon}</span>
-                    <span>{r.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+            <HomeMenuRow icon={housingConfig.icon} title={activeHomeTitle} text={`${activeHomeArea} · Switch home`} onClick={() => { setHomeMenuOpen(false); setTierModalOpen(true); }} />
+            <HomeMenuRow icon="🧑‍🎨" title={decorJob ? "Decorator at work" : "Employ a decorator"} text={decorJob ? "See how it's going" : "A player decorates with your budget"} onClick={() => { setHomeMenuOpen(false); setDecoratorOpen(true); }} />
+            <HomeMenuRow icon="🎉" title="Host a party" text="Open your doors to everyone online" onClick={() => { setHomeMenuOpen(false); void hostParty(); }} />
+            {activeFlat && <HomeMenuRow icon="💌" title="Invite a player to your home" text="Pick someone from your chats" onClick={() => { setHomeMenuOpen(false); router.push("/phone?tab=chats"); }} />}
+            <HomeMenuRow icon="🔗" title={activeFlat ? "Share an invite link" : "Invite a friend to Dubai Life"} text={activeFlat ? "Send it to anyone" : "Rent or buy on the map to have people over"} onClick={() => { setHomeMenuOpen(false); void shareHome(); }} />
+            {housingConfig.hasDollhouseUpView && <HomeMenuRow icon={upView ? "🔍" : "📐"} title={upView ? "Focus on one room" : "See the whole floor"} text="Change the view" onClick={() => { setUpView(!upView); setHomeMenuOpen(false); }} />}
+          </div>
         </div>
       )}
 
@@ -746,7 +734,7 @@ export default function HomePage() {
       {/* BOTTOM NAVIGATION BAR (Image 2) */}
       {!cleanScreen && !placing && (
         <div className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] sm:bottom-5 left-0 w-full z-40 pointer-events-none px-4">
-          <div className="max-w-sm sm:max-w-md mx-auto bg-white/95 backdrop-blur-2xl border border-white shadow-[0_16px_48px_rgba(0,0,0,0.25)] rounded-full p-1.5 flex items-center justify-between pointer-events-auto">
+          <div className="max-w-sm sm:max-w-2xl mx-auto bg-white/95 backdrop-blur-2xl border border-white shadow-[0_16px_48px_rgba(0,0,0,0.25)] rounded-full p-1.5 flex items-center justify-between pointer-events-auto">
             {/* Home (Active) */}
             <button className="flex-1 min-h-[48px] py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full bg-slate-900 text-white font-black text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 shadow-md">
               <Home className="w-3.5 h-3.5" />
