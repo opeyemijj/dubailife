@@ -31,7 +31,7 @@ export function WelcomeBack({ citizen }: { citizen: Citizen }) {
     <main className="fixed inset-0 h-[100dvh] w-screen overflow-hidden bg-[#eef6ff] text-slate-900 select-none">
       {/* Your whole home, from above, in the space above the card. */}
       <div className="absolute inset-x-0 top-[13dvh] bottom-[33dvh] pointer-events-none">
-        <ApartmentRoom housingTier={tier} furniture={withHomeItems(citizen.furniture ?? [], tier)} homeStyle={style} look={citizen.look} upView viewDistance={19} background="transparent" loadingLabel="Opening your home" />
+        <ApartmentRoom housingTier={tier} furniture={withHomeItems(citizen.furniture ?? [], tier)} homeStyle={style} look={citizen.look} upView viewDistance={16} background="transparent" loadingLabel="Opening your home" />
       </div>
 
       <header className="relative z-10 pt-[max(2.5rem,calc(env(safe-area-inset-top)+1.5rem))] px-6 text-center">
