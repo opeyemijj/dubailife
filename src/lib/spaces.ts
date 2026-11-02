@@ -130,6 +130,11 @@ let beatInterval: ReturnType<typeof setInterval> | null = null;
 let micStarting = false;
 let pendingJoinId: string | null = null;
 const remoteAudioElements = new Map<string, HTMLAudioElement>();
+// Phones only let audio start from a tap. A voice can arrive long after your last tap (a speaker brought up later),
+// so this many players are readied while you're tapping to host or join, and each voice takes one when it comes.
+const audioPool: HTMLAudioElement[] = [];
+const SILENCE = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+let retryingAudio = false;
 
 function meInfo(): { id: string; username: string; preset: string; placeId: string | null } {
   const c = getCitizenState().citizen;
@@ -152,6 +157,7 @@ function connectLobby() {
       if (!payload || !payload.id) return;
       const incoming = payload as SpaceRoom;
       roomLastSeen.set(incoming.id, Date.now());
+      const roleBefore = myRoleIn(incoming.id);
       const exists = state.rooms.some((r) => r.id === incoming.id);
       const myId = meInfo().id;
       state = {
@@ -160,9 +166,11 @@ function connectLobby() {
           ? state.rooms.map((r) => {
               if (r.id !== incoming.id) return r;
               // The host's roster wins, but I know my own seat best (it may not have reached them yet).
+              // Except my role, which is the host's to give.
               const mine = incoming.id === state.activeSpaceId ? r.participants.find((p) => p.id === myId) : undefined;
+              const given = incoming.participants.find((p) => p.id === myId)?.role;
               const others = incoming.participants.filter((p) => p.id !== myId);
-              return { ...r, ...incoming, participants: mine ? [...others, mine] : incoming.participants };
+              return { ...r, ...incoming, participants: mine ? [...others, { ...mine, role: given ?? mine.role }] : incoming.participants };
             })
           : [incoming, ...state.rooms],
       };
@@ -171,6 +179,7 @@ function connectLobby() {
         pendingJoinId = null;
         joinSpace(incoming.id);
       } else if (incoming.id === state.activeSpaceId) {
+        myRoleChanged(roleBefore);
         syncPeers();
       }
     })
@@ -242,6 +251,31 @@ function stopLocalMic() {
   }
 }
 
+/** Call from the tap that hosts or joins a Space. */
+function unlockAudio() {
+  if (typeof document === "undefined") return;
+  while (audioPool.length + remoteAudioElements.size < MAX_STAGE_MICS) {
+    const el = document.createElement("audio");
+    el.setAttribute("playsinline", "true");
+    el.style.display = "none";
+    document.body.appendChild(el);
+    el.src = SILENCE;
+    el.play().catch(() => {});
+    audioPool.push(el);
+  }
+  if (!retryingAudio) {
+    retryingAudio = true;
+    window.addEventListener("pointerdown", resumeVoices, { capture: true, passive: true });
+  }
+}
+
+/** Anything still silent gets another go: after a tap, and after the mic starts (phones can pause audio for that). */
+function resumeVoices() {
+  remoteAudioElements.forEach((el) => {
+    if (el.paused) el.play().catch(() => {});
+  });
+}
+
 function closeAllPeers() {
   peerConnections.forEach((pc) => {
     try {
@@ -262,6 +296,11 @@ function closeAllPeers() {
     }
   });
   remoteAudioElements.clear();
+  audioPool.splice(0).forEach((el) => el.remove());
+  if (retryingAudio) {
+    retryingAudio = false;
+    window.removeEventListener("pointerdown", resumeVoices, { capture: true });
+  }
 }
 
 function cleanupActiveRoom() {
@@ -306,6 +345,7 @@ async function ensureLocalMic(unmuted: boolean) {
     localStream.getAudioTracks().forEach((t) => {
       t.enabled = true;
     });
+    syncPeers();
     return;
   }
 
@@ -336,6 +376,7 @@ async function ensureLocalMic(unmuted: boolean) {
 
     // Everyone in the room gets the voice (adding a track renegotiates by itself).
     syncPeers();
+    resumeVoices();
 
     // Voice Activity Detection (VAD) for green pulsing speaking ring
     const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -364,6 +405,27 @@ async function ensureLocalMic(unmuted: boolean) {
     micBlocked("Microphone access is blocked. Allow it for this site to speak. You can still listen, comment and react.");
   } finally {
     micStarting = false;
+  }
+}
+
+function myRoleIn(spaceId: string): SpaceRole | undefined {
+  const myId = meInfo().id;
+  return state.rooms.find((r) => r.id === spaceId)?.participants.find((p) => p.id === myId)?.role;
+}
+
+/** Brought up on stage: your mic goes live (the host invited you to talk). Moved to the audience: it goes off. */
+function myRoleChanged(before: SpaceRole | undefined) {
+  const spaceId = state.activeSpaceId;
+  if (!spaceId || !before) return;
+  const me = meInfo();
+  const now = myRoleIn(spaceId);
+  if (!now || now === before) return;
+  if (now === "listener") {
+    ensureLocalMic(false);
+  } else if (before === "listener") {
+    updateParticipantInRoom(spaceId, me.id, { muted: false });
+    roomChannel?.send({ type: "broadcast", event: "participant-patch", payload: { userId: me.id, patch: { muted: false } } }).catch(() => {});
+    ensureLocalMic(true);
   }
 }
 
@@ -476,19 +538,16 @@ function getOrCreatePeerConnection(peerId: string): RTCPeerConnection {
     if (!remoteStream || typeof document === "undefined") return;
     let audio = remoteAudioElements.get(peerId);
     if (!audio) {
-      audio = document.createElement("audio");
+      audio = audioPool.pop() ?? document.createElement("audio");
       audio.autoplay = true;
       audio.setAttribute("playsinline", "true");
       audio.style.display = "none";
-      document.body.appendChild(audio);
+      if (!audio.isConnected) document.body.appendChild(audio);
       remoteAudioElements.set(peerId, audio);
     }
+    audio.removeAttribute("src");
     audio.srcObject = remoteStream;
-    const el = audio;
-    // Phones can refuse to play until the next tap.
-    el.play().catch(() => {
-      window.addEventListener("pointerdown", () => el.play().catch(() => {}), { once: true });
-    });
+    audio.play().catch(() => {});
   };
 
   addLocalTracks(pc);
@@ -543,9 +602,14 @@ function subscribeToSpaceChannel(spaceId: string, onReady?: () => void) {
     })
     .on("broadcast", { event: "participant-patch" }, ({ payload }) => {
       if (!payload?.userId) return;
-      updateParticipantInRoom(spaceId, payload.userId, payload.patch);
-      // Moved to the audience by the host: my mic goes off.
-      if (payload.userId === me.id && payload.patch?.role === "listener") ensureLocalMic(false);
+      const roleBefore = myRoleIn(spaceId);
+      if (payload.userId === me.id && roleBefore && roleBefore !== "listener" && payload.patch?.role && payload.patch.role !== "listener") {
+        // Host changing my seat on stage: my own mute stays mine.
+        updateParticipantInRoom(spaceId, me.id, { role: payload.patch.role, handRaised: false });
+      } else {
+        updateParticipantInRoom(spaceId, payload.userId, payload.patch);
+      }
+      myRoleChanged(roleBefore);
     })
     .on("broadcast", { event: "participant-leave" }, ({ payload }) => {
       if (!payload?.userId) return;
@@ -745,6 +809,7 @@ export function hostNewSpace(opts: {
   startExpiryWatcher();
   // The city music stops while you're in a Space, and your mic goes live.
   gameAudio.holdMusic(true);
+  unlockAudio();
   ensureLocalMic(true);
   gameAudio.sfx("chime");
 
@@ -819,6 +884,7 @@ export function joinSpace(spaceId: string): { ok: boolean; reason?: string } {
   });
   startExpiryWatcher();
   gameAudio.holdMusic(true);
+  unlockAudio();
   if (myRole !== "listener") {
     ensureLocalMic(true);
   }
