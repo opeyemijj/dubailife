@@ -55,6 +55,10 @@ export interface ApartmentRoomProps {
   upView?: boolean;
   /** A party on here: its decorations, shown in the room. */
   partyDecor?: string[];
+  /** Party lights out: the room goes dark and the decorations glow. */
+  lightsOut?: boolean;
+  /** What you're doing, when the page decides (dancing at a party). */
+  myAnimation?: AvatarAnimation;
   /** How far back the camera sits, when something needs the whole home in a smaller space. */
   viewDistance?: number;
   /** "inside": an over-the-shoulder camera in the room with the citizen, instead of looking down on the home. */
@@ -1100,6 +1104,7 @@ function CameraRig({
 
 function RoomScene({
   look,
+  myAnimation,
   furniture: ownFurniture = [],
   placing,
   decorating,
@@ -1574,7 +1579,7 @@ function RoomScene({
       <Suspense fallback={null}>
         <group position={pose.position} rotation={[0, pose.yaw, 0]}>
           {/* Asleep: laid flat on the back, head along the bed. */}
-          <CitizenAvatar look={look} animation={animation} rotation={pose.lie ? [-Math.PI / 2, 0, 0] : [0, 0, 0]} />
+          <CitizenAvatar look={look} animation={myAnimation ?? animation} rotation={pose.lie ? [-Math.PI / 2, 0, 0] : [0, 0, 0]} />
         </group>
         {people.map((p, i) => <PersonAvatar key={i} p={p} id={`p${i}`} labels={labels} />)}
       </Suspense>
@@ -1590,11 +1595,11 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
       <SceneLoadingOverlay label={props.loadingLabel ?? "Opening your apartment"} />
       <Canvas shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false} camera={{ position: [11.5, 10.7, 11.5], fov: 35 }} dpr={quality.dpr}>
         {props.background !== "transparent" && <color attach="background" args={[props.background ?? "#7f9c78"]} />}
-        <StudioEnvironment intensity={0.35} />
-        <hemisphereLight args={["#fff7ed", "#6b7280", 1.0]} />
+        <StudioEnvironment intensity={props.lightsOut ? 0.04 : 0.35} />
+        <hemisphereLight args={props.lightsOut ? ["#7c3aed", "#0f172a", 0.25] : ["#fff7ed", "#6b7280", 1.0]} />
         <directionalLight
           position={[5, 9, 4]}
-          intensity={2.2}
+          intensity={props.lightsOut ? 0.15 : 2.2}
           castShadow
           shadow-mapSize={[2048, 2048]}
           shadow-camera-left={-6}
@@ -1603,7 +1608,7 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
           shadow-camera-bottom={-6}
           shadow-bias={-0.0005}
         />
-        <pointLight position={[0, 2.6, 0]} intensity={6} distance={9} color="#fde68a" />
+        <pointLight position={[0, 2.6, 0]} intensity={props.lightsOut ? 1.2 : 6} distance={9} color={props.lightsOut ? "#c084fc" : "#fde68a"} />
 
         <Suspense fallback={null}>
           <RoomScene {...props} labels={labels} />

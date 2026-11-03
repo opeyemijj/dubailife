@@ -26,7 +26,7 @@ export interface InviteView {
 }
 export interface MyParty { code: string; title: string; label: string; startsAt: string; endsAt: string; going: number }
 export interface InviteRow { code: string; kind: InviteKind; title: string; label: string; startsAt: string; endsAt: string; going?: number; arrived?: number; status?: string; host?: string }
-export interface PartyHere { code: string; kind: EventKind; title: string; decor: string[]; endsAt: string; host: string; isHost: boolean; arrived: number }
+export interface PartyHere { code: string; kind: EventKind; title: string; decor: string[]; endsAt: string; host: string; isHost: boolean; arrived: number; lightsOut?: boolean }
 
 const ERRORS: Record<string, string> = {
   not_your_home: "You can only throw a party at a home you rent or own.",
@@ -100,6 +100,8 @@ export async function arriveAt(route: string): Promise<{ code: string; title: st
   const { data } = await supabase().rpc("invite_arrive", { p_route: route });
   return (data as { code: string; title: string; host: string; points: number } | null) ?? null;
 }
+/** The host turns the lights out (or back on) for everyone at the party. */
+export async function setPartyLights(code: string, out: boolean) { await supabase().rpc("party_lights", { p_code: code, p_out: out }); }
 export async function cancelInvite(code: string) { await supabase().rpc("cancel_invite", { p_code: code }); }
 
 /** Share an invite: the phone's share sheet, or the link copied. */

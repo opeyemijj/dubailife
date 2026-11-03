@@ -7,6 +7,7 @@ import { MoveInGuide } from "@/components/home/MoveInGuide";
 import { PartySheet } from "@/components/invite/PartySheet";
 import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyPeople } from "@/components/invite/PartyPeople";
+import { PartyActions } from "@/components/invite/PartyActions";
 import { spotFor } from "@/components/property/PropertyRoute";
 import { useRoom } from "@/lib/room";
 import { AppSetup, needsAppSetup } from "@/components/pwa/AppSetup";
@@ -266,7 +267,11 @@ export default function HomePage() {
   const party = usePartyHere(activeFlat ? flatRoute(activeFlat) : null, false);
   // During your party you're in the same live room as your guests (the one they join at your door): you see them
   // and they see you.
-  const partyRoom = useRoom(party && activeFlat ? `flat:${activeFlat.id}` : null, { x: 0, z: 0, animation: "idle" });
+  const [dancing, setDancing] = useState(false);
+  const [lightsSet, setLightsSet] = useState<boolean | null>(null);
+  const lightsOut = lightsSet ?? !!party?.lightsOut;
+  const partyRoom = useRoom(party && activeFlat ? `flat:${activeFlat.id}` : null, { x: 0, z: 0, animation: dancing ? "dance" : "idle" });
+  const dance = (seconds: number) => { setDancing(true); setTimeout(() => setDancing(false), seconds * 1000); };
   const guests: Person[] = partyRoom.peers.map((p) => ({
     look: p.look,
     position: spotFor(p.userId),
@@ -410,6 +415,8 @@ export default function HomePage() {
         onChangeLevel={changeLevel}
         homeStyle={homeStyle}
         partyDecor={party?.decor}
+        lightsOut={!!party && lightsOut}
+        myAnimation={dancing ? "dance" : undefined}
       />
 
       {/* Camera controls */}
@@ -612,6 +619,7 @@ export default function HomePage() {
         </div>
       )}
 
+      {party && !cleanScreen && !placing && <PartyActions party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={dance} announce={(text) => partyRoom.emit({ type: "chat", text })} className="bottom-[8.75rem] sm:bottom-40" />}
       {party && activeFlat && <PartyPeople room={partyRoom} place={activeHomeTitle} peerId={guestId} setPeerId={setGuestId} say={showToast} />}
       {party && !cleanScreen && <PartyBanner party={party} className="top-[calc(max(0.75rem,env(safe-area-inset-top))+7.25rem)]" />}
       {partyOpen && <PartySheet flat={activeFlat ? { id: activeFlat.id, route: flatRoute(activeFlat), title: activeHomeTitle, area: activeHomeArea } : null} onClose={() => setPartyOpen(false)} />}
@@ -847,7 +855,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {citizen && !decorFirst && !cleanScreen && !placing && !decorating && <HomeActions onShop={openShop} />}
+      {citizen && !decorFirst && !party && !cleanScreen && !placing && !decorating && <HomeActions onShop={openShop} />}
       {decorFirst && appSetupOpen && citizen && <AppSetup userId={citizen.id} onClose={() => setAppSetupOpen(false)} />}
       {decorFirst && !appSetupOpen && !cleanScreen && !placing && !decorating && !buyModalOpen && !decoratorOpen && (
         <MoveInGuide

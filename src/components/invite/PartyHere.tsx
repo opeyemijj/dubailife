@@ -3,9 +3,9 @@
 // A party on where you are: its decorations (for the 3D room), music, a banner with who's here, a mute switch and an
 // invite button, and checking you in when you arrive as a guest.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { arriveAt, partyHere, shareInvite, kindOf, type PartyHere } from "@/lib/invites";
+import { arriveAt, partyHere, PARTIES, shareInvite, kindOf, type PartyHere } from "@/lib/invites";
 import { RaceMusic } from "@/components/marathon/raceMusic";
 import { gameAudio } from "@/utils/gameAudio";
 
@@ -30,48 +30,110 @@ export function usePartyHere(route: string | null, arrive: boolean): PartyHere |
       }
     };
     const first = setTimeout(() => void load(), 0);
-    const every = setInterval(() => void load(), 60_000);
+    // Often enough that the host turning the lights out reaches everyone quickly.
+    const every = setInterval(() => void load(), 15_000);
     return () => { live = false; clearTimeout(first); clearInterval(every); };
   }, [route, arrive]);
   usePartyMusic(!!party);
   return party;
 }
 
-const MUTE = "dl_party_music";
-const musicListeners = new Set<(on: boolean) => void>();
-/** Party music on or off (remembered); the banner's switch. */
-export function setPartyMusic(on: boolean) {
-  try { localStorage.setItem(MUTE, on ? "on" : "off"); } catch { /* storage blocked */ }
-  musicListeners.forEach((f) => f(on));
+// Party music: a live Afrobeats radio station (from the Radio Browser directory), the built-in groove, or off.
+// The choice is remembered; the game's own mute silences it too.
+export type MusicMode = "radio" | "groove" | "off";
+const MODE = "dl_party_music";
+const modeListeners = new Set<(m: MusicMode) => void>();
+const currentMode = (): MusicMode => {
+  try {
+    if (gameAudio.getIsMuted()) return "off";
+    const m = localStorage.getItem(MODE);
+    return m === "groove" || m === "off" ? m : "radio";
+  } catch { return "radio"; }
+};
+export function setMusicMode(m: MusicMode) {
+  try { localStorage.setItem(MODE, m); } catch { /* storage blocked */ }
+  modeListeners.forEach((f) => f(m));
 }
-const partyMusicOn = () => { try { return localStorage.getItem(MUTE) !== "off" && !gameAudio.getIsMuted(); } catch { return true; } };
+const stationListeners = new Set<(name: string | null) => void>();
+let stationName: string | null = null;
+const setStation = (n: string | null) => { stationName = n; stationListeners.forEach((f) => f(n)); };
 
-/** While a party's on here: the Afrobeats groove from the marathon, with the city music held back. */
+interface Station { name: string; url_resolved: string; codec: string }
+let stations: Promise<Station[]> | null = null;
+/** Afrobeats stations that play in a browser (secure streams, common formats), most listened first. */
+const afrobeatsStations = () => (stations ??= (async () => {
+  // The directory has mirrors: the first that answers.
+  for (const base of PARTIES.radio.directories) {
+    try {
+      const r = await fetch(`${base}/json/stations/bytag/${PARTIES.radio.tag}?hidebroken=true&order=clickcount&reverse=true&limit=40`);
+      if (!r.ok) continue;
+      const list = (await r.json()) as Station[];
+      // Afrobeats stations by name first (the tag also covers general stations that play some).
+      const afro = (x: Station) => (/afro|naija|lagos/i.test(x.name) ? 0 : 1);
+      return list.filter((x) => x.url_resolved?.startsWith("https://") && /mp3|aac/i.test(x.codec)).sort((a, b) => afro(a) - afro(b));
+    } catch { /* next mirror */ }
+  }
+  return [] as Station[];
+})());
+
 function usePartyMusic(active: boolean) {
-  const music = useRef<RaceMusic | null>(null);
   useEffect(() => {
     if (!active) return;
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AC) return;
-    const ctx = new AC();
-    const m = new RaceMusic(ctx);
-    music.current = m;
-    m.setMood("race");
-    m.setMuted(!partyMusicOn());
-    m.start();
+    let ctx: AudioContext | null = null;
+    let groove: RaceMusic | null = null;
+    let radio: HTMLAudioElement | null = null;
+    let gone = false;
     gameAudio.holdMusic(true);
-    // Browsers hold sound back until a touch.
-    const wake = () => { if (ctx.state === "suspended") void ctx.resume(); };
-    wake();
+
+    const stop = () => {
+      groove?.stop(); groove = null;
+      if (radio) { radio.pause(); radio.removeAttribute("src"); radio.load(); radio = null; }
+      setStation(null);
+    };
+    const playGroove = () => {
+      if (!AC) return;
+      ctx ??= new AC();
+      groove = new RaceMusic(ctx);
+      groove.setMood("race");
+      groove.start();
+    };
+    const playRadio = async () => {
+      const list = await afrobeatsStations();
+      // Try a few stations in turn; the groove if none will play.
+      for (const st of list.slice(0, 5)) {
+        if (gone || currentMode() !== "radio") return;
+        const el = new Audio(st.url_resolved);
+        el.volume = 0.7;
+        try {
+          await el.play();
+          if (gone || currentMode() !== "radio") { el.pause(); return; }
+          radio = el;
+          setStation(st.name.trim());
+          return;
+        } catch { el.pause(); }
+      }
+      if (!gone && currentMode() === "radio") playGroove();
+    };
+    const play = (m: MusicMode) => {
+      stop();
+      if (m === "radio") void playRadio();
+      else if (m === "groove") playGroove();
+    };
+    play(currentMode());
+    // Browsers hold sound back until a touch: try again then.
+    const wake = () => {
+      if (ctx?.state === "suspended") void ctx.resume();
+      if (currentMode() === "radio" && !radio) play("radio");
+    };
     window.addEventListener("pointerdown", wake);
-    const onToggle = (on: boolean) => m.setMuted(!on);
-    musicListeners.add(onToggle);
+    modeListeners.add(play);
     return () => {
+      gone = true;
       window.removeEventListener("pointerdown", wake);
-      musicListeners.delete(onToggle);
-      m.stop();
-      music.current = null;
-      void ctx.close();
+      modeListeners.delete(play);
+      stop();
+      void ctx?.close();
       gameAudio.holdMusic(false);
     };
   }, [active]);
@@ -79,15 +141,20 @@ function usePartyMusic(active: boolean) {
 
 export function PartyBanner({ party, hostAway, className = "" }: { party: PartyHere; hostAway?: boolean; className?: string }) {
   const [copied, setCopied] = useState(false);
-  const [musicOn, setMusicOn] = useState(partyMusicOn);
+  const [mode, setMode] = useState<MusicMode>(currentMode);
+  const [station, setStationName] = useState<string | null>(stationName);
+  useEffect(() => { stationListeners.add(setStationName); return () => { stationListeners.delete(setStationName); }; }, []);
+  const next: MusicMode = mode === "radio" ? "groove" : mode === "groove" ? "off" : "radio";
   const k = kindOf(party.kind);
   return (
     <div className={`fixed left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 rounded-full bg-fuchsia-600 text-white shadow-xl pl-3 pr-1 py-1 max-w-[94vw] ${className}`}>
       <Link href={`/i/${party.code}`} className="min-w-0 flex-1 text-xs font-black truncate">
         {k.icon} {party.isHost ? "Your" : `@${party.host}'s`} {party.title} · {party.arrived} here{hostAway ? ` · @${party.host} is out` : ""}
       </Link>
-      <button onClick={() => { setPartyMusic(!musicOn); setMusicOn(!musicOn); }} aria-label={musicOn ? "Mute party music" : "Play party music"} className="shrink-0 w-7 h-7 rounded-full bg-white/20 text-xs">
-        {musicOn ? "🔊" : "🔇"}
+      <button onClick={() => { setMusicMode(next); setMode(next); }} title={mode === "radio" ? station ?? "Finding an Afrobeats station…" : mode === "groove" ? "Party groove" : "Music off"}
+        aria-label={`Music: ${mode === "radio" ? "Afrobeats radio" : mode === "groove" ? "party groove" : "off"}. Tap for ${next}.`}
+        className="shrink-0 h-7 px-2 rounded-full bg-white/20 text-[11px] font-black max-w-[9rem] truncate">
+        {mode === "radio" ? `📻 ${station ?? "Radio"}` : mode === "groove" ? "🥁 Groove" : "🔇"}
       </button>
       <button
         onClick={async () => { const r = await shareInvite(party.code, `Come to ${party.title} on Dubai Life!`); setCopied(r === "copied"); }}

@@ -4,6 +4,7 @@
 // interior. Residents and editors can furnish it; owners manage access, guests and listings.
 
 import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
+import { PartyActions } from "@/components/invite/PartyActions";
 import { askForPush } from "@/lib/push/engage";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -156,6 +157,8 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
 }) {
   // A party on here: decorations, a banner, and (for a guest) checking in.
   const party = usePartyHere(flatRoute(flat), true);
+  const [dancing, setDancing] = useState(false);
+  const dance = (seconds: number) => { setDancing(true); setTimeout(() => setDancing(false), seconds * 1000); };
   const [placing, setPlacing] = useState<PlacingState | null>(null);
   const [decorating, setDecorating] = useState(false);
   const [turns, setTurns] = useState(0);
@@ -216,7 +219,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
       return next;
     }), 6000);
   }, []);
-  const room = useRoom(`flat:${flat.id}`, { x: mySpot[0], z: mySpot[2], animation: "idle" }, (e: Received) => {
+  const room = useRoom(`flat:${flat.id}`, { x: mySpot[0], z: mySpot[2], animation: dancing ? "dance" : "idle" }, (e: Received) => {
     if (e.type === "chat") bubble(e.from.userId, e.text);
     if (e.type === "wave") bubble(e.from.userId, "👋");
   });
@@ -295,7 +298,10 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         onPickUp={(uid) => { const f = withHomeItems(furniture, housingTier).find((x) => x.uid === uid); if (f) setPlacing({ uid, itemId: f.itemId, rot: f.placement?.kind === "floor" ? f.placement.rot : 0 }); }}
         onPlaceBlocked={() => say("🚫 It doesn't fit there.")}
         partyDecor={party?.decor}
+        lightsOut={!!party?.lightsOut}
+        myAnimation={dancing ? "dance" : undefined}
       />
+      {party && <PartyActions party={party} lightsOut={!!party.lightsOut} onLights={() => {}} onDance={dance} announce={(text) => room.emit({ type: "chat", text })} className="bottom-24" />}
       {party && <PartyBanner party={party} hostAway={!room.peers.some((p) => p.username === party.host)} className="top-[calc(max(0.75rem,env(safe-area-inset-top))+4rem)]" />}
 
       <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2">

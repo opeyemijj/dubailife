@@ -6,6 +6,7 @@
 
 import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyDecor } from "@/components/invite/PartyDecor";
+import { PartyActions } from "@/components/invite/PartyActions";
 import { askForPush } from "@/lib/push/engage";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -116,6 +117,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   const plan = useMemo(() => buildPlan(venue), [venue]);
   // A party on here: decorations, a banner, and checking in as a guest.
   const party = usePartyHere(`/place/${place.id}/${venue.id}`, true);
+  const [lightsSet, setLightsSet] = useState<boolean | null>(null);
 
   const [walkTo, setWalkTo] = useState<WalkTarget | null>(null);
   const [, setPending] = useState<{ key: number; open: () => void } | null>(null);
@@ -1238,6 +1240,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         inside={inside && !ride}
         ride={ride}
         onRideEnd={onRideEnd}
+        dim={!!party && (lightsSet ?? !!party.lightsOut)}
         extras={<>
           {castles.map((c) => <group key={`${c.at[0]},${c.at[1]}`} position={[c.at[0], 0, c.at[1]]}><SandCastle stage={c.stage} /></group>)}
           {party && <PartyDecor decor={party.decor} w={plan.size[0]} d={plan.size[1]} h={4.4} />}
@@ -1277,6 +1280,11 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         activityFX={activityFX}
       />
       {party && <PartyBanner party={party} className="top-[calc(max(0.75rem,env(safe-area-inset-top))+4.5rem)]" />}
+      {party && !ride && (
+        <PartyActions party={party} lightsOut={lightsSet ?? !!party.lightsOut} onLights={setLightsSet}
+          onDance={(seconds) => { setPlayerAnimation("dance"); setTimeout(() => setPlayerAnimation((a) => (a === "dance" ? "idle" : a)), seconds * 1000); }}
+          announce={(text) => room.emit({ type: "chat", text })} className="bottom-28" />
+      )}
 
       {ride && (
         <RideHUD

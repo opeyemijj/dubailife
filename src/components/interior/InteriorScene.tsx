@@ -65,6 +65,8 @@ interface Props {
   onRideEnd?: (r: RideResult) => void;
   /** Things left in the venue this visit (a sandcastle). */
   extras?: React.ReactNode;
+  /** Party lights out. */
+  dim?: boolean;
   /** Puts the citizen at a spot (after a ride); a new key moves them again. */
   placeAt?: { point: [number, number]; key: number } | null;
   venue: Venue;
@@ -318,9 +320,11 @@ function ClubLighting({ plan }: { plan: Plan }) {
   );
 }
 
-function Lights({ venue, plan }: { venue: Venue; plan: Plan }) {
+function Lights({ venue, plan, dim }: { venue: Venue; plan: Plan; dim?: boolean }) {
   const [w, d] = plan.size;
   const club = venue.layout === "club";
+  // Lights out at a party: almost dark, so the decorations and club lights glow.
+  if (dim) return <><hemisphereLight args={["#7c3aed", "#0f172a", 0.3]} />{club && <ClubLighting plan={plan} />}</>;
   return (
     <>
       {/* Clubs stay moody but bright enough to see yourself and others. */}
@@ -738,6 +742,7 @@ function ActivityFXLayer({ activityFX, follow }: { activityFX?: Activity3DFX; fo
 
 export function InteriorScene({
   extras,
+  dim,
   ride,
   onRideEnd,
   placeAt,
@@ -826,8 +831,8 @@ export function InteriorScene({
     <div className="relative w-full h-full">
     <Canvas shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false} camera={{ position: [0, 7.5, d / 2 + 6], fov: 42 }} dpr={quality.dpr}>
       <color attach="background" args={[venue.layout === "club" ? "#120a24" : OPEN_AIR.has(venue.layout) ? "#bae6fd" : "#e7e5e4"]} />
-      <StudioEnvironment intensity={venue.layout === "club" ? 0.35 : 0.45} />
-      <Lights venue={venue} plan={plan} />
+      <StudioEnvironment intensity={dim ? 0.04 : venue.layout === "club" ? 0.35 : 0.45} />
+      <Lights venue={venue} plan={plan} dim={dim} />
       {/* The room appears at once; everything with a model streams in on its own as it arrives. */}
       <Room venue={venue} plan={plan} onFloor={onFloor} onWallAdClick={onWallAdClick} />
       <Suspense fallback={null}>{plan.decor}</Suspense>
