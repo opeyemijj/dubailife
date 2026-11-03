@@ -61,7 +61,7 @@ export function FloatingSpaceOverlay() {
   const timer = formatSpaceTimer(activeRoom.expiresAt, now);
 
   return (
-    <div className="fixed top-[max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))] left-1/2 -translate-x-1/2 z-[155] w-[min(94vw,430px)] pointer-events-auto select-none">
+    <div className="dl-hide-clean fixed top-[max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))] left-1/2 -translate-x-1/2 z-[155] w-[min(94vw,430px)] pointer-events-auto select-none">
       <div className="rounded-full bg-[#1d2433]/95 backdrop-blur-xl text-white border border-white/15 shadow-[0_14px_40px_rgba(0,0,0,0.45)] p-1.5 pl-2.5 pr-2 flex items-center gap-2.5">
         {/* Tap left area to re-open full Live Space inside Phone */}
         <button

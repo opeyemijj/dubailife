@@ -32,6 +32,8 @@ export interface Peer {
   lift?: number;
   /** Which floor of the home they're on (upstairs is 1). */
   level?: number;
+  /** A drink in hand at a party: sipping, or just holding the cup. */
+  hold?: "sip" | "cup";
 }
 
 export interface Gift {
@@ -107,6 +109,8 @@ export interface Me {
   lift?: number;
   /** Which floor of the home they're on (upstairs is 1). */
   level?: number;
+  /** A drink in hand at a party. */
+  hold?: "sip" | "cup";
 }
 
 const send = (channel: RealtimeChannel | null, payload: unknown) =>
@@ -139,11 +143,11 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
   // What others see of me.
   useEffect(() => {
     if (!profile) return;
-    self.current = { ...profile, x: me.x, z: me.z, face: me.face, animation: me.animation, lift: me.lift, level: me.level };
+    self.current = { ...profile, x: me.x, z: me.z, face: me.face, animation: me.animation, lift: me.lift, level: me.level, hold: me.hold };
     if (ready.current) channel.current?.track(self.current).catch(() => {});
     // profile is rebuilt every render; its fields are what matter.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.userId, profile?.username, profile?.name, citizen?.look, me.x, me.z, me.face, me.animation, me.lift, me.level]);
+  }, [profile?.userId, profile?.username, profile?.name, citizen?.look, me.x, me.z, me.face, me.animation, me.lift, me.level, me.hold]);
 
   // A fresh channel when the old one can't recover by itself.
   const [attempt, setAttempt] = useState(0);
@@ -178,7 +182,7 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
           const p = metas[metas.length - 1];
           if (key === myId || !p?.userId) continue;
           here.add(p.userId);
-          people.set(p.userId, { peer: { userId: p.userId, username: p.username, name: p.name, look: p.look, x: p.x, z: p.z, face: p.face, animation: p.animation, lift: p.lift }, goneAt: 0 });
+          people.set(p.userId, { peer: { userId: p.userId, username: p.username, name: p.name, look: p.look, x: p.x, z: p.z, face: p.face, animation: p.animation, lift: p.lift, level: p.level, hold: p.hold }, goneAt: 0 });
         }
         // A connection blip shouldn't make someone vanish: keep them a little while.
         const now = Date.now();
@@ -193,7 +197,9 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
           setTyping((t) => ({ ...t, [from]: e.at }));
           return;
         }
-        if (e.type === "chat") {
+        // A chat sent to me is a message. One said to the whole room (a party announcement: "grabbed a drink",
+        // "sat down") is only a speech bubble: it's not a message and never counts as unread.
+        if (e.type === "chat" && e.to === myId) {
           setTyping((t) => ({ ...t, [from]: 0 }));
           setMessages((m) => merge(m, [{ id: e.id, with: from, mine: false, text: e.text, at: e.at }]));
           if (reading.current !== from) setUnread((u) => ({ ...u, [from]: (u[from] ?? 0) + 1 }));

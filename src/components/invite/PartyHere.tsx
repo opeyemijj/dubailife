@@ -115,7 +115,7 @@ function usePartySpace(party: PartyHere | null, route: string | null) {
   }, [code, isHost, title, host, route, endsAt]);
 }
 
-// Party music: a live Lagos radio station (from the Radio Browser directory), the built-in groove, or off.
+// Party music: a live Afrobeats music station (see parties.json), the built-in groove, or off.
 // The choice is remembered; the game's own mute silences it too.
 export type MusicMode = "radio" | "groove" | "off";
 const MODE = "dl_party_music";
@@ -132,31 +132,16 @@ export function setMusicMode(m: MusicMode) {
   modeListeners.forEach((f) => f(m));
 }
 const stationListeners = new Set<(name: string | null) => void>();
+const skipListeners = new Set<() => void>();
+/** The next station (tap ⏭). */
+export function nextStation() { skipListeners.forEach((f) => f()); }
 let stationName: string | null = null;
 const setStation = (n: string | null) => { stationName = n; stationListeners.forEach((f) => f(n)); };
 
-interface Station { name: string; url_resolved: string; codec: string }
-let stations: Promise<Station[]> | null = null;
-/** Lagos radio stations that play in a browser (secure streams, common formats): the music stations (Beat FM,
-    Rhythm, Naija FM, Wazobia…) first in the order set in parties.json, then the rest by how much they're listened to. */
-const lagosStations = () => (stations ??= (async () => {
-  const { country, state, prefer, skip } = PARTIES.radio;
-  // The directory has mirrors: the first that answers.
-  for (const base of PARTIES.radio.directories) {
-    try {
-      const r = await fetch(`${base}/json/stations/search?countrycode=${country}&state=${encodeURIComponent(state)}&hidebroken=true&order=clickcount&reverse=true&limit=60`);
-      if (!r.ok) continue;
-      const list = (await r.json()) as Station[];
-      const rank = (x: Station) => { const i = prefer.findIndex((p) => x.name.toLowerCase().includes(p.toLowerCase())); return i < 0 ? prefer.length : i; };
-      const seen = new Set<string>();
-      return list
-        .filter((x) => x.url_resolved?.startsWith("https://") && /mp3|aac/i.test(x.codec) && !skip.some((w) => x.name.toLowerCase().includes(w)))
-        .filter((x) => !seen.has(x.url_resolved) && !!seen.add(x.url_resolved))
-        .sort((a, b) => rank(a) - rank(b));
-    } catch { /* next mirror */ }
-  }
-  return [] as Station[];
-})());
+interface Station { name: string; url_resolved: string }
+/** Music-only stations (Afrobeats, non-stop: no talk shows), LagosJump Radio first. Fixed in parties.json and each
+    checked to stream; if one is down the next plays. */
+const musicStations = (): Station[] => PARTIES.radio.stations.map((x) => ({ name: x.name, url_resolved: x.url }));
 
 // One audio player for the radio, kept for the whole visit. Phones only let audio start from a tap, so if the
 // station can't start by itself it waits, with its station already loaded, and the next tap anywhere plays it
@@ -190,7 +175,7 @@ export function primePartyAudio() {
   ["pointerdown", "touchend", "click"].forEach((t) => window.addEventListener(t, unlock, true));
 }
 
-/** The same Lagos radio, for a club with no party on: the club's music. (At a party the party plays it instead, so
+/** The same radio, for a club with no party on: the club's music. (At a party the party plays it instead, so
     there's only ever one.) */
 export function useClubRadio(active: boolean) { usePartyMusic(active); }
 
@@ -235,7 +220,7 @@ function usePartyMusic(active: boolean) {
       }
     };
     const playRadio = async () => {
-      list = (await lagosStations()).slice(0, 6);
+      list = musicStations();
       tries = 0;
       void tryStation();
     };
@@ -262,12 +247,20 @@ function usePartyMusic(active: boolean) {
     window.addEventListener("touchend", wake, opts);
     window.addEventListener("click", wake, opts);
     modeListeners.add(play);
+    const skip = () => {
+      if (currentMode() !== "radio" || !list.length) return;
+      tries = (tries + 1) % list.length;
+      setStation("Tuning…");
+      void tryStation();
+    };
+    skipListeners.add(skip);
     return () => {
       gone = true;
       window.removeEventListener("pointerdown", wake, opts);
       window.removeEventListener("touchend", wake, opts);
       window.removeEventListener("click", wake, opts);
       modeListeners.delete(play);
+      skipListeners.delete(skip);
       stop();
       void ctx?.close();
       gameAudio.holdMusic(false);
@@ -278,17 +271,20 @@ function usePartyMusic(active: boolean) {
 /** Below the Space bar, so a live Space never covers it. */
 export const BELOW_SPACE_TOP = "top-[calc(max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))+3.5rem)]";
 
-/** The club's radio, bottom left where the DJ booth player sits: the station playing, and a tap to switch Lagos radio → groove → off. */
+/** The club's radio, bottom left where the DJ booth player sits: the station playing, and a tap to switch radio → groove → off, and ⏭ for the next station. */
 export function ClubRadioPill({ className = "" }: { className?: string }) {
   const [mode, setMode] = useState<MusicMode>(currentMode);
   const [station, setStationName] = useState<string | null>(stationName);
   useEffect(() => { stationListeners.add(setStationName); return () => { stationListeners.delete(setStationName); }; }, []);
   const next: MusicMode = mode === "radio" ? "groove" : mode === "groove" ? "off" : "radio";
   return (
-    <button onClick={() => { setMusicMode(next); setMode(next); }} aria-label={`Music: ${mode === "radio" ? "Lagos radio" : mode === "groove" ? "groove" : "off"}. Tap for ${next}.`}
-      className={`fixed left-3 bottom-20 z-40 h-9 pl-2 pr-3 rounded-full bg-slate-950/90 text-white border border-white/10 shadow-xl text-[11px] font-black max-w-[60vw] truncate ${className}`}>
-      {mode === "radio" ? `📻 ${station ?? "Finding a Lagos station…"}` : mode === "groove" ? "🥁 Groove" : "🔇 Music off"}
-    </button>
+    <div className={`fixed left-3 bottom-20 z-40 flex items-center gap-1 rounded-full bg-slate-950/90 text-white border border-white/10 shadow-xl p-1 max-w-[70vw] ${className}`}>
+      <button onClick={() => { setMusicMode(next); setMode(next); }} aria-label={`Music: ${mode === "radio" ? "radio" : mode === "groove" ? "groove" : "off"}. Tap for ${next}.`}
+        className="h-7 pl-2 pr-2 rounded-full text-[11px] font-black truncate min-w-0">
+        {mode === "radio" ? `📻 ${station ?? "Tuning…"}` : mode === "groove" ? "🥁 Groove" : "🔇 Music off"}
+      </button>
+      {mode === "radio" && <button onClick={nextStation} aria-label="Next station" className="shrink-0 w-7 h-7 rounded-full bg-white/15 text-[12px] font-black">⏭</button>}
+    </div>
   );
 }
 
@@ -305,11 +301,12 @@ export function PartyBanner({ party, hostAway, className = "" }: { party: PartyH
       <Link href={`/i/${party.code}`} className="min-w-0 flex-1 text-xs font-black truncate">
         {k.icon} {party.isHost ? "Your" : `@${party.host}'s`} {party.title} · {party.arrived} here{hostAway ? ` · @${party.host} is out` : ""}
       </Link>
-      <button onClick={() => { setMusicMode(next); setMode(next); }} title={mode === "radio" ? station ?? "Finding a Lagos station…" : mode === "groove" ? "Party groove" : "Music off"}
-        aria-label={`Music: ${mode === "radio" ? "Lagos radio" : mode === "groove" ? "party groove" : "off"}. Tap for ${next}.`}
+      <button onClick={() => { setMusicMode(next); setMode(next); }} title={mode === "radio" ? station ?? "Tuning…" : mode === "groove" ? "Party groove" : "Music off"}
+        aria-label={`Music: ${mode === "radio" ? "radio" : mode === "groove" ? "party groove" : "off"}. Tap for ${next}.`}
         className="shrink-0 h-7 px-2 rounded-full bg-white/20 text-[11px] font-black max-w-[9rem] truncate">
         {mode === "radio" ? `📻 ${station ?? "Radio"}` : mode === "groove" ? "🥁 Groove" : "🔇"}
       </button>
+      {mode === "radio" && <button onClick={nextStation} aria-label="Next station" className="shrink-0 w-7 h-7 rounded-full bg-white/20 text-[11px] font-black">⏭</button>}
       <button onClick={() => setInviting(true)} className="shrink-0 h-7 px-3 rounded-full bg-white text-fuchsia-700 text-[11px] font-black">Invite</button>
       {party.isHost && (ending === "ask" ? (
         <span className="shrink-0 flex items-center gap-1 pl-1">

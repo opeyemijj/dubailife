@@ -3,12 +3,13 @@
 import { askLogout } from "@/components/layout/LogoutConfirm";
 import { DecoratorSheet, DecoratorStatus } from "@/components/home/Decorator";
 import { HomeActions } from "@/components/home/HomeActions";
+import { useCleanScreen } from "@/lib/cleanScreen";
 import { MoveInGuide } from "@/components/home/MoveInGuide";
 import { PartySheet } from "@/components/invite/PartySheet";
 import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyPeople } from "@/components/invite/PartyPeople";
 import { PartyActions } from "@/components/invite/PartyActions";
-import { PartyHostesses, type HostessRun } from "@/components/invite/PartyHostess";
+import { drinkInHand, PartyHostesses, usePartyDrink, type HostessRun } from "@/components/invite/PartyHostess";
 import { faceNearest, partyMood } from "@/lib/invites";
 import { spotsFor } from "@/components/property/PropertyRoute";
 import { useRoom } from "@/lib/room";
@@ -89,6 +90,7 @@ export default function HomePage() {
   const onlineCount = useOnlineCount();
   const { visits } = useSiteStats();
   const [cleanScreen, setCleanScreen] = useState(false);
+  useCleanScreen(cleanScreen);
   const [wardrobeModalOpen, setWardrobeModalOpen] = useState(false);
 
   useEffect(() => {
@@ -284,15 +286,20 @@ export default function HomePage() {
   const [bubbles, setBubbles] = useState<Record<string, string>>({});
   // Hostesses bringing drinks to whoever ordered.
   const [runs, setRuns] = useState<HostessRun[]>([]);
-  const serve = (id: string, name: string, to: [number, number]) => setRuns((r) => [...r, { id: `${id}-${Date.now()}`, name, to }].slice(-6));
+  const serve = (id: string, name: string, to: [number, number]) => setRuns((r) => [...r, { id: `${id}-${Date.now()}`, name, to, who: id }].slice(-6));
+  // The drink the hostess hands me, held for the rest of the party.
+  const [drink, handDrink] = usePartyDrink();
+  // Sit: walk to the nearest free seat (the room finds it). Each tap is a new ask.
+  const [seatCall, setSeatCall] = useState<{ n: number; sit: boolean } | undefined>(undefined);
+  const askSeat = (sit: boolean) => setSeatCall((c) => ({ n: (c?.n ?? 0) + 1, sit }));
   const myMood = dancing ? "dance" : pose ?? (party && citizen ? partyMood(citizen.id) : "idle");
   // Where I am, shared when I set off and when I stop, so my guests see me move.
-  const [where, setWhere] = useState({ x: -3.25, z: 0, yaw: 0, walking: false });
+  const [where, setWhere] = useState<{ x: number; z: number; yaw: number; walking: boolean; lift?: number; rest?: "sit" | "sleep" }>({ x: -3.25, z: 0, yaw: 0, walking: false });
   // Sent when I set off (where I'm heading) and when I stop: everyone else walks me there in between.
-  const onMove = (x: number, z: number, yaw: number, walking: boolean) => {
-    setWhere({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw: Math.round(yaw * 100) / 100, walking });
+  const onMove = (x: number, z: number, yaw: number, walking: boolean, lift?: number, rest?: "sit" | "sleep") => {
+    setWhere({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw: Math.round(yaw * 100) / 100, walking, lift: lift ? Math.round(lift * 100) / 100 : undefined, rest });
   };
-  const partyRoom = useRoom(party && activeFlat ? `flat:${activeFlat.id}` : null, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : myMood, level }, (e) => {
+  const partyRoom = useRoom(party && activeFlat ? `flat:${activeFlat.id}` : null, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : where.rest ?? myMood, lift: where.lift, level, hold: drink ?? undefined }, (e) => {
     // Drinks: the hostess goes to wherever they are.
     if (e.type === "party" && e.action === "drinks") serve(e.from.userId, e.from.username, [e.from.x, e.from.z]);
     const text = e.type === "chat" ? e.text : e.type === "wave" ? "👋" : null;
@@ -306,7 +313,9 @@ export default function HomePage() {
   // Only the guests on the floor I'm on.
   const guests: Person[] = partyRoom.peers.filter((p) => (p.level ?? 0) === level).map((p) => ({
     look: p.look,
-    position: Number.isFinite(p.x) ? [p.x, 0, p.z] : guestSpots.get(p.userId)!,
+    position: Number.isFinite(p.x) ? [p.x, p.lift ?? 0, p.z] : guestSpots.get(p.userId)!,
+    holding: drinkInHand(p.hold)?.prop,
+    carryMode: drinkInHand(p.hold)?.mode,
     // Facing whoever's nearest, so they dance with each other.
     rotation: p.face ?? faceNearest([p.x, 0, p.z], [[where.x, 0, where.z], ...partyRoom.peers.map((o) => [o.x, 0, o.z] as [number, number, number])]) ?? 0,
     animation: p.animation,
@@ -452,7 +461,9 @@ export default function HomePage() {
         lightsOut={!!party && lightsOut}
         myAnimation={party ? myMood : undefined}
         onMove={party ? onMove : undefined}
-        extras={<PartyHostesses runs={runs} onDone={(id) => setRuns((r) => r.filter((x) => x.id !== id))} />}
+        seatCall={party ? seatCall : undefined}
+        holding={party ? drinkInHand(drink) : undefined}
+        extras={<PartyHostesses runs={runs} onArrive={(r) => { if (r.who === citizen?.id) handDrink(); }} onDone={(id) => setRuns((r) => r.filter((x) => x.id !== id))} />}
       />
 
       {/* Camera controls */}
@@ -655,7 +666,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {party && !cleanScreen && !placing && <PartyActions party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={dance} pose={dancing ? "dance" : pose} onPose={(x) => { setDancing(false); setPose(x === "dance" ? null : x); }} announce={(text) => partyRoom.emit({ type: "chat", text })} broadcast={(action, on) => { partyRoom.emit({ type: "party", action, on }); if (action === "drinks") serve(citizen?.id ?? "me", citizen?.username ?? "you", [where.x, where.z]); }} className="bottom-[8.75rem] sm:bottom-40" />}
+      {party && !cleanScreen && !placing && <PartyActions party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={(sec) => { if (where.rest) askSeat(false); dance(sec); }} pose={dancing ? "dance" : pose} onPose={(x) => { setDancing(false); setPose(x === "dance" ? null : x); if (x === "sit" || pose === "sit") askSeat(x === "sit"); }} announce={(text) => partyRoom.emit({ type: "chat", text })} broadcast={(action, on) => { partyRoom.emit({ type: "party", action, on }); if (action === "drinks") serve(citizen?.id ?? "me", citizen?.username ?? "you", [where.x, where.z]); }} className="bottom-[8.75rem] sm:bottom-40" />}
       {party && activeFlat && <PartyPeople room={partyRoom} place={activeHomeTitle} peerId={guestId} setPeerId={setGuestId} say={showToast} />}
       {party && !cleanScreen && <PartyBanner party={party} className="top-[calc(max(0.75rem,env(safe-area-inset-top))+7.25rem)]" />}
       {partyOpen && <PartySheet flat={activeFlat ? { id: activeFlat.id, route: flatRoute(activeFlat), title: activeHomeTitle, area: activeHomeArea } : null} onClose={() => setPartyOpen(false)} />}

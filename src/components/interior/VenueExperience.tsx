@@ -4,6 +4,7 @@
 // compare products, try accessories on, buy (with confirmation), talk to staff, apply for a job,
 // work shifts and join activities.
 
+import { useCleanScreen } from "@/lib/cleanScreen";
 import { BELOW_SPACE_TOP, ClubRadioPill, PartyBanner, useClubRadio, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyDecor } from "@/components/invite/PartyDecor";
 import { PartyActions } from "@/components/invite/PartyActions";
@@ -11,7 +12,7 @@ import { partyMood } from "@/lib/invites";
 import { askForPush } from "@/lib/push/engage";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Briefcase, Check, HelpCircle, LogOut, Megaphone, MessageCircle, MessagesSquare, Search, Share2, Shirt, ShoppingBag, Sparkles, Users, X } from "lucide-react";
+import { ArrowLeft, Briefcase, Eye, EyeOff, Check, HelpCircle, LogOut, Megaphone, MessageCircle, MessagesSquare, Search, Share2, Shirt, ShoppingBag, Sparkles, Users, X } from "lucide-react";
 import { broadcastCityPulse } from "@/lib/presence";
 import type { Place, Product, StationKind, Venue } from "@/lib/city/types";
 import { adjustBalance, boostNeed, updateCitizen, useCitizen, type InventoryItem } from "@/lib/citizenStore";
@@ -123,6 +124,9 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   const party = usePartyHere(`/place/${place.id}/${venue.id}`, true);
   useClubRadio(clubParty && !party);
   const [lightsSet, setLightsSet] = useState<boolean | null>(null);
+  // Clean screen: everything over the venue hidden (the floating Space bar too) for the whole view.
+  const [clean, setClean] = useState(false);
+  useCleanScreen(clean);
 
   const [walkTo, setWalkTo] = useState<WalkTarget | null>(null);
   const [, setPending] = useState<{ key: number; open: () => void } | null>(null);
@@ -1291,6 +1295,13 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         vipTables={vipReservations}
         activityFX={activityFX}
       />
+      {/* Clean screen: every button and panel out of the way for the whole view of the venue, and back again. */}
+      <button onClick={() => setClean((c) => !c)} aria-label={clean ? "Show everything" : "Clean screen"} title={clean ? "Show everything" : "Clean screen"}
+        className="absolute left-3 top-[calc(max(0.75rem,env(safe-area-inset-top))+3.25rem)] z-[60] w-10 h-10 rounded-full bg-white/95 shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 active:scale-90 transition-transform">
+        {clean ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+      </button>
+      {/* Hidden, not removed: the music and anything open carry on underneath. */}
+      <div className={clean ? "hidden" : "contents"}>
       {party && <PartyBanner party={party} className={BELOW_SPACE_TOP} />}
       {clubParty && !party && !ride && <ClubRadioPill />}
       {party && !ride && !clubParty && (
@@ -1593,6 +1604,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
           <Check className="w-4 h-4 text-emerald-400" /> {toast}
         </div>
       )}
+      </div>
     </main>
   );
 }

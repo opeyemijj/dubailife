@@ -13,7 +13,7 @@ import { LuxuryDecor } from "./LuxuryDecor";
 import { buildNav, findPath, type Rect, type Seg } from "./homeNav";
 import { HomeFixtures } from "./HomeFixtures";
 import { fixtureRect, fixtureSpot, fixturesFor, fixtureWallsFor, type Fixture } from "@/lib/homeFixtures";
-import { CitizenAvatar, StudioEnvironment, type AvatarAnimation } from "@/components/avatar/CitizenAvatar";
+import { CitizenAvatar, type CarryMode, StudioEnvironment, type AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 import { SceneLoadingOverlay } from "@/components/GameLoadingScreen";
 import {
   AVATAR_SPOT, BUILT_INS, CELL, DOOR, GRID, LAYOUT_SCALE, ROOM_SIZE, WALL_HEIGHT, WINDOW,
@@ -64,7 +64,11 @@ export interface ApartmentRoomProps {
   /** Where you start in the room (x, z), when it isn't the usual spot. */
   startAt?: [number, number];
   /** Where you are as you move about (x, z, facing, walking), so others can see you live. */
-  onMove?: (x: number, z: number, yaw: number, walking: boolean) => void;
+  onMove?: (x: number, z: number, yaw: number, walking: boolean, lift?: number, rest?: "sit" | "sleep") => void;
+  /** Sit down (on the nearest free seat: sofa, armchair, chair, majlis) or stand up again. Each new `n` is a new ask. */
+  seatCall?: { n: number; sit: boolean };
+  /** What you have in your hand (a drink at a party), and how you hold it. */
+  holding?: { prop: React.ReactNode; mode: CarryMode };
   /** How far back the camera sits, when something needs the whole home in a smaller space. */
   viewDistance?: number;
   /** "inside": an over-the-shoulder camera in the room with the citizen, instead of looking down on the home. */
@@ -97,6 +101,9 @@ export interface Person {
   label?: string;
   bubble?: string;
   onClick?: () => void;
+  /** In their hand (a drink at a party), and how they hold it. */
+  holding?: React.ReactNode;
+  carryMode?: CarryMode;
 }
 
 type LabelNodes = React.RefObject<Map<string, HTMLDivElement>>;
@@ -124,6 +131,8 @@ function PersonAvatar({ p, id, labels }: { p: Person; id: string; labels: LabelN
       if (moving) setMoving(false);
       g.rotation.y += ((p.rotation ?? g.rotation.y) - g.rotation.y) * Math.min(1, dt * 6);
     }
+    // On a seat: raised to it once they've stopped (on the floor while walking).
+    g.position.y = dist > 0.15 ? 0 : p.position[1];
     const v = new THREE.Vector3();
     for (const [suffix, lift] of [["tag", 2.2], ["bubble", 2.6]] as const) {
       const el = labels.current.get(`${id}:${suffix}`);
@@ -146,7 +155,8 @@ function PersonAvatar({ p, id, labels }: { p: Person; id: string; labels: LabelN
     >
       {/* Asleep: lying on the floor where they were. */}
       <group position={!moving && p.animation === "sleep" ? [0, 0.12, 0] : [0, 0, 0]}>
-        <CitizenAvatar look={p.look} animation={moving ? "walk" : p.animation ?? "idle"} rotation={!moving && p.animation === "sleep" ? [-Math.PI / 2, 0, 0] : [0, 0, 0]} />
+        <CitizenAvatar look={p.look} animation={moving ? "walk" : p.animation ?? "idle"} rotation={!moving && p.animation === "sleep" ? [-Math.PI / 2, 0, 0] : [0, 0, 0]}
+          holding={p.holding} carryMode={p.holding ? (moving ? "hold" : p.carryMode ?? "hold") : undefined} />
       </group>
       {p.label && (
         <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
@@ -1153,6 +1163,8 @@ function RoomScene({
   myAnimation,
   startAt,
   onMove,
+  seatCall,
+  holding,
   furniture: ownFurniture = [],
   placing,
   decorating,
@@ -1196,7 +1208,8 @@ function RoomScene({
   // Where the user last pointed the item being placed (cleared by switching items).
   const [moved, setMoved] = useState<{ uid: string; placement: Placement } | null>(null);
   const [animation, setAnimation] = useState<AvatarAnimation>("idle");
-  const shown: AvatarAnimation = animation === "walk" || animation === "talk" || !myAnimation ? animation : myAnimation;
+  // Walking, talking, or sitting / lying on a piece of furniture shows that; otherwise what the page asks for (dancing).
+  const shown: AvatarAnimation = animation === "walk" || animation === "talk" || animation === "sit" || animation === "sleep" || !myAnimation ? animation : myAnimation;
   const shownSleep = shown === "sleep";
   const [pose, setPose] = useState<Pose>(() => (startAt ? { position: [startAt[0], 0, startAt[1]], yaw: Math.PI / 4 } : STAND));
   const [walkTarget, setWalkTarget] = useState<[number, number] | null>(null);
@@ -1211,9 +1224,11 @@ function RoomScene({
   useEffect(() => {
     if (walkTarget) moveRef.current?.(walkTarget[0], walkTarget[1], poseRef.current.yaw, true);
   }, [walkTarget]);
+  // Stopped, sat down on something or got up: where I am now (raised onto the seat, and sitting or lying there).
+  const restNow = animation === "sit" || animation === "sleep" ? animation : undefined;
   useEffect(() => {
-    if (!walkingNow) moveRef.current?.(poseRef.current.position[0], poseRef.current.position[2], poseRef.current.yaw, false);
-  }, [walkingNow]);
+    if (!walkingNow) moveRef.current?.(poseRef.current.position[0], poseRef.current.position[2], poseRef.current.yaw, false, restNow ? poseRef.current.position[1] : 0, restNow);
+  }, [walkingNow, restNow]);
   // The route there: round walls and furniture, through doorways (see homeNav.ts).
   const routeRef = useRef<{ for: [number, number]; points: Array<[number, number]> } | null>(null);
   // The kitchen and bathroom on this floor, and the bathroom's walls.
@@ -1469,6 +1484,41 @@ function RoomScene({
   };
   useEffect(() => () => { if (animTimer.current) clearTimeout(animTimer.current); }, []);
 
+  // Sit (at a party): to the nearest seat nobody's on, on this floor. With none free, the page sits you where you are.
+  // Stand: up off the seat.
+  const interactRef = useRef(interact);
+  useEffect(() => { interactRef.current = interact; });
+  const peopleRef = useRef(people);
+  useEffect(() => { peopleRef.current = people; }, [people]);
+  const seatN = seatCall?.n ?? 0;
+  const seatSit = !!seatCall?.sit;
+  useEffect(() => {
+    if (!seatN) return;
+    const t = setTimeout(() => {
+      if (!seatSit) {
+        setPendingAction(null);
+        setPose((p) => (p.stand ? { position: [p.stand[0], 0, p.stand[1]], yaw: p.yaw } : p));
+        setAnimation("idle");
+        return;
+      }
+      const [mx, , mz] = poseRef.current.position;
+      const taken = (x: number, z: number) => peopleRef.current.some((o) => Math.hypot(o.position[0] - x, o.position[2] - z) < 0.45);
+      let best: { item: CatalogItem; placement: Placement; d: number } | null = null;
+      for (const f of furniture) {
+        const item = getCatalogItem(f.itemId);
+        if (!item || item.interaction !== "chair" || f.placement?.kind !== "floor" || levelOf(f.placement) !== lvl) continue;
+        const r = restPose(item, f.placement, "chair", avatarHeight);
+        if (!r || taken(r.position[0], r.position[2])) continue;
+        const d = Math.hypot(r.position[0] - mx, r.position[2] - mz);
+        if (!best || d < best.d) best = { item, placement: f.placement, d };
+      }
+      if (best) interactRef.current("chair", best.item, best.placement);
+    }, 0);
+    return () => clearTimeout(t);
+    // Only a new ask: not every time the furniture or people change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seatN]);
+
   const hoverCursor = (on: boolean) => () => { document.body.style.cursor = on ? "pointer" : ""; };
 
   return (
@@ -1645,7 +1695,8 @@ function RoomScene({
           {/* Asleep: laid flat on the back, head along the bed. */}
           {/* Walking always shows walking (no sliding); what the page asks for (dancing, sitting) is when you stop. */}
           <group position={shownSleep && !pose.lie ? [0, 0.12, 0] : [0, 0, 0]}>
-            <CitizenAvatar look={look} animation={shown} rotation={pose.lie || shownSleep ? [-Math.PI / 2, 0, 0] : [0, 0, 0]} />
+            <CitizenAvatar look={look} animation={shown} rotation={pose.lie || shownSleep ? [-Math.PI / 2, 0, 0] : [0, 0, 0]}
+              holding={holding?.prop} carryMode={holding ? (animation === "walk" ? "hold" : holding.mode) : undefined} />
           </group>
         </group>
         {people.map((p, i) => <PersonAvatar key={i} p={p} id={`p${i}`} labels={labels} />)}

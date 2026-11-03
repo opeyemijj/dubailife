@@ -6,7 +6,7 @@
 import { BottomNav } from "@/components/layout/BottomNav";
 import { BELOW_SPACE_TOP, PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyActions } from "@/components/invite/PartyActions";
-import { PartyHostesses, type HostessRun } from "@/components/invite/PartyHostess";
+import { drinkInHand, PartyHostesses, usePartyDrink, type HostessRun } from "@/components/invite/PartyHostess";
 import { faceNearest, PARTIES, partyMood } from "@/lib/invites";
 import { askForPush } from "@/lib/push/engage";
 import Link from "next/link";
@@ -168,7 +168,12 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   const lightsOut = !!party && (lightsSet ?? !!party.lightsOut);
   // Hostesses bringing drinks: to whoever ordered (you stand by the door's side of the room when it's you).
   const [runs, setRuns] = useState<HostessRun[]>([]);
-  const serve = (id: string, name: string, to: [number, number]) => setRuns((r) => [...r, { id: `${id}-${Date.now()}`, name, to }].slice(-6));
+  const serve = (id: string, name: string, to: [number, number]) => setRuns((r) => [...r, { id: `${id}-${Date.now()}`, name, to, who: id }].slice(-6));
+  // The drink the hostess hands me, held for the rest of the party.
+  const [drink, handDrink] = usePartyDrink();
+  // Sit: walk to the nearest free seat (the room finds it). Each tap is a new ask.
+  const [seatCall, setSeatCall] = useState<{ n: number; sit: boolean } | undefined>(undefined);
+  const askSeat = (sit: boolean) => setSeatCall((c) => ({ n: (c?.n ?? 0) + 1, sit }));
   const [placing, setPlacing] = useState<PlacingState | null>(null);
   const [decorating, setDecorating] = useState(false);
   const [turns, setTurns] = useState(0);
@@ -232,14 +237,14 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   // At a party everyone dances (some sit) unless they're doing something else.
   const myMood = dancing ? "dance" : pose ?? (party ? partyMood(me) : "idle");
   // Where I am, shared when I set off and when I stop, so everyone sees me move.
-  const [where, setWhere] = useState({ x: mySpot[0], z: mySpot[2], yaw: 0, walking: false });
+  const [where, setWhere] = useState<{ x: number; z: number; yaw: number; walking: boolean; lift?: number; rest?: "sit" | "sleep" }>({ x: mySpot[0], z: mySpot[2], yaw: 0, walking: false });
   // Which floor I'm on: people upstairs aren't shown downstairs, and the other way round.
   const [level, setLevel] = useState(0);
   // Sent when I set off (where I'm heading) and when I stop: everyone else walks me there in between.
-  const onMove = (x: number, z: number, yaw: number, walking: boolean) => {
-    setWhere({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw: Math.round(yaw * 100) / 100, walking });
+  const onMove = (x: number, z: number, yaw: number, walking: boolean, lift?: number, rest?: "sit" | "sleep") => {
+    setWhere({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw: Math.round(yaw * 100) / 100, walking, lift: lift ? Math.round(lift * 100) / 100 : undefined, rest });
   };
-  const room = useRoom(`flat:${flat.id}`, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : myMood, level }, (e: Received) => {
+  const room = useRoom(`flat:${flat.id}`, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : where.rest ?? myMood, lift: where.lift, level, hold: drink ?? undefined }, (e: Received) => {
     if (e.type === "chat") bubble(e.from.userId, e.text);
     if (e.type === "wave") bubble(e.from.userId, "👋");
     if (e.type === "party") {
@@ -264,7 +269,9 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
     ...resident,
     ...room.peers.filter((p) => (p.level ?? 0) === level).map((p): Person => ({
       look: p.look,
-      position: Number.isFinite(p.x) ? [p.x, 0, p.z] : spotOf(p.userId),
+      position: Number.isFinite(p.x) ? [p.x, p.lift ?? 0, p.z] : spotOf(p.userId),
+      holding: drinkInHand(p.hold)?.prop,
+      carryMode: drinkInHand(p.hold)?.mode,
       rotation: p.face ?? (party ? faceNearest([p.x, 0, p.z], [[where.x, 0, where.z], ...room.peers.map((o) => [o.x, 0, o.z] as [number, number, number])]) : undefined) ?? Math.atan2(-p.x, -p.z),
       animation: p.animation,
       label: `@${p.username}${room.unread[p.userId] ? ` · 💬${room.unread[p.userId]}` : ""}`,
@@ -329,9 +336,11 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         myAnimation={party ? myMood : undefined}
         startAt={[mySpot[0], mySpot[2]]}
         onMove={onMove}
-        extras={<PartyHostesses runs={runs} onDone={(id) => setRuns((r) => r.filter((x) => x.id !== id))} />}
+        seatCall={seatCall}
+        holding={drinkInHand(drink)}
+        extras={<PartyHostesses runs={runs} onArrive={(r) => { if (r.who === me) handDrink(); }} onDone={(id) => setRuns((r) => r.filter((x) => x.id !== id))} />}
       />
-      {party && <PartyActions party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={dance} pose={dancing ? "dance" : pose} onPose={(x) => { setDancing(false); setPose(x === "dance" ? null : x); }} announce={(text) => room.emit({ type: "chat", text })} broadcast={(action, on) => { room.emit({ type: "party", action, on }); if (action === "drinks") serve(me, citizen?.username ?? "you", [where.x, where.z]); }} className={canEdit ? "bottom-[10rem]" : "bottom-[6.25rem]"} />}
+      {party && <PartyActions party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={(sec) => { if (where.rest) askSeat(false); dance(sec); }} pose={dancing ? "dance" : pose} onPose={(x) => { setDancing(false); setPose(x === "dance" ? null : x); if (x === "sit" || pose === "sit") askSeat(x === "sit"); }} announce={(text) => room.emit({ type: "chat", text })} broadcast={(action, on) => { room.emit({ type: "party", action, on }); if (action === "drinks") serve(me, citizen?.username ?? "you", [where.x, where.z]); }} className={canEdit ? "bottom-[10rem]" : "bottom-[6.25rem]"} />}
       {party && <PartyBanner party={party} hostAway={!room.peers.some((p) => p.username === party.host)} className={BELOW_SPACE_TOP} />}
 
       <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2">
