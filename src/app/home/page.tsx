@@ -4,6 +4,7 @@ import { askLogout } from "@/components/layout/LogoutConfirm";
 import { DecoratorSheet, DecoratorStatus } from "@/components/home/Decorator";
 import { HomeActions } from "@/components/home/HomeActions";
 import { useCleanScreen } from "@/lib/cleanScreen";
+import { usePhoneButtonHere } from "@/lib/phoneButtons";
 import { MoveInGuide } from "@/components/home/MoveInGuide";
 import { PartySheet } from "@/components/invite/PartySheet";
 import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
@@ -91,6 +92,8 @@ export default function HomePage() {
   const { visits } = useSiteStats();
   const [cleanScreen, setCleanScreen] = useState(false);
   useCleanScreen(cleanScreen);
+  // The home's own bottom bar has the phone.
+  usePhoneButtonHere();
   const [wardrobeModalOpen, setWardrobeModalOpen] = useState(false);
 
   useEffect(() => {

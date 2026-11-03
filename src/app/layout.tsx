@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { PhoneFab } from "@/components/layout/PhoneFab";
+import { PartySheetHost } from "@/components/invite/PartySheetHost";
 import { Fredoka } from "next/font/google";
 import "./globals.css";
 import { PresenceTracker } from "@/components/PresenceTracker";
@@ -230,6 +232,8 @@ export default function RootLayout({
           <LiveSpaceBanner />
           <BackToParty />
           <PhoneOverlay />
+          <PhoneFab />
+          <PartySheetHost />
           <HudSheets />
           <LoveListener />
           <GameInviteListener />

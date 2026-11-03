@@ -25,19 +25,27 @@ const at = (iso: string) => new Date(iso).toLocaleString("en-GB", { timeZone: "A
 const aed = (n: number) => `AED ${n.toLocaleString()}`;
 const minutesFromNow = (mins: number) => new Date(Date.now() + mins * 60_000);
 
-// Venues a party can be at: clubs for club nights, restaurants for dinners.
+// Venues a party can be at: clubs for club nights, pools and beach clubs for pool parties, restaurants for dinners.
 const VENUES = PLACES.flatMap((p) => p.venues.filter((v) => !v.comingSoon).map((v) => ({ place: p, venue: v })));
 const CLUBS = VENUES.filter((x) => x.place.kind === "club" || (x.venue.layout === "club" && !/entertainment/i.test(x.venue.category)));
+const POOLS = VENUES.filter((x) => x.venue.feature === "pool" && x.venue.layout !== "waterpark");
 const RESTAURANTS = VENUES.filter((x) => x.venue.layout === "dining" && /restaurant|dining|grill|steak|lounge|bistro|brasserie|kitchen/i.test(`${x.venue.category} ${x.venue.name}`));
 
-export function PartySheet({ flat, onClose }: {
+/** Where to start: a kind of party, and a venue already picked (opened from the venue itself). */
+export interface PartyStart { kind?: EventKind; placeId?: string; venueId?: string }
+
+const listFor = (k: EventKind) => (k === "club_night" ? CLUBS : k === "pool_party" ? POOLS : RESTAURANTS);
+const atVenue = (k: EventKind) => k === "club_night" || k === "pool_party";
+
+export function PartySheet({ flat, start, onClose }: {
   flat: { id: string; route: string; title: string; area: string } | null;
+  start?: PartyStart;
   onClose: () => void;
 }) {
   const { citizen } = useCitizen();
-  const [kind, setKind] = useState<EventKind>(flat ? "house_party" : "club_night");
-  const [atHome, setAtHome] = useState(!!flat);
-  const [venueKey, setVenueKey] = useState<string | null>(null);
+  const [kind, setKind] = useState<EventKind>(start?.kind ?? (flat ? "house_party" : "club_night"));
+  const [atHome, setAtHome] = useState(!!flat && !start?.venueId && !atVenue(start?.kind ?? "house_party"));
+  const [venueKey, setVenueKey] = useState<string | null>(start?.placeId && start.venueId ? `${start.placeId}/${start.venueId}` : null);
   const [q, setQ] = useState("");
   const [title, setTitle] = useState("");
   const [mins, setMins] = useState<number>(0);
@@ -52,9 +60,14 @@ export function PartySheet({ flat, onClose }: {
   useEffect(() => { void myParties().then(setParties); }, [made]);
 
   const home = kind === "house_party" || (kind === "dinner" && atHome);
-  const list = kind === "club_night" ? CLUBS : RESTAURANTS;
-  const shown = useMemo(() => list.filter((x) => `${x.venue.name} ${x.place.name}`.toLowerCase().includes(q.trim().toLowerCase())).slice(0, 40), [list, q]);
-  const venue = list.find((x) => `${x.place.id}/${x.venue.id}` === venueKey) ?? null;
+  const list = listFor(kind);
+  // The venue it was opened from heads the list (even if it isn't the usual kind of place for this party).
+  const picked = VENUES.find((x) => `${x.place.id}/${x.venue.id}` === venueKey) ?? null;
+  const shown = useMemo(() => {
+    const all = picked && !list.includes(picked) ? [picked, ...list] : list;
+    return all.filter((x) => `${x.venue.name} ${x.place.name}`.toLowerCase().includes(q.trim().toLowerCase())).slice(0, 40);
+  }, [list, q, picked]);
+  const venue = picked;
   const where = home ? (flat ? `${flat.title} · ${flat.area}` : null) : venue ? `${venue.venue.name} · ${venue.place.name}` : null;
   const k = kindOf(kind);
   const name = title.trim() || `@${citizen?.username ?? "my"}'s ${k.label.toLowerCase()}`;
@@ -115,10 +128,10 @@ export function PartySheet({ flat, onClose }: {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-1.5">
-              {(["house_party", "dinner", "club_night"] as const).map((id) => (
-                <button key={id} onClick={() => { setKind(id); setVenueKey(null); setAtHome(id !== "club_night" && !!flat); }}
-                  className={`h-14 rounded-2xl text-xs font-black flex flex-col items-center justify-center ${kind === id ? "bg-fuchsia-600 text-white" : "bg-slate-100 text-slate-700"}`}>
+            <div className="grid grid-cols-4 gap-1.5">
+              {(["house_party", "dinner", "club_night", "pool_party"] as const).map((id) => (
+                <button key={id} onClick={() => { setKind(id); if (atVenue(id) !== atVenue(kind) || id === "house_party") setVenueKey(null); setAtHome(!atVenue(id) && !!flat); }}
+                  className={`h-14 px-1 rounded-2xl text-[11px] leading-tight text-center font-black flex flex-col items-center justify-center gap-0.5 ${kind === id ? "bg-fuchsia-600 text-white" : "bg-slate-100 text-slate-700"}`}>
                   <span className="text-lg leading-none">{kindOf(id).icon}</span>{kindOf(id).label}
                 </button>
               ))}
@@ -133,10 +146,10 @@ export function PartySheet({ flat, onClose }: {
 
             {home ? (
               flat ? <p className="rounded-2xl bg-slate-50 p-3 text-sm"><b>At your {flat.title}</b> · {flat.area}. Your door opens to guests.</p>
-                : <p className="rounded-2xl bg-amber-50 p-3 text-sm text-amber-900">Parties at home need a home you rent or own on the map. Pick a {kind === "dinner" ? "restaurant" : "club"} instead, or find a home on the map.</p>
+                : <p className="rounded-2xl bg-amber-50 p-3 text-sm text-amber-900">A house party needs a home you rent or own on the map. Anyone can throw a club night, pool party or dinner at a restaurant, so pick one of those, or find a home on the map.</p>
             ) : (
               <div className="space-y-1.5">
-                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={kind === "club_night" ? "Search clubs" : "Search restaurants"} aria-label="Search places"
+                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={kind === "club_night" ? "Search clubs" : kind === "pool_party" ? "Search pools and beach clubs" : "Search restaurants"} aria-label="Search places"
                   className="w-full h-10 rounded-xl bg-slate-50 border border-slate-200 px-3 text-sm font-bold outline-none" />
                 <div className="max-h-44 overflow-y-auto space-y-1 pr-1">
                   {shown.map((x) => {

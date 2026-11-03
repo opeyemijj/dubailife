@@ -244,6 +244,14 @@ for (const text of [
 ]) {
   if (!evSql.includes(text)) { bad++; console.error(`parties: differs from SQL (${text.slice(0, 80)})`); }
 }
+// Pool parties (*_pool_parties.sql) redefine create_event: the same lengths, with pool parties as long as club nights.
+const poolFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_pool_parties.sql")).sort().pop();
+if (poolFile) {
+  const poolSql = readFileSync(`supabase/migrations/${poolFile}`, "utf8");
+  const hours = `when 'house_party' then ${parties.kinds.house_party.hours} when 'dinner' then ${parties.kinds.dinner.hours} else ${parties.kinds.club_night.hours} end`;
+  if (!poolSql.includes(hours)) { bad++; console.error("parties: pool_parties.sql party lengths differ"); }
+  if (parties.kinds.pool_party.hours !== parties.kinds.club_night.hours) { bad++; console.error("parties: pool_party.hours must equal club_night.hours (SQL gives both the same)"); }
+}
 // Penalties (cars.json → driving.revokeAfterAccidents vs *_penalties.sql).
 const penFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_penalties.sql")).sort().pop();
 const penSql = readFileSync(`supabase/migrations/${penFile}`, "utf8");

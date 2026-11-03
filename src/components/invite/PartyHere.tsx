@@ -175,7 +175,7 @@ export function primePartyAudio() {
   ["pointerdown", "touchend", "click"].forEach((t) => window.addEventListener(t, unlock, true));
 }
 
-/** The same radio, for a club with no party on: the club's music. (At a party the party plays it instead, so
+/** The same radio, for a venue with no party on: the venue's music. (At a party the party plays it instead, so
     there's only ever one.) */
 export function useClubRadio(active: boolean) { usePartyMusic(active); }
 
@@ -272,13 +272,13 @@ function usePartyMusic(active: boolean) {
 export const BELOW_SPACE_TOP = "top-[calc(max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))+3.5rem)]";
 
 /** The club's radio, bottom left where the DJ booth player sits: the station playing, and a tap to switch radio → groove → off, and ⏭ for the next station. */
-export function ClubRadioPill({ className = "" }: { className?: string }) {
+export function ClubRadioPill({ className = "bottom-20" }: { className?: string }) {
   const [mode, setMode] = useState<MusicMode>(currentMode);
   const [station, setStationName] = useState<string | null>(stationName);
   useEffect(() => { stationListeners.add(setStationName); return () => { stationListeners.delete(setStationName); }; }, []);
   const next: MusicMode = mode === "radio" ? "groove" : mode === "groove" ? "off" : "radio";
   return (
-    <div className={`fixed left-3 bottom-20 z-40 flex items-center gap-1 rounded-full bg-slate-950/90 text-white border border-white/10 shadow-xl p-1 max-w-[70vw] ${className}`}>
+    <div className={`fixed left-3 z-40 flex items-center gap-1 rounded-full bg-slate-950/90 text-white border border-white/10 shadow-xl p-1 max-w-[70vw] ${className}`}>
       <button onClick={() => { setMusicMode(next); setMode(next); }} aria-label={`Music: ${mode === "radio" ? "radio" : mode === "groove" ? "groove" : "off"}. Tap for ${next}.`}
         className="h-7 pl-2 pr-2 rounded-full text-[11px] font-black truncate min-w-0">
         {mode === "radio" ? `📻 ${station ?? "Tuning…"}` : mode === "groove" ? "🥁 Groove" : "🔇 Music off"}

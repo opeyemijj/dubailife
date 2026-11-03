@@ -4,6 +4,7 @@
     "house_party": { "icon": "🎉", "label": "House party", "where": "home", "hours": 3 },
     "dinner": { "icon": "🍽️", "label": "Dinner party", "where": "home-or-restaurant", "hours": 2 },
     "club_night": { "icon": "🪩", "label": "Club night", "where": "club", "hours": 4 },
+    "pool_party": { "icon": "🏊", "label": "Pool party", "where": "pool", "hours": 4 },
     "ask_out": { "icon": "💌", "label": "Ask me out", "where": "link", "days": 14 },
     "hire_decorator": { "icon": "🧑‍🎨", "label": "Hire me to decorate", "where": "link", "days": 14 }
   },

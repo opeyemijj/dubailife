@@ -13,6 +13,7 @@ import { gameAudio } from "@/utils/gameAudio";
 import { SITE } from "@/lib/site";
 import { illnessOf, useServices } from "@/lib/cityServices";
 import { useEmbedded } from "@/components/layout/Embed";
+import { usePhoneButtonHere } from "@/lib/phoneButtons";
 import { useMissions } from "@/lib/missions";
 import { dismissCityPulse, useCityPulse, usePresentCitizens } from "@/lib/presence";
 import { gatherings, SLOT_MS } from "@/lib/locals";
@@ -24,8 +25,11 @@ export function BottomNav() {
   const { citizen } = useCitizen();
   const unread = useUnreadTotal(citizen?.id);
   const onMap = isActive("/explore") && !!citizen?.id;
+  const embedded = useEmbedded();
+  // This bar has the phone, so the floating phone button isn't needed.
+  usePhoneButtonHere(!embedded);
   // Inside the in-game phone the page around it already has the bar.
-  if (useEmbedded()) return null;
+  if (embedded) return null;
 
   return (
     <div className="fixed bottom-0 left-0 w-full z-50 px-3 sm:px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 pointer-events-none select-none">

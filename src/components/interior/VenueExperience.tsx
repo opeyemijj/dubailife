@@ -5,6 +5,8 @@
 // work shifts and join activities.
 
 import { useCleanScreen } from "@/lib/cleanScreen";
+import { openPartySheet } from "@/components/invite/PartySheetHost";
+import type { EventKind } from "@/lib/invites";
 import { BELOW_SPACE_TOP, ClubRadioPill, PartyBanner, useClubRadio, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyDecor } from "@/components/invite/PartyDecor";
 import { PartyActions } from "@/components/invite/PartyActions";
@@ -21,7 +23,6 @@ import { gainSkill, lifeEvent } from "@/lib/life";
 import type { AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 import { gameAudio } from "@/utils/gameAudio";
 import { InteriorScene, type CarryingState, type DeliveryDef, type VipTableReservation, type WalkTarget } from "./InteriorScene";
-import { VenueRadio } from "./VenueRadio";
 import { VenueAbout, VenueLoadingCard } from "./VenueOwnerLayer";
 import { VenueWallAdModal } from "./VenueWallAdModal";
 import { VenueGuideModal } from "./VenueGuideModal";
@@ -118,11 +119,14 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   }, [place, venue, citizen?.id]);
   const plan = useMemo(() => buildPlan(venue), [venue]);
   // A party on here: decorations, a banner, its Space, and checking in as a guest. A club already has its own drinks,
-  // dance floor and lights, so a party there brings no party actions or lights out. Its music is the Lagos radio, the
-  // same as a house party: the club plays it, and when a party is on the party plays it instead (only ever one).
+  // dance floor and lights, so a party there brings no party actions or lights out.
   const clubParty = venue.layout === "club";
   const party = usePartyHere(`/place/${place.id}/${venue.id}`, true);
-  useClubRadio(clubParty && !party);
+  // Every venue plays the Afrobeats radio (the same as a house party). When a party is on, the party plays it
+  // instead, so there's only ever one.
+  useClubRadio(!party);
+  // The party you can throw here: a club night at a club, a pool party at a pool or beach club, dinner at a restaurant.
+  const partyKind: EventKind | null = venue.layout === "club" ? "club_night" : venue.feature === "pool" && venue.layout !== "waterpark" ? "pool_party" : venue.layout === "dining" ? "dinner" : null;
   const [lightsSet, setLightsSet] = useState<boolean | null>(null);
   // Clean screen: everything over the venue hidden (the floating Space bar too) for the whole view.
   const [clean, setClean] = useState(false);
@@ -1303,7 +1307,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       {/* Hidden, not removed: the music and anything open carry on underneath. */}
       <div className={clean ? "hidden" : "contents"}>
       {party && <PartyBanner party={party} className={BELOW_SPACE_TOP} />}
-      {clubParty && !party && !ride && <ClubRadioPill />}
+      {!party && !ride && <ClubRadioPill className="bottom-[8.5rem] sm:bottom-20" />}
       {party && !ride && !clubParty && (
         <PartyActions party={party} lightsOut={lightsSet ?? !!party.lightsOut} onLights={setLightsSet}
           onDance={(seconds) => { setPlayerAnimation("dance"); setTimeout(() => setPlayerAnimation((a) => (a === "dance" ? "idle" : a)), seconds * 1000); }}
@@ -1348,7 +1352,6 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       <VenueWallAdModal venueId={venue.id} venueName={venue.name} open={wallAdOpen} onOpenChange={setWallAdOpen} initialPanelId={selectedAdPanel} />
       <VenueGuideModal venue={venue} open={guideOpen} onOpenChange={setGuideOpen} />
       <ClothingStoreModal open={clothingStoreOpen} onOpenChange={setClothingStoreOpen} storeName={venue.name} />
-      {!ride && !clubParty && <VenueRadio venue={venue} compact={!!panel} />}
 
       {/* Item 7: Celebratory Bottle Service Announcement Banner */}
       {vipCelebration && (
@@ -1413,6 +1416,12 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       {/* Quick actions (hidden during a ride: the ride's own controls are there) */}
       {!panel && !ride && (
         <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-30 flex flex-wrap justify-center gap-2 w-[min(96vw,560px)] pointer-events-auto">
+          {partyKind && !party && (
+            <button onClick={() => { gameAudio.playClickSound(); openPartySheet({ kind: partyKind, placeId: place.id, venueId: venue.id }); }}
+              className="h-11 px-4 rounded-full bg-fuchsia-600 text-white font-black shadow-xl text-xs flex items-center gap-1.5 active:scale-95 transition-all">
+              🎉 Host a {partyKind === "club_night" ? "club night" : partyKind === "pool_party" ? "pool party" : "dinner"} here
+            </button>
+          )}
           {(venue.activities ?? []).length > 0 && (
             <button
               onClick={() => {

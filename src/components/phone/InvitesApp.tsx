@@ -8,7 +8,8 @@ import { useRouter } from "next/navigation";
 import { useCitizen } from "@/lib/citizenStore";
 import { useNow } from "@/lib/dubaiClock";
 import { useServices } from "@/lib/cityServices";
-import { createLink, kindOf, myInvites, partyDoor, shareInvite, type InviteRow } from "@/lib/invites";
+import { openPartySheet } from "@/components/invite/PartySheetHost";
+import { createLink, isEvent, kindOf, myInvites, partyDoor, shareInvite, type InviteRow } from "@/lib/invites";
 import { AppScreen, Big, Card, Note } from "./AppScreen";
 
 const at = (iso: string) => new Date(iso).toLocaleString("en-GB", { timeZone: "Asia/Dubai", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
@@ -56,11 +57,11 @@ export function InvitesApp({ onBack, onClose }: { onBack: () => void; onClose?: 
           <p className="text-xs font-black uppercase tracking-wider text-slate-400 px-1">You&apos;re invited</p>
           {data.invited.length ? data.invited.map((r) => row(r, false)) : <p className="text-sm text-slate-500 px-1">No invites right now. When someone invites you to a party, it shows up here.</p>}
           <p className="text-xs font-black uppercase tracking-wider text-slate-400 px-1 pt-2">You&apos;re hosting</p>
-          {data.hosting.filter((r) => r.kind === "house_party" || r.kind === "dinner" || r.kind === "club_night").map((r) => row(r, true))}
+          {data.hosting.filter((r) => isEvent(r.kind)).map((r) => row(r, true))}
           <Card className="bg-fuchsia-50">
             <p className="font-black">🎉 Throw a party</p>
-            <p className="text-sm text-slate-600">A house party or dinner at your home, or a night at a club or restaurant. Invite anyone with a link.</p>
-            <Big onClick={() => { onClose?.(); router.push("/home?party=1"); }}>Plan a party</Big>
+            <p className="text-sm text-slate-600">A house party or dinner at your home, a club night, a pool party, or dinner at a restaurant. Invite anyone with a link.</p>
+            <Big onClick={() => { onClose?.(); openPartySheet(); }}>Plan a party</Big>
           </Card>
           <Card>
             <p className="font-black">💌 Ask someone out</p>

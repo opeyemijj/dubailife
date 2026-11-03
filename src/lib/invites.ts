@@ -14,8 +14,8 @@ import type { AvatarLookProps } from "@/components/avatar/roster";
 
 export { PARTIES };
 export type InviteKind = keyof typeof PARTIES.kinds;
-export type EventKind = "house_party" | "dinner" | "club_night";
-export const isEvent = (k: InviteKind): k is EventKind => k === "house_party" || k === "dinner" || k === "club_night";
+export type EventKind = "house_party" | "dinner" | "club_night" | "pool_party";
+export const isEvent = (k: InviteKind): k is EventKind => k === "house_party" || k === "dinner" || k === "club_night" || k === "pool_party";
 export const kindOf = (k: InviteKind) => PARTIES.kinds[k];
 export const decorOf = (id: string) => PARTIES.decor.find((d) => d.id === id);
 
