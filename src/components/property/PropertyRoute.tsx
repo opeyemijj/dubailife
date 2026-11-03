@@ -296,7 +296,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         onPlaceBlocked={() => say("🚫 It doesn't fit there.")}
         partyDecor={party?.decor}
       />
-      {party && <PartyBanner party={party} className="top-[calc(max(0.75rem,env(safe-area-inset-top))+4rem)]" />}
+      {party && <PartyBanner party={party} hostAway={!room.peers.some((p) => p.username === party.host)} className="top-[calc(max(0.75rem,env(safe-area-inset-top))+4rem)]" />}
 
       <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2">
         <button onClick={onExit} className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center" aria-label="Leave"><ArrowLeft className="w-4 h-4" /></button>
@@ -459,7 +459,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
 
 /** Where a citizen stands while in someone's home: a spot picked from their id, the same for everyone. */
 const SPOTS: Array<[number, number, number]> = [[1.0, 0, 1.0], [0.2, 0, 1.6], [1.6, 0, 0.2], [-0.4, 0, 1.8], [1.8, 0, 1.4], [-1.6, 0, 1.6]];
-function spotFor(userId: string): [number, number, number] {
+export function spotFor(userId: string): [number, number, number] {
   let h = 0;
   for (let i = 0; i < userId.length; i++) h = (h * 31 + userId.charCodeAt(i)) | 0;
   return SPOTS[Math.abs(h) % SPOTS.length];

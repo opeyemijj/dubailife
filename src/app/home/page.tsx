@@ -6,6 +6,9 @@ import { HomeActions } from "@/components/home/HomeActions";
 import { MoveInGuide } from "@/components/home/MoveInGuide";
 import { PartySheet } from "@/components/invite/PartySheet";
 import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
+import { PartyPeople } from "@/components/invite/PartyPeople";
+import { spotFor } from "@/components/property/PropertyRoute";
+import { useRoom } from "@/lib/room";
 import { AppSetup, needsAppSetup } from "@/components/pwa/AppSetup";
 import { inviteFriends } from "@/lib/invite";
 import { useMyDecor } from "@/lib/decorator";
@@ -19,7 +22,7 @@ import {
   Home, ShoppingBag, Map, Smartphone, Sparkles, X, Megaphone,
   RotateCw, RotateCcw, Keyboard, Move, Package, LogOut, Shirt, Bell
 } from "lucide-react";
-import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoom";
+import { ApartmentRoom, type Person, type PlacingState } from "@/components/home/ApartmentRoom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { gameAudio } from "@/utils/gameAudio";
 import { isNewCitizen, useRequireCitizen, adjustBalance, buyFurniture, setFurniturePlacement, updateCitizen, DEFAULT_NEEDS, type Needs } from "@/lib/citizenStore";
@@ -261,6 +264,18 @@ export default function HomePage() {
   };
   // A party on at this home right now (yours): its decorations go up.
   const party = usePartyHere(activeFlat ? flatRoute(activeFlat) : null, false);
+  // During your party you're in the same live room as your guests (the one they join at your door): you see them
+  // and they see you.
+  const partyRoom = useRoom(party && activeFlat ? `flat:${activeFlat.id}` : null, { x: 0, z: 0, animation: "idle" });
+  const guests: Person[] = partyRoom.peers.map((p) => ({
+    look: p.look,
+    position: spotFor(p.userId),
+    rotation: Math.atan2(-spotFor(p.userId)[0], -spotFor(p.userId)[2]),
+    animation: p.animation,
+    label: `@${p.username}`,
+    onClick: () => setGuestId(p.userId),
+  }));
+  const [guestId, setGuestId] = useState<string | null>(null);
   const openShop = () => { setShopTab("shop"); setBuyModalOpen(true); };
   const stored = withHomeItems(furniture, housingTier).filter((f) => !f.placement);
   const placingItem = placing ? getCatalogItem(placing.itemId) : undefined;
@@ -375,7 +390,7 @@ export default function HomePage() {
       
       {/* 3D Isometric Apartment Interior */}
       <ApartmentRoom
-        people={matesInRoom(bedspace, onlineNames, (m) => router.push(`/phone?tab=chats&chat=${m.id}`))}
+        people={[...matesInRoom(bedspace, onlineNames, (m) => router.push(`/phone?tab=chats&chat=${m.id}`)), ...guests]}
         look={citizen?.look}
         furniture={furniture}
         placing={placing}
@@ -597,6 +612,7 @@ export default function HomePage() {
         </div>
       )}
 
+      {party && activeFlat && <PartyPeople room={partyRoom} place={activeHomeTitle} peerId={guestId} setPeerId={setGuestId} say={showToast} />}
       {party && !cleanScreen && <PartyBanner party={party} className="top-[calc(max(0.75rem,env(safe-area-inset-top))+7.25rem)]" />}
       {partyOpen && <PartySheet flat={activeFlat ? { id: activeFlat.id, route: flatRoute(activeFlat), title: activeHomeTitle, area: activeHomeArea } : null} onClose={() => setPartyOpen(false)} />}
       {homeMenuOpen && (
