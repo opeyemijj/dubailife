@@ -8,6 +8,7 @@ import Link from "next/link";
 import { arriveAt, partyHere, PARTIES, kindOf, type PartyHere } from "@/lib/invites";
 import { InviteSheet } from "./InviteSheet";
 import { RaceMusic } from "@/components/marathon/raceMusic";
+import { activeSpaceId, hostNewSpace, joinSpace } from "@/lib/spaces";
 import { gameAudio } from "@/utils/gameAudio";
 
 export function usePartyHere(route: string | null, arrive: boolean): PartyHere | null {
@@ -36,7 +37,26 @@ export function usePartyHere(route: string | null, arrive: boolean): PartyHere |
     return () => { live = false; clearTimeout(first); clearInterval(every); };
   }, [route, arrive]);
   usePartyMusic(!!party);
+  usePartySpace(party);
   return party;
+}
+
+/** Every party has its own voice Space: the host hosts it when they're there, and guests join it when they arrive
+    (as listeners; they raise a hand to speak). Once per party each visit, so leaving the Space is respected. */
+export const partySpaceId = (code: string) => `space-party-${code}`;
+function usePartySpace(party: PartyHere | null) {
+  const code = party?.code ?? null;
+  const isHost = !!party?.isHost;
+  const title = party?.title ?? "";
+  useEffect(() => {
+    if (!code) return;
+    const id = partySpaceId(code);
+    const key = `party-space:${code}`;
+    try { if (sessionStorage.getItem(key) === "1") return; sessionStorage.setItem(key, "1"); } catch { /* storage blocked */ }
+    if (activeSpaceId() === id) return;
+    if (isHost) hostNewSpace({ id, title: `🎉 ${title}`, activityKind: "talent" });
+    else joinSpace(id);
+  }, [code, isHost, title]);
 }
 
 // Party music: a live Afrobeats radio station (from the Radio Browser directory), the built-in groove, or off.

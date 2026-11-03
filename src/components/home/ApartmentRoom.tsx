@@ -55,6 +55,8 @@ export interface ApartmentRoomProps {
   upView?: boolean;
   /** A party on here: its decorations, shown in the room. */
   partyDecor?: string[];
+  /** More to show in the room (a hostess bringing drinks). */
+  extras?: React.ReactNode;
   /** Party lights out: the room goes dark and the decorations glow. */
   lightsOut?: boolean;
   /** What you're doing, when the page decides (dancing at a party). */
@@ -1613,6 +1615,7 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
         <Suspense fallback={null}>
           <RoomScene {...props} labels={labels} />
         </Suspense>
+        {props.extras}
         {props.partyDecor && <PartyDecor decor={props.partyDecor} w={ROOM_SIZE} d={ROOM_SIZE} h={WALL_HEIGHT} />}
 
         <OrbitControls

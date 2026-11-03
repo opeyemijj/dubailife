@@ -719,13 +719,15 @@ export function hostNewSpace(opts: {
   dropAmount?: number;
   gameId?: string;
   gameName?: string;
+  /** A fixed id, so others can find it without a link (a party's own Space). */
+  id?: string;
 }): SpaceRoom {
   connectLobby();
   cleanupActiveRoom();
 
   const me = meInfo();
   const now = Date.now();
-  const id = `space-${now}-${Math.random().toString(36).slice(2, 7)}`;
+  const id = opts.id ?? `space-${now}-${Math.random().toString(36).slice(2, 7)}`;
 
   const activityKind = opts.activityKind ?? "talent";
   const activity: SpaceActivityState =
@@ -1190,6 +1192,9 @@ function subscribe(cb: () => void) {
     listeners.delete(cb);
   };
 }
+
+/** The Space you're in right now, if any. */
+export const activeSpaceId = () => state.activeSpaceId;
 
 export function useSpacesStore(): SpacesStoreState {
   return useSyncExternalStore(

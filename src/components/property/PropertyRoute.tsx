@@ -5,6 +5,7 @@
 
 import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyActions } from "@/components/invite/PartyActions";
+import { PartyHostesses, type HostessRun } from "@/components/invite/PartyHostess";
 import { faceNearest, PARTIES, partyMood } from "@/lib/invites";
 import { askForPush } from "@/lib/push/engage";
 import Link from "next/link";
@@ -163,6 +164,9 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   // The host's lights switch, the moment they flip it (late arrivals get it from the party itself).
   const [lightsSet, setLightsSet] = useState<boolean | null>(null);
   const lightsOut = !!party && (lightsSet ?? !!party.lightsOut);
+  // Hostesses bringing drinks: to whoever ordered (you stand by the door's side of the room when it's you).
+  const [runs, setRuns] = useState<HostessRun[]>([]);
+  const serve = (id: string, name: string, to: [number, number]) => setRuns((r) => [...r, { id: `${id}-${Date.now()}`, name, to }].slice(-6));
   const [placing, setPlacing] = useState<PlacingState | null>(null);
   const [decorating, setDecorating] = useState(false);
   const [turns, setTurns] = useState(0);
@@ -230,6 +234,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
     if (e.type === "wave") bubble(e.from.userId, "👋");
     if (e.type === "party") {
       if (e.action === "lights") setLightsSet(!!e.on);
+      else if (e.action === "drinks") { const s = spotOf(e.from.userId); serve(e.from.userId, e.from.username, [s[0], s[2]]); }
       else { dance(PARTIES.actions.dance.seconds); bubble(e.from.userId, "🪩 Everyone dance!"); }
     }
   });
@@ -242,12 +247,16 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
     return () => clearInterval(t);
   }, [peerId]);
   const peer = room.peers.find((p) => p.userId === peerId);
+  // Spots are handed out over everyone here (me included), so nobody stands on anyone else.
+  const spots = spotsFor([me, ...room.peers.map((p) => p.userId)]);
+  const spotOf = (id: string) => spots.get(id) ?? spotFor(id);
+  const allSpots = [...spots.values()];
   const people: Person[] = [
     ...resident,
     ...room.peers.map((p): Person => ({
       look: p.look,
-      position: spotFor(p.userId),
-      rotation: (party ? faceNearest(spotFor(p.userId), [mySpot, ...room.peers.map((o) => spotFor(o.userId))]) : undefined) ?? Math.atan2(-spotFor(p.userId)[0], -spotFor(p.userId)[2]),
+      position: spotOf(p.userId),
+      rotation: (party ? faceNearest(spotOf(p.userId), allSpots) : undefined) ?? Math.atan2(-spotOf(p.userId)[0], -spotOf(p.userId)[2]),
       animation: p.animation,
       label: `@${p.username}${room.unread[p.userId] ? ` · 💬${room.unread[p.userId]}` : ""}`,
       bubble: bubbles[p.userId],
@@ -310,8 +319,9 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         partyDecor={party?.decor}
         lightsOut={lightsOut}
         myAnimation={party ? myMood : undefined}
+        extras={<PartyHostesses runs={runs} onDone={(id) => setRuns((r) => r.filter((x) => x.id !== id))} />}
       />
-      {party && <PartyActions party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={dance} announce={(text) => room.emit({ type: "chat", text })} broadcast={(action, on) => room.emit({ type: "party", action, on })} className="bottom-24" />}
+      {party && <PartyActions party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={dance} announce={(text) => room.emit({ type: "chat", text })} broadcast={(action, on) => { room.emit({ type: "party", action, on }); if (action === "drinks") serve(me, citizen?.username ?? "you", [-2.6, 0]); }} className="bottom-24" />}
       {party && <PartyBanner party={party} hostAway={!room.peers.some((p) => p.username === party.host)} className="top-[calc(max(0.75rem,env(safe-area-inset-top))+4rem)]" />}
 
       <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2">
@@ -474,11 +484,22 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
 }
 
 /** Where a citizen stands while in someone's home: a spot picked from their id, the same for everyone. */
-const SPOTS: Array<[number, number, number]> = [[1.0, 0, 1.0], [0.2, 0, 1.6], [1.6, 0, 0.2], [-0.4, 0, 1.8], [1.8, 0, 1.4], [-1.6, 0, 1.6]];
+// Where visitors stand: in pairs across the middle of the room (so they dance with each other), never on top of each
+// other, your own avatar or the resident. Everyone is given a spot in username order, so it's the same on every screen.
+const PAIR_CENTRES: Array<[number, number]> = [[0.4, 0.8], [0.4, -0.8], [2.0, 0.8], [2.0, -0.8], [0.4, 2.4], [0.4, -2.4], [2.0, 2.4], [2.0, -2.4], [-1.2, -0.8], [-1.2, 2.4], [-1.2, -2.4], [3.4, 0]];
+const KEEP_CLEAR: Array<[number, number]> = [[-3.25, 0], [-1.2, 0.6]];
+const SPOTS: Array<[number, number, number]> = PAIR_CENTRES
+  .flatMap(([x, z]) => [[x - 0.45, z], [x + 0.45, z]] as Array<[number, number]>)
+  .filter(([x, z]) => KEEP_CLEAR.every(([cx, cz]) => Math.hypot(x - cx, z - cz) > 0.8))
+  .map(([x, z]) => [x, 0, z]);
+
+/** Everyone's spot: one each, the first ones in pairs. */
+export function spotsFor(userIds: string[]): Map<string, [number, number, number]> {
+  const sorted = [...new Set(userIds)].sort();
+  return new Map(sorted.map((id, i) => [id, SPOTS[i % SPOTS.length]]));
+}
 export function spotFor(userId: string): [number, number, number] {
-  let h = 0;
-  for (let i = 0; i < userId.length; i++) h = (h * 31 + userId.charCodeAt(i)) | 0;
-  return SPOTS[Math.abs(h) % SPOTS.length];
+  return spotsFor([userId]).get(userId)!;
 }
 
 // ---------------------------------------------------------------- owner tools

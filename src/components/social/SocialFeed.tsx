@@ -20,7 +20,7 @@ function describe(e: Received): { icon: string; text: string } {
     case "accept": return { icon: "✅", text: `${who} accepted — ${e.kind === "dance" ? "time to dance!" : e.kind === "table" ? "they're coming to your table" : "they're on their way"}` };
     case "served": return { icon: "🍽️", text: `${who} ordered` };
     case "friend": return { icon: "🤝", text: `${who} sent you a friend request` };
-    case "party": return { icon: "🎉", text: e.action === "dance" ? `${who} got everyone dancing` : `${who} turned the lights ${e.on ? "out" : "on"}` };
+    case "party": return { icon: "🎉", text: e.action === "dance" ? `${who} got everyone dancing` : e.action === "drinks" ? `${who} ordered drinks` : `${who} turned the lights ${e.on ? "out" : "on"}` };
     case "typing": return { icon: "✍️", text: `${who} is typing…` };
     case "bottle": return { icon: "🍾", text: `${who} ordered bottle service!` };
     case "consumption": return { icon: e.action === "drink" ? "🍸" : "🍴", text: `${who} is having a ${e.action === "drink" ? "drink" : "bite"}` };

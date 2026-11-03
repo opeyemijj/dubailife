@@ -8,8 +8,9 @@ import { PartySheet } from "@/components/invite/PartySheet";
 import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyPeople } from "@/components/invite/PartyPeople";
 import { PartyActions } from "@/components/invite/PartyActions";
+import { PartyHostesses, type HostessRun } from "@/components/invite/PartyHostess";
 import { faceNearest, partyMood } from "@/lib/invites";
-import { spotFor } from "@/components/property/PropertyRoute";
+import { spotsFor } from "@/components/property/PropertyRoute";
 import { useRoom } from "@/lib/room";
 import { AppSetup, needsAppSetup } from "@/components/pwa/AppSetup";
 import { inviteFriends } from "@/lib/invite";
@@ -272,19 +273,28 @@ export default function HomePage() {
   const [lightsSet, setLightsSet] = useState<boolean | null>(null);
   const lightsOut = lightsSet ?? !!party?.lightsOut;
   const [bubbles, setBubbles] = useState<Record<string, string>>({});
+  // Hostesses bringing drinks to whoever ordered.
+  const [runs, setRuns] = useState<HostessRun[]>([]);
+  const serve = (id: string, name: string, to: [number, number]) => setRuns((r) => [...r, { id: `${id}-${Date.now()}`, name, to }].slice(-6));
   const myMood = dancing ? "dance" : party && citizen ? partyMood(citizen.id) : "idle";
   const partyRoom = useRoom(party && activeFlat ? `flat:${activeFlat.id}` : null, { x: 0, z: 0, animation: myMood }, (e) => {
+    if (e.type === "party" && e.action === "drinks") {
+      const s = guestSpots.get(e.from.userId);
+      if (s) serve(e.from.userId, e.from.username, [s[0], s[2]]);
+    }
     const text = e.type === "chat" ? e.text : e.type === "wave" ? "👋" : null;
     if (!text) return;
     setBubbles((b) => ({ ...b, [e.from.userId]: text }));
     setTimeout(() => setBubbles((b) => { const next = { ...b }; if (next[e.from.userId] === text) delete next[e.from.userId]; return next; }), 6000);
   });
   const dance = (seconds: number) => { setDancing(true); setTimeout(() => setDancing(false), seconds * 1000); };
+  // One spot each, so nobody stands on anyone else.
+  const guestSpots = spotsFor(partyRoom.peers.map((p) => p.userId));
   const guests: Person[] = partyRoom.peers.map((p) => ({
     look: p.look,
-    position: spotFor(p.userId),
+    position: guestSpots.get(p.userId)!,
     // Facing whoever's nearest, so they dance with each other.
-    rotation: faceNearest(spotFor(p.userId), partyRoom.peers.map((o) => spotFor(o.userId))) ?? Math.atan2(-spotFor(p.userId)[0], -spotFor(p.userId)[2]),
+    rotation: faceNearest(guestSpots.get(p.userId)!, [...guestSpots.values()]) ?? Math.atan2(-guestSpots.get(p.userId)![0], -guestSpots.get(p.userId)![2]),
     animation: p.animation,
     label: `@${p.username}`,
     bubble: bubbles[p.userId],
@@ -427,6 +437,7 @@ export default function HomePage() {
         partyDecor={party?.decor}
         lightsOut={!!party && lightsOut}
         myAnimation={party ? myMood : undefined}
+        extras={<PartyHostesses runs={runs} onDone={(id) => setRuns((r) => r.filter((x) => x.id !== id))} />}
       />
 
       {/* Camera controls */}
@@ -629,7 +640,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {party && !cleanScreen && !placing && <PartyActions party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={dance} announce={(text) => partyRoom.emit({ type: "chat", text })} broadcast={(action, on) => partyRoom.emit({ type: "party", action, on })} className="bottom-[8.75rem] sm:bottom-40" />}
+      {party && !cleanScreen && !placing && <PartyActions party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={dance} announce={(text) => partyRoom.emit({ type: "chat", text })} broadcast={(action, on) => { partyRoom.emit({ type: "party", action, on }); if (action === "drinks") serve(citizen?.id ?? "me", citizen?.username ?? "you", [-2.6, 0]); }} className="bottom-[8.75rem] sm:bottom-40" />}
       {party && activeFlat && <PartyPeople room={partyRoom} place={activeHomeTitle} peerId={guestId} setPeerId={setGuestId} say={showToast} />}
       {party && !cleanScreen && <PartyBanner party={party} className="top-[calc(max(0.75rem,env(safe-area-inset-top))+7.25rem)]" />}
       {partyOpen && <PartySheet flat={activeFlat ? { id: activeFlat.id, route: flatRoute(activeFlat), title: activeHomeTitle, area: activeHomeArea } : null} onClose={() => setPartyOpen(false)} />}

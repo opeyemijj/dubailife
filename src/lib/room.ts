@@ -53,7 +53,7 @@ export type RoomEvent =
   | { type: "accept"; kind: "join" | "dance" | "table"; spot?: [number, number] }
   | { type: "friend" }
   // At a party: the host turns the lights out or on, or gets everyone dancing.
-  | { type: "party"; action: "lights" | "dance"; on?: boolean };
+  | { type: "party"; action: "lights" | "dance" | "drinks"; on?: boolean };
 
 export type Received = RoomEvent & { id: string; from: Peer; to?: string; at: number };
 
