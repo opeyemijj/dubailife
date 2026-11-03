@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useCitizen } from "@/lib/citizenStore";
 import { useNow } from "@/lib/dubaiClock";
 import { useServices } from "@/lib/cityServices";
-import { createLink, kindOf, myInvites, shareInvite, type InviteRow } from "@/lib/invites";
+import { createLink, kindOf, myInvites, partyDoor, shareInvite, type InviteRow } from "@/lib/invites";
 import { AppScreen, Big, Card, Note } from "./AppScreen";
 
 const at = (iso: string) => new Date(iso).toLocaleString("en-GB", { timeZone: "Asia/Dubai", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
@@ -23,6 +23,7 @@ export function InvitesApp({ onBack, onClose }: { onBack: () => void; onClose?: 
   useEffect(() => { void myInvites().then(setData); }, []);
 
   const open = (code: string) => { onClose?.(); router.push(`/i/${code}`); };
+  const headThere = (r: InviteRow) => { onClose?.(); router.push(r.route ? partyDoor(r.route) : `/i/${r.code}`); };
   const link = async (kind: "ask_out" | "hire_decorator") => {
     const r = await createLink(kind);
     if (!r.code) { setNote({ ok: false, text: r.error ?? "Couldn't make the link." }); return; }
@@ -42,7 +43,7 @@ export function InvitesApp({ onBack, onClose }: { onBack: () => void; onClose?: 
             <p className={`text-sm font-bold ${live ? "text-rose-600" : "text-slate-500"}`}>{live ? "● Happening now" : at(r.startsAt)}{hosting ? ` · ${r.going ?? 0} going · ${r.arrived ?? 0} here` : r.status === "invited" ? " · Not answered yet" : " · You're going"}</p>
           </div>
         </div>
-        <Big onClick={() => open(r.code)}>{hosting ? "Open and invite more" : live ? "🎉 Head there" : "See the invite"}</Big>
+        {!hosting && live && r.status === "going" ? <Big onClick={() => headThere(r)}>🎉 Back to the party</Big> : <Big onClick={() => open(r.code)}>{hosting ? "Open and invite more" : live ? "🎉 Head there" : "See the invite"}</Big>}
       </Card>
     );
   };

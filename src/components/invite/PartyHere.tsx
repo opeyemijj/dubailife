@@ -5,7 +5,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { arriveAt, partyHere, PARTIES, shareInvite, kindOf, type PartyHere } from "@/lib/invites";
+import { arriveAt, partyHere, PARTIES, kindOf, type PartyHere } from "@/lib/invites";
+import { InviteSheet } from "./InviteSheet";
 import { RaceMusic } from "@/components/marathon/raceMusic";
 import { gameAudio } from "@/utils/gameAudio";
 
@@ -140,7 +141,7 @@ function usePartyMusic(active: boolean) {
 }
 
 export function PartyBanner({ party, hostAway, className = "" }: { party: PartyHere; hostAway?: boolean; className?: string }) {
-  const [copied, setCopied] = useState(false);
+  const [inviting, setInviting] = useState(false);
   const [mode, setMode] = useState<MusicMode>(currentMode);
   const [station, setStationName] = useState<string | null>(stationName);
   useEffect(() => { stationListeners.add(setStationName); return () => { stationListeners.delete(setStationName); }; }, []);
@@ -156,12 +157,8 @@ export function PartyBanner({ party, hostAway, className = "" }: { party: PartyH
         className="shrink-0 h-7 px-2 rounded-full bg-white/20 text-[11px] font-black max-w-[9rem] truncate">
         {mode === "radio" ? `📻 ${station ?? "Radio"}` : mode === "groove" ? "🥁 Groove" : "🔇"}
       </button>
-      <button
-        onClick={async () => { const r = await shareInvite(party.code, `Come to ${party.title} on Dubai Life!`); setCopied(r === "copied"); }}
-        className="shrink-0 h-7 px-3 rounded-full bg-white text-fuchsia-700 text-[11px] font-black"
-      >
-        {copied ? "Copied!" : "Invite"}
-      </button>
+      <button onClick={() => setInviting(true)} className="shrink-0 h-7 px-3 rounded-full bg-white text-fuchsia-700 text-[11px] font-black">Invite</button>
+      {inviting && <InviteSheet code={party.code} title={party.title} onClose={() => setInviting(false)} />}
     </div>
   );
 }

@@ -7,6 +7,8 @@
 
 import { supabase } from "@/lib/supabase/client";
 import { sendPushNotification } from "@/lib/push/client";
+import { updateCitizen } from "@/lib/citizenStore";
+import { entranceOf } from "@/lib/city/geo";
 import PARTIES from "@/data/life/parties.json";
 import type { AvatarLookProps } from "@/components/avatar/roster";
 
@@ -25,7 +27,7 @@ export interface InviteView {
   isHost: boolean; mine: "invited" | "going" | "no" | null;
 }
 export interface MyParty { code: string; title: string; label: string; startsAt: string; endsAt: string; going: number }
-export interface InviteRow { code: string; kind: InviteKind; title: string; label: string; startsAt: string; endsAt: string; going?: number; arrived?: number; status?: string; host?: string }
+export interface InviteRow { code: string; kind: InviteKind; title: string; label: string; route?: string; startsAt: string; endsAt: string; going?: number; arrived?: number; status?: string; host?: string }
 export interface PartyHere { code: string; kind: EventKind; title: string; decor: string[]; endsAt: string; host: string; isHost: boolean; arrived: number; lightsOut?: boolean }
 
 const ERRORS: Record<string, string> = {
@@ -45,6 +47,7 @@ const ERRORS: Record<string, string> = {
   they_are_taken: "They're already with someone.",
   you_are_taken: "You're already with someone.",
   not_a_decorator: "Only interior decorators can share a hire-me link.",
+  not_at_party: "Say you're going first, then you can invite people.",
 };
 const friendly = (m: string) => ERRORS[Object.keys(ERRORS).find((k) => m.includes(k)) ?? ""] ?? "Something went wrong. Try again.";
 
@@ -102,6 +105,33 @@ export async function arriveAt(route: string): Promise<{ code: string; title: st
 }
 /** The host turns the lights out (or back on) for everyone at the party. */
 export async function setPartyLights(code: string, out: boolean) { await supabase().rpc("party_lights", { p_code: code, p_out: out }); }
+/** At a party, by default: most people dance and some sit (each person always the same, so it doesn't flicker). */
+export function partyMood(userId: string): "dance" | "sit" {
+  let h = 0;
+  for (let i = 0; i < userId.length; i++) h = (h * 31 + userId.charCodeAt(i)) | 0;
+  return Math.abs(h) % 10 < 3 ? "sit" : "dance";
+}
+/** Turned towards the nearest other person, so people dance with each other. */
+export function faceNearest(at: [number, number, number], others: [number, number, number][]): number | undefined {
+  let best: [number, number, number] | null = null, d = Infinity;
+  for (const o of others) {
+    const dd = (o[0] - at[0]) ** 2 + (o[2] - at[2]) ** 2;
+    if (dd > 0.01 && dd < d) { d = dd; best = o; }
+  }
+  return best ? Math.atan2(best[0] - at[0], best[2] - at[2]) : undefined;
+}
+
+/** Straight to a party you're invited to (or hosting): you're put at the door, so you don't travel across the city
+    again each time. Returns where to go. */
+export function partyDoor(route: string): string {
+  const m = route.match(/^\/(?:property|place)\/([^/]+)\//);
+  const placeId = m?.[1];
+  if (placeId) {
+    const at = entranceOf(placeId);
+    updateCitizen((c) => ({ ...c, location: { ...(at ?? c.location ?? { x: 0, y: 0 }), placeId } }));
+  }
+  return route;
+}
 export async function cancelInvite(code: string) { await supabase().rpc("cancel_invite", { p_code: code }); }
 
 /** Share an invite: the phone's share sheet, or the link copied. */

@@ -5,6 +5,7 @@
 
 import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyActions } from "@/components/invite/PartyActions";
+import { faceNearest, PARTIES, partyMood } from "@/lib/invites";
 import { askForPush } from "@/lib/push/engage";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -159,6 +160,9 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   const party = usePartyHere(flatRoute(flat), true);
   const [dancing, setDancing] = useState(false);
   const dance = (seconds: number) => { setDancing(true); setTimeout(() => setDancing(false), seconds * 1000); };
+  // The host's lights switch, the moment they flip it (late arrivals get it from the party itself).
+  const [lightsSet, setLightsSet] = useState<boolean | null>(null);
+  const lightsOut = !!party && (lightsSet ?? !!party.lightsOut);
   const [placing, setPlacing] = useState<PlacingState | null>(null);
   const [decorating, setDecorating] = useState(false);
   const [turns, setTurns] = useState(0);
@@ -219,9 +223,15 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
       return next;
     }), 6000);
   }, []);
-  const room = useRoom(`flat:${flat.id}`, { x: mySpot[0], z: mySpot[2], animation: dancing ? "dance" : "idle" }, (e: Received) => {
+  // At a party everyone dances (some sit) unless they're doing something else.
+  const myMood = dancing ? "dance" : party ? partyMood(me) : "idle";
+  const room = useRoom(`flat:${flat.id}`, { x: mySpot[0], z: mySpot[2], animation: myMood }, (e: Received) => {
     if (e.type === "chat") bubble(e.from.userId, e.text);
     if (e.type === "wave") bubble(e.from.userId, "👋");
+    if (e.type === "party") {
+      if (e.action === "lights") setLightsSet(!!e.on);
+      else { dance(PARTIES.actions.dance.seconds); bubble(e.from.userId, "🪩 Everyone dance!"); }
+    }
   });
   const [peerId, setPeerId] = useState<string | null>(null);
   const [startChat, setStartChat] = useState(false);
@@ -237,7 +247,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
     ...room.peers.map((p): Person => ({
       look: p.look,
       position: spotFor(p.userId),
-      rotation: Math.atan2(-spotFor(p.userId)[0], -spotFor(p.userId)[2]),
+      rotation: (party ? faceNearest(spotFor(p.userId), [mySpot, ...room.peers.map((o) => spotFor(o.userId))]) : undefined) ?? Math.atan2(-spotFor(p.userId)[0], -spotFor(p.userId)[2]),
       animation: p.animation,
       label: `@${p.username}${room.unread[p.userId] ? ` · 💬${room.unread[p.userId]}` : ""}`,
       bubble: bubbles[p.userId],
@@ -298,10 +308,10 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         onPickUp={(uid) => { const f = withHomeItems(furniture, housingTier).find((x) => x.uid === uid); if (f) setPlacing({ uid, itemId: f.itemId, rot: f.placement?.kind === "floor" ? f.placement.rot : 0 }); }}
         onPlaceBlocked={() => say("🚫 It doesn't fit there.")}
         partyDecor={party?.decor}
-        lightsOut={!!party?.lightsOut}
-        myAnimation={dancing ? "dance" : undefined}
+        lightsOut={lightsOut}
+        myAnimation={party ? myMood : undefined}
       />
-      {party && <PartyActions party={party} lightsOut={!!party.lightsOut} onLights={() => {}} onDance={dance} announce={(text) => room.emit({ type: "chat", text })} className="bottom-24" />}
+      {party && <PartyActions party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={dance} announce={(text) => room.emit({ type: "chat", text })} broadcast={(action, on) => room.emit({ type: "party", action, on })} className="bottom-24" />}
       {party && <PartyBanner party={party} hostAway={!room.peers.some((p) => p.username === party.host)} className="top-[calc(max(0.75rem,env(safe-area-inset-top))+4rem)]" />}
 
       <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2">

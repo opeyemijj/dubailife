@@ -7,6 +7,7 @@
 import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyDecor } from "@/components/invite/PartyDecor";
 import { PartyActions } from "@/components/invite/PartyActions";
+import { partyMood } from "@/lib/invites";
 import { askForPush } from "@/lib/push/engage";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -406,7 +407,9 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     return [plan.entrance[0] + (slot - 3) * 0.8, plan.entrance[1] - (slot % 2) * 0.6];
   }, [citizen?.id, plan.entrance]);
   // What others see of me: where I'm standing or heading, and what I'm doing.
-  const me = { x: walkTo?.point[0] ?? spawn[0], z: walkTo?.point[1] ?? spawn[1], face: walkTo?.face, animation: playerAnimation, lift: playerAnimation === "sit" ? seatLift : 0 };
+  // At a party everyone dances (some sit) unless they're doing something else.
+  const shownAnimation: AvatarAnimation = party && playerAnimation === "idle" && citizen ? partyMood(citizen.id) : playerAnimation;
+  const me = { x: walkTo?.point[0] ?? spawn[0], z: walkTo?.point[1] ?? spawn[1], face: walkTo?.face, animation: shownAnimation, lift: playerAnimation === "sit" ? seatLift : 0 };
   const [bubbles, setBubbles] = useState<Record<string, string>>({});
   const bubble = useCallback((who: string, text: string) => {
     setBubbles((b) => ({ ...b, [who]: text }));
@@ -469,6 +472,11 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
 
   // React to what others send me, as it arrives.
   const onRoomEvent = (e: Received) => {
+    // The party host's lights switch and "everyone dance", live.
+    if (e.type === "party") {
+      if (e.action === "lights") setLightsSet(!!e.on);
+      else { setPlayerAnimation("dance"); setTimeout(() => setPlayerAnimation((a) => (a === "dance" ? "idle" : a)), 25_000); bubble(e.from.userId, "🪩 Everyone dance!"); }
+    }
     if (e.type === "chat") {
       bubble(e.from.userId, e.text);
       // A buzz on phones so a message isn't missed.
@@ -1250,7 +1258,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         plan={plan}
         look={citizen?.look}
         worn={worn}
-        playerAnimation={playerAnimation}
+        playerAnimation={shownAnimation}
         playerLift={playerAnimation === "sit" ? seatLift : 0}
         start={spawn}
         walkTo={walkTo}
@@ -1283,7 +1291,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       {party && !ride && (
         <PartyActions party={party} lightsOut={lightsSet ?? !!party.lightsOut} onLights={setLightsSet}
           onDance={(seconds) => { setPlayerAnimation("dance"); setTimeout(() => setPlayerAnimation((a) => (a === "dance" ? "idle" : a)), seconds * 1000); }}
-          announce={(text) => room.emit({ type: "chat", text })} className="bottom-28" />
+          announce={(text) => room.emit({ type: "chat", text })} broadcast={(action, on) => room.emit({ type: "party", action, on })} className="bottom-28" />
       )}
 
       {ride && (

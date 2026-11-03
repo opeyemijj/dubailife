@@ -12,7 +12,7 @@ import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { useCitizen } from "@/lib/citizenStore";
 import { useNow } from "@/lib/dubaiClock";
 import { openPhone } from "@/components/layout/PhoneOverlay";
-import { acceptAskOut, decorOf, forgetInvite, inviteView, isEvent, kindOf, rememberInvite, rsvp, shareInvite, type InviteView } from "@/lib/invites";
+import { acceptAskOut, decorOf, forgetInvite, partyDoor, inviteView, isEvent, kindOf, rememberInvite, rsvp, shareInvite, type InviteView } from "@/lib/invites";
 import { gameAudio } from "@/utils/gameAudio";
 
 const when = (iso: string) => new Date(iso).toLocaleString("en-GB", { timeZone: "Asia/Dubai", weekday: "long", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
@@ -85,7 +85,7 @@ export function InvitePage({ code, initial }: { code: string; initial: InviteVie
     if (err && invite.mine !== "going") { setNote(err); return; }
     forgetInvite();
     gameAudio.playClickSound();
-    router.push(invite.route);
+    router.push(invite.isHost && invite.route.startsWith("/property/") ? "/home" : partyDoor(invite.route));
   };
   const countMeIn = async () => {
     setBusy(true);

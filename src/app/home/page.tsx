@@ -8,6 +8,7 @@ import { PartySheet } from "@/components/invite/PartySheet";
 import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyPeople } from "@/components/invite/PartyPeople";
 import { PartyActions } from "@/components/invite/PartyActions";
+import { faceNearest, partyMood } from "@/lib/invites";
 import { spotFor } from "@/components/property/PropertyRoute";
 import { useRoom } from "@/lib/room";
 import { AppSetup, needsAppSetup } from "@/components/pwa/AppSetup";
@@ -270,14 +271,23 @@ export default function HomePage() {
   const [dancing, setDancing] = useState(false);
   const [lightsSet, setLightsSet] = useState<boolean | null>(null);
   const lightsOut = lightsSet ?? !!party?.lightsOut;
-  const partyRoom = useRoom(party && activeFlat ? `flat:${activeFlat.id}` : null, { x: 0, z: 0, animation: dancing ? "dance" : "idle" });
+  const [bubbles, setBubbles] = useState<Record<string, string>>({});
+  const myMood = dancing ? "dance" : party && citizen ? partyMood(citizen.id) : "idle";
+  const partyRoom = useRoom(party && activeFlat ? `flat:${activeFlat.id}` : null, { x: 0, z: 0, animation: myMood }, (e) => {
+    const text = e.type === "chat" ? e.text : e.type === "wave" ? "👋" : null;
+    if (!text) return;
+    setBubbles((b) => ({ ...b, [e.from.userId]: text }));
+    setTimeout(() => setBubbles((b) => { const next = { ...b }; if (next[e.from.userId] === text) delete next[e.from.userId]; return next; }), 6000);
+  });
   const dance = (seconds: number) => { setDancing(true); setTimeout(() => setDancing(false), seconds * 1000); };
   const guests: Person[] = partyRoom.peers.map((p) => ({
     look: p.look,
     position: spotFor(p.userId),
-    rotation: Math.atan2(-spotFor(p.userId)[0], -spotFor(p.userId)[2]),
+    // Facing whoever's nearest, so they dance with each other.
+    rotation: faceNearest(spotFor(p.userId), partyRoom.peers.map((o) => spotFor(o.userId))) ?? Math.atan2(-spotFor(p.userId)[0], -spotFor(p.userId)[2]),
     animation: p.animation,
     label: `@${p.username}`,
+    bubble: bubbles[p.userId],
     onClick: () => setGuestId(p.userId),
   }));
   const [guestId, setGuestId] = useState<string | null>(null);
@@ -416,7 +426,7 @@ export default function HomePage() {
         homeStyle={homeStyle}
         partyDecor={party?.decor}
         lightsOut={!!party && lightsOut}
-        myAnimation={dancing ? "dance" : undefined}
+        myAnimation={party ? myMood : undefined}
       />
 
       {/* Camera controls */}
@@ -619,7 +629,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {party && !cleanScreen && !placing && <PartyActions party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={dance} announce={(text) => partyRoom.emit({ type: "chat", text })} className="bottom-[8.75rem] sm:bottom-40" />}
+      {party && !cleanScreen && !placing && <PartyActions party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={dance} announce={(text) => partyRoom.emit({ type: "chat", text })} broadcast={(action, on) => partyRoom.emit({ type: "party", action, on })} className="bottom-[8.75rem] sm:bottom-40" />}
       {party && activeFlat && <PartyPeople room={partyRoom} place={activeHomeTitle} peerId={guestId} setPeerId={setGuestId} say={showToast} />}
       {party && !cleanScreen && <PartyBanner party={party} className="top-[calc(max(0.75rem,env(safe-area-inset-top))+7.25rem)]" />}
       {partyOpen && <PartySheet flat={activeFlat ? { id: activeFlat.id, route: flatRoute(activeFlat), title: activeHomeTitle, area: activeHomeArea } : null} onClose={() => setPartyOpen(false)} />}
