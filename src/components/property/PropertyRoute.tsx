@@ -3,6 +3,7 @@
 // A flat or home: travel there, get through the door (access rules / knocking), then see the saved
 // interior. Residents and editors can furnish it; owners manage access, guests and listings.
 
+import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { askForPush } from "@/lib/push/engage";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -13,7 +14,7 @@ import { CATALOG, getCatalogItem, housingTierFor, withHomeItems, HOUSING_CONFIGS
 import { adjustBalance, useCitizen, useRequireCitizen } from "@/lib/citizenStore";
 import { getEntity } from "@/lib/city/geo";
 import {
-  ACCESS_LABEL, addGuest, flatTitle, getFlat, getInterior, listFlat, listGuests, removeGuest, requestEntry, saveInterior, setAccess, watchRequest,
+  ACCESS_LABEL, addGuest, flatRoute, flatTitle, getFlat, getInterior, listFlat, listGuests, removeGuest, requestEntry, saveInterior, setAccess, watchRequest,
   type Access, type FlatView, type Listing,
 } from "@/lib/city/flats";
 import { ROSTER, presetFor, rosterThumb } from "@/components/avatar/roster";
@@ -153,6 +154,8 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   flat: FlatView; me: string; canEdit: boolean; reason: string; furniture: OwnedFurniture[];
   setFurniture: (f: OwnedFurniture[]) => void; look?: import("@/components/avatar/roster").AvatarLookProps; onExit: () => void; onChanged: () => void;
 }) {
+  // A party on here: decorations, a banner, and (for a guest) checking in.
+  const party = usePartyHere(flatRoute(flat), true);
   const [placing, setPlacing] = useState<PlacingState | null>(null);
   const [decorating, setDecorating] = useState(false);
   const [turns, setTurns] = useState(0);
@@ -291,7 +294,9 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         onPlace={(uid, p) => place(uid, p)}
         onPickUp={(uid) => { const f = withHomeItems(furniture, housingTier).find((x) => x.uid === uid); if (f) setPlacing({ uid, itemId: f.itemId, rot: f.placement?.kind === "floor" ? f.placement.rot : 0 }); }}
         onPlaceBlocked={() => say("🚫 It doesn't fit there.")}
+        partyDecor={party?.decor}
       />
+      {party && <PartyBanner party={party} className="top-[calc(max(0.75rem,env(safe-area-inset-top))+4rem)]" />}
 
       <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2">
         <button onClick={onExit} className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center" aria-label="Leave"><ArrowLeft className="w-4 h-4" /></button>

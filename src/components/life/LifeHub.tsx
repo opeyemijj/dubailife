@@ -59,7 +59,8 @@ export function LifeHub() {
       if (ref) void supabase().rpc("claim_referral", { p_username: ref }).then(() => { try { localStorage.removeItem("dl_ref"); } catch { /* blocked */ } });
       const urlGo = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("go") : null;
       const go = urlGo || localStorage.getItem("dl_go");
-      if (go && go.startsWith("/") && !go.startsWith("//")) {
+      // A brand-new player finishes moving in and decorating first; the link waits until then.
+      if (go && go.startsWith("/") && !go.startsWith("//") && !citizen?.decorFirst) {
         try { localStorage.removeItem("dl_go"); } catch { /* blocked */ }
         if (window.location.pathname !== go.split("?")[0]) {
           window.dispatchEvent(new CustomEvent("dubai:toast", { detail: ref ? `🚀 Joining @${ref} now…` : "🚀 Teleporting to your invite…" }));

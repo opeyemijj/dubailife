@@ -1,0 +1,27 @@
+{
+  "_note": "Parties and invite links (src/lib/invites.ts, components/invite). Event kinds, party decorations (bought for one event, shown in 3D at the home or venue while it's on) and arrival rewards. decor prices, rewards and limits are mirrored in supabase/migrations/*_events.sql (scripts/check-life-config.mjs).",
+  "kinds": {
+    "house_party": { "icon": "🎉", "label": "House party", "where": "home", "hours": 3 },
+    "dinner": { "icon": "🍽️", "label": "Dinner party", "where": "home-or-restaurant", "hours": 2 },
+    "club_night": { "icon": "🪩", "label": "Club night", "where": "club", "hours": 4 },
+    "ask_out": { "icon": "💌", "label": "Ask me out", "where": "link", "days": 14 },
+    "hire_decorator": { "icon": "🧑‍🎨", "label": "Hire me to decorate", "where": "link", "days": 14 }
+  },
+  "decor": [
+    { "id": "balloons", "label": "Balloon clusters", "icon": "🎈", "price": 800 },
+    { "id": "bunting", "label": "Bunting flags", "icon": "🎏", "price": 600 },
+    { "id": "lights", "label": "Fairy lights", "icon": "✨", "price": 1200 },
+    { "id": "flowers", "label": "Flower displays", "icon": "💐", "price": 1500 },
+    { "id": "neon", "label": "Neon party sign", "icon": "🔆", "price": 2000 },
+    { "id": "discoball", "label": "Disco ball & lights", "icon": "🪩", "price": 2500 }
+  ],
+  "rewards": {
+    "hostPerGuest": 300,
+    "hostPerNewPlayer": 1000,
+    "newPlayerDays": 7,
+    "guestPoints": 20,
+    "hostPoints": 10
+  },
+  "maxGuests": 20,
+  "reminderMinutes": 15
+}

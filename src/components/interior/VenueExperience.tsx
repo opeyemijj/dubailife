@@ -4,6 +4,8 @@
 // compare products, try accessories on, buy (with confirmation), talk to staff, apply for a job,
 // work shifts and join activities.
 
+import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
+import { PartyDecor } from "@/components/invite/PartyDecor";
 import { askForPush } from "@/lib/push/engage";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -112,6 +114,8 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     if (kind && citizen?.id) logFun(kind, place.id, venue.id);
   }, [place, venue, citizen?.id]);
   const plan = useMemo(() => buildPlan(venue), [venue]);
+  // A party on here: decorations, a banner, and checking in as a guest.
+  const party = usePartyHere(`/place/${place.id}/${venue.id}`, true);
 
   const [walkTo, setWalkTo] = useState<WalkTarget | null>(null);
   const [, setPending] = useState<{ key: number; open: () => void } | null>(null);
@@ -1234,7 +1238,10 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         inside={inside && !ride}
         ride={ride}
         onRideEnd={onRideEnd}
-        extras={castles.length ? <>{castles.map((c) => <group key={`${c.at[0]},${c.at[1]}`} position={[c.at[0], 0, c.at[1]]}><SandCastle stage={c.stage} /></group>)}</> : null}
+        extras={<>
+          {castles.map((c) => <group key={`${c.at[0]},${c.at[1]}`} position={[c.at[0], 0, c.at[1]]}><SandCastle stage={c.stage} /></group>)}
+          {party && <PartyDecor decor={party.decor} w={plan.size[0]} d={plan.size[1]} h={4.4} />}
+        </>}
         placeAt={placeAt}
         venue={venue}
         plan={plan}
@@ -1269,6 +1276,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         vipTables={vipReservations}
         activityFX={activityFX}
       />
+      {party && <PartyBanner party={party} className="top-[calc(max(0.75rem,env(safe-area-inset-top))+4.5rem)]" />}
 
       {ride && (
         <RideHUD

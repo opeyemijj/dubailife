@@ -1,5 +1,6 @@
 "use client";
 
+import { isInviteCode, pendingInvite, rememberInvite } from "@/lib/invites";
 import { requestPasswordReset } from "@/lib/email";
 import { InstallApp } from "@/components/pwa/InstallApp";
 import { compact, useSiteStats } from "@/lib/siteStats";
@@ -37,10 +38,12 @@ export function LandingOverlay({
   // An invite (?ref=username) and optional deep-link destination (?go=/place/...) are remembered until signed in.
   const ref = searchParams.get("ref");
   const go = searchParams.get("go");
+  const invite = searchParams.get("invite");
   useEffect(() => {
+    if (isInviteCode(invite)) rememberInvite(invite);
     if (ref && /^[a-z0-9_]{3,24}$/.test(ref)) { try { localStorage.setItem("dl_ref", ref); } catch { /* storage blocked */ } }
     if (go && go.startsWith("/") && !go.startsWith("//")) { try { localStorage.setItem("dl_go", go); } catch { /* storage blocked */ } }
-  }, [ref, go]);
+  }, [ref, go, invite]);
   const onlineCount = useOnlineCount();
   const { visits } = useSiteStats();
   const placeCount = PLACES.reduce((n, p) => n + p.venues.filter((v) => !v.comingSoon).length, 0);
@@ -175,7 +178,9 @@ export function LandingOverlay({
     setBusy(false);
     if (!result.ok) return setAuthError(result.error);
     setLoginPassword("");
-    router.push(getCitizenState().needsOnboarding ? "/onboarding/look" : "/home");
+    // Came from an invite: back to it (it shows what's left to do).
+    const pending = pendingInvite();
+    router.push(getCitizenState().needsOnboarding ? "/onboarding/look" : pending ? `/i/${pending}` : "/home");
   };
 
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

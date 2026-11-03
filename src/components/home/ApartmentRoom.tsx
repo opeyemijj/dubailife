@@ -1,5 +1,6 @@
 "use client";
 
+import { PartyDecor } from "@/components/invite/PartyDecor";
 import { canvasQuality } from "@/lib/device";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
@@ -52,6 +53,8 @@ export interface ApartmentRoomProps {
   housingTier?: HousingTier;
   /** High-angle isometric dollhouse cutaway up-view */
   upView?: boolean;
+  /** A party on here: its decorations, shown in the room. */
+  partyDecor?: string[];
   /** How far back the camera sits, when something needs the whole home in a smaller space. */
   viewDistance?: number;
   /** "inside": an over-the-shoulder camera in the room with the citizen, instead of looking down on the home. */
@@ -1605,6 +1608,7 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
         <Suspense fallback={null}>
           <RoomScene {...props} labels={labels} />
         </Suspense>
+        {props.partyDecor && <PartyDecor decor={props.partyDecor} w={ROOM_SIZE} d={ROOM_SIZE} h={WALL_HEIGHT} />}
 
         <OrbitControls
           makeDefault

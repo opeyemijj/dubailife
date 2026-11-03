@@ -4,6 +4,8 @@ import { askLogout } from "@/components/layout/LogoutConfirm";
 import { DecoratorSheet, DecoratorStatus } from "@/components/home/Decorator";
 import { HomeActions } from "@/components/home/HomeActions";
 import { MoveInGuide } from "@/components/home/MoveInGuide";
+import { PartySheet } from "@/components/invite/PartySheet";
+import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { AppSetup, needsAppSetup } from "@/components/pwa/AppSetup";
 import { inviteFriends } from "@/lib/invite";
 import { useMyDecor } from "@/lib/decorator";
@@ -25,10 +27,10 @@ import {
   CATALOG, FLOOR_FINISHES, PANELS_PRICE, SHOP_CATEGORIES, WALL_PAINTS, getCatalogItem, getHousingTierFromText, housingTierFor, withHomeItems, HOUSING_CONFIGS,
   type CatalogItem, type HomeStyle, type Interaction, type Placement, type Rotation, type HousingTier, type HomeActivityDef, type ShopCategory,
 } from "@/lib/furniture";
-import { flatRoute, myFlats, setAccess, type FlatView } from "@/lib/city/flats";
+import { flatRoute, myFlats, type FlatView } from "@/lib/city/flats";
 import { getEntity } from "@/lib/city/geo";
 import { openLife } from "@/components/life/LifeHub";
-import { broadcastCityPulse, useOnlineCount, useOnlineUsernames, formatOnline } from "@/lib/presence";
+import { useOnlineCount, useOnlineUsernames, formatOnline } from "@/lib/presence";
 import { matesInRoom, useBedspace } from "@/lib/bedspace";
 import { openPhone } from "@/components/layout/PhoneOverlay";
 import { useUnreadTotal } from "@/lib/unread";
@@ -104,8 +106,11 @@ export default function HomePage() {
   const [placing, setPlacing] = useState<PlacingState | null>(null);
   const [decorating, setDecorating] = useState(false);
   // An interior decorator: choosing one, and whether one is at work here (then the style is theirs to set).
-  const [decoratorOpen, setDecoratorOpen] = useState(false);
+  // Opened from a decorator's hire-me link (/home?hire=<username>).
+  const [decoratorOpen, setDecoratorOpen] = useState(() => !!searchParams?.get("hire"));
   const [homeMenuOpen, setHomeMenuOpen] = useState(false);
+  const [partyOpen, setPartyOpen] = useState(() => searchParams?.get("party") === "1");
+  const hireParam = searchParams?.get("hire") ?? null;
   const { job: decorJob, reload: reloadDecor } = useMyDecor(citizen?.id);
   const [turns, setTurns] = useState(0);
 
@@ -239,33 +244,6 @@ export default function HomePage() {
     if (!decorFirst || !decorated) return;
     return () => updateCitizen((c) => ({ ...c, decorFirst: false }));
   }, [decorFirst, decorated]);
-  const hostParty = async () => {
-                gameAudio.playCoinSound();
-                const targetHref = activeFlat ? flatRoute(activeFlat) : "/home";
-                if (activeFlat) {
-                  void setAccess(activeFlat.id, "public");
-                }
-                broadcastCityPulse({
-                  kind: "party",
-                  icon: "🎉",
-                  title: `@${citizen?.username ?? "someone"} is hosting an Open House at ${activeHomeTitle}!`,
-                  subtitle: `${activeHomeArea} · Doors open now for +25 Social & vibes!`,
-                  href: targetHref,
-                  cta: "Visit Home ›",
-                  from: citizen?.username ?? "someone",
-                });
-                gainSkill("charisma", 15);
-                const refPart = citizen?.username ? `ref=${encodeURIComponent(citizen.username)}&` : "";
-                const url = `${window.location.origin}/?${refPart}go=${encodeURIComponent(targetHref)}`;
-                const text = `Come visit my 3D ${activeHomeTitle} (${activeHomeArea}) in Dubai Life! 🎉 Doors are open right now!`;
-                if (navigator.share) {
-                  try { await navigator.share({ title: `${activeHomeTitle} · Open House`, text, url }); } catch { /* cancelled */ }
-                } else {
-                  try { await navigator.clipboard.writeText(`${text} ${url}`); } catch { /* blocked */ }
-                }
-                setToastMsg(`🎉 Open House broadcast to all online citizens & invite link ready! (+15 Charisma XP)`);
-                setTimeout(() => setToastMsg(null), 4500);
-  };
   const shareHome = async () => {
     gameAudio.playClickSound();
     if (!activeFlat) {
@@ -281,6 +259,8 @@ export default function HomePage() {
     }
     try { await navigator.clipboard.writeText(`${text} ${url}`); showToast("Invite link copied. Send it to your friends!"); } catch { /* blocked */ }
   };
+  // A party on at this home right now (yours): its decorations go up.
+  const party = usePartyHere(activeFlat ? flatRoute(activeFlat) : null, false);
   const openShop = () => { setShopTab("shop"); setBuyModalOpen(true); };
   const stored = withHomeItems(furniture, housingTier).filter((f) => !f.placement);
   const placingItem = placing ? getCatalogItem(placing.itemId) : undefined;
@@ -414,6 +394,7 @@ export default function HomePage() {
         level={level}
         onChangeLevel={changeLevel}
         homeStyle={homeStyle}
+        partyDecor={party?.decor}
       />
 
       {/* Camera controls */}
@@ -616,6 +597,8 @@ export default function HomePage() {
         </div>
       )}
 
+      {party && !cleanScreen && <PartyBanner party={party} className="top-[calc(max(0.75rem,env(safe-area-inset-top))+7.25rem)]" />}
+      {partyOpen && <PartySheet flat={activeFlat ? { id: activeFlat.id, route: flatRoute(activeFlat), title: activeHomeTitle, area: activeHomeArea } : null} onClose={() => setPartyOpen(false)} />}
       {homeMenuOpen && (
         <div className="fixed inset-0 z-[200] bg-black/40 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-label="Home menu" onClick={() => setHomeMenuOpen(false)}>
           <div className="w-full max-w-md bg-white text-slate-900 rounded-t-[28px] sm:rounded-[28px] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-2" onClick={(e) => e.stopPropagation()}>
@@ -625,7 +608,7 @@ export default function HomePage() {
             </div>
             <HomeMenuRow icon={housingConfig.icon} title={activeHomeTitle} text={`${activeHomeArea} · Switch home`} onClick={() => { setHomeMenuOpen(false); setTierModalOpen(true); }} />
             <HomeMenuRow icon="🧑‍🎨" title={decorJob ? "Decorator at work" : "Employ a decorator"} text={decorJob ? "See how it's going" : "A player decorates with your budget"} onClick={() => { setHomeMenuOpen(false); setDecoratorOpen(true); }} />
-            <HomeMenuRow icon="🎉" title="Host a party" text="Open your doors to everyone online" onClick={() => { setHomeMenuOpen(false); void hostParty(); }} />
+            <HomeMenuRow icon="🎉" title="Throw a house party" text="Pick a time and send invite links" onClick={() => { setHomeMenuOpen(false); setPartyOpen(true); }} />
             {activeFlat && <HomeMenuRow icon="💌" title="Invite a player to your home" text="Pick someone from your chats" onClick={() => { setHomeMenuOpen(false); router.push("/phone?tab=chats"); }} />}
             <HomeMenuRow icon="🔗" title={activeFlat ? "Share an invite link" : "Invite a friend to Dubai Life"} text={activeFlat ? "Send it to anyone" : "Rent or buy on the map to have people over"} onClick={() => { setHomeMenuOpen(false); void shareHome(); }} />
             {housingConfig.hasDollhouseUpView && <HomeMenuRow icon={upView ? "🔍" : "📐"} title={upView ? "Focus on one room" : "See the whole floor"} text="Change the view" onClick={() => { setUpView(!upView); setHomeMenuOpen(false); }} />}
@@ -635,7 +618,7 @@ export default function HomePage() {
 
       {/* An interior decorator at work here, and the reveal when they're done; choosing one. */}
       {!cleanScreen && <DecoratorStatus tier={housingTier} job={decorJob} reload={reloadDecor} />}
-      {decoratorOpen && <DecoratorSheet tier={housingTier} onClose={() => setDecoratorOpen(false)} onHired={() => { setBuyModalOpen(false); void reloadDecor(); }} />}
+      {decoratorOpen && <DecoratorSheet tier={housingTier} preselect={hireParam} onClose={() => setDecoratorOpen(false)} onHired={() => { setBuyModalOpen(false); void reloadDecor(); }} />}
 
       {/* RELATABLE HOME ACTIVITIES DOCK (Collapsible Floating Pill / Expanded Drawer) */}
       {!cleanScreen && !placing && (

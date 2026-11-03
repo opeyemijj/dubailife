@@ -227,6 +227,23 @@ const decCallSql = readFileSync(`supabase/migrations/${decCallFile}`, "utf8");
 for (const text of [`p_budget < ${dec.budget.min} or p_budget > ${dec.budget.max}`, `interval '${dec.abandonHours} hours'`]) {
   if (!decCallSql.includes(text)) { bad++; console.error(`decorators: differs from SQL (${text})`); }
 }
+// Parties (src/data/life/parties.json vs *_events.sql): decoration prices, arrival rewards, guest limit and reminders.
+const parties = JSON.parse(readFileSync("src/data/life/parties.json", "utf8"));
+const evFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_events.sql")).sort().pop();
+const evSql = readFileSync(`supabase/migrations/${evFile}`, "utf8");
+const pr = parties.rewards;
+for (const text of [
+  ...parties.decor.map((d) => `when '${d.id}' then ${d.price}`),
+  `paid := ${pr.hostPerGuest} + case when fresh then ${pr.hostPerNewPlayer} else 0 end;`,
+  `created_at > now() - interval '${pr.newPlayerDays} days'`,
+  `add_points(i.host_id, 'wellbeing', ${pr.hostPoints},`,
+  `add_points(me, 'wellbeing', ${pr.guestPoints},`,
+  `p_max > ${parties.maxGuests}`,
+  `now() + interval '${parties.reminderMinutes} minutes'`,
+  `when 'house_party' then ${parties.kinds.house_party.hours} when 'dinner' then ${parties.kinds.dinner.hours} else ${parties.kinds.club_night.hours} end`,
+]) {
+  if (!evSql.includes(text)) { bad++; console.error(`parties: differs from SQL (${text.slice(0, 80)})`); }
+}
 // Penalties (cars.json → driving.revokeAfterAccidents vs *_penalties.sql).
 const penFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_penalties.sql")).sort().pop();
 const penSql = readFileSync(`supabase/migrations/${penFile}`, "utf8");

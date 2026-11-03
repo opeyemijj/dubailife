@@ -29,6 +29,8 @@ import { NAVIGATE } from "@/components/layout/Embed";
 import { HayatiApp } from "@/components/phone/HayatiApp";
 import { CarsApp } from "@/components/phone/CarsApp";
 import { DecorApp } from "@/components/phone/DecorApp";
+import { InvitesApp } from "@/components/phone/InvitesApp";
+import { myInvites } from "@/lib/invites";
 import { SpacesApp } from "@/components/phone/SpacesApp";
 import { useSpacesStore } from "@/lib/spaces";
 import { useLove } from "@/lib/love";
@@ -38,7 +40,7 @@ import APPS from "@/data/phone/apps.json";
 export const openPhone = (app?: Screen) => window.dispatchEvent(new CustomEvent("dubai:open-phone", { detail: app }));
 
 /** Apps that open inside the phone (the rest open their page). */
-type Screen = "home" | "spaces" | "games" | "jobs" | "clinic" | "court" | "food" | "grocery" | "rides" | "hayati" | "cars" | "decor" | `store:${string}` | `page:${string}`;
+type Screen = "home" | "spaces" | "games" | "jobs" | "clinic" | "court" | "food" | "grocery" | "rides" | "hayati" | "cars" | "decor" | "invites" | `store:${string}` | `page:${string}`;
 
 interface App { id: string; name: string; icon: string; bg: string; href?: string; screen?: Screen; run?: () => void; badge?: number; isNew?: boolean }
 
@@ -98,6 +100,13 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
   const courtBadge = (services?.cases.filter((c) => c.status === "open").length ?? 0) + (services?.clients.filter((c) => c.status === "open" && c.defence === null).length ?? 0);
   const { rooms: spaceRooms } = useSpacesStore();
   const liveSpacesBadge = spaceRooms.filter((r) => !r.scheduledFor).length;
+  // Invites not answered yet.
+  const [invitesBadge, setInvitesBadge] = useState(0);
+  useEffect(() => {
+    let live = true;
+    void myInvites().then((r) => { if (live) setInvitesBadge(r.invited.filter((x) => x.status === "invited").length); });
+    return () => { live = false; };
+  }, []);
   const apps: App[] = useMemo(() => [
     // The apps people in Dubai open every day.
     { id: "spaces", name: "Spaces", icon: "🎙️", bg: "from-purple-600 to-slate-900", screen: "spaces", badge: liveSpacesBadge, isNew: true },
@@ -110,6 +119,7 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
     { id: "hayati", name: "Hayati", icon: "💞", bg: "from-rose-400 to-pink-600", screen: "hayati", badge: loveBadge, isNew: true },
     { id: "cars", name: "My Car", icon: "🚗", bg: "from-slate-600 to-slate-900", screen: "cars", isNew: true },
     { id: "decor", name: "Decor", icon: "🧑‍🎨", bg: "from-emerald-400 to-teal-700", screen: "decor", isNew: true },
+    { id: "invites", name: "Invites", icon: "🎉", bg: "from-fuchsia-500 to-violet-700", screen: "invites", badge: invitesBadge, isNew: true },
     { id: "marathon", name: "Marathon", icon: "🏅", bg: "from-emerald-500 to-teal-700", href: "/marathon", isNew: true },
     { id: "messages", name: "Messages", icon: "💬", bg: "from-sky-400 to-blue-600", screen: "page:/phone", badge: unread },
     { id: "jobs", name: "Jobs", icon: "💼", bg: "from-emerald-400 to-emerald-700", screen: "jobs" },
@@ -133,7 +143,7 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
     { id: "alerts", name: "Alerts", icon: "🔔", bg: "from-rose-300 to-pink-600", screen: "page:/phone?tab=alerts" },
     { id: "guide", name: "Guide", icon: "🧭", bg: "from-sky-300 to-cyan-600", screen: "page:/guide" },
     { id: "profile", name: "Profile", icon: "🙂", bg: "from-zinc-300 to-zinc-500", run: () => openLife("profile") },
-  ], [unread, clinicBadge, courtBadge, loveBadge, liveSpacesBadge]);
+  ], [unread, clinicBadge, courtBadge, loveBadge, liveSpacesBadge, invitesBadge]);
 
   const home = () => setScreen("home");
   // App screens are white, so the status bar and home bar turn dark on them.
@@ -180,6 +190,7 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
             : screen === "hayati" ? <HayatiApp onBack={home} />
             : screen === "cars" ? <CarsApp onBack={home} onClose={onClose} />
             : screen === "decor" ? <DecorApp onBack={home} onClose={onClose} />
+            : screen === "invites" ? <InvitesApp onBack={home} onClose={onClose} />
             : screen === "games" ? (
               <div className="relative flex-1 overflow-y-auto px-5 pb-10">
                 <button onClick={home} className="flex items-center gap-1 font-bold text-white/90 mb-3"><ChevronLeft className="w-5 h-5" /> Home</button>

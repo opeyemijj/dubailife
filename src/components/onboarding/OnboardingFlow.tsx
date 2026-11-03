@@ -1,5 +1,6 @@
 "use client";
 
+import { pendingInvite } from "@/lib/invites";
 import { sendVerification } from "@/lib/email";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -481,7 +482,11 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
           look={look}
           homeId={movedInto.id}
           homeLabel={movedInto.label}
-          onDone={() => router.push("/home")}
+          onDone={() => {
+            // Came from an invite: straight back to it, now that they're all set up.
+            const pending = pendingInvite();
+            router.push(pending ? `/i/${pending}` : "/home");
+          }}
         />
       )}
     </div>

@@ -17,7 +17,7 @@ const aed = (n: number) => `AED ${n.toLocaleString()}`;
 
 // ---------------------------------------------------------------- choosing a decorator
 
-export function DecoratorSheet({ tier, onClose, onHired }: { tier: HousingTier; onClose: () => void; onHired?: () => void }) {
+export function DecoratorSheet({ tier, preselect, onClose, onHired }: { tier: HousingTier; preselect?: string | null; onClose: () => void; onHired?: () => void }) {
   const { citizen } = useCitizen();
   const online = usePresentCitizens();
   const svc = useServices(citizen?.id);
@@ -51,7 +51,8 @@ export function DecoratorSheet({ tier, onClose, onHired }: { tier: HousingTier; 
   };
   // Every player working as a decorator, the ones in the game right now first.
   const isOnline = (u: string) => online.some((p) => p.username === u);
-  const sorted = [...(pros ?? [])].sort((a, b) => Number(isOnline(b.username)) - Number(isOnline(a.username)) || a.fee - b.fee);
+  // The decorator whose hire-me link brought you here comes first.
+  const sorted = [...(pros ?? [])].sort((a, b) => Number(b.username === preselect) - Number(a.username === preselect) || Number(isOnline(b.username)) - Number(isOnline(a.username)) || a.fee - b.fee);
 
   return (
     <ModalPortal>
@@ -101,7 +102,7 @@ export function DecoratorSheet({ tier, onClose, onHired }: { tier: HousingTier; 
                 {pros === null && <p className="text-sm text-slate-500">Finding decorators…</p>}
                 {pros !== null && sorted.length === 0 && svc?.service !== "decorator" && <p className="text-sm text-slate-500">No players have the Interior decorator job yet. Check back soon, or take the job yourself on the Job Board.</p>}
                 {sorted.map((p) => (
-                  <div key={p.id} className="flex items-center gap-3 rounded-2xl border border-slate-200 p-2.5">
+                  <div key={p.id} className={`flex items-center gap-3 rounded-2xl border p-2.5 ${p.username === preselect ? "border-emerald-500 ring-2 ring-emerald-500/30 bg-emerald-50" : "border-slate-200"}`}>
                     <span className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-xl">🧑‍🎨</span>
                     <div className="flex-1 min-w-0">
                       <p className="font-black text-sm truncate">@{p.username} {isOnline(p.username) && <span className="text-[10px] font-black text-emerald-600">● online</span>}</p>
