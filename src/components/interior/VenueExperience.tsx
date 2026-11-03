@@ -4,7 +4,7 @@
 // compare products, try accessories on, buy (with confirmation), talk to staff, apply for a job,
 // work shifts and join activities.
 
-import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
+import { BELOW_SPACE_TOP, ClubRadioPill, PartyBanner, useClubRadio, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyDecor } from "@/components/invite/PartyDecor";
 import { PartyActions } from "@/components/invite/PartyActions";
 import { partyMood } from "@/lib/invites";
@@ -116,8 +116,12 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     if (kind && citizen?.id) logFun(kind, place.id, venue.id);
   }, [place, venue, citizen?.id]);
   const plan = useMemo(() => buildPlan(venue), [venue]);
-  // A party on here: decorations, a banner, and checking in as a guest.
+  // A party on here: decorations, a banner, its Space, and checking in as a guest. A club already has its own drinks,
+  // dance floor and lights, so a party there brings no party actions or lights out. Its music is the Lagos radio, the
+  // same as a house party: the club plays it, and when a party is on the party plays it instead (only ever one).
+  const clubParty = venue.layout === "club";
   const party = usePartyHere(`/place/${place.id}/${venue.id}`, true);
+  useClubRadio(clubParty && !party);
   const [lightsSet, setLightsSet] = useState<boolean | null>(null);
 
   const [walkTo, setWalkTo] = useState<WalkTarget | null>(null);
@@ -1248,7 +1252,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         inside={inside && !ride}
         ride={ride}
         onRideEnd={onRideEnd}
-        dim={!!party && (lightsSet ?? !!party.lightsOut)}
+        dim={!!party && !clubParty && (lightsSet ?? !!party.lightsOut)}
         extras={<>
           {castles.map((c) => <group key={`${c.at[0]},${c.at[1]}`} position={[c.at[0], 0, c.at[1]]}><SandCastle stage={c.stage} /></group>)}
           {party && <PartyDecor decor={party.decor} w={plan.size[0]} d={plan.size[1]} h={4.4} />}
@@ -1287,8 +1291,9 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         vipTables={vipReservations}
         activityFX={activityFX}
       />
-      {party && <PartyBanner party={party} className="top-[calc(max(0.75rem,env(safe-area-inset-top))+4.5rem)]" />}
-      {party && !ride && (
+      {party && <PartyBanner party={party} className={BELOW_SPACE_TOP} />}
+      {clubParty && !party && !ride && <ClubRadioPill />}
+      {party && !ride && !clubParty && (
         <PartyActions party={party} lightsOut={lightsSet ?? !!party.lightsOut} onLights={setLightsSet}
           onDance={(seconds) => { setPlayerAnimation("dance"); setTimeout(() => setPlayerAnimation((a) => (a === "dance" ? "idle" : a)), seconds * 1000); }}
           pose={playerAnimation === "dance" || playerAnimation === "sit" ? playerAnimation : null} canSleep={false}
@@ -1332,7 +1337,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       <VenueWallAdModal venueId={venue.id} venueName={venue.name} open={wallAdOpen} onOpenChange={setWallAdOpen} initialPanelId={selectedAdPanel} />
       <VenueGuideModal venue={venue} open={guideOpen} onOpenChange={setGuideOpen} />
       <ClothingStoreModal open={clothingStoreOpen} onOpenChange={setClothingStoreOpen} storeName={venue.name} />
-      {!ride && <VenueRadio venue={venue} compact={!!panel} />}
+      {!ride && !clubParty && <VenueRadio venue={venue} compact={!!panel} />}
 
       {/* Item 7: Celebratory Bottle Service Announcement Banner */}
       {vipCelebration && (

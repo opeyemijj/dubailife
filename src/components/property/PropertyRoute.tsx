@@ -3,7 +3,7 @@
 // A flat or home: travel there, get through the door (access rules / knocking), then see the saved
 // interior. Residents and editors can furnish it; owners manage access, guests and listings.
 
-import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
+import { BELOW_SPACE_TOP, PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyActions } from "@/components/invite/PartyActions";
 import { PartyHostesses, type HostessRun } from "@/components/invite/PartyHostess";
 import { faceNearest, PARTIES, partyMood } from "@/lib/invites";
@@ -230,15 +230,12 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   }, []);
   // At a party everyone dances (some sit) unless they're doing something else.
   const myMood = dancing ? "dance" : pose ?? (party ? partyMood(me) : "idle");
-  // Where I am as I walk about, shared a few times a second so everyone sees me move.
+  // Where I am, shared when I set off and when I stop, so everyone sees me move.
   const [where, setWhere] = useState({ x: mySpot[0], z: mySpot[2], yaw: 0, walking: false });
   // Which floor I'm on: people upstairs aren't shown downstairs, and the other way round.
   const [level, setLevel] = useState(0);
-  const lastSent = useRef(0);
+  // Sent when I set off (where I'm heading) and when I stop: everyone else walks me there in between.
   const onMove = (x: number, z: number, yaw: number, walking: boolean) => {
-    const now = Date.now();
-    if (walking === where.walking && now - lastSent.current < 200) return;
-    lastSent.current = now;
     setWhere({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw: Math.round(yaw * 100) / 100, walking });
   };
   const room = useRoom(`flat:${flat.id}`, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : myMood, level }, (e: Received) => {
@@ -334,7 +331,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         extras={<PartyHostesses runs={runs} onDone={(id) => setRuns((r) => r.filter((x) => x.id !== id))} />}
       />
       {party && <PartyActions party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={dance} pose={dancing ? "dance" : pose} onPose={(x) => { setDancing(false); setPose(x === "dance" ? null : x); }} announce={(text) => room.emit({ type: "chat", text })} broadcast={(action, on) => { room.emit({ type: "party", action, on }); if (action === "drinks") serve(me, citizen?.username ?? "you", [where.x, where.z]); }} className="bottom-24" />}
-      {party && <PartyBanner party={party} hostAway={!room.peers.some((p) => p.username === party.host)} className="top-[calc(max(0.75rem,env(safe-area-inset-top))+4rem)]" />}
+      {party && <PartyBanner party={party} hostAway={!room.peers.some((p) => p.username === party.host)} className={BELOW_SPACE_TOP} />}
 
       <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2">
         <button onClick={onExit} className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center" aria-label="Leave"><ArrowLeft className="w-4 h-4" /></button>

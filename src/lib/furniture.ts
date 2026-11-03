@@ -84,6 +84,8 @@ export interface CatalogItem {
   visual?: string;
   /** Shop section. */
   category?: ShopCategory;
+  /** The main colour of a code-drawn piece (the same armchair in navy, blush…). */
+  tint?: string;
   /** Part of the building (the staircase): can't be moved or stored. */
   fixed?: boolean;
 }
@@ -145,6 +147,26 @@ export const CATALOG: CatalogItem[] = [
   { id: "rug-silk-round", name: "Hand-Knotted Silk Rug", desc: "A round ivory-and-gold silk rug.", icon: "🟡", price: 4800, kind: "rug", size: [5, 5], visual: "rug-round", category: "decor" },
   { id: "rug-runner", name: "Moroccan Runner", desc: "A long Beni Ourain runner for hallways.", icon: "〰️", price: 1500, kind: "rug", size: [2, 6], visual: "rug-runner", category: "decor" },
   { id: "artwork", name: "Burj Khalifa Sunset Painting", desc: "Original high-rise acrylic artwork.", icon: "🖼️", price: 1500, kind: "wall", size: [3, 2], category: "wall" },
+  // Colour choices of the code-drawn pieces (tint), and more paintings.
+  { id: "velvet-armchair-blush", name: "Blush Velvet Armchair", desc: "Deep-buttoned rose velvet on brass feet.", icon: "🩷", price: 2900, kind: "floor", size: [2, 2], visual: "armchair", tint: "#c98b8b", category: "living", interaction: "chair" },
+  { id: "velvet-armchair-navy", name: "Navy Velvet Armchair", desc: "Deep-buttoned midnight velvet on brass feet.", icon: "💙", price: 2900, kind: "floor", size: [2, 2], visual: "armchair", tint: "#1e2a4a", category: "living", interaction: "chair" },
+  { id: "velvet-armchair-mustard", name: "Mustard Velvet Armchair", desc: "Deep-buttoned saffron velvet on brass feet.", icon: "💛", price: 2900, kind: "floor", size: [2, 2], visual: "armchair", tint: "#c9952b", category: "living", interaction: "chair" },
+  { id: "velvet-armchair-ivory", name: "Ivory Bouclé Armchair", desc: "Soft cream bouclé on brass feet.", icon: "🤍", price: 3200, kind: "floor", size: [2, 2], visual: "armchair", tint: "#ece4d6", category: "living", interaction: "chair" },
+  { id: "ottoman-ivory", name: "Ivory Bouclé Pouf", desc: "A round pouf in cream bouclé.", icon: "⚪", price: 900, kind: "floor", size: [1, 1], visual: "ottoman", tint: "#ece4d6", category: "living" },
+  { id: "ottoman-emerald", name: "Emerald Velvet Pouf", desc: "A round pouf in emerald velvet.", icon: "🟢", price: 950, kind: "floor", size: [1, 1], visual: "ottoman", tint: "#1f5a45", category: "living" },
+  { id: "ottoman-black", name: "Black Leather Pouf", desc: "A round pouf in black leather.", icon: "⚫", price: 950, kind: "floor", size: [1, 1], visual: "ottoman", tint: "#1c1c1f", category: "living" },
+  { id: "majlis-navy", name: "Navy Majlis Seating", desc: "Low floor cushions in deep navy, with gold bolsters.", icon: "🕌", price: 6500, kind: "floor", size: [4, 4], visual: "majlis", tint: "#1e2a4a", category: "living", interaction: "chair" },
+  { id: "majlis-emerald", name: "Emerald Majlis Seating", desc: "Low floor cushions in emerald, with gold bolsters.", icon: "🕌", price: 6500, kind: "floor", size: [4, 4], visual: "majlis", tint: "#1f5a45", category: "living", interaction: "chair" },
+  { id: "majlis-ivory", name: "Ivory Majlis Seating", desc: "Low floor cushions in cream linen.", icon: "🕌", price: 6800, kind: "floor", size: [4, 4], visual: "majlis", tint: "#e7dcc8", category: "living", interaction: "chair" },
+  { id: "rug-round-sage", name: "Sage Round Rug", desc: "A soft round rug in sage green.", icon: "🟩", price: 2600, kind: "rug", size: [5, 5], visual: "rug-round", tint: "#b7c4ad", category: "decor" },
+  { id: "rug-round-navy", name: "Navy Round Rug", desc: "A soft round rug in deep navy.", icon: "🟦", price: 2600, kind: "rug", size: [5, 5], visual: "rug-round", tint: "#2a3a5c", category: "decor" },
+  { id: "rug-round-terracotta", name: "Terracotta Round Rug", desc: "A soft round rug in sun-baked terracotta.", icon: "🟧", price: 2600, kind: "rug", size: [5, 5], visual: "rug-round", tint: "#b5654a", category: "decor" },
+  { id: "art-skyline", name: "Dubai Skyline at Night", desc: "The towers lit up over the Creek.", icon: "🌃", price: 5200, kind: "wall", size: [4, 2], visual: "art-skyline", category: "wall" },
+  { id: "art-sunset", name: "Desert Sunset Canvas", desc: "A low sun over rolling dunes.", icon: "🌅", price: 3600, kind: "wall", size: [3, 2], visual: "art-sunset", category: "wall" },
+  { id: "art-ocean", name: "Arabian Gulf Seascape", desc: "Layered blues of the Gulf at noon.", icon: "🌊", price: 3400, kind: "wall", size: [3, 2], visual: "art-ocean", category: "wall" },
+  { id: "art-geometric", name: "Islamic Geometric Star", desc: "An eight-point star pattern in teal and gold.", icon: "✴️", price: 4600, kind: "wall", size: [2, 2], visual: "art-geometric", category: "wall" },
+  { id: "art-botanical", name: "Tropical Botanical Print", desc: "Big green leaves on cream.", icon: "🌿", price: 2200, kind: "wall", size: [2, 3], visual: "art-botanical", category: "wall" },
+  { id: "art-pop", name: "Colour-Block Modern Art", desc: "Bold primaries in a gallery frame.", icon: "🟥", price: 3900, kind: "wall", size: [3, 3], visual: "art-pop", category: "wall" },
 ];
 
 export const getCatalogItem = (id: string) => CATALOG.find((c) => c.id === id) ?? HOME_ITEMS.find((c) => c.id === id);
@@ -248,7 +270,8 @@ export interface LevelDef {
 
 // ---------------------------------------------------------------- finishes
 
-export type FloorFinish = "oak" | "herringbone" | "walnut" | "white-marble" | "black-marble" | "travertine";
+export type FloorFinish = "oak" | "herringbone" | "walnut" | "white-marble" | "black-marble" | "travertine"
+  | "white-oak" | "grey-oak" | "teak" | "herringbone-white" | "green-marble" | "rose-marble" | "terrazzo" | "slate";
 export const FLOOR_FINISHES: Array<{ id: FloorFinish; label: string; price: number }> = [
   { id: "oak", label: "Light oak planks", price: 0 },
   { id: "herringbone", label: "Herringbone parquet", price: 4500 },
@@ -256,6 +279,14 @@ export const FLOOR_FINISHES: Array<{ id: FloorFinish; label: string; price: numb
   { id: "travertine", label: "Travertine stone", price: 6200 },
   { id: "white-marble", label: "Calacatta white marble", price: 9500 },
   { id: "black-marble", label: "Nero Marquina black marble", price: 9500 },
+  { id: "white-oak", label: "Scandi white oak", price: 3600 },
+  { id: "grey-oak", label: "Smoked grey oak", price: 3600 },
+  { id: "teak", label: "Golden teak", price: 4200 },
+  { id: "herringbone-white", label: "Whitewashed herringbone", price: 5200 },
+  { id: "green-marble", label: "Verde emerald marble", price: 11000 },
+  { id: "rose-marble", label: "Rosa Portogallo marble", price: 10500 },
+  { id: "terrazzo", label: "Venetian terrazzo", price: 6800 },
+  { id: "slate", label: "Charcoal slate tiles", price: 5400 },
 ];
 export const WALL_PAINTS: Array<{ id: string; label: string; color: string; price: number }> = [
   { id: "ivory", label: "Warm ivory", color: "#f4efe6", price: 0 },
@@ -266,6 +297,22 @@ export const WALL_PAINTS: Array<{ id: string; label: string; color: string; pric
   { id: "charcoal", label: "Charcoal", color: "#33363b", price: 1200 },
   { id: "emerald", label: "Emerald", color: "#1f4d40", price: 1200 },
   { id: "terracotta", label: "Terracotta", color: "#b5654a", price: 1200 },
+  { id: "chalk", label: "Chalk white", color: "#faf8f3", price: 600 },
+  { id: "sand", label: "Desert sand", color: "#e6d3b3", price: 900 },
+  { id: "dove", label: "Dove grey", color: "#c9c6c1", price: 900 },
+  { id: "lilac", label: "Soft lilac", color: "#d9cfe3", price: 900 },
+  { id: "sky", label: "Sky blue", color: "#c7dbea", price: 900 },
+  { id: "mint", label: "Fresh mint", color: "#cfe5d6", price: 900 },
+  { id: "butter", label: "Butter yellow", color: "#f3e3a8", price: 900 },
+  { id: "peach", label: "Peach", color: "#f1c9b0", price: 900 },
+  { id: "teal", label: "Deep teal", color: "#1f5560", price: 1200 },
+  { id: "plum", label: "Plum", color: "#4e2a45", price: 1200 },
+  { id: "olive", label: "Olive", color: "#6b6b3f", price: 1200 },
+  { id: "burgundy", label: "Burgundy", color: "#6a1f2b", price: 1200 },
+  { id: "ochre", label: "Ochre", color: "#c08a2e", price: 1200 },
+  { id: "forest", label: "Forest green", color: "#2f4a35", price: 1200 },
+  { id: "graphite", label: "Graphite", color: "#4a4d52", price: 1200 },
+  { id: "black", label: "Soft black", color: "#1f2023", price: 1400 },
 ];
 /** How a home is finished: floor, wall colour, and whether the walls are panelled with mouldings. */
 export interface HomeStyle { floor: FloorFinish; wall: string; panels: boolean }

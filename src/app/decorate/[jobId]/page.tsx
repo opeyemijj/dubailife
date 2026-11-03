@@ -32,7 +32,8 @@ export default function DecoratePage() {
   const [spent, setSpent] = useState(0);
   const [placing, setPlacing] = useState<PlacingState | null>(null);
   const [store, setStore] = useState<"shop" | "storage" | "style" | null>(null);
-  const [cat, setCat] = useState<string>("living");
+  const [cat, setCat] = useState<string>("all");
+  const [find, setFind] = useState("");
   const [turns, setTurns] = useState(0);
   const [level, setLevel] = useState(0);
   const [room, setRoom] = useState("living");
@@ -220,11 +221,13 @@ export default function DecoratePage() {
             </div>
             {store === "shop" && (
               <>
+                <input value={find} onChange={(e) => setFind(e.target.value)} placeholder="Search the store" aria-label="Search the store"
+                  className="w-full h-10 rounded-xl bg-slate-50 border border-slate-200 px-3 text-sm font-bold outline-none" />
                 <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
-                  {SHOP_CATEGORIES.map((c) => <button key={c.id} onClick={() => setCat(c.id)} className={`shrink-0 h-9 px-3 rounded-full text-xs font-black ${cat === c.id ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"}`}>{c.icon} {c.label}</button>)}
+                  {[{ id: "all", label: "All", icon: "🛍️" }, ...SHOP_CATEGORIES].map((c) => <button key={c.id} onClick={() => setCat(c.id)} className={`shrink-0 h-9 px-3 rounded-full text-xs font-black ${cat === c.id ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"}`}>{c.icon} {c.label}</button>)}
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  {CATALOG.filter((c) => c.category === cat).map((item) => (
+                  {CATALOG.filter((c) => (cat === "all" || c.category === cat) && (!find.trim() || `${c.name} ${c.desc}`.toLowerCase().includes(find.trim().toLowerCase()))).map((item) => (
                     <button key={item.id} disabled={item.price > left} onClick={() => buy(item)} className="rounded-2xl border border-slate-200 p-2.5 text-left disabled:opacity-40">
                       <span className="block text-2xl">{item.icon}</span>
                       <span className="block text-xs font-black leading-tight mt-1">{item.name}</span>

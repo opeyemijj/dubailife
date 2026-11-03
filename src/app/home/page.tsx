@@ -17,7 +17,7 @@ import { inviteFriends } from "@/lib/invite";
 import { useMyDecor } from "@/lib/decorator";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { compact, useSiteStats } from "@/lib/siteStats";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
@@ -54,6 +54,14 @@ const FLOOR_SWATCH: Record<string, string> = {
   oak: "repeating-linear-gradient(0deg,#c8935f 0 10px,#b98250 10px 11px)",
   walnut: "repeating-linear-gradient(0deg,#5b3a24 0 10px,#3f2818 10px 11px)",
   herringbone: "repeating-linear-gradient(45deg,#b98a57 0 8px,#a97a49 8px 16px),#b98a57",
+  "white-oak": "repeating-linear-gradient(0deg,#e6d6bb 0 10px,#d8c4a5 10px 11px)",
+  "grey-oak": "repeating-linear-gradient(0deg,#a8a198 0 10px,#8f887e 10px 11px)",
+  teak: "repeating-linear-gradient(0deg,#a86b35 0 10px,#8f5729 10px 11px)",
+  "herringbone-white": "repeating-linear-gradient(45deg,#e8dcc6 0 8px,#d9caae 8px 16px),#e8dcc6",
+  "green-marble": "linear-gradient(135deg,#1f4d3a 40%,#e1f0e6 45%,#1f4d3a 50%)",
+  "rose-marble": "linear-gradient(135deg,#e8c8c0 40%,#a8786f 45%,#e8c8c0 50%)",
+  terrazzo: "radial-gradient(circle at 20% 30%,#c97b63 2px,transparent 3px),radial-gradient(circle at 70% 60%,#7a8b99 2px,transparent 3px),radial-gradient(circle at 45% 80%,#d9b44a 2px,transparent 3px),#ece6dc",
+  slate: "linear-gradient(90deg,#3b3f45 49%,#2c2f34 50%,#3b3f45 51%)",
   travertine: "repeating-linear-gradient(0deg,#dfcfb3 0 6px,#d3c09f 6px 8px)",
   "white-marble": "linear-gradient(135deg,#f5f3ef 40%,#c9c9cf 45%,#f5f3ef 50%)",
   "black-marble": "linear-gradient(135deg,#17171a 40%,#d9d9d9 44%,#17171a 48%)",
@@ -278,13 +286,10 @@ export default function HomePage() {
   const [runs, setRuns] = useState<HostessRun[]>([]);
   const serve = (id: string, name: string, to: [number, number]) => setRuns((r) => [...r, { id: `${id}-${Date.now()}`, name, to }].slice(-6));
   const myMood = dancing ? "dance" : pose ?? (party && citizen ? partyMood(citizen.id) : "idle");
-  // Where I am as I walk about, shared a few times a second so my guests see me move.
+  // Where I am, shared when I set off and when I stop, so my guests see me move.
   const [where, setWhere] = useState({ x: -3.25, z: 0, yaw: 0, walking: false });
-  const lastSent = useRef(0);
+  // Sent when I set off (where I'm heading) and when I stop: everyone else walks me there in between.
   const onMove = (x: number, z: number, yaw: number, walking: boolean) => {
-    const now = Date.now();
-    if (walking === where.walking && now - lastSent.current < 200) return;
-    lastSent.current = now;
     setWhere({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw: Math.round(yaw * 100) / 100, walking });
   };
   const partyRoom = useRoom(party && activeFlat ? `flat:${activeFlat.id}` : null, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : myMood, level }, (e) => {

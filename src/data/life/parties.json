@@ -27,7 +27,7 @@
     "drinks": { "icon": "🍹", "label": "Drinks", "need": "fun", "amount": 15, "say": "🍹 got a drink" },
     "dance": { "icon": "💃", "label": "Dance", "seconds": 25, "need": "fun", "amount": 10, "say": "💃 is dancing" }
   },
-  "radio": { "tag": "afrobeats", "directories": ["https://de1.api.radio-browser.info", "https://de2.api.radio-browser.info", "https://all.api.radio-browser.info"] },
+  "radio": { "country": "NG", "state": "Lagos", "prefer": ["Beat FM", "Rhythm", "Naija FM", "Wazobia", "Cool FM", "Soundcity", "Metro", "Bond"], "skip": ["gospel", "christ", "islam", "quran", "news"], "directories": ["https://de1.api.radio-browser.info", "https://de2.api.radio-browser.info", "https://all.api.radio-browser.info"] },
   "maxGuests": 20,
   "reminderMinutes": 15
 }

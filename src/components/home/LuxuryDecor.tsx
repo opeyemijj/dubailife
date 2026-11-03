@@ -11,7 +11,7 @@ import * as THREE from "three";
 import { CELL, WALL_HEIGHT } from "@/lib/furniture";
 
 type Ghost = "valid" | "invalid" | undefined;
-const GOLD = "#c9a24a", BRASS = "#b8892e", MARBLE = "#f2efe9", WALNUT = "#5b3a24", VELVET = "#1f5c4a", IVORY = "#f3ead9";
+const GOLD = "#c9a24a", BRASS = "#b8892e", MARBLE = "#f2efe9", WALNUT = "#5b3a24", VELVET_DEFAULT = "#1f5c4a", IVORY = "#f3ead9";
 
 /** A material, or the placement ghost's tint. */
 function M({ color, ghost, metal = 0, rough = 0.6, emissive, glow = 0, opacity }: { color: string; ghost: Ghost; metal?: number; rough?: number; emissive?: string; glow?: number; opacity?: number }) {
@@ -190,8 +190,8 @@ function Aquarium({ w, ghost }: { w: number; ghost: Ghost }) {
   );
 }
 
-function Majlis({ w, d, ghost }: { w: number; d: number; ghost: Ghost }) {
-  const cushion = "#7f1d1d", back = "#b45309";
+function Majlis({ w, d, ghost, tint }: { w: number; d: number; ghost: Ghost; tint?: string }) {
+  const cushion = tint ?? "#7f1d1d", back = tint ? GOLD : "#b45309";
   return (
     <group>
       {/* an L of low seats along the back and left, with bolster backs, and a brass tray table */}
@@ -208,7 +208,8 @@ function Majlis({ w, d, ghost }: { w: number; d: number; ghost: Ghost }) {
   );
 }
 
-function Armchair({ w, d, ghost }: { w: number; d: number; ghost: Ghost }) {
+function Armchair({ w, d, ghost, tint }: { w: number; d: number; ghost: Ghost; tint?: string }) {
+  const VELVET = tint ?? VELVET_DEFAULT;
   return (
     <group>
       <B s={[w * 0.7, 0.18, d * 0.62]} p={[0, 0.38, 0.04]} c={VELVET} ghost={ghost} rough={0.85} />
@@ -219,8 +220,8 @@ function Armchair({ w, d, ghost }: { w: number; d: number; ghost: Ghost }) {
   );
 }
 
-function Ottoman({ ghost }: { ghost: Ghost }) {
-  return <Cyl r={0.22} h={0.4} p={[0, 0.2, 0]} c="#8b4a2b" ghost={ghost} rough={0.5} seg={24} />;
+function Ottoman({ ghost, tint }: { ghost: Ghost; tint?: string }) {
+  return <Cyl r={0.22} h={0.4} p={[0, 0.2, 0]} c={tint ?? "#8b4a2b"} ghost={ghost} rough={0.5} seg={24} />;
 }
 
 function MediaWall({ w, ghost }: { w: number; ghost: Ghost }) {
@@ -393,6 +394,45 @@ function Art({ kind, w, h, ghost }: { kind: string; w: number; h: number; ghost:
       g.fillStyle = "#fff4d6"; g.beginPath(); g.arc(W * 0.7, H * 0.3, 30, 0, Math.PI * 2); g.fill();
       ["#d9984f", "#c27b3c", "#a8622b"].forEach((c, i) => { g.fillStyle = c; g.beginPath(); g.moveTo(0, H); g.quadraticCurveTo(W * (0.3 + i * 0.2), H * (0.45 + i * 0.12), W, H * (0.7 + i * 0.08)); g.lineTo(W, H); g.fill(); });
       g.fillStyle = "#111"; [W / 3, (2 * W) / 3].forEach((x) => g.fillRect(x - 2, 0, 4, H));
+    } else if (kind === "art-skyline") {
+      const sky = g.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, "#0b1026"); sky.addColorStop(1, "#3b2a5a");
+      g.fillStyle = sky; g.fillRect(0, 0, W, H);
+      for (let i = 0; i < 40; i++) { g.fillStyle = "rgba(255,255,255,0.7)"; g.fillRect((i * 97) % W, (i * 53) % (H * 0.4), 2, 2); }
+      // Towers, with the tallest spire in the middle.
+      const towers = [[0.05, 0.45], [0.13, 0.62], [0.21, 0.5], [0.3, 0.7], [0.4, 0.55], [0.6, 0.6], [0.68, 0.48], [0.77, 0.66], [0.86, 0.52], [0.94, 0.4]];
+      g.fillStyle = "#11131f";
+      towers.forEach(([x, h]) => g.fillRect(W * x - 16, H * (1 - h), 32, H * h));
+      g.beginPath(); g.moveTo(W * 0.5 - 22, H); g.lineTo(W * 0.5 - 6, H * 0.08); g.lineTo(W * 0.5 + 6, H * 0.08); g.lineTo(W * 0.5 + 22, H); g.fill();
+      for (let i = 0; i < 220; i++) { g.fillStyle = i % 4 ? "rgba(255,214,120,0.85)" : "rgba(160,200,255,0.8)"; const [x, h] = towers[i % towers.length]; g.fillRect(W * x - 12 + ((i * 7) % 24), H * (1 - h) + 8 + ((i * 13) % Math.max(10, H * h - 16)), 3, 3); }
+      g.fillStyle = "rgba(255,200,120,0.25)"; g.fillRect(0, H * 0.92, W, H * 0.08);
+    } else if (kind === "art-sunset") {
+      const grad = g.createLinearGradient(0, 0, 0, H); grad.addColorStop(0, "#ff7e5f"); grad.addColorStop(0.55, "#feb47b"); grad.addColorStop(1, "#7a3b2e");
+      g.fillStyle = grad; g.fillRect(0, 0, W, H);
+      g.fillStyle = "#ffe8a3"; g.beginPath(); g.arc(W * 0.5, H * 0.58, 46, 0, Math.PI * 2); g.fill();
+      ["#c4593b", "#9c4230", "#6e2c22"].forEach((c, i) => { g.fillStyle = c; g.beginPath(); g.moveTo(0, H); g.quadraticCurveTo(W * (0.25 + i * 0.25), H * (0.55 + i * 0.1), W, H * (0.68 + i * 0.08)); g.lineTo(W, H); g.fill(); });
+    } else if (kind === "art-ocean") {
+      ["#a7d8f0", "#6bb6dc", "#3b8fc0", "#1f6a99", "#134a70"].forEach((c, i) => {
+        g.fillStyle = c; g.beginPath(); g.moveTo(0, H * (0.15 + i * 0.18));
+        for (let x = 0; x <= W; x += 32) g.lineTo(x, H * (0.15 + i * 0.18) + Math.sin(x / 40 + i) * 10);
+        g.lineTo(W, H); g.lineTo(0, H); g.fill();
+      });
+    } else if (kind === "art-geometric") {
+      g.fillStyle = "#0f3d3e"; g.fillRect(0, 0, W, H);
+      g.strokeStyle = "#d4af37"; g.lineWidth = 6;
+      const star = (cx: number, cy: number, r: number) => { g.beginPath(); for (let i = 0; i <= 16; i++) { const a = (i / 16) * Math.PI * 2; const rr = i % 2 ? r * 0.55 : r; g.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); } g.stroke(); };
+      star(W / 2, H / 2, Math.min(W, H) * 0.4); star(W / 2, H / 2, Math.min(W, H) * 0.22);
+      [[0, 0], [W, 0], [0, H], [W, H]].forEach(([x, y]) => star(x, y, Math.min(W, H) * 0.25));
+    } else if (kind === "art-botanical") {
+      g.fillStyle = "#f3ecdd"; g.fillRect(0, 0, W, H);
+      for (let i = 0; i < 9; i++) {
+        g.save(); g.translate(W * (0.2 + (i % 3) * 0.3), H * (0.2 + Math.floor(i / 3) * 0.3)); g.rotate((i * 0.9) % Math.PI);
+        g.fillStyle = ["#2f6b3a", "#3f8a4a", "#245a33"][i % 3]; g.beginPath(); g.ellipse(0, 0, 26, 70, 0, 0, Math.PI * 2); g.fill();
+        g.strokeStyle = "rgba(255,255,255,0.4)"; g.lineWidth = 2; g.beginPath(); g.moveTo(0, -66); g.lineTo(0, 66); g.stroke(); g.restore();
+      }
+    } else if (kind === "art-pop") {
+      g.fillStyle = "#f7f5ef"; g.fillRect(0, 0, W, H);
+      [["#d62828", 0, 0, 0.55, 0.6], ["#1d4ed8", 0.6, 0.65, 0.4, 0.35], ["#facc15", 0.6, 0, 0.4, 0.3], ["#111111", 0, 0.65, 0.2, 0.35]].forEach(([c, x, y, w2, h2]) => { g.fillStyle = c as string; g.fillRect(W * (x as number), H * (y as number), W * (w2 as number), H * (h2 as number)); });
+      g.fillStyle = "#111"; [0.57, 0.62].forEach((x) => g.fillRect(W * x - 6, 0, 12, H)); g.fillRect(0, H * 0.62 - 6, W, 12);
     } else {
       g.fillStyle = "#13233f"; g.fillRect(0, 0, W, H);
       for (let i = 0; i < 14; i++) {
@@ -493,10 +533,10 @@ function Console({ w, ghost }: { w: number; ghost: Ghost }) {
   );
 }
 
-function RugRound({ w, ghost }: { w: number; ghost: Ghost }) {
+function RugRound({ w, ghost, tint }: { w: number; ghost: Ghost; tint?: string }) {
   return (
     <group>
-      <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><circleGeometry args={[w / 2, 48]} /><M color="#efe6d4" ghost={ghost} rough={1} /></mesh>
+      <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><circleGeometry args={[w / 2, 48]} /><M color={tint ?? "#efe6d4"} ghost={ghost} rough={1} /></mesh>
       {[0.85, 0.6, 0.35].map((k) => <mesh key={k} position={[0, 0.012, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[(w / 2) * k - 0.04, (w / 2) * k, 48]} /><M color={GOLD} ghost={ghost} rough={1} /></mesh>)}
     </group>
   );
@@ -566,7 +606,7 @@ function Stairwell({ w, d, ghost }: { w: number; d: number; ghost: Ghost }) {
 // ---------------------------------------------------------------- dispatcher
 
 /** The code-drawn look for a decor `visual`, fitted to `size` (grid cells). */
-export function LuxuryDecor({ visual, size, ghost }: { visual: string; size: [number, number]; ghost?: Ghost }) {
+export function LuxuryDecor({ visual, size, ghost, tint }: { visual: string; size: [number, number]; ghost?: Ghost; tint?: string }) {
   const w = size[0] * CELL, d = size[1] * CELL;
   switch (visual) {
     case "chandelier-crystal": return <ChandelierCrystal ghost={ghost} />;
@@ -577,9 +617,9 @@ export function LuxuryDecor({ visual, size, ghost }: { visual: string; size: [nu
     case "grand-piano": return <GrandPiano w={w} d={d} ghost={ghost} />;
     case "fireplace": return <Fireplace w={w} ghost={ghost} />;
     case "aquarium": return <Aquarium w={w} ghost={ghost} />;
-    case "majlis": return <Majlis w={w} d={d} ghost={ghost} />;
-    case "armchair": return <Armchair w={w} d={d} ghost={ghost} />;
-    case "ottoman": return <Ottoman ghost={ghost} />;
+    case "majlis": return <Majlis w={w} d={d} ghost={ghost} tint={tint} />;
+    case "armchair": return <Armchair w={w} d={d} ghost={ghost} tint={tint} />;
+    case "ottoman": return <Ottoman ghost={ghost} tint={tint} />;
     case "media-wall": return <MediaWall w={w} ghost={ghost} />;
     case "canopy-bed": return <CanopyBed w={w} d={d} ghost={ghost} />;
     case "vanity": return <Vanity w={w} ghost={ghost} />;
@@ -589,14 +629,16 @@ export function LuxuryDecor({ visual, size, ghost }: { visual: string; size: [nu
     case "coffee-bar": return <CoffeeBar w={w} ghost={ghost} />;
     case "drinks-cabinet": return <DrinksCabinet w={w} ghost={ghost} />;
     case "mirror": return <Mirror w={w} h={d} ghost={ghost} />;
-    case "art-abstract": case "art-calligraphy": case "art-desert": return <Art kind={visual} w={w} h={d} ghost={ghost} />;
+    case "art-abstract": case "art-calligraphy": case "art-desert":
+    case "art-skyline": case "art-sunset": case "art-ocean": case "art-geometric": case "art-botanical": case "art-pop":
+      return <Art kind={visual} w={w} h={d} ghost={ghost} />;
     case "shelves": return <Shelves w={w} ghost={ghost} />;
     case "sculpture": return <Sculpture ghost={ghost} />;
     case "vase": return <Vase ghost={ghost} />;
     case "palm": return <Palm ghost={ghost} />;
     case "orchids": return <Orchids ghost={ghost} />;
     case "console": return <Console w={w} ghost={ghost} />;
-    case "rug-round": return <RugRound w={w} ghost={ghost} />;
+    case "rug-round": return <RugRound w={w} ghost={ghost} tint={tint} />;
     case "rug-runner": return <RugRunner w={w} d={d} ghost={ghost} />;
     case "staircase": return <Staircase w={w} d={d} ghost={ghost} />;
     case "stairwell": return <Stairwell w={w} d={d} ghost={ghost} />;

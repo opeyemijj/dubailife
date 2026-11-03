@@ -74,7 +74,7 @@ function usePartySpace(party: PartyHere | null, route: string | null) {
   }, [code, isHost, title, host, route]);
 }
 
-// Party music: a live Afrobeats radio station (from the Radio Browser directory), the built-in groove, or off.
+// Party music: a live Lagos radio station (from the Radio Browser directory), the built-in groove, or off.
 // The choice is remembered; the game's own mute silences it too.
 export type MusicMode = "radio" | "groove" | "off";
 const MODE = "dl_party_music";
@@ -96,17 +96,22 @@ const setStation = (n: string | null) => { stationName = n; stationListeners.for
 
 interface Station { name: string; url_resolved: string; codec: string }
 let stations: Promise<Station[]> | null = null;
-/** Afrobeats stations that play in a browser (secure streams, common formats), most listened first. */
-const afrobeatsStations = () => (stations ??= (async () => {
+/** Lagos radio stations that play in a browser (secure streams, common formats): the music stations (Beat FM,
+    Rhythm, Naija FM, Wazobia…) first in the order set in parties.json, then the rest by how much they're listened to. */
+const lagosStations = () => (stations ??= (async () => {
+  const { country, state, prefer, skip } = PARTIES.radio;
   // The directory has mirrors: the first that answers.
   for (const base of PARTIES.radio.directories) {
     try {
-      const r = await fetch(`${base}/json/stations/bytag/${PARTIES.radio.tag}?hidebroken=true&order=clickcount&reverse=true&limit=40`);
+      const r = await fetch(`${base}/json/stations/search?countrycode=${country}&state=${encodeURIComponent(state)}&hidebroken=true&order=clickcount&reverse=true&limit=60`);
       if (!r.ok) continue;
       const list = (await r.json()) as Station[];
-      // Afrobeats stations by name first (the tag also covers general stations that play some).
-      const afro = (x: Station) => (/afro|naija|lagos/i.test(x.name) ? 0 : 1);
-      return list.filter((x) => x.url_resolved?.startsWith("https://") && /mp3|aac/i.test(x.codec)).sort((a, b) => afro(a) - afro(b));
+      const rank = (x: Station) => { const i = prefer.findIndex((p) => x.name.toLowerCase().includes(p.toLowerCase())); return i < 0 ? prefer.length : i; };
+      const seen = new Set<string>();
+      return list
+        .filter((x) => x.url_resolved?.startsWith("https://") && /mp3|aac/i.test(x.codec) && !skip.some((w) => x.name.toLowerCase().includes(w)))
+        .filter((x) => !seen.has(x.url_resolved) && !!seen.add(x.url_resolved))
+        .sort((a, b) => rank(a) - rank(b));
     } catch { /* next mirror */ }
   }
   return [] as Station[];
@@ -143,6 +148,10 @@ export function primePartyAudio() {
   };
   ["pointerdown", "touchend", "click"].forEach((t) => window.addEventListener(t, unlock, true));
 }
+
+/** The same Lagos radio, for a club with no party on: the club's music. (At a party the party plays it instead, so
+    there's only ever one.) */
+export function useClubRadio(active: boolean) { usePartyMusic(active); }
 
 function usePartyMusic(active: boolean) {
   useEffect(() => {
@@ -185,7 +194,7 @@ function usePartyMusic(active: boolean) {
       }
     };
     const playRadio = async () => {
-      list = (await afrobeatsStations()).slice(0, 6);
+      list = (await lagosStations()).slice(0, 6);
       tries = 0;
       void tryStation();
     };
@@ -225,6 +234,23 @@ function usePartyMusic(active: boolean) {
   }, [active]);
 }
 
+/** Below the Space bar, so a live Space never covers it. */
+export const BELOW_SPACE_TOP = "top-[calc(max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))+3.5rem)]";
+
+/** The club's radio, bottom left where the DJ booth player sits: the station playing, and a tap to switch Lagos radio → groove → off. */
+export function ClubRadioPill({ className = "" }: { className?: string }) {
+  const [mode, setMode] = useState<MusicMode>(currentMode);
+  const [station, setStationName] = useState<string | null>(stationName);
+  useEffect(() => { stationListeners.add(setStationName); return () => { stationListeners.delete(setStationName); }; }, []);
+  const next: MusicMode = mode === "radio" ? "groove" : mode === "groove" ? "off" : "radio";
+  return (
+    <button onClick={() => { setMusicMode(next); setMode(next); }} aria-label={`Music: ${mode === "radio" ? "Lagos radio" : mode === "groove" ? "groove" : "off"}. Tap for ${next}.`}
+      className={`fixed left-3 bottom-20 z-40 h-9 pl-2 pr-3 rounded-full bg-slate-950/90 text-white border border-white/10 shadow-xl text-[11px] font-black max-w-[60vw] truncate ${className}`}>
+      {mode === "radio" ? `📻 ${station ?? "Finding a Lagos station…"}` : mode === "groove" ? "🥁 Groove" : "🔇 Music off"}
+    </button>
+  );
+}
+
 export function PartyBanner({ party, hostAway, className = "" }: { party: PartyHere; hostAway?: boolean; className?: string }) {
   const [inviting, setInviting] = useState(false);
   const [mode, setMode] = useState<MusicMode>(currentMode);
@@ -237,8 +263,8 @@ export function PartyBanner({ party, hostAway, className = "" }: { party: PartyH
       <Link href={`/i/${party.code}`} className="min-w-0 flex-1 text-xs font-black truncate">
         {k.icon} {party.isHost ? "Your" : `@${party.host}'s`} {party.title} · {party.arrived} here{hostAway ? ` · @${party.host} is out` : ""}
       </Link>
-      <button onClick={() => { setMusicMode(next); setMode(next); }} title={mode === "radio" ? station ?? "Finding an Afrobeats station…" : mode === "groove" ? "Party groove" : "Music off"}
-        aria-label={`Music: ${mode === "radio" ? "Afrobeats radio" : mode === "groove" ? "party groove" : "off"}. Tap for ${next}.`}
+      <button onClick={() => { setMusicMode(next); setMode(next); }} title={mode === "radio" ? station ?? "Finding a Lagos station…" : mode === "groove" ? "Party groove" : "Music off"}
+        aria-label={`Music: ${mode === "radio" ? "Lagos radio" : mode === "groove" ? "party groove" : "off"}. Tap for ${next}.`}
         className="shrink-0 h-7 px-2 rounded-full bg-white/20 text-[11px] font-black max-w-[9rem] truncate">
         {mode === "radio" ? `📻 ${station ?? "Radio"}` : mode === "groove" ? "🥁 Groove" : "🔇"}
       </button>

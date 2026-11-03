@@ -115,7 +115,7 @@ function PersonAvatar({ p, id, labels }: { p: Person; id: string; labels: LabelN
     const dx = tx - g.position.x, dz = tz - g.position.z, dist = Math.hypot(dx, dz);
     if (dist > 0.03) {
       // Far off (just arrived, or a jump): straight there. Otherwise at walking pace.
-      const step = dist > 4 ? dist : Math.min(dist, dt * 2.2);
+      const step = dist > 4 ? dist : Math.min(dist, dt * 2.4);
       g.position.x += (dx / dist) * step;
       g.position.z += (dz / dist) * step;
       g.rotation.y = Math.atan2(dx, dz);
@@ -574,7 +574,7 @@ function FlatScreenTVOnStand({ size, ghost }: { size: [number, number]; ghost?: 
 
 
 function ItemVisual({ item, ghost }: { item: CatalogItem; ghost?: "valid" | "invalid" }) {
-  if (item.visual) return <LuxuryDecor visual={item.visual} size={item.size} ghost={ghost} />;
+  if (item.visual) return <LuxuryDecor visual={item.visual} size={item.size} ghost={ghost} tint={item.tint} />;
   if (item.id === "tv" || item.id.includes("tv")) return <FlatScreenTVOnStand size={item.size} ghost={ghost} />;
   if (item.kind === "wall") return <SunsetPainting size={item.size} ghost={ghost} />;
   return <FurnitureModel url={item.model!} size={item.size} yaw={item.yaw} ghost={ghost} />;
@@ -838,8 +838,15 @@ function useFloorTexture(finish: FloorFinish = "oak") {
     const ctx = c.getContext("2d")!;
     const rnd = seeded(7);
     let repeat = 2;
-    if (finish === "oak" || finish === "walnut") {
-      const tones = finish === "oak" ? ["#c8935f", "#bf8954", "#cf9c68", "#b98250", "#c48f5b"] : ["#5b3a24", "#4f321f", "#664229", "#563621", "#6b4630"];
+    const PLANKS: Partial<Record<FloorFinish, string[]>> = {
+      oak: ["#c8935f", "#bf8954", "#cf9c68", "#b98250", "#c48f5b"],
+      walnut: ["#5b3a24", "#4f321f", "#664229", "#563621", "#6b4630"],
+      "white-oak": ["#e6d6bb", "#ddcbae", "#ebdcc3", "#d8c4a5", "#e2d1b4"],
+      "grey-oak": ["#a8a198", "#9d968c", "#b1aaa1", "#958e84", "#a39c92"],
+      teak: ["#a86b35", "#9a5f2e", "#b5763d", "#8f5729", "#a26632"],
+    };
+    if (PLANKS[finish]) {
+      const tones = PLANKS[finish]!;
       const plank = 64;
       for (let row = 0; row < 512 / plank; row++) {
         let x = -((row * 97) % 220);
@@ -854,10 +861,11 @@ function useFloorTexture(finish: FloorFinish = "oak") {
         ctx.fillStyle = "rgba(30,18,8,0.4)";
         ctx.fillRect(0, row * plank, 512, 2);
       }
-    } else if (finish === "herringbone") {
-      const tones = ["#b98a57", "#a97a49", "#c4955f", "#b07f4d"];
+    } else if (finish === "herringbone" || finish === "herringbone-white") {
+      const white = finish === "herringbone-white";
+      const tones = white ? ["#e8dcc6", "#dfd1b8", "#efe4cf", "#d9caae"] : ["#b98a57", "#a97a49", "#c4955f", "#b07f4d"];
       const L = 96, W = 24;
-      ctx.fillStyle = "#a97a49";
+      ctx.fillStyle = tones[1];
       ctx.fillRect(0, 0, 512, 512);
       for (let y = -L; y < 512 + L; y += W * 2) {
         for (let x = -L; x < 512 + L; x += L) {
@@ -877,11 +885,23 @@ function useFloorTexture(finish: FloorFinish = "oak") {
       repeat = 3;
     } else {
       // Stone: large tiles with veining (marble) or pitted bands (travertine).
-      const base = finish === "white-marble" ? "#f1efeb" : finish === "black-marble" ? "#17171a" : "#dfcfb3";
-      const vein = finish === "white-marble" ? "rgba(120,120,130,0.45)" : finish === "black-marble" ? "rgba(235,235,235,0.55)" : "rgba(160,130,90,0.35)";
+      // Stone: large tiles with veining (marbles), pitted bands (travertine), chips (terrazzo) or plain (slate).
+      const STONE: Partial<Record<FloorFinish, [string, string]>> = {
+        "green-marble": ["#1f4d3a", "rgba(225,240,230,0.55)"],
+        "rose-marble": ["#e8c8c0", "rgba(150,95,85,0.45)"],
+        terrazzo: ["#ece6dc", "rgba(0,0,0,0)"],
+        slate: ["#3b3f45", "rgba(255,255,255,0.06)"],
+      };
+      const base = STONE[finish]?.[0] ?? (finish === "white-marble" ? "#f1efeb" : finish === "black-marble" ? "#17171a" : "#dfcfb3");
+      const vein = STONE[finish]?.[1] ?? (finish === "white-marble" ? "rgba(120,120,130,0.45)" : finish === "black-marble" ? "rgba(235,235,235,0.55)" : "rgba(160,130,90,0.35)");
       ctx.fillStyle = base;
       ctx.fillRect(0, 0, 512, 512);
-      if (finish === "travertine") {
+      if (finish === "terrazzo") {
+        const chips = ["#c97b63", "#7a8b99", "#d9b44a", "#5e6b5a", "#ffffff", "#2f3133"];
+        for (let i = 0; i < 900; i++) { ctx.fillStyle = chips[i % chips.length]; ctx.beginPath(); ctx.ellipse(rnd() * 512, rnd() * 512, 1.5 + rnd() * 5, 1 + rnd() * 3.5, rnd() * 3, 0, Math.PI * 2); ctx.fill(); }
+      } else if (finish === "slate") {
+        for (let i = 0; i < 60; i++) { ctx.fillStyle = `rgba(255,255,255,${0.02 + rnd() * 0.04})`; ctx.fillRect(rnd() * 512, rnd() * 512, 40 + rnd() * 120, 2 + rnd() * 4); }
+      } else if (finish === "travertine") {
         for (let i = 0; i < 40; i++) { ctx.fillStyle = `rgba(170,140,100,${0.08 + rnd() * 0.12})`; ctx.fillRect(0, rnd() * 512, 512, 2 + rnd() * 8); }
         for (let i = 0; i < 260; i++) { ctx.fillStyle = "rgba(140,110,75,0.35)"; ctx.beginPath(); ctx.ellipse(rnd() * 512, rnd() * 512, 1 + rnd() * 4, 1 + rnd(), 0, 0, Math.PI * 2); ctx.fill(); }
       } else {
@@ -1179,11 +1199,21 @@ function RoomScene({
   const shown: AvatarAnimation = animation === "walk" || animation === "talk" || !myAnimation ? animation : myAnimation;
   const shownSleep = shown === "sleep";
   const [pose, setPose] = useState<Pose>(() => (startAt ? { position: [startAt[0], 0, startAt[1]], yaw: Math.PI / 4 } : STAND));
+  const [walkTarget, setWalkTarget] = useState<[number, number] | null>(null);
   // Others in the room see where you are.
   const moveRef = useRef(onMove);
   useEffect(() => { moveRef.current = onMove; }, [onMove]);
-  useEffect(() => { moveRef.current?.(pose.position[0], pose.position[2], pose.yaw, animation === "walk"); }, [pose, animation]);
-  const [walkTarget, setWalkTarget] = useState<[number, number] | null>(null);
+  // Only two updates a walk, to keep live traffic low: where you're heading when you set off, and where you stopped.
+  // Everyone else's screen walks you there in between.
+  const poseRef = useRef(pose);
+  useEffect(() => { poseRef.current = pose; }, [pose]);
+  const walkingNow = animation === "walk";
+  useEffect(() => {
+    if (walkTarget) moveRef.current?.(walkTarget[0], walkTarget[1], poseRef.current.yaw, true);
+  }, [walkTarget]);
+  useEffect(() => {
+    if (!walkingNow) moveRef.current?.(poseRef.current.position[0], poseRef.current.position[2], poseRef.current.yaw, false);
+  }, [walkingNow]);
   // The route there: round walls and furniture, through doorways (see homeNav.ts).
   const routeRef = useRef<{ for: [number, number]; points: Array<[number, number]> } | null>(null);
   // The kitchen and bathroom on this floor, and the bathroom's walls.
@@ -1464,7 +1494,7 @@ function RoomScene({
         <planeGeometry args={[ROOM_SIZE, ROOM_SIZE]} />
         <meshStandardMaterial
           map={floorTexture}
-          roughness={style.floor.includes("marble") ? 0.18 : style.floor === "travertine" ? 0.55 : 0.65}
+          roughness={style.floor.includes("marble") ? 0.18 : style.floor === "terrazzo" ? 0.3 : style.floor === "travertine" || style.floor === "slate" ? 0.55 : 0.65}
           metalness={style.floor.includes("marble") ? 0.05 : 0}
           color={style.floor === "oak" ? config.floorTint : undefined}
         />
