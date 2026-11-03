@@ -82,6 +82,29 @@ const ICE_SERVERS: RTCIceServer[] = [
   { urls: "stun:stun.cloudflare.com:3478" },
 ];
 
+// Plus relay (TURN) servers when the app has them (see /api/turn): without a relay, phones on mobile data often can't
+// connect to each other at all, and nobody hears them. Fetched once a session and refreshed before it runs out; any
+// connection made before they arrive is switched over to them.
+let iceServers: RTCIceServer[] = ICE_SERVERS;
+let iceFetchedAt = 0;
+function loadIceServers() {
+  if (typeof window === "undefined" || Date.now() - iceFetchedAt < 12 * 60 * 60 * 1000) return;
+  iceFetchedAt = Date.now();
+  fetch("/api/turn", { method: "POST" })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j: { iceServers?: RTCIceServer[] | null } | null) => {
+      if (!j?.iceServers?.length) return;
+      iceServers = [...ICE_SERVERS, ...j.iceServers];
+      peerConnections.forEach((pc) => {
+        try {
+          pc.setConfiguration({ iceServers });
+          if (pc.connectionState !== "connected") pc.restartIce();
+        } catch { /* closed */ }
+      });
+    })
+    .catch(() => { iceFetchedAt = 0; });
+}
+
 export const TRUTH_OR_DARE_PROMPTS = [
   "TRUTH: What was your biggest AED splurge in Dubai so far?",
   "DARE: Do your best Dubai Metro station announcement voice on the mic!",
@@ -156,6 +179,7 @@ function meInfo(): { id: string; username: string; preset: string; placeId: stri
 }
 
 function connectLobby() {
+  loadIceServers();
   if (lobbyChannel) return;
   if (typeof window === "undefined") return;
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return;
@@ -297,7 +321,8 @@ function unlockAudio() {
   }
   if (!retryingAudio) {
     retryingAudio = true;
-    window.addEventListener("pointerdown", resumeVoices, { capture: true, passive: true });
+    // iPhones only count some kinds of tap as letting sound play, so all of them.
+    ["pointerdown", "touchend", "click"].forEach((t) => window.addEventListener(t, resumeVoices, { capture: true, passive: true }));
   }
 }
 
@@ -331,7 +356,7 @@ function closeAllPeers() {
   audioPool.splice(0).forEach((el) => el.remove());
   if (retryingAudio) {
     retryingAudio = false;
-    window.removeEventListener("pointerdown", resumeVoices, { capture: true });
+    ["pointerdown", "touchend", "click"].forEach((t) => window.removeEventListener(t, resumeVoices, { capture: true }));
   }
 }
 
@@ -354,6 +379,7 @@ function micBlocked(text: string) {
   const spaceId = state.activeSpaceId;
   state = { ...state, micPermissionError: text };
   emit();
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("dubai:toast", { detail: `🎙️ ${text} Tap the red mic to try again.` }));
   if (!spaceId) return;
   const me = meInfo();
   updateParticipantInRoom(spaceId, me.id, { muted: true, speaking: false });
@@ -540,7 +566,7 @@ function getOrCreatePeerConnection(peerId: string): RTCPeerConnection {
   const existing = peerConnections.get(peerId);
   if (existing) return existing;
 
-  const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+  const pc = new RTCPeerConnection({ iceServers });
   peerConnections.set(peerId, pc);
   const meta = { makingOffer: false, ignoreOffer: false, pendingIce: [] as RTCIceCandidateInit[] };
   peerMeta.set(peerId, meta);
@@ -756,6 +782,8 @@ export function hostNewSpace(opts: {
   id?: string;
   partyRoute?: string;
   partyHost?: string;
+  /** When it ends, if not after the usual hour (a party's Space lasts the whole party). */
+  endsAt?: number;
 }): SpaceRoom {
   connectLobby();
   cleanupActiveRoom();
@@ -809,7 +837,7 @@ export function hostNewSpace(opts: {
     hostPreset: me.preset,
     placeId: me.placeId,
     startedAt: now,
-    expiresAt: now + SPACE_DURATION_MS,
+    expiresAt: opts.endsAt && opts.endsAt > now ? opts.endsAt : now + SPACE_DURATION_MS,
     aiSafetyCheck: true,
     activity,
     participants: [

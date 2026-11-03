@@ -20,7 +20,7 @@ import {
 
 export function FloatingSpaceOverlay() {
   const { citizen } = useCitizen();
-  const { rooms, activeSpaceId, lockedSpaceId, soundOff } = useSpacesStore();
+  const { rooms, activeSpaceId, lockedSpaceId, soundOff, micPermissionError } = useSpacesStore();
   const router = useRouter();
   const [now, setNow] = useState(() => Date.now());
 
@@ -68,8 +68,9 @@ export function FloatingSpaceOverlay() {
           type="button"
           onClick={() => {
             // A party's Space is part of the party: at the party it stays here; elsewhere it takes you back to it.
-            if (activeRoom.partyRoute) {
-              if (lockedSpaceId !== activeRoom.id) router.push(activeRoom.partyHost === citizen?.username && activeRoom.partyRoute.startsWith("/property/") ? "/home" : partyDoor(activeRoom.partyRoute));
+            // At the party it opens the Space in the phone (who's on stage, hands up, comments).
+            if (activeRoom.partyRoute && lockedSpaceId !== activeRoom.id) {
+              router.push(activeRoom.partyHost === citizen?.username && activeRoom.partyRoute.startsWith("/property/") ? "/home" : partyDoor(activeRoom.partyRoute));
               return;
             }
             openPhone("spaces");
@@ -138,14 +139,16 @@ export function FloatingSpaceOverlay() {
           <button
             type="button"
             onClick={toggleSpaceMic}
-            aria-label={myParticipant?.muted ? "Unmute mic" : "Mute mic"}
-            className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 active:scale-90 transition-all ${
-              myParticipant?.muted
+            aria-label={micPermissionError ? "Microphone blocked: tap to try again" : myParticipant?.muted ? "Unmute mic" : "Mute mic"}
+            title={micPermissionError ?? undefined}
+            className={`relative w-9 h-9 rounded-full flex items-center justify-center shrink-0 active:scale-90 transition-all ${
+              micPermissionError ? "bg-rose-500 text-white animate-pulse" : myParticipant?.muted
                 ? "bg-white/10 text-slate-300 hover:bg-white/20"
                 : "bg-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.6)]"
             }`}
           >
-            {myParticipant?.muted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            {myParticipant?.muted || micPermissionError ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            {micPermissionError && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-white text-rose-600 text-[10px] font-black flex items-center justify-center">!</span>}
           </button>
         ) : (
           <button

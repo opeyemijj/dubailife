@@ -5,21 +5,59 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { arriveAt, partyHere, PARTIES, kindOf, type PartyHere } from "@/lib/invites";
+import { arriveAt, endParty, partyHere, PARTIES, kindOf, type PartyHere } from "@/lib/invites";
 import { InviteSheet } from "./InviteSheet";
 import { RaceMusic } from "@/components/marathon/raceMusic";
-import { activeSpaceId, hostNewSpace, joinSpace, lockSpace, spaceExists } from "@/lib/spaces";
+import { activeSpaceId, hostNewSpace, joinSpace, leaveSpace, lockSpace, spaceExists } from "@/lib/spaces";
+import { supabase } from "@/lib/supabase/client";
 import { gameAudio } from "@/utils/gameAudio";
+
+// Ending a party: each party on screen registers how to drop it here, and listens on its own channel so the host
+// ending it reaches everyone there at once (not at the next check).
+const enders = new Map<string, () => void>();
+const endChannels = new Map<string, ReturnType<ReturnType<typeof supabase>["channel"]>>();
+/** Out of the party's Space when the party is over. */
+const leavePartySpace = (code: string) => { lockSpace(null); if (activeSpaceId() === partySpaceId(code)) leaveSpace(); };
+
+/** The host ends the party: it ends in the database, everyone there is told, and the host's Space closes. */
+export async function endPartyNow(code: string): Promise<boolean> {
+  if (!(await endParty(code))) return false;
+  void endChannels.get(code)?.send({ type: "broadcast", event: "ended", payload: {} });
+  enders.get(code)?.();
+  return true;
+}
 
 export function usePartyHere(route: string | null, arrive: boolean): PartyHere | null {
   const [party, setParty] = useState<PartyHere | null>(null);
+  const code = party?.code ?? null;
+  const host = party?.host ?? "";
+  const isHost = !!party?.isHost;
+  useEffect(() => {
+    if (!code) return;
+    const end = () => {
+      setParty(null);
+      leavePartySpace(code);
+      window.dispatchEvent(new CustomEvent("dubai:toast", { detail: isHost ? "🎉 Party ended. Thanks for hosting!" : `🎉 @${host} ended the party. Thanks for coming!` }));
+    };
+    enders.set(code, end);
+    const ch = supabase().channel(`party-end:${code}`);
+    ch.on("broadcast", { event: "ended" }, end).subscribe();
+    endChannels.set(code, ch);
+    return () => { enders.delete(code); endChannels.delete(code); void supabase().removeChannel(ch); };
+  }, [code, host, isHost]);
   useEffect(() => {
     if (!route) return;
     let live = true;
     let checkedIn = false;
+    let had: string | null = null;
     const load = async () => {
       const p = await partyHere(route);
-      if (!live) return;
+      // Couldn't check (offline): keep things as they are. A party only ends when the host ends it or its time is up;
+      // the host leaving doesn't end it (a guest keeps its Space going until they're back).
+      if (!live || p === undefined) return;
+      // It was on and now isn't (ended, or its time ran out): out of its Space too.
+      if (had && !p) leavePartySpace(had);
+      had = p?.code ?? null;
       setParty(p);
       if (p && arrive && !p.isHost && !checkedIn) {
         checkedIn = true;
@@ -27,7 +65,8 @@ export function usePartyHere(route: string | null, arrive: boolean): PartyHere |
         if (r && live) {
           gameAudio.playCoinSound();
           window.dispatchEvent(new CustomEvent("dubai:toast", { detail: `🎉 You're at @${r.host}'s ${r.title}!${r.points ? ` +${r.points} points` : ""}` }));
-          setParty(await partyHere(route));
+          const again = await partyHere(route);
+          if (again !== undefined && live) setParty(again);
         }
       }
     };
@@ -50,10 +89,12 @@ function usePartySpace(party: PartyHere | null, route: string | null) {
   const isHost = !!party?.isHost;
   const title = party?.title ?? "";
   const host = party?.host ?? "";
+  const endsAt = party?.endsAt ? Date.parse(party.endsAt) : 0;
   useEffect(() => {
     if (!code) return;
     const id = partySpaceId(code);
-    const open = () => hostNewSpace({ id, title: `🎉 ${title}`, activityKind: "talent", partyRoute: route ?? undefined, partyHost: host });
+    // The Space lasts as long as the party (not the usual hour).
+    const open = () => hostNewSpace({ id, title: `🎉 ${title}`, activityKind: "talent", partyRoute: route ?? undefined, partyHost: host, endsAt: endsAt || undefined });
     let waitingSince = 0;
     const keepIn = () => {
       if (activeSpaceId() === id) { waitingSince = 0; return; }
@@ -71,7 +112,7 @@ function usePartySpace(party: PartyHere | null, route: string | null) {
     const back = () => { if (document.visibilityState === "visible") keepIn(); };
     document.addEventListener("visibilitychange", back);
     return () => { clearInterval(t); document.removeEventListener("visibilitychange", back); lockSpace(null); };
-  }, [code, isHost, title, host, route]);
+  }, [code, isHost, title, host, route, endsAt]);
 }
 
 // Party music: a live Lagos radio station (from the Radio Browser directory), the built-in groove, or off.
@@ -253,6 +294,7 @@ export function ClubRadioPill({ className = "" }: { className?: string }) {
 
 export function PartyBanner({ party, hostAway, className = "" }: { party: PartyHere; hostAway?: boolean; className?: string }) {
   const [inviting, setInviting] = useState(false);
+  const [ending, setEnding] = useState<"ask" | "busy" | null>(null);
   const [mode, setMode] = useState<MusicMode>(currentMode);
   const [station, setStationName] = useState<string | null>(stationName);
   useEffect(() => { stationListeners.add(setStationName); return () => { stationListeners.delete(setStationName); }; }, []);
@@ -269,6 +311,17 @@ export function PartyBanner({ party, hostAway, className = "" }: { party: PartyH
         {mode === "radio" ? `📻 ${station ?? "Radio"}` : mode === "groove" ? "🥁 Groove" : "🔇"}
       </button>
       <button onClick={() => setInviting(true)} className="shrink-0 h-7 px-3 rounded-full bg-white text-fuchsia-700 text-[11px] font-black">Invite</button>
+      {party.isHost && (ending === "ask" ? (
+        <span className="shrink-0 flex items-center gap-1 pl-1">
+          <span className="text-[11px] font-black">End it?</span>
+          <button onClick={async () => { setEnding("busy"); if (!(await endPartyNow(party.code))) { setEnding(null); window.dispatchEvent(new CustomEvent("dubai:toast", { detail: "Couldn't end the party. Try again." })); } }}
+            className="h-7 px-3 rounded-full bg-rose-500 text-white text-[11px] font-black">Yes, end</button>
+          <button onClick={() => setEnding(null)} className="h-7 px-2 rounded-full bg-white/20 text-[11px] font-black">No</button>
+        </span>
+      ) : (
+        <button onClick={() => setEnding("ask")} disabled={ending === "busy"} aria-label="End the party"
+          className="shrink-0 h-7 px-3 rounded-full bg-slate-950/40 text-white text-[11px] font-black disabled:opacity-50">{ending === "busy" ? "Ending…" : "End"}</button>
+      ))}
       {inviting && <InviteSheet code={party.code} title={party.title} onClose={() => setInviting(false)} />}
     </div>
   );

@@ -94,8 +94,11 @@ export async function myInvites(): Promise<{ hosting: InviteRow[]; invited: Invi
   const { data } = await supabase().rpc("my_invites");
   return (data as { hosting: InviteRow[]; invited: InviteRow[] } | null) ?? { hosting: [], invited: [] };
 }
-export async function partyHere(route: string): Promise<PartyHere | null> {
-  const { data } = await supabase().rpc("party_here", { p_route: route });
+/** The party on at this place now, null if none, or undefined if it couldn't be checked (offline): a failed check
+    must never look like the party ending. */
+export async function partyHere(route: string): Promise<PartyHere | null | undefined> {
+  const { data, error } = await supabase().rpc("party_here", { p_route: route });
+  if (error) return undefined;
   return (data as PartyHere | null) ?? null;
 }
 /** You're here while a party's on: checks you in. Returns what to tell you, or null. */
@@ -105,6 +108,11 @@ export async function arriveAt(route: string): Promise<{ code: string; title: st
 }
 /** The host turns the lights out (or back on) for everyone at the party. */
 export async function setPartyLights(code: string, out: boolean) { await supabase().rpc("party_lights", { p_code: code, p_out: out }); }
+/** The host ends the party that's on now. Everyone there is told straight away (see usePartyHere). */
+export async function endParty(code: string): Promise<boolean> {
+  const { error } = await supabase().rpc("end_party", { p_code: code });
+  return !error;
+}
 /** At a party, by default: most people dance and some sit (each person always the same, so it doesn't flicker). */
 export function partyMood(userId: string): "dance" | "sit" {
   let h = 0;

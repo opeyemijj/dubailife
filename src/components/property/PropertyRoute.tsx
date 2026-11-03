@@ -3,6 +3,7 @@
 // A flat or home: travel there, get through the door (access rules / knocking), then see the saved
 // interior. Residents and editors can furnish it; owners manage access, guests and listings.
 
+import { BottomNav } from "@/components/layout/BottomNav";
 import { BELOW_SPACE_TOP, PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyActions } from "@/components/invite/PartyActions";
 import { PartyHostesses, type HostessRun } from "@/components/invite/PartyHostess";
@@ -330,16 +331,21 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         onMove={onMove}
         extras={<PartyHostesses runs={runs} onDone={(id) => setRuns((r) => r.filter((x) => x.id !== id))} />}
       />
-      {party && <PartyActions party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={dance} pose={dancing ? "dance" : pose} onPose={(x) => { setDancing(false); setPose(x === "dance" ? null : x); }} announce={(text) => room.emit({ type: "chat", text })} broadcast={(action, on) => { room.emit({ type: "party", action, on }); if (action === "drinks") serve(me, citizen?.username ?? "you", [where.x, where.z]); }} className="bottom-24" />}
+      {party && <PartyActions party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={dance} pose={dancing ? "dance" : pose} onPose={(x) => { setDancing(false); setPose(x === "dance" ? null : x); }} announce={(text) => room.emit({ type: "chat", text })} broadcast={(action, on) => { room.emit({ type: "party", action, on }); if (action === "drinks") serve(me, citizen?.username ?? "you", [where.x, where.z]); }} className={canEdit ? "bottom-[10rem]" : "bottom-[6.25rem]"} />}
       {party && <PartyBanner party={party} hostAway={!room.peers.some((p) => p.username === party.host)} className={BELOW_SPACE_TOP} />}
 
       <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2">
         <button onClick={onExit} className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center" aria-label="Leave"><ArrowLeft className="w-4 h-4" /></button>
-        <div className="bg-white rounded-2xl shadow-lg px-3 py-1.5 min-w-0">
+        <div className="bg-white rounded-2xl shadow-lg px-3 py-1.5 min-w-0 flex-1 sm:flex-none">
           <div className="font-black text-sm truncate">{flatTitle(flat)}</div>
           <div className="text-[11px] text-slate-500 truncate">{flat.property_type} · {flat.size_sqft.toLocaleString()} sq ft{flat.view ? ` · ${flat.view}` : ""}</div>
         </div>
-        <div className="flex-1" />
+        <div className="hidden sm:block flex-1" />
+        {/* Your money, always in sight (short on phones: 2.2M). */}
+        <Link href="/wallet" className="h-10 shrink-0 px-3 rounded-full bg-amber-50 text-amber-800 border border-amber-200 shadow-lg flex items-center text-xs font-black font-mono whitespace-nowrap" aria-label="Wallet">
+          <span className="sm:hidden">AED {new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(citizen?.balance ?? 0)}</span>
+          <span className="hidden sm:inline">AED {(citizen?.balance ?? 0).toLocaleString()}</span>
+        </Link>
         <button
           onClick={() => { gameAudio.playClickSound(); openLife("profile"); }}
           className="h-10 pl-1 pr-2.5 rounded-full bg-white shadow-lg flex items-center gap-1.5 text-xs font-black active:scale-95 transition-transform"
@@ -348,10 +354,10 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={rosterThumb(presetFor(look ?? { gender: "woman" }))} alt="" className="w-7 h-7 rounded-full object-cover object-top bg-sky-100 ring-2 ring-amber-400" />
-          <span className="hidden xs:inline">Profile</span>
+          <span className="hidden sm:inline">Profile</span>
         </button>
-        {isManager && <button onClick={() => setManageOpen(true)} className="h-10 px-3 rounded-full bg-white shadow-lg flex items-center gap-1.5 text-xs font-black"><Settings2 className="w-4 h-4" /> Manage</button>}
-        <button onClick={onExit} className="h-10 px-3 rounded-full bg-slate-900 text-white shadow-lg flex items-center gap-1.5 text-xs font-black"><LogOut className="w-3.5 h-3.5" /> Exit</button>
+        {isManager && <button onClick={() => setManageOpen(true)} className="h-10 w-10 sm:w-auto shrink-0 justify-center sm:px-3 rounded-full bg-white shadow-lg flex items-center gap-1.5 text-xs font-black" aria-label="Manage"><Settings2 className="w-4 h-4" /> <span className="hidden sm:inline">Manage</span></button>}
+        <button onClick={onExit} className="h-10 w-10 sm:w-auto shrink-0 justify-center sm:px-3 rounded-full bg-slate-900 text-white shadow-lg flex items-center gap-1.5 text-xs font-black" aria-label="Exit"><LogOut className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Exit</span></button>
       </header>
 
       {/* Multi-Room Navigation & Cutaway View Pills */}
@@ -406,8 +412,11 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         <button onClick={() => setTurns((t) => t + 1)} className="w-10 h-10 rounded-full bg-white shadow-lg font-black" aria-label="Rotate room right">⟳</button>
       </div>
 
+      {/* The usual bottom bar (Home, Map, To do, Me), so you can always get back to the city. */}
+      {!placing && !peer && <BottomNav />}
+
       {canEdit && !placing && (
-        <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-30 flex gap-2">
+        <div className="absolute bottom-[6.25rem] left-1/2 -translate-x-1/2 z-30 flex gap-2">
           <button onClick={() => setShopOpen(true)} className="h-11 px-4 rounded-full bg-white shadow-xl text-xs font-black flex items-center gap-1.5"><ShoppingBag className="w-4 h-4" /> Buy furniture</button>
           <button onClick={() => setDecorating((d) => !d)} className={`h-11 px-4 rounded-full shadow-xl text-xs font-black ${decorating ? "bg-emerald-500 text-white" : "bg-white"}`}>{decorating ? "Done decorating" : "Decorate"}</button>
         </div>
