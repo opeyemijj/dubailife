@@ -151,11 +151,12 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
     <ModalPortal>
       <div className="fixed inset-0 z-[170] flex items-center justify-center p-3 pt-[max(4.5rem,calc(env(safe-area-inset-top)+3.5rem))] pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="absolute inset-0 bg-slate-950/25" onClick={onClose} aria-hidden />
-        <button onClick={onClose} className="absolute right-4 top-[max(4.5rem,calc(env(safe-area-inset-top)+3.5rem))] z-10 -translate-y-1/2 h-12 px-5 rounded-full bg-white text-slate-900 font-bold text-lg shadow-xl flex items-center gap-2 active:scale-95">
-          <X className="w-5 h-5" /> Close
-        </button>
         <div role="dialog" aria-modal="true" aria-label="Your phone"
           className="relative w-[min(92vw,400px)] h-[min(100%,820px)] rounded-[48px] bg-slate-900 p-[10px] shadow-[0_30px_80px_rgba(0,0,0,0.5)] animate-[sheetUp_0.25s_ease-out]">
+          {/* Close sits on the phone's own top-right corner, wherever the phone is on the screen. */}
+          <button onClick={onClose} aria-label="Close phone" className="absolute -top-3 -right-2 z-20 h-10 pl-3 pr-4 rounded-full bg-white text-slate-900 font-bold shadow-xl flex items-center gap-1.5 active:scale-95">
+            <X className="w-4 h-4" /> Close
+          </button>
           <div className="relative w-full h-full rounded-[38px] overflow-hidden bg-gradient-to-b from-emerald-800 via-emerald-600 to-emerald-50 text-white flex flex-col">
             {/* Skyline at the foot of the wallpaper. */}
             <svg className="absolute bottom-0 inset-x-0 w-full h-28 text-emerald-900/25 pointer-events-none" viewBox="0 0 400 110" preserveAspectRatio="none" aria-hidden>

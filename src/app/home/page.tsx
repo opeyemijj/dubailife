@@ -4,6 +4,7 @@ import { askLogout } from "@/components/layout/LogoutConfirm";
 import { DecoratorSheet, DecoratorStatus } from "@/components/home/Decorator";
 import { HomeActions } from "@/components/home/HomeActions";
 import { MoveInGuide } from "@/components/home/MoveInGuide";
+import { AppSetup, needsAppSetup } from "@/components/pwa/AppSetup";
 import { inviteFriends } from "@/lib/invite";
 import { useMyDecor } from "@/lib/decorator";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
@@ -223,6 +224,13 @@ export default function HomePage() {
     const t = setTimeout(() => setTriedMoving(true), 0);
     return () => clearTimeout(t);
   }, [decorating]);
+  // Straight after moving in, getting the app comes first (installing, then notifications).
+  const [appSetupOpen, setAppSetupOpen] = useState(false);
+  useEffect(() => {
+    if (!decorFirst) return;
+    const t = setTimeout(() => { if (needsAppSetup()) setAppSetupOpen(true); }, 0);
+    return () => clearTimeout(t);
+  }, [decorFirst]);
   const decorated = triedMoving || !!decorJob
     || furniture.some((f) => !f.uid.startsWith("builtin:") && f.placement)
     || Object.keys(citizen?.homeStyle ?? {}).length > 0;
@@ -841,7 +849,8 @@ export default function HomePage() {
       )}
 
       {citizen && !decorFirst && !cleanScreen && !placing && !decorating && <HomeActions onShop={openShop} />}
-      {decorFirst && !cleanScreen && !placing && !decorating && !buyModalOpen && !decoratorOpen && (
+      {decorFirst && appSetupOpen && citizen && <AppSetup userId={citizen.id} onClose={() => setAppSetupOpen(false)} />}
+      {decorFirst && !appSetupOpen && !cleanScreen && !placing && !decorating && !buyModalOpen && !decoratorOpen && (
         <MoveInGuide
           name={citizen?.username ?? ""}
           decorated={decorated}
@@ -878,7 +887,7 @@ export default function HomePage() {
                   <span className="text-2xl">🧑‍🎨</span>
                   <span className="flex-1">
                     <span className="block font-black text-sm">Hire an interior decorator</span>
-                    <span className="block text-[11px] text-white/80">Set a budget, and a player does it all while you're out.</span>
+                    <span className="block text-[11px] text-white/80">Set a budget, and a player does it all while you&apos;re out.</span>
                   </span>
                   <span className="text-lg">›</span>
                 </button>

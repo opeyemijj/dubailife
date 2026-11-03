@@ -1,0 +1,16 @@
+{
+  "_note": "The 'Get the app' screen a new player sees at home after moving in (src/components/pwa/AppSetup.tsx): install the app and turn on notifications, with steps for each browser.",
+  "title": "Get the full Dubai Life",
+  "why": "Dubai Life is live with other players. Without the app and notifications you'll miss friends messaging you, knocks on your door, marathon starts, your decorator finishing and rent day. It takes 1–2 minutes.",
+  "perks": ["💬 Messages and friend requests", "🚪 Knocks on your door", "🏃 Marathon and live Spaces starting", "💰 Payday and rent reminders"],
+  "install": {
+    "iosSafari": ["Tap the Share button {share} at the bottom of Safari (on iPad it's at the top)", "Scroll down and tap “Add to Home Screen” {plus} (if you don't see it, tap “More” first)", "Tap “Add” at the top right", "Close Safari and open Dubai Life from your Home Screen. You'll finish here."],
+    "iosChrome": ["Tap the Share button {share} at the top right, next to the address bar", "Tap “Add to Home Screen” {plus}", "Tap “Add”", "Open Dubai Life from your Home Screen. (No Share button? Open mydubailife.app in Safari instead.)"],
+    "androidChrome": ["Tap the menu ⋮ at the top right of Chrome", "Tap “Install app” or “Add to Home screen”", "Tap “Install”", "Open Dubai Life from your Home Screen or app drawer"],
+    "samsung": ["Tap the menu ☰ at the bottom right", "Tap “Add page to” then “Home screen”", "Open Dubai Life from your Home Screen"],
+    "desktopChrome": ["Click the install icon at the right end of the address bar (a screen with a down arrow)", "Or open the menu ⋮ → “Cast, save and share” → “Install page”", "Click “Install”"],
+    "desktopEdge": ["Click the menu … at the top right", "Choose “Apps” then “Install this site as an app”", "Click “Install”"],
+    "macSafari": ["In the menu bar, click File", "Choose “Add to Dock”", "Click “Add”, then open Dubai Life from your Dock"],
+    "other": ["Open mydubailife.app in Chrome or Safari to install the app"]
+  }
+}
