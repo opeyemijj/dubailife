@@ -287,7 +287,7 @@ export default function HomePage() {
     lastSent.current = now;
     setWhere({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw: Math.round(yaw * 100) / 100, walking });
   };
-  const partyRoom = useRoom(party && activeFlat ? `flat:${activeFlat.id}` : null, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : myMood }, (e) => {
+  const partyRoom = useRoom(party && activeFlat ? `flat:${activeFlat.id}` : null, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : myMood, level }, (e) => {
     // Drinks: the hostess goes to wherever they are.
     if (e.type === "party" && e.action === "drinks") serve(e.from.userId, e.from.username, [e.from.x, e.from.z]);
     const text = e.type === "chat" ? e.text : e.type === "wave" ? "👋" : null;
@@ -298,7 +298,8 @@ export default function HomePage() {
   const dance = (seconds: number) => { setPose(null); setDancing(true); setTimeout(() => setDancing(false), seconds * 1000); };
   // One spot each, so nobody stands on anyone else.
   const guestSpots = spotsFor(partyRoom.peers.map((p) => p.userId));
-  const guests: Person[] = partyRoom.peers.map((p) => ({
+  // Only the guests on the floor I'm on.
+  const guests: Person[] = partyRoom.peers.filter((p) => (p.level ?? 0) === level).map((p) => ({
     look: p.look,
     position: Number.isFinite(p.x) ? [p.x, 0, p.z] : guestSpots.get(p.userId)!,
     // Facing whoever's nearest, so they dance with each other.

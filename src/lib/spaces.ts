@@ -71,6 +71,9 @@ export interface SpaceRoom {
   participants: SpaceParticipant[];
   activity: SpaceActivityState;
   aiSafetyCheck: boolean;
+  /** A party's own Space: where the party is (so it leads there, not to the Spaces app), and whose party it is. */
+  partyRoute?: string;
+  partyHost?: string;
 }
 
 const ICE_SERVERS: RTCIceServer[] = [
@@ -98,6 +101,8 @@ interface SpacesStoreState {
   micPermissionError: string | null;
   /** A Space you can't leave right now: your party's, while you're at the party. */
   lockedSpaceId: string | null;
+  /** Everyone else's voices silenced, for you only. */
+  soundOff: boolean;
 }
 
 let state: SpacesStoreState = {
@@ -107,6 +112,7 @@ let state: SpacesStoreState = {
   reactions: [],
   micPermissionError: null,
   lockedSpaceId: null,
+  soundOff: false,
 };
 
 const listeners = new Set<() => void>();
@@ -161,6 +167,9 @@ function connectLobby() {
       const incoming = payload as SpaceRoom;
       roomLastSeen.set(incoming.id, Date.now());
       const roleBefore = myRoleIn(incoming.id);
+      const before = state.rooms.find((r) => r.id === incoming.id);
+      const hostBefore = before?.hostId;
+      const startedBefore = before?.startedAt;
       const exists = state.rooms.some((r) => r.id === incoming.id);
       const myId = meInfo().id;
       state = {
@@ -182,6 +191,26 @@ function connectLobby() {
         pendingJoinId = null;
         joinSpace(incoming.id);
       } else if (incoming.id === state.activeSpaceId) {
+        // Two people hosting the same party Space (a guest stood in while the host was away): one gives way, the
+        // party's host first, then whoever's username comes first, and rejoins to listen.
+        const me = meInfo();
+        const mine = state.rooms.find((r) => r.id === incoming.id);
+        if (incoming.partyRoute && roleBefore === "host" && incoming.hostId !== me.id && mine
+            && (incoming.hostUsername === incoming.partyHost || (me.username !== incoming.partyHost && incoming.hostUsername < me.username))) {
+          cleanupActiveRoom();
+          state = { ...state, activeSpaceId: null, rooms: state.rooms.map((r) => (r.id === incoming.id ? { ...r, hostId: incoming.hostId, hostUsername: incoming.hostUsername, participants: incoming.participants } : r)) };
+          emit();
+          joinSpace(incoming.id);
+          return;
+        }
+        // A new host, or the host started it again (they refreshed or came back): drop the old connection to them
+        // and say hello again, so they reconnect to me and I'm back in as a listener.
+        if (hostBefore && incoming.hostId !== me.id && (hostBefore !== incoming.hostId || startedBefore !== incoming.startedAt)) {
+          dropPeer(hostBefore);
+          if (hostBefore !== incoming.hostId) dropPeer(incoming.hostId);
+          const mePart = state.rooms.find((r) => r.id === incoming.id)?.participants.find((p) => p.id === me.id);
+          if (mePart) roomChannel?.send({ type: "broadcast", event: "participant-join", payload: mePart }).catch(() => {});
+        }
         myRoleChanged(roleBefore);
         syncPeers();
       }
@@ -551,6 +580,7 @@ function getOrCreatePeerConnection(peerId: string): RTCPeerConnection {
     }
     audio.removeAttribute("src");
     audio.srcObject = remoteStream;
+    audio.muted = state.soundOff;
     audio.play().catch(() => {});
   };
 
@@ -724,6 +754,8 @@ export function hostNewSpace(opts: {
   gameName?: string;
   /** A fixed id, so others can find it without a link (a party's own Space). */
   id?: string;
+  partyRoute?: string;
+  partyHost?: string;
 }): SpaceRoom {
   connectLobby();
   cleanupActiveRoom();
@@ -770,6 +802,8 @@ export function hostNewSpace(opts: {
   const newRoom: SpaceRoom = {
     id,
     title: opts.title.trim() || `${me.username}'s Dubai Space`,
+    partyRoute: opts.partyRoute,
+    partyHost: opts.partyHost,
     hostId: me.id,
     hostUsername: me.username,
     hostPreset: me.preset,
@@ -1196,12 +1230,22 @@ function subscribe(cb: () => void) {
   };
 }
 
+/** Hear the Space or not (only for you; your mic is separate). */
+export function setSpaceSound(on: boolean) {
+  state = { ...state, soundOff: !on };
+  remoteAudioElements.forEach((el) => { el.muted = !on; });
+  emit();
+}
+
 /** At a party its Space is part of it: no leaving while you're there. */
 export function lockSpace(id: string | null) {
   if (state.lockedSpaceId === id) return;
   state = { ...state, lockedSpaceId: id };
   emit();
 }
+
+/** Someone has announced this Space (it's live). */
+export const spaceExists = (id: string) => state.rooms.some((r) => r.id === id);
 
 /** The Space you're in right now, if any. */
 export const activeSpaceId = () => state.activeSpaceId;

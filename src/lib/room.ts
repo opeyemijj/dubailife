@@ -30,6 +30,8 @@ export interface Peer {
   animation: AvatarAnimation;
   /** Raised off the floor while sitting on a sofa. */
   lift?: number;
+  /** Which floor of the home they're on (upstairs is 1). */
+  level?: number;
 }
 
 export interface Gift {
@@ -103,6 +105,8 @@ export interface Me {
   face?: number;
   animation: AvatarAnimation;
   lift?: number;
+  /** Which floor of the home they're on (upstairs is 1). */
+  level?: number;
 }
 
 const send = (channel: RealtimeChannel | null, payload: unknown) =>
@@ -135,11 +139,11 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
   // What others see of me.
   useEffect(() => {
     if (!profile) return;
-    self.current = { ...profile, x: me.x, z: me.z, face: me.face, animation: me.animation, lift: me.lift };
+    self.current = { ...profile, x: me.x, z: me.z, face: me.face, animation: me.animation, lift: me.lift, level: me.level };
     if (ready.current) channel.current?.track(self.current).catch(() => {});
     // profile is rebuilt every render; its fields are what matter.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.userId, profile?.username, profile?.name, citizen?.look, me.x, me.z, me.face, me.animation, me.lift]);
+  }, [profile?.userId, profile?.username, profile?.name, citizen?.look, me.x, me.z, me.face, me.animation, me.lift, me.level]);
 
   // A fresh channel when the old one can't recover by itself.
   const [attempt, setAttempt] = useState(0);

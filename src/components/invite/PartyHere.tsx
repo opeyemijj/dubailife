@@ -8,7 +8,7 @@ import Link from "next/link";
 import { arriveAt, partyHere, PARTIES, kindOf, type PartyHere } from "@/lib/invites";
 import { InviteSheet } from "./InviteSheet";
 import { RaceMusic } from "@/components/marathon/raceMusic";
-import { activeSpaceId, hostNewSpace, joinSpace, lockSpace } from "@/lib/spaces";
+import { activeSpaceId, hostNewSpace, joinSpace, lockSpace, spaceExists } from "@/lib/spaces";
 import { gameAudio } from "@/utils/gameAudio";
 
 export function usePartyHere(route: string | null, arrive: boolean): PartyHere | null {
@@ -37,7 +37,7 @@ export function usePartyHere(route: string | null, arrive: boolean): PartyHere |
     return () => { live = false; clearTimeout(first); clearInterval(every); };
   }, [route, arrive]);
   usePartyMusic(!!party);
-  usePartySpace(party);
+  usePartySpace(party, route);
   return party;
 }
 
@@ -45,24 +45,33 @@ export function usePartyHere(route: string | null, arrive: boolean): PartyHere |
     a hand to speak). Checked every few seconds while you're there, so anyone arriving or coming back is put in, and if
     the host comes back and opens it again, everyone rejoins. */
 export const partySpaceId = (code: string) => `space-party-${code}`;
-function usePartySpace(party: PartyHere | null) {
+function usePartySpace(party: PartyHere | null, route: string | null) {
   const code = party?.code ?? null;
   const isHost = !!party?.isHost;
   const title = party?.title ?? "";
+  const host = party?.host ?? "";
   useEffect(() => {
     if (!code) return;
     const id = partySpaceId(code);
+    const open = () => hostNewSpace({ id, title: `🎉 ${title}`, activityKind: "talent", partyRoute: route ?? undefined, partyHost: host });
+    let waitingSince = 0;
     const keepIn = () => {
-      if (activeSpaceId() === id) return;
-      if (isHost) hostNewSpace({ id, title: `🎉 ${title}`, activityKind: "talent" });
-      // Not announced yet (the host isn't in it): joins as soon as it is.
-      else joinSpace(id);
+      if (activeSpaceId() === id) { waitingSince = 0; return; }
+      if (isHost) { open(); return; }
+      // Join it; joins the moment it's announced if it isn't yet.
+      joinSpace(id);
+      // Nobody's hosting (the host is away): a guest opens it so the party still has its Space. The host takes it
+      // back when they return.
+      waitingSince ||= Date.now();
+      if (Date.now() - waitingSince > 12_000 && !spaceExists(id)) { waitingSince = 0; open(); }
     };
     keepIn();
     lockSpace(id);
-    const t = setInterval(keepIn, 5000);
-    return () => { clearInterval(t); lockSpace(null); };
-  }, [code, isHost, title]);
+    const t = setInterval(keepIn, 3000);
+    const back = () => { if (document.visibilityState === "visible") keepIn(); };
+    document.addEventListener("visibilitychange", back);
+    return () => { clearInterval(t); document.removeEventListener("visibilitychange", back); lockSpace(null); };
+  }, [code, isHost, title, host, route]);
 }
 
 // Party music: a live Afrobeats radio station (from the Radio Browser directory), the built-in groove, or off.
@@ -116,6 +125,24 @@ const radioPlayer = () => {
   }
   return radioEl;
 };
+
+const SILENCE = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+let primed = false;
+/** Phones only let sound start from a tap. On your first tap anywhere in the game the party radio is unlocked
+    (playing a moment of silence), so later it can start on its own when you reach a party. */
+export function primePartyAudio() {
+  if (primed || typeof window === "undefined") return;
+  primed = true;
+  const unlock = () => {
+    const el = radioPlayer();
+    if (!el.src || el.paused) {
+      el.src = SILENCE;
+      el.play().then(() => { if (el.src === SILENCE) el.pause(); }).catch(() => {});
+    }
+    ["pointerdown", "touchend", "click"].forEach((t) => window.removeEventListener(t, unlock, true));
+  };
+  ["pointerdown", "touchend", "click"].forEach((t) => window.addEventListener(t, unlock, true));
+}
 
 function usePartyMusic(active: boolean) {
   useEffect(() => {

@@ -8,12 +8,15 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCitizen } from "@/lib/citizenStore";
 import { kindOf, myInvites, partyDoor, type InviteRow } from "@/lib/invites";
 import { gameAudio } from "@/utils/gameAudio";
+import { primePartyAudio } from "./PartyHere";
 
 export function BackToParty() {
   const { citizen } = useCitizen();
   const path = usePathname() ?? "";
   const router = useRouter();
   const [live, setLive] = useState<{ row: InviteRow; hosting: boolean } | null>(null);
+  // Get party music ready to play from the first tap in the game.
+  useEffect(() => { primePartyAudio(); }, []);
   const here = /^\/(explore|home)\b/.test(path);
   useEffect(() => {
     if (!citizen?.id || !here) return;

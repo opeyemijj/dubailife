@@ -232,6 +232,8 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   const myMood = dancing ? "dance" : pose ?? (party ? partyMood(me) : "idle");
   // Where I am as I walk about, shared a few times a second so everyone sees me move.
   const [where, setWhere] = useState({ x: mySpot[0], z: mySpot[2], yaw: 0, walking: false });
+  // Which floor I'm on: people upstairs aren't shown downstairs, and the other way round.
+  const [level, setLevel] = useState(0);
   const lastSent = useRef(0);
   const onMove = (x: number, z: number, yaw: number, walking: boolean) => {
     const now = Date.now();
@@ -239,7 +241,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
     lastSent.current = now;
     setWhere({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw: Math.round(yaw * 100) / 100, walking });
   };
-  const room = useRoom(`flat:${flat.id}`, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : myMood }, (e: Received) => {
+  const room = useRoom(`flat:${flat.id}`, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : myMood, level }, (e: Received) => {
     if (e.type === "chat") bubble(e.from.userId, e.text);
     if (e.type === "wave") bubble(e.from.userId, "👋");
     if (e.type === "party") {
@@ -262,7 +264,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   const spotOf = (id: string) => spots.get(id) ?? spotFor(id);
   const people: Person[] = [
     ...resident,
-    ...room.peers.map((p): Person => ({
+    ...room.peers.filter((p) => (p.level ?? 0) === level).map((p): Person => ({
       look: p.look,
       position: Number.isFinite(p.x) ? [p.x, 0, p.z] : spotOf(p.userId),
       rotation: p.face ?? (party ? faceNearest([p.x, 0, p.z], [[where.x, 0, where.z], ...room.peers.map((o) => [o.x, 0, o.z] as [number, number, number])]) : undefined) ?? Math.atan2(-p.x, -p.z),
@@ -284,7 +286,6 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
 
   const housingConfig = HOUSING_CONFIGS[housingTier] ?? HOUSING_CONFIGS.studio;
   const levels = housingConfig.levels;
-  const [level, setLevel] = useState(0);
   const rooms = levels ? levels[Math.min(level, levels.length - 1)].rooms : housingConfig.rooms;
   const changeLevel = (n: number) => {
     if (!levels || n === level || n < 0 || n >= levels.length) return;

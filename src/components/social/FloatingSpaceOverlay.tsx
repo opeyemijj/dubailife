@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Hand, Mic, MicOff, X } from "lucide-react";
+import { Hand, Mic, MicOff, Volume2, VolumeX, X } from "lucide-react";
 import { rosterThumb } from "@/components/avatar/roster";
 import { useCitizen } from "@/lib/citizenStore";
 import { openPhone } from "@/components/layout/PhoneOverlay";
+import { useRouter } from "next/navigation";
+import { partyDoor } from "@/lib/invites";
 import {
   formatSpaceTimer,
   joinSpace,
@@ -13,11 +15,13 @@ import {
   toggleSpaceMic,
   triggerStageActivity,
   useSpacesStore,
+  setSpaceSound,
 } from "@/lib/spaces";
 
 export function FloatingSpaceOverlay() {
   const { citizen } = useCitizen();
-  const { rooms, activeSpaceId, lockedSpaceId } = useSpacesStore();
+  const { rooms, activeSpaceId, lockedSpaceId, soundOff } = useSpacesStore();
+  const router = useRouter();
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -62,7 +66,14 @@ export function FloatingSpaceOverlay() {
         {/* Tap left area to re-open full Live Space inside Phone */}
         <button
           type="button"
-          onClick={() => openPhone("spaces")}
+          onClick={() => {
+            // A party's Space is part of the party: at the party it stays here; elsewhere it takes you back to it.
+            if (activeRoom.partyRoute) {
+              if (lockedSpaceId !== activeRoom.id) router.push(activeRoom.partyHost === citizen?.username && activeRoom.partyRoute.startsWith("/property/") ? "/home" : partyDoor(activeRoom.partyRoute));
+              return;
+            }
+            openPhone("spaces");
+          }}
           className="flex items-center gap-2.5 flex-1 min-w-0 text-left group"
         >
           <div className="relative shrink-0">
@@ -150,6 +161,16 @@ export function FloatingSpaceOverlay() {
             <Hand className="w-4 h-4" />
           </button>
         )}
+
+        {/* Speaker: hear the Space or not (just for you) */}
+        <button
+          type="button"
+          onClick={() => setSpaceSound(soundOff)}
+          aria-label={soundOff ? "Turn Space sound on" : "Mute Space sound"}
+          className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${soundOff ? "bg-rose-500 text-white" : "bg-white/10 hover:bg-white/20 text-white"}`}
+        >
+          {soundOff ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+        </button>
 
         {/* Leave Space button (not at a party: its Space is part of it) */}
         {lockedSpaceId !== activeRoom.id && <button
