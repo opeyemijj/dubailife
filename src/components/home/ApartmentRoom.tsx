@@ -61,6 +61,10 @@ export interface ApartmentRoomProps {
   lightsOut?: boolean;
   /** What you're doing, when the page decides (dancing at a party). */
   myAnimation?: AvatarAnimation;
+  /** Where you start in the room (x, z), when it isn't the usual spot. */
+  startAt?: [number, number];
+  /** Where you are as you move about (x, z, facing, walking), so others can see you live. */
+  onMove?: (x: number, z: number, yaw: number, walking: boolean) => void;
   /** How far back the camera sits, when something needs the whole home in a smaller space. */
   viewDistance?: number;
   /** "inside": an over-the-shoulder camera in the room with the citizen, instead of looking down on the home. */
@@ -100,9 +104,26 @@ type LabelNodes = React.RefObject<Map<string, HTMLDivElement>>;
 /** Someone in the room, tappable, with their name tag kept over their head. */
 function PersonAvatar({ p, id, labels }: { p: Person; id: string; labels: LabelNodes }) {
   const group = useRef<THREE.Group>(null);
-  useFrame(({ camera, size }) => {
+  // Where they first appear; after that they move live (below).
+  const [initial] = useState(p.position);
+  // Other players move live: glide to where they are now, walking (and facing the way) while they move.
+  const [moving, setMoving] = useState(false);
+  useFrame(({ camera, size }, dt) => {
     const g = group.current;
     if (!g) return;
+    const [tx, , tz] = p.position;
+    const dx = tx - g.position.x, dz = tz - g.position.z, dist = Math.hypot(dx, dz);
+    if (dist > 0.03) {
+      // Far off (just arrived, or a jump): straight there. Otherwise at walking pace.
+      const step = dist > 4 ? dist : Math.min(dist, dt * 2.2);
+      g.position.x += (dx / dist) * step;
+      g.position.z += (dz / dist) * step;
+      g.rotation.y = Math.atan2(dx, dz);
+      if (!moving && dist > 0.15) setMoving(true);
+    } else {
+      if (moving) setMoving(false);
+      g.rotation.y += ((p.rotation ?? g.rotation.y) - g.rotation.y) * Math.min(1, dt * 6);
+    }
     const v = new THREE.Vector3();
     for (const [suffix, lift] of [["tag", 2.2], ["bubble", 2.6]] as const) {
       const el = labels.current.get(`${id}:${suffix}`);
@@ -117,13 +138,16 @@ function PersonAvatar({ p, id, labels }: { p: Person; id: string; labels: LabelN
   return (
     <group
       ref={group}
-      position={p.position}
+      position={initial}
       rotation={[0, p.rotation ?? 0, 0]}
       onClick={p.onClick ? (e) => { if (e.delta > 6) return; e.stopPropagation(); p.onClick!(); } : undefined}
       onPointerOver={p.onClick ? () => (document.body.style.cursor = "pointer") : undefined}
       onPointerOut={p.onClick ? () => (document.body.style.cursor = "") : undefined}
     >
-      <CitizenAvatar look={p.look} animation={p.animation ?? "idle"} />
+      {/* Asleep: lying on the floor where they were. */}
+      <group position={!moving && p.animation === "sleep" ? [0, 0.12, 0] : [0, 0, 0]}>
+        <CitizenAvatar look={p.look} animation={moving ? "walk" : p.animation ?? "idle"} rotation={!moving && p.animation === "sleep" ? [-Math.PI / 2, 0, 0] : [0, 0, 0]} />
+      </group>
       {p.label && (
         <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
           <ringGeometry args={[0.36, 0.44, 32]} />
@@ -1107,6 +1131,8 @@ function CameraRig({
 function RoomScene({
   look,
   myAnimation,
+  startAt,
+  onMove,
   furniture: ownFurniture = [],
   placing,
   decorating,
@@ -1150,7 +1176,13 @@ function RoomScene({
   // Where the user last pointed the item being placed (cleared by switching items).
   const [moved, setMoved] = useState<{ uid: string; placement: Placement } | null>(null);
   const [animation, setAnimation] = useState<AvatarAnimation>("idle");
-  const [pose, setPose] = useState<Pose>(STAND);
+  const shown: AvatarAnimation = animation === "walk" || animation === "talk" || !myAnimation ? animation : myAnimation;
+  const shownSleep = shown === "sleep";
+  const [pose, setPose] = useState<Pose>(() => (startAt ? { position: [startAt[0], 0, startAt[1]], yaw: Math.PI / 4 } : STAND));
+  // Others in the room see where you are.
+  const moveRef = useRef(onMove);
+  useEffect(() => { moveRef.current = onMove; }, [onMove]);
+  useEffect(() => { moveRef.current?.(pose.position[0], pose.position[2], pose.yaw, animation === "walk"); }, [pose, animation]);
   const [walkTarget, setWalkTarget] = useState<[number, number] | null>(null);
   // The route there: round walls and furniture, through doorways (see homeNav.ts).
   const routeRef = useRef<{ for: [number, number]; points: Array<[number, number]> } | null>(null);
@@ -1581,7 +1613,10 @@ function RoomScene({
       <Suspense fallback={null}>
         <group position={pose.position} rotation={[0, pose.yaw, 0]}>
           {/* Asleep: laid flat on the back, head along the bed. */}
-          <CitizenAvatar look={look} animation={myAnimation ?? animation} rotation={pose.lie ? [-Math.PI / 2, 0, 0] : [0, 0, 0]} />
+          {/* Walking always shows walking (no sliding); what the page asks for (dancing, sitting) is when you stop. */}
+          <group position={shownSleep && !pose.lie ? [0, 0.12, 0] : [0, 0, 0]}>
+            <CitizenAvatar look={look} animation={shown} rotation={pose.lie || shownSleep ? [-Math.PI / 2, 0, 0] : [0, 0, 0]} />
+          </group>
         </group>
         {people.map((p, i) => <PersonAvatar key={i} p={p} id={`p${i}`} labels={labels} />)}
       </Suspense>

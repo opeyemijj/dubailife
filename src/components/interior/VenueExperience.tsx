@@ -408,7 +408,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   }, [citizen?.id, plan.entrance]);
   // What others see of me: where I'm standing or heading, and what I'm doing.
   // At a party everyone dances (some sit) unless they're doing something else.
-  const shownAnimation: AvatarAnimation = party && playerAnimation === "idle" && citizen ? partyMood(citizen.id) : playerAnimation;
+  const shownAnimation: AvatarAnimation = party && playerAnimation === "idle" && !walkTo && citizen ? partyMood(citizen.id) : playerAnimation;
   const me = { x: walkTo?.point[0] ?? spawn[0], z: walkTo?.point[1] ?? spawn[1], face: walkTo?.face, animation: shownAnimation, lift: playerAnimation === "sit" ? seatLift : 0 };
   const [bubbles, setBubbles] = useState<Record<string, string>>({});
   const bubble = useCallback((who: string, text: string) => {
@@ -1291,6 +1291,8 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       {party && !ride && (
         <PartyActions party={party} lightsOut={lightsSet ?? !!party.lightsOut} onLights={setLightsSet}
           onDance={(seconds) => { setPlayerAnimation("dance"); setTimeout(() => setPlayerAnimation((a) => (a === "dance" ? "idle" : a)), seconds * 1000); }}
+          pose={playerAnimation === "dance" || playerAnimation === "sit" ? playerAnimation : null} canSleep={false}
+          onPose={(x) => setPlayerAnimation(x === "sit" ? "sit" : "idle")}
           announce={(text) => room.emit({ type: "chat", text })} broadcast={(action, on) => room.emit({ type: "party", action, on })} className="bottom-28" />
       )}
 

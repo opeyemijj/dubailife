@@ -52,7 +52,7 @@ export function SpacesApp({
 }) {
   const router = useRouter();
   const { citizen } = useCitizen();
-  const { rooms, activeSpaceId, comments, reactions, micPermissionError } = useSpacesStore();
+  const { rooms, activeSpaceId, comments, reactions, micPermissionError, lockedSpaceId } = useSpacesStore();
 
   const [view, setView] = useState<"list" | "live" | "create">(
     activeSpaceId ? "live" : "list"
@@ -312,6 +312,7 @@ export function SpacesApp({
             >
               Float ↗
             </button>
+{lockedSpaceId !== activeRoom.id && (
             <button
               type="button"
               onClick={() => {
@@ -322,6 +323,7 @@ export function SpacesApp({
             >
               {activeRoom.hostId === myId ? "End" : "Leave"}
             </button>
+            )}
           </div>
         </div>
 

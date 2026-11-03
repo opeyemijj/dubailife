@@ -17,7 +17,7 @@ import { inviteFriends } from "@/lib/invite";
 import { useMyDecor } from "@/lib/decorator";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { compact, useSiteStats } from "@/lib/siteStats";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
@@ -270,31 +270,39 @@ export default function HomePage() {
   // During your party you're in the same live room as your guests (the one they join at your door): you see them
   // and they see you.
   const [dancing, setDancing] = useState(false);
+  const [pose, setPose] = useState<"sit" | "sleep" | null>(null);
   const [lightsSet, setLightsSet] = useState<boolean | null>(null);
   const lightsOut = lightsSet ?? !!party?.lightsOut;
   const [bubbles, setBubbles] = useState<Record<string, string>>({});
   // Hostesses bringing drinks to whoever ordered.
   const [runs, setRuns] = useState<HostessRun[]>([]);
   const serve = (id: string, name: string, to: [number, number]) => setRuns((r) => [...r, { id: `${id}-${Date.now()}`, name, to }].slice(-6));
-  const myMood = dancing ? "dance" : party && citizen ? partyMood(citizen.id) : "idle";
-  const partyRoom = useRoom(party && activeFlat ? `flat:${activeFlat.id}` : null, { x: 0, z: 0, animation: myMood }, (e) => {
-    if (e.type === "party" && e.action === "drinks") {
-      const s = guestSpots.get(e.from.userId);
-      if (s) serve(e.from.userId, e.from.username, [s[0], s[2]]);
-    }
+  const myMood = dancing ? "dance" : pose ?? (party && citizen ? partyMood(citizen.id) : "idle");
+  // Where I am as I walk about, shared a few times a second so my guests see me move.
+  const [where, setWhere] = useState({ x: -3.25, z: 0, yaw: 0, walking: false });
+  const lastSent = useRef(0);
+  const onMove = (x: number, z: number, yaw: number, walking: boolean) => {
+    const now = Date.now();
+    if (walking === where.walking && now - lastSent.current < 200) return;
+    lastSent.current = now;
+    setWhere({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw: Math.round(yaw * 100) / 100, walking });
+  };
+  const partyRoom = useRoom(party && activeFlat ? `flat:${activeFlat.id}` : null, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : myMood }, (e) => {
+    // Drinks: the hostess goes to wherever they are.
+    if (e.type === "party" && e.action === "drinks") serve(e.from.userId, e.from.username, [e.from.x, e.from.z]);
     const text = e.type === "chat" ? e.text : e.type === "wave" ? "👋" : null;
     if (!text) return;
     setBubbles((b) => ({ ...b, [e.from.userId]: text }));
     setTimeout(() => setBubbles((b) => { const next = { ...b }; if (next[e.from.userId] === text) delete next[e.from.userId]; return next; }), 6000);
   });
-  const dance = (seconds: number) => { setDancing(true); setTimeout(() => setDancing(false), seconds * 1000); };
+  const dance = (seconds: number) => { setPose(null); setDancing(true); setTimeout(() => setDancing(false), seconds * 1000); };
   // One spot each, so nobody stands on anyone else.
   const guestSpots = spotsFor(partyRoom.peers.map((p) => p.userId));
   const guests: Person[] = partyRoom.peers.map((p) => ({
     look: p.look,
-    position: guestSpots.get(p.userId)!,
+    position: Number.isFinite(p.x) ? [p.x, 0, p.z] : guestSpots.get(p.userId)!,
     // Facing whoever's nearest, so they dance with each other.
-    rotation: faceNearest(guestSpots.get(p.userId)!, [...guestSpots.values()]) ?? Math.atan2(-guestSpots.get(p.userId)![0], -guestSpots.get(p.userId)![2]),
+    rotation: p.face ?? faceNearest([p.x, 0, p.z], [[where.x, 0, where.z], ...partyRoom.peers.map((o) => [o.x, 0, o.z] as [number, number, number])]) ?? 0,
     animation: p.animation,
     label: `@${p.username}`,
     bubble: bubbles[p.userId],
@@ -437,6 +445,7 @@ export default function HomePage() {
         partyDecor={party?.decor}
         lightsOut={!!party && lightsOut}
         myAnimation={party ? myMood : undefined}
+        onMove={party ? onMove : undefined}
         extras={<PartyHostesses runs={runs} onDone={(id) => setRuns((r) => r.filter((x) => x.id !== id))} />}
       />
 
@@ -640,7 +649,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {party && !cleanScreen && !placing && <PartyActions party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={dance} announce={(text) => partyRoom.emit({ type: "chat", text })} broadcast={(action, on) => { partyRoom.emit({ type: "party", action, on }); if (action === "drinks") serve(citizen?.id ?? "me", citizen?.username ?? "you", [-2.6, 0]); }} className="bottom-[8.75rem] sm:bottom-40" />}
+      {party && !cleanScreen && !placing && <PartyActions party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={dance} pose={dancing ? "dance" : pose} onPose={(x) => { setDancing(false); setPose(x === "dance" ? null : x); }} announce={(text) => partyRoom.emit({ type: "chat", text })} broadcast={(action, on) => { partyRoom.emit({ type: "party", action, on }); if (action === "drinks") serve(citizen?.id ?? "me", citizen?.username ?? "you", [where.x, where.z]); }} className="bottom-[8.75rem] sm:bottom-40" />}
       {party && activeFlat && <PartyPeople room={partyRoom} place={activeHomeTitle} peerId={guestId} setPeerId={setGuestId} say={showToast} />}
       {party && !cleanScreen && <PartyBanner party={party} className="top-[calc(max(0.75rem,env(safe-area-inset-top))+7.25rem)]" />}
       {partyOpen && <PartySheet flat={activeFlat ? { id: activeFlat.id, route: flatRoute(activeFlat), title: activeHomeTitle, area: activeHomeArea } : null} onClose={() => setPartyOpen(false)} />}

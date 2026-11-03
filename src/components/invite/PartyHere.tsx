@@ -8,7 +8,7 @@ import Link from "next/link";
 import { arriveAt, partyHere, PARTIES, kindOf, type PartyHere } from "@/lib/invites";
 import { InviteSheet } from "./InviteSheet";
 import { RaceMusic } from "@/components/marathon/raceMusic";
-import { activeSpaceId, hostNewSpace, joinSpace } from "@/lib/spaces";
+import { activeSpaceId, hostNewSpace, joinSpace, lockSpace } from "@/lib/spaces";
 import { gameAudio } from "@/utils/gameAudio";
 
 export function usePartyHere(route: string | null, arrive: boolean): PartyHere | null {
@@ -41,8 +41,9 @@ export function usePartyHere(route: string | null, arrive: boolean): PartyHere |
   return party;
 }
 
-/** Every party has its own voice Space: the host hosts it when they're there, and guests join it when they arrive
-    (as listeners; they raise a hand to speak). Once per party each visit, so leaving the Space is respected. */
+/** Every party has its own voice Space, and everyone at the party is in it: the host hosts it, guests listen (and raise
+    a hand to speak). Checked every few seconds while you're there, so anyone arriving or coming back is put in, and if
+    the host comes back and opens it again, everyone rejoins. */
 export const partySpaceId = (code: string) => `space-party-${code}`;
 function usePartySpace(party: PartyHere | null) {
   const code = party?.code ?? null;
@@ -51,11 +52,16 @@ function usePartySpace(party: PartyHere | null) {
   useEffect(() => {
     if (!code) return;
     const id = partySpaceId(code);
-    const key = `party-space:${code}`;
-    try { if (sessionStorage.getItem(key) === "1") return; sessionStorage.setItem(key, "1"); } catch { /* storage blocked */ }
-    if (activeSpaceId() === id) return;
-    if (isHost) hostNewSpace({ id, title: `🎉 ${title}`, activityKind: "talent" });
-    else joinSpace(id);
+    const keepIn = () => {
+      if (activeSpaceId() === id) return;
+      if (isHost) hostNewSpace({ id, title: `🎉 ${title}`, activityKind: "talent" });
+      // Not announced yet (the host isn't in it): joins as soon as it is.
+      else joinSpace(id);
+    };
+    keepIn();
+    lockSpace(id);
+    const t = setInterval(keepIn, 5000);
+    return () => { clearInterval(t); lockSpace(null); };
   }, [code, isHost, title]);
 }
 
@@ -97,44 +103,64 @@ const afrobeatsStations = () => (stations ??= (async () => {
   return [] as Station[];
 })());
 
+// One audio player for the radio, kept for the whole visit. Phones only let audio start from a tap, so if the
+// station can't start by itself it waits, with its station already loaded, and the next tap anywhere plays it
+// (straight from the tap, which is what phones need).
+let radioEl: HTMLAudioElement | null = null;
+const radioPlayer = () => {
+  if (!radioEl) {
+    radioEl = new Audio();
+    radioEl.setAttribute("playsinline", "true");
+    radioEl.preload = "none";
+    radioEl.volume = 0.7;
+  }
+  return radioEl;
+};
+
 function usePartyMusic(active: boolean) {
   useEffect(() => {
     if (!active) return;
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     let ctx: AudioContext | null = null;
     let groove: RaceMusic | null = null;
-    let radio: HTMLAudioElement | null = null;
     let gone = false;
+    let waitingForTap = false;
+    let tries = 0;
+    let list: Station[] = [];
+    const el = radioPlayer();
     gameAudio.holdMusic(true);
 
-    const stop = () => {
-      groove?.stop(); groove = null;
-      if (radio) { radio.pause(); radio.removeAttribute("src"); radio.load(); radio = null; }
-      setStation(null);
-    };
+    const stopRadio = () => { el.pause(); waitingForTap = false; };
+    const stop = () => { groove?.stop(); groove = null; stopRadio(); setStation(null); };
     const playGroove = () => {
       if (!AC) return;
       ctx ??= new AC();
+      if (ctx.state === "suspended") void ctx.resume();
       groove = new RaceMusic(ctx);
       groove.setMood("race");
       groove.start();
     };
-    const playRadio = async () => {
-      const list = await afrobeatsStations();
-      // Try a few stations in turn; the groove if none will play.
-      for (const st of list.slice(0, 5)) {
-        if (gone || currentMode() !== "radio") return;
-        const el = new Audio(st.url_resolved);
-        el.volume = 0.7;
-        try {
-          await el.play();
-          if (gone || currentMode() !== "radio") { el.pause(); return; }
-          radio = el;
-          setStation(st.name.trim());
-          return;
-        } catch { el.pause(); }
+    // Try the current station; on a refusal that needs a tap, wait for one; on a dead stream, the next station.
+    const tryStation = async () => {
+      if (gone || currentMode() !== "radio") return;
+      const st = list[tries];
+      if (!st) { playGroove(); return; }
+      if (el.src !== st.url_resolved) el.src = st.url_resolved;
+      try {
+        await el.play();
+        waitingForTap = false;
+        if (gone || currentMode() !== "radio") { el.pause(); return; }
+        setStation(st.name.trim());
+      } catch (e) {
+        if ((e as DOMException)?.name === "NotAllowedError") { waitingForTap = true; setStation("Tap to play"); return; }
+        tries++;
+        void tryStation();
       }
-      if (!gone && currentMode() === "radio") playGroove();
+    };
+    const playRadio = async () => {
+      list = (await afrobeatsStations()).slice(0, 6);
+      tries = 0;
+      void tryStation();
     };
     const play = (m: MusicMode) => {
       stop();
@@ -142,16 +168,28 @@ function usePartyMusic(active: boolean) {
       else if (m === "groove") playGroove();
     };
     play(currentMode());
-    // Browsers hold sound back until a touch: try again then.
+
+    // A tap anywhere: start whatever is waiting, right inside the tap.
     const wake = () => {
       if (ctx?.state === "suspended") void ctx.resume();
-      if (currentMode() === "radio" && !radio) play("radio");
+      if (currentMode() === "radio" && (waitingForTap || (el.paused && el.src))) {
+        el.play().then(() => {
+          waitingForTap = false;
+          const st = list[tries];
+          if (st && !gone) setStation(st.name.trim());
+        }).catch(() => { tries++; void tryStation(); });
+      }
     };
-    window.addEventListener("pointerdown", wake);
+    const opts = { capture: true, passive: true } as const;
+    window.addEventListener("pointerdown", wake, opts);
+    window.addEventListener("touchend", wake, opts);
+    window.addEventListener("click", wake, opts);
     modeListeners.add(play);
     return () => {
       gone = true;
-      window.removeEventListener("pointerdown", wake);
+      window.removeEventListener("pointerdown", wake, opts);
+      window.removeEventListener("touchend", wake, opts);
+      window.removeEventListener("click", wake, opts);
       modeListeners.delete(play);
       stop();
       void ctx?.close();

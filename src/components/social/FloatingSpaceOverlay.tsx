@@ -17,7 +17,7 @@ import {
 
 export function FloatingSpaceOverlay() {
   const { citizen } = useCitizen();
-  const { rooms, activeSpaceId } = useSpacesStore();
+  const { rooms, activeSpaceId, lockedSpaceId } = useSpacesStore();
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -151,15 +151,15 @@ export function FloatingSpaceOverlay() {
           </button>
         )}
 
-        {/* Leave Space button */}
-        <button
+        {/* Leave Space button (not at a party: its Space is part of it) */}
+        {lockedSpaceId !== activeRoom.id && <button
           type="button"
           onClick={leaveSpace}
           aria-label="Leave Space"
           className="w-8 h-8 rounded-full bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 flex items-center justify-center shrink-0 active:scale-90"
         >
           <X className="w-4 h-4" />
-        </button>
+        </button>}
       </div>
     </div>
   );

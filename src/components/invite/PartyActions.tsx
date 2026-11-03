@@ -16,11 +16,18 @@ import { gameAudio } from "@/utils/gameAudio";
 const A = PARTIES.actions;
 type NeedKey = Parameters<typeof boostNeed>[0];
 
-export function PartyActions({ party, lightsOut, onLights, onDance, announce, broadcast, className = "" }: {
+export type PartyPose = "dance" | "sit" | "sleep" | null;
+
+export function PartyActions({ party, lightsOut, onLights, onDance, pose, onPose, canSleep = true, announce, broadcast, className = "" }: {
   party: PartyHere;
   lightsOut: boolean;
   onLights: (out: boolean) => void;
   onDance: (seconds: number) => void;
+  /** What you're doing now (sitting or asleep stay until you tap again), and changing it. */
+  pose?: PartyPose;
+  onPose?: (p: PartyPose) => void;
+  /** Lying down suits a home, not a club. */
+  canSleep?: boolean;
   /** Tell the others in the room (a bubble over you). */
   announce: (text: string) => void;
   /** Tell everyone in the room right now (lights, dancing). */
@@ -53,12 +60,22 @@ export function PartyActions({ party, lightsOut, onLights, onDance, announce, br
     gameAudio.playClickSound();
     await setPartyLights(party.code, out);
   };
-  const btn = "h-12 min-w-[4.25rem] px-2 rounded-2xl bg-white/95 text-slate-900 shadow-lg flex flex-col items-center justify-center text-[10px] font-black active:scale-95 transition-transform";
+  const btn = "shrink-0 h-12 min-w-[4.25rem] px-2 rounded-2xl bg-white/95 text-slate-900 shadow-lg flex flex-col items-center justify-center text-[10px] font-black active:scale-95 transition-transform";
   return (
-    <div className={`fixed left-1/2 -translate-x-1/2 z-40 flex gap-1.5 ${className}`} role="toolbar" aria-label="Party actions">
+    <div className={`fixed left-1/2 -translate-x-1/2 z-40 flex gap-1.5 max-w-[96vw] overflow-x-auto px-1 py-2 [scrollbar-width:none] ${className}`} role="toolbar" aria-label="Party actions">
       <button onClick={() => treat("food")} disabled={busy === "food"} className={btn}><span className="text-lg leading-none">{A.food.icon}</span>{busy === "food" ? "Yum!" : "Food"}</button>
       <button onClick={() => treat("drinks")} disabled={busy === "drinks"} className={btn}><span className="text-lg leading-none">{A.drinks.icon}</span>{busy === "drinks" ? "Cheers!" : "Drinks"}</button>
-      <button onClick={dance} className={btn}><span className="text-lg leading-none">{A.dance.icon}</span>Dance</button>
+      <button onClick={dance} className={`${btn} ${pose === "dance" ? "!bg-fuchsia-600 !text-white" : ""}`}><span className="text-lg leading-none">{A.dance.icon}</span>Dance</button>
+      {onPose && (
+        <button onClick={() => { onPose(pose === "sit" ? null : "sit"); announce(pose === "sit" ? "🙂 is up again" : "🪑 sat down"); }} className={`${btn} ${pose === "sit" ? "!bg-fuchsia-600 !text-white" : ""}`}>
+          <span className="text-lg leading-none">🪑</span>{pose === "sit" ? "Stand" : "Sit"}
+        </button>
+      )}
+      {onPose && canSleep && (
+        <button onClick={() => { onPose(pose === "sleep" ? null : "sleep"); announce(pose === "sleep" ? "🥱 woke up" : "😴 dozed off"); }} className={`${btn} ${pose === "sleep" ? "!bg-indigo-600 !text-white" : ""}`}>
+          <span className="text-lg leading-none">😴</span>{pose === "sleep" ? "Wake up" : "Sleep"}
+        </button>
+      )}
       <button onClick={() => openPhone("page:/phone")} className={`${btn} relative`} aria-label={unread ? `Messages, ${unread} unread` : "Messages"}>
         <span className="text-lg leading-none">💬</span>Messages
         {unread > 0 && <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center ring-2 ring-white">{unread > 99 ? "99+" : unread}</span>}

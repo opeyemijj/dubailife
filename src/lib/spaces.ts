@@ -96,6 +96,8 @@ interface SpacesStoreState {
   comments: SpaceComment[];
   reactions: SpaceReaction[];
   micPermissionError: string | null;
+  /** A Space you can't leave right now: your party's, while you're at the party. */
+  lockedSpaceId: string | null;
 }
 
 let state: SpacesStoreState = {
@@ -104,6 +106,7 @@ let state: SpacesStoreState = {
   comments: [],
   reactions: [],
   micPermissionError: null,
+  lockedSpaceId: null,
 };
 
 const listeners = new Set<() => void>();
@@ -1191,6 +1194,13 @@ function subscribe(cb: () => void) {
   return () => {
     listeners.delete(cb);
   };
+}
+
+/** At a party its Space is part of it: no leaving while you're there. */
+export function lockSpace(id: string | null) {
+  if (state.lockedSpaceId === id) return;
+  state = { ...state, lockedSpaceId: id };
+  emit();
 }
 
 /** The Space you're in right now, if any. */
