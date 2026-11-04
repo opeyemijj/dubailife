@@ -87,6 +87,11 @@ cartoon **flies** on dirty players, and a **boat cruise** you can watch sail.
 | 32 | **Eyes view less zoomed**: 74° lens, camera 0.45 m behind the head (homes and venues) | ✅ Done (2026-11-04) | `ApartmentRoom.tsx`, `InteriorScene.tsx` |
 | 33 | **Leaving a Space asks first** (✕ on the floating Space bar: Leave / Stay) | ✅ Done (2026-11-04) | `social/FloatingSpaceOverlay.tsx` |
 | 34 | **Courses: no wait between steps** (was 20 hours: next lesson and the week's test open as soon as you pass) | ✅ Done (2026-11-04), migration applied | `lib/academy/progress.ts` (`UNLOCK_HOURS`) |
+| 35 | **Moving in needs a yes** (request, Accept / Not now, live note on every page), and **living together is live**: the host's home joins the shared home's room so both see each other move and can chat; the host's furniture is copied to the shared home | ✅ Done (2026-11-05), migration applied | `20261226000000_move_in_requests.sql`, `lib/love.ts`, `phone/HayatiApp.tsx` (`LivingTogether`), `love/LoveListener.tsx` (`MoveInListener`), `app/home/page.tsx` (`hostShare`, `guestShare`) |
+| 36 | **One home, one version**: living together, the home's furniture and look (floor, walls, panels, bed sheets) are the shared copy in `flats.interior`; both partners and visitors see and change the same home, live (room event `home`) | ✅ Done (2026-11-05) | `lib/city/sharedHome.ts`, `app/home/page.tsx` (`sharedHome`, `saveShared`), `PropertyRoute.tsx` (`commit`, `restyle`), `components/home/HomeLookSheet.tsx`, `lib/room.ts` |
+| 37 | **Bed sheets**: 8 colours (`BEDDING`), drawn on every bed | ✅ Done (2026-11-05) | `lib/furniture.ts`, `ApartmentRoom.tsx` (`BeddingContext`) |
+| 38 | **Things to do at home**: TV (news, movie, football on screen), aquarium (feed: flakes and fish come up; clean; watch), kitchen counter (cook roast chicken or beef stew, clean), dining table (sit and eat a roast dinner, beef stew or breakfast, laid out on the table with steam). Partners and visitors can use them too | ✅ Done (2026-11-05) | `data/home/fixtures.json` (kinds `tv`, `aquarium`, `island`, `dining`; pantry `beef`, `roast`, `stew`), `components/home/HomeActivityProps.tsx`, `LuxuryDecor.tsx`, `ApartmentRoom.tsx` (`startObjectUse`, `activity`), `PropertyRoute.tsx` |
+| 39 | **One house, one design for everyone**: every home's design lives once in `flats.interior`; owner, partner, decorator and visitors all change that one. Homes off the map get their address on first visit so they have one too (bed spaces keep each sleeper's corner). Decorators start from it and finishing writes into it; parties never overwrite it | ✅ Done (2026-11-05), migration applied | `20261227000000_one_home_design.sql` (`home_flat_of`, `decor_home`, `decor_complete`, `party_home`), `app/home/page.tsx` (`homeFlatId`) |
 | 15 | Family, phase 2: **move in together**, and **kids shown in the 3D home** at their stage | ✅ Done (2026-11-04), needs migration `20261224000000_move_in.sql`: live together; kids in the 3D home | `lib/love.ts`, `components/phone/HayatiApp.tsx`, `ApartmentRoom.tsx`, `supabase/migrations/20261216000000_family.sql` |
 
 ### Details and "done when"
@@ -245,7 +250,7 @@ the scene, and cut per-frame label updates (drei `Html`). Expected: about half t
 
 ## Migrations waiting
 
-Everything up to `20261225000000_academy_no_wait.sql` is applied (2026-11-04). Nothing waiting. Applied in the last batches:
+Everything up to `20261227000000_one_home_design.sql` is applied (2026-11-05). Nothing waiting. Applied in the last batches:
 - `20261221000000_send_limit.sql`: AED 50,000,000 a day, AED 20,000,000 per transfer (both in `app_settings.limits`).
 - `20261222000000_party_homes.sql`: `flats.home_of`, `party_home`, `my_party_home`, and `flat_permissions`,
   `is_flat_manager` and `create_event` accepting generic homes. Before it runs, a party at a home off the map says

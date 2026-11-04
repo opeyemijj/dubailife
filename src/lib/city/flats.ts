@@ -4,7 +4,7 @@
 
 import { onUserEvent } from "@/lib/userChannel";
 import { supabase } from "@/lib/supabase/client";
-import type { OwnedFurniture } from "@/lib/furniture";
+import type { HomeStyle, OwnedFurniture } from "@/lib/furniture";
 import { sendPushNotification } from "@/lib/push/client";
 
 export type Access = "public" | "friends" | "invite" | "private";
@@ -139,10 +139,13 @@ export const requestEntry = async (flatId: string, note?: string) => {
 };
 export const respondEntry = (requestId: string, approve: boolean) => call<{ id: string; status: string }>("respond_entry", { p_request: requestId, p_approve: approve });
 
-export async function getInterior(flatId: string): Promise<Result<{ interior: { furniture: OwnedFurniture[] }; can_edit: boolean; reason: string }>> {
+export async function getInterior(flatId: string): Promise<Result<{ interior: { furniture: OwnedFurniture[]; style?: HomeStyle; shared?: boolean }; can_edit: boolean; reason: string }>> {
   return call("get_flat_interior", { p_flat: flatId });
 }
 export const saveInterior = (flatId: string, furniture: OwnedFurniture[]) => call<null>("save_flat_interior", { p_flat: flatId, p_interior: { furniture } });
+/** The whole interior: furniture, the look (floor, walls, panels, bedding) and whether it's a shared home. */
+export const saveInteriorFull = (flatId: string, interior: { furniture: OwnedFurniture[]; style?: unknown; shared?: boolean }) =>
+  call<null>("save_flat_interior", { p_flat: flatId, p_interior: interior });
 
 export async function listGuests(flatId: string) {
   const { data } = await supabase().from("flat_guests").select("user_id, can_edit, profiles:user_id (username, display_name)").eq("flat_id", flatId);

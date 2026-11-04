@@ -24,6 +24,7 @@ function describe(e: Received): { icon: string; text: string } {
     case "typing": return { icon: "✍️", text: `${who} is typing…` };
     case "bottle": return { icon: "🍾", text: `${who} ordered bottle service!` };
     case "consumption": return { icon: e.action === "drink" ? "🍸" : "🍴", text: `${who} is having a ${e.action === "drink" ? "drink" : "bite"}` };
+    case "home": return { icon: "🛋️", text: `${who} changed something in the home` };
   }
 }
 

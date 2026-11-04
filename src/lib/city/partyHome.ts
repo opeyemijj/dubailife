@@ -26,10 +26,11 @@ export const areaFor = (tier: HousingTier) => (HOUSING_CONFIGS[tier]?.area ?? "A
 export const hasRoom = (tier: HousingTier) => tier !== "bed_space";
 
 /** Makes (or refreshes, with today's furniture) my generic home and returns where guests go. */
-export async function preparePartyHome(tier: HousingTier, furniture: OwnedFurniture[]): Promise<{ id: string; route: string } | { error: string }> {
+export async function preparePartyHome(tier: HousingTier, furniture: OwnedFurniture[], interior?: { furniture: OwnedFurniture[]; style?: unknown; shared?: boolean }): Promise<{ id: string; route: string } | { error: string }> {
   if (!hasRoom(tier)) return { error: "A shared bed space isn't a room of your own. Move to a studio or bigger to host." };
   const placed = withHomeItems(furniture, tier).filter((f) => f.placement);
-  const { data, error } = await supabase().rpc("party_home", { p_tier: tier, p_area: areaFor(tier), p_interior: { furniture: placed } });
+  // A shared home keeps its one copy (with its look); otherwise my placed furniture.
+  const { data, error } = await supabase().rpc("party_home", { p_tier: tier, p_area: areaFor(tier), p_interior: interior ?? { furniture: placed } });
   if (error || typeof data !== "string") {
     return { error: /need_a_room/.test(error?.message ?? "") ? "A shared bed space isn't a room of your own. Move to a studio or bigger to host."
       : /function .*party_home|schema cache/i.test(error?.message ?? "") ? "House parties at homes off the map are coming in the next update."

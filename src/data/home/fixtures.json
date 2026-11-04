@@ -2,6 +2,42 @@
   "_note": "The kitchen and bathroom built into every home: what each fixture is, what you can do with it (time, needs, the pantry ingredients it uses) and where it sits in each home type. Cells are 0.5 m on the 14 × 14 floor (col 0 is the west wall, row 0 the north wall); rot 0 faces south, 1 west, 2 north, 3 east. Bathroom walls are [x, z] metres with an optional doorway [from, to] metres along the wall.",
 
   "kinds": {
+    "tv": {
+      "name": "TV", "icon": "📺", "size": [4, 1],
+      "desc": "Sit back and watch something.",
+      "actions": [
+        { "id": "watch-news", "label": "Watch the news", "icon": "📰", "seconds": 5, "needs": { "fun": 10, "energy": 5 }, "uses": {}, "serve": "tv-news" },
+        { "id": "watch-movie", "label": "Watch a movie", "icon": "🎬", "seconds": 8, "needs": { "fun": 30, "energy": 10 }, "uses": {}, "serve": "tv-movie" },
+        { "id": "watch-football", "label": "Watch the football", "icon": "⚽", "seconds": 7, "needs": { "fun": 25, "social": 5 }, "uses": {}, "serve": "tv-football" }
+      ]
+    },
+    "aquarium": {
+      "name": "Aquarium", "icon": "🐠", "size": [4, 1],
+      "desc": "Your reef fish: feed them and keep the tank clean.",
+      "actions": [
+        { "id": "feed-fish", "label": "Feed the fish", "icon": "🐟", "seconds": 5, "needs": { "fun": 15 }, "uses": {}, "serve": "feed" },
+        { "id": "clean-tank", "label": "Clean the tank", "icon": "🫧", "seconds": 7, "needs": { "fun": 10 }, "uses": {}, "serve": "clean" },
+        { "id": "watch-fish", "label": "Watch the fish swim", "icon": "😌", "seconds": 5, "needs": { "energy": 10, "fun": 10 }, "uses": {}, "serve": "watch" }
+      ]
+    },
+    "island": {
+      "name": "Kitchen counter", "icon": "🧑‍🍳", "size": [4, 2],
+      "desc": "Cook proper meals to eat at the dining table, or clean up.",
+      "actions": [
+        { "id": "cook-roast", "label": "Roast a whole chicken (with rice)", "icon": "🍗", "seconds": 9, "needs": {}, "uses": { "chicken": 1, "rice": 1 }, "produces": { "roast": 1 }, "skill": "cooking", "serve": "cook" },
+        { "id": "cook-stew", "label": "Cook beef stew (with rice)", "icon": "🍲", "seconds": 9, "needs": {}, "uses": { "beef": 1, "rice": 1 }, "produces": { "stew": 1 }, "skill": "cooking", "serve": "cook" },
+        { "id": "clean-counter", "label": "Clean the counter", "icon": "🧽", "seconds": 5, "needs": { "fun": 5 }, "uses": {}, "serve": "clean" }
+      ]
+    },
+    "dining": {
+      "name": "Dining table", "icon": "🍽️", "size": [4, 3],
+      "desc": "Sit down and eat. Cook at the kitchen counter first for a proper meal.",
+      "actions": [
+        { "id": "eat-roast", "label": "Roast chicken dinner", "icon": "🍗", "seconds": 8, "needs": { "hunger": 75, "fun": 10 }, "uses": { "roast": 1 }, "meal": true, "serve": "roast" },
+        { "id": "eat-stew", "label": "Beef stew and rice", "icon": "🍲", "seconds": 8, "needs": { "hunger": 70, "energy": 10 }, "uses": { "stew": 1 }, "meal": true, "serve": "stew" },
+        { "id": "eat-breakfast", "label": "Eggs, toast and tea", "icon": "🍳", "seconds": 6, "needs": { "hunger": 35, "energy": 15 }, "uses": { "eggs": 1, "bread": 1, "tea": 1 }, "meal": true, "serve": "breakfast" }
+      ]
+    },
     "kitchen-run": {
       "name": "Kitchen", "icon": "🍳", "size": [4, 1],
       "desc": "Sink, five-burner hob and oven, microwave and a blender. Cooking needs ingredients from your pantry.",
@@ -58,6 +94,9 @@
   },
 
   "pantry": {
+    "beef": { "name": "Beef", "icon": "🥩" },
+    "roast": { "name": "Roast chicken (cooked)", "icon": "🍗" },
+    "stew": { "name": "Beef stew (cooked)", "icon": "🍲" },
     "rice": { "name": "Basmati rice", "icon": "🍚" },
     "chicken": { "name": "Chicken", "icon": "🍗" },
     "eggs": { "name": "Eggs", "icon": "🥚" },
@@ -71,7 +110,7 @@
     "soap": { "name": "Shower gel", "icon": "🧼" },
     "toothpaste": { "name": "Toothpaste", "icon": "🪥" }
   },
-  "starterPantry": { "rice": 2, "chicken": 2, "eggs": 4, "bread": 4, "fruit": 3, "milk": 3, "tea": 6, "noodles": 2, "detergent": 3, "soap": 4, "toothpaste": 6 },
+  "starterPantry": { "beef": 1, "rice": 2, "chicken": 2, "eggs": 4, "bread": 4, "fruit": 3, "milk": 3, "tea": 6, "noodles": 2, "detergent": 3, "soap": 4, "toothpaste": 6 },
 
   "layouts": {
     "bed_space": {

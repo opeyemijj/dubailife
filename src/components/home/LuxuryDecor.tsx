@@ -5,6 +5,7 @@
 // dining set and kitchen island, art, mirrors and the staircase of two-storey homes. Wall pieces are
 // centred where the wall puts them (about 1.7 m up); ceiling pieces hang from the ceiling.
 
+import { CounterWork, TableMeal, TankActivity } from "./HomeActivityProps";
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
@@ -163,13 +164,17 @@ function Fireplace({ w, ghost }: { w: number; ghost: Ghost }) {
   );
 }
 
-function Aquarium({ w, ghost }: { w: number; ghost: Ghost }) {
+function Aquarium({ w, ghost, activity }: { w: number; ghost: Ghost; activity?: string }) {
   const fishRef = useRef<THREE.Group>(null);
+  const feeding = activity === "feed";
   useFrame((s) => {
     fishRef.current?.children.forEach((f, i) => {
       const t = s.clock.elapsedTime * (0.4 + i * 0.07) + i * 1.3;
-      f.position.set(Math.sin(t) * w * 0.4, 0.95 + (i % 4) * 0.12 + Math.sin(t * 2) * 0.03, Math.cos(t * 0.7) * 0.08);
-      f.rotation.y = Math.cos(t) > 0 ? 0 : Math.PI;
+      // Feeding: they crowd up to the flakes near the top middle.
+      const x = feeding ? Math.sin(t * 2) * w * 0.12 : Math.sin(t) * w * 0.4;
+      const y = feeding ? 1.3 + Math.sin(t * 3) * 0.04 : 0.95 + (i % 4) * 0.12 + Math.sin(t * 2) * 0.03;
+      f.position.lerp(new THREE.Vector3(x, y, Math.cos(t * 0.7) * 0.08), 0.08);
+      f.rotation.y = Math.cos(feeding ? t * 2 : t) > 0 ? 0 : Math.PI;
     });
   });
   return (
@@ -181,11 +186,12 @@ function Aquarium({ w, ghost }: { w: number; ghost: Ghost }) {
       {!ghost && (
         <group ref={fishRef}>
           {Array.from({ length: 8 }, (_, i) => (
-            <mesh key={i} rotation={[0, 0, Math.PI / 2]}><coneGeometry args={[0.03, 0.1, 6]} /><meshStandardMaterial color={["#f97316", "#facc15", "#38bdf8", "#f472b6"][i % 4]} emissive={["#f97316", "#facc15", "#38bdf8", "#f472b6"][i % 4]} emissiveIntensity={0.3} /></mesh>
+            <mesh key={i} rotation={[0, 0, Math.PI / 2]}><coneGeometry args={[0.045, 0.15, 8]} /><meshStandardMaterial color={["#f97316", "#facc15", "#38bdf8", "#f472b6"][i % 4]} emissive={["#f97316", "#facc15", "#38bdf8", "#f472b6"][i % 4]} emissiveIntensity={0.3} /></mesh>
           ))}
         </group>
       )}
       {[-0.3, 0.1, 0.4].map((x, i) => <Cyl key={i} r={0.04} top={0.01} h={0.25 + i * 0.08} p={[x * w, 0.88 + i * 0.04, -0.08]} c="#22c55e" ghost={ghost} />)}
+      {!ghost && activity && <TankActivity kind={activity} w={w} y0={0.75} y1={1.42} />}
     </group>
   );
 }
@@ -288,7 +294,7 @@ function Wardrobe({ w, ghost }: { w: number; ghost: Ghost }) {
 
 // ---------------------------------------------------------------- dining & kitchen
 
-function DiningSet({ w, d, ghost }: { w: number; d: number; ghost: Ghost }) {
+function DiningSet({ w, d, ghost, activity }: { w: number; d: number; ghost: Ghost; activity?: string }) {
   const chairs: Array<[number, number, number]> = [[-0.6, -1, 0], [0, -1, 0], [0.6, -1, 0], [-0.6, 1, Math.PI], [0, 1, Math.PI], [0.6, 1, Math.PI]];
   return (
     <group>
@@ -301,13 +307,13 @@ function DiningSet({ w, d, ghost }: { w: number; d: number; ghost: Ghost }) {
           {[[-0.18, -0.18], [0.18, -0.18], [-0.18, 0.18], [0.18, 0.18]].map(([lx, lz], j) => <Cyl key={j} r={0.015} h={0.46} p={[lx, 0.23, lz]} c={GOLD} ghost={ghost} metal={0.9} />)}
         </group>
       ))}
-      {/* a centrepiece */}
-      <Cyl r={0.08} top={0.05} h={0.22} p={[0, 0.9, 0]} c="#f5f5f4" ghost={ghost} />
+      {/* a centrepiece, or the meal being eaten */}
+      {!ghost && activity ? <TableMeal kind={activity} w={w * 0.72} d={d * 0.42} y={0.785} /> : <Cyl r={0.08} top={0.05} h={0.22} p={[0, 0.9, 0]} c="#f5f5f4" ghost={ghost} />}
     </group>
   );
 }
 
-function KitchenIsland({ w, d, ghost }: { w: number; d: number; ghost: Ghost }) {
+function KitchenIsland({ w, d, ghost, activity }: { w: number; d: number; ghost: Ghost; activity?: string }) {
   return (
     <group>
       <B s={[w * 0.9, 0.86, d * 0.5]} p={[0, 0.43, -d * 0.12]} c="#e7e1d8" ghost={ghost} rough={0.4} />
@@ -315,6 +321,7 @@ function KitchenIsland({ w, d, ghost }: { w: number; d: number; ghost: Ghost }) 
       {/* waterfall ends */}
       {[-1, 1].map((k) => <B key={k} s={[0.05, 0.89, d * 0.62]} p={[k * w * 0.47, 0.445, -d * 0.06]} c={MARBLE} ghost={ghost} rough={0.15} />)}
       <B s={[0.4, 0.02, 0.3]} p={[w * 0.2, 0.92, -d * 0.12]} c="#1f2937" ghost={ghost} metal={0.6} />
+      {!ghost && activity && <group position={[0, 0, -d * 0.06]}><CounterWork kind={activity} w={w * 0.94} y={0.915} /></group>}
       {[-1, 0, 1].map((k) => (
         <group key={k} position={[k * w * 0.28, 0, d * 0.36]}>
           <Cyl r={0.17} h={0.06} p={[0, 0.66, 0]} c="#c4b5a0" ghost={ghost} />
@@ -606,7 +613,7 @@ function Stairwell({ w, d, ghost }: { w: number; d: number; ghost: Ghost }) {
 // ---------------------------------------------------------------- dispatcher
 
 /** The code-drawn look for a decor `visual`, fitted to `size` (grid cells). */
-export function LuxuryDecor({ visual, size, ghost, tint }: { visual: string; size: [number, number]; ghost?: Ghost; tint?: string }) {
+export function LuxuryDecor({ visual, size, ghost, tint, activity }: { visual: string; size: [number, number]; ghost?: Ghost; tint?: string; /** In use: what it shows (a meal, flakes…). */ activity?: string }) {
   const w = size[0] * CELL, d = size[1] * CELL;
   switch (visual) {
     case "chandelier-crystal": return <ChandelierCrystal ghost={ghost} />;
@@ -616,7 +623,7 @@ export function LuxuryDecor({ visual, size, ghost, tint }: { visual: string; siz
     case "sconces": return <Sconces w={w} ghost={ghost} />;
     case "grand-piano": return <GrandPiano w={w} d={d} ghost={ghost} />;
     case "fireplace": return <Fireplace w={w} ghost={ghost} />;
-    case "aquarium": return <Aquarium w={w} ghost={ghost} />;
+    case "aquarium": return <Aquarium w={w} ghost={ghost} activity={activity} />;
     case "majlis": return <Majlis w={w} d={d} ghost={ghost} tint={tint} />;
     case "armchair": return <Armchair w={w} d={d} ghost={ghost} tint={tint} />;
     case "ottoman": return <Ottoman ghost={ghost} tint={tint} />;
@@ -624,8 +631,8 @@ export function LuxuryDecor({ visual, size, ghost, tint }: { visual: string; siz
     case "canopy-bed": return <CanopyBed w={w} d={d} ghost={ghost} />;
     case "vanity": return <Vanity w={w} ghost={ghost} />;
     case "wardrobe": return <Wardrobe w={w} ghost={ghost} />;
-    case "dining-set": return <DiningSet w={w} d={d} ghost={ghost} />;
-    case "kitchen-island": return <KitchenIsland w={w} d={d} ghost={ghost} />;
+    case "dining-set": return <DiningSet w={w} d={d} ghost={ghost} activity={activity} />;
+    case "kitchen-island": return <KitchenIsland w={w} d={d} ghost={ghost} activity={activity} />;
     case "coffee-bar": return <CoffeeBar w={w} ghost={ghost} />;
     case "drinks-cabinet": return <DrinksCabinet w={w} ghost={ghost} />;
     case "mirror": return <Mirror w={w} h={d} ghost={ghost} />;

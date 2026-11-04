@@ -4,7 +4,7 @@ import { Ceiling } from "@/components/interior/Ceiling";
 import { Flies } from "@/components/avatar/Flies";
 import { PartyDecor } from "@/components/invite/PartyDecor";
 import { canvasQuality } from "@/lib/device";
-import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import React, { createContext, Suspense, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
@@ -21,7 +21,7 @@ import { SceneLoadingOverlay } from "@/components/GameLoadingScreen";
 import {
   AVATAR_SPOT, BUILT_INS, CELL, DOOR, GRID, LAYOUT_SCALE, ROOM_SIZE, WALL_HEIGHT, WINDOW,
   findFreePlacement, floorCenter, floorPlacementAt, getCatalogItem, isPlacementValid, levelOf, rotatedSize, wallOffsetAt, wallTransform, withHomeItems,
-  HOUSING_CONFIGS, hasPlot, type FloorFinish, type HomeStyle, type HousingTier, type LevelDef, type RoomZone,
+  HOUSING_CONFIGS, hasPlot, homeObjectOf, type HomeObject, type FloorFinish, type HomeStyle, type HousingTier, type LevelDef, type RoomZone,
   type CatalogItem, type FloorPlacement, type Interaction, type OwnedFurniture, type Placement, type Rotation, type Wall,
 } from "@/lib/furniture";
 
@@ -72,6 +72,8 @@ export interface ApartmentRoomProps {
   seatCall?: { n: number; sit: boolean };
   /** Walk to the nearest fixture of this kind (the shower for "Morning Shower") and use it; each call is a new ask. */
   fixtureCall?: { n: number; kind: string };
+  /** What an object in use is showing (the meal on the table, flakes in the tank, the TV on…): its action's `serve`. */
+  activity?: string;
   /** What you have in your hand (a drink at a party), and how you hold it. */
   holding?: { prop: React.ReactNode; mode: CarryMode };
   /** I haven't washed: flies buzz round me. */
@@ -126,6 +128,9 @@ export interface Person {
 type LabelNodes = React.RefObject<Map<string, HTMLDivElement>>;
 
 /** Someone in the room, tappable, with their name tag kept over their head. */
+/** The time now (ms), for tap markers. */
+const nowMs = () => performance.now();
+
 function PersonAvatar({ p, id, labels }: { p: Person; id: string; labels: LabelNodes }) {
   const group = useRef<THREE.Group>(null);
   // Where they first appear; after that they move live (below).
@@ -221,7 +226,10 @@ export const BED_MATTRESS = 0.6;
 const MODEL_MATTRESS = 0.942;
 
 /** Loads a furniture GLB and fits it into its footprint: centred, resting on y=0, front facing +z. */
-function useFittedModel(url: string, size: [number, number], yaw = 0, ghost?: "valid" | "invalid") {
+/** The bed sheets' colour in this home (HomeStyle.bedding), for every bed. */
+const BeddingContext = createContext<string | undefined>(undefined);
+
+function useFittedModel(url: string, size: [number, number], yaw = 0, ghost?: "valid" | "invalid", bedding?: string) {
   const { scene } = useGLTF(url);
   return useMemo(() => {
     const model = scene.clone(true);
@@ -244,9 +252,20 @@ function useFittedModel(url: string, size: [number, number], yaw = 0, ghost?: "v
     const ghostMat = ghost
       ? new THREE.MeshStandardMaterial({ color: ghost === "valid" ? "#34d399" : "#f87171", transparent: true, opacity: 0.55, depthWrite: false })
       : null;
+    // Bed sheets: the duvet in the chosen colour, the pillows a paler shade of it.
+    const sheet = bedding && !ghost ? new THREE.Color(bedding) : null;
     outer.traverse((o) => {
       const m = o as THREE.Mesh;
       if (!m.isMesh) return;
+      if (sheet) {
+        const part = `${m.name} ${m.parent?.name ?? ""}`;
+        if (/comforter|duvet|blanket/i.test(part) || /pillow/i.test(part)) {
+          const mat = (Array.isArray(m.material) ? m.material[0] : m.material).clone() as THREE.MeshStandardMaterial;
+          mat.map = null;
+          mat.color = /pillow/i.test(part) ? sheet.clone().lerp(new THREE.Color("#ffffff"), 0.6) : sheet.clone();
+          m.material = mat;
+        }
+      }
       if (ghostMat) {
         m.material = ghostMat;
         m.raycast = () => {}; // ghosts never block the floor underneath
@@ -256,11 +275,12 @@ function useFittedModel(url: string, size: [number, number], yaw = 0, ghost?: "v
       }
     });
     return outer;
-  }, [scene, size, yaw, ghost]);
+  }, [scene, size, yaw, ghost, bedding]);
 }
 
 function FurnitureModel({ url, size, yaw, ghost }: { url: string; size: [number, number]; yaw?: number; ghost?: "valid" | "invalid" }) {
-  const object = useFittedModel(url, size, yaw, ghost);
+  const bedding = useContext(BeddingContext);
+  const object = useFittedModel(url, size, yaw, ghost, url === BED_MODEL ? bedding : undefined);
   return <primitive object={object} />;
 }
 
@@ -406,7 +426,55 @@ function tvScreenTexture() {
 }
 
 /** A 65-inch flat screen TV on a table stand, standing on a media console against the wall. */
-function FlatScreenTVOnStand({ size, ghost }: { size: [number, number]; ghost?: "valid" | "invalid" }) {
+/** What's on the TV while someone watches: the news, a movie or the football, drawn live on the screen. */
+function TvShow({ kind, w, h }: { kind: string; w: number; h: number }) {
+  const canvas = useMemo(() => { const c = document.createElement("canvas"); c.width = 256; c.height = 144; return c; }, []);
+  const tex = useMemo(() => { const t = new THREE.CanvasTexture(canvas); t.colorSpace = THREE.SRGBColorSpace; return t; }, [canvas]);
+  useEffect(() => () => tex.dispose(), [tex]);
+  const last = useRef(0);
+  // eslint-disable-next-line react-hooks/immutability -- the canvas texture is redrawn in place each frame
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    if (t - last.current < 0.08) return;
+    last.current = t;
+    const g = canvas.getContext("2d")!;
+    if (kind === "tv-football") {
+      g.fillStyle = "#15803d"; g.fillRect(0, 0, 256, 144);
+      g.strokeStyle = "#dcfce7"; g.lineWidth = 2; g.strokeRect(8, 8, 240, 128); g.beginPath(); g.moveTo(128, 8); g.lineTo(128, 136); g.stroke();
+      g.beginPath(); g.arc(128, 72, 20, 0, Math.PI * 2); g.stroke();
+      for (let i = 0; i < 10; i++) {
+        g.fillStyle = i < 5 ? "#dc2626" : "#f8fafc";
+        g.beginPath(); g.arc(60 + (i % 5) * 34 + Math.sin(t * 1.3 + i) * 18, 30 + (i % 3) * 38 + Math.cos(t + i * 2) * 10, 4, 0, Math.PI * 2); g.fill();
+      }
+      g.fillStyle = "#fde047"; g.beginPath(); g.arc(128 + Math.sin(t * 1.7) * 70, 72 + Math.sin(t * 2.3) * 40, 3, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "rgba(0,0,0,0.6)"; g.fillRect(8, 6, 92, 16); g.fillStyle = "#fff"; g.font = "bold 11px sans-serif"; g.fillText(`DXB 2 - 1 AUH  ${Math.floor(t) % 90}'`, 12, 18);
+    } else if (kind === "tv-news") {
+      g.fillStyle = "#0b2a5b"; g.fillRect(0, 0, 256, 144);
+      g.fillStyle = "#1e40af"; g.fillRect(150, 20, 90, 70);
+      g.fillStyle = "#fcd34d"; g.beginPath(); g.arc(70, 70, 26, 0, Math.PI * 2); g.fill(); g.fillStyle = "#1f2937"; g.fillRect(44, 92, 52, 40);
+      g.fillStyle = "#b91c1c"; g.fillRect(0, 112, 256, 32);
+      g.fillStyle = "#fff"; g.font = "bold 13px sans-serif";
+      g.fillText("DUBAI LIFE NEWS · Metro extended · Skyline record · Weekend sunny 34°C · ", 256 - ((t * 40) % 700), 132);
+    } else {
+      // A movie: slow-moving scenes in warm cinematic colours, letterboxed.
+      const hue = (t * 12) % 360;
+      const grad = g.createLinearGradient(0, 0, 256, 144);
+      grad.addColorStop(0, `hsl(${hue}, 60%, 35%)`); grad.addColorStop(1, `hsl(${(hue + 60) % 360}, 70%, 18%)`);
+      g.fillStyle = grad; g.fillRect(0, 0, 256, 144);
+      g.fillStyle = "rgba(255,230,180,0.85)"; g.beginPath(); g.arc(128 + Math.sin(t * 0.4) * 60, 70, 18, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#111"; g.fillRect(0, 0, 256, 18); g.fillRect(0, 126, 256, 18);
+    }
+    tex.needsUpdate = true; // eslint-disable-line react-hooks/immutability
+  });
+  return (
+    <mesh position={[0, 0, 0.002]} raycast={() => null}>
+      <planeGeometry args={[w, h]} />
+      <meshBasicMaterial map={tex} toneMapped={false} />
+    </mesh>
+  );
+}
+
+function FlatScreenTVOnStand({ size, ghost, activity }: { size: [number, number]; ghost?: "valid" | "invalid"; activity?: string }) {
   // The placement ghost is a flat tint, so it never needs the screen picture.
   const screenTexture = ghost ? null : tvScreenTexture();
 
@@ -595,6 +663,9 @@ function FlatScreenTVOnStand({ size, ghost }: { size: [number, number]; ghost?: 
         )}
       </mesh>
 
+      {/* Someone's watching: the show on the screen. */}
+      {!ghost && activity?.startsWith("tv-") && <group position={[0, tvCenterY, 0.013]}><TvShow kind={activity} w={tvW - 0.04} h={tvH - 0.04} /></group>}
+
       {/* Power Standby LED in Lower-Right Corner */}
       {!ghost && (
         <mesh position={[tvW / 2 - 0.025, tvCenterY - tvH / 2 + 0.018, 0.013]}>
@@ -615,9 +686,9 @@ function FlatScreenTVOnStand({ size, ghost }: { size: [number, number]; ghost?: 
 }
 
 
-function ItemVisual({ item, ghost }: { item: CatalogItem; ghost?: "valid" | "invalid" }) {
-  if (item.visual) return <LuxuryDecor visual={item.visual} size={item.size} ghost={ghost} tint={item.tint} />;
-  if (item.id === "tv" || item.id.includes("tv")) return <FlatScreenTVOnStand size={item.size} ghost={ghost} />;
+function ItemVisual({ item, ghost, activity }: { item: CatalogItem; ghost?: "valid" | "invalid"; activity?: string }) {
+  if (item.visual) return <LuxuryDecor visual={item.visual} size={item.size} ghost={ghost} tint={item.tint} activity={activity} />;
+  if (item.id === "tv" || item.id.includes("tv")) return <FlatScreenTVOnStand size={item.size} ghost={ghost} activity={activity} />;
   if (item.kind === "wall") return <SunsetPainting size={item.size} ghost={ghost} />;
   return <FurnitureModel url={item.model!} size={item.size} yaw={item.yaw} ghost={ghost} />;
 }
@@ -1224,6 +1295,7 @@ function RoomScene({
   onMove,
   seatCall,
   fixtureCall,
+  activity,
   holding,
   dirty,
   using,
@@ -1592,9 +1664,42 @@ function RoomScene({
     getUp();
     const spot = fixtureSpot(f);
     setWalkTarget([spot.x, spot.z]);
-    setClickBeacon({ x: spot.x, z: spot.z, time: performance.now() });
+    setClickBeacon({ x: spot.x, z: spot.z, time: nowMs() });
     setPendingAction({ type: "cooler", fixture: f });
   };
+  // Using an object (TV, aquarium, dining table, counter) works like a fixture: walk there, then its actions.
+  const [objectFx, setObjectFx] = useState<Fixture | null>(null);
+  const startObjectUse = (uid: string, kind: HomeObject, item: CatalogItem, placement: FloorPlacement) => {
+    const f: Fixture = { id: uid, kind: kind as Fixture["kind"], size: item.size as [number, number], placement };
+    setObjectFx(f);
+    goUseFixture(f);
+  };
+  // While an object is in use: seated at the table, facing the TV, at the counter or the tank. Back where you were after.
+  const objectInUse = using && objectFx?.id === using ? objectFx : null;
+  useEffect(() => {
+    if (!objectInUse) return;
+    const f = objectInUse;
+    const front = fixtureSpot(f);
+    const c = floorCenter(f.size, f.placement);
+    const t = setTimeout(() => {
+      if (f.kind === "dining") {
+        // In the chair on the near side, at the table.
+        const dx = front.x - c.x, dz = front.z - c.z, l = Math.hypot(dx, dz) || 1;
+        const reach = f.size[1] * CELL * 0.36;
+        setPose({ position: [c.x + (dx / l) * reach, 0.06, c.z + (dz / l) * reach], yaw: front.yaw });
+        setAnimation("sit");
+        return;
+      }
+      setPose({ position: [front.x, 0, front.z], yaw: front.yaw });
+      setAnimation(f.kind === "tv" ? "idle" : "talk");
+    }, 0);
+    return () => {
+      clearTimeout(t);
+      setTimeout(() => { setPose({ position: [front.x, 0, front.z], yaw: front.yaw }); setAnimation("idle"); }, 0);
+    };
+    // Only when a use starts or ends.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [objectInUse?.id]);
   const fixtureN = fixtureCall?.n ?? 0;
   useEffect(() => {
     if (!fixtureN || !fixtureCall) return;
@@ -1671,7 +1776,7 @@ function RoomScene({
   const hoverCursor = (on: boolean) => () => { document.body.style.cursor = on ? "pointer" : ""; };
 
   return (
-    <>
+    <BeddingContext.Provider value={style.bedding}>
       <CameraRig
         turns={turns}
         upView={upView}
@@ -1792,12 +1897,15 @@ function RoomScene({
                   if (placing || e.delta > DRAG_THRESHOLD) return;
                   // Decorating: pick it up to move. Otherwise: use it (sit, sleep, open the fridge).
                   if (decorating) { e.stopPropagation(); if (!item.fixed) onPickUp?.(f.uid); return; }
-                  if (item.interaction) { e.stopPropagation(); interact(item.interaction, item, f.placement); }
+                  if (item.interaction) { e.stopPropagation(); interact(item.interaction, item, f.placement); return; }
+                  // The TV, aquarium, dining table, kitchen counter: walk over and choose what to do.
+                  const obj = homeObjectOf(item);
+                  if (obj && f.placement?.kind === "floor" && !busy) { e.stopPropagation(); startObjectUse(f.uid, obj, item, f.placement); }
                 }}
-                onPointerOver={(decorating && !placing && !item.fixed) || (item.interaction && !busy) ? hoverCursor(true) : undefined}
+                onPointerOver={(decorating && !placing && !item.fixed) || ((item.interaction || homeObjectOf(item)) && !busy) ? hoverCursor(true) : undefined}
                 onPointerOut={hoverCursor(false)}
               >
-                <ItemVisual item={item} />
+                <ItemVisual item={item} activity={using === f.uid ? activity : undefined} />
 
                 {/* Tactile Decorate-mode hit plate and visual highlight for every movable item */}
                 {decorating && !placing && !item.fixed && f.placement.kind === "floor" && (
@@ -1850,7 +1958,7 @@ function RoomScene({
         </group>
         {people.map((p, i) => <PersonAvatar key={i} p={p} id={`p${i}`} labels={labels} />)}
       </Suspense>
-    </>
+    </BeddingContext.Provider>
   );
 }
 

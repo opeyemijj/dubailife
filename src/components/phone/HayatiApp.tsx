@@ -12,7 +12,7 @@ import { Heart } from "lucide-react";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { useCitizen } from "@/lib/citizenStore";
 import {
-  addRelative, askForBaby, moveInTogether, moveOut, myHousehold, type SharedHome, askOut, cancelRequest, careForChild, datePlaceOf, endRelationship, FAMILY, happinessOf, hireNanny, logDate, LOVE,
+  addRelative, askForBaby, askMoveIn, respondMoveIn, myMoveInRequests, moveOut, myHousehold, type SharedHome, type MoveInRequest, askOut, cancelRequest, careForChild, datePlaceOf, endRelationship, FAMILY, happinessOf, hireNanny, logDate, LOVE,
   nameChild, planWedding, propose, relationLabel, removeRelative, resolveDiscovery, respond, respondRelative, ringOf, showLove, stageOf,
   useFamily, useLove, venueOf, weddingCost, weddingLink, type Child, type Person, type Relation, type Relationship, type Relative,
 } from "@/lib/love";
@@ -20,6 +20,8 @@ import { contacts, type Contact } from "@/lib/messages";
 import { supabase } from "@/lib/supabase/client";
 import { gameAudio } from "@/utils/gameAudio";
 import { useNow } from "@/lib/dubaiClock";
+import { onUserEvent } from "@/lib/userChannel";
+import { partyDoor } from "@/lib/invites";
 import { AppScreen, aed, Big, Card, Note } from "./AppScreen";
 
 const Face = ({ p, size = 56 }: { p: Pick<Person, "look">; size?: number }) => (
@@ -495,20 +497,48 @@ function Relatives({ me, relatives, busy, run }: { me: string; relatives: Relati
   );
 }
 
-/** Moving in together: your partner moves into your home (they get the keys: come and go, decorate), or you see the
-    home you share and can go there. Either of you can move out. */
+/** Moving in together: ask your partner to move into your home; they move in when they say yes (they get the keys:
+    come and go, decorate). Once you live together, both of you are in the home live and can chat. Either can move out. */
 function LivingTogether({ partnerId, partner, busy, run }: { partnerId: string; partner: string; busy: boolean; run: Run }) {
+  const { citizen } = useCitizen();
   const [homes, setHomes] = useState<SharedHome[] | null>(null);
-  const load = () => void myHousehold().then(setHomes);
-  useEffect(() => { load(); }, [partnerId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [asks, setAsks] = useState<MoveInRequest[]>([]);
+  const load = () => { void myHousehold().then(setHomes); void myMoveInRequests().then(setAsks); };
+  useEffect(() => {
+    load();
+    // Live: an answer (or a new ask) reloads at once; a slow poll as a fallback.
+    const off = citizen?.id ? onUserEvent(citizen.id, "love", load) : undefined;
+    const t = setInterval(load, 20_000);
+    return () => { off?.(); clearInterval(t); };
+  }, [partnerId, citizen?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const shared = homes?.find((h) => h.partner === partnerId);
+  const ask = asks.find((q) => q.partner === partnerId);
   if (!homes) return null;
   if (!shared) {
+    if (ask?.incoming) {
+      return (
+        <Card className="bg-amber-50">
+          <p className="font-black">🏠 @{partner} asked you to move in</p>
+          <p className="text-sm text-slate-600">Say yes and you get the keys to their home: come and go as you like, decorate together, and be there with them live.</p>
+          <Big tone="green" disabled={busy} onClick={async () => { await run(() => respondMoveIn(ask.id, true), `🏠 You moved in with @${partner}!`); load(); }}>Yes, move in</Big>
+          <button disabled={busy} onClick={async () => { await run(() => respondMoveIn(ask.id, false), "You said not yet."); load(); }} className="w-full text-sm font-semibold text-slate-500 py-1">Not now</button>
+        </Card>
+      );
+    }
+    if (ask) {
+      return (
+        <Card>
+          <p className="font-black">🏠 Waiting for @{partner}</p>
+          <p className="text-sm text-slate-500">You asked @{partner} to move in. They&apos;ll move in when they say yes.</p>
+          <button disabled={busy} onClick={async () => { await run(() => respondMoveIn(ask.id, false), "Request taken back."); load(); }} className="w-full text-sm font-semibold text-slate-500 py-1">Take it back</button>
+        </Card>
+      );
+    }
     return (
       <Card>
         <p className="font-black">🏠 Live together</p>
-        <p className="text-sm text-slate-500">@{partner} moves into your home: they come and go as they like and can decorate it with you.</p>
-        <Big tone="green" disabled={busy} onClick={async () => { await run(() => moveInTogether(partnerId), `🏠 @${partner} moved in with you!`); load(); }}>Ask @{partner} to move in</Big>
+        <p className="text-sm text-slate-500">Ask @{partner} to move into your home. If they say yes, you&apos;ll both be there live: see each other, chat and spend time together.</p>
+        <Big tone="green" disabled={busy} onClick={async () => { await run(() => askMoveIn(partnerId), `💌 Asked @${partner} to move in.`); load(); }}>Ask @{partner} to move in</Big>
       </Card>
     );
   }
@@ -517,8 +547,8 @@ function LivingTogether({ partnerId, partner, busy, run }: { partnerId: string; 
   return (
     <Card className="bg-emerald-50">
       <p className="font-black">🏠 Living together</p>
-      <p className="text-sm text-slate-600">{shared.host ? `@${partner} lives with you at your ${where}.` : `You live with @${partner} at their ${where}.`}</p>
-      <Link href={href} className="block w-full h-12 leading-[3rem] text-center rounded-2xl bg-emerald-600 text-white font-black">Go home</Link>
+      <p className="text-sm text-slate-600">{shared.host ? `@${partner} lives with you at your ${where}.` : `You live with @${partner} at their ${where}.`} When you&apos;re both home you see each other live.</p>
+      <Link href={href} onClick={() => { if (!shared.host) partyDoor(href); }} className="block w-full h-12 leading-[3rem] text-center rounded-2xl bg-emerald-600 text-white font-black">Go home</Link>
       <button disabled={busy} onClick={async () => { if (confirm("Stop living together?")) { await run(() => moveOut(partnerId), "You don't live together any more."); load(); } }}
         className="w-full text-sm font-semibold text-slate-400 py-1">Move out</button>
     </Card>

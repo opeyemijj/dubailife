@@ -10,7 +10,13 @@ import type { Citizen, NeedKey } from "@/lib/citizenStore";
 export { FIXTURES };
 export type FixtureKind = keyof typeof FIXTURES.kinds;
 export type PantryItem = keyof typeof FIXTURES.pantry;
-export interface FixtureAction { id: string; label: string; icon: string; seconds: number; needs: Partial<Record<NeedKey, number>>; uses: Partial<Record<PantryItem, number>>; meal?: boolean; skill?: string }
+export interface FixtureAction {
+  id: string; label: string; icon: string; seconds: number; needs: Partial<Record<NeedKey, number>>; uses: Partial<Record<PantryItem, number>>; meal?: boolean; skill?: string;
+  /** What it makes for the pantry (a dish cooked at the counter, eaten at the table). */
+  produces?: Partial<Record<PantryItem, number>>;
+  /** What the 3D shows while it's done (the meal on the table, flakes in the tank, the TV on…). */
+  serve?: string;
+}
 export interface Fixture { id: string; kind: FixtureKind; size: [number, number]; placement: FloorPlacement }
 export interface FixtureWall { a: [number, number]; b: [number, number]; door?: [number, number] }
 
@@ -88,5 +94,6 @@ export function missingFor(action: FixtureAction, pantry: Partial<Record<PantryI
 export function afterUsing(action: FixtureAction, pantry: Partial<Record<PantryItem, number>>) {
   const next = { ...pantry };
   for (const [k, n] of Object.entries(action.uses) as Array<[PantryItem, number]>) next[k] = Math.max(0, (next[k] ?? 0) - n);
+  for (const [k, n] of Object.entries(action.produces ?? {}) as Array<[PantryItem, number]>) next[k] = (next[k] ?? 0) + n;
   return next;
 }

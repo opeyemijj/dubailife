@@ -174,6 +174,17 @@ export const getCatalogItem = (id: string) => CATALOG.find((c) => c.id === id) ?
 
 export type Interaction = "cooler" | "bed" | "chair" | "door" | "stairs";
 
+/** Things in the home you use rather than sit or lie on: the TV, the aquarium, the dining table, the kitchen counter.
+    Each opens its actions (src/data/home/fixtures.json, kinds "tv", "aquarium", "dining", "island"). */
+export type HomeObject = "tv" | "aquarium" | "dining" | "island";
+export function homeObjectOf(item: { id: string; visual?: string; model?: string }): HomeObject | null {
+  if (item.visual === "aquarium") return "aquarium";
+  if (item.visual === "dining-set") return "dining";
+  if (item.visual === "kitchen-island") return "island";
+  if (item.id === "tv" || /(^|_)tv$/.test(item.id) || item.model?.endsWith("/tv.glb")) return "tv";
+  return null;
+}
+
 /** Furniture that comes with every apartment, in its starting place. It can be moved like anything else. */
 export interface BuiltIn {
   id: string;
@@ -316,7 +327,19 @@ export const WALL_PAINTS: Array<{ id: string; label: string; color: string; pric
   { id: "black", label: "Soft black", color: "#1f2023", price: 1400 },
 ];
 /** How a home is finished: floor, wall colour, and whether the walls are panelled with mouldings. */
-export interface HomeStyle { floor: FloorFinish; wall: string; panels: boolean; /** Pieces outside the house (pool, garage, garden…: src/data/home/exterior.json). */ exterior?: string[] }
+export interface HomeStyle { floor: FloorFinish; wall: string; panels: boolean; /** Pieces outside the house (pool, garage, garden…: src/data/home/exterior.json). */ exterior?: string[]; /** Bed sheets: the colour of the duvet on every bed (pillows a paler shade). */ bedding?: string }
+
+/** Bed sheets to choose from. */
+export const BEDDING: Array<{ id: string; label: string; color: string; price: number }> = [
+  { id: "plum", label: "Plum satin (as it came)", color: "#6b2f4f", price: 0 },
+  { id: "white", label: "Hotel white cotton", color: "#f1f5f9", price: 350 },
+  { id: "navy", label: "Navy linen", color: "#1e3a5f", price: 350 },
+  { id: "sage", label: "Sage green linen", color: "#8aa38b", price: 350 },
+  { id: "blush", label: "Blush pink", color: "#e8b4b8", price: 350 },
+  { id: "gold", label: "Gold silk", color: "#c9a227", price: 600 },
+  { id: "charcoal", label: "Charcoal jersey", color: "#374151", price: 350 },
+  { id: "terracotta", label: "Terracotta", color: "#b5654a", price: 350 },
+];
 
 /** What can be added outside a house, and which homes have a plot for it. */
 export const EXTERIOR = EXTERIOR_DATA as { tiers: string[]; items: Array<{ id: string; name: string; icon: string; price: number; desc: string }> };

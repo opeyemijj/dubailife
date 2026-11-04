@@ -8,7 +8,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { useCitizen } from "@/lib/citizenStore";
-import { datePlaceOf, respond, ringOf, useLove } from "@/lib/love";
+import { datePlaceOf, myMoveInRequests, respond, ringOf, useLove, type MoveInRequest } from "@/lib/love";
+import { onUserEvent } from "@/lib/userChannel";
 import { openPhone } from "@/components/layout/PhoneOverlay";
 import { PENDING_WEDDING } from "./WeddingPage";
 
@@ -68,6 +69,33 @@ export function LoveListener() {
         <p className="flex-1 min-w-0 font-semibold leading-tight">{date!.kind === "baby" ? `@${date!.from.username} wants to have a baby with you` : `@${date!.from.username} asked you out`}</p>
         <button onClick={() => { setSeen((s) => [...s, date!.id]); openPhone("hayati"); }} className="h-10 px-4 rounded-full bg-rose-500 text-white font-semibold">Answer</button>
         <button onClick={() => setSeen((s) => [...s, date!.id])} aria-label="Later" className="w-8 h-8 rounded-full text-slate-400">✕</button>
+      </div>
+    </div>
+  );
+}
+
+/** On every page: your partner asked you to move in. A note at the top; Answer opens Family (Accept or Not now). */
+export function MoveInListener() {
+  const { citizen } = useCitizen();
+  const [asks, setAsks] = useState<MoveInRequest[]>([]);
+  const [seen, setSeen] = useState<number[]>([]);
+  useEffect(() => {
+    if (!citizen?.id) return;
+    const load = () => void myMoveInRequests().then(setAsks);
+    const first = setTimeout(load, 1500);
+    const off = onUserEvent(citizen.id, "love", load);
+    const t = setInterval(load, 60_000);
+    return () => { clearTimeout(first); off(); clearInterval(t); };
+  }, [citizen?.id]);
+  const ask = asks.find((q) => q.incoming && !seen.includes(q.id));
+  if (!ask) return null;
+  return (
+    <div className="fixed top-[max(8.5rem,calc(env(safe-area-inset-top)+8rem))] inset-x-0 z-[140] px-3 pointer-events-none">
+      <div className="max-w-md mx-auto pointer-events-auto flex items-center gap-3 p-2.5 rounded-[24px] bg-white text-slate-900 shadow-xl">
+        <span className="text-3xl pl-1">🏠</span>
+        <p className="flex-1 min-w-0 font-semibold leading-tight">@{ask.partnerName} asked you to move in with them</p>
+        <button onClick={() => { setSeen((s) => [...s, ask.id]); openPhone("hayati"); }} className="h-10 px-4 rounded-full bg-emerald-600 text-white font-semibold">Answer</button>
+        <button onClick={() => setSeen((s) => [...s, ask.id])} aria-label="Later" className="w-8 h-8 rounded-full text-slate-400">✕</button>
       </div>
     </div>
   );

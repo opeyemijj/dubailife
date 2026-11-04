@@ -23,7 +23,7 @@ import { KeyboardShortcuts } from "@/components/common/KeyboardShortcuts";
 import { LifeHub } from "@/components/life/LifeHub";
 import { PhoneOverlay } from "@/components/layout/PhoneOverlay";
 import { HudSheets } from "@/components/layout/HudSheets";
-import { LoveListener } from "@/components/love/LoveListener";
+import { LoveListener, MoveInListener } from "@/components/love/LoveListener";
 import { GameInviteListener } from "@/components/games/GameInviteListener";
 import { MarathonBanner } from "@/components/marathon/MarathonBanner";
 import { Custody } from "@/components/cars/Custody";
@@ -240,6 +240,7 @@ export default function RootLayout({
           <TapLayer />
           <HudSheets />
           <LoveListener />
+          <MoveInListener />
           <GameInviteListener />
           <MarathonBanner />
           <Custody />

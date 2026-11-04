@@ -62,7 +62,9 @@ export type RoomEvent =
   | { type: "accept"; kind: "join" | "dance" | "table"; spot?: [number, number] }
   | { type: "friend" }
   // At a party: the host turns the lights out or on, or gets everyone dancing.
-  | { type: "party"; action: "lights" | "dance" | "drinks"; on?: boolean };
+  | { type: "party"; action: "lights" | "dance" | "drinks"; on?: boolean }
+  // Someone changed the home (furniture, walls, floor, bedding): everyone there reloads its one shared copy.
+  | { type: "home" };
 
 export type Received = RoomEvent & { id: string; from: Peer; to?: string; at: number };
 

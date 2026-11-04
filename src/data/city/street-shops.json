@@ -19,6 +19,7 @@
         { "id": "milk", "label": "Milk", "icon": "🥛", "price": 6, "pantry": { "milk": 1 } },
         { "id": "rice", "label": "Basmati rice", "icon": "🍚", "price": 18, "pantry": { "rice": 2 } },
         { "id": "chicken", "label": "Chicken", "icon": "🍗", "price": 22, "pantry": { "chicken": 1 } },
+        { "id": "beef", "label": "Beef", "icon": "🥩", "price": 28, "pantry": { "beef": 1 } },
         { "id": "fruit", "label": "Fruit", "icon": "🍎", "price": 10, "pantry": { "fruit": 2 } },
         { "id": "tea", "label": "Tea", "icon": "🫖", "price": 7, "pantry": { "tea": 2 } },
         { "id": "soap", "label": "Shower gel", "icon": "🧴", "price": 9, "pantry": { "soap": 1 } }

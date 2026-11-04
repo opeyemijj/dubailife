@@ -20,13 +20,16 @@ import { FloatMenu, SideBar, SideButton, SidePopover, ViewCycle } from "@/compon
 import { openPhone } from "@/components/layout/PhoneOverlay";
 import { useUnreadTotal } from "@/lib/unread";
 import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoom";
-import { CATALOG, getCatalogItem, housingTierFor, withHomeItems, HOUSING_CONFIGS, type CatalogItem, type OwnedFurniture, type Placement, type Rotation, type HousingTier } from "@/lib/furniture";
+import { CATALOG, getCatalogItem, housingTierFor, withHomeItems, HOUSING_CONFIGS, type CatalogItem, type OwnedFurniture, type Placement, type Rotation, type HousingTier, type HomeStyle } from "@/lib/furniture";
 import { adjustBalance, useCitizen, useRequireCitizen } from "@/lib/citizenStore";
 import { getEntity } from "@/lib/city/geo";
 import { isGenericHome, towerName } from "@/lib/city/partyHome";
 import { TowerArrival } from "./TowerArrival";
+import { HomeLookSheet } from "@/components/home/HomeLookSheet";
+import { FixtureProgress, FixtureSheet, completeFixtureAction } from "@/components/home/FixtureSheet";
+import type { Fixture, FixtureAction } from "@/lib/homeFixtures";
 import {
-  ACCESS_LABEL, addGuest, flatRoute, flatTitle, getFlat, getInterior, listFlat, listGuests, removeGuest, requestEntry, saveInterior, setAccess, watchRequest,
+  ACCESS_LABEL, addGuest, flatRoute, flatTitle, getFlat, getInterior, listFlat, listGuests, removeGuest, requestEntry, saveInteriorFull, setAccess, watchRequest,
   type Access, type FlatView, type Listing,
 } from "@/lib/city/flats";
 import { ROSTER, presetFor, rosterThumb } from "@/components/avatar/roster";
@@ -54,6 +57,8 @@ export function PropertyRoute({ buildingId, unit }: { buildingId: string; unit: 
   const [flat, setFlat] = useState<FlatView | null | undefined>(undefined);
   const [door, setDoor] = useState<Door>({ state: "checking" });
   const [furniture, setFurniture] = useState<OwnedFurniture[]>([]);
+  // The home's look (floor, walls, panels, bedding), saved with its furniture: one version for everyone here.
+  const [style, setStyle] = useState<Partial<HomeStyle> | null>(null);
   // A flat in a tower off the map: you come in through the lobby and take the lift up first (once per visit).
   const [upstairs, setUpstairs] = useState(false);
 
@@ -64,6 +69,7 @@ export function PropertyRoute({ buildingId, unit }: { buildingId: string; unit: 
     const res = await getInterior(flatId);
     if (res.ok) {
       setFurniture(res.data.interior?.furniture ?? []);
+      setStyle(res.data.interior?.style ?? null);
       setDoor({ state: "open", canEdit: res.data.can_edit, reason: res.data.reason });
     } else {
       setDoor({ state: "closed", reason: res.error.replace(/^access_denied:/, "") });
@@ -106,6 +112,8 @@ export function PropertyRoute({ buildingId, unit }: { buildingId: string; unit: 
       furniture={furniture}
       setFurniture={setFurniture}
       look={citizen.look}
+      lookOfHome={style}
+      setLookOfHome={setStyle}
       onExit={() => router.push(generic ? "/explore" : `/explore?at=${buildingId}`)}
       onChanged={load}
     />
@@ -171,9 +179,11 @@ function DoorStep({ flat, door, setDoor, onEnter, buildingName }: { flat: FlatVi
 
 // ---------------------------------------------------------------- inside
 
-function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onExit, onChanged }: {
+function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onExit, onChanged, lookOfHome, setLookOfHome }: {
   flat: FlatView; me: string; canEdit: boolean; reason: string; furniture: OwnedFurniture[];
   setFurniture: (f: OwnedFurniture[]) => void; look?: import("@/components/avatar/roster").AvatarLookProps; onExit: () => void; onChanged: () => void;
+  /** The home's floor, walls, panels and bedding (saved with the furniture: one version for everyone). */
+  lookOfHome: Partial<HomeStyle> | null; setLookOfHome: (s: Partial<HomeStyle>) => void;
 }) {
   // A party on here: decorations, a banner, and (for a guest) checking in.
   const party = usePartyHere(flatRoute(flat), true);
@@ -207,13 +217,28 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   const say = (t: string) => { setToast(t); setTimeout(() => setToast((x) => (x === t ? null : x)), 3000); };
 
   // Every change to the layout is saved to the flat, so visitors see exactly this.
-  const commit = (next: OwnedFurniture[]) => {
+  const commit = (next: OwnedFurniture[], nextLook: Partial<HomeStyle> | null = lookOfHome) => {
     setFurniture(next);
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      const res = await saveInterior(flat.id, next);
+      // The furniture and the look together, so nobody's change wipes the other's; then everyone here reloads it.
+      const res = await saveInteriorFull(flat.id, { furniture: next, style: nextLook ?? undefined, shared: true });
       if (!res.ok) say(`Couldn't save: ${res.error}`);
+      else room.emit({ type: "home" });
     }, 500);
+  };
+  const [lookOpen, setLookOpen] = useState(false);
+  // The kitchen, bathroom and things in the home (TV, aquarium, dining table, counter): anyone here can use them.
+  const [fixture, setFixture] = useState<Fixture | null>(null);
+  const [running, setRunning] = useState<FixtureAction | null>(null);
+  const [usingFixture, setUsingFixture] = useState<string | null>(null);
+  const restyle = (change: Partial<HomeStyle>, price: number, label: string) => {
+    if (price > 0 && !adjustBalance(-price)) return say("⚠️ Not enough AED.");
+    const next = { ...homeLook, ...change };
+    setLookOfHome(next);
+    commit(furniture, next);
+    gameAudio.playCoinSound();
+    say(`✨ ${label}${price ? ` · AED ${price.toLocaleString()}` : ""}`);
   };
 
   const buy = (item: CatalogItem) => {
@@ -267,6 +292,8 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   const room = useRoom(`flat:${flat.id}`, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : where.rest ?? myMood, lift: where.lift, level, hold: drink ?? undefined, dirty: isDirty(citizen?.needs?.hygiene) }, (e: Received) => {
     if (e.type === "chat") bubble(e.from.userId, e.text);
     if (e.type === "wave") bubble(e.from.userId, "👋");
+    // Someone changed the home: the one version, reloaded for everyone here.
+    if (e.type === "home") onChanged();
     if (e.type === "party") {
       if (e.action === "lights") setLightsSet(!!e.on);
       else if (e.action === "drinks") serve(e.from.userId, e.from.username, [e.from.x, e.from.z]);
@@ -311,6 +338,8 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   const housingTier: HousingTier = housingTierFor(flat.property_type, flat.bedrooms);
 
   const housingConfig = HOUSING_CONFIGS[housingTier] ?? HOUSING_CONFIGS.studio;
+  // The home's look as saved (or as it came).
+  const homeLook: HomeStyle = { ...housingConfig.finish, ...lookOfHome };
   const levels = housingConfig.levels;
   const rooms = levels ? levels[Math.min(level, levels.length - 1)].rooms : housingConfig.rooms;
   const changeLevel = (n: number) => {
@@ -339,6 +368,10 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
       <ApartmentRoom
         loadingLabel={`Opening ${flatTitle(flat)}`}
         look={look}
+        homeStyle={homeLook}
+        onUseFixture={(f) => setFixture(f)}
+        using={usingFixture}
+        activity={running?.serve}
         furniture={furniture}
         placing={placing}
         decorating={decorating}
@@ -460,6 +493,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
       )}
       {panel === "menu" && (
         <SidePopover title={flatTitle(flat)} onClose={() => setPanel(null)}>
+          {canEdit && <button onClick={() => setLookOpen(true)} className="w-full h-11 rounded-2xl bg-emerald-600 text-white text-xs font-black">🎨 Floors, walls &amp; bedding</button>}
           {(levels || (rooms && rooms.length > 0)) && (
             <div className="flex flex-wrap gap-1">
               {rooms && rooms.length > 0 && <button onClick={() => setUpView(!upView)} className={`px-2.5 h-8 rounded-full text-[11px] font-black ${upView ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-700"}`}>{upView ? "📐 All rooms" : "🔍 One room"}</button>}
@@ -482,6 +516,17 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
           className="fixed right-3 bottom-[max(6.25rem,calc(env(safe-area-inset-bottom)+5.75rem))] z-30 h-11 pl-3 pr-4 rounded-full bg-emerald-600 text-white shadow-lg flex items-center gap-1.5 font-black text-sm active:scale-95" aria-label="Go outside">🚪 <span>Outside</span></Link>
       )}
 
+      {fixture && !running && (
+        <FixtureSheet fixture={fixture} onClose={() => setFixture(null)} onStart={(a) => { gameAudio.playClickSound(); setRunning(a); setUsingFixture(fixture.id); setFixture(null); }} />
+      )}
+      {running && (
+        <div className="absolute left-3 top-[max(7.5rem,calc(env(safe-area-inset-top)+7rem))] z-40 pointer-events-auto">
+          <FixtureProgress key={running.id} action={running}
+            onCancel={() => { setRunning(null); setUsingFixture(null); }}
+            onDone={() => { completeFixtureAction(running); say(`${running.icon} ${running.label}: done`); setRunning(null); setUsingFixture(null); }} />
+        </div>
+      )}
+      {lookOpen && canEdit && <HomeLookSheet style={homeLook} onChange={restyle} onClose={() => setLookOpen(false)} />}
       {/* The usual bottom bar (Home, Map, To do, Me), so you can always get back to the city. */}
       {!placing && !peer && <BottomNav />}
 

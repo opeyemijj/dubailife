@@ -15,7 +15,7 @@ import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyPeople } from "@/components/invite/PartyPeople";
 import { PartyActions } from "@/components/invite/PartyActions";
 import { drinkInHand, PartyHostesses, usePartyDrink, type HostessRun } from "@/components/invite/PartyHostess";
-import { faceNearest, partyMood } from "@/lib/invites";
+import { faceNearest, partyDoor, partyMood } from "@/lib/invites";
 import { spotsFor } from "@/components/property/PropertyRoute";
 import { useRoom } from "@/lib/room";
 import { AppSetup, needsAppSetup } from "@/components/pwa/AppSetup";
@@ -32,17 +32,19 @@ import {
   RotateCw, RotateCcw, Keyboard, Move, Package, LogOut, Shirt, Bell
 } from "lucide-react";
 import { ApartmentRoom, type Person, type PlacingState } from "@/components/home/ApartmentRoom";
-import { stageOf, useFamily } from "@/lib/love";
+import { myHousehold, stageOf, useFamily, type SharedHome } from "@/lib/love";
+import { onUserEvent } from "@/lib/userChannel";
 import { useNow } from "@/lib/dubaiClock";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { gameAudio } from "@/utils/gameAudio";
 import { isNewCitizen, useRequireCitizen, adjustBalance, buyFurniture, setFurniturePlacement, updateCitizen, DEFAULT_NEEDS, type Needs } from "@/lib/citizenStore";
 import {
-  CATALOG, FLOOR_FINISHES, PANELS_PRICE, SHOP_CATEGORIES, WALL_PAINTS, getCatalogItem, getHousingTierFromText, hasPlot, housingTierFor, withHomeItems, HOUSING_CONFIGS,
+  BEDDING, CATALOG, FLOOR_FINISHES, PANELS_PRICE, SHOP_CATEGORIES, WALL_PAINTS, getCatalogItem, getHousingTierFromText, hasPlot, housingTierFor, withHomeItems, HOUSING_CONFIGS,
   type CatalogItem, type HomeStyle, type Interaction, type Placement, type Rotation, type HousingTier, type HomeActivityDef, type ShopCategory,
 } from "@/lib/furniture";
-import { flatRoute, getFlat, myFlats, type FlatView } from "@/lib/city/flats";
-import { areaFor, hasRoom, myPartyHome, preparePartyHome, towerName } from "@/lib/city/partyHome";
+import { flatRoute, getFlat, myFlats, saveInterior, type FlatView } from "@/lib/city/flats";
+import { areaFor, hasRoom, isGenericHome, myPartyHome, preparePartyHome, towerName } from "@/lib/city/partyHome";
+import { useSharedInterior, type SharedInterior } from "@/lib/city/sharedHome";
 import { getEntity } from "@/lib/city/geo";
 import { openLife } from "@/components/life/LifeHub";
 import { useOnlineCount, useOnlineUsernames, formatOnline } from "@/lib/presence";
@@ -88,6 +90,9 @@ function HomeMenuRow({ icon, title, text, onClick }: { icon: string; title: stri
     </button>
   );
 }
+
+/** A new id for a piece of furniture bought for a shared home. */
+const newFurnitureUid = (itemId: string) => `${itemId}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
 export default function HomePage() {
   const router = useRouter();
@@ -216,7 +221,7 @@ export default function HomePage() {
   const [level, setLevel] = useState(0);
   const rooms = levels ? levels[Math.min(level, levels.length - 1)].rooms : housingConfig.rooms;
   const isMultiRoom = !!rooms?.length;
-  const homeStyle: HomeStyle = citizen?.homeStyle?.[housingTier] ?? housingConfig.finish;
+  const ownStyle: HomeStyle = citizen?.homeStyle?.[housingTier] ?? housingConfig.finish;
   const [upView, setUpView] = useState(isMultiRoom);
   // Looking down on the home, or over the shoulder in the room.
   const [view, setView] = useState<"above" | "inside" | "eye">("above");
@@ -251,12 +256,13 @@ export default function HomePage() {
       showToast("⚠️ Not enough AED in your wallet!");
       return;
     }
-    updateCitizen((c) => ({ ...c, homeStyle: { ...c.homeStyle, [housingTier]: { ...homeStyle, ...change } } }));
+    if (sh) void saveShared({ ...sh, style: { ...homeStyle, ...change } });
+    else updateCitizen((c) => ({ ...c, homeStyle: { ...c.homeStyle, [housingTier]: { ...homeStyle, ...change } } }));
     gameAudio.playCoinSound();
     showToast(`✨ ${label}${price ? ` · AED ${price.toLocaleString()}` : ""}`);
   };
 
-  const furniture = citizen?.furniture ?? [];
+  const ownFurniture = citizen?.furniture ?? [];
   // A new player's first job here: buy something, move things or hire a decorator. Their goals wait for that,
   // and follow as soon as they've done it (on leaving home, if they don't tap through to them here).
   const decorFirst = !!citizen?.decorFirst && isNewCitizen(citizen);
@@ -274,7 +280,7 @@ export default function HomePage() {
     return () => clearTimeout(t);
   }, [decorFirst]);
   const decorated = triedMoving || !!decorJob
-    || furniture.some((f) => !f.uid.startsWith("builtin:") && f.placement)
+    || ownFurniture.some((f) => !f.uid.startsWith("builtin:") && f.placement)
     || Object.keys(citizen?.homeStyle ?? {}).length > 0;
   const finishDecorFirst = () => updateCitizen((c) => ({ ...c, decorFirst: false }));
   useEffect(() => {
@@ -284,19 +290,68 @@ export default function HomePage() {
   // No home on the map: the home you live in gets a generic address on your first party (lib/city/partyHome.ts).
   // During a party you and your guests share its live room, like any other home.
   const [starterHome, setStarterHome] = useState<FlatView | null>(null);
+  const [starterLoaded, setStarterLoaded] = useState(false);
   useEffect(() => {
     if (activeFlat || !citizen?.id) return;
     let live = true;
-    void myPartyHome().then((f) => { if (live) setStarterHome(f); });
+    void myPartyHome().then((f) => { if (live) { setStarterHome(f); setStarterLoaded(true); } });
     return () => { live = false; };
   }, [activeFlat, citizen?.id]);
   const homeOff = !activeFlat && starterHome && housingTierFor(starterHome.property_type, starterHome.bedrooms) === housingTier ? starterHome : null;
   const partyFlat = activeFlat ?? homeOff;
+  // Living together (Family): the homes I share with a partner. Mine (I'm the host): we're both in its live room
+  // whenever we're home. Theirs: a way there (and straight there if I've no home of my own on the map).
+  const [shared, setShared] = useState<SharedHome[]>([]);
+  useEffect(() => {
+    if (!citizen?.id) return;
+    const load = () => void myHousehold().then(setShared);
+    const first = setTimeout(load, 0);
+    const off = onUserEvent(citizen.id, "love", load);
+    return () => { clearTimeout(first); off(); };
+  }, [citizen?.id]);
+  const hostShare = shared.find((h) => h.host && (h.flat === activeFlat?.id || h.flat === homeOff?.id || (!activeFlat && isGenericHome(h.building)))) ?? null;
+  const guestShare = shared.find((h) => !h.host) ?? null;
+  const guestRoute = guestShare ? `/property/${guestShare.building}/${encodeURIComponent(guestShare.unit)}` : null;
+  const goToShared = () => { if (guestRoute) router.push(partyDoor(guestRoute)); };
+  // No home of my own on the map: home is where we live together.
+  useEffect(() => {
+    if (guestRoute && flats && flats.length === 0 && !hostShare) router.replace(partyDoor(guestRoute));
+  }, [guestRoute, flats, hostShare, router]);
+  // One home, one design: the home's furniture and look are saved with the home, and everyone (me, my partner, a
+  // decorator, visitors) sees and changes that one. Every home with a room has one (a home off the map gets its
+  // address for this). Only a shared bed space keeps each sleeper's own corner.
+  const homeFlatId = hostShare?.flat ?? activeFlat?.id ?? homeOff?.id ?? null;
+  const sharedHome = useSharedInterior(homeFlatId);
+  const sh = homeFlatId ? sharedHome.data : null;
+  const furniture = sh ? sh.furniture : ownFurniture;
+  const homeStyle: HomeStyle = sh ? { ...ownStyle, ...sh.style } : ownStyle;
+  /** Saves a change to the shared home and tells whoever's there (they reload it at once). */
+  const saveShared = async (next: SharedInterior) => {
+    const ok = await sharedHome.save(next);
+    if (!ok) { showToast("⚠️ Couldn't save that. Try again."); void sharedHome.reload(); return; }
+    partyRoom.emit({ type: "home" });
+  };
+  // The home's design starts as the home looks to me now (once, the first time).
+  useEffect(() => {
+    if (!homeFlatId || !sharedHome.data || sharedHome.data.shared) return;
+    void sharedHome.save({ furniture: withHomeItems(ownFurniture, housingTier), style: ownStyle, shared: true });
+    // Only when the shared copy first arrives.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [homeFlatId, sharedHome.data?.shared, !!sharedHome.data]);
   const prepareHome = async () => {
-    const r = await preparePartyHome(housingTier, furniture);
+    const r = await preparePartyHome(housingTier, furniture, sh ? { furniture: sh.furniture, style: sh.style, shared: true } : undefined);
     if (!("error" in r)) void getFlat(r.id).then((f) => f && setStarterHome(f));
     return r;
   };
+  // A home off the map with a room gets its address (and so its one design) as soon as I'm home.
+  const madeHome = useRef(false);
+  useEffect(() => {
+    if (madeHome.current || !citizen?.id || !starterLoaded || !flats || activeFlat || homeOff || !hasRoom(housingTier)) return;
+    madeHome.current = true;
+    void prepareHome();
+    // Once the starter home is known.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [citizen?.id, starterLoaded, flats, activeFlat?.id, homeOff?.id, housingTier]);
   // Your children at home, at their age: a newborn lying down, a crawler sitting, then up and about, growing taller
   // each week (Family app for their care). Tap one to open the Family app.
   const family = useFamily(citizen?.id);
@@ -353,7 +408,9 @@ export default function HomePage() {
   const onMove = (x: number, z: number, yaw: number, walking: boolean, lift?: number, rest?: "sit" | "sleep") => {
     setWhere({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw: Math.round(yaw * 100) / 100, walking, lift: lift ? Math.round(lift * 100) / 100 : undefined, rest });
   };
-  const partyRoom = useRoom(party && partyFlat ? `flat:${partyFlat.id}` : null, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : where.rest ?? myMood, lift: where.lift, level, hold: drink ?? undefined, dirty: isDirty(citizen?.needs?.hygiene) }, (e) => {
+  const partyRoom = useRoom(party && partyFlat ? `flat:${partyFlat.id}` : hostShare ? `flat:${hostShare.flat}` : null, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : where.rest ?? myMood, lift: where.lift, level, hold: drink ?? undefined, dirty: isDirty(citizen?.needs?.hygiene) }, (e) => {
+    // My partner (or a guest decorating) changed the home: everyone sees the one version.
+    if (e.type === "home") { void sharedHome.reload(); return; }
     // Drinks: the hostess goes to wherever they are.
     if (e.type === "party" && e.action === "drinks") serve(e.from.userId, e.from.username, [e.from.x, e.from.z]);
     const text = e.type === "chat" ? e.text : e.type === "wave" ? "👋" : null;
@@ -364,10 +421,11 @@ export default function HomePage() {
   // At a party in a home off the map, guests see the host's furniture: moving things round updates their copy.
   const furnitureKey = JSON.stringify(furniture.filter((f) => f.placement));
   useEffect(() => {
-    if (!party?.isHost || activeFlat || !homeOff) return;
+    // My home off the map at my party: guests see my furniture. (A shared home is already the one copy.)
+    if (sh || hostShare || !party?.isHost || activeFlat || !homeOff) return;
     const t = setTimeout(() => { void preparePartyHome(housingTier, furniture); }, 2000);
     return () => clearTimeout(t);
-  }, [furnitureKey, party?.isHost, !!activeFlat, homeOff?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [furnitureKey, party?.isHost, !!activeFlat, homeOff?.id, hostShare?.flat]); // eslint-disable-line react-hooks/exhaustive-deps
   const dance = (seconds: number) => { setPose(null); setDancing(true); setTimeout(() => setDancing(false), seconds * 1000); };
   // One spot each, so nobody stands on anyone else.
   const guestSpots = spotsFor(partyRoom.peers.map((p) => p.userId));
@@ -436,7 +494,11 @@ export default function HomePage() {
   };
 
   const handleBuy = (item: CatalogItem) => {
-    const uid = buyFurniture(item.id, item.price);
+    // Our shared home: paid by me, it goes into our home (both of us can place it).
+    const uid = sh
+      ? (adjustBalance(-item.price) ? newFurnitureUid(item.id) : null)
+      : buyFurniture(item.id, item.price);
+    if (uid && sh) void saveShared({ ...sh, furniture: [...sh.furniture, { uid, itemId: item.id, placement: null }] });
     if (!uid) {
       showToast("⚠️ Not enough AED in your wallet!");
       return;
@@ -446,8 +508,13 @@ export default function HomePage() {
     showToast(`🎉 Bought ${item.name}! ${item.kind === "wall" ? "Tap a wall" : "Tap the floor"} to place it.`);
   };
 
+  const placeShared = (uid: string, placement: Placement | null) => {
+    if (!sh) return;
+    void saveShared({ ...sh, furniture: withHomeItems(sh.furniture, housingTier).map((f) => (f.uid === uid ? { ...f, placement } : f)) });
+  };
   const handlePlace = (uid: string, placement: Placement) => {
-    setFurniturePlacement(uid, placement, housingTier);
+    if (sh) placeShared(uid, placement);
+    else setFurniturePlacement(uid, placement, housingTier);
     setPlacing(null);
     gameAudio.playClickSound();
   };
@@ -463,7 +530,8 @@ export default function HomePage() {
 
   const storePlacing = () => {
     if (!placing) return;
-    setFurniturePlacement(placing.uid, null, housingTier);
+    if (sh) placeShared(placing.uid, null);
+    else setFurniturePlacement(placing.uid, null, housingTier);
     setPlacing(null);
     showToast("📦 Moved to storage. Open Buy → Storage to place it again.");
   };
@@ -523,6 +591,7 @@ export default function HomePage() {
         onInteractObject={handleInteractObject}
         onUseFixture={(f) => setFixture(f)}
         using={usingFixture}
+        activity={running?.serve}
         fixtureCall={fixtureCall}
         level={level}
         onChangeLevel={changeLevel}
@@ -530,7 +599,7 @@ export default function HomePage() {
         partyDecor={party?.decor}
         lightsOut={!!party && lightsOut}
         myAnimation={party ? myMood : undefined}
-        onMove={party ? onMove : undefined}
+        onMove={party || hostShare ? onMove : undefined}
         seatCall={party ? seatCall : undefined}
         holding={party ? drinkInHand(drink) : undefined}
         dirty={isDirty(citizen?.needs?.hygiene)}
@@ -555,6 +624,13 @@ export default function HomePage() {
         <FloatMenu label="Party" onClose={() => setPartyPanel(false)}>
           <PartyActions list party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={(sec) => { if (where.rest) askSeat(false); dance(sec); }} pose={dancing ? "dance" : pose} onPose={(x) => { setDancing(false); setPose(x === "dance" ? null : x); if (x === "sit" || pose === "sit") askSeat(x === "sit"); }} announce={(text) => partyRoom.emit({ type: "chat", text })} broadcast={(action, on) => { partyRoom.emit({ type: "party", action, on }); if (action === "drinks") serve(citizen?.id ?? "me", citizen?.username ?? "you", [where.x, where.z]); }} />
         </FloatMenu>
+      )}
+      {/* Living with my partner at theirs: one tap home to them. */}
+      {guestShare && !cleanScreen && !placing && (
+        <button onClick={() => { gameAudio.playClickSound(); goToShared(); }}
+          className="fixed left-3 top-[calc(env(safe-area-inset-top)+7.5rem)] z-30 h-11 pl-3 pr-4 rounded-full bg-emerald-600 text-white shadow-xl text-sm font-black flex items-center gap-1.5">
+          🏠 <span className="truncate max-w-[60vw]">Our home with @{guestShare.partnerName ?? "your partner"}</span>
+        </button>
       )}
       {/* Bottom right, beside the stick: going outside. */}
       {!cleanScreen && !placing && (
@@ -734,7 +810,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {party && partyFlat && <PartyPeople room={partyRoom} place={activeHomeTitle} peerId={guestId} setPeerId={setGuestId} say={showToast} />}
+      {((party && partyFlat) || hostShare) && <PartyPeople room={partyRoom} place={activeHomeTitle} peerId={guestId} setPeerId={setGuestId} say={showToast} />}
       {party && !cleanScreen && <PartyBanner party={party} className="top-[calc(max(0.75rem,env(safe-area-inset-top))+7.25rem)]" />}
       {partyOpen && <PartySheet
         flat={activeFlat ? { id: activeFlat.id, route: flatRoute(activeFlat), title: activeHomeTitle, area: activeHomeArea }
@@ -777,7 +853,7 @@ export default function HomePage() {
           onClose={() => setExteriorOpen(false)} />
       )}
       {/* An interior decorator at work here, and the reveal when they're done; choosing one. */}
-      {!cleanScreen && <DecoratorStatus tier={housingTier} job={decorJob} reload={reloadDecor} />}
+      {!cleanScreen && <DecoratorStatus tier={housingTier} job={decorJob} reload={() => { reloadDecor(); void sharedHome.reload(); }} />}
       {decoratorOpen && <DecoratorSheet tier={housingTier} preselect={hireParam} onClose={() => setDecoratorOpen(false)} onHired={() => { setBuyModalOpen(false); void reloadDecor(); }} />}
 
       {/* RELATABLE HOME ACTIVITIES DOCK (Collapsible Floating Pill / Expanded Drawer) */}
@@ -1077,6 +1153,22 @@ export default function HomePage() {
                 >
                   {homeStyle.panels ? "Remove" : `AED ${PANELS_PRICE.toLocaleString()}`}
                 </button>
+              </section>
+              <section className="space-y-2">
+                <h4 className="text-xs font-black text-slate-900">🛏️ Bed sheets</h4>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {BEDDING.map((b) => {
+                    const current = (homeStyle.bedding ?? BEDDING[0].color).toLowerCase() === b.color.toLowerCase();
+                    return (
+                      <button key={b.id} disabled={current} onClick={() => restyle({ bedding: b.color }, b.price, `New sheets: ${b.label}`)}
+                        className={`rounded-xl border p-1.5 text-left ${current ? "border-emerald-500 ring-2 ring-emerald-200" : "border-slate-200"}`}>
+                        <span className="block h-7 rounded-lg border border-black/5" style={{ background: b.color }} />
+                        <span className="block text-[10px] font-black mt-1 leading-tight">{b.label}</span>
+                        <span className="text-[9px] font-mono font-bold text-emerald-600">{current ? "✓" : b.price ? `AED ${b.price}` : "Free"}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </section>
             </div>
           ) : shopTab === "shop" ? (
