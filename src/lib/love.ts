@@ -1,26 +1,38 @@
 "use client";
 
-// Relationships and weddings (the Hayati app). Only what UAE law allows: a man and a woman, one partner at
-// a time, both agreeing at every step. Rules: src/data/life/love.json, enforced in *_love.sql.
+// Relationships, weddings and family (the Family app, once called Hayati). A couple is a man and a woman, both
+// agreeing at every step; a man may have up to 4 partners, a woman one, and other partners are hidden (but can be
+// found out). Relatives, babies and nannies too. Rules: src/data/life/love.json and family.json, enforced in
+// *_love.sql and *_family.sql.
 
 import { useEffect, useSyncExternalStore } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { refreshCitizen } from "@/lib/citizenStore";
 import LOVE from "@/data/life/love.json";
+import FAMILY from "@/data/life/family.json";
 
-export { LOVE };
+export { LOVE, FAMILY };
 type Look = { gender: "woman" | "man"; preset?: string } | null;
 export interface Person { id: string; username: string; look: Look }
-export interface LoveRequest { id: number; kind: "date" | "propose"; ring: string | null; place: string | null; message: string | null; from: Person }
+export interface LoveRequest { id: number; kind: "date" | "propose" | "baby"; ring: string | null; place: string | null; message: string | null; from: Person }
 export interface Relationship {
   id: number; status: "dating" | "engaged" | "married"; level: number; ring: string | null; since: string; engagedAt: string | null; marriedAt: string | null;
   partner: Person; lovedToday: boolean; dateToday: string | null; partnerDateToday: string | null; wedding: string | null;
 }
+export interface Discovery { relationship: number; status: string; foundAt: string; partner: Person; other: Person }
 export interface MyLove {
   gender: "man" | "woman" | null;
+  /** Can start another relationship (a woman when single, a man with fewer than 4 partners). */
+  canDate: boolean;
+  relationships: Relationship[];
+  /** The first of them (most people have one). */
   relationship: Relationship | null;
+  /** What I found out about my partner and haven't dealt with yet. */
+  discoveries: Discovery[];
+  /** Partners of mine who found out about another of my relationships. */
+  caught: Array<{ by: string; about: string }>;
   incoming: LoveRequest[];
-  outgoing: Array<{ id: number; kind: "date" | "propose"; to: string }>;
+  outgoing: Array<{ id: number; kind: "date" | "propose" | "baby"; to: string }>;
   invitations: Array<{ code: string; startsAt: string; venue: string }>;
   candidates: Person[];
 }
@@ -42,8 +54,15 @@ export const weddingCost = (venue: string, guests: number, ceremony: string) => 
 const ERRORS: Record<string, string> = {
   friends_first: "Be friends first. Add them in Phone → People.",
   not_allowed: "Relationships on Dubai Life follow UAE law: a man and a woman.",
-  you_are_taken: "You're already in a relationship.",
-  they_are_taken: "They're already in a relationship.",
+  you_are_taken: "You can't start another relationship right now.",
+  they_are_taken: "They're already taken.",
+  already_together: "You're already together.",
+  which_partner: "Choose which partner.",
+  already_expecting: "You're already expecting a baby.",
+  not_born_yet: "The baby isn't born yet.",
+  already_family: "You're already family.",
+  already_partners: "You're partners, not relatives.",
+  bad_name: "Give your baby a name (1 to 24 characters).",
   cooling_off: "Take a few days after a breakup before asking someone new.",
   already_asked: "You've already asked. Wait for their answer.",
   too_soon: `Get closer first: you need ${LOVE.levels.propose} hearts to propose.`,
@@ -78,7 +97,7 @@ function watch(me: string) {
   void reloadLove();
   const db = supabase();
   const ch = db.channel(`love:${me}`);
-  for (const table of ["love_requests", "relationships", "weddings"]) ch.on("postgres_changes", { event: "*", schema: "public", table }, () => void reloadLove());
+  for (const table of ["love_requests", "relationships", "weddings", "family_links", "children"]) ch.on("postgres_changes", { event: "*", schema: "public", table }, () => { void reloadLove(); void reloadFamily(); });
   ch.subscribe();
   live = { me, users: 1, stop: () => void db.removeChannel(ch) };
 }
@@ -101,13 +120,59 @@ const after = async <T,>(p: Promise<{ data?: T; error?: string }>) => { const r 
 export const askOut = (to: string, message?: string) => after(call<number>("ask_out", { p_to: to, p_message: message ?? null }));
 export const respond = (id: number, accept: boolean) => after(call<null>("love_respond", { p_request: id, p_accept: accept }));
 export const cancelRequest = (id: number) => after(call<null>("cancel_love_request", { p_request: id }));
-export const showLove = () => after(call<number>("show_love"));
-export const logDate = (place: string) => after(call<{ together: boolean; level?: number }>("log_date", { p_place: place }));
-export const propose = (ring: string, place: string, message?: string) => after(call<number>("propose", { p_ring: ring, p_place: place, p_message: message ?? null }));
-export const endRelationship = () => after(call<null>("end_relationship"));
-export const planWedding = (venue: string, startsAt: Date, guests: number, ceremony: string) =>
-  after(call<string>("plan_wedding", { p_venue: venue, p_starts_at: startsAt.toISOString(), p_guests: guests, p_ceremony: ceremony }));
-export const cancelWedding = () => after(call<null>("cancel_wedding"));
+export const showLove = (partner?: string) => after(call<number>("show_love", { p_partner: partner ?? null }));
+export const logDate = (place: string, partner?: string) => after(call<{ together: boolean; level?: number }>("log_date", { p_place: place, p_partner: partner ?? null }));
+export const propose = (ring: string, place: string, message?: string, partner?: string) => after(call<number>("propose", { p_ring: ring, p_place: place, p_message: message ?? null, p_partner: partner ?? null }));
+export const endRelationship = (partner?: string) => after(call<null>("end_relationship", { p_partner: partner ?? null }));
+export const planWedding = (venue: string, startsAt: Date, guests: number, ceremony: string, partner?: string) =>
+  after(call<string>("plan_wedding", { p_venue: venue, p_starts_at: startsAt.toISOString(), p_guests: guests, p_ceremony: ceremony, p_partner: partner ?? null }));
+export const cancelWedding = (partner?: string) => after(call<null>("cancel_wedding", { p_partner: partner ?? null }));
+export const resolveDiscovery = (relationship: number, forgive: boolean) => after(call<null>("resolve_discovery", { p_relationship: relationship, p_forgive: forgive }));
+
+// ---------------------------------------------------------------- family: relatives and children
+
+export type Relation = "sibling" | "cousin" | "parent" | "child";
+export interface Relative { id: number; status: "pending" | "accepted"; mine: boolean; relation: Relation; person: Person }
+export interface Child {
+  id: number; name: string | null; gender: "boy" | "girl"; conceivedAt: string; dueAt: string; born: boolean; nannyUntil: string | null;
+  mother: { id: string; username: string }; father: { id: string; username: string };
+  careToday: Array<"feed" | "play" | "bath">; careRecent: number;
+}
+export interface MyFamily { relatives: Relative[]; children: Child[] }
+
+/** What a relative is called, by their gender: a sibling who's a man is a brother. */
+export const relationLabel = (relation: Relation, gender?: string | null) => {
+  const r = FAMILY.relations.find((x) => x.id === relation);
+  return r ? (gender === "woman" ? r.woman : r.man) : relation;
+};
+/** A child's stage now: newborn, crawling, first steps… a new one each week after birth. */
+export function stageOf(child: Pick<Child, "dueAt">, now: number) {
+  const weeks = Math.max(0, Math.floor((now - Date.parse(child.dueAt)) / (7 * 86_400_000)));
+  const stage = [...FAMILY.stages].reverse().find((s) => weeks >= s.week) ?? FAMILY.stages[0];
+  const next = FAMILY.stages.find((s) => s.week > weeks) ?? null;
+  return { weeks, stage, next };
+}
+/** How happy a child is (0 to 100): the care they've had over the last 3 days, or full with a nanny. */
+export function happinessOf(child: Pick<Child, "careRecent" | "nannyUntil">, now: number) {
+  if (child.nannyUntil && Date.parse(child.nannyUntil) > now) return 100;
+  return Math.min(100, Math.round((child.careRecent / (FAMILY.care.length * FAMILY.careWindowDays)) * 100));
+}
+
+let family: MyFamily | null = null;
+const familyListeners = new Set<() => void>();
+export const reloadFamily = () => call<MyFamily>("my_family").then((r) => { if (r.data) { family = r.data; familyListeners.forEach((l) => l()); } });
+export function useFamily(me: string | null | undefined): MyFamily | null {
+  useEffect(() => { if (me) void reloadFamily(); }, [me]);
+  return useSyncExternalStore((l) => { familyListeners.add(l); return () => { familyListeners.delete(l); }; }, () => family, () => null);
+}
+const afterFamily = async <T,>(p: Promise<{ data?: T; error?: string }>) => { const r = await p; await Promise.all([reloadFamily(), reloadLove(), refreshCitizen()]); return r; };
+export const askForBaby = (partner?: string) => afterFamily(call<number>("ask_for_baby", { p_partner: partner ?? null }));
+export const nameChild = (child: number, name: string) => afterFamily(call<null>("name_child", { p_child: child, p_name: name }));
+export const careForChild = (child: number, action: string) => afterFamily(call<null>("care_for_child", { p_child: child, p_action: action }));
+export const hireNanny = (child: number, plan: string) => afterFamily(call<string>("hire_nanny", { p_child: child, p_plan: plan }));
+export const addRelative = (to: string, relation: Relation) => afterFamily(call<null>("add_relative", { p_to: to, p_relation: relation }));
+export const respondRelative = (id: number, accept: boolean) => afterFamily(call<null>("respond_relative", { p_link: id, p_accept: accept }));
+export const removeRelative = (id: number) => afterFamily(call<null>("remove_relative", { p_link: id }));
 export const weddingView = (code: string) => call<WeddingView>("wedding_view", { p_code: code });
 export const rsvp = (code: string, yes: boolean) => call<null>("rsvp_wedding", { p_code: code, p_yes: yes });
 export const setRole = (code: string, user: string, role: string) => call<null>("set_wedding_role", { p_code: code, p_user: user, p_role: role });

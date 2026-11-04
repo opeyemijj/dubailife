@@ -38,8 +38,8 @@
             "Radiation: Electromagnetic infrared waves traveling through space from the sun without requiring a physical medium",
             "Thermal Mass & Low-E Glass: Double glazing with micro-thin metallic coatings reflects infrared solar radiation while admitting visible light"
           ],
-          "codeSnippet": "// Heat Transfer Calculation (Conduction)\n// Q = (k * A * (T_hot - T_cold)) / d\n// k = Thermal conductivity (W/m·K)\n// A = Surface area (m²), d = thickness (m)\nconst conductionHeatGain = (k: number, area: number, deltaT: number, thickness: number) => {\n  return (k * area * deltaT) / thickness; // Watts (Joules/sec)\n};\n// Low-E double glazing drops k from 1.0 (standard glass) down to 0.15 W/m·K",
-          "takeaway": "Energy efficiency in the desert relies on preventing radiation via low-emissivity coatings and blocking conduction with high-performance thermal insulation."
+          "takeaway": "Energy efficiency in the desert relies on preventing radiation via low-emissivity coatings and blocking conduction with high-performance thermal insulation.",
+          "example": "Heat through a wall or window: Q = k × A × ΔT ÷ d\n• k: how well the material conducts heat (W/m·K)\n• A: area (m²)\n• ΔT: temperature difference inside to outside (°C)\n• d: thickness (m)\nLow-E double glazing cuts k from about 1.0 for plain glass to about 0.15, so far less heat gets in."
         },
         {
           "title": "How District Cooling Beats Conventional Air Conditioning",
@@ -50,8 +50,8 @@
             "Chilled water absorbs indoor heat via Heat Exchangers (HEX) in building basements, returning at 13°C to be re-cooled",
             "Thermal Energy Storage (TES): Freezing water or chilling massive brine tanks at night during off-peak power rates to cool towers during daytime peak heat"
           ],
-          "codeSnippet": "// Coefficient of Performance (COP)\n// COP = Useful Cooling Provided (kW) / Electrical Work Consumed (kW)\n// Individual window AC: COP ≈ 2.2\n// Modern District Cooling Plant: COP ≈ 6.5+ (Nearly 3x more efficient!)",
-          "takeaway": "Centralized district cooling leverages economies of scale and thermodynamics to cut power grid strain by over 40% across Dubai's urban core."
+          "takeaway": "Centralized district cooling leverages economies of scale and thermodynamics to cut power grid strain by over 40% across Dubai's urban core.",
+          "example": "Coefficient of Performance (COP) = cooling delivered ÷ electricity used.\n• A window air conditioner: COP about 2.2\n• A modern district cooling plant: COP about 6.5 or more, nearly 3 times as efficient"
         }
       ],
       "lab": {
@@ -119,8 +119,8 @@
             "Shockley-Queisser Limit: The theoretical maximum efficiency of a single-junction silicon solar cell is approximately 33.7%",
             "Modern commercial mono-crystalline solar panels achieve 21% - 24% real-world conversion efficiency"
           ],
-          "codeSnippet": "// Solar Power Output Formula\n// Power (W) = Solar Irradiance (W/m²) * Area (m²) * Panel Efficiency * Performance Ratio\nconst solarOutput = (irradiance: number, areaM2: number, efficiency: number, pr: number = 0.8) => {\n  return irradiance * areaM2 * efficiency * pr;\n};\n// Dubai peak sun: 1000 W/m² on 20m² rooftop panels at 22% efficiency:\nconsole.log(solarOutput(1000, 20, 0.22)); // 3,520 Watts (3.52 kW DC output)",
-          "takeaway": "Solar PV harnesses quantum physics: photons knock electrons across a semiconductor junction to generate clean DC electricity without moving parts."
+          "takeaway": "Solar PV harnesses quantum physics: photons knock electrons across a semiconductor junction to generate clean DC electricity without moving parts.",
+          "example": "Solar panel output = sunlight (W/m²) × area (m²) × panel efficiency × performance ratio.\nExample: Dubai midday sun of 1,000 W/m² on 20 m² of panels at 22% efficiency, with a performance ratio of 0.8.\n1,000 × 20 × 0.22 × 0.8 = 3,520 W (3.5 kW)"
         },
         {
           "title": "Desert Solar Engineering: Dust, Heat & Bifacial Panels",
@@ -131,8 +131,8 @@
             "Bifacial Panels: Dual-sided glass panels that capture direct sunlight on top, and reflected sunlight (albedo) from the white desert sand on the underside",
             "Inverters convert DC electricity into 50Hz AC electricity synchronized with Dubai's DEWA high-voltage transmission grid"
           ],
-          "codeSnippet": "// Temperature Degradation Calculation\n// P_actual = P_rated * [1 + tempCoeff * (T_cell - 25°C)]\nconst tempDegradation = (pRated: number, tCell: number, tempCoeff = -0.004) => {\n  return pRated * (1 + tempCoeff * (tCell - 25));\n};\n// At 65°C desert midday panel temp: 400W panel produces 336W (16% thermal loss)",
-          "takeaway": "Desert solar optimization relies on bifacial technology and autonomous dry-cleaning to maximize energy yield despite extreme desert heat."
+          "takeaway": "Desert solar optimization relies on bifacial technology and autonomous dry-cleaning to maximize energy yield despite extreme desert heat.",
+          "example": "Panels lose power as they heat up: P = P(rated) × [1 + c × (T − 25°C)], where c is about −0.4% per °C.\nExample: a 400 W panel at 65°C on a desert afternoon.\n400 × [1 − 0.004 × 40] = 336 W, 16% lost to heat."
         }
       ],
       "lab": {
@@ -200,8 +200,8 @@
             "Applied Hydraulic Pressure: High-pressure pumps apply 60 to 75 bar (nearly 1,000 PSI) to force water molecules backward through a synthetic polyamide membrane",
             "Pore size of RO membranes is approximately 0.1 to 1 nanometer—small enough to allow H2O molecules through while filtering out 99.8% of dissolved NaCl and mineral ions"
           ],
-          "codeSnippet": "// van 't Hoff's Formula for Osmotic Pressure:\n// Pi = i * M * R * T\n// i: van 't Hoff factor (for NaCl ≈ 1.9)\n// M: Molarity of salt ions (mol/L)\n// R: Ideal gas constant (0.08314 L·bar/mol·K)\n// T: Absolute temperature in Kelvin (273.15 + C)",
-          "takeaway": "Reverse Osmosis is a mechanical filtration process operating at nanoscale pores under extreme hydraulic pressure exceeding natural osmotic pressure."
+          "takeaway": "Reverse Osmosis is a mechanical filtration process operating at nanoscale pores under extreme hydraulic pressure exceeding natural osmotic pressure.",
+          "example": "Osmotic pressure (van 't Hoff): π = i × M × R × T\n• i: how many particles each salt unit splits into (about 1.9 for sea salt, NaCl)\n• M: salt concentration (mol/L)\n• R: gas constant, 0.08314 L·bar/(mol·K)\n• T: temperature in kelvin (°C + 273.15)\nReverse osmosis has to push harder than this pressure to force fresh water out of seawater."
         },
         {
           "title": "Energy Recovery Devices (ERD) & Seawater Desalination",
@@ -212,8 +212,8 @@
             "Modern SWRO plants consume under 3.0 kWh per cubic meter (1,000 liters) of fresh drinking water",
             "Post-Treatment: Desalinated water is so pure it is corrosive; it must be remineralized with calcium and carbonate before distribution to taps"
           ],
-          "codeSnippet": "// Specific Energy Consumption (SEC)\n// Thermal Desalination (MSF): ~12-15 kWh/m³\n// Modern SWRO with Pressure Exchanger: ~2.8-3.2 kWh/m³\n// Energy savings: > 75% reduction in carbon footprint",
-          "takeaway": "Isobaric energy recovery devices recycle the hydraulic pressure of waste brine, making modern membrane desalination clean, scalable, and energy-efficient."
+          "takeaway": "Isobaric energy recovery devices recycle the hydraulic pressure of waste brine, making modern membrane desalination clean, scalable, and energy-efficient.",
+          "example": "Energy to make 1 m³ of fresh water from the sea:\n• Thermal desalination (boiling, MSF): about 12 to 15 kWh\n• Modern reverse osmosis with energy recovery: about 2.8 to 3.2 kWh\nThat's more than 75% less energy, and far less carbon."
         }
       ],
       "lab": {
@@ -281,8 +281,8 @@
             "Because the building profile is different at every height level, wind vortices cannot organize or sync into a single coherent resonant frequency",
             "Dramatically reduces lateral wind shear forces without requiring hundreds of tons of dead steel weight"
           ],
-          "codeSnippet": "// Strouhal Number & Vortex Frequency\n// f = (St * V) / D\n// f = Shedding frequency (Hz), St = Strouhal number (~0.21)\n// V = Wind speed (m/s), D = Building diameter (m)\n// By constantly varying D across 26 setbacks, f is randomized at every altitude!",
-          "takeaway": "The Burj Khalifa's iconic stepped setbacks are an aerodynamic necessity designed to break up vortex shedding and dissipate wind forces harmlessly."
+          "takeaway": "The Burj Khalifa's iconic stepped setbacks are an aerodynamic necessity designed to break up vortex shedding and dissipate wind forces harmlessly.",
+          "example": "Wind swirls off a tower at a frequency f = St × V ÷ D\n• St: Strouhal number, about 0.21\n• V: wind speed (m/s)\n• D: width of the building (m)\nThe Burj Khalifa narrows at 26 setbacks, so D keeps changing with height and the swirls never build into one rhythm that could shake it."
         },
         {
           "title": "Materials Science: High-Performance Concrete & Damping",
@@ -293,8 +293,8 @@
             "Tuned Mass Dampers (TMD): Massive suspended pendulum weights or sloshing water tanks at tower crowns that oscillate out-of-phase with wind sway",
             "Dynamic building sway at the 828m tip is engineered to be under 1.5 meters during extreme 50-year gale-force winds"
           ],
-          "codeSnippet": "/* Supertall Structural Metrics */\nconst burjMetrics = {\n  heightMeters: 828,\n  concreteWeightTons: 330000,\n  maxWindSwayTip: '1.5 meters (Gentle harmonic period ~9 seconds)',\n  buttressedCoreDesign: 'Y-shape with 3 aerodynamic outrigger wings'\n};",
-          "takeaway": "Supertall skyscraper engineering marries concrete chemistry, tuned mass oscillation, and geometric aerodynamics to conquer the physics of gravity and wind."
+          "takeaway": "Supertall skyscraper engineering marries concrete chemistry, tuned mass oscillation, and geometric aerodynamics to conquer the physics of gravity and wind.",
+          "example": "The Burj Khalifa in numbers:\n• 828 m tall\n• About 330,000 m³ of concrete\n• Sways up to about 1.5 m at the top, slowly (about every 9 seconds)\n• A Y-shaped core with three wings, which braces it against the wind"
         }
       ],
       "lab": {
@@ -467,4 +467,3 @@
   },
   "tuitionFee": 1400
 }
-

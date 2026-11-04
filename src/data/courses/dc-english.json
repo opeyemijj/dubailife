@@ -1,0 +1,463 @@
+{
+  "id": "dc-english",
+  "institutionId": "dc",
+  "title": "English for Work & Life",
+  "tagline": "Write clear emails, speak with confidence, ace interviews and presentations, and use plain English that gets results.",
+  "category": "Language",
+  "level": "secondary_diploma",
+  "duration": "4 Weeks (Communication Diploma)",
+  "rating": 4.96,
+  "enrolledCount": 2640,
+  "icon": "🗣️",
+  "superpower": {
+    "id": "clear_voice",
+    "name": "Clear Voice",
+    "icon": "🗣️",
+    "description": "Writes and speaks clearly: better interviews, deals and friendships.",
+    "badgeText": "Communicator",
+    "perkType": "general"
+  },
+  "syllabus": [
+    "Week 1: Plain English: short, clear, active",
+    "Week 2: Emails and messages that get answers",
+    "Week 3: Speaking, presenting and small talk",
+    "Week 4: CVs, cover letters and interviews"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Plain English",
+      "objective": "Write so anyone understands you the first time.",
+      "slides": [
+        {
+          "title": "Short Words, Short Sentences",
+          "body": "Clear writing respects the reader's time. Use everyday words, keep sentences to about 15 to 20 words, and put the main point first.",
+          "bullets": [
+            "'Use' not 'utilise'; 'help' not 'facilitate'; 'start' not 'commence'",
+            "One idea per sentence",
+            "Main point first, details after",
+            "Cut words that add nothing: 'in order to' becomes 'to'"
+          ],
+          "example": "Before: 'We would like to take this opportunity to inform you that your application has been successfully processed.'\nAfter: 'Your application is approved.'",
+          "takeaway": "If a 12-year-old can understand it, your boss will love it."
+        },
+        {
+          "title": "Active Voice",
+          "body": "In active sentences, the person doing the action comes first. They're shorter, clearer and show who's responsible.",
+          "bullets": [
+            "Passive: 'The report was finished by Sara.' Active: 'Sara finished the report.'",
+            "Passive hides who did it: 'Mistakes were made.'",
+            "Use active voice by default; passive only when the doer doesn't matter"
+          ],
+          "takeaway": "Name who does what, and your writing gets stronger."
+        }
+      ],
+      "lab": {
+        "title": "Rewrite Lab",
+        "brief": "Rewrite five long, formal paragraphs in plain English, cutting each by at least a third.",
+        "deliverable": "Before and after versions with word counts.",
+        "proTip": "Read it aloud: if you run out of breath, the sentence is too long."
+      },
+      "caseStudy": {
+        "scenario": "Your manager says your report is 'hard to follow'. What's the best first fix?",
+        "options": [
+          {
+            "text": "Add more technical words to sound expert.",
+            "correct": false,
+            "explanation": "Jargon makes it harder."
+          },
+          {
+            "text": "Put the main conclusion first, shorten sentences and use headings.",
+            "correct": true,
+            "explanation": "Structure and plain language fix most 'hard to follow' writing."
+          },
+          {
+            "text": "Make the font bigger.",
+            "correct": false,
+            "explanation": "Font size doesn't fix clarity."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Which is plain English?",
+          "options": [
+            "Utilise",
+            "Use",
+            "Leverage synergies",
+            "Facilitate"
+          ],
+          "correctIndex": 1,
+          "explanation": "'Use' is simplest."
+        },
+        {
+          "question": "Which sentence is active?",
+          "options": [
+            "The car was washed by Ali.",
+            "Ali washed the car.",
+            "The car has been washed.",
+            "Washing was done."
+          ],
+          "correctIndex": 1,
+          "explanation": "The doer comes first."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Emails and Messages",
+      "objective": "Write emails and messages that get quick, useful replies.",
+      "slides": [
+        {
+          "title": "The Perfect Work Email",
+          "body": "Busy people read the subject line and the first two lines. Make those count.",
+          "bullets": [
+            "Subject line says what you need: 'Approval needed: Q3 budget by Thursday'",
+            "First line: the request or the point",
+            "Then context, in short paragraphs or bullets",
+            "End with the next step and the deadline"
+          ],
+          "example": "Subject: Can you approve the venue deposit by Thursday?\nHi Omar,\nCould you approve the AED 5,000 deposit for the launch venue by Thursday? The venue holds the date until Friday.\nQuote attached. Happy to call if easier.\nThanks,\nLina",
+          "takeaway": "Ask clearly, give a deadline, keep it short."
+        },
+        {
+          "title": "Tone Across Cultures",
+          "body": "Dubai workplaces mix dozens of nationalities. Polite, warm and direct works almost everywhere.",
+          "bullets": [
+            "Greet by name; 'Hi' or 'Dear' depending on formality",
+            "Please and thank you, always",
+            "Avoid sarcasm and jokes that may not translate",
+            "On WhatsApp for work: short, polite, and still professional"
+          ],
+          "takeaway": "Be kind and clear: it translates into every culture."
+        }
+      ],
+      "lab": {
+        "title": "Email Lab",
+        "brief": "Write three emails: a request, a polite follow-up and a complaint, each under 120 words.",
+        "deliverable": "Three emails with subject lines.",
+        "proTip": "Write the subject line last: once you know your point."
+      },
+      "caseStudy": {
+        "scenario": "A colleague hasn't replied to your request for a week. What's best?",
+        "options": [
+          {
+            "text": "Send an angry email copying their boss.",
+            "correct": false,
+            "explanation": "That damages the relationship."
+          },
+          {
+            "text": "Send a short, friendly follow-up with the request and deadline in the first line.",
+            "correct": true,
+            "explanation": "A polite, clear nudge usually works."
+          },
+          {
+            "text": "Give up.",
+            "correct": false,
+            "explanation": "Follow up professionally."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What should the first line of a work email contain?",
+          "options": [
+            "The weather",
+            "Your request or main point",
+            "Your job history",
+            "A joke"
+          ],
+          "correctIndex": 1,
+          "explanation": "Lead with the point."
+        },
+        {
+          "question": "A good subject line:",
+          "options": [
+            "Hello",
+            "Says what you need",
+            "Is blank",
+            "Is in capitals"
+          ],
+          "correctIndex": 1,
+          "explanation": "Clear and specific."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Speaking and Presenting",
+      "objective": "Speak confidently in meetings, presentations and everyday conversation.",
+      "slides": [
+        {
+          "title": "Presenting With Confidence",
+          "body": "Great presentations have one clear message, a simple structure and a speaker who has practised.",
+          "bullets": [
+            "Structure: tell them what you'll say, say it, then sum it up",
+            "One idea per slide, few words, big visuals",
+            "Practise out loud three times",
+            "Look at people, pause, and slow down"
+          ],
+          "takeaway": "Nerves are normal: preparation turns them into energy."
+        },
+        {
+          "title": "Small Talk and Listening",
+          "body": "Relationships start with small talk. Ask open questions, listen, and remember details.",
+          "bullets": [
+            "Open questions: 'What brought you to Dubai?' rather than 'Do you like Dubai?'",
+            "Listen more than you speak",
+            "Remember names and use them",
+            "Safe topics: travel, food, work, sport; avoid politics and religion at first"
+          ],
+          "takeaway": "People remember how you made them feel, not what you said."
+        }
+      ],
+      "lab": {
+        "title": "Presentation Lab",
+        "brief": "Give a 3-minute talk on something you know well, with three slides, and ask a friend for feedback.",
+        "deliverable": "Your slides and the feedback notes.",
+        "proTip": "Record yourself once: you'll spot the filler words."
+      },
+      "caseStudy": {
+        "scenario": "You're asked to present tomorrow and you feel very nervous. What helps most?",
+        "options": [
+          {
+            "text": "Write every word on the slides and read them.",
+            "correct": false,
+            "explanation": "Reading slides loses the audience."
+          },
+          {
+            "text": "Prepare one clear message, practise out loud, and keep slides simple.",
+            "correct": true,
+            "explanation": "Practice builds confidence."
+          },
+          {
+            "text": "Speak as fast as possible to finish quickly.",
+            "correct": false,
+            "explanation": "Rushing makes it harder to follow."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "An open question is:",
+          "options": [
+            "Do you like coffee?",
+            "What do you enjoy about your work?",
+            "Are you okay?",
+            "Is it hot?"
+          ],
+          "correctIndex": 1,
+          "explanation": "Open questions invite longer answers."
+        },
+        {
+          "question": "Good slides have:",
+          "options": [
+            "Lots of text",
+            "One idea and few words",
+            "No visuals",
+            "Tiny font"
+          ],
+          "correctIndex": 1,
+          "explanation": "Simple and visual."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "CVs and Interviews",
+      "objective": "Win interviews with a strong CV and confident answers.",
+      "slides": [
+        {
+          "title": "A CV That Gets Read",
+          "body": "Recruiters scan a CV in seconds. Lead with results, keep it to one or two pages, and match it to the job.",
+          "bullets": [
+            "Start with a 2 to 3 line summary",
+            "Achievements with numbers: 'cut delivery time by 20%'",
+            "Use the job advert's key words",
+            "Clean layout; no photo needed unless asked"
+          ],
+          "example": "Weak: 'Responsible for social media.'\nStrong: 'Grew Instagram followers from 2,000 to 15,000 in 6 months, raising online orders by 30%.'",
+          "takeaway": "Show what you achieved, not just what you did."
+        },
+        {
+          "title": "Interview Answers With STAR",
+          "body": "Behavioural questions ('Tell me about a time…') are answered best with STAR.",
+          "bullets": [
+            "Situation: the background",
+            "Task: what you had to do",
+            "Action: what you did",
+            "Result: what happened, with numbers if possible"
+          ],
+          "takeaway": "STAR turns stories into proof."
+        }
+      ],
+      "lab": {
+        "title": "Interview Lab",
+        "brief": "Rewrite your CV with achievement bullets, then answer three common questions using STAR.",
+        "deliverable": "A one-page CV and three STAR answers.",
+        "proTip": "Prepare 5 stories that can answer most questions."
+      },
+      "caseStudy": {
+        "scenario": "An interviewer asks: 'Tell me about a time you solved a problem.' The best answer:",
+        "options": [
+          {
+            "text": "'I'm a great problem solver.'",
+            "correct": false,
+            "explanation": "Claims without proof don't convince."
+          },
+          {
+            "text": "A STAR story: the situation, your task, your actions and the measurable result.",
+            "correct": true,
+            "explanation": "STAR gives concrete proof."
+          },
+          {
+            "text": "'I don't have problems.'",
+            "correct": false,
+            "explanation": "Everyone has problems; show how you handle them."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "STAR stands for:",
+          "options": [
+            "Situation, Task, Action, Result",
+            "Start, Talk, Ask, Return",
+            "Skills, Tools, Aims, Reasons",
+            "Smile, Thank, Answer, Repeat"
+          ],
+          "correctIndex": 0,
+          "explanation": "Situation, Task, Action, Result."
+        },
+        {
+          "question": "A strong CV bullet:",
+          "options": [
+            "Lists duties",
+            "Shows achievements with numbers",
+            "Is very long",
+            "Has jokes"
+          ],
+          "correctIndex": 1,
+          "explanation": "Achievements with numbers."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "Plain English means:",
+        "options": [
+          "Long words",
+          "Clear, everyday words",
+          "No punctuation",
+          "Slang"
+        ],
+        "correctIndex": 1,
+        "explanation": "Clear and simple."
+      },
+      {
+        "question": "Active voice puts first:",
+        "options": [
+          "The object",
+          "The doer",
+          "The verb",
+          "The date"
+        ],
+        "correctIndex": 1,
+        "explanation": "The doer first."
+      },
+      {
+        "question": "'In order to' is better as:",
+        "options": [
+          "'For the purpose of'",
+          "'To'",
+          "'So as to'",
+          "'With regard to'"
+        ],
+        "correctIndex": 1,
+        "explanation": "'To'."
+      },
+      {
+        "question": "A work email should end with:",
+        "options": [
+          "A long signature only",
+          "The next step and deadline",
+          "A joke",
+          "Nothing"
+        ],
+        "correctIndex": 1,
+        "explanation": "Clear next step."
+      },
+      {
+        "question": "A safe small-talk topic:",
+        "options": [
+          "Politics",
+          "Food and travel",
+          "Religion",
+          "Salaries"
+        ],
+        "correctIndex": 1,
+        "explanation": "Food and travel."
+      },
+      {
+        "question": "Good presenters:",
+        "options": [
+          "Read slides",
+          "Practise out loud",
+          "Avoid eye contact",
+          "Rush"
+        ],
+        "correctIndex": 1,
+        "explanation": "Practice builds confidence."
+      },
+      {
+        "question": "STAR's 'R' is:",
+        "options": [
+          "Reason",
+          "Result",
+          "Review",
+          "Role"
+        ],
+        "correctIndex": 1,
+        "explanation": "Result."
+      },
+      {
+        "question": "A CV should usually be:",
+        "options": [
+          "10 pages",
+          "1 to 2 pages",
+          "Half a page of photos",
+          "Handwritten"
+        ],
+        "correctIndex": 1,
+        "explanation": "One or two pages."
+      },
+      {
+        "question": "'Mistakes were made' is:",
+        "options": [
+          "Active",
+          "Passive",
+          "A question",
+          "Slang"
+        ],
+        "correctIndex": 1,
+        "explanation": "Passive: it hides who did it."
+      },
+      {
+        "question": "An open question begins with:",
+        "options": [
+          "Do",
+          "Is",
+          "What or how",
+          "Are"
+        ],
+        "correctIndex": 2,
+        "explanation": "What, how, why invite fuller answers."
+      }
+    ]
+  },
+  "tuitionFee": 1500
+}

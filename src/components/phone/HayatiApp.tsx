@@ -1,15 +1,23 @@
 "use client";
 
-// Hayati: relationships and weddings on the phone. Single → ask a friend out; dating → daily love, dates
-// and the proposal; engaged → plan the wedding; married → your wedding page. UAE law applies: a man and a
-// woman, one partner at a time, both agreeing at every step.
+// Family (once called Hayati): partners, kids and relatives on the phone.
+//   Partners: ask a friend out; dating → daily love, dates and the proposal; engaged → plan the wedding. A man may
+//   have up to 4 partners (each relationship separate), a woman one. Other partners are hidden, but can be found out.
+//   Kids: decide together to have a baby (7 days of pregnancy), then a new stage every week; care daily or hire a nanny.
+//   Relatives: brothers, sisters, parents, children and cousins, when both agree.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { useCitizen } from "@/lib/citizenStore";
-import { askOut, cancelRequest, datePlaceOf, endRelationship, logDate, LOVE, planWedding, propose, respond, ringOf, showLove, useLove, venueOf, weddingCost, weddingLink, type Person } from "@/lib/love";
+import {
+  addRelative, askForBaby, askOut, cancelRequest, careForChild, datePlaceOf, endRelationship, FAMILY, happinessOf, hireNanny, logDate, LOVE,
+  nameChild, planWedding, propose, relationLabel, removeRelative, resolveDiscovery, respond, respondRelative, ringOf, showLove, stageOf,
+  useFamily, useLove, venueOf, weddingCost, weddingLink, type Child, type Person, type Relation, type Relationship, type Relative,
+} from "@/lib/love";
+import { contacts, type Contact } from "@/lib/messages";
+import { supabase } from "@/lib/supabase/client";
 import { gameAudio } from "@/utils/gameAudio";
 import { useNow } from "@/lib/dubaiClock";
 import { AppScreen, aed, Big, Card, Note } from "./AppScreen";
@@ -19,23 +27,33 @@ const Face = ({ p, size = 56 }: { p: Pick<Person, "look">; size?: number }) => (
   <img src={rosterThumb(presetFor(p.look ?? { gender: "woman" }))} alt="" style={{ width: size, height: size }} className="rounded-full object-cover object-top bg-rose-100 shrink-0" />
 );
 
+type Run = (fn: () => Promise<{ error?: string }>, ok: string) => Promise<void>;
+type Tab = "partners" | "kids" | "relatives";
+
 export function HayatiApp({ onBack }: { onBack: () => void }) {
   const { citizen } = useCitizen();
   const love = useLove(citizen?.id);
+  const family = useFamily(citizen?.id);
+  const [tab, setTab] = useState<Tab>("partners");
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const run = async (fn: () => Promise<{ error?: string }>, ok: string) => {
+  const run: Run = async (fn, ok) => {
     setBusy(true);
     const r = await fn();
     setBusy(false);
     setNote(r.error ? { ok: false, text: r.error } : { ok: true, text: ok });
     if (!r.error) gameAudio.playCoinSound();
   };
-  const rel = love?.relationship;
+  const pendingRelatives = family?.relatives.filter((r) => r.status === "pending" && !r.mine).length ?? 0;
 
   return (
-    <AppScreen title="Hayati" onBack={onBack} accent="text-rose-500">
+    <AppScreen title="Family" onBack={onBack} accent="text-rose-500">
       {note && <Note ok={note.ok}>{note.text}</Note>}
+      <div className="grid grid-cols-3 gap-1 rounded-full bg-slate-100 p-1">
+        {([["partners", "❤️ Partners"], ["kids", "👶 Kids"], ["relatives", `👨‍👩‍👧 Relatives${pendingRelatives ? ` (${pendingRelatives})` : ""}`]] as const).map(([id, label]) => (
+          <button key={id} onClick={() => setTab(id)} className={`h-10 rounded-full text-sm font-semibold ${tab === id ? "bg-white shadow" : "text-slate-500"}`}>{label}</button>
+        ))}
+      </div>
       {!love ? <p className="text-center text-slate-500 py-8">Loading…</p> : (
         <>
           {love.incoming.map((q) => (
@@ -43,58 +61,103 @@ export function HayatiApp({ onBack }: { onBack: () => void }) {
               <div className="flex items-center gap-3">
                 <Face p={q.from} />
                 <div className="flex-1 min-w-0">
-                  <p className="font-black text-lg leading-tight">{q.kind === "propose" ? `💍 @${q.from.username} proposed!` : `@${q.from.username} asked you out`}</p>
+                  <p className="font-black text-lg leading-tight">{q.kind === "propose" ? `💍 @${q.from.username} proposed!` : q.kind === "baby" ? `👶 @${q.from.username} wants to have a baby with you` : `@${q.from.username} asked you out`}</p>
                   {q.kind === "propose" && <p className="text-slate-600">{ringOf(q.ring)?.name} · at {datePlaceOf(q.place)?.label}</p>}
+                  {q.kind === "baby" && <p className="text-slate-600">Say yes and you&apos;re expecting: the baby arrives in {FAMILY.pregnancyDays} days.</p>}
                   {q.message && <p className="text-slate-600 italic">“{q.message}”</p>}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <Big tone="light" disabled={busy} onClick={() => run(() => respond(q.id, false), q.kind === "propose" ? "You said not yet. The ring goes back to the shop." : "You said no, kindly.")}>{q.kind === "propose" ? "Not yet" : "No, thanks"}</Big>
-                <Big tone="red" disabled={busy} onClick={() => run(() => respond(q.id, true), q.kind === "propose" ? "💍 You're engaged! Plan the wedding below." : `💕 You're dating @${q.from.username}.`)}>{q.kind === "propose" ? "Yes! 💍" : "Yes 💕"}</Big>
+                <Big tone="light" disabled={busy} onClick={() => run(() => respond(q.id, false), q.kind === "propose" ? "You said not yet. The ring goes back to the shop." : "You said no, kindly.")}>{q.kind === "propose" || q.kind === "baby" ? "Not yet" : "No, thanks"}</Big>
+                <Big tone="red" disabled={busy} onClick={() => run(() => respond(q.id, true), q.kind === "propose" ? "💍 You're engaged! Plan the wedding below." : q.kind === "baby" ? `🤰 You're expecting! See Kids.` : `💕 You're dating @${q.from.username}.`)}>{q.kind === "propose" ? "Yes! 💍" : q.kind === "baby" ? "Yes 👶" : "Yes 💕"}</Big>
               </div>
             </Card>
           ))}
 
-          {rel ? <Together rel={rel} busy={busy} run={run} me={citizen?.username ?? ""} /> : <Single candidates={love.candidates} gender={love.gender} busy={busy} run={run} />}
-
-          {love.outgoing.map((o) => (
-            <div key={o.id} className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-slate-100 text-sm">
-              <span className="flex-1">{o.kind === "propose" ? "💍 Proposal" : "💌 Asked"} @{o.to} · waiting for an answer</span>
-              <button disabled={busy} onClick={() => run(() => cancelRequest(o.id), "Withdrawn.")} className="font-semibold text-slate-500">Withdraw</button>
-            </div>
-          ))}
-
-          {love.invitations.length > 0 && (
-            <Card>
-              <p className="font-black">💒 Weddings you&apos;re going to</p>
-              {love.invitations.map((w) => (
-                <Link key={w.code} href={`/wedding/${w.code}`} className="flex items-center gap-2 py-1">
-                  <span className="text-xl">{venueOf(w.venue)?.icon}</span>
-                  <span className="flex-1">{venueOf(w.venue)?.name}</span>
-                  <span className="text-sm text-slate-500">{new Date(w.startsAt).toLocaleString("en-GB", { timeZone: "Asia/Dubai", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</span>
-                </Link>
-              ))}
-            </Card>
-          )}
-          <p className="text-center text-xs text-slate-400 px-4">Hayati follows UAE law: relationships and marriage between a man and a woman, one partner at a time, and both must agree at every step.</p>
+          {tab === "partners" && <Partners love={love} busy={busy} run={run} me={citizen?.username ?? ""} />}
+          {tab === "kids" && <Kids rels={love.relationships} kids={family?.children ?? null} busy={busy} run={run} me={citizen?.id ?? ""} />}
+          {tab === "relatives" && <Relatives me={citizen?.id ?? ""} relatives={family?.relatives ?? null} busy={busy} run={run} />}
         </>
       )}
     </AppScreen>
   );
 }
 
-type Run = (fn: () => Promise<{ error?: string }>, ok: string) => Promise<void>;
+// ---------------------------------------------------------------- partners
 
-function Single({ candidates, gender, busy, run }: { candidates: Person[]; gender: string | null; busy: boolean; run: Run }) {
+function Partners({ love, busy, run, me }: { love: NonNullable<ReturnType<typeof useLove>>; busy: boolean; run: Run; me: string }) {
+  const [pick, setPick] = useState(0);
+  const rels = love.relationships;
+  const rel = rels[Math.min(pick, rels.length - 1)];
+  return (
+    <>
+      {love.discoveries.map((x) => (
+        <Card key={x.relationship} className="bg-amber-50 border border-amber-300">
+          <div className="flex items-center gap-3">
+            <Face p={x.other} />
+            <div className="flex-1 min-w-0">
+              <p className="font-black text-lg leading-tight">😱 You found out about @{x.other.username}</p>
+              <p className="text-slate-600">@{x.partner.username} has been {x.status === "married" ? "married to" : x.status === "engaged" ? "engaged to" : "seeing"} @{x.other.username} too. It cost you {FAMILY.discovery.heartsLost} hearts.</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Big tone="light" disabled={busy} onClick={() => run(() => resolveDiscovery(x.relationship, true), `You forgave @${x.partner.username}.`)}>Forgive</Big>
+            <Big tone="red" disabled={busy} onClick={() => { if (confirm(`Leave @${x.partner.username}? This ends your relationship.`)) void run(() => resolveDiscovery(x.relationship, false), "You walked away. You deserve better."); }}>Leave them</Big>
+          </div>
+        </Card>
+      ))}
+      {love.caught.map((c) => (
+        <Note key={`${c.by}:${c.about}`} ok={false}>😬 @{c.by} found out about you and @{c.about}. Talk to them before they decide.</Note>
+      ))}
+
+      {rels.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {rels.map((r, i) => (
+            <button key={r.id} onClick={() => setPick(i)} className={`shrink-0 flex items-center gap-2 pl-1 pr-3 h-12 rounded-full ${i === pick ? "bg-rose-500 text-white" : "bg-slate-100"}`}>
+              <Face p={r.partner} size={40} /><span className="font-semibold">@{r.partner.username}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {rel && <Together key={rel.id} rel={rel} busy={busy} run={run} me={me} many={rels.length > 1} />}
+      {love.canDate && <Single candidates={love.candidates} gender={love.gender} busy={busy} run={run} taken={rels.length > 0} />}
+
+      {love.outgoing.map((o) => (
+        <div key={o.id} className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-slate-100 text-sm">
+          <span className="flex-1">{o.kind === "propose" ? "💍 Proposal" : o.kind === "baby" ? "👶 Baby" : "💌 Asked"} @{o.to} · waiting for an answer</span>
+          <button disabled={busy} onClick={() => run(() => cancelRequest(o.id), "Withdrawn.")} className="font-semibold text-slate-500">Withdraw</button>
+        </div>
+      ))}
+
+      {love.invitations.length > 0 && (
+        <Card>
+          <p className="font-black">💒 Weddings you&apos;re going to</p>
+          {love.invitations.map((w) => (
+            <Link key={w.code} href={`/wedding/${w.code}`} className="flex items-center gap-2 py-1">
+              <span className="text-xl">{venueOf(w.venue)?.icon}</span>
+              <span className="flex-1">{venueOf(w.venue)?.name}</span>
+              <span className="text-sm text-slate-500">{new Date(w.startsAt).toLocaleString("en-GB", { timeZone: "Asia/Dubai", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</span>
+            </Link>
+          ))}
+        </Card>
+      )}
+      <p className="text-center text-xs text-slate-400 px-4">Relationships on Dubai Life are between a man and a woman, both agreeing at every step. A man may have up to {FAMILY.maxWives} partners; a woman has one.</p>
+    </>
+  );
+}
+
+function Single({ candidates, gender, busy, run, taken }: { candidates: Person[]; gender: string | null; busy: boolean; run: Run; taken: boolean }) {
   const [msg, setMsg] = useState("");
   return (
     <>
       <Card className="bg-rose-50">
-        <p className="font-black text-lg">💌 You&apos;re single</p>
-        <p className="text-slate-600">Ask a friend out. If they say yes you&apos;re dating: show love every day and go on dates together to grow closer. With {LOVE.levels.propose} hearts you can propose.</p>
+        <p className="font-black text-lg">{taken ? "💌 Ask someone else out" : "💌 You're single"}</p>
+        <p className="text-slate-600">{taken
+          ? `You can have up to ${FAMILY.maxWives} partners. Each relationship is separate, and your partners don't see each other… unless they find out.`
+          : `Ask a friend out. If they say yes you're dating: show love every day and go on dates together to grow closer. With ${LOVE.levels.propose} hearts you can propose.`}</p>
       </Card>
       {!gender ? <p className="text-slate-500 px-1">Finish your avatar first so we know who you can date.</p>
-        : candidates.length === 0 ? <p className="text-slate-500 px-1">No single friends to ask yet. Meet people around the city and add them in Phone → People.</p> : (
+        : candidates.length === 0 ? <p className="text-slate-500 px-1">No single friends to ask yet. Meet people around the city and chat; add them as friends in Phone → People.</p> : (
           <>
             <input value={msg} onChange={(e) => setMsg(e.target.value)} maxLength={280} placeholder="Add a message (optional): Karak at the fountain?" className="w-full h-12 px-4 rounded-full bg-slate-100 outline-none" />
             {candidates.map((p) => (
@@ -110,15 +173,17 @@ function Single({ candidates, gender, busy, run }: { candidates: Person[]; gende
   );
 }
 
-function Together({ rel, busy, run, me }: { rel: NonNullable<ReturnType<typeof useLove>>["relationship"] & object; busy: boolean; run: Run; me: string }) {
+function Together({ rel, busy, run, me, many }: { rel: Relationship; busy: boolean; run: Run; me: string; many: boolean }) {
   const [screen, setScreen] = useState<"main" | "propose" | "plan">("main");
   const p = rel.partner;
+  // With more than one partner, every action says which one.
+  const who = many ? p.id : undefined;
   const hearts = Math.min(rel.level, LOVE.levels.propose);
   const label = rel.status === "married" ? "Married" : rel.status === "engaged" ? "Engaged" : "Dating";
   const since = new Date(rel.marriedAt ?? rel.engagedAt ?? rel.since).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
-  if (screen === "propose") return <Proposal onDone={() => setScreen("main")} run={run} busy={busy} partner={p.username} />;
-  if (screen === "plan") return <Planner onDone={() => setScreen("main")} run={run} busy={busy} />;
+  if (screen === "propose") return <Proposal onDone={() => setScreen("main")} run={run} busy={busy} partner={p.username} who={who} />;
+  if (screen === "plan") return <Planner onDone={() => setScreen("main")} run={run} busy={busy} who={who} />;
 
   return (
     <>
@@ -137,7 +202,7 @@ function Together({ rel, busy, run, me }: { rel: NonNullable<ReturnType<typeof u
             <p className="text-sm text-slate-500 mt-1">{rel.level >= LOVE.levels.propose ? "Close enough to propose 💍" : `${LOVE.levels.propose - rel.level} more hearts until you can propose`}</p>
           </div>
         )}
-        <Big tone="red" disabled={busy || rel.lovedToday} onClick={() => run(showLove, `💗 @${p.username} felt that.`)}>{rel.lovedToday ? "💗 Love shown today" : "💗 Show love (+1 a day)"}</Big>
+        <Big tone="red" disabled={busy || rel.lovedToday} onClick={() => run(() => showLove(who), `💗 @${p.username} felt that.`)}>{rel.lovedToday ? "💗 Love shown today" : "💗 Show love (+1 a day)"}</Big>
       </Card>
 
       <Card>
@@ -145,7 +210,7 @@ function Together({ rel, busy, run, me }: { rel: NonNullable<ReturnType<typeof u
         <p className="text-sm text-slate-500">Both check in at the same place today. {rel.partnerDateToday ? `@${p.username} picked ${datePlaceOf(rel.partnerDateToday)?.label}.` : `@${p.username} hasn't picked yet.`}</p>
         <div className="grid grid-cols-2 gap-2">
           {LOVE.datePlaces.map((d) => (
-            <button key={d.id} disabled={busy} onClick={() => run(() => logDate(d.id), rel.partnerDateToday === d.id ? `💞 Date night at ${d.label}! +${LOVE.levels.date}` : `Checked in at ${d.label}. Waiting for @${p.username}.`)}
+            <button key={d.id} disabled={busy} onClick={() => run(() => logDate(d.id, who), rel.partnerDateToday === d.id ? `💞 Date night at ${d.label}! +${LOVE.levels.date}` : `Checked in at ${d.label}. Waiting for @${p.username}.`)}
               className={`text-left px-3 py-2.5 rounded-2xl text-sm ${rel.dateToday === d.id ? "bg-rose-500 text-white" : rel.partnerDateToday === d.id ? "bg-rose-100 ring-2 ring-rose-400" : "bg-slate-100"}`}>
               {d.icon} {d.label}
             </button>
@@ -157,7 +222,7 @@ function Together({ rel, busy, run, me }: { rel: NonNullable<ReturnType<typeof u
       {rel.status === "engaged" && !rel.wedding && <Big tone="red" onClick={() => setScreen("plan")}>💒 Plan the wedding</Big>}
       {rel.wedding && <WeddingCard code={rel.wedding} me={me} />}
 
-      <button disabled={busy} onClick={() => { if (confirm(rel.status === "married" ? "Divorce? This ends your marriage." : "Break up? This ends the relationship.")) void run(endRelationship, "It's over. Take care of yourself."); }}
+      <button disabled={busy} onClick={() => { if (confirm(rel.status === "married" ? `Divorce @${p.username}? This ends your marriage.` : `Break up with @${p.username}? This ends the relationship.`)) void run(() => endRelationship(who), "It's over. Take care of yourself."); }}
         className="w-full text-sm font-semibold text-slate-400 py-2">{rel.status === "married" ? "Divorce" : "Break up"}</button>
     </>
   );
@@ -183,7 +248,7 @@ function WeddingCard({ code, me }: { code: string; me: string }) {
   );
 }
 
-function Proposal({ onDone, run, busy, partner }: { onDone: () => void; run: Run; busy: boolean; partner: string }) {
+function Proposal({ onDone, run, busy, partner, who }: { onDone: () => void; run: Run; busy: boolean; partner: string; who?: string }) {
   const [ring, setRing] = useState(LOVE.rings[1].id);
   const [place, setPlace] = useState(LOVE.datePlaces[0].id);
   const [message, setMessage] = useState("");
@@ -202,13 +267,13 @@ function Proposal({ onDone, run, busy, partner }: { onDone: () => void; run: Run
       </select>
       <textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={280} rows={3} placeholder="Say it from the heart…" className="w-full rounded-2xl bg-white p-3 outline-none" />
       <p className="text-xs text-slate-500">If the answer is not yet, the ring goes back to the shop and you get your money back.</p>
-      <Big tone="red" disabled={busy} onClick={async () => { await run(() => propose(ring, place, message), `💍 Proposal sent. @${partner} will see it now.`); onDone(); }}>Propose · {aed(ringOf(ring)!.price)}</Big>
+      <Big tone="red" disabled={busy} onClick={async () => { await run(() => propose(ring, place, message, who), `💍 Proposal sent. @${partner} will see it now.`); onDone(); }}>Propose · {aed(ringOf(ring)!.price)}</Big>
       <button onClick={onDone} className="w-full text-sm font-semibold text-slate-500">Not now</button>
     </Card>
   );
 }
 
-function Planner({ onDone, run, busy }: { onDone: () => void; run: Run; busy: boolean }) {
+function Planner({ onDone, run, busy, who }: { onDone: () => void; run: Run; busy: boolean; who?: string }) {
   const [venue, setVenue] = useState(LOVE.venues[0].id);
   const [guests, setGuests] = useState(LOVE.guestOptions[1]);
   const [ceremony, setCeremony] = useState(LOVE.ceremonies[0].id);
@@ -253,9 +318,178 @@ function Planner({ onDone, run, busy }: { onDone: () => void; run: Run; busy: bo
       </div>
       <div className="flex justify-between font-black text-lg pt-1"><span>Total</span><span>{aed(cost)}</span></div>
       <p className="text-xs text-slate-500">You pay now. Cancelling later refunds half. On the day, you both say &ldquo;I do&rdquo; on the wedding page during the 30-minute ceremony.</p>
-      <Big tone="green" disabled={busy} onClick={async () => { await run(() => planWedding(venue, startsAt, guests, ceremony), "💒 Booked! Share the invitation with your guests."); onDone(); }}>Book the wedding · {aed(cost)}</Big>
+      <Big tone="green" disabled={busy} onClick={async () => { await run(() => planWedding(venue, startsAt, guests, ceremony, who), "💒 Booked! Share the invitation with your guests."); onDone(); }}>Book the wedding · {aed(cost)}</Big>
       <button onClick={onDone} className="w-full text-sm font-semibold text-slate-500">Back</button>
     </Card>
   );
 }
 
+// ---------------------------------------------------------------- kids
+
+function Kids({ rels, kids, busy, run, me }: { rels: Relationship[]; kids: Child[] | null; busy: boolean; run: Run; me: string }) {
+  const now = useNow();
+  const expecting = (p: Person) => kids?.some((k) => !k.born && Date.parse(k.dueAt) > now && (k.mother.id === p.id || k.father.id === p.id));
+  return (
+    <>
+      {rels.length === 0 && !kids?.length && (
+        <Card className="bg-sky-50">
+          <p className="font-black text-lg">👶 Starting a family</p>
+          <p className="text-slate-600">When you&apos;re with someone, you can decide together to have a baby. The pregnancy lasts {FAMILY.pregnancyDays} days, then your baby grows a new stage every week: crawling, first steps, running around, first words, nursery and school.</p>
+        </Card>
+      )}
+      {rels.map((r) => (
+        <Big key={r.id} tone="blue" disabled={busy || expecting(r.partner)}
+          onClick={() => run(() => askForBaby(rels.length > 1 ? r.partner.id : undefined), `👶 Asked @${r.partner.username}. You both have to say yes.`)}>
+          {expecting(r.partner) ? `🤰 Expecting with @${r.partner.username}` : `👶 Have a baby with @${r.partner.username}`}
+        </Big>
+      ))}
+      {kids === null ? <p className="text-center text-slate-500 py-4">Loading…</p> : kids.map((k) => <ChildCard key={k.id} child={k} busy={busy} run={run} me={me} now={now} />)}
+    </>
+  );
+}
+
+function ChildCard({ child: k, busy, run, me, now }: { child: Child; busy: boolean; run: Run; me: string; now: number }) {
+  const [name, setName] = useState("");
+  const other = k.mother.id === me ? k.father : k.mother;
+  const born = Date.parse(k.dueAt) <= now;
+  const display = k.name ?? (k.gender === "boy" ? "Baby boy" : "Baby girl");
+  const suggestions = FAMILY.babyNames[k.gender];
+
+  if (!born) {
+    const total = Date.parse(k.dueAt) - Date.parse(k.conceivedAt);
+    const done = Math.min(1, Math.max(0, (now - Date.parse(k.conceivedAt)) / total));
+    const daysLeft = Math.ceil((Date.parse(k.dueAt) - now) / 86_400_000);
+    return (
+      <Card className="bg-gradient-to-br from-sky-50 to-pink-50">
+        <p className="font-black text-lg">🤰 Expecting {k.name ? k.name : `a ${k.gender}`} with @{other.username}</p>
+        <div className="h-3 rounded-full bg-white overflow-hidden"><div className="h-full bg-pink-400" style={{ width: `${Math.round(done * 100)}%` }} /></div>
+        <p className="text-slate-600">Arrives in {daysLeft} day{daysLeft === 1 ? "" : "s"}. Choose a name together:</p>
+        <NameRow name={name} setName={setName} suggestions={suggestions} busy={busy} onSave={(n) => run(() => nameChild(k.id, n), `💕 ${n} it is.`)} />
+      </Card>
+    );
+  }
+
+  const { weeks, stage, next } = stageOf(k, now);
+  const happy = happinessOf(k, now);
+  const nanny = k.nannyUntil && Date.parse(k.nannyUntil) > now;
+  const nextIn = next ? Math.max(1, Math.ceil((Date.parse(k.dueAt) + next.week * 7 * 86_400_000 - now) / 86_400_000)) : null;
+  return (
+    <Card className="bg-gradient-to-br from-amber-50 to-pink-50">
+      <div className="flex items-center gap-3">
+        <span className="w-16 h-16 rounded-full bg-white flex items-center justify-center text-4xl shrink-0">{stage.icon}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-xl font-black truncate">{display} {k.gender === "boy" ? "👦" : "👧"}</p>
+          <p className="text-sm font-semibold text-rose-600">{stage.label} · {weeks === 0 ? "first week" : `${weeks} week${weeks === 1 ? "" : "s"} old`}</p>
+          <p className="text-sm text-slate-500">with @{other.username}</p>
+        </div>
+      </div>
+      <p className="text-slate-600">{stage.text}</p>
+      {next && <p className="text-xs text-slate-500">Next milestone in {nextIn} day{nextIn === 1 ? "" : "s"}: {next.icon} {next.label}</p>}
+      {!k.name && <NameRow name={name} setName={setName} suggestions={suggestions} busy={busy} onSave={(n) => run(() => nameChild(k.id, n), `💕 Welcome, ${n}!`)} />}
+
+      <div>
+        <div className="flex justify-between text-xs font-semibold text-slate-500"><span>Happiness</span><span>{happy}%</span></div>
+        <div className="h-2.5 rounded-full bg-white overflow-hidden"><div className={`h-full ${happy >= 60 ? "bg-emerald-500" : happy >= 30 ? "bg-amber-400" : "bg-rose-500"}`} style={{ width: `${happy}%` }} /></div>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {FAMILY.care.map((c) => {
+          const done = k.careToday.includes(c.id as "feed");
+          return (
+            <button key={c.id} disabled={busy || done} onClick={() => run(() => careForChild(k.id, c.id), `${c.icon} ${display} loved that.`)}
+              className={`h-14 rounded-2xl text-sm font-semibold flex flex-col items-center justify-center ${done ? "bg-emerald-100 text-emerald-700" : "bg-white"}`}>
+              <span className="text-xl leading-none">{done ? "✓" : c.icon}</span>{c.label}
+            </button>
+          );
+        })}
+      </div>
+      {nanny ? (
+        <p className="text-sm font-semibold text-emerald-700">🧑‍🍼 A nanny is looking after {display} until {new Date(k.nannyUntil!).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}.</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-2">
+          {FAMILY.nanny.map((n) => (
+            <button key={n.id} disabled={busy} onClick={() => run(() => hireNanny(k.id, n.id), `🧑‍🍼 Nanny hired for ${n.label.toLowerCase()}.`)} className="h-12 rounded-2xl bg-slate-900 text-white text-sm font-semibold">
+              🧑‍🍼 Nanny · {n.label} · {aed(n.price)}
+            </button>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function NameRow({ name, setName, suggestions, busy, onSave }: { name: string; setName: (s: string) => void; suggestions: string[]; busy: boolean; onSave: (n: string) => void }) {
+  return (
+    <>
+      <div className="flex gap-2">
+        <input value={name} onChange={(e) => setName(e.target.value.slice(0, 24))} placeholder="A name" className="flex-1 min-w-0 h-11 px-4 rounded-full bg-white outline-none" />
+        <button disabled={busy || !name.trim()} onClick={() => onSave(name.trim())} className="h-11 px-4 rounded-full bg-rose-500 text-white font-semibold disabled:opacity-50">Save</button>
+      </div>
+      <div className="flex gap-1.5 flex-wrap">{suggestions.slice(0, 6).map((n) => <button key={n} onClick={() => setName(n)} className="px-3 h-8 rounded-full bg-white/80 text-sm">{n}</button>)}</div>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------- relatives
+
+async function friendsOf(me: string): Promise<Contact[]> {
+  const { data } = await supabase().from("friendships").select("user_id, friend_id").or(`user_id.eq.${me},friend_id.eq.${me}`).eq("status", "accepted");
+  const ids = (data ?? []).map((f) => (f.user_id === me ? f.friend_id : f.user_id) as string);
+  return [...(await contacts(ids)).values()].sort((a, b) => a.username.localeCompare(b.username));
+}
+
+function Relatives({ me, relatives, busy, run }: { me: string; relatives: Relative[] | null; busy: boolean; run: Run }) {
+  const [friends, setFriends] = useState<Contact[] | null>(null);
+  const [relation, setRelation] = useState<Relation>("sibling");
+  useEffect(() => { if (me) void friendsOf(me).then(setFriends); }, [me]);
+  const linked = new Set((relatives ?? []).map((r) => r.person.id));
+  const accepted = (relatives ?? []).filter((r) => r.status === "accepted");
+  const incoming = (relatives ?? []).filter((r) => r.status === "pending" && !r.mine);
+  const outgoing = (relatives ?? []).filter((r) => r.status === "pending" && r.mine);
+
+  return (
+    <>
+      {incoming.map((r) => (
+        <Card key={r.id} className="bg-violet-50">
+          <div className="flex items-center gap-3">
+            <Face p={r.person} />
+            <p className="flex-1 font-black">@{r.person.username} says they&apos;re your {relationLabel(r.relation, r.person.look?.gender).toLowerCase()}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Big tone="light" disabled={busy} onClick={() => run(() => respondRelative(r.id, false), "Declined.")}>Not family</Big>
+            <Big tone="dark" disabled={busy} onClick={() => run(() => respondRelative(r.id, true), `👨‍👩‍👧 @${r.person.username} is family.`)}>Yes, family</Big>
+          </div>
+        </Card>
+      ))}
+
+      <Card>
+        <p className="font-black text-lg">👨‍👩‍👧 Your family</p>
+        {relatives === null ? <p className="text-slate-500">Loading…</p> : accepted.length === 0 ? <p className="text-slate-500">Add your brother, sister, parents, children or cousins who play. They have to say yes.</p> : accepted.map((r) => (
+          <div key={r.id} className="flex items-center gap-3">
+            <Face p={r.person} size={44} />
+            <div className="flex-1 min-w-0"><p className="font-semibold truncate">@{r.person.username}</p><p className="text-sm text-slate-500">{relationLabel(r.relation, r.person.look?.gender)}</p></div>
+            <button disabled={busy} onClick={() => { if (confirm(`Remove @${r.person.username} from your family?`)) void run(() => removeRelative(r.id), "Removed."); }} className="text-sm font-semibold text-slate-400">Remove</button>
+          </div>
+        ))}
+        {outgoing.map((r) => <p key={r.id} className="text-sm text-slate-500">Waiting for @{r.person.username} to confirm ({relationLabel(r.relation, r.person.look?.gender).toLowerCase()})</p>)}
+      </Card>
+
+      <Card>
+        <p className="font-black">➕ Add a relative</p>
+        <p className="text-sm text-slate-500">They are my…</p>
+        <div className="grid grid-cols-4 gap-1.5">
+          {FAMILY.relations.map((r) => (
+            <button key={r.id} onClick={() => setRelation(r.id as Relation)} className={`h-11 rounded-full text-xs font-semibold ${relation === r.id ? "bg-violet-600 text-white" : "bg-slate-100"}`}>{r.icon} {r.id === "sibling" ? "Sibling" : r.id === "parent" ? "Parent" : r.id === "child" ? "Child" : "Cousin"}</button>
+          ))}
+        </div>
+        {friends === null ? <p className="text-slate-500">Loading friends…</p> : friends.filter((f) => !linked.has(f.id)).length === 0 ? <p className="text-slate-500">Add them as a friend first (Phone → People), then come back.</p>
+          : friends.filter((f) => !linked.has(f.id)).map((f) => (
+            <div key={f.id} className="flex items-center gap-3">
+              <Face p={{ look: (f.look ?? null) as Person["look"] }} size={40} />
+              <span className="flex-1 font-semibold truncate">@{f.username}</span>
+              <button disabled={busy} onClick={() => run(() => addRelative(f.id, relation), `Asked @${f.username} to confirm.`)} className="h-9 px-3 rounded-full bg-violet-600 text-white text-sm font-semibold disabled:opacity-50">Add</button>
+            </div>
+          ))}
+      </Card>
+    </>
+  );
+}

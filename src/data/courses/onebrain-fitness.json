@@ -1,0 +1,463 @@
+{
+  "id": "onebrain-fitness",
+  "institutionId": "onebrain",
+  "title": "Fitness & Nutrition Coaching",
+  "tagline": "Train bodies safely, plan nutrition that works, coach in Dubai's heat and build a personal training business.",
+  "category": "Health & Fitness",
+  "level": "accelerator",
+  "duration": "4 Weeks (Coach Accelerator)",
+  "rating": 4.95,
+  "enrolledCount": 1980,
+  "icon": "🏋️",
+  "superpower": {
+    "id": "pro_coach",
+    "name": "Pro Coach",
+    "icon": "🏋️",
+    "description": "Plans training and meals like a professional: better wellbeing, and more from fitness jobs.",
+    "badgeText": "Coach Certified",
+    "perkType": "general"
+  },
+  "syllabus": [
+    "Week 1: How the body adapts: training principles and safe technique",
+    "Week 2: Nutrition: energy, protein and real-life meal plans",
+    "Week 3: Coaching people: assessment, motivation and training in the heat",
+    "Week 4: The business of personal training in Dubai"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "How the Body Adapts",
+      "objective": "Use progressive overload, the right reps and good form to get results without injury.",
+      "slides": [
+        {
+          "title": "Progressive Overload and the Rep Ranges",
+          "body": "Muscles and fitness improve only when the body is asked to do a little more than last time, then given time to recover. That gradual increase is progressive overload: more weight, more reps, more sets, or better form and control.",
+          "bullets": [
+            "Strength: heavy sets of about 1 to 5 reps",
+            "Muscle growth (hypertrophy): about 6 to 12 reps, close to failure",
+            "Muscular endurance: 15 reps or more",
+            "Recovery is when you actually improve: 48 hours or so before training the same muscles hard again"
+          ],
+          "example": "A beginner's squat over 4 weeks:\n• Week 1: 3 sets of 10 at 40 kg\n• Week 2: 3 × 12 at 40 kg (more reps)\n• Week 3: 3 × 10 at 45 kg (more weight)\n• Week 4: 4 × 10 at 45 kg (more sets)\nEach week asks a little more, so the body keeps adapting.",
+          "takeaway": "Do a little more over time, recover well, repeat: that is the whole secret."
+        },
+        {
+          "title": "Technique and Safety First",
+          "body": "A coach's first job is to keep clients safe. Every session starts with a warm-up, and every lift is taught with a neutral spine, controlled tempo and a full but comfortable range of motion.",
+          "bullets": [
+            "Warm up 5 to 10 minutes: light cardio and movements that rehearse the workout",
+            "Brace the core and keep the spine neutral on squats, deadlifts and rows",
+            "Stop at sharp pain, dizziness or chest pain, and refer to a doctor",
+            "Screen clients with a health questionnaire (PAR-Q) before training"
+          ],
+          "takeaway": "Results come from consistency, and consistency comes from never getting hurt."
+        }
+      ],
+      "lab": {
+        "title": "Programme Design Lab",
+        "brief": "Write a 4-week, 3-days-a-week full-body programme for a beginner, showing how the load progresses each week.",
+        "deliverable": "A table of exercises, sets, reps and load for each week.",
+        "proTip": "Simple programmes done consistently beat clever programmes done twice."
+      },
+      "caseStudy": {
+        "scenario": "A new client wants to deadlift 100 kg in their first session to impress friends. They've never lifted before. What do you do?",
+        "options": [
+          {
+            "text": "Let them try: confidence matters.",
+            "correct": false,
+            "explanation": "Maximal lifts with no technique are a classic way to injure a beginner's back."
+          },
+          {
+            "text": "Teach the hip hinge with a light bar, build technique, and progress the weight over weeks.",
+            "correct": true,
+            "explanation": "Technique first, then load: safe, and it builds faster progress."
+          },
+          {
+            "text": "Refuse to teach deadlifts at all.",
+            "correct": false,
+            "explanation": "Deadlifts are valuable; they just need teaching properly."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Which rep range mainly builds muscle size?",
+          "options": [
+            "1 to 3",
+            "6 to 12",
+            "25 to 30",
+            "50+"
+          ],
+          "correctIndex": 1,
+          "explanation": "Roughly 6 to 12 reps close to failure is the classic hypertrophy range."
+        },
+        {
+          "question": "What is progressive overload?",
+          "options": [
+            "Training every day",
+            "Gradually asking the body to do more over time",
+            "Lifting the heaviest weight possible",
+            "Changing every exercise each session"
+          ],
+          "correctIndex": 1,
+          "explanation": "Gradually increasing the demand is what drives adaptation."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Nutrition That Works",
+      "objective": "Work out energy needs, set protein targets and build meal plans people can stick to.",
+      "slides": [
+        {
+          "title": "Energy Balance: BMR and TDEE",
+          "body": "Body weight follows energy balance over time. Basal Metabolic Rate (BMR) is what the body burns at rest; Total Daily Energy Expenditure (TDEE) adds activity. Eat below TDEE to lose fat, above it to gain.",
+          "bullets": [
+            "Mifflin-St Jeor: men 10 × weight (kg) + 6.25 × height (cm) − 5 × age + 5; women the same but − 161",
+            "Multiply by activity: about 1.2 (desk job) to 1.725 (very active)",
+            "A deficit of about 500 kcal a day loses roughly 0.5 kg a week"
+          ],
+          "example": "A 30-year-old man, 80 kg, 180 cm, training 3 to 5 times a week:\nBMR = 10 × 80 + 6.25 × 180 − 5 × 30 + 5 = 800 + 1,125 − 150 + 5 = 1,780 kcal\nTDEE = 1,780 × 1.55 ≈ 2,760 kcal\nFor fat loss: about 2,260 kcal a day.",
+          "takeaway": "Weight change is maths over time; the coaching is making it livable."
+        },
+        {
+          "title": "Protein, Plates and Real Life",
+          "body": "Protein builds and repairs muscle and keeps people full. Most training clients do well on about 1.6 to 2.2 g of protein per kg of body weight. Then build meals simply, from food they actually like, including local favourites.",
+          "bullets": [
+            "The plate method: half vegetables, a quarter protein, a quarter carbs, a thumb of fat",
+            "Good protein: chicken, fish (hammour, salmon), eggs, laban and Greek yogurt, lentils, chickpeas",
+            "Hydration: in Dubai's heat, often 2.5 to 3.5 litres a day or more, with electrolytes after heavy sweating",
+            "Fasting in Ramadan: train after iftar, and spread protein between iftar and suhoor"
+          ],
+          "takeaway": "The best diet is the one your client can follow on a busy Tuesday."
+        }
+      ],
+      "lab": {
+        "title": "Meal Plan Lab",
+        "brief": "Calculate a client's TDEE and protein target, then write a one-day meal plan that hits both with food from Dubai supermarkets.",
+        "deliverable": "Calculations, a meal plan with calories and protein per meal, and a shopping list.",
+        "proTip": "Swap, don't ban: a lighter version of their favourite food beats a list of forbidden food."
+      },
+      "caseStudy": {
+        "scenario": "A client has lost no weight in 4 weeks and swears they 'eat clean'. What's the best next step?",
+        "options": [
+          {
+            "text": "Cut their calories in half immediately.",
+            "correct": false,
+            "explanation": "Extreme cuts backfire: they're hard to stick to and lose muscle."
+          },
+          {
+            "text": "Ask them to log everything they eat and drink for a week, including drinks and snacks, then adjust.",
+            "correct": true,
+            "explanation": "Most stalls come from untracked calories: juices, coffee drinks, oils and weekend meals."
+          },
+          {
+            "text": "Tell them their metabolism is broken.",
+            "correct": false,
+            "explanation": "That isn't true and it destroys motivation."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What's a typical protein target for someone training?",
+          "options": [
+            "0.3 g per kg",
+            "1.6 to 2.2 g per kg",
+            "5 g per kg",
+            "None needed"
+          ],
+          "correctIndex": 1,
+          "explanation": "About 1.6 to 2.2 g/kg supports muscle growth and repair."
+        },
+        {
+          "question": "A daily deficit of about 500 kcal loses roughly:",
+          "options": [
+            "0.5 kg a week",
+            "2 kg a week",
+            "5 kg a week",
+            "Nothing"
+          ],
+          "correctIndex": 0,
+          "explanation": "500 × 7 = 3,500 kcal, roughly 0.5 kg of body fat."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Coaching People",
+      "objective": "Assess clients, keep them motivated and train safely in extreme heat.",
+      "slides": [
+        {
+          "title": "Assessment and Goals",
+          "body": "Every programme starts with knowing the person: their health, history, schedule and real goal. Turn vague wishes into SMART goals: Specific, Measurable, Achievable, Relevant, Time-bound.",
+          "bullets": [
+            "Health questionnaire (PAR-Q) and, if needed, a doctor's clearance",
+            "Baseline: weight, waist measurement, photos, a push-up and plank test",
+            "From 'get fit' to 'lose 5 cm from my waist and do 10 push-ups in 12 weeks'",
+            "Review every 4 weeks and celebrate progress"
+          ],
+          "takeaway": "What gets measured gets improved, and what gets celebrated gets repeated."
+        },
+        {
+          "title": "Training in Dubai's Heat",
+          "body": "Summer in Dubai regularly passes 40°C with high humidity. Heat illness is a real danger for outdoor sessions, so coaches plan around it.",
+          "bullets": [
+            "Train outdoors early morning or after sunset in summer, or move indoors",
+            "Signs of heat exhaustion: heavy sweating, dizziness, nausea, cramps: stop, cool down, rehydrate",
+            "Heat stroke is an emergency: confusion, hot dry skin, collapse. Call 998 for an ambulance and cool them immediately",
+            "Plan water breaks every 15 to 20 minutes"
+          ],
+          "takeaway": "In the heat, the session plan bends to the weather, never the other way round."
+        }
+      ],
+      "lab": {
+        "title": "Client Onboarding Lab",
+        "brief": "Run a full onboarding for a friend: questionnaire, baseline tests, SMART goal and first-month plan.",
+        "deliverable": "The completed forms, baseline numbers and a 4-week plan.",
+        "proTip": "Clients stay for the relationship: remember their names, wins and struggles."
+      },
+      "caseStudy": {
+        "scenario": "It's 41°C at 4pm and your client wants their usual outdoor beach bootcamp. What do you do?",
+        "options": [
+          {
+            "text": "Go ahead but tell them to drink water.",
+            "correct": false,
+            "explanation": "Peak afternoon heat is when heat illness is most likely."
+          },
+          {
+            "text": "Move the session indoors or to after sunset, and explain why.",
+            "correct": true,
+            "explanation": "Changing the time or place keeps them safe and keeps the habit going."
+          },
+          {
+            "text": "Cancel without explanation.",
+            "correct": false,
+            "explanation": "They lose the session and don't learn why."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What does SMART stand for?",
+          "options": [
+            "Strong, Muscular, Active, Ripped, Toned",
+            "Specific, Measurable, Achievable, Relevant, Time-bound",
+            "Sets, Minutes, Air, Reps, Tempo",
+            "Simple, Modern, Agile, Rapid, Tough"
+          ],
+          "correctIndex": 1,
+          "explanation": "SMART goals are specific, measurable, achievable, relevant and time-bound."
+        },
+        {
+          "question": "What number do you call for an ambulance in the UAE?",
+          "options": [
+            "999",
+            "998",
+            "997",
+            "911"
+          ],
+          "correctIndex": 1,
+          "explanation": "998 is the ambulance; 999 is police and 997 is fire."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "The Personal Training Business",
+      "objective": "Register, price, find clients and keep them.",
+      "slides": [
+        {
+          "title": "Getting Qualified and Registered",
+          "body": "In the UAE, gyms usually require trainers to hold a recognised qualification and to be registered with REPs UAE (the Register of Exercise Professionals), plus first aid and CPR. Working freelance also needs the right licence or permit.",
+          "bullets": [
+            "A recognised personal training qualification",
+            "REPs UAE registration, renewed yearly",
+            "First aid and CPR certificate",
+            "A freelance permit or trade licence if you work for yourself"
+          ],
+          "takeaway": "Credentials open gym doors and give clients trust."
+        },
+        {
+          "title": "Pricing and Keeping Clients",
+          "body": "Personal training is sold by the session or in packages. Packages bring commitment and steady income; results and relationships bring referrals.",
+          "bullets": [
+            "Price from your costs, hours and the market",
+            "Packages: 10 or 20 sessions at a small discount, paid up front",
+            "Track results and share them (with permission)",
+            "Ask happy clients for referrals"
+          ],
+          "example": "Planning a month's income:\n• 1 session: AED 300. A 10-session package: AED 2,700 (10% off).\n• 12 clients doing 2 sessions a week = 96 sessions a month.\n• At about AED 270 a session: AED 25,920 a month, before gym fees and costs.",
+          "takeaway": "Your best marketing is a client who got results and tells their friends."
+        }
+      ],
+      "lab": {
+        "title": "Business Plan Lab",
+        "brief": "Write a one-page plan for your training business: who you serve, prices, packages and how you'll find your first 10 clients.",
+        "deliverable": "A one-page plan with prices and a 30-day client plan.",
+        "proTip": "Niche down: 'strength for busy mums' wins more clients than 'fitness for everyone'."
+      },
+      "caseStudy": {
+        "scenario": "Your client cancels sessions at the last minute every week. What's the professional fix?",
+        "options": [
+          {
+            "text": "Charge them double next time.",
+            "correct": false,
+            "explanation": "Surprise penalties damage the relationship."
+          },
+          {
+            "text": "Agree a clear 24-hour cancellation policy in writing at the start, and apply it kindly.",
+            "correct": true,
+            "explanation": "Clear terms agreed upfront protect your time and stay fair."
+          },
+          {
+            "text": "Stop replying to them.",
+            "correct": false,
+            "explanation": "Ghosting is unprofessional."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is REPs UAE?",
+          "options": [
+            "A gym chain",
+            "The Register of Exercise Professionals",
+            "A supplement brand",
+            "A fitness app"
+          ],
+          "correctIndex": 1,
+          "explanation": "REPs UAE registers qualified exercise professionals."
+        },
+        {
+          "question": "Why sell session packages?",
+          "options": [
+            "To overcharge",
+            "Commitment from clients and steadier income",
+            "They're required by law",
+            "To avoid tax"
+          ],
+          "correctIndex": 1,
+          "explanation": "Packages give clients commitment and you steady income."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "What drives fitness gains over time?",
+        "options": [
+          "Random workouts",
+          "Progressive overload plus recovery",
+          "Training only cardio",
+          "Never resting"
+        ],
+        "correctIndex": 1,
+        "explanation": "Gradually more demand, with recovery, drives adaptation."
+      },
+      {
+        "question": "BMR is:",
+        "options": [
+          "Calories burned at rest",
+          "Calories eaten",
+          "Body mass ratio",
+          "Beats per minute"
+        ],
+        "correctIndex": 0,
+        "explanation": "Basal Metabolic Rate is energy used at rest."
+      },
+      {
+        "question": "TDEE adds what to BMR?",
+        "options": [
+          "Sleep",
+          "Activity",
+          "Protein",
+          "Water"
+        ],
+        "correctIndex": 1,
+        "explanation": "Total Daily Energy Expenditure includes activity."
+      },
+      {
+        "question": "A sign of heat stroke is:",
+        "options": [
+          "Mild thirst",
+          "Confusion and hot, dry skin",
+          "Feeling hungry",
+          "Sore muscles next day"
+        ],
+        "correctIndex": 1,
+        "explanation": "Confusion and hot, dry skin mean heat stroke: an emergency."
+      },
+      {
+        "question": "Before training a new client you should:",
+        "options": [
+          "Test their 1-rep max",
+          "Complete a health questionnaire (PAR-Q)",
+          "Sell supplements",
+          "Skip the warm-up"
+        ],
+        "correctIndex": 1,
+        "explanation": "Screening comes first."
+      },
+      {
+        "question": "Which rep range best builds endurance?",
+        "options": [
+          "1 to 3",
+          "4 to 6",
+          "15+",
+          "None"
+        ],
+        "correctIndex": 2,
+        "explanation": "Higher reps build muscular endurance."
+      },
+      {
+        "question": "A good place to train outdoors in Dubai's summer is:",
+        "options": [
+          "Midday on the beach",
+          "Early morning or after sunset",
+          "Any time with a hat",
+          "Only at 3pm"
+        ],
+        "correctIndex": 1,
+        "explanation": "Avoid the heat of the day."
+      },
+      {
+        "question": "The plate method fills half the plate with:",
+        "options": [
+          "Rice",
+          "Vegetables",
+          "Meat",
+          "Sauce"
+        ],
+        "correctIndex": 1,
+        "explanation": "Half vegetables, a quarter protein, a quarter carbs."
+      },
+      {
+        "question": "A deficit of 500 kcal/day for 4 weeks loses roughly:",
+        "options": [
+          "0.5 kg",
+          "2 kg",
+          "8 kg",
+          "10 kg"
+        ],
+        "correctIndex": 1,
+        "explanation": "About 0.5 kg a week × 4 = 2 kg."
+      },
+      {
+        "question": "The best marketing for a trainer is usually:",
+        "options": [
+          "Discounts",
+          "Client results and referrals",
+          "Social media only",
+          "Cold calling"
+        ],
+        "correctIndex": 1,
+        "explanation": "Happy clients bring more clients."
+      }
+    ]
+  },
+  "tuitionFee": 7500
+}

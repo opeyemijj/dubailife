@@ -6,6 +6,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
+import { useServices } from "@/lib/cityServices";
 import { useCitizen } from "@/lib/citizenStore";
 import { broadcastCityPulse } from "@/lib/presence";
 import { PLACES } from "@/lib/city/places";
@@ -34,8 +35,10 @@ const RESTAURANTS = VENUES.filter((x) => x.venue.layout === "dining" && /restaur
 /** Where to start: a kind of party, and a venue already picked (opened from the venue itself). */
 export interface PartyStart { kind?: EventKind; placeId?: string; venueId?: string }
 
-const listFor = (k: EventKind) => (k === "club_night" ? CLUBS : k === "pool_party" ? POOLS : RESTAURANTS);
-const atVenue = (k: EventKind) => k === "club_night" || k === "pool_party";
+// Seminars can be anywhere (a hotel hall, a café, a co-working space…).
+const listFor = (k: EventKind, promoter: boolean) => (promoter || k === "seminar" ? VENUES : k === "club_night" ? CLUBS : k === "pool_party" ? POOLS : RESTAURANTS);
+const atVenue = (k: EventKind) => k === "club_night" || k === "pool_party" || k === "seminar";
+const SIZES = [20, 50, 100, 200];
 
 export function PartySheet({ flat, start, onClose }: {
   flat: { id: string; route: string; title: string; area: string } | null;
@@ -43,6 +46,11 @@ export function PartySheet({ flat, start, onClose }: {
   onClose: () => void;
 }) {
   const { citizen } = useCitizen();
+  // Club promoters: any venue, guest lists up to 200, and a commission for every guest who turns up.
+  const promoter = useServices(citizen?.id)?.service === "promoter";
+  const [size, setSize] = useState(20);
+  const [paid, setPaid] = useState(false);
+  const [price, setPrice] = useState(100);
   const [kind, setKind] = useState<EventKind>(start?.kind ?? (flat ? "house_party" : "club_night"));
   const [atHome, setAtHome] = useState(!!flat && !start?.venueId && !atVenue(start?.kind ?? "house_party"));
   const [venueKey, setVenueKey] = useState<string | null>(start?.placeId && start.venueId ? `${start.placeId}/${start.venueId}` : null);
@@ -60,7 +68,7 @@ export function PartySheet({ flat, start, onClose }: {
   useEffect(() => { void myParties().then(setParties); }, [made]);
 
   const home = kind === "house_party" || (kind === "dinner" && atHome);
-  const list = listFor(kind);
+  const list = listFor(kind, promoter);
   // The venue it was opened from heads the list (even if it isn't the usual kind of place for this party).
   const picked = VENUES.find((x) => `${x.place.id}/${x.venue.id}` === venueKey) ?? null;
   const shown = useMemo(() => {
@@ -81,8 +89,8 @@ export function PartySheet({ flat, start, onClose }: {
     setError(null);
     const starts = minutesFromNow(mins);
     const r = await createEvent(home && flat
-      ? { kind, title: name, startsAt: starts, label: where, flatId: flat.id, route: flat.route, decor }
-      : { kind, title: name, startsAt: starts, label: where, placeId: venue!.place.id, venueId: venue!.venue.id, decor });
+      ? { kind, title: name, startsAt: starts, label: where, flatId: flat.id, route: flat.route, decor, price: paid ? price : 0 }
+      : { kind, title: name, startsAt: starts, label: where, placeId: venue!.place.id, venueId: venue!.venue.id, decor, price: paid ? price : 0, maxGuests: promoter ? size : 20 });
     setBusy(false);
     if (!r.code) { setError(r.error ?? "Couldn't make the party."); return; }
     gameAudio.playCoinSound();
@@ -128,8 +136,9 @@ export function PartySheet({ flat, start, onClose }: {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-4 gap-1.5">
-              {(["house_party", "dinner", "club_night", "pool_party"] as const).map((id) => (
+            {promoter && <p className="rounded-2xl bg-amber-50 p-3 text-sm text-amber-900">📣 <b>Club promoter:</b> host at any venue, for up to 200 guests. You earn AED 150 for every guest who turns up.</p>}
+            <div className="grid grid-cols-5 gap-1.5">
+              {(["house_party", "dinner", "club_night", "pool_party", "seminar"] as const).map((id) => (
                 <button key={id} onClick={() => { setKind(id); if (atVenue(id) !== atVenue(kind) || id === "house_party") setVenueKey(null); setAtHome(!atVenue(id) && !!flat); }}
                   className={`h-14 px-1 rounded-2xl text-[11px] leading-tight text-center font-black flex flex-col items-center justify-center gap-0.5 ${kind === id ? "bg-fuchsia-600 text-white" : "bg-slate-100 text-slate-700"}`}>
                   <span className="text-lg leading-none">{kindOf(id).icon}</span>{kindOf(id).label}
@@ -149,7 +158,7 @@ export function PartySheet({ flat, start, onClose }: {
                 : <p className="rounded-2xl bg-amber-50 p-3 text-sm text-amber-900">A house party needs a home you rent or own on the map. Anyone can throw a club night, pool party or dinner at a restaurant, so pick one of those, or find a home on the map.</p>
             ) : (
               <div className="space-y-1.5">
-                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={kind === "club_night" ? "Search clubs" : kind === "pool_party" ? "Search pools and beach clubs" : "Search restaurants"} aria-label="Search places"
+                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={promoter || kind === "seminar" ? "Search any venue" : kind === "club_night" ? "Search clubs" : kind === "pool_party" ? "Search pools and beach clubs" : "Search restaurants"} aria-label="Search places"
                   className="w-full h-10 rounded-xl bg-slate-50 border border-slate-200 px-3 text-sm font-bold outline-none" />
                 <div className="max-h-44 overflow-y-auto space-y-1 pr-1">
                   {shown.map((x) => {
@@ -170,6 +179,30 @@ export function PartySheet({ flat, start, onClose }: {
               className="w-full h-11 rounded-xl bg-slate-50 border border-slate-200 px-3 font-bold outline-none" />
             <div className="grid grid-cols-4 gap-1.5">
               {WHEN.map((w) => <button key={w.label} onClick={() => setMins(w.mins)} className={`h-10 rounded-xl text-xs font-black ${mins === w.mins ? "bg-fuchsia-600 text-white" : "bg-slate-100 text-slate-700"}`}>{w.label}</button>)}
+            </div>
+
+            <div className="space-y-1.5">
+              <p className="text-xs font-black uppercase tracking-wider text-slate-400">Entry</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button onClick={() => setPaid(false)} className={`h-10 rounded-xl text-xs font-black ${!paid ? "bg-fuchsia-600 text-white" : "bg-slate-100 text-slate-700"}`}>🎉 Free</button>
+                <button onClick={() => setPaid(true)} className={`h-10 rounded-xl text-xs font-black ${paid ? "bg-fuchsia-600 text-white" : "bg-slate-100 text-slate-700"}`}>🎟️ Paid tickets</button>
+              </div>
+              {paid && (
+                <label className="flex items-center gap-2 rounded-xl bg-slate-50 border border-slate-200 px-3 h-11">
+                  <span className="text-sm font-black text-slate-500">AED</span>
+                  <input type="number" inputMode="numeric" min={1} max={PARTIES.tickets.maxPrice} value={price} onChange={(e) => setPrice(Math.max(1, Math.min(PARTIES.tickets.maxPrice, Math.round(+e.target.value || 0))))}
+                    aria-label="Ticket price" className="flex-1 min-w-0 bg-transparent font-black outline-none" />
+                  <span className="text-[11px] text-slate-500">a ticket, paid to you</span>
+                </label>
+              )}
+              {promoter && !home && (
+                <>
+                  <p className="text-xs font-black uppercase tracking-wider text-slate-400 pt-1">Guest list</p>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {SIZES.map((n) => <button key={n} onClick={() => setSize(n)} className={`h-10 rounded-xl text-xs font-black ${size === n ? "bg-fuchsia-600 text-white" : "bg-slate-100 text-slate-700"}`}>{n}</button>)}
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="space-y-1.5">

@@ -1,7 +1,8 @@
 "use client";
 
-// Inviting people to a party that's on (or coming up): by username, from your friends or from your recent chats,
-// each with a notification and a place in their Invites app; or the link, on WhatsApp or anywhere.
+// Inviting people to a party (or anywhere in the game, with a visit link): by username, from your friends or from
+// your recent chats, each with a notification and a place in their Invites app; or the link, on WhatsApp or anywhere,
+// for people who aren't playing yet.
 
 import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
@@ -19,7 +20,7 @@ async function friendsOf(me: string): Promise<Contact[]> {
   return [...(await contacts(ids)).values()].sort((a, b) => a.username.localeCompare(b.username));
 }
 
-export function InviteSheet({ code, title, onClose }: { code: string; title: string; onClose: () => void }) {
+export function InviteSheet({ code, title, text: shareText, onClose }: { code: string; title: string; text?: string; onClose: () => void }) {
   const { citizen } = useCitizen();
   const me = citizen?.id ?? "";
   const [tab, setTab] = useState<"friends" | "chats">("friends");
@@ -34,7 +35,7 @@ export function InviteSheet({ code, title, onClose }: { code: string; title: str
     void listConversations(me).then((c) => setChats(c.map((x) => x.with)));
   }, [me]);
 
-  const text = `🎉 Come to ${title} on Dubai Life!`;
+  const text = shareText ?? `🎉 Come to ${title} on Dubai Life!`;
   const invite = async (username: string) => {
     const u = username.trim().replace(/^@/, "").toLowerCase();
     if (!u) return;

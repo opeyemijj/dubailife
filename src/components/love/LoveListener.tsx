@@ -29,7 +29,8 @@ export function LoveListener() {
   }, [citizen?.id, needsOnboarding, pathname, router]);
 
   const proposal = love?.incoming.find((q) => q.kind === "propose" && !seen.includes(q.id));
-  const date = love?.incoming.find((q) => q.kind === "date" && !seen.includes(q.id));
+  // A date request or a partner asking for a baby: a note at the top.
+  const date = love?.incoming.find((q) => (q.kind === "date" || q.kind === "baby") && !seen.includes(q.id));
   if (!proposal && !date) return null;
 
   if (proposal) {
@@ -53,7 +54,7 @@ export function LoveListener() {
               <button disabled={busy} onClick={() => answer(false)} className="h-14 rounded-full bg-white/20 font-semibold text-lg">Not yet</button>
               <button disabled={busy} onClick={() => answer(true)} className="h-14 rounded-full bg-white text-rose-600 font-black text-lg">Yes! 💍</button>
             </div>
-            <button onClick={() => setSeen((s) => [...s, proposal.id])} className="text-sm text-white/70">Decide later (it&apos;s in Hayati)</button>
+            <button onClick={() => setSeen((s) => [...s, proposal.id])} className="text-sm text-white/70">Decide later (it&apos;s in Family)</button>
           </div>
         </div>
       </ModalPortal>
@@ -63,8 +64,8 @@ export function LoveListener() {
   return (
     <div className="fixed top-[max(4.5rem,calc(env(safe-area-inset-top)+4rem))] inset-x-0 z-[140] px-3 pointer-events-none">
       <div className="max-w-md mx-auto pointer-events-auto flex items-center gap-3 p-2.5 rounded-[24px] bg-white text-slate-900 shadow-xl">
-        <span className="text-3xl pl-1">💌</span>
-        <p className="flex-1 min-w-0 font-semibold leading-tight">@{date!.from.username} asked you out</p>
+        <span className="text-3xl pl-1">{date!.kind === "baby" ? "👶" : "💌"}</span>
+        <p className="flex-1 min-w-0 font-semibold leading-tight">{date!.kind === "baby" ? `@${date!.from.username} wants to have a baby with you` : `@${date!.from.username} asked you out`}</p>
         <button onClick={() => { setSeen((s) => [...s, date!.id]); openPhone("hayati"); }} className="h-10 px-4 rounded-full bg-rose-500 text-white font-semibold">Answer</button>
         <button onClick={() => setSeen((s) => [...s, date!.id])} aria-label="Later" className="w-8 h-8 rounded-full text-slate-400">✕</button>
       </div>

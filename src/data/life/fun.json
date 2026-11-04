@@ -1,5 +1,5 @@
 {
-  "_note": "Life & Fun goals: things to do whenever you like, alongside the ordered life path. Visits are logged by public.log_fun() when you go into a venue (or book a hotel night); love goals read Hayati. Each goal is collected once for XP (wellbeing league points); the weekend card asks for two different fun things on Saturday or Sunday (Dubai time) and builds a weekend streak. Checks, counts and XP are mirrored in supabase/migrations/*_fun.sql (scripts/check-life-config.mjs).",
+  "_note": "Life & Fun goals: things to do whenever you like, alongside the ordered life path. Visits are logged by public.log_fun() when you go into a venue (or book a hotel night); love goals read the Family app. Each goal is collected once for XP (wellbeing league points); the weekend card asks for two different fun things on Saturday or Sunday (Dubai time) and builds a weekend streak. Checks, counts and XP are mirrored in supabase/migrations/*_fun.sql (scripts/check-life-config.mjs).",
   "kinds": ["beach", "club", "hotel", "staycation", "brunch", "attraction", "waterpark"],
   "categories": [
     { "id": "love", "icon": "💞", "title": "Love", "blurb": "Find someone, go on dates, become a couple. A man and a woman, both agreeing." },

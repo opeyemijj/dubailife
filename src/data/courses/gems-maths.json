@@ -38,8 +38,8 @@
             "Percentage reversal symmetry: x% of y is mathematically identical to y% of x (e.g. 8% of 50 = 50% of 8 = 4)",
             "Fraction shortcuts: 1/8 = 12.5%, 1/6 = 16.67%, 1/3 = 33.33%, 3/8 = 37.5%"
           ],
-          "codeSnippet": "// Rapid Percentage & Reversal Formula\n// x% of y == y% of x\nconst quickPercent = (percent: number, total: number) => (percent * total) / 100;\n// 18% of 50 AED -> 50% of 18 AED = 9 AED\nconsole.log(quickPercent(18, 50)); // 9",
-          "takeaway": "Deconstruct complex percentages into 10%, 5%, and 1% steps, or reverse them (x% of y = y% of x) for instantaneous mental computation."
+          "takeaway": "Deconstruct complex percentages into 10%, 5%, and 1% steps, or reverse them (x% of y = y% of x) for instantaneous mental computation.",
+          "example": "A percentage shortcut: x% of y is the same as y% of x.\nExample: 18% of AED 50 is hard in your head, but 50% of 18 is easy: AED 9."
         },
         {
           "title": "Markup vs. Profit Margin: The Universal Trap",
@@ -52,8 +52,8 @@
             "Margin = (20 / 100) = 20% margin",
             "A 100% markup always yields exactly a 50% profit margin"
           ],
-          "codeSnippet": "function computeEconomics(cost: number, sellPrice: number) {\n  const profit = sellPrice - cost;\n  const markup = (profit / cost) * 100;\n  const margin = (profit / sellPrice) * 100;\n  return { profit, markup: `${markup}%`, margin: `${margin}%` };\n}\n// Cost: 60 AED, Sells: 100 AED -> Markup: 66.67%, Margin: 40%",
-          "takeaway": "Never price products confusing margin with markup. If you need a 30% margin on a 70 AED item, sell price must be 70 / (1 - 0.30) = 100 AED, not 70 * 1.30 = 91 AED."
+          "takeaway": "Never price products confusing margin with markup. If you need a 30% margin on a 70 AED item, sell price must be 70 / (1 - 0.30) = 100 AED, not 70 * 1.30 = 91 AED.",
+          "example": "Markup and margin are not the same thing.\nExample: you buy for AED 60 and sell for AED 100.\nProfit: 100 − 60 = AED 40\nMarkup (profit compared with cost): 40 ÷ 60 = 66.7%\nMargin (profit compared with price): 40 ÷ 100 = 40%"
         }
       ],
       "lab": {
@@ -122,8 +122,8 @@
             "t: Time in years",
             "Albert Einstein famously noted: 'Compound interest is the eighth wonder of the world. He who understands it, earns it; he who doesn't, pays it.'"
           ],
-          "codeSnippet": "// Compound Interest Engine\nfunction calculateCompounding(principal: number, annualRate: number, years: number, n: number = 12) {\n  const total = principal * Math.pow(1 + (annualRate / n), n * years);\n  return Number(total.toFixed(2));\n}\n// 10,000 AED invested at 8% annual return for 30 years compounded monthly:\nconsole.log(calculateCompounding(10000, 0.08, 30)); // 109,357.30 AED (10.9x growth!)",
-          "takeaway": "Time in the market matters far more than timing the market. Doubling your investment horizon squares the exponential compounding factor."
+          "takeaway": "Time in the market matters far more than timing the market. Doubling your investment horizon squares the exponential compounding factor.",
+          "example": "Compound interest: A = P × (1 + r/n)^(n×t)\nExample: AED 10,000 invested at 8% a year, compounded monthly, for 30 years.\nA = 10,000 × (1 + 0.08 ÷ 12)^360 ≈ AED 109,357\nThat's nearly 11 times the money, without adding a dirham."
         },
         {
           "title": "The Rule of 72: Instant Doubling Calculations",
@@ -135,8 +135,8 @@
             "At 12% return: 72 / 12 = 6 years to double",
             "Inflation erosion: At 3% annual inflation, money loses half its purchasing power in 72 / 3 = 24 years"
           ],
-          "codeSnippet": "// Doubling Time Calculator\nconst yearsToDouble = (annualRatePercent: number) => 72 / annualRatePercent;\nconsole.log(`At 8% return: money doubles every ${yearsToDouble(8)} years`); // 9 years",
-          "takeaway": "Use 72 / rate to evaluate any business return, loan payoff, or inflation impact instantly without spreadsheet software."
+          "takeaway": "Use 72 / rate to evaluate any business return, loan payoff, or inflation impact instantly without spreadsheet software.",
+          "example": "The Rule of 72: divide 72 by the yearly return to find roughly how many years money takes to double.\n• At 8%: 72 ÷ 8 = 9 years\n• At 6%: 12 years\n• At 12%: 6 years"
         }
       ],
       "lab": {
@@ -204,8 +204,8 @@
             "Negative EV (-EV): Guaranteed statistical loss over high sample sizes (e.g. lottery tickets)",
             "Example: 60% chance of gaining 1,000 AED, 40% chance of losing 800 AED -> EV = (0.60 * 1000) + (0.40 * -800) = 600 - 320 = +280 AED"
           ],
-          "codeSnippet": "// Expected Value Calculator\ninterface Outcome { probability: number; payoff: number; }\nfunction calculateEV(outcomes: Outcome[]): number {\n  return outcomes.reduce((sum, o) => sum + (o.probability * o.payoff), 0);\n}\nconst coinBet = [\n  { probability: 0.5, payoff: 200 }, // Win 200 AED\n  { probability: 0.5, payoff: -100 }  // Lose 100 AED\n];\nconsole.log(calculateEV(coinBet)); // +50 AED expected profit per flip",
-          "takeaway": "Never judge a decision solely by its outcome. A +EV decision can have an unlucky outcome, but repeated +EV choices inevitably create wealth."
+          "takeaway": "Never judge a decision solely by its outcome. A +EV decision can have an unlucky outcome, but repeated +EV choices inevitably create wealth.",
+          "example": "Expected value: multiply each outcome by its chance, then add them up.\nExample: a coin flip where heads wins AED 200 and tails loses AED 100.\nEV = (0.5 × 200) + (0.5 × −100) = 100 − 50 = +AED 50 a flip\nIt's a bet worth taking again and again, even though you'll lose half the time."
         },
         {
           "title": "The Gambler's Fallacy & The Law of Large Numbers",
@@ -216,8 +216,8 @@
             "The Law of Large Numbers: As sample size increases, observed sample mean converges toward expected theoretical mean",
             "Small sample sizes produce wild variance; large sample sizes produce mathematical certainty"
           ],
-          "codeSnippet": "// Independent Probability Principle\nconst P_Heads = 0.5;\n// Probability of 5 heads in a row: 0.5^5 = 0.03125 (3.125%)\n// BUT probability of flip #6 being heads given 5 prior heads:\nconst P_flip6_heads = 0.5; // Always exactly 50%",
-          "takeaway": "Independent events do not 'balance out' by changing future odds. The Law of Large Numbers works by dilution, not compensation."
+          "takeaway": "Independent events do not 'balance out' by changing future odds. The Law of Large Numbers works by dilution, not compensation.",
+          "example": "Coin flips have no memory.\nThe chance of 5 heads in a row is 0.5^5 = 3.125%.\nBut after 5 heads, the chance the next flip is heads is still exactly 50%."
         }
       ],
       "lab": {
@@ -285,8 +285,8 @@
             "Mode: Most frequently occurring value in the dataset",
             "Rule of thumb: In wealth and real estate distributions, Median is almost always lower than Mean due to right-tail skewness"
           ],
-          "codeSnippet": "function analyzeDistribution(numbers: number[]) {\n  const sorted = [...numbers].sort((a, b) => a - b);\n  const sum = sorted.reduce((a, b) => a + b, 0);\n  const mean = sum / sorted.length;\n  const mid = Math.floor(sorted.length / 2);\n  const median = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;\n  return { mean, median };\n}\n// Incomes: [3000, 3500, 4000, 4500, 100000]\n// Mean: 23,000 AED | Median: 4,000 AED (Median represents the true norm!)",
-          "takeaway": "Always ask for the Median whenever analyzing prices, salaries, or turnaround times to eliminate billionaire or outlier distortion."
+          "takeaway": "Always ask for the Median whenever analyzing prices, salaries, or turnaround times to eliminate billionaire or outlier distortion.",
+          "example": "Mean and median: one extreme number can mislead you.\nMonthly incomes: AED 3,000, 3,500, 4,000, 4,500 and 100,000.\nMean (the average): 115,000 ÷ 5 = AED 23,000\nMedian (the middle value): AED 4,000\nThe median shows what a typical person earns."
         },
         {
           "title": "Correlation vs. Causation & Truncated Graph Axes",
@@ -471,4 +471,3 @@
   },
   "tuitionFee": 1400
 }
-

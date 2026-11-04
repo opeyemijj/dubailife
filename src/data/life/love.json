@@ -1,5 +1,5 @@
 {
-  "_note": "Relationships and weddings (the Hayati app). Only what UAE law allows: a man and a woman, one partner at a time, both agreeing at every step. Numbers are mirrored in supabase/migrations/*_love.sql and checked by scripts/check-life-config.mjs.",
+  "_note": "Relationships and weddings (the Family app). A man and a woman, both agreeing at every step; a man may have up to 4 partners, a woman one (see family.json). Numbers are mirrored in supabase/migrations/*_love.sql and checked by scripts/check-life-config.mjs.",
   "levels": { "dailyLove": 1, "date": 5, "propose": 10 },
   "cooldownDays": 3,
   "datePlaces": [

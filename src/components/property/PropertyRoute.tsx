@@ -3,6 +3,7 @@
 // A flat or home: travel there, get through the door (access rules / knocking), then see the saved
 // interior. Residents and editors can furnish it; owners manage access, guests and listings.
 
+import { InviteHere } from "@/components/invite/InviteHere";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { BELOW_SPACE_TOP, PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyActions } from "@/components/invite/PartyActions";
@@ -365,6 +366,8 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
           <img src={rosterThumb(presetFor(look ?? { gender: "woman" }))} alt="" className="w-7 h-7 rounded-full object-cover object-top bg-sky-100 ring-2 ring-amber-400" />
           <span className="hidden sm:inline">Profile</span>
         </button>
+        <InviteHere title={flatTitle(flat)} label={`${flat.property_type} · ${flat.size_sqft.toLocaleString()} sq ft`} text={`🏠 Come and see ${flatTitle(flat)} with me on Dubai Life!`} compact
+          className="h-10 w-10 sm:w-auto shrink-0 justify-center sm:px-3 rounded-full bg-fuchsia-600 text-white shadow-lg flex items-center gap-1.5 text-xs font-black" />
         {isManager && <button onClick={() => setManageOpen(true)} className="h-10 w-10 sm:w-auto shrink-0 justify-center sm:px-3 rounded-full bg-white shadow-lg flex items-center gap-1.5 text-xs font-black" aria-label="Manage"><Settings2 className="w-4 h-4" /> <span className="hidden sm:inline">Manage</span></button>}
         <button onClick={onExit} className="h-10 w-10 sm:w-auto shrink-0 justify-center sm:px-3 rounded-full bg-slate-900 text-white shadow-lg flex items-center gap-1.5 text-xs font-black" aria-label="Exit"><LogOut className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Exit</span></button>
       </header>

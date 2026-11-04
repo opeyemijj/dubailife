@@ -37,8 +37,8 @@
             "RERA: Regulates developer licensing, rental caps (Rental Increase Calculator), and real estate advertising permits",
             "DLD 4% Transfer Fee: Standard government fee paid upon transfer (traditionally split 50/50 or paid by buyer per contract)"
           ],
-          "codeSnippet": "// DLD Transaction Cost Breakdown (AED)\nfunction calculateDLDTransferCost(propertyPriceAED) {\n  const dldFee = propertyPriceAED * 0.04; // 4% DLD transfer fee\n  const adminFee = 580; // DLD admin fee\n  const trusteeFee = propertyPriceAED >= 500000 ? 4000 : 2000; // Registration Trustee fee\n  const trusteeVat = trusteeFee * 0.05;\n  return {\n    dldFee,\n    trusteeFee: trusteeFee + trusteeVat,\n    totalGovCosts: dldFee + adminFee + trusteeFee + trusteeVat\n  };\n}",
-          "takeaway": "Always verify developer and broker permits through the official DLD REST mobile application before placing deposits."
+          "takeaway": "Always verify developer and broker permits through the official DLD REST mobile application before placing deposits.",
+          "example": "Government costs when you buy a AED 2,000,000 home:\n• DLD transfer fee: 4% of the price = AED 80,000\n• DLD admin fee: AED 580\n• Registration trustee fee: AED 4,000 for homes of AED 500,000 or more (AED 2,000 below), plus 5% VAT = AED 4,200\nTotal government costs: 80,000 + 580 + 4,200 = AED 84,780."
         },
         {
           "title": "Law No. 8 of 2007: Escrow Trust Accounts",
@@ -116,8 +116,8 @@
             "4% Oqood Fee: Equal to the DLD transfer fee, paid during initial contract booking",
             "Automatic Sakk Conversion: Upon building completion and handover, Oqood converts to a permanent Title Deed"
           ],
-          "codeSnippet": "// Off-Plan Payment Plan Modeling\nconst paymentPlan = {\n  project: 'Dubai Creek Harbour Tower',\n  purchasePriceAED: 2400000,\n  milestones: [\n    { event: 'Booking', pct: 0.10, amount: 240000 },\n    { event: 'Construction 20%', pct: 0.10, amount: 240000 },\n    { event: 'Construction 40%', pct: 0.10, amount: 240000 },\n    { event: 'Construction 60%', pct: 0.10, amount: 240000 },\n    { event: 'Handover (Completion)', pct: 0.20, amount: 480000 },\n    { event: 'Post-Handover 24 Mo', pct: 0.30, amount: 720000 }\n  ]\n};",
-          "takeaway": "Ensure the developer registers your unit on Oqood within 30-60 days of SPA signing; failure to register exposes the buyer to legal vulnerability."
+          "takeaway": "Ensure the developer registers your unit on Oqood within 30-60 days of SPA signing; failure to register exposes the buyer to legal vulnerability.",
+          "example": "A typical off-plan payment plan on a AED 2,400,000 apartment:\n• Booking: 10% = AED 240,000\n• At 20% construction: 10% = AED 240,000\n• At 40% construction: 10% = AED 240,000\n• At 60% construction: 10% = AED 240,000\n• On handover: 20% = AED 480,000\n• Over 24 months after handover: 30% = AED 720,000\nOnly 40% is paid during construction, all of it into the project's escrow account."
         },
         {
           "title": "Evaluating Post-Handover Payment Plans (PHPP)",
@@ -207,8 +207,8 @@
             "Second / Investment Property: Maximum 60% LTV (40% minimum cash down payment for all expats)",
             "UAE Nationals First Home ≤ AED 5M: Maximum 85% LTV (15% minimum cash down payment)"
           ],
-          "codeSnippet": "// Buyer Cash Required Calculation (AED 3M Property - Expats)\nconst propertyPrice = 3000000;\nconst downPayment = propertyPrice * 0.20; // 600,000 (80% LTV)\nconst dldTransferFee = propertyPrice * 0.04; // 120,000\nconst brokerFee = propertyPrice * 0.02 * 1.05; // 63,000 (2% + 5% VAT)\nconst trusteeRegistration = 4200; // Registration Trustee\nconst mortgageRegFee = (propertyPrice * 0.80) * 0.0025 + 290; // 0.25% of loan + admin = 6,290\nconst bankValuation = 3150;\nconst totalCashRequired = downPayment + dldTransferFee + brokerFee + trusteeRegistration + mortgageRegFee + bankValuation;\n// Result: ~796,640 AED (~26.5% total cash outlay)",
-          "takeaway": "Budget at least 26% to 27% in total upfront cash for secondary market property purchases financed via bank mortgages."
+          "takeaway": "Budget at least 26% to 27% in total upfront cash for secondary market property purchases financed via bank mortgages.",
+          "example": "Cash an expat needs to buy a AED 3,000,000 first home with a mortgage:\n• Down payment, 20% (the bank lends 80%): AED 600,000\n• DLD transfer fee, 4%: AED 120,000\n• Broker fee, 2% plus 5% VAT: AED 63,000\n• Registration trustee: AED 4,200\n• Mortgage registration, 0.25% of the AED 2,400,000 loan plus AED 290: AED 6,290\n• Bank valuation: AED 3,150\nTotal cash needed: about AED 796,640, roughly 26.5% of the price."
         }
       ],
       "lab": {
@@ -275,8 +275,8 @@
             "12-Month Eviction Notice: Must be served via registered mail or Notary Public stating lawful grounds (sale, own use, demolition)",
             "Ejari Registration: Mandatory for tenant utility (DEWA) activation and legal standing at the Rental Dispute Settlement Centre (RDSC)"
           ],
-          "codeSnippet": "// RERA Rent Increase Matrix (Law 43 of 2013)\nfunction getReraAllowedIncrease(currentRent, benchmarkMarketRent) {\n  const pctBelow = ((benchmarkMarketRent - currentRent) / benchmarkMarketRent) * 100;\n  if (pctBelow <= 10) return 0;       // Up to 10% below: 0% increase\n  if (pctBelow <= 20) return 0.05;    // 11-20% below: max 5% increase\n  if (pctBelow <= 30) return 0.10;    // 21-30% below: max 10% increase\n  if (pctBelow <= 40) return 0.15;    // 31-40% below: max 15% increase\n  return 0.20;                        // > 40% below: max 20% increase\n}",
-          "takeaway": "Check the updated building-specific RERA Rental Index before issuing annual lease renewal notices to tenants."
+          "takeaway": "Check the updated building-specific RERA Rental Index before issuing annual lease renewal notices to tenants.",
+          "example": "How much a landlord may raise the rent at renewal (Decree 43 of 2013), compared with the average rent for similar homes in the RERA Rental Index:\n• Rent no more than 10% below average: no increase\n• 11% to 20% below: up to 5%\n• 21% to 30% below: up to 10%\n• 31% to 40% below: up to 15%\n• More than 40% below: up to 20%\nExample: you pay AED 80,000 and similar homes average AED 100,000. You're 20% below, so the most it can go up is 5%, to AED 84,000."
         },
         {
           "title": "Long-Term Leasing vs Short-Term Holiday Homes",

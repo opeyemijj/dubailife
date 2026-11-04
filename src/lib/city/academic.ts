@@ -26,6 +26,19 @@ import onebrainMarketingJson from "@/data/courses/onebrain-marketing.json";
 import onebrainProgrammingJson from "@/data/courses/onebrain-programming.json";
 import onebrainSalesJson from "@/data/courses/onebrain-sales.json";
 import udCybersecurityJson from "@/data/courses/ud-cybersecurity.json";
+import onebrainCulinaryJson from "@/data/courses/onebrain-culinary.json";
+import onebrainFitnessJson from "@/data/courses/onebrain-fitness.json";
+import onebrainTechnicianJson from "@/data/courses/onebrain-technician.json";
+import onebrainPhotographyJson from "@/data/courses/onebrain-photography.json";
+import onebrainBeautyJson from "@/data/courses/onebrain-beauty.json";
+import audHospitalityJson from "@/data/courses/aud-hospitality.json";
+import audUaeLawJson from "@/data/courses/aud-uae-law.json";
+import udHealthcareJson from "@/data/courses/ud-healthcare.json";
+import udAccountingJson from "@/data/courses/ud-accounting.json";
+import udLogisticsJson from "@/data/courses/ud-logistics.json";
+import dcEnglishJson from "@/data/courses/dc-english.json";
+import dcPersonalFinanceJson from "@/data/courses/dc-personal-finance.json";
+import dcTeachingJson from "@/data/courses/dc-teaching.json";
 // Brain University book library: one JSON file per book (src/data/books), each chapter a module.
 import bookAtomicHabits from "@/data/books/atomic-habits.json";
 import bookSevenHabits from "@/data/books/seven-habits.json";
@@ -68,7 +81,10 @@ export interface SlideDef {
   content: string;
   body?: string;
   bullets?: string[];
+  /** Real code: only in technical courses (programming, AI, data, security, blockchain). */
   codeSnippet?: string;
+  /** A worked example in plain words and numbers (a cost breakdown, a sum done step by step, a phrase list). */
+  example?: string;
   highlight?: string;
   takeaway?: string;
 }
@@ -308,6 +324,7 @@ function mapCourseJson(raw: any): AcademicCourse {
       body: s.body,
       bullets: s.bullets,
       codeSnippet: s.codeSnippet,
+      example: s.example,
       takeaway: s.takeaway,
     })),
     lab: w.lab,
@@ -416,7 +433,7 @@ export const BOOK_COURSES: AcademicCourse[] = [
 // ============================================================================
 
 export const ACADEMIC_COURSES: AcademicCourse[] = [
-  // 10 Brain University Accelerator Courses
+  // Brain University accelerator courses
   mapCourseJson(onebrainAiJson),
   mapCourseJson(onebrainCryptoJson),
   mapCourseJson(onebrainForexJson),
@@ -427,16 +444,30 @@ export const ACADEMIC_COURSES: AcademicCourse[] = [
   mapCourseJson(onebrainContentJson),
   mapCourseJson(onebrainDataJson),
   mapCourseJson(onebrainSalesJson),
+  // Skills for every walk of life
+  mapCourseJson(onebrainCulinaryJson),
+  mapCourseJson(onebrainFitnessJson),
+  mapCourseJson(onebrainTechnicianJson),
+  mapCourseJson(onebrainPhotographyJson),
+  mapCourseJson(onebrainBeautyJson),
 
   // American University in Dubai courses
   mapCourseJson(audBusinessJson),
   mapCourseJson(audRealEstateJson),
+  mapCourseJson(audHospitalityJson),
+  mapCourseJson(audUaeLawJson),
 
-  // University of Dubai course
+  // University of Dubai courses
   mapCourseJson(udCybersecurityJson),
+  mapCourseJson(udHealthcareJson),
+  mapCourseJson(udAccountingJson),
+  mapCourseJson(udLogisticsJson),
 
   // Diplomas (Dubai College, GEMS Wellington)
   mapCourseJson(dcUaeStudiesJson),
+  mapCourseJson(dcEnglishJson),
+  mapCourseJson(dcPersonalFinanceJson),
+  mapCourseJson(dcTeachingJson),
   mapCourseJson(gemsArabicJson),
   mapCourseJson(gemsMathsJson),
   mapCourseJson(gemsScienceJson),

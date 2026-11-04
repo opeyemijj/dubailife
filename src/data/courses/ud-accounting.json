@@ -1,0 +1,465 @@
+{
+  "id": "ud-accounting",
+  "institutionId": "ud",
+  "title": "Accounting & UAE VAT",
+  "tagline": "Bookkeeping, financial statements, VAT and corporate tax in the UAE: the numbers every business and freelancer must get right.",
+  "category": "Accounting & Tax",
+  "level": "bachelor_degree",
+  "duration": "4 Weeks (Professional Programme)",
+  "rating": 4.95,
+  "enrolledCount": 1840,
+  "icon": "🧾",
+  "superpower": {
+    "id": "numbers_pro",
+    "name": "Numbers Pro",
+    "icon": "🧾",
+    "description": "Keeps clean books and pays the right tax: fewer fines and better business decisions.",
+    "badgeText": "Accounts Certified",
+    "perkType": "general"
+  },
+  "syllabus": [
+    "Week 1: Bookkeeping: the accounting equation and double entry",
+    "Week 2: Financial statements: profit, balance sheet and cash flow",
+    "Week 3: UAE VAT: registration, invoices and returns",
+    "Week 4: Corporate tax, records and running the books"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Bookkeeping Basics",
+      "objective": "Record transactions correctly with double-entry bookkeeping.",
+      "slides": [
+        {
+          "title": "The Accounting Equation",
+          "body": "Every business balances: what it owns equals what it owes plus what belongs to the owners. Every transaction keeps this equation in balance.",
+          "bullets": [
+            "Assets = Liabilities + Equity",
+            "Assets: cash, stock, equipment, money owed to you",
+            "Liabilities: loans, bills, money you owe",
+            "Equity: the owner's investment plus retained profit"
+          ],
+          "example": "You start a business with AED 50,000 of your savings and a AED 20,000 loan.\nAssets (cash): AED 70,000\nLiabilities (loan): AED 20,000\nEquity (your money): AED 50,000\n70,000 = 20,000 + 50,000. It balances.",
+          "takeaway": "If the equation doesn't balance, something's been recorded wrong."
+        },
+        {
+          "title": "Double Entry: Debits and Credits",
+          "body": "Every transaction is recorded twice: a debit in one account and an equal credit in another. That's what keeps the books balanced.",
+          "bullets": [
+            "Debits increase assets and expenses",
+            "Credits increase liabilities, equity and income",
+            "Total debits always equal total credits",
+            "Accrual accounting records income when earned and costs when incurred, not when cash moves"
+          ],
+          "takeaway": "Two sides to every transaction: learn that and bookkeeping clicks."
+        }
+      ],
+      "lab": {
+        "title": "Bookkeeping Lab",
+        "brief": "Record 10 transactions for a small café's first month with double entry, then check the trial balance.",
+        "deliverable": "A journal and a balanced trial balance.",
+        "proTip": "Reconcile with the bank statement every month: it catches most mistakes."
+      },
+      "caseStudy": {
+        "scenario": "You buy a AED 3,000 coffee machine on credit. How is it recorded?",
+        "options": [
+          {
+            "text": "Debit equipment (asset) AED 3,000; credit accounts payable (liability) AED 3,000.",
+            "correct": true,
+            "explanation": "An asset goes up, and so does what you owe."
+          },
+          {
+            "text": "Debit cash AED 3,000.",
+            "correct": false,
+            "explanation": "No cash moved; you bought on credit."
+          },
+          {
+            "text": "Don't record it until you pay.",
+            "correct": false,
+            "explanation": "Under accrual accounting you record it when you get the machine."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "The accounting equation is:",
+          "options": [
+            "Assets = Liabilities + Equity",
+            "Income = Expenses",
+            "Cash = Profit",
+            "Assets = Income"
+          ],
+          "correctIndex": 0,
+          "explanation": "Assets = Liabilities + Equity."
+        },
+        {
+          "question": "Debits increase:",
+          "options": [
+            "Liabilities",
+            "Income",
+            "Assets and expenses",
+            "Equity"
+          ],
+          "correctIndex": 2,
+          "explanation": "Debits increase assets and expenses."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Financial Statements",
+      "objective": "Read and prepare the three statements that tell a business's story.",
+      "slides": [
+        {
+          "title": "Profit and Loss, Balance Sheet, Cash Flow",
+          "body": "Three reports answer three questions: did we make money (P&L), what do we own and owe (balance sheet), and where did cash go (cash flow statement)? UAE companies generally follow IFRS.",
+          "bullets": [
+            "P&L: revenue − cost of sales = gross profit; − expenses = net profit",
+            "Balance sheet: a snapshot of assets, liabilities and equity on one date",
+            "Cash flow: operating, investing and financing cash",
+            "Profit isn't cash: a profitable business can still run out of money"
+          ],
+          "example": "A café's month:\nRevenue: AED 80,000\nCost of sales (food and drink): AED 26,000 → gross profit AED 54,000\nRent, salaries, utilities: AED 45,000 → net profit AED 9,000\nBut if AED 20,000 of sales are to corporate clients who haven't paid yet, cash is tight despite the profit.",
+          "takeaway": "Read all three together: profit, position and cash."
+        },
+        {
+          "title": "Key Ratios",
+          "body": "Ratios turn statements into decisions.",
+          "bullets": [
+            "Gross margin % = gross profit ÷ revenue",
+            "Net margin % = net profit ÷ revenue",
+            "Current ratio = current assets ÷ current liabilities (above 1 is healthier)",
+            "Days receivable: how long customers take to pay"
+          ],
+          "takeaway": "Watch margins and cash days monthly, not yearly."
+        }
+      ],
+      "lab": {
+        "title": "Statements Lab",
+        "brief": "From a trial balance, prepare a simple P&L and balance sheet, and calculate gross margin, net margin and the current ratio.",
+        "deliverable": "Two statements and three ratios.",
+        "proTip": "Explain each number in one sentence: if you can't, you don't understand it yet."
+      },
+      "caseStudy": {
+        "scenario": "A business shows a healthy profit but can't pay salaries this month. Most likely why?",
+        "options": [
+          {
+            "text": "The accountant made a typo.",
+            "correct": false,
+            "explanation": "Possible, but the usual cause is cash tied up."
+          },
+          {
+            "text": "Cash is tied up in unpaid customer invoices or stock.",
+            "correct": true,
+            "explanation": "Profit isn't cash: collections and stock absorb it."
+          },
+          {
+            "text": "Profit and cash are always the same.",
+            "correct": false,
+            "explanation": "They're often very different."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Gross profit is:",
+          "options": [
+            "Revenue − cost of sales",
+            "Revenue + expenses",
+            "Cash in the bank",
+            "Net profit × 2"
+          ],
+          "correctIndex": 0,
+          "explanation": "Revenue minus cost of sales."
+        },
+        {
+          "question": "Which statement shows assets and liabilities on a date?",
+          "options": [
+            "P&L",
+            "Balance sheet",
+            "Cash flow",
+            "Budget"
+          ],
+          "correctIndex": 1,
+          "explanation": "The balance sheet."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "UAE VAT",
+      "objective": "Register, invoice and file VAT correctly.",
+      "slides": [
+        {
+          "title": "VAT Basics and Registration",
+          "body": "VAT was introduced in the UAE on 1 January 2018 at 5%, administered by the Federal Tax Authority (FTA) through the EmaraTax portal. Registration depends on your taxable supplies.",
+          "bullets": [
+            "Mandatory registration: taxable supplies over AED 375,000 in the past 12 months (or expected in the next 30 days)",
+            "Voluntary registration: over AED 187,500",
+            "Standard rate 5%; some supplies are zero-rated (like exports and many education and healthcare services) or exempt (like residential rent)",
+            "A registered business gets a Tax Registration Number (TRN)"
+          ],
+          "takeaway": "Track your rolling 12-month sales: crossing AED 375,000 means you must register."
+        },
+        {
+          "title": "Invoices and Returns",
+          "body": "You charge VAT on sales (output tax), reclaim VAT on business purchases (input tax), and pay the FTA the difference, usually every quarter.",
+          "bullets": [
+            "Tax invoices show your TRN, the VAT amount and the date",
+            "VAT payable = output tax − input tax",
+            "Returns are usually due within 28 days after the end of each tax period",
+            "Keep VAT records for at least 5 years"
+          ],
+          "example": "A quarter for a design agency:\n• Sales AED 200,000 + 5% VAT = AED 10,000 output tax\n• Business purchases with VAT invoices: AED 60,000 + AED 3,000 input tax\nVAT payable to the FTA: 10,000 − 3,000 = AED 7,000",
+          "takeaway": "Only claim input VAT you can back up with a valid tax invoice."
+        }
+      ],
+      "lab": {
+        "title": "VAT Return Lab",
+        "brief": "From a quarter's sales and purchase invoices, calculate output tax, input tax and VAT payable, and spot invoices that can't be claimed.",
+        "deliverable": "A VAT workings sheet.",
+        "proTip": "Reconcile your VAT account to the return before you submit."
+      },
+      "caseStudy": {
+        "scenario": "A freelancer's sales over the last 12 months reached AED 410,000. What must they do?",
+        "options": [
+          {
+            "text": "Nothing; freelancers don't pay VAT.",
+            "correct": false,
+            "explanation": "VAT depends on taxable supplies, not on being a freelancer."
+          },
+          {
+            "text": "Register for VAT with the FTA within the deadline, because they're over AED 375,000.",
+            "correct": true,
+            "explanation": "Mandatory registration applies above the threshold."
+          },
+          {
+            "text": "Wait until they reach AED 1 million.",
+            "correct": false,
+            "explanation": "The threshold is AED 375,000."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "The UAE standard VAT rate is:",
+          "options": [
+            "0%",
+            "5%",
+            "10%",
+            "15%"
+          ],
+          "correctIndex": 1,
+          "explanation": "5%."
+        },
+        {
+          "question": "Output VAT AED 8,000, input VAT AED 3,500. Payable:",
+          "options": [
+            "AED 3,500",
+            "AED 4,500",
+            "AED 8,000",
+            "AED 11,500"
+          ],
+          "correctIndex": 1,
+          "explanation": "8,000 − 3,500 = AED 4,500."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Corporate Tax and Running the Books",
+      "objective": "Understand UAE corporate tax and keep books that pass any review.",
+      "slides": [
+        {
+          "title": "UAE Corporate Tax",
+          "body": "Corporate tax applies to business profits for financial years starting on or after 1 June 2023, also through the FTA.",
+          "bullets": [
+            "0% on taxable income up to AED 375,000; 9% above that",
+            "Small Business Relief: businesses with revenue of AED 3 million or less can elect to be treated as having no taxable income (for eligible periods)",
+            "Qualifying free zone persons may get 0% on qualifying income",
+            "Register even if no tax is due; keep records for at least 7 years"
+          ],
+          "example": "Taxable income AED 900,000:\nFirst AED 375,000 at 0% = AED 0\nRemaining AED 525,000 at 9% = AED 47,250\nCorporate tax due: AED 47,250",
+          "takeaway": "Register, keep records and know which rate applies to you."
+        },
+        {
+          "title": "Monthly Close",
+          "body": "Good books are a habit: a short routine every month keeps you ready for VAT, tax, banks and investors.",
+          "bullets": [
+            "Record all sales and costs with invoices",
+            "Reconcile every bank account",
+            "Review receivables and chase late payers",
+            "Produce a monthly P&L and compare with budget"
+          ],
+          "takeaway": "Ten minutes a day on the books beats ten days of panic at year-end."
+        }
+      ],
+      "lab": {
+        "title": "Month-End Lab",
+        "brief": "Run a month-end close for a small business: reconcile the bank, chase two overdue invoices and produce a P&L.",
+        "deliverable": "A reconciliation, a P&L and two polite chase emails.",
+        "proTip": "Automate what you can: accounting software and bank feeds cut errors."
+      },
+      "caseStudy": {
+        "scenario": "A startup earned AED 300,000 taxable profit this year. How much corporate tax?",
+        "options": [
+          {
+            "text": "AED 27,000 (9% of everything).",
+            "correct": false,
+            "explanation": "The first AED 375,000 is taxed at 0%."
+          },
+          {
+            "text": "AED 0: it's within the 0% band, but they must still register and file.",
+            "correct": true,
+            "explanation": "Below AED 375,000 the rate is 0%; registration still applies."
+          },
+          {
+            "text": "AED 15,000.",
+            "correct": false,
+            "explanation": "No tax is due in the 0% band."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "UAE corporate tax rate above AED 375,000:",
+          "options": [
+            "5%",
+            "9%",
+            "15%",
+            "20%"
+          ],
+          "correctIndex": 1,
+          "explanation": "9%."
+        },
+        {
+          "question": "A monthly bank reconciliation:",
+          "options": [
+            "Isn't needed",
+            "Catches errors and missing transactions",
+            "Is only for banks",
+            "Replaces invoices"
+          ],
+          "correctIndex": 1,
+          "explanation": "It catches mistakes early."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "Assets = ?",
+        "options": [
+          "Liabilities + Equity",
+          "Income − Expenses",
+          "Cash × 2",
+          "Profit"
+        ],
+        "correctIndex": 0,
+        "explanation": "The accounting equation."
+      },
+      {
+        "question": "Credits increase:",
+        "options": [
+          "Assets",
+          "Expenses",
+          "Liabilities, equity and income",
+          "Nothing"
+        ],
+        "correctIndex": 2,
+        "explanation": "Credits increase liabilities, equity and income."
+      },
+      {
+        "question": "Net margin = net profit ÷",
+        "options": [
+          "Assets",
+          "Revenue",
+          "Equity",
+          "Cash"
+        ],
+        "correctIndex": 1,
+        "explanation": "Net profit ÷ revenue."
+      },
+      {
+        "question": "Mandatory VAT registration threshold:",
+        "options": [
+          "AED 100,000",
+          "AED 187,500",
+          "AED 375,000",
+          "AED 3 million"
+        ],
+        "correctIndex": 2,
+        "explanation": "AED 375,000."
+      },
+      {
+        "question": "Who administers UAE VAT and corporate tax?",
+        "options": [
+          "FTA",
+          "RTA",
+          "MOHRE",
+          "DET"
+        ],
+        "correctIndex": 0,
+        "explanation": "The Federal Tax Authority."
+      },
+      {
+        "question": "Residential rent is generally:",
+        "options": [
+          "Standard-rated 5%",
+          "Exempt from VAT",
+          "Taxed at 9%",
+          "Zero-rated"
+        ],
+        "correctIndex": 1,
+        "explanation": "Residential rent is exempt."
+      },
+      {
+        "question": "VAT returns are usually due within:",
+        "options": [
+          "7 days",
+          "28 days after the period ends",
+          "1 year",
+          "Never"
+        ],
+        "correctIndex": 1,
+        "explanation": "28 days after the tax period."
+      },
+      {
+        "question": "Taxable income AED 475,000. Corporate tax:",
+        "options": [
+          "AED 0",
+          "AED 9,000",
+          "AED 42,750",
+          "AED 47,500"
+        ],
+        "correctIndex": 1,
+        "explanation": "9% × (475,000 − 375,000) = AED 9,000."
+      },
+      {
+        "question": "Profit and cash are:",
+        "options": [
+          "Always equal",
+          "Often different",
+          "The same in the UAE",
+          "Both on the balance sheet only"
+        ],
+        "correctIndex": 1,
+        "explanation": "Profit isn't cash."
+      },
+      {
+        "question": "VAT records must be kept at least:",
+        "options": [
+          "1 year",
+          "5 years",
+          "6 months",
+          "Forever"
+        ],
+        "correctIndex": 1,
+        "explanation": "At least 5 years."
+      }
+    ]
+  },
+  "tuitionFee": 3400
+}

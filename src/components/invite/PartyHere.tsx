@@ -62,7 +62,11 @@ export function usePartyHere(route: string | null, arrive: boolean): PartyHere |
       if (p && arrive && !p.isHost && !checkedIn) {
         checkedIn = true;
         const r = await arriveAt(route);
-        if (r && live) {
+        if (r?.needsTicket && live) {
+          // Paid event, no ticket yet: say so once (the banner links to the invite, where they can buy one; coming
+          // back after buying checks them in).
+          window.dispatchEvent(new CustomEvent("dubai:toast", { detail: `🎟️ @${r.host}'s ${r.title} is ticketed (AED ${r.price?.toLocaleString()}). Tap the banner to get your ticket.` }));
+        } else if (r && live) {
           gameAudio.playCoinSound();
           window.dispatchEvent(new CustomEvent("dubai:toast", { detail: `🎉 You're at @${r.host}'s ${r.title}!${r.points ? ` +${r.points} points` : ""}` }));
           const again = await partyHere(route);
@@ -75,7 +79,8 @@ export function usePartyHere(route: string | null, arrive: boolean): PartyHere |
     const every = setInterval(() => void load(), 15_000);
     return () => { live = false; clearTimeout(first); clearInterval(every); };
   }, [route, arrive]);
-  usePartyMusic(!!party);
+  // A seminar is a talk: no party music.
+  usePartyMusic(!!party && party.kind !== "seminar");
   usePartySpace(party, route);
   return party;
 }

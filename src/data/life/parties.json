@@ -5,6 +5,8 @@
     "dinner": { "icon": "🍽️", "label": "Dinner party", "where": "home-or-restaurant", "hours": 2 },
     "club_night": { "icon": "🪩", "label": "Club night", "where": "club", "hours": 4 },
     "pool_party": { "icon": "🏊", "label": "Pool party", "where": "pool", "hours": 4 },
+    "seminar": { "icon": "🎤", "label": "Seminar", "where": "venue", "hours": 2 },
+    "visit": { "icon": "📍", "label": "Come and see", "where": "link", "days": 30 },
     "ask_out": { "icon": "💌", "label": "Ask me out", "where": "link", "days": 14 },
     "hire_decorator": { "icon": "🧑‍🎨", "label": "Hire me to decorate", "where": "link", "days": 14 }
   },
@@ -36,5 +38,6 @@
     { "name": "Afrikana Radio", "url": "https://radio.afrikanabestsounds.com/listen/live_african/radio.mp3" }
   ] },
   "maxGuests": 20,
-  "reminderMinutes": 15
+  "reminderMinutes": 15,
+  "tickets": { "maxPrice": 5000, "_how": "Any event can be free or paid. Going buys the ticket; the money goes to the host. Calling it off refunds every ticket." }
 }

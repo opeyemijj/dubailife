@@ -1,0 +1,465 @@
+{
+  "id": "ud-logistics",
+  "institutionId": "ud",
+  "title": "Logistics & Supply Chain",
+  "tagline": "How goods move through Dubai: Jebel Ali, customs, Incoterms, warehousing, inventory maths and last-mile delivery.",
+  "category": "Logistics",
+  "level": "bachelor_degree",
+  "duration": "4 Weeks (Professional Programme)",
+  "rating": 4.93,
+  "enrolledCount": 1420,
+  "icon": "🚢",
+  "superpower": {
+    "id": "supply_chain",
+    "name": "Supply Chain Pro",
+    "icon": "🚢",
+    "description": "Moves goods smart: lower costs for your ventures and more from logistics jobs.",
+    "badgeText": "Logistics Certified",
+    "perkType": "general"
+  },
+  "syllabus": [
+    "Week 1: Dubai's trade hub: ports, airports and free zones",
+    "Week 2: Shipping terms and customs",
+    "Week 3: Warehousing and inventory",
+    "Week 4: Last-mile delivery and e-commerce logistics"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Dubai's Trade Hub",
+      "objective": "Understand why so much world trade flows through Dubai.",
+      "slides": [
+        {
+          "title": "Ports, Airports and Free Zones",
+          "body": "Dubai sits between Asia, Europe and Africa and has built logistics infrastructure to match. Jebel Ali Port is the largest port in the Middle East, next to the JAFZA free zone; Al Maktoum International (DWC) and DXB handle air cargo.",
+          "bullets": [
+            "Jebel Ali Port: one of the world's busiest container ports",
+            "JAFZA: a free zone where companies can import, store and re-export",
+            "Sea-air: goods arrive by ship and leave by air within hours",
+            "Re-export: much of Dubai's trade is goods passing through to other markets"
+          ],
+          "takeaway": "Dubai's edge is location plus connected sea, air and free zones."
+        },
+        {
+          "title": "The Supply Chain",
+          "body": "A supply chain is every step from raw material to the customer: plan, source, make, deliver and return. Logistics is the physical part: moving and storing goods.",
+          "bullets": [
+            "Upstream: suppliers and manufacturers",
+            "Midstream: warehouses and distribution centres",
+            "Downstream: retailers and customers",
+            "Reverse logistics: returns and recycling"
+          ],
+          "takeaway": "A chain is only as fast as its slowest link."
+        }
+      ],
+      "lab": {
+        "title": "Route Map Lab",
+        "brief": "Map how a phone made in China reaches a customer in Riyadh through Jebel Ali, with each step and rough timings.",
+        "deliverable": "A route map with modes, handovers and days.",
+        "proTip": "Count the handovers: each one is a chance for delay or damage."
+      },
+      "caseStudy": {
+        "scenario": "A company wants to import electronics, store them, and re-export across the Gulf without paying UAE duty on goods that leave. Where should they set up?",
+        "options": [
+          {
+            "text": "A free zone like JAFZA.",
+            "correct": true,
+            "explanation": "Free zones let goods be stored and re-exported without UAE customs duty."
+          },
+          {
+            "text": "A residential apartment.",
+            "correct": false,
+            "explanation": "Not legal or practical for trading."
+          },
+          {
+            "text": "Anywhere: duty never applies.",
+            "correct": false,
+            "explanation": "Mainland imports normally pay duty."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Dubai's main container port is:",
+          "options": [
+            "Port Rashid only",
+            "Jebel Ali",
+            "Khalifa Port",
+            "Fujairah"
+          ],
+          "correctIndex": 1,
+          "explanation": "Jebel Ali Port."
+        },
+        {
+          "question": "Reverse logistics covers:",
+          "options": [
+            "Returns and recycling",
+            "Only exports",
+            "Air cargo only",
+            "Taxes"
+          ],
+          "correctIndex": 0,
+          "explanation": "Returns and recycling."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Shipping Terms and Customs",
+      "objective": "Use Incoterms correctly and clear goods through customs.",
+      "slides": [
+        {
+          "title": "Incoterms 2020",
+          "body": "Incoterms are international rules that say who pays for transport, insurance and risk at each step. Getting them wrong causes surprise bills.",
+          "bullets": [
+            "EXW (Ex Works): the buyer does almost everything from the seller's door",
+            "FOB (Free On Board, sea): the seller loads it onto the ship; risk passes then",
+            "CIF (Cost, Insurance and Freight, sea): the seller pays freight and insurance to the destination port",
+            "DAP: delivered to a place, buyer pays import duty",
+            "DDP: the seller delivers with duty paid"
+          ],
+          "takeaway": "Agree the Incoterm before the price: it decides who pays for what."
+        },
+        {
+          "title": "Customs and Duty",
+          "body": "Goods entering the UAE mainland are cleared by customs (Dubai Customs in Dubai) using HS codes. Most goods pay the GCC common duty of 5% of the CIF value, with exemptions and higher rates for some products.",
+          "bullets": [
+            "HS code: the international code that classifies each product",
+            "Documents: commercial invoice, packing list, bill of lading or airway bill, certificate of origin",
+            "Standard duty: 5% of CIF value for most goods",
+            "VAT at 5% is also due on imports"
+          ],
+          "example": "Importing furniture with a CIF value of AED 40,000:\nCustoms duty: 5% × 40,000 = AED 2,000\nImport VAT: 5% × (40,000 + 2,000) = AED 2,100\nTotal at the border: AED 4,100",
+          "takeaway": "Correct HS codes and documents mean fast clearance and no fines."
+        }
+      ],
+      "lab": {
+        "title": "Landed Cost Lab",
+        "brief": "Calculate the landed cost of an order under FOB and under DDP, including freight, insurance, duty and VAT.",
+        "deliverable": "A comparison table.",
+        "proTip": "Always compare landed cost, not the supplier's price."
+      },
+      "caseStudy": {
+        "scenario": "You agreed FOB Shanghai. The ship is damaged at sea. Who carries the risk?",
+        "options": [
+          {
+            "text": "The seller.",
+            "correct": false,
+            "explanation": "Under FOB, risk passes to the buyer once goods are loaded on board."
+          },
+          {
+            "text": "The buyer, which is why buyers on FOB insure the cargo.",
+            "correct": true,
+            "explanation": "Risk transfers at loading under FOB."
+          },
+          {
+            "text": "The port.",
+            "correct": false,
+            "explanation": "Ports don't take on the cargo risk."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Under CIF, who pays the freight to the destination port?",
+          "options": [
+            "Buyer",
+            "Seller",
+            "Customs",
+            "Nobody"
+          ],
+          "correctIndex": 1,
+          "explanation": "Cost, Insurance and Freight are paid by the seller."
+        },
+        {
+          "question": "The standard GCC customs duty on most goods is:",
+          "options": [
+            "0%",
+            "5%",
+            "15%",
+            "25%"
+          ],
+          "correctIndex": 1,
+          "explanation": "5% of the CIF value."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Warehousing and Inventory",
+      "objective": "Store goods efficiently and order the right amount at the right time.",
+      "slides": [
+        {
+          "title": "Warehouse Operations",
+          "body": "A warehouse is a factory for orders: receive, put away, store, pick, pack and ship. Speed and accuracy both matter.",
+          "bullets": [
+            "FIFO (first in, first out) for most goods; FEFO (first expiry, first out) for food and medicine",
+            "ABC analysis: A items (high value) get the most attention",
+            "Cold chain: medicines often 2 to 8°C, frozen food −18°C",
+            "A warehouse management system (WMS) tracks every location"
+          ],
+          "takeaway": "The right item in the right place, found in seconds."
+        },
+        {
+          "title": "Inventory Maths",
+          "body": "Too much stock ties up cash; too little loses sales. Two formulas help balance it.",
+          "bullets": [
+            "Reorder point = daily demand × lead time + safety stock",
+            "Economic order quantity (EOQ) = √(2 × annual demand × order cost ÷ holding cost per unit)",
+            "Safety stock covers surprises in demand or delays",
+            "Stock turnover = cost of sales ÷ average stock"
+          ],
+          "example": "A shop sells 40 units a day; the supplier takes 7 days; safety stock is 60.\nReorder point: 40 × 7 + 60 = 340 units.\nAnnual demand 12,000, order cost AED 100, holding cost AED 4 per unit a year:\nEOQ = √(2 × 12,000 × 100 ÷ 4) = √600,000 ≈ 775 units per order",
+          "takeaway": "Order by maths, not by feeling."
+        }
+      ],
+      "lab": {
+        "title": "Inventory Lab",
+        "brief": "For 5 products, calculate reorder points and EOQ, and sort them into A, B and C classes.",
+        "deliverable": "A table with each calculation.",
+        "proTip": "Review safety stock before Ramadan, Eid and the Dubai Shopping Festival: demand jumps."
+      },
+      "caseStudy": {
+        "scenario": "A pharmacy warehouse keeps vaccines that must stay at 2 to 8°C. A fridge alarm goes off overnight. What's right?",
+        "options": [
+          {
+            "text": "Ignore it until morning.",
+            "correct": false,
+            "explanation": "Vaccines can be ruined by temperature breaks."
+          },
+          {
+            "text": "Follow the cold-chain plan: move stock to a backup fridge, record the temperatures, and quarantine stock until quality checks it.",
+            "correct": true,
+            "explanation": "Protect, record and check: cold chain rules."
+          },
+          {
+            "text": "Put the vaccines in the freezer.",
+            "correct": false,
+            "explanation": "Freezing can destroy many vaccines."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "FEFO means:",
+          "options": [
+            "First expiry, first out",
+            "Fast entry, fast out",
+            "First in, first out",
+            "Free export"
+          ],
+          "correctIndex": 0,
+          "explanation": "Used for perishable goods."
+        },
+        {
+          "question": "Daily demand 20, lead time 5 days, safety stock 30. Reorder point:",
+          "options": [
+            "100",
+            "130",
+            "150",
+            "25"
+          ],
+          "correctIndex": 1,
+          "explanation": "20 × 5 + 30 = 130."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Last-Mile and E-Commerce Logistics",
+      "objective": "Deliver fast, cheaply and reliably to customers' doors.",
+      "slides": [
+        {
+          "title": "The Last Mile",
+          "body": "The last mile, from the local hub to the customer, is often the most expensive part of delivery. In Dubai, customers expect same-day or next-day delivery.",
+          "bullets": [
+            "Route planning to cut kilometres and fuel",
+            "Delivery slots and live tracking reduce failed deliveries",
+            "Cash on delivery is still common in the region and adds risk",
+            "Lockers and pick-up points cut failed attempts"
+          ],
+          "takeaway": "Failed deliveries are the hidden cost: confirm, track, deliver once."
+        },
+        {
+          "title": "Measuring Performance",
+          "body": "Logistics teams track a few numbers to keep improving.",
+          "bullets": [
+            "On-time delivery %",
+            "First-attempt delivery success %",
+            "Cost per delivery",
+            "Return rate and reasons"
+          ],
+          "example": "A courier made 1,200 delivery attempts this week and 1,050 succeeded first time.\nFirst-attempt success: 1,050 ÷ 1,200 = 87.5%\nIf each failed attempt costs AED 12 to redo: 150 × 12 = AED 1,800 a week lost.",
+          "takeaway": "Measure every week; fix the biggest leak first."
+        }
+      ],
+      "lab": {
+        "title": "Delivery Plan Lab",
+        "brief": "Plan same-day delivery for 50 orders across Dubai: zones, vehicles, slots and how you'll confirm customers are home.",
+        "deliverable": "A zone map and delivery plan with costs.",
+        "proTip": "A confirmation message an hour before delivery saves more than a faster van."
+      },
+      "caseStudy": {
+        "scenario": "An online store has many failed cash-on-delivery orders. What helps most?",
+        "options": [
+          {
+            "text": "Hire more drivers.",
+            "correct": false,
+            "explanation": "More drivers just fail more deliveries."
+          },
+          {
+            "text": "Confirm orders by WhatsApp before dispatch, offer delivery slots, and encourage card payment.",
+            "correct": true,
+            "explanation": "Confirmation and slots cut failed deliveries."
+          },
+          {
+            "text": "Stop delivering.",
+            "correct": false,
+            "explanation": "That ends the business."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "The last mile is:",
+          "options": [
+            "The ship's journey",
+            "From the local hub to the customer",
+            "The factory floor",
+            "The customs process"
+          ],
+          "correctIndex": 1,
+          "explanation": "The final leg to the door."
+        },
+        {
+          "question": "1,000 attempts, 900 first-time successes: success rate?",
+          "options": [
+            "90%",
+            "10%",
+            "100%",
+            "80%"
+          ],
+          "correctIndex": 0,
+          "explanation": "900 ÷ 1,000 = 90%."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "JAFZA is:",
+        "options": [
+          "An airline",
+          "A free zone next to Jebel Ali Port",
+          "A bank",
+          "A road"
+        ],
+        "correctIndex": 1,
+        "explanation": "Jebel Ali Free Zone."
+      },
+      {
+        "question": "Under EXW, who handles most of the shipping?",
+        "options": [
+          "Seller",
+          "Buyer",
+          "Customs",
+          "Port"
+        ],
+        "correctIndex": 1,
+        "explanation": "The buyer, from the seller's door."
+      },
+      {
+        "question": "DDP means the seller pays:",
+        "options": [
+          "Nothing",
+          "Delivery including import duty",
+          "Only packaging",
+          "Only insurance"
+        ],
+        "correctIndex": 1,
+        "explanation": "Delivered Duty Paid."
+      },
+      {
+        "question": "HS codes are used to:",
+        "options": [
+          "Track drivers",
+          "Classify goods for customs",
+          "Price fuel",
+          "Book flights"
+        ],
+        "correctIndex": 1,
+        "explanation": "Classification for duty."
+      },
+      {
+        "question": "Customs duty on AED 10,000 CIF at 5%:",
+        "options": [
+          "AED 50",
+          "AED 500",
+          "AED 1,000",
+          "AED 5,000"
+        ],
+        "correctIndex": 1,
+        "explanation": "5% × 10,000 = AED 500."
+      },
+      {
+        "question": "FIFO stands for:",
+        "options": [
+          "First in, first out",
+          "Fast in, fast out",
+          "Freight in, freight out",
+          "Fixed inventory"
+        ],
+        "correctIndex": 0,
+        "explanation": "First in, first out."
+      },
+      {
+        "question": "Medicines in cold chain are often kept at:",
+        "options": [
+          "2 to 8°C",
+          "20 to 25°C",
+          "−80°C always",
+          "40°C"
+        ],
+        "correctIndex": 0,
+        "explanation": "2 to 8°C."
+      },
+      {
+        "question": "EOQ helps decide:",
+        "options": [
+          "Delivery routes",
+          "How much to order each time",
+          "Customs duty",
+          "Staff hours"
+        ],
+        "correctIndex": 1,
+        "explanation": "Economic order quantity."
+      },
+      {
+        "question": "A key last-mile measure is:",
+        "options": [
+          "Ship size",
+          "First-attempt delivery success",
+          "Port depth",
+          "HS code count"
+        ],
+        "correctIndex": 1,
+        "explanation": "First-attempt success."
+      },
+      {
+        "question": "Import VAT in the UAE is:",
+        "options": [
+          "0%",
+          "5%",
+          "10%",
+          "None"
+        ],
+        "correctIndex": 1,
+        "explanation": "5% on imports."
+      }
+    ]
+  },
+  "tuitionFee": 3500
+}

@@ -1,0 +1,12 @@
+{
+  "_note": "Club promoters: a player job (Job Board, with an interview). Promoters run events at any venue, with bigger guest lists, and earn a commission for every guest who turns up. Numbers are mirrored in supabase/migrations/*_promoters.sql and checked by scripts/check-life-config.mjs.",
+  "career": { "name": "Dubai Nightlife Collective", "icon": "📣", "title": "Club promoter", "weeklyWage": 2200, "shiftsPerWeek": 4, "requirement": "none", "service": "promoter" },
+  "commission": 150,
+  "maxGuests": 200,
+  "maxEvents": 6,
+  "interview": [
+    { "q": "A club gives you a guest list for Friday. The best way to fill it is to…", "options": ["Spam everyone in the city with the same message", "Invite people who'd love that night, personally, and get your regulars to bring friends", "Promise free bottles you can't deliver"], "answer": 1 },
+    { "q": "Two of your guests start arguing at the door. You…", "options": ["Stay calm, separate them and bring in venue security if needed", "Film it for social media", "Join in"], "answer": 0 },
+    { "q": "A venue owner asks how your last event did. You…", "options": ["Double the numbers to look good", "Say you don't track that", "Share the real numbers: who came, who came back, and what you'll do better"], "answer": 2 }
+  ]
+}

@@ -1,0 +1,465 @@
+{
+  "id": "onebrain-photography",
+  "institutionId": "onebrain",
+  "title": "Photography & Videography",
+  "tagline": "Exposure, light, composition and video, Dubai's rules on filming people and drones, and turning photos into paid work.",
+  "category": "Creative Arts",
+  "level": "accelerator",
+  "duration": "4 Weeks (Creator Accelerator)",
+  "rating": 4.96,
+  "enrolledCount": 2110,
+  "icon": "📷",
+  "superpower": {
+    "id": "lens_master",
+    "name": "Lens Master",
+    "icon": "📷",
+    "description": "Shoots like a pro: better posts and more from photo and video jobs.",
+    "badgeText": "Visual Pro",
+    "perkType": "general"
+  },
+  "syllabus": [
+    "Week 1: Exposure: aperture, shutter speed and ISO",
+    "Week 2: Light and composition",
+    "Week 3: Video: frame rates, motion and sound",
+    "Week 4: The law, the business and your portfolio"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Exposure",
+      "objective": "Control how bright, sharp and blurred your photos are with the exposure triangle.",
+      "slides": [
+        {
+          "title": "The Exposure Triangle",
+          "body": "Every exposure is a balance of three settings. Change one and you must adjust another to keep the same brightness.",
+          "bullets": [
+            "Aperture (f-number): how wide the lens opens. f/1.8 is wide (blurry background); f/11 is narrow (everything sharp)",
+            "Shutter speed: how long light hits the sensor. 1/1000 s freezes action; 1/30 s blurs motion",
+            "ISO: sensor sensitivity. Low ISO (100) is clean; high ISO (3200+) is brighter but grainy",
+            "One 'stop' doubles or halves the light"
+          ],
+          "example": "The Sunny 16 rule for bright Dubai sun: at f/16, set the shutter to 1 ÷ ISO.\n• ISO 100: f/16 at 1/100 s\n• Want a blurry background? Open to f/4 (4 stops more light), so speed up 4 stops: 1/1600 s.",
+          "takeaway": "Choose the creative setting first (blur or freeze), then balance the others."
+        },
+        {
+          "title": "Focus and Sharpness",
+          "body": "Sharp photos come from focusing on the right thing and holding the camera steady.",
+          "bullets": [
+            "Focus on the eyes in portraits",
+            "Hand-held: keep the shutter at least 1 ÷ focal length (1/50 s for a 50 mm lens)",
+            "Tripod for night skylines and long exposures",
+            "Phones: tap to focus, and hold to lock exposure"
+          ],
+          "takeaway": "If the eyes are sharp, the portrait works."
+        }
+      ],
+      "lab": {
+        "title": "Exposure Lab",
+        "brief": "Shoot the same scene three ways: frozen action, motion blur and a blurred background, noting the settings.",
+        "deliverable": "Three photos with aperture, shutter and ISO for each.",
+        "proTip": "Shoot in aperture priority (A/Av) while learning: you choose the blur, the camera handles the rest."
+      },
+      "caseStudy": {
+        "scenario": "You're shooting a fast-moving jet ski at Kite Beach and every photo is blurred. What do you change?",
+        "options": [
+          {
+            "text": "A slower shutter speed.",
+            "correct": false,
+            "explanation": "Slower shutters add more blur."
+          },
+          {
+            "text": "A faster shutter speed, around 1/1000 s or more.",
+            "correct": true,
+            "explanation": "Fast shutter speeds freeze fast action."
+          },
+          {
+            "text": "A lower ISO only.",
+            "correct": false,
+            "explanation": "Lower ISO darkens the photo without freezing motion."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Which aperture gives the blurriest background?",
+          "options": [
+            "f/16",
+            "f/11",
+            "f/1.8",
+            "f/8"
+          ],
+          "correctIndex": 2,
+          "explanation": "A wide aperture (small f-number) gives shallow depth of field."
+        },
+        {
+          "question": "What does high ISO add?",
+          "options": [
+            "Sharpness",
+            "Grain (noise)",
+            "Colour",
+            "Zoom"
+          ],
+          "correctIndex": 1,
+          "explanation": "High ISO brightens but adds noise."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Light and Composition",
+      "objective": "Use natural light and composition rules to make striking images.",
+      "slides": [
+        {
+          "title": "Working With Light",
+          "body": "Light makes the photo. Dubai's midday sun is harsh and overhead; the best light is at golden hour, just after sunrise and before sunset, and blue hour after sunset for skylines.",
+          "bullets": [
+            "Golden hour: soft, warm, flattering light",
+            "Midday: find open shade or use a reflector",
+            "Blue hour: city lights and the sky balance (great for the Burj Khalifa)",
+            "Backlight with a reflector for glowing portraits"
+          ],
+          "takeaway": "Shoot at the right time and half the work is done."
+        },
+        {
+          "title": "Composition",
+          "body": "Composition guides the viewer's eye. A few principles make most photos stronger.",
+          "bullets": [
+            "Rule of thirds: put the subject on a third line, not dead centre",
+            "Leading lines: roads, railings and the Metro track pull the eye in",
+            "Frame within a frame: arches, windows and doorways (great in Al Fahidi)",
+            "Simplify: fill the frame and remove clutter"
+          ],
+          "takeaway": "Every good photo has one clear subject."
+        }
+      ],
+      "lab": {
+        "title": "Golden Hour Lab",
+        "brief": "Shoot a portrait and a cityscape at golden hour and at midday, using the rule of thirds and leading lines.",
+        "deliverable": "Four photos comparing the light, with notes.",
+        "proTip": "Arrive 30 minutes early: golden hour is short."
+      },
+      "caseStudy": {
+        "scenario": "A client wants outdoor portraits in July at 1pm. What do you suggest?",
+        "options": [
+          {
+            "text": "Shoot at 1pm in full sun.",
+            "correct": false,
+            "explanation": "Harsh overhead light and dangerous heat."
+          },
+          {
+            "text": "Move to golden hour, or shoot in open shade or indoors with window light.",
+            "correct": true,
+            "explanation": "Better light and safer for everyone."
+          },
+          {
+            "text": "Use maximum flash directly.",
+            "correct": false,
+            "explanation": "Direct flash in sun is harsh and unflattering."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "When is golden hour?",
+          "options": [
+            "Midday",
+            "Just after sunrise and before sunset",
+            "Midnight",
+            "Any time"
+          ],
+          "correctIndex": 1,
+          "explanation": "Golden hour is the soft light near sunrise and sunset."
+        },
+        {
+          "question": "The rule of thirds places the subject:",
+          "options": [
+            "Dead centre",
+            "On a third line or intersection",
+            "At the edge",
+            "Anywhere"
+          ],
+          "correctIndex": 1,
+          "explanation": "Off-centre on thirds is more dynamic."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Video",
+      "objective": "Shoot smooth, cinematic video with clean sound.",
+      "slides": [
+        {
+          "title": "Frame Rates and the 180° Rule",
+          "body": "Video is many photos a second. Frame rate sets the feel; shutter speed sets the motion blur.",
+          "bullets": [
+            "24 or 25 fps: the cinematic look",
+            "30 fps: social media and TV",
+            "60 fps or more: smooth slow motion",
+            "180° rule: shutter = 1 ÷ (2 × frame rate)",
+            "Use ND filters outdoors to keep the right shutter in bright sun"
+          ],
+          "example": "Filming at 25 fps: shutter = 1 ÷ (2 × 25) = 1/50 s.\nIn bright sun at 1/50 s the image is too bright, so add an ND filter instead of raising the shutter speed (which makes motion look jittery).",
+          "takeaway": "Pick the frame rate for the story, then set the shutter to match."
+        },
+        {
+          "title": "Sound and Stability",
+          "body": "Viewers forgive average video but not bad sound. Use a microphone close to the speaker and keep shots steady.",
+          "bullets": [
+            "A lapel mic for interviews",
+            "Record 10 seconds of room tone for editing",
+            "Gimbal or tripod for steady shots",
+            "Plan shots: wide, medium, close-up"
+          ],
+          "takeaway": "Good audio makes average video watchable."
+        }
+      ],
+      "lab": {
+        "title": "Mini Film Lab",
+        "brief": "Shoot and edit a 60-second story about a place in Dubai, with wide, medium and close-up shots and clean audio.",
+        "deliverable": "A 60-second edit and a shot list.",
+        "proTip": "Shoot 3 times more than you need: editing is choosing."
+      },
+      "caseStudy": {
+        "scenario": "Your interview footage looks great but the AC noise drowns the voice. What's the fix next time?",
+        "options": [
+          {
+            "text": "Turn up the volume in editing.",
+            "correct": false,
+            "explanation": "That makes the noise louder too."
+          },
+          {
+            "text": "Use a lapel mic close to the speaker and, if allowed, switch off the AC while recording.",
+            "correct": true,
+            "explanation": "Close mics and less background noise mean clean audio."
+          },
+          {
+            "text": "Film from further away.",
+            "correct": false,
+            "explanation": "Distance makes sound worse."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Shutter speed for 30 fps (180° rule)?",
+          "options": [
+            "1/30 s",
+            "1/60 s",
+            "1/250 s",
+            "1/1000 s"
+          ],
+          "correctIndex": 1,
+          "explanation": "1 ÷ (2 × 30) = 1/60 s."
+        },
+        {
+          "question": "Which frame rate gives smooth slow motion?",
+          "options": [
+            "12 fps",
+            "24 fps",
+            "60 fps or more",
+            "1 fps"
+          ],
+          "correctIndex": 2,
+          "explanation": "Higher frame rates slow down smoothly."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Law, Business and Portfolio",
+      "objective": "Shoot within UAE law, price your work and build a portfolio that wins clients.",
+      "slides": [
+        {
+          "title": "Filming People and Drones in the UAE",
+          "body": "UAE privacy laws make photographing or filming people without their consent, and sharing it, a serious offence. Drones must be registered and flown only where permitted.",
+          "bullets": [
+            "Get consent before photographing people, and written releases for commercial use",
+            "Never share photos of people (especially women and children) without permission",
+            "Avoid government buildings, military sites and airports",
+            "Drones: register with the aviation authority and fly only in permitted zones"
+          ],
+          "takeaway": "In the UAE, consent first is not just polite, it's the law."
+        },
+        {
+          "title": "Pricing and Portfolio",
+          "body": "Photographers usually charge by the hour, the day or the package, plus editing time and usage rights.",
+          "bullets": [
+            "Day rate: covers shooting, editing, gear and your experience",
+            "Usage rights: social media only costs less than a billboard campaign",
+            "Portfolio: your 15 best images in one style",
+            "Contracts: deliverables, deadline, payment terms"
+          ],
+          "example": "Quoting a café's social media shoot:\n• Half-day shoot (4 hours): AED 1,500\n• Editing 30 photos: AED 600\n• Social media usage for 12 months: included\nTotal: AED 2,100, 50% deposit to book.",
+          "takeaway": "Clients buy confidence: a focused portfolio and a clear contract give it."
+        }
+      ],
+      "lab": {
+        "title": "Portfolio Lab",
+        "brief": "Build a 15-image portfolio in one niche (food, portraits, property or events) and write a one-page price list.",
+        "deliverable": "A portfolio link and a price list.",
+        "proTip": "Pick a niche: 'Dubai food photographer' is easier to hire than 'photographer'."
+      },
+      "caseStudy": {
+        "scenario": "You took a great street photo of a family at the Dubai Mall fountain. Can you post it on your public Instagram?",
+        "options": [
+          {
+            "text": "Yes, it's a public place.",
+            "correct": false,
+            "explanation": "UAE law protects people's privacy even in public places."
+          },
+          {
+            "text": "Only with their consent; otherwise don't publish it.",
+            "correct": true,
+            "explanation": "Ask permission, or don't post identifiable people."
+          },
+          {
+            "text": "Yes, if you add a filter.",
+            "correct": false,
+            "explanation": "A filter changes nothing legally."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Before posting a photo of someone, you need:",
+          "options": [
+            "Nothing",
+            "Their consent",
+            "A filter",
+            "A hashtag"
+          ],
+          "correctIndex": 1,
+          "explanation": "Consent is required under UAE privacy law."
+        },
+        {
+          "question": "What raises a photographer's price?",
+          "options": [
+            "Fewer photos",
+            "Wider usage rights",
+            "Shooting at midday",
+            "Using a phone"
+          ],
+          "correctIndex": 1,
+          "explanation": "Wider usage, like billboards, is worth more."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "A wide aperture is shown as:",
+        "options": [
+          "f/16",
+          "f/1.8",
+          "ISO 100",
+          "1/1000"
+        ],
+        "correctIndex": 1,
+        "explanation": "A small f-number is a wide aperture."
+      },
+      {
+        "question": "To freeze action, use:",
+        "options": [
+          "A slow shutter",
+          "A fast shutter",
+          "High f-number only",
+          "Low ISO only"
+        ],
+        "correctIndex": 1,
+        "explanation": "Fast shutter speeds freeze motion."
+      },
+      {
+        "question": "Sunny 16 at ISO 200 is f/16 at:",
+        "options": [
+          "1/50 s",
+          "1/100 s",
+          "1/200 s",
+          "1/1000 s"
+        ],
+        "correctIndex": 2,
+        "explanation": "Shutter = 1 ÷ ISO = 1/200 s."
+      },
+      {
+        "question": "Blue hour is best for:",
+        "options": [
+          "Midday portraits",
+          "City skylines with lights",
+          "Product shots indoors",
+          "Sports"
+        ],
+        "correctIndex": 1,
+        "explanation": "Sky and city lights balance."
+      },
+      {
+        "question": "Leading lines:",
+        "options": [
+          "Distract",
+          "Guide the eye into the photo",
+          "Are always horizontal",
+          "Are banned"
+        ],
+        "correctIndex": 1,
+        "explanation": "They pull the viewer in."
+      },
+      {
+        "question": "At 24 fps the 180° shutter is about:",
+        "options": [
+          "1/24",
+          "1/50",
+          "1/500",
+          "1/8"
+        ],
+        "correctIndex": 1,
+        "explanation": "1 ÷ 48 ≈ 1/50 s."
+      },
+      {
+        "question": "An ND filter:",
+        "options": [
+          "Adds colour",
+          "Cuts light so you can keep the right shutter",
+          "Zooms",
+          "Sharpens"
+        ],
+        "correctIndex": 1,
+        "explanation": "ND filters reduce light."
+      },
+      {
+        "question": "For clean interview audio use:",
+        "options": [
+          "The camera mic far away",
+          "A lapel mic close to the speaker",
+          "No mic",
+          "A phone speaker"
+        ],
+        "correctIndex": 1,
+        "explanation": "Close mics capture clean voice."
+      },
+      {
+        "question": "Flying a drone in the UAE requires:",
+        "options": [
+          "Nothing",
+          "Registration and permitted zones",
+          "Only a big battery",
+          "A selfie stick"
+        ],
+        "correctIndex": 1,
+        "explanation": "Drones must be registered and flown legally."
+      },
+      {
+        "question": "A focused portfolio should be:",
+        "options": [
+          "Every photo you took",
+          "About 15 best images in one niche",
+          "Only selfies",
+          "Unedited"
+        ],
+        "correctIndex": 1,
+        "explanation": "Show your best work in one style."
+      }
+    ]
+  },
+  "tuitionFee": 8000
+}

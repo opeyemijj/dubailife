@@ -1,5 +1,6 @@
 "use client";
 
+import { InviteHere } from "@/components/invite/InviteHere";
 import { use } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -38,9 +39,12 @@ export default function CampusHubPage({ params }: { params: Promise<{ campusId: 
             <ArrowLeft className="w-5 h-5" />
           </Link>
 
-          <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full">
-            <Coins className="w-4 h-4 text-amber-400" />
-            <span className="text-xs font-black text-amber-300">{(citizen?.balance ?? 0).toLocaleString()} AED</span>
+          <div className="flex items-center gap-2">
+            <InviteHere title={campus.name} label="Academic City" text={`🎓 Come and study at ${campus.name} with me on Dubai Life!`} />
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full">
+              <Coins className="w-4 h-4 text-amber-400" />
+              <span className="text-xs font-black text-amber-300">{(citizen?.balance ?? 0).toLocaleString()} AED</span>
+            </div>
           </div>
         </header>
 

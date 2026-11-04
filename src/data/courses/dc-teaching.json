@@ -1,0 +1,463 @@
+{
+  "id": "dc-teaching",
+  "institutionId": "dc",
+  "title": "Teaching & Tutoring Essentials",
+  "tagline": "How people learn, planning great lessons, managing a class, and tutoring legally in Dubai.",
+  "category": "Education",
+  "level": "secondary_diploma",
+  "duration": "4 Weeks (Educator Diploma)",
+  "rating": 4.95,
+  "enrolledCount": 1710,
+  "icon": "🧑‍🏫",
+  "superpower": {
+    "id": "mentor",
+    "name": "Mentor",
+    "icon": "🧑‍🏫",
+    "description": "Explains anything clearly: helps friends learn and earns more from tutoring jobs.",
+    "badgeText": "Certified Tutor",
+    "perkType": "general"
+  },
+  "syllabus": [
+    "Week 1: How people learn",
+    "Week 2: Planning a great lesson",
+    "Week 3: Managing a class and giving feedback",
+    "Week 4: Tutoring in Dubai: rules, pricing and parents"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "How People Learn",
+      "objective": "Use what science says about memory and learning.",
+      "slides": [
+        {
+          "title": "Memory and Practice",
+          "body": "Learning sticks when students actively recall it, spread practice out over time and connect new ideas to what they know.",
+          "bullets": [
+            "Retrieval practice: quizzing beats re-reading",
+            "Spaced practice: review after a day, a week, a month",
+            "Interleaving: mix problem types",
+            "Explain it simply: if you can't, you don't understand it yet"
+          ],
+          "takeaway": "Make students pull knowledge out of their heads, again and again."
+        },
+        {
+          "title": "Working Memory and Clear Explanations",
+          "body": "People can hold only a few new ideas at once. Great teachers break big ideas into small steps and show worked examples.",
+          "bullets": [
+            "Teach one step at a time",
+            "Model it ('I do'), practise together ('we do'), then alone ('you do')",
+            "Worked examples before independent problems",
+            "Check understanding often with quick questions"
+          ],
+          "takeaway": "Small steps, shown clearly, then practised."
+        }
+      ],
+      "lab": {
+        "title": "Learning Science Lab",
+        "brief": "Teach someone a new skill in 10 minutes using I do, we do, you do, then test them the next day with recall questions.",
+        "deliverable": "A short lesson plan and the test results.",
+        "proTip": "The next-day quiz shows what really stuck."
+      },
+      "caseStudy": {
+        "scenario": "A student re-reads their notes for hours but forgets everything in the test. What should they change?",
+        "options": [
+          {
+            "text": "Read them even more times.",
+            "correct": false,
+            "explanation": "Re-reading feels productive but isn't."
+          },
+          {
+            "text": "Use self-quizzing and spaced practice over several days.",
+            "correct": true,
+            "explanation": "Retrieval and spacing make memories last."
+          },
+          {
+            "text": "Highlight everything in yellow.",
+            "correct": false,
+            "explanation": "Highlighting barely helps."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Which helps memory most?",
+          "options": [
+            "Re-reading",
+            "Retrieval practice (self-quizzing)",
+            "Highlighting",
+            "Copying notes"
+          ],
+          "correctIndex": 1,
+          "explanation": "Retrieval practice."
+        },
+        {
+          "question": "'I do, we do, you do' means:",
+          "options": [
+            "Teacher does all the work",
+            "Model, guided practice, independent practice",
+            "Students teach the teacher",
+            "Homework only"
+          ],
+          "correctIndex": 1,
+          "explanation": "A gradual release."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Planning a Great Lesson",
+      "objective": "Plan lessons with a clear goal and a way to check learning.",
+      "slides": [
+        {
+          "title": "Start With the Goal",
+          "body": "Every good lesson starts with what students should be able to do by the end, then works backwards.",
+          "bullets": [
+            "Learning objective: 'By the end, students can…'",
+            "Hook: a question or problem that grabs attention",
+            "Teach, practise, check",
+            "Exit ticket: a quick question to see who got it"
+          ],
+          "takeaway": "If you can't check it, it isn't a clear objective."
+        },
+        {
+          "title": "Differentiation",
+          "body": "Every class has students at different levels. Plan ways to support those who struggle and stretch those who fly.",
+          "bullets": [
+            "Support: worked examples, word banks, smaller steps",
+            "Stretch: harder problems, 'explain why' questions",
+            "Group work with clear roles",
+            "Adjust as you go, based on what you see"
+          ],
+          "takeaway": "Same goal, different routes."
+        }
+      ],
+      "lab": {
+        "title": "Lesson Plan Lab",
+        "brief": "Plan a 40-minute lesson with an objective, hook, I do, we do, you do and an exit ticket.",
+        "deliverable": "A one-page lesson plan.",
+        "proTip": "Plan the exit ticket first: it defines success."
+      },
+      "caseStudy": {
+        "scenario": "Halfway through a lesson, most students look confused. What's best?",
+        "options": [
+          {
+            "text": "Keep going to finish the plan.",
+            "correct": false,
+            "explanation": "Moving on leaves them behind."
+          },
+          {
+            "text": "Pause, check what's unclear, re-explain with a new example, and practise together.",
+            "correct": true,
+            "explanation": "Responsive teaching fixes confusion early."
+          },
+          {
+            "text": "Give them extra homework.",
+            "correct": false,
+            "explanation": "Homework won't fix a misunderstanding."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "A learning objective should be:",
+          "options": [
+            "Vague",
+            "Checkable",
+            "Secret",
+            "Long"
+          ],
+          "correctIndex": 1,
+          "explanation": "You should be able to check it."
+        },
+        {
+          "question": "An exit ticket is:",
+          "options": [
+            "A bus ticket",
+            "A quick end-of-lesson check",
+            "A detention",
+            "A grade report"
+          ],
+          "correctIndex": 1,
+          "explanation": "A quick check of learning."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Managing a Class and Feedback",
+      "objective": "Create calm, focused classes and give feedback that improves work.",
+      "slides": [
+        {
+          "title": "Routines and Relationships",
+          "body": "Calm classrooms run on clear routines and respectful relationships, not shouting.",
+          "bullets": [
+            "Set 2 or 3 clear expectations and practise them",
+            "Greet students by name",
+            "Praise specific behaviour: 'Great use of evidence, Ahmed'",
+            "Deal with problems privately and calmly"
+          ],
+          "takeaway": "Routines prevent most problems before they start."
+        },
+        {
+          "title": "Feedback That Works",
+          "body": "Feedback should help the student improve the next piece of work, not just grade this one.",
+          "bullets": [
+            "Be specific: what's good and what to do next",
+            "Focus on 1 or 2 improvements, not 10",
+            "Give time to act on it",
+            "Praise effort and strategy, not just talent"
+          ],
+          "example": "Weak: 'Good essay, 7/10.'\nStrong: 'Your argument is clear. Next time, back each point with a quote from the text, as you did well in paragraph 2.'",
+          "takeaway": "Good feedback answers 'What do I do next?'"
+        }
+      ],
+      "lab": {
+        "title": "Feedback Lab",
+        "brief": "Mark three pieces of student work with specific, actionable feedback, and plan time for students to use it.",
+        "deliverable": "Three marked pieces with feedback.",
+        "proTip": "Feedback nobody acts on is wasted: build in redo time."
+      },
+      "caseStudy": {
+        "scenario": "A student keeps talking during your explanation. What's the best first response?",
+        "options": [
+          {
+            "text": "Shout at them in front of everyone.",
+            "correct": false,
+            "explanation": "Public shouting damages relationships and calm."
+          },
+          {
+            "text": "Calmly remind them of the expectation, privately if possible, and praise them when they focus.",
+            "correct": true,
+            "explanation": "Calm, consistent and positive works best."
+          },
+          {
+            "text": "Ignore it forever.",
+            "correct": false,
+            "explanation": "Unaddressed behaviour spreads."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Specific praise looks like:",
+          "options": [
+            "'Good.'",
+            "'Great use of evidence in your answer.'",
+            "'Fine.'",
+            "'OK.'"
+          ],
+          "correctIndex": 1,
+          "explanation": "Name exactly what was good."
+        },
+        {
+          "question": "Good feedback focuses on:",
+          "options": [
+            "Everything at once",
+            "1 or 2 next steps",
+            "Only the grade",
+            "Handwriting only"
+          ],
+          "correctIndex": 1,
+          "explanation": "A few clear improvements."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Tutoring in Dubai",
+      "objective": "Tutor legally, price fairly and work well with parents.",
+      "slides": [
+        {
+          "title": "Tutoring Legally",
+          "body": "Private tutoring in Dubai requires a permit. A private tutor work permit was introduced so qualified people (including school teachers, university students and other professionals) can tutor legally.",
+          "bullets": [
+            "Get the private tutor work permit before taking paying students",
+            "Keep the permit valid and follow its conditions",
+            "Safeguarding: tutor children with a parent at home or in a public space",
+            "Keep records of sessions and payments"
+          ],
+          "takeaway": "Tutor with a permit: it protects you, your students and their parents."
+        },
+        {
+          "title": "Pricing and Parents",
+          "body": "Tutors charge per hour or per package, depending on subject, level and experience. Parents stay loyal when they see progress.",
+          "bullets": [
+            "Price by subject and level; exam years cost more",
+            "Packages of 8 or 10 sessions, paid in advance",
+            "Send a short progress update to parents after each month",
+            "Agree a cancellation policy"
+          ],
+          "example": "A maths tutor charges AED 200 an hour.\n10-session package: AED 1,800 (10% off).\n8 students, 1 hour a week each: 32 sessions a month ≈ AED 6,000 to AED 6,400 a month.",
+          "takeaway": "Visible progress keeps students and earns referrals."
+        }
+      ],
+      "lab": {
+        "title": "Tutoring Business Lab",
+        "brief": "Plan a tutoring offer: subject, level, price, package, permit steps and a monthly parent update template.",
+        "deliverable": "A one-page plan and a parent update.",
+        "proTip": "Start with a free 15-minute assessment: it shows parents what you'll fix."
+      },
+      "caseStudy": {
+        "scenario": "A parent asks you to start tutoring their child next week, but you don't have a tutoring permit yet. What do you do?",
+        "options": [
+          {
+            "text": "Start anyway and keep it quiet.",
+            "correct": false,
+            "explanation": "Tutoring without a permit isn't allowed."
+          },
+          {
+            "text": "Apply for the permit first, explain the timeline, and start once it's approved.",
+            "correct": true,
+            "explanation": "Doing it legally protects everyone."
+          },
+          {
+            "text": "Use a friend's permit.",
+            "correct": false,
+            "explanation": "Permits are personal."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "To tutor privately in Dubai you need:",
+          "options": [
+            "Nothing",
+            "A private tutor work permit",
+            "A driving licence",
+            "A trade licence for a restaurant"
+          ],
+          "correctIndex": 1,
+          "explanation": "A tutoring permit."
+        },
+        {
+          "question": "Parents stay loyal mainly when they see:",
+          "options": [
+            "Discounts",
+            "Their child's progress",
+            "Long sessions",
+            "Homework only"
+          ],
+          "correctIndex": 1,
+          "explanation": "Progress keeps them."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "Spaced practice means:",
+        "options": [
+          "Cramming the night before",
+          "Reviewing over days and weeks",
+          "Studying in space",
+          "Never reviewing"
+        ],
+        "correctIndex": 1,
+        "explanation": "Spread practice over time."
+      },
+      {
+        "question": "Retrieval practice is:",
+        "options": [
+          "Re-reading",
+          "Testing yourself",
+          "Copying",
+          "Highlighting"
+        ],
+        "correctIndex": 1,
+        "explanation": "Self-testing."
+      },
+      {
+        "question": "In 'I do, we do, you do', 'we do' is:",
+        "options": [
+          "Teacher alone",
+          "Guided practice together",
+          "Homework",
+          "A test"
+        ],
+        "correctIndex": 1,
+        "explanation": "Guided practice."
+      },
+      {
+        "question": "An exit ticket checks:",
+        "options": [
+          "Attendance",
+          "What students learned",
+          "Bus times",
+          "Grades for the year"
+        ],
+        "correctIndex": 1,
+        "explanation": "Learning in the lesson."
+      },
+      {
+        "question": "Differentiation means:",
+        "options": [
+          "Same work for all, no help",
+          "Supporting and stretching students at different levels",
+          "Grouping by age",
+          "No planning"
+        ],
+        "correctIndex": 1,
+        "explanation": "Different routes to the same goal."
+      },
+      {
+        "question": "A calm classroom relies on:",
+        "options": [
+          "Shouting",
+          "Clear routines and relationships",
+          "Punishments only",
+          "No rules"
+        ],
+        "correctIndex": 1,
+        "explanation": "Routines and respect."
+      },
+      {
+        "question": "Good feedback is:",
+        "options": [
+          "Vague",
+          "Specific and actionable",
+          "Only a grade",
+          "Very long"
+        ],
+        "correctIndex": 1,
+        "explanation": "Specific next steps."
+      },
+      {
+        "question": "Working memory can hold:",
+        "options": [
+          "Unlimited new ideas",
+          "Only a few new ideas at once",
+          "Nothing",
+          "Exactly 100 facts"
+        ],
+        "correctIndex": 1,
+        "explanation": "A few at a time."
+      },
+      {
+        "question": "Tutoring children safely means:",
+        "options": [
+          "Alone behind closed doors",
+          "With a parent at home or in a public space",
+          "Only online at night",
+          "Without telling parents"
+        ],
+        "correctIndex": 1,
+        "explanation": "Safeguarding first."
+      },
+      {
+        "question": "A 10-session package at AED 200 with 10% off is:",
+        "options": [
+          "AED 2,000",
+          "AED 1,800",
+          "AED 1,000",
+          "AED 2,200"
+        ],
+        "correctIndex": 1,
+        "explanation": "2,000 − 10% = AED 1,800."
+      }
+    ]
+  },
+  "tuitionFee": 1500
+}

@@ -58,14 +58,14 @@
         {
           "title": "The $7.5 Trillion Daily Foreign Exchange Market",
           "content": "Forex is the world's largest, most liquid financial market. It operates 24 hours a day across global financial hubs: Tokyo, London, and New York. Currencies are traded in pairs (EUR/USD, GBP/USD). The first currency is the Base, and the second is the Quote.",
-          "codeSnippet": "// Calculating 1 Pip value on EUR/USD:\n// Pip = 0.0001\n// Value per pip on 1 Standard Lot (100,000 units) = $10.00 USD",
-          "keyTakeaway": "Understanding pip valuation is the prerequisite for calculating position risk."
+          "keyTakeaway": "Understanding pip valuation is the prerequisite for calculating position risk.",
+          "example": "What one pip is worth on EUR/USD:\n• A pip is the fourth decimal place: 0.0001.\n• On 1 standard lot (100,000 euros), 1 pip = USD 10.\nSo a 20-pip move on one lot is a USD 200 gain or loss."
         },
         {
           "title": "The UAE Dirham Peg (USD/AED = 3.6725)",
           "content": "Since 1997, the UAE Central Bank has maintained an official currency peg to the US Dollar at exactly 3.6725 AED per 1.00 USD. This guarantees monetary stability for businesses operating in Dubai and eliminates currency exchange volatility when trading dollar-denominated assets.",
-          "codeSnippet": "const USD_AED_PEG = 3.6725;\nfunction convertUsdToAed(usd) { return usd * USD_AED_PEG; }",
-          "keyTakeaway": "The dollar peg gives Dubai businesses zero foreign exchange risk on US dollar transactions."
+          "keyTakeaway": "The dollar peg gives Dubai businesses zero foreign exchange risk on US dollar transactions.",
+          "example": "The dirham is pegged: USD 1 = AED 3.6725, always.\nExample: USD 5,000 = 5,000 × 3.6725 = AED 18,362.50\nThat's why USD/AED barely moves: dirham savers don't take on dollar currency risk."
         }
       ],
       "practicalLab": {
@@ -161,8 +161,8 @@
         {
           "title": "Market Structure: Break of Structure (BOS) & Change of Character (CHoCH)",
           "content": "Markets move in waves of expansion and retracement. In an uptrend, price creates Higher Highs (HH) and Higher Lows (HL). A Break of Structure (BOS) confirms trend continuation. When price breaches the most recent Higher Low, a Change of Character (CHoCH) signals potential institutional reversal.",
-          "codeSnippet": "// Structure Logic:\nif (currentHigh > previousHigh) trend = 'BULLISH_CONTINUATION';\nif (currentLow < previousHigherLow) trend = 'BEARISH_REVERSAL_CHOCH';",
-          "keyTakeaway": "Trade in the direction of structural order flow; never fight the higher timeframe trend."
+          "keyTakeaway": "Trade in the direction of structural order flow; never fight the higher timeframe trend.",
+          "example": "Reading market structure:\n• A higher high than the last one: the uptrend is continuing (Break of Structure).\n• The price falls below the last higher low: the trend may be turning down (Change of Character)."
         },
         {
           "title": "Liquidity Sweeps & Fair Value Gaps (FVG)",
@@ -270,8 +270,8 @@
         {
           "title": "Trading Psychology & Emotional Discipline",
           "content": "Fear, greed, and revenge trading account for 95% of retail failure. Professional traders view each trade as one of the next 10,000 trades. When a stop-loss is hit, it is not a personal failure; it is simply the business cost of acquiring market information.",
-          "codeSnippet": "// The Golden Rule:\nif (accountLossToday >= 0.03) {\n  terminateTradingSession(); // Walk away for the day\n}",
-          "keyTakeaway": "Unshakable discipline to walk away after daily loss limits separates pros from gamblers."
+          "keyTakeaway": "Unshakable discipline to walk away after daily loss limits separates pros from gamblers.",
+          "example": "The golden rule: if you're down 3% of your account today, stop trading for the day.\nOn a USD 10,000 account that's USD 300. Walk away; there's always tomorrow."
         }
       ],
       "practicalLab": {
@@ -373,8 +373,8 @@
         {
           "title": "Passing Dubai Prop Firm Funding Challenges",
           "content": "Proprietary trading firms provide funded capital ($50,000 to $200,000) to disciplined traders who pass 2-phase evaluation challenges. Passing requires strict adherence to maximum daily drawdown limits (typically 5%) and overall maximum drawdown (typically 10%).",
-          "codeSnippet": "// Prop Firm Evaluation Rules:\n- Profit Target: Phase 1 (8%), Phase 2 (5%)\n- Max Daily Loss: 5%\n- Max Trailing Drawdown: 10%\n- Profit Split: 80% to Trader, 20% to Firm",
-          "keyTakeaway": "Prop firms evaluate risk control and drawdown consistency, not reckless win rates."
+          "keyTakeaway": "Prop firms evaluate risk control and drawdown consistency, not reckless win rates.",
+          "example": "Typical prop firm challenge rules:\n• Profit target: 8% in phase 1, then 5% in phase 2\n• Maximum loss in one day: 5%\n• Maximum total drawdown: 10%\n• Profit split once funded: 80% to you, 20% to the firm"
         }
       ],
       "practicalLab": {

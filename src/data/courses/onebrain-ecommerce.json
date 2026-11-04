@@ -58,8 +58,8 @@
         {
           "title": "The Reality of Cash on Delivery (COD) in the GCC",
           "content": "While card adoption is surging in urban Dubai, COD remains dominant across the wider GCC. Unconfirmed orders bleed capital through courier shipping and return fees. Automated WhatsApp confirmation with GPS pin location drops reduces RTO from 25% down to under 7%.",
-          "codeSnippet": "// Automated WhatsApp confirmation:\nif (customer.confirmsWhatsApp) {\n  dispatchCourierShipment(orderId);\n} else {\n  holdOrderForCallCenterValidation(orderId);\n}",
-          "keyTakeaway": "Never dispatch a COD shipment without automated phone and address validation."
+          "keyTakeaway": "Never dispatch a COD shipment without automated phone and address validation.",
+          "example": "Cutting cash-on-delivery returns:\n1. When an order comes in, send the customer an automatic WhatsApp message asking them to confirm.\n2. Confirmed: ship it.\n3. No reply: hold it until the call centre has checked with them."
         },
         {
           "title": "Return-to-Origin (RTO) Unit Economics",
@@ -161,8 +161,8 @@
         {
           "title": "Buy Now Pay Later (BNPL): Tabby & Tamara",
           "content": "Offering split payments (4 interest-free installments via Tabby or Tamara) lifts checkout conversion by up to 35% and increases Average Order Value by 40% across Dubai and Saudi Arabia. Consumers perceive higher purchasing power with zero financing fees.",
-          "codeSnippet": "// Tabby Checkout SDK Integration:\n<TabbyPromo price={product.price} currency='AED' installments={4} />",
-          "keyTakeaway": "BNPL integration is essential for unlocking high-ticket retail conversion in the Middle East."
+          "keyTakeaway": "BNPL integration is essential for unlocking high-ticket retail conversion in the Middle East.",
+          "example": "At checkout, show the instalment price next to the full price:\n\"AED 400, or 4 interest-free payments of AED 100 with Tabby\"\nSeeing the smaller amount lifts how many people buy, and how much they spend per order."
         },
         {
           "title": "Post-Purchase One-Click Upsells",

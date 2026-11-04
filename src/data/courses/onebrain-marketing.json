@@ -58,8 +58,8 @@
         {
           "title": "The 3-Second Drop-off Reality",
           "content": "On TikTok and Reels, over 80% of audience drop-off happens within the first 3 seconds. The algorithm ranks content by hook retention rate and completion percentage. Creative is the new targeting: the visual and auditory hook dictates which audience cohort the platform's AI matches your ad to.",
-          "codeSnippet": "// The Viral Hook Formula:\n// [Visual Pattern Interrupt] + [Provocative Polarizing Statement] + [Curiosity Gap Open Loop]",
-          "keyTakeaway": "Test 10 hook variations for every single offer body; hook rate determines ad auction win rate."
+          "keyTakeaway": "Test 10 hook variations for every single offer body; hook rate determines ad auction win rate.",
+          "example": "A hook that stops the scroll in the first 3 seconds:\n[Something visually unexpected] + [a bold, divisive statement] + [an open question they have to watch to answer]\nExample: you smash a phone on screen, then say \"Your phone isn't why you're broke\", and then \"Here's what is…\""
         },
         {
           "title": "User-Generated Content (UGC) vs High-Gloss Commercials",
@@ -161,8 +161,8 @@
         {
           "title": "Conversion API (CAPI) vs Client Pixel",
           "content": "Browser-based tracking pixels lose up to 40% of conversion events due to iOS Safari privacy protections (ITP) and ad-blockers. Meta CAPI sends purchase events server-to-server directly from your Next.js backend, restoring conversion attribution and training the ad algorithm on verified revenue data.",
-          "codeSnippet": "import { FacebookAdsApi, ServerEvent } from 'facebook-nodejs-business-sdk';\n// Server-to-server purchase event tracking\nawait sendCapiEvent({\n  eventName: 'Purchase',\n  eventTime: Math.floor(Date.now() / 1000),\n  userData: { em: hashEmail(user.email) },\n  customData: { currency: 'AED', value: orderTotal }\n});",
-          "keyTakeaway": "Server-side CAPI is non-negotiable for accurate attribution and algorithmic ad scaling."
+          "keyTakeaway": "Server-side CAPI is non-negotiable for accurate attribution and algorithmic ad scaling.",
+          "example": "Why brands send purchases server to server (the Conversions API):\n• The browser pixel misses sales when ad blockers or iPhone privacy settings stop it.\n• Your server sends each purchase to Meta directly: the order value in AED, and the customer's email, scrambled (hashed) for privacy.\n• Meta sees the sales it was missing, so it learns faster and your cost per sale falls."
         },
         {
           "title": "Advantage+ Shopping Campaigns (ASC) & Broad Targeting",
@@ -270,8 +270,8 @@
         {
           "title": "Conversion Rate Optimization (CRO) & Frictionless Checkout",
           "content": "A store converting at 1.5% that improves to 3.0% doubles its revenue with zero extra advertising spend. Removing mandatory account creation, adding Apple Pay / Google Pay, and displaying transparent delivery timelines immediately lifts conversion by 25% to 40%.",
-          "codeSnippet": "// CRO Checklist:\n- 1-Click Apple Pay & Tabby/Tamara Split Pay\n- Zero mandatory password creation at checkout\n- Sticky Add-to-Cart bar on mobile view",
-          "keyTakeaway": "Friction at checkout kills advertising profitability faster than high CPMs."
+          "keyTakeaway": "Friction at checkout kills advertising profitability faster than high CPMs.",
+          "example": "A checkout that converts:\n• One-tap Apple Pay, with Tabby or Tamara instalments\n• No account or password needed to pay\n• An Add to Cart bar that stays on screen on phones"
         }
       ],
       "practicalLab": {
@@ -373,8 +373,8 @@
         {
           "title": "Performance Influencer Contracts: Affiliates & Usage Rights",
           "content": "Flat upfront fee influencer promotions are high risk. Master marketers negotiate hybrid contracts: a modest base fee paired with affiliate revenue share and 60-day paid advertising digital usage rights (whitelisting/Spark Ads), allowing the brand to run the creator's video directly from their profile as an ad.",
-          "codeSnippet": "// Contract Clause:\n'Creator grants Brand exclusive 90-day digital advertising usage rights to run Creator-generated content as Meta and TikTok Spark Ads.'",
-          "keyTakeaway": "Securing paid advertising usage rights unlocks 10x more value than a 24-hour disappearing story."
+          "keyTakeaway": "Securing paid advertising usage rights unlocks 10x more value than a 24-hour disappearing story.",
+          "example": "A usage-rights clause to put in an influencer contract:\n\"The creator gives the brand exclusive rights, for 90 days, to run the creator's content as paid ads on Meta and TikTok (Spark Ads).\""
         }
       ],
       "practicalLab": {

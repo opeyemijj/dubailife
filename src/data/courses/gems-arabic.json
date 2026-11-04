@@ -38,8 +38,8 @@
             "Sabah al-khayr -> Response: Sabah an-noor (Good morning / Morning of light)",
             "Masa' al-khayr -> Response: Masa' an-noor (Good evening / Evening of light)"
           ],
-          "codeSnippet": "// Spoken Khaleeji Dialogue Matrix\nconst greetings = [\n  { arabic: 'السلام عليكم', transliteration: 'As-salamu alaykum', meaning: 'Peace be upon you (Formal greeting)' },\n  { arabic: 'وعليكم السلام', transliteration: 'Wa alaykum as-salam', meaning: 'And upon you be peace (Response)' },\n  { arabic: 'شحالك؟', transliteration: 'Sh-halak? (m) / Sh-halich? (f)', meaning: 'How are you? (Khaleeji/Emirati dialect)' },\n  { arabic: 'الحمد لله بخير', transliteration: 'Alhamdulillah, bikhayr', meaning: 'Praise be to God, well' },\n  { arabic: 'تفضل', transliteration: 'Tafaddal (m) / Tafaddali (f)', meaning: 'Please, go ahead / Welcome in' },\n  { arabic: 'مشكور', transliteration: 'Mashkoor (m) / Mashkoorah (f)', meaning: 'Thank you (Deeply appreciated in Khaleeji)' }\n];",
-          "takeaway": "Using local Khaleeji expressions like 'Sh-halak' and 'Mashkoor' creates immediate goodwill with Emirati citizens."
+          "takeaway": "Using local Khaleeji expressions like 'Sh-halak' and 'Mashkoor' creates immediate goodwill with Emirati citizens.",
+          "example": "Everyday greetings in Emirati (Khaleeji) Arabic:\n• السلام عليكم (As-salamu alaykum): Peace be upon you. The formal greeting.\n• وعليكم السلام (Wa alaykum as-salam): And upon you be peace. The reply.\n• شحالك؟ (Sh-halak? to a man / Sh-halich? to a woman): How are you?\n• الحمد لله بخير (Alhamdulillah, bikhayr): Thank God, I'm well.\n• تفضل (Tafaddal to a man / Tafaddali to a woman): Please, go ahead. Come in.\n• مشكور (Mashkoor to a man / Mashkoorah to a woman): Thank you."
         },
         {
           "title": "Honorifics & Respectful Address",
@@ -131,8 +131,8 @@
             "Tashira: Official entry visa",
             "Ghurfat Dubai: Dubai Chamber of Commerce"
           ],
-          "codeSnippet": "// Government Document Terms\nconst docTerms = {\n  aqd: 'Contract / Agreement (عقد)',\n  sakk: 'Title Deed (صك)',\n  ruksa: 'Trade License (رخصة)',\n  tafweez: 'Authorization / Mandate (تفويض)',\n  khalas: 'Clearance / Certificate of Completion (خلو طرف)'\n};",
-          "takeaway": "Ensure your commercial contracts contain both verified English and Arabic text, as Arabic remains the official legal language of UAE courts."
+          "takeaway": "Ensure your commercial contracts contain both verified English and Arabic text, as Arabic remains the official legal language of UAE courts.",
+          "example": "Arabic words you'll see on official papers:\n• عقد (aqd): contract, agreement\n• صك (sakk): title deed\n• رخصة (rukhsa): licence, as in trade licence\n• تفويض (tafweed): authorisation, power to act for someone\n• خلو طرف (khulu taraf): clearance certificate, showing nothing is owed"
         }
       ],
       "lab": {

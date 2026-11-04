@@ -113,6 +113,48 @@ lneed("gift", `p_amount > ${love.maxGift} then raise exception 'amount_out_of_ra
 lneed("i do before", `starts_at - interval '${love.iDoWindow.beforeMinutes} minutes' then raise exception 'too_early'`);
 lneed("i do after", `starts_at + interval '${love.iDoWindow.afterMinutes} minutes' then raise exception 'too_late'`);
 for (const [id, r] of Object.entries(love.roles)) lneed(`role ${id}`, `when '${id}' then ${r.max}`);
+// Seminars and tickets (*_tickets_seminars.sql): event lengths and the ticket price limit.
+const tixFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_tickets_seminars.sql")).sort().pop();
+if (tixFile) {
+  const tix = readFileSync(`supabase/migrations/${tixFile}`, "utf8");
+  const pk = JSON.parse(readFileSync("src/data/life/parties.json", "utf8"));
+  for (const text of [
+    `when 'house_party' then ${pk.kinds.house_party.hours} when 'dinner' then ${pk.kinds.dinner.hours} when 'seminar' then ${pk.kinds.seminar.hours} else ${pk.kinds.club_night.hours} end`,
+    `p_price > ${pk.tickets.maxPrice} then raise exception 'bad_price'`,
+    `check (ticket_price between 0 and ${pk.tickets.maxPrice})`,
+  ]) if (!tix.includes(text)) { bad++; console.error(`tickets: differs from SQL (${text})`); }
+}
+// Club promoters (src/data/economy/promoters.json vs *_promoters.sql): the career, interview, limits and commission.
+const promo = JSON.parse(readFileSync("src/data/economy/promoters.json", "utf8"));
+const promoFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_promoters.sql")).sort().pop();
+if (promoFile) {
+  const promoSql = readFileSync(`supabase/migrations/${promoFile}`, "utf8");
+  const pc = promo.career;
+  for (const text of [
+    `('${pc.name}', '${pc.title}', ${pc.weeklyWage}, ${pc.shiftsPerWeek}, '${pc.requirement}', '${pc.service}')`,
+    `('${pc.name}', '{${promo.interview.map((q) => q.answer).join(",")}}')`,
+    `then ${promo.maxGuests} else ${JSON.parse(readFileSync("src/data/life/parties.json", "utf8")).maxGuests} end`,
+    `then ${promo.maxEvents} else 3 end`,
+    `coin_move(i.host_id, ${promo.commission}, 'earn', 'Promoter commission'`,
+    `count(*) * ${promo.commission}`,
+  ]) if (!promoSql.includes(text)) { bad++; console.error(`promoters: differs from SQL (${text})`); }
+}
+// Family (src/data/life/family.json vs *_family.sql): partners, finding out, pregnancy, care and nannies.
+const fam = JSON.parse(readFileSync("src/data/life/family.json", "utf8"));
+const famFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_family.sql")).sort().pop();
+if (famFile) {
+  const famSql = readFileSync(`supabase/migrations/${famFile}`, "utf8");
+  const fneed2 = (label, text) => { if (!famSql.includes(text)) { bad++; console.error(`family ${label}: differs from SQL (${text})`); } };
+  fneed2("max wives", `when 'man' then public.partner_count(p_user) < ${fam.maxWives}`);
+  fneed2("discovery chance", `% 100) < ${fam.discovery.chancePercent} then`);
+  fneed2("hearts lost", `greatest(0, level - ${fam.discovery.heartsLost})`);
+  fneed2("pregnancy", `now() + interval '${fam.pregnancyDays} days'`);
+  fneed2("care actions", `action in (${fam.care.map((c) => `'${c.id}'`).join(", ")})`);
+  fneed2("care window", `day > d - ${fam.careWindowDays}`);
+  fneed2("nanny days", `days := case p_plan ${fam.nanny.map((n) => `when '${n.id}' then ${n.days}`).join(" ")} end`);
+  fneed2("nanny prices", `price := case p_plan ${fam.nanny.map((n) => `when '${n.id}' then ${n.price}`).join(" ")} end`);
+  fneed2("relations", `relation in (${fam.relations.map((r) => `'${r.id}'`).join(", ")})`);
+}
 // The marathon (src/data/life/marathon.json vs *_marathon.sql).
 const mar = JSON.parse(readFileSync("src/data/life/marathon.json", "utf8"));
 const marFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_marathon.sql")).sort().pop();

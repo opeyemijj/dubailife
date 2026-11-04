@@ -1,0 +1,463 @@
+{
+  "id": "onebrain-beauty",
+  "institutionId": "onebrain",
+  "title": "Beauty, Barbering & Salon Business",
+  "tagline": "Hygiene and Dubai salon rules, skin and hair science, cutting and colour basics, and running a profitable salon or chair.",
+  "category": "Beauty & Wellness",
+  "level": "accelerator",
+  "duration": "4 Weeks (Salon Accelerator)",
+  "rating": 4.95,
+  "enrolledCount": 1890,
+  "icon": "💇",
+  "superpower": {
+    "id": "salon_star",
+    "name": "Salon Star",
+    "icon": "💇",
+    "description": "Looks the part and runs a busy chair: more from beauty jobs and better confidence.",
+    "badgeText": "Salon Certified",
+    "perkType": "general"
+  },
+  "syllabus": [
+    "Week 1: Hygiene, safety and Dubai salon rules",
+    "Week 2: Skin and hair science",
+    "Week 3: Cutting, fades and colour basics",
+    "Week 4: Pricing, rebooking and running a salon"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Hygiene and Salon Rules",
+      "objective": "Keep every client safe with proper sterilisation and meet Dubai's salon requirements.",
+      "slides": [
+        {
+          "title": "Clean, Disinfect, Sterilise",
+          "body": "Salons handle skin, hair and sometimes blood. Infections spread through dirty tools, so every tool is cleaned and disinfected between clients, and metal tools that can break skin are sterilised.",
+          "bullets": [
+            "Clean: wash off hair and debris with soap and water",
+            "Disinfect: soak in a hospital-grade disinfectant for the full contact time on the label",
+            "Sterilise: autoclave metal tools that can cut skin (about 121°C for 15 to 20 minutes)",
+            "Single-use: razor blades, files and buffers go in the bin after each client"
+          ],
+          "takeaway": "Every client gets clean tools, every time, no exceptions."
+        },
+        {
+          "title": "Dubai Salon Requirements",
+          "body": "Beauty salons and barbershops in Dubai are licensed and inspected by Dubai Municipality. Staff need occupational health certificates and hygiene training, and inspectors check sterilisation, records and cleanliness.",
+          "bullets": [
+            "Licensed premises and trained staff",
+            "Health certificates for workers who touch clients",
+            "Sterilisation records and a clean, separated tool area",
+            "A new blade for every shave"
+          ],
+          "takeaway": "Inspection-ready every day means clients feel safe every day."
+        }
+      ],
+      "lab": {
+        "title": "Hygiene Audit Lab",
+        "brief": "Audit a workstation: list every tool, how it's cleaned, disinfected or sterilised, and fix any gaps.",
+        "deliverable": "A tool-by-tool hygiene table.",
+        "proTip": "Show clients you open a fresh blade: it builds instant trust."
+      },
+      "caseStudy": {
+        "scenario": "A client is in a hurry and asks you to reuse the blade from the last client. What do you do?",
+        "options": [
+          {
+            "text": "Reuse it; they asked.",
+            "correct": false,
+            "explanation": "Shared blades can spread blood-borne infections."
+          },
+          {
+            "text": "Politely refuse and open a new blade: it takes seconds.",
+            "correct": true,
+            "explanation": "A new blade every client is both safe and required."
+          },
+          {
+            "text": "Rinse it under the tap and reuse it.",
+            "correct": false,
+            "explanation": "Rinsing doesn't sterilise."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Which tools must be thrown away after each client?",
+          "options": [
+            "Combs",
+            "Razor blades",
+            "Scissors",
+            "Chairs"
+          ],
+          "correctIndex": 1,
+          "explanation": "Blades are single-use."
+        },
+        {
+          "question": "Sterilising metal tools typically uses:",
+          "options": [
+            "Cold water",
+            "An autoclave at about 121°C",
+            "A hair dryer",
+            "Perfume"
+          ],
+          "correctIndex": 1,
+          "explanation": "Autoclaves sterilise with pressurised steam."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Skin and Hair Science",
+      "objective": "Understand skin types, hair structure and how to avoid reactions.",
+      "slides": [
+        {
+          "title": "Skin Types and Care",
+          "body": "Good beauty work starts with reading the skin: its type, its sensitivity and how it reacts to the sun. Dubai's strong sun makes sunscreen part of every routine.",
+          "bullets": [
+            "Skin types: normal, dry, oily, combination, sensitive",
+            "Fitzpatrick scale I to VI: how skin reacts to sun",
+            "Daily sunscreen SPF 30 or more",
+            "Refer clients with rashes or lesions to a dermatologist"
+          ],
+          "takeaway": "Treat the client's actual skin, not a standard routine."
+        },
+        {
+          "title": "Hair Structure and Patch Tests",
+          "body": "Hair has three layers: the cuticle (outer scales), cortex (strength and colour) and medulla (core). Chemical services change the cortex, so they can damage hair or cause allergic reactions.",
+          "bullets": [
+            "Porosity: how well hair absorbs moisture and colour",
+            "Patch test 48 hours before any hair dye, every time",
+            "Strand test before colour or lightening",
+            "Bleach and heat break bonds: use bond builders and heat protection"
+          ],
+          "takeaway": "A 48-hour patch test is a small step that prevents a serious reaction."
+        }
+      ],
+      "lab": {
+        "title": "Consultation Lab",
+        "brief": "Run a full consultation: skin or hair type, history, allergies, goals and a patch-test plan.",
+        "deliverable": "A completed consultation card.",
+        "proTip": "Write everything down: records protect your clients and you."
+      },
+      "caseStudy": {
+        "scenario": "A walk-in wants a full hair colour today and has never been coloured before. What's right?",
+        "options": [
+          {
+            "text": "Colour straight away.",
+            "correct": false,
+            "explanation": "Without a patch test an allergic reaction could be severe."
+          },
+          {
+            "text": "Do a patch test now and book the colour for at least 48 hours later.",
+            "correct": true,
+            "explanation": "The 48-hour patch test checks for allergies safely."
+          },
+          {
+            "text": "Use double the developer to be quick.",
+            "correct": false,
+            "explanation": "That raises damage and irritation."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "How long before dyeing should a patch test be done?",
+          "options": [
+            "10 minutes",
+            "48 hours",
+            "2 weeks",
+            "Never"
+          ],
+          "correctIndex": 1,
+          "explanation": "48 hours is the standard."
+        },
+        {
+          "question": "Which hair layer holds colour?",
+          "options": [
+            "Cuticle",
+            "Cortex",
+            "Medulla",
+            "Root only"
+          ],
+          "correctIndex": 1,
+          "explanation": "Colour sits in the cortex."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Cutting, Fades and Colour",
+      "objective": "Learn the core cutting and fade techniques and how colour works.",
+      "slides": [
+        {
+          "title": "Clipper Guards and Fades",
+          "body": "A fade blends from very short at the bottom to longer on top. Clipper guard numbers set the length.",
+          "bullets": [
+            "#0: no guard (about 0.5 mm)",
+            "#1: 3 mm, #2: 6 mm, #3: 10 mm, #4: 13 mm",
+            "Blend in sections from shortest to longest, with the lever and a flicking motion",
+            "Check symmetry from behind and in the mirror"
+          ],
+          "example": "A mid skin fade:\n• Bottom: #0 up to just above the ear tip\n• Next band: #1, then #2 a little higher\n• Blend into #3 at the parietal ridge, leaving the top for scissors.\nWork the lever (open and closed) between guards to remove lines.",
+          "takeaway": "Smooth blending is what separates a fade from a line of steps."
+        },
+        {
+          "title": "Colour Basics",
+          "body": "Hair colour is measured in levels from 1 (black) to 10 (lightest blonde). Developer strength controls how much the hair lifts.",
+          "bullets": [
+            "Levels 1 to 10, black to lightest blonde",
+            "Developer: 10 vol (deposit only), 20 vol (1 to 2 levels of lift), 30 vol (2 to 3), 40 vol (3+; use with care)",
+            "Colour can't lighten colour: going lighter over dyed hair needs lightener",
+            "Toner neutralises unwanted warmth (purple cancels yellow)"
+          ],
+          "takeaway": "Know the starting level and the target before you mix anything."
+        }
+      ],
+      "lab": {
+        "title": "Practical Lab",
+        "brief": "On a training head, do a mid fade and a colour plan for a client going from level 4 to level 7.",
+        "deliverable": "Photos of the fade and a written colour formula.",
+        "proTip": "Practise on mannequins until the blend is invisible from arm's length."
+      },
+      "caseStudy": {
+        "scenario": "A client with level 5 dyed hair wants to be level 8 using a box dye. What do you explain?",
+        "options": [
+          {
+            "text": "Box dye will lift it fine.",
+            "correct": false,
+            "explanation": "Colour doesn't lighten existing artificial colour."
+          },
+          {
+            "text": "Existing colour needs a lightener, then a toner; it may take more than one session to protect the hair.",
+            "correct": true,
+            "explanation": "Lift with lightener, tone, and protect the hair's condition."
+          },
+          {
+            "text": "Use 40 vol on the whole head immediately.",
+            "correct": false,
+            "explanation": "That risks breakage and scalp irritation."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Clipper guard #2 is about:",
+          "options": [
+            "0.5 mm",
+            "3 mm",
+            "6 mm",
+            "25 mm"
+          ],
+          "correctIndex": 2,
+          "explanation": "#2 is about 6 mm."
+        },
+        {
+          "question": "Which colour cancels yellow tones?",
+          "options": [
+            "Green",
+            "Purple",
+            "Red",
+            "Orange"
+          ],
+          "correctIndex": 1,
+          "explanation": "Purple is opposite yellow on the colour wheel."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Running a Salon or Chair",
+      "objective": "Price services, rebook clients and grow.",
+      "slides": [
+        {
+          "title": "Pricing Services",
+          "body": "Price from your time, products and overheads, then check the local market.",
+          "bullets": [
+            "Service price = time × hourly rate + product cost",
+            "Know your break-even: rent, licence, staff, products",
+            "Premium services (colour, treatments) carry the margin",
+            "Retail products add income and help results at home"
+          ],
+          "example": "Pricing a men's fade with beard trim:\n• 45 minutes at AED 120 an hour = AED 90\n• Products and blade: AED 8\nPrice: about AED 100, with a 'cut + beard + hot towel' package at AED 130.",
+          "takeaway": "Price for profit, not just to be the cheapest."
+        },
+        {
+          "title": "Rebooking and Reputation",
+          "body": "A full diary comes from clients who come back. Rebook before they leave, follow up, and protect your reviews.",
+          "bullets": [
+            "Rebook at checkout: 'Same time in 3 weeks?'",
+            "Reminders by WhatsApp a day before",
+            "Ask happy clients for a review",
+            "Before-and-after photos (with consent) for social media"
+          ],
+          "takeaway": "The easiest client to book is the one already in your chair."
+        }
+      ],
+      "lab": {
+        "title": "Salon Business Lab",
+        "brief": "Price a menu of 8 services and plan how you'll fill a 40-appointment week.",
+        "deliverable": "A price list with costs and a rebooking plan.",
+        "proTip": "Track your rebooking rate: aim for most clients leaving with their next appointment."
+      },
+      "caseStudy": {
+        "scenario": "A client is unhappy with their haircut. What's the professional response?",
+        "options": [
+          {
+            "text": "Argue that it looks fine.",
+            "correct": false,
+            "explanation": "Arguing loses the client and their friends."
+          },
+          {
+            "text": "Listen, apologise, and offer a free fix right away or at a time that suits them.",
+            "correct": true,
+            "explanation": "Fixing it kindly often turns an unhappy client into a loyal one."
+          },
+          {
+            "text": "Charge them for a new cut.",
+            "correct": false,
+            "explanation": "Charging to fix your work damages trust."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Service price is roughly:",
+          "options": [
+            "Product cost only",
+            "Time × hourly rate + product cost",
+            "Whatever competitors charge",
+            "Free"
+          ],
+          "correctIndex": 1,
+          "explanation": "Time plus products, then check the market."
+        },
+        {
+          "question": "The best time to rebook a client is:",
+          "options": [
+            "Never",
+            "Before they leave the salon",
+            "After 6 months",
+            "On their birthday only"
+          ],
+          "correctIndex": 1,
+          "explanation": "Rebook at checkout."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "Disinfecting tools requires:",
+        "options": [
+          "A quick rinse",
+          "Full contact time in an approved disinfectant",
+          "Air drying only",
+          "Perfume spray"
+        ],
+        "correctIndex": 1,
+        "explanation": "Contact time matters."
+      },
+      {
+        "question": "Who inspects Dubai salons?",
+        "options": [
+          "RTA",
+          "Dubai Municipality",
+          "DEWA",
+          "Dubai Police"
+        ],
+        "correctIndex": 1,
+        "explanation": "Dubai Municipality licenses and inspects salons."
+      },
+      {
+        "question": "A patch test is done:",
+        "options": [
+          "After colouring",
+          "48 hours before colouring",
+          "Only once in life",
+          "Never"
+        ],
+        "correctIndex": 1,
+        "explanation": "48 hours before every colour service."
+      },
+      {
+        "question": "The Fitzpatrick scale measures:",
+        "options": [
+          "Hair length",
+          "Skin's reaction to sun",
+          "Nail strength",
+          "Price"
+        ],
+        "correctIndex": 1,
+        "explanation": "Skin types I to VI by sun reaction."
+      },
+      {
+        "question": "Clipper guard #1 is about:",
+        "options": [
+          "1 mm",
+          "3 mm",
+          "10 mm",
+          "20 mm"
+        ],
+        "correctIndex": 1,
+        "explanation": "#1 is about 3 mm."
+      },
+      {
+        "question": "Hair colour level 1 is:",
+        "options": [
+          "Lightest blonde",
+          "Black",
+          "Red",
+          "Grey"
+        ],
+        "correctIndex": 1,
+        "explanation": "Level 1 is black."
+      },
+      {
+        "question": "20 vol developer gives about:",
+        "options": [
+          "No lift",
+          "1 to 2 levels of lift",
+          "5 levels",
+          "Bleaches white"
+        ],
+        "correctIndex": 1,
+        "explanation": "20 vol lifts 1 to 2 levels."
+      },
+      {
+        "question": "To go lighter over dyed hair you need:",
+        "options": [
+          "More box dye",
+          "Lightener, then toner",
+          "Shampoo",
+          "Cold water"
+        ],
+        "correctIndex": 1,
+        "explanation": "Colour won't lift colour."
+      },
+      {
+        "question": "A 60-minute service at AED 100/hour with AED 10 of product costs:",
+        "options": [
+          "AED 60",
+          "AED 100",
+          "AED 110",
+          "AED 160"
+        ],
+        "correctIndex": 2,
+        "explanation": "100 + 10 = AED 110."
+      },
+      {
+        "question": "Razor blades are:",
+        "options": [
+          "Reused all day",
+          "Single-use, new for every client",
+          "Rinsed between clients",
+          "Shared"
+        ],
+        "correctIndex": 1,
+        "explanation": "New blade every client."
+      }
+    ]
+  },
+  "tuitionFee": 6500
+}

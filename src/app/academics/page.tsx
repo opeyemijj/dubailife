@@ -1,5 +1,7 @@
 "use client";
 
+import { RequestLearning } from "@/components/academy/RequestLearning";
+import { InviteHere } from "@/components/invite/InviteHere";
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Award, Sparkles, GraduationCap, BookOpen, CheckCircle, ChevronRight, Coins } from "lucide-react";
@@ -54,6 +56,13 @@ export default function AcademicDistrictPage() {
             <span className="text-xs font-black text-amber-300">{(citizen?.balance ?? 0).toLocaleString()} AED</span>
           </div>
         </header>
+
+        <RequestLearning />
+
+        <InviteHere title="Academic City" label="Universities, schools and books" text="🎓 Learn something new with me on Dubai Life: universities, courses and books, all free to start!"
+          className="w-full h-12 rounded-2xl bg-fuchsia-600 text-white font-black flex items-center justify-center gap-2 text-sm">
+          🤝 Invite friends to learn with you
+        </InviteHere>
 
         <Link href="/driving" className="flex items-center gap-3 rounded-2xl p-4 bg-gradient-to-r from-sky-900/60 to-indigo-900/60 border border-sky-500/30">
           <span className="text-3xl">🚗</span>

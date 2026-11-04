@@ -496,7 +496,7 @@ export const WIKI_HUBS: WikiHub[] = [
     icon: "🎉",
     title: "Social, Spaces & love",
     subtitle:
-      "Live Audio Spaces, 2.5× Venue Co-Presence boosts, Treat the Room, VIP Bottle Service, friends & Hayati dating.",
+      "Live Audio Spaces, 2.5× Venue Co-Presence boosts, Treat the Room, VIP Bottle Service, friends, dating & Family.",
     toneA: "#FDECEF",
     toneB: "#F9D3DA",
     blocks: [
@@ -532,14 +532,14 @@ export const WIKI_HUBS: WikiHub[] = [
       {
         id: "hayati-love",
         icon: "💘",
-        title: "Friends, Door Knocks & Hayati Dating",
+        title: "Friends, Door Knocks & Family",
         badge: "Relationships",
         summary:
           "Build your circle from casual acquaintances to best friends, roommates, or marriage.",
         bullets: [
           "**People Panel & DMs**: Tap any citizen in a venue or on `/citizens` to add them as a friend, chat live, or send an AED gift.",
           "**Knocking on Doors**: Visit a friend's apartment on the map and knock — if they let you in, you'll appear inside their 3D home together!",
-          "**💘 Hayati App (`Phone → Hayati`)**: Swipe, match, go on venue dates, exchange rings, and host a **Dubai Wedding**!",
+          "**👨‍👩‍👧 Family App (`Phone → Family`)**: Ask friends out, go on dates, propose, host a **Dubai Wedding**, have babies and watch them grow week by week, and add your relatives!",
         ],
         cta: { label: "Meet Citizens", href: "/citizens" },
       },
@@ -755,7 +755,7 @@ export const WIKI_HUBS: WikiHub[] = [
               "Roads & Transport Authority — runs the Dubai Metro, Taxis, parking meters, and traffic fines.",
             ],
             [
-              "Hayati",
+              "Family",
               "'My Life' in Arabic — Dubai Life's in-phone dating and marriage app.",
             ],
           ],

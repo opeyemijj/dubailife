@@ -1,5 +1,6 @@
 "use client";
 
+import { InviteHere } from "@/components/invite/InviteHere";
 import { ShareButton } from "@/components/share/ShareButton";
 import { askForPush } from "@/lib/push/engage";
 import { gainSkill, skillForCourse } from "@/lib/life";
@@ -29,6 +30,9 @@ import { getCourse, getCampus, calculateTuition } from "@/lib/city/academic";
 import { academyProgress, submitStep, unlockAt, untilText, type AcademyProgress } from "@/lib/academy/progress";
 import { honorsFor } from "@/lib/academy/grade";
 import { BottomNav } from "@/components/layout/BottomNav";
+
+/** Courses whose examples are real code (shown as code). Everything else gets plain worked examples. */
+const TECH_CATEGORIES = new Set(["Artificial Intelligence", "Blockchain & Web3", "Offensive Security", "Data Science & Analytics", "Software Engineering", "Technology"]);
 import { gameAudio } from "@/utils/gameAudio";
 
 export default function CourseViewerPage({ params }: { params: Promise<{ courseId: string }> }) {
@@ -213,6 +217,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
           </Link>
 
           <div className="flex items-center gap-2">
+            <InviteHere title={course.title} label={`${course.icon} ${campus?.name ?? "Academic City"}`} text={`📚 Study ${course.title} with me on Dubai Life!`} />
             <span className="text-xs font-bold text-slate-400">{campus?.shortName}</span>
             <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs font-black text-amber-300">
               <Coins className="w-3.5 h-3.5 text-amber-400" />
@@ -587,11 +592,18 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
                   </div>
                 )}
 
+                {activeLesson.slides[currentSlideIdx].example && (
+                  <div className="rounded-2xl bg-amber-50/95 border border-amber-200 p-3.5 space-y-1.5 text-slate-800">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-amber-700">📝 Worked example</div>
+                    <p className="text-[13px] whitespace-pre-line leading-relaxed">{activeLesson.slides[currentSlideIdx].example}</p>
+                  </div>
+                )}
+
                 {activeLesson.slides[currentSlideIdx].codeSnippet && (
                   <div className="rounded-2xl bg-slate-950 border border-white/10 p-3.5 space-y-1.5 shadow-inner">
                     <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-slate-400">
                       <Terminal className="w-3 h-3 text-emerald-400" />
-                      <span>Applied Protocol / Code Specification:</span>
+                      <span>{TECH_CATEGORIES.has(course.category) ? "Code example" : "Example"}</span>
                     </div>
                     <pre className="text-[11px] font-mono text-emerald-300 whitespace-pre-wrap leading-relaxed overflow-x-auto">
                       {activeLesson.slides[currentSlideIdx].codeSnippet}

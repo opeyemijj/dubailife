@@ -9,9 +9,10 @@ import { supabase } from "@/lib/supabase/client";
 import { refreshCitizen } from "@/lib/citizenStore";
 import SERVICES from "@/data/economy/city-services.json";
 import DECORATORS from "@/data/home/decorators.json";
+import PROMOTERS from "@/data/economy/promoters.json";
 
 export { SERVICES };
-export type Service = "doctor" | "police" | "lawyer" | "decorator";
+export type Service = "doctor" | "police" | "lawyer" | "decorator" | "promoter";
 export type IllnessKind = (typeof SERVICES.illness.kinds)[number];
 export interface Question { q: string; options: string[]; answer: number }
 
@@ -37,7 +38,7 @@ export const illnessOf = (kind?: string | null) => SERVICES.illness.kinds.find((
 export const careerOf = (company: string) => SERVICES.careers.find((c) => c.name === company) ?? null;
 /** The interview for a job: the company's own questions, or the general set for player ventures. */
 export const interviewFor = (company: string, system: boolean): Question[] =>
-  (system ? (company === DECORATORS.career.name ? DECORATORS.interview : (SERVICES.interviews as unknown as Record<string, Question[]>)[company]) : null) ?? SERVICES.interviews._player;
+  (system ? (company === DECORATORS.career.name ? DECORATORS.interview : company === PROMOTERS.career.name ? PROMOTERS.interview : (SERVICES.interviews as unknown as Record<string, Question[]>)[company]) : null) ?? SERVICES.interviews._player;
 
 // Friendlier words for the database's refusals.
 const ERRORS: Record<string, string> = {

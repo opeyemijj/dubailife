@@ -4,8 +4,10 @@
 // compare products, try accessories on, buy (with confirmation), talk to staff, apply for a job,
 // work shifts and join activities.
 
+import { InviteHere } from "@/components/invite/InviteHere";
 import { useCleanScreen } from "@/lib/cleanScreen";
 import { openPartySheet } from "@/components/invite/PartySheetHost";
+import { useServices } from "@/lib/cityServices";
 import type { EventKind } from "@/lib/invites";
 import { BELOW_SPACE_TOP, ClubRadioPill, PartyBanner, useClubRadio, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyDecor } from "@/components/invite/PartyDecor";
@@ -126,6 +128,8 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   // instead, so there's only ever one.
   useClubRadio(!party);
   // The party you can throw here: a club night at a club, a pool party at a pool or beach club, dinner at a restaurant.
+  // Club promoters can put on an event at any venue.
+  const isPromoter = useServices(citizen?.id)?.service === "promoter";
   const partyKind: EventKind | null = venue.layout === "club" ? "club_night" : venue.feature === "pool" && venue.layout !== "waterpark" ? "pool_party" : venue.layout === "dining" ? "dinner" : null;
   const [lightsSet, setLightsSet] = useState<boolean | null>(null);
   // Clean screen: everything over the venue hidden (the floating Space bar too) for the whole view.
@@ -1308,7 +1312,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       <div className={clean ? "hidden" : "contents"}>
       {party && <PartyBanner party={party} className={BELOW_SPACE_TOP} />}
       {!party && !ride && <ClubRadioPill className="bottom-[8.5rem] sm:bottom-20" />}
-      {party && !ride && !clubParty && (
+      {party && !ride && !clubParty && party.kind !== "seminar" && (
         <PartyActions party={party} lightsOut={lightsSet ?? !!party.lightsOut} onLights={setLightsSet}
           onDance={(seconds) => { setPlayerAnimation("dance"); setTimeout(() => setPlayerAnimation((a) => (a === "dance" ? "idle" : a)), seconds * 1000); }}
           pose={playerAnimation === "dance" || playerAnimation === "sit" ? playerAnimation : null} canSleep={false}
@@ -1416,10 +1420,12 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       {/* Quick actions (hidden during a ride: the ride's own controls are there) */}
       {!panel && !ride && (
         <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-30 flex flex-wrap justify-center gap-2 w-[min(96vw,560px)] pointer-events-auto">
-          {partyKind && !party && (
-            <button onClick={() => { gameAudio.playClickSound(); openPartySheet({ kind: partyKind, placeId: place.id, venueId: venue.id }); }}
+          <InviteHere title={venue.name} label={`${venue.category} · ${place.name}`} text={`📍 Meet me at ${venue.name} (${place.name}) on Dubai Life!`}
+            className="h-11 px-4 rounded-full bg-white text-fuchsia-700 font-black shadow-xl text-xs flex items-center gap-1.5 active:scale-95 transition-all" />
+          {!party && (
+            <button onClick={() => { gameAudio.playClickSound(); openPartySheet({ kind: partyKind ?? "seminar", placeId: place.id, venueId: venue.id }); }}
               className="h-11 px-4 rounded-full bg-fuchsia-600 text-white font-black shadow-xl text-xs flex items-center gap-1.5 active:scale-95 transition-all">
-              🎉 Host a {partyKind === "club_night" ? "club night" : partyKind === "pool_party" ? "pool party" : "dinner"} here
+              {isPromoter ? "📣 Promote an event here" : partyKind ? `🎉 Host a ${partyKind === "club_night" ? "club night" : partyKind === "pool_party" ? "pool party" : "dinner"} here` : "🎤 Host a seminar here"}
             </button>
           )}
           {(venue.activities ?? []).length > 0 && (

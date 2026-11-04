@@ -1,0 +1,468 @@
+{
+  "id": "ud-healthcare",
+  "institutionId": "ud",
+  "title": "Healthcare & Patient Care Foundations",
+  "tagline": "Vital signs, infection control, first aid and CPR, safe medication practice, and how healthcare works in Dubai.",
+  "category": "Healthcare",
+  "level": "bachelor_degree",
+  "duration": "4 Weeks (Foundation Programme)",
+  "rating": 4.97,
+  "enrolledCount": 2050,
+  "icon": "🩺",
+  "superpower": {
+    "id": "first_responder",
+    "name": "First Responder",
+    "icon": "🩺",
+    "description": "Knows what to do when someone is unwell: better wellbeing and more from care jobs.",
+    "badgeText": "Care Certified",
+    "perkType": "general"
+  },
+  "syllabus": [
+    "Week 1: How healthcare works in Dubai, and the caring professional",
+    "Week 2: Vital signs and observing patients",
+    "Week 3: Infection control and safe medication",
+    "Week 4: First aid, CPR and emergencies"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Healthcare in Dubai",
+      "objective": "Understand the system, the regulators and what it means to care professionally.",
+      "slides": [
+        {
+          "title": "The System and Its Regulators",
+          "body": "Healthcare in Dubai is regulated by the Dubai Health Authority (DHA). Doctors, nurses and allied health workers must be licensed by DHA (through its Sheryan system) before they can practise, usually after passing a licensing exam. Health insurance is mandatory for residents in Dubai.",
+          "bullets": [
+            "DHA licenses professionals and facilities in Dubai",
+            "Licensing exams and verified qualifications come before practice",
+            "Health insurance is compulsory for Dubai residents, usually provided by the employer",
+            "Emergency departments treat emergencies regardless of insurance"
+          ],
+          "takeaway": "In Dubai, you need a DHA licence to practise: qualifications alone aren't enough."
+        },
+        {
+          "title": "The Caring Professional",
+          "body": "Patients remember how they were treated. Professional care combines skill with dignity, privacy and clear communication, often across many languages and cultures.",
+          "bullets": [
+            "Consent: explain and ask before any care",
+            "Confidentiality: patient information is shared only with those who need it",
+            "Dignity and cultural respect: same-gender carers where requested",
+            "Clear handovers: the SBAR method (Situation, Background, Assessment, Recommendation)"
+          ],
+          "takeaway": "Skill keeps patients safe; kindness makes them feel safe."
+        }
+      ],
+      "lab": {
+        "title": "SBAR Handover Lab",
+        "brief": "Write an SBAR handover for a patient whose breathing has worsened during your shift.",
+        "deliverable": "A four-line SBAR handover.",
+        "proTip": "Lead with the most important fact: what's wrong right now."
+      },
+      "caseStudy": {
+        "scenario": "A patient's relative phones the ward asking for their test results. What do you do?",
+        "options": [
+          {
+            "text": "Read the results out to be helpful.",
+            "correct": false,
+            "explanation": "That breaks confidentiality."
+          },
+          {
+            "text": "Politely explain you can't share information without the patient's consent, and offer to pass on a message.",
+            "correct": true,
+            "explanation": "Confidentiality protects patients; consent comes first."
+          },
+          {
+            "text": "Hang up.",
+            "correct": false,
+            "explanation": "Be polite and helpful within the rules."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Who licenses healthcare professionals in Dubai?",
+          "options": [
+            "MOHRE",
+            "DHA (Dubai Health Authority)",
+            "RTA",
+            "KHDA"
+          ],
+          "correctIndex": 1,
+          "explanation": "The DHA licenses professionals and facilities."
+        },
+        {
+          "question": "SBAR stands for:",
+          "options": [
+            "Situation, Background, Assessment, Recommendation",
+            "Stop, Breathe, Act, Rest",
+            "Safety, Bed, Airway, Rest",
+            "Sign, Book, Admit, Release"
+          ],
+          "correctIndex": 0,
+          "explanation": "SBAR structures clear handovers."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Vital Signs",
+      "objective": "Measure and interpret the basic signs of health and spot a patient getting worse.",
+      "slides": [
+        {
+          "title": "Normal Adult Ranges",
+          "body": "Vital signs are the quickest picture of how a patient is doing. Know the normal adult ranges so you notice when something is off.",
+          "bullets": [
+            "Heart rate: 60 to 100 beats per minute",
+            "Breathing rate: 12 to 20 breaths per minute",
+            "Blood pressure: around 120/80 mmHg or lower",
+            "Temperature: about 36.1 to 37.2°C",
+            "Oxygen saturation (SpO2): 95 to 100% for most healthy adults"
+          ],
+          "takeaway": "Know normal, so you can spot abnormal."
+        },
+        {
+          "title": "Spotting Deterioration",
+          "body": "A patient rarely gets worse without warning. Breathing rate is often the first sign to change, and early warning scores add up small changes into a clear alarm.",
+          "bullets": [
+            "Rising breathing rate, falling SpO2, falling blood pressure, rising heart rate",
+            "New confusion or drowsiness is a red flag",
+            "Repeat observations and record them on a chart",
+            "Escalate early: tell the nurse in charge or doctor straight away"
+          ],
+          "example": "A patient's observations at 2pm and 4pm:\n• Breathing: 16, then 26 a minute\n• Heart rate: 82, then 112\n• SpO2: 97%, then 91%\n• New confusion at 4pm\nEvery sign is moving the wrong way: escalate now, using SBAR.",
+          "takeaway": "Trends matter more than one reading: chart them and escalate early."
+        }
+      ],
+      "lab": {
+        "title": "Observations Lab",
+        "brief": "Take and chart a full set of observations on a classmate twice, 30 minutes apart, and note anything outside the normal range.",
+        "deliverable": "A completed observation chart.",
+        "proTip": "Count breathing for a full 30 seconds without telling the person: they breathe differently when watched."
+      },
+      "caseStudy": {
+        "scenario": "A patient's breathing rate rises from 14 to 28 over an hour, and they seem confused. What do you do?",
+        "options": [
+          {
+            "text": "Wait for the next routine check in 4 hours.",
+            "correct": false,
+            "explanation": "These are signs of serious deterioration."
+          },
+          {
+            "text": "Escalate immediately to the nurse in charge or doctor, with your observations.",
+            "correct": true,
+            "explanation": "Early escalation saves lives."
+          },
+          {
+            "text": "Give them a glass of water.",
+            "correct": false,
+            "explanation": "That doesn't address the deterioration."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Normal adult resting heart rate:",
+          "options": [
+            "30 to 50",
+            "60 to 100",
+            "120 to 160",
+            "200+"
+          ],
+          "correctIndex": 1,
+          "explanation": "60 to 100 bpm."
+        },
+        {
+          "question": "Normal adult breathing rate:",
+          "options": [
+            "4 to 8",
+            "12 to 20",
+            "30 to 40",
+            "50+"
+          ],
+          "correctIndex": 1,
+          "explanation": "12 to 20 breaths a minute."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Infection Control and Medication Safety",
+      "objective": "Stop infections spreading and give medicines safely.",
+      "slides": [
+        {
+          "title": "Hand Hygiene and PPE",
+          "body": "Clean hands are the single most effective way to prevent infections in healthcare. The WHO's 'five moments' define exactly when.",
+          "bullets": [
+            "Before touching a patient",
+            "Before a clean or aseptic procedure",
+            "After exposure to body fluids",
+            "After touching a patient",
+            "After touching the patient's surroundings",
+            "PPE on: gown, mask, goggles, gloves. Off: gloves, goggles, gown, mask, then wash hands"
+          ],
+          "takeaway": "Clean hands save more lives than any machine in the hospital."
+        },
+        {
+          "title": "Giving Medicines Safely",
+          "body": "Medication errors are among the most common harms in healthcare. Every dose is checked against the five rights, and anything unclear is questioned before it's given.",
+          "bullets": [
+            "Right patient: check two identifiers (name and date of birth)",
+            "Right drug",
+            "Right dose",
+            "Right route (by mouth, injection…)",
+            "Right time",
+            "Check allergies first; record every dose immediately"
+          ],
+          "example": "A doctor prescribes 500 mg of a medicine, and the tablets are 250 mg each.\nDose ÷ strength = 500 ÷ 250 = 2 tablets.\nBefore giving them: check the patient's name and date of birth, allergies, route and time, then record it.",
+          "takeaway": "If any of the five rights is uncertain, stop and check."
+        }
+      ],
+      "lab": {
+        "title": "Infection Control Lab",
+        "brief": "Demonstrate handwashing (40 to 60 seconds) and putting on and taking off PPE in the right order.",
+        "deliverable": "A checklist signed by a peer.",
+        "proTip": "Taking PPE off is where contamination happens: go slowly."
+      },
+      "caseStudy": {
+        "scenario": "You're about to give a tablet and the patient says 'I'm allergic to that.' The chart shows no allergy. What do you do?",
+        "options": [
+          {
+            "text": "Give it; the chart is correct.",
+            "correct": false,
+            "explanation": "Never ignore a patient's report of allergy."
+          },
+          {
+            "text": "Hold the dose, check with the prescriber, and update the allergy record if confirmed.",
+            "correct": true,
+            "explanation": "Stop, check and record: patient safety first."
+          },
+          {
+            "text": "Give half the dose.",
+            "correct": false,
+            "explanation": "A smaller dose can still cause a reaction."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "How many 'moments' of hand hygiene does the WHO define?",
+          "options": [
+            "2",
+            "3",
+            "5",
+            "10"
+          ],
+          "correctIndex": 2,
+          "explanation": "Five moments."
+        },
+        {
+          "question": "Prescribed 1,000 mg; tablets are 500 mg. How many?",
+          "options": [
+            "1",
+            "2",
+            "3",
+            "5"
+          ],
+          "correctIndex": 1,
+          "explanation": "1,000 ÷ 500 = 2 tablets."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "First Aid, CPR and Emergencies",
+      "objective": "Act in the first minutes, when it matters most.",
+      "slides": [
+        {
+          "title": "Emergency Basics in the UAE",
+          "body": "In an emergency, every minute counts. Make sure the scene is safe, call for help early, and start first aid.",
+          "bullets": [
+            "Ambulance: 998. Police: 999. Fire: 997",
+            "Danger, Response, Shout for help, Airway, Breathing (DRSAB)",
+            "Recovery position for someone unconscious but breathing normally",
+            "Severe bleeding: firm direct pressure"
+          ],
+          "takeaway": "Call early, act fast: the first minutes decide the outcome."
+        },
+        {
+          "title": "CPR for Adults",
+          "body": "If someone is unresponsive and not breathing normally, start CPR immediately and get a defibrillator (AED). Hands-only CPR is far better than nothing.",
+          "bullets": [
+            "Push hard and fast in the centre of the chest: 100 to 120 compressions a minute",
+            "Depth: 5 to 6 cm for an adult, letting the chest fully rise",
+            "If trained: 30 compressions to 2 rescue breaths",
+            "Use an AED as soon as it arrives and follow its voice instructions"
+          ],
+          "takeaway": "Good, continuous compressions keep blood flowing to the brain until help arrives."
+        }
+      ],
+      "lab": {
+        "title": "First Aid Scenario Lab",
+        "brief": "Run three scenarios on a manikin: an unconscious breathing adult, an adult in cardiac arrest, and severe bleeding.",
+        "deliverable": "A record of the actions and their order.",
+        "proTip": "Compressions to the beat of a 100 to 120 bpm song help keep the right pace."
+      },
+      "caseStudy": {
+        "scenario": "At a mall, a man collapses and isn't breathing normally. A bystander is filming. What's first?",
+        "options": [
+          {
+            "text": "Wait for the ambulance before doing anything.",
+            "correct": false,
+            "explanation": "Without CPR the chance of survival falls fast."
+          },
+          {
+            "text": "Call 998 (or tell someone to), start CPR, and ask someone to bring the nearest AED.",
+            "correct": true,
+            "explanation": "Call, compress, and get an AED: the chain of survival."
+          },
+          {
+            "text": "Give him water.",
+            "correct": false,
+            "explanation": "Never give an unresponsive person anything by mouth."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Adult CPR compression rate:",
+          "options": [
+            "60 a minute",
+            "100 to 120 a minute",
+            "200 a minute",
+            "30 a minute"
+          ],
+          "correctIndex": 1,
+          "explanation": "100 to 120 a minute."
+        },
+        {
+          "question": "The UAE ambulance number is:",
+          "options": [
+            "999",
+            "998",
+            "997",
+            "112"
+          ],
+          "correctIndex": 1,
+          "explanation": "998."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "Who regulates healthcare in Dubai?",
+        "options": [
+          "DHA",
+          "RTA",
+          "DEWA",
+          "DET"
+        ],
+        "correctIndex": 0,
+        "explanation": "The Dubai Health Authority."
+      },
+      {
+        "question": "Normal SpO2 for most healthy adults:",
+        "options": [
+          "60 to 70%",
+          "80 to 85%",
+          "95 to 100%",
+          "100 to 120%"
+        ],
+        "correctIndex": 2,
+        "explanation": "95 to 100%."
+      },
+      {
+        "question": "A red flag sign of deterioration is:",
+        "options": [
+          "Normal breathing",
+          "New confusion",
+          "Sleeping at night",
+          "Eating well"
+        ],
+        "correctIndex": 1,
+        "explanation": "New confusion is a red flag."
+      },
+      {
+        "question": "The first PPE item removed is:",
+        "options": [
+          "Mask",
+          "Gloves",
+          "Goggles",
+          "Gown"
+        ],
+        "correctIndex": 1,
+        "explanation": "Gloves come off first (most contaminated)."
+      },
+      {
+        "question": "Which is NOT one of the five medication rights?",
+        "options": [
+          "Right patient",
+          "Right dose",
+          "Right price",
+          "Right route"
+        ],
+        "correctIndex": 2,
+        "explanation": "Price isn't one of them."
+      },
+      {
+        "question": "CPR compression depth for adults:",
+        "options": [
+          "1 to 2 cm",
+          "5 to 6 cm",
+          "10 cm",
+          "Just touch"
+        ],
+        "correctIndex": 1,
+        "explanation": "5 to 6 cm."
+      },
+      {
+        "question": "The ratio of compressions to breaths for trained rescuers:",
+        "options": [
+          "15:1",
+          "30:2",
+          "5:5",
+          "50:10"
+        ],
+        "correctIndex": 1,
+        "explanation": "30:2."
+      },
+      {
+        "question": "SBAR is used for:",
+        "options": [
+          "Billing",
+          "Clear handovers",
+          "Cleaning",
+          "Parking"
+        ],
+        "correctIndex": 1,
+        "explanation": "Structured communication."
+      },
+      {
+        "question": "Health insurance for Dubai residents is:",
+        "options": [
+          "Optional",
+          "Mandatory",
+          "Only for tourists",
+          "Banned"
+        ],
+        "correctIndex": 1,
+        "explanation": "Compulsory in Dubai."
+      },
+      {
+        "question": "An unconscious person who's breathing normally should be:",
+        "options": [
+          "Given CPR",
+          "Put in the recovery position",
+          "Given water",
+          "Left alone"
+        ],
+        "correctIndex": 1,
+        "explanation": "Recovery position, and keep checking breathing."
+      }
+    ]
+  },
+  "tuitionFee": 3600
+}

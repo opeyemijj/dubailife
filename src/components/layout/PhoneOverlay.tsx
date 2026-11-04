@@ -116,7 +116,7 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
     { id: "grocery", name: APPS.grocery.app.name, icon: APPS.grocery.app.icon, bg: APPS.grocery.app.bg, screen: "grocery", isNew: true },
     { id: "police", name: "Dubai Police", icon: "🚓", bg: "from-blue-700 to-slate-900", screen: "court", badge: courtBadge, isNew: true },
     { id: "health", name: "Dubai Health", icon: "🩺", bg: "from-teal-400 to-cyan-700", screen: "clinic", badge: clinicBadge, isNew: true },
-    { id: "hayati", name: "Hayati", icon: "💞", bg: "from-rose-400 to-pink-600", screen: "hayati", badge: loveBadge, isNew: true },
+    { id: "hayati", name: "Family", icon: "👨‍👩‍👧", bg: "from-rose-400 to-pink-600", screen: "hayati", badge: loveBadge, isNew: true },
     { id: "cars", name: "My Car", icon: "🚗", bg: "from-slate-600 to-slate-900", screen: "cars", isNew: true },
     { id: "decor", name: "Decor", icon: "🧑‍🎨", bg: "from-emerald-400 to-teal-700", screen: "decor", isNew: true },
     { id: "invites", name: "Invites", icon: "🎉", bg: "from-fuchsia-500 to-violet-700", screen: "invites", badge: invitesBadge, isNew: true },

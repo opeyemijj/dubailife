@@ -1,0 +1,463 @@
+{
+  "id": "onebrain-technician",
+  "institutionId": "onebrain",
+  "title": "Home Services Technician",
+  "tagline": "AC care, electrical safety, plumbing and handyman skills for Dubai homes, and how to quote and run jobs like a pro.",
+  "category": "Trades & Home Services",
+  "level": "accelerator",
+  "duration": "4 Weeks (Trade Accelerator)",
+  "rating": 4.94,
+  "enrolledCount": 1760,
+  "icon": "🛠️",
+  "superpower": {
+    "id": "fix_it",
+    "name": "Fix-It Pro",
+    "icon": "🛠️",
+    "description": "Keeps homes running: lower repair bills, and more from maintenance jobs.",
+    "badgeText": "Technician Certified",
+    "perkType": "general"
+  },
+  "syllabus": [
+    "Week 1: Safety first, tools and how Dubai homes are built",
+    "Week 2: Air conditioning: how it works and how to maintain it",
+    "Week 3: Plumbing and electrical basics (and when to call a licensed specialist)",
+    "Week 4: Quoting, customer service and running your own jobs"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Safety, Tools and Dubai Homes",
+      "objective": "Work safely, use the right tools and understand how villas and apartments are serviced.",
+      "slides": [
+        {
+          "title": "Safety Before Everything",
+          "body": "Most trade injuries are avoidable: falls from ladders, electric shocks, cuts and eye injuries. Professionals assess risk before every job, isolate power and water before working, and wear protection.",
+          "bullets": [
+            "Isolate the circuit at the distribution board (DB) and test it's dead before touching wiring",
+            "Ladders: three points of contact, on firm ground, never on the top step",
+            "Gloves, safety glasses, and a dust mask when drilling or cutting",
+            "Never work on gas: in Dubai, gas work is for licensed, Civil Defence-approved specialists"
+          ],
+          "takeaway": "A job done fast is no good if someone gets hurt. Isolate, test, protect."
+        },
+        {
+          "title": "Tools and Home Systems",
+          "body": "A good technician carries a compact kit and knows where things are in a home: the DB, the main water valve, the water heater and the AC units.",
+          "bullets": [
+            "Kit: multimeter or voltage tester, screwdrivers, adjustable spanner, pipe wrench, drill, sealant gun, torch, PTFE tape",
+            "UAE power: 230 V, 50 Hz, with three-pin Type G (BS 1363) sockets",
+            "Water heater thermostat at about 60°C: hot enough to stop Legionella bacteria",
+            "Know where the main water stopcock is before any plumbing job"
+          ],
+          "takeaway": "Find the controls first: the DB, the stopcock and the heater. Then start work."
+        }
+      ],
+      "lab": {
+        "title": "Home Survey Lab",
+        "brief": "Survey a home: find the DB and label its circuits, find the main water valve, check the water heater setting and note the AC units.",
+        "deliverable": "A labelled home map with each control's location.",
+        "proTip": "A labelled DB saves you and the next technician time on every visit."
+      },
+      "caseStudy": {
+        "scenario": "A tenant asks you to move a socket. The circuit is labelled 'sockets' but you haven't tested it. What now?",
+        "options": [
+          {
+            "text": "Switch off that breaker, test with a voltage tester that it's dead, then work.",
+            "correct": true,
+            "explanation": "Labels can be wrong: always test before touching."
+          },
+          {
+            "text": "Trust the label and start.",
+            "correct": false,
+            "explanation": "Wrong labels are common and can kill."
+          },
+          {
+            "text": "Work on it live, carefully.",
+            "correct": false,
+            "explanation": "Never work live."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the mains voltage in UAE homes?",
+          "options": [
+            "110 V",
+            "230 V",
+            "400 V",
+            "12 V"
+          ],
+          "correctIndex": 1,
+          "explanation": "UAE homes use 230 V at 50 Hz."
+        },
+        {
+          "question": "Who should work on gas installations?",
+          "options": [
+            "Any handyman",
+            "Licensed, Civil Defence-approved specialists",
+            "The tenant",
+            "No one"
+          ],
+          "correctIndex": 1,
+          "explanation": "Gas work is for approved specialists only."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Air Conditioning",
+      "objective": "Understand split and central AC and do the maintenance that keeps it cold and efficient.",
+      "slides": [
+        {
+          "title": "How AC Works",
+          "body": "An air conditioner moves heat from inside to outside using refrigerant. The indoor unit (evaporator) absorbs heat from the room; the outdoor unit (condenser) releases it. In Dubai, AC runs most of the year, so poor maintenance shows up fast in bills and comfort.",
+          "bullets": [
+            "Split units: an indoor and an outdoor unit joined by refrigerant pipes",
+            "Ducted and central AC: air through ducts; many towers use district cooling",
+            "Condensate drain: carries water away; if it blocks, water leaks indoors",
+            "Refrigerant work needs certified technicians"
+          ],
+          "takeaway": "AC doesn't make cold: it moves heat out. Keep the airflow and the drain clear."
+        },
+        {
+          "title": "Maintenance That Matters",
+          "body": "Most AC complaints are fixed with basic care: clean filters, clear drains and clean coils.",
+          "bullets": [
+            "Clean or replace filters monthly in summer",
+            "Flush the condensate drain; clear algae with a mild cleaner",
+            "Keep outdoor units clear of dust and obstruction",
+            "Signs of a deeper problem: ice on pipes, warm air, loud noises: call a refrigeration technician"
+          ],
+          "example": "A 'not cooling' call, step by step:\n1. Thermostat on Cool and set below room temperature? (Often the fix.)\n2. Filter clogged with dust? Clean it.\n3. Outdoor unit running, fan turning?\n4. Ice on the pipes or warm air with everything clean: likely low refrigerant, so a specialist job.",
+          "takeaway": "A clean filter can cut cooling costs noticeably and stop most 'not cold' calls."
+        }
+      ],
+      "lab": {
+        "title": "AC Service Lab",
+        "brief": "Service a split unit: clean filters, check the drain, inspect the outdoor unit and record the air temperature at the vents before and after.",
+        "deliverable": "A service checklist with before and after vent temperatures.",
+        "proTip": "Show the customer the dirty filter: it builds trust and explains the value."
+      },
+      "caseStudy": {
+        "scenario": "Water is dripping from an indoor AC unit onto the floor. What's most likely?",
+        "options": [
+          {
+            "text": "The refrigerant is leaking water.",
+            "correct": false,
+            "explanation": "Refrigerant isn't water; leaks show as poor cooling, not drips."
+          },
+          {
+            "text": "The condensate drain is blocked: clear it.",
+            "correct": true,
+            "explanation": "Blocked drains are the usual cause of indoor drips."
+          },
+          {
+            "text": "The outdoor unit is too big.",
+            "correct": false,
+            "explanation": "Unit size doesn't cause indoor drips."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What does the outdoor (condenser) unit do?",
+          "options": [
+            "Makes cold air",
+            "Releases heat from the home outside",
+            "Filters water",
+            "Heats the room"
+          ],
+          "correctIndex": 1,
+          "explanation": "It rejects the heat taken out of the home."
+        },
+        {
+          "question": "How often should AC filters be cleaned in summer?",
+          "options": [
+            "Every 2 years",
+            "Monthly",
+            "Never",
+            "Daily"
+          ],
+          "correctIndex": 1,
+          "explanation": "Monthly cleaning keeps airflow and efficiency up."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Plumbing and Electrical Basics",
+      "objective": "Fix common plumbing faults, do simple electrical replacements safely and know your limits.",
+      "slides": [
+        {
+          "title": "Plumbing Fixes",
+          "body": "Most household plumbing jobs are leaks, blockages and running toilets. Isolate the water first and work clean.",
+          "bullets": [
+            "Dripping tap: replace the washer or cartridge",
+            "Blocked sink: plunger first, then clean the P-trap; avoid harsh acids",
+            "Running toilet: adjust or replace the fill or flush valve",
+            "Hidden leak test: turn off all taps and watch the DEWA meter. If it moves, there's a leak"
+          ],
+          "takeaway": "Isolate, fix, test, and leave it cleaner than you found it."
+        },
+        {
+          "title": "Simple Electrical Jobs and Limits",
+          "body": "Replacing a light fitting, a socket faceplate or a plug is common handyman work when done safely. New circuits, DB changes and major rewiring need a licensed electrician and approvals.",
+          "bullets": [
+            "Power off at the DB and test dead every time",
+            "Match the wires: live (brown), neutral (blue), earth (green and yellow)",
+            "RCDs (earth leakage breakers) trip at about 30 mA to protect people: if one keeps tripping, find the fault, don't bypass it",
+            "Know your limit: new circuits and DB work are for licensed electricians"
+          ],
+          "takeaway": "Small jobs, done safely; big jobs, referred to licensed pros."
+        }
+      ],
+      "lab": {
+        "title": "Fault-Finding Lab",
+        "brief": "Diagnose and fix a dripping tap and a running toilet, then do a meter leak test for the whole home.",
+        "deliverable": "Photos, parts used, and the meter readings.",
+        "proTip": "Carry common washers, cartridges and flush valves: most jobs finish on the first visit."
+      },
+      "caseStudy": {
+        "scenario": "A customer's RCD keeps tripping and they ask you to bypass it so the power stays on. What do you do?",
+        "options": [
+          {
+            "text": "Bypass it; the customer asked.",
+            "correct": false,
+            "explanation": "An RCD protects people from electric shock. Bypassing it is dangerous and illegal."
+          },
+          {
+            "text": "Refuse to bypass it, unplug appliances one by one to find the fault, and call a licensed electrician if it's in the wiring.",
+            "correct": true,
+            "explanation": "Find the faulty appliance or circuit and keep the protection working."
+          },
+          {
+            "text": "Swap it for a bigger breaker.",
+            "correct": false,
+            "explanation": "That removes protection and creates a fire risk."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Earth wire colour in UAE wiring?",
+          "options": [
+            "Brown",
+            "Blue",
+            "Green and yellow",
+            "Red"
+          ],
+          "correctIndex": 2,
+          "explanation": "Earth is green and yellow."
+        },
+        {
+          "question": "Water meter moves with all taps off. This means:",
+          "options": [
+            "The meter is broken",
+            "There's probably a leak",
+            "Normal use",
+            "High pressure"
+          ],
+          "correctIndex": 1,
+          "explanation": "Movement with nothing on means water is escaping somewhere."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Quoting and Running Jobs",
+      "objective": "Price work fairly, communicate like a professional and build repeat customers.",
+      "slides": [
+        {
+          "title": "Quoting a Job",
+          "body": "Clear, written quotes prevent arguments. Break them into labour, materials and call-out, add your margin, and say what's included.",
+          "bullets": [
+            "Labour: hours × your hourly rate",
+            "Materials: cost plus a markup for sourcing",
+            "Call-out or minimum charge",
+            "VAT at 5% if you're VAT-registered"
+          ],
+          "example": "Replacing a kitchen mixer tap:\n• Labour: 1.5 hours × AED 120 = AED 180\n• Tap supplied: AED 350 cost + 15% = AED 402.50\n• Call-out: AED 50\nTotal: AED 632.50, plus 5% VAT if registered = AED 664.13",
+          "takeaway": "A clear quote is half the job: it sets expectations and protects you both."
+        },
+        {
+          "title": "Customer Service and Repeat Work",
+          "body": "Customers remember punctuality, tidiness and honesty more than anything. Annual maintenance contracts (AMCs) for AC and general upkeep turn one-off jobs into steady income.",
+          "bullets": [
+            "Arrive on time, or call ahead if you're late",
+            "Protect floors, clean up, and explain what you did",
+            "Photos before and after build trust",
+            "Offer an AMC: AC servicing every 3 to 4 months plus priority call-outs"
+          ],
+          "takeaway": "Honest, tidy and on time: that's how one job becomes ten."
+        }
+      ],
+      "lab": {
+        "title": "Quote and AMC Lab",
+        "brief": "Write quotes for three common jobs and design an annual maintenance contract for a 2-bedroom apartment.",
+        "deliverable": "Three itemised quotes and a one-page AMC offer with price.",
+        "proTip": "Price the AMC so it's cheaper than ad-hoc calls for the customer but steady income for you."
+      },
+      "caseStudy": {
+        "scenario": "Halfway through a job you find a bigger problem that will double the cost. What do you do?",
+        "options": [
+          {
+            "text": "Fix it and add it to the bill.",
+            "correct": false,
+            "explanation": "Surprise charges break trust."
+          },
+          {
+            "text": "Stop, show the customer, explain options and costs, and get their OK before continuing.",
+            "correct": true,
+            "explanation": "Customers decide on extra cost. Transparency keeps trust."
+          },
+          {
+            "text": "Leave without saying anything.",
+            "correct": false,
+            "explanation": "That abandons the customer."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What should a quote list?",
+          "options": [
+            "Only the total",
+            "Labour, materials, call-out and VAT",
+            "Nothing written",
+            "Your life story"
+          ],
+          "correctIndex": 1,
+          "explanation": "Itemised quotes prevent disputes."
+        },
+        {
+          "question": "What is an AMC?",
+          "options": [
+            "A type of tap",
+            "An annual maintenance contract",
+            "A licence",
+            "An AC refrigerant"
+          ],
+          "correctIndex": 1,
+          "explanation": "An annual maintenance contract brings repeat work."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "Before touching any wiring you must:",
+        "options": [
+          "Wear gloves only",
+          "Isolate the circuit and test it's dead",
+          "Ask the customer",
+          "Use a ladder"
+        ],
+        "correctIndex": 1,
+        "explanation": "Isolate and test every time."
+      },
+      {
+        "question": "UAE sockets are mostly:",
+        "options": [
+          "Type A",
+          "Type G (three-pin)",
+          "Type C",
+          "Type F"
+        ],
+        "correctIndex": 1,
+        "explanation": "UAE uses three-pin Type G (BS 1363)."
+      },
+      {
+        "question": "Water heaters should be set to about:",
+        "options": [
+          "30°C",
+          "45°C",
+          "60°C",
+          "90°C"
+        ],
+        "correctIndex": 2,
+        "explanation": "About 60°C controls Legionella."
+      },
+      {
+        "question": "Indoor AC drips are usually caused by:",
+        "options": [
+          "Low voltage",
+          "A blocked condensate drain",
+          "Too much refrigerant",
+          "Old remote batteries"
+        ],
+        "correctIndex": 1,
+        "explanation": "Clear the drain."
+      },
+      {
+        "question": "Who handles refrigerant work?",
+        "options": [
+          "Any handyman",
+          "Certified refrigeration technicians",
+          "The landlord",
+          "The customer"
+        ],
+        "correctIndex": 1,
+        "explanation": "Refrigerant work needs certified technicians."
+      },
+      {
+        "question": "The neutral wire is coloured:",
+        "options": [
+          "Brown",
+          "Blue",
+          "Green and yellow",
+          "Black"
+        ],
+        "correctIndex": 1,
+        "explanation": "Neutral is blue."
+      },
+      {
+        "question": "An RCD protects against:",
+        "options": [
+          "Theft",
+          "Electric shock from earth leakage",
+          "Water leaks",
+          "AC noise"
+        ],
+        "correctIndex": 1,
+        "explanation": "RCDs trip on earth leakage to protect people."
+      },
+      {
+        "question": "To clear a blocked sink, first try:",
+        "options": [
+          "Strong acid",
+          "A plunger, then the P-trap",
+          "Removing the sink",
+          "Calling DEWA"
+        ],
+        "correctIndex": 1,
+        "explanation": "Plunger, then clean the trap."
+      },
+      {
+        "question": "A AED 300 job plus 5% VAT costs:",
+        "options": [
+          "AED 305",
+          "AED 315",
+          "AED 330",
+          "AED 350"
+        ],
+        "correctIndex": 1,
+        "explanation": "300 × 1.05 = AED 315."
+      },
+      {
+        "question": "The best way to win repeat work is:",
+        "options": [
+          "Lowest price only",
+          "Punctuality, tidiness and honesty",
+          "Never answering calls",
+          "Long quotes"
+        ],
+        "correctIndex": 1,
+        "explanation": "Customers come back to reliable, honest technicians."
+      }
+    ]
+  },
+  "tuitionFee": 6000
+}

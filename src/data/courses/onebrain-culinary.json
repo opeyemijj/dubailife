@@ -1,0 +1,520 @@
+{
+  "id": "onebrain-culinary",
+  "institutionId": "onebrain",
+  "title": "World-Class Culinary Arts",
+  "tagline": "From knife skills and Dubai Municipality food safety to mother sauces, Emirati classics, fine-dining plating and menu costing.",
+  "category": "Culinary Arts",
+  "level": "accelerator",
+  "duration": "4 Weeks (Chef Accelerator)",
+  "rating": 4.97,
+  "enrolledCount": 2240,
+  "icon": "👨‍🍳",
+  "superpower": {
+    "id": "master_chef",
+    "name": "Master Chef",
+    "icon": "👨‍🍳",
+    "description": "Cooks with confidence and costs a menu like a pro: earns more at food jobs and from home dinner parties.",
+    "badgeText": "Chef Certified",
+    "perkType": "general"
+  },
+  "syllabus": [
+    "Week 1: The professional kitchen: mise en place, knife skills and the brigade",
+    "Week 2: Food safety and hygiene: the danger zone, allergens, Dubai Municipality rules and halal",
+    "Week 3: Heat, technique and flavour: browning, stocks, mother sauces and balance",
+    "Week 4: Emirati cuisine, professional plating, food cost and menu pricing"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "The Professional Kitchen: Knife Skills, Mise en Place & the Brigade",
+      "objective": "Work like a professional cook: set up your station, cut with precision and know who does what in a world-class kitchen.",
+      "slides": [
+        {
+          "title": "Mise en Place: Everything in Its Place",
+          "body": "Every great kitchen runs on mise en place: before service starts, every ingredient is washed, cut, measured and placed within reach, and every tool is ready. Service is fast and calm because the thinking was done earlier. Top chefs say a cook is only as good as their prep list.",
+          "bullets": [
+            "Read the whole recipe first, then write a prep list in the order things take longest",
+            "Group ingredients by the moment they go into the pan, in small containers",
+            "Keep a clean station: a damp cloth under the board, a bin bowl, sanitiser bucket, and wipe as you go",
+            "A 'hot' and a 'cold' side: never stack raw proteins above ready-to-eat food"
+          ],
+          "example": "Prep list for a chicken machboos for 10 (service at 7pm):\n• 4:00 Marinate chicken in bzar, turmeric, salt and loomi (needs 2 hours)\n• 4:15 Soak 1 kg basmati rice (needs 30 to 60 minutes)\n• 4:30 Slice 3 onions, chop garlic and ginger, crack 4 loomi\n• 5:00 Make the stock base; 6:00 cook the rice in it; 6:45 rest, garnish and hold hot above 60°C",
+          "takeaway": "Cooks who prep properly cook faster, waste less and burn fewer things. Prep is the job."
+        },
+        {
+          "title": "Knife Skills and the Classic Cuts",
+          "body": "A sharp knife is a safe knife: a dull blade slips and needs force. Hold the handle with a pinch grip (thumb and index finger on the blade), and guide the food with a 'claw' hand, fingertips tucked behind the knuckles. Even cuts cook evenly, which is why chefs are judged on them.",
+          "bullets": [
+            "Julienne: thin strips about 3 mm × 3 mm × 5 to 6 cm",
+            "Brunoise: tiny 3 mm cubes, cut from julienne",
+            "Dice: small 6 mm, medium 12 mm, large 20 mm",
+            "Chiffonade: herbs or leaves rolled tight and sliced into fine ribbons",
+            "Hone the edge with a steel before every shift; sharpen on a whetstone when honing stops working"
+          ],
+          "example": "Dicing an onion without tears or waste:\n1. Halve it through the root and peel, keeping the root on (it holds the layers together).\n2. Make vertical cuts towards the root, 6 mm apart, without cutting through it.\n3. One or two horizontal cuts, then slice across: perfect 6 mm dice.\n4. Chill the onion for 10 minutes first and use a sharp knife: fewer tears.",
+          "takeaway": "Precision is respect for the ingredient: even pieces mean even cooking and a beautiful plate."
+        },
+        {
+          "title": "The Kitchen Brigade",
+          "body": "Auguste Escoffier organised the professional kitchen like a team with clear ranks, and the best hotels in Dubai still run this way. Everyone knows their station, and orders flow from the pass.",
+          "bullets": [
+            "Chef de cuisine (head chef) runs the kitchen; the sous chef runs service and stands in for them",
+            "Chefs de partie run stations: saucier (sauces), poissonnier (fish), rôtisseur (roasts), garde manger (cold kitchen), entremetier (vegetables), pâtissier (pastry)",
+            "Commis are junior cooks learning under each chef de partie",
+            "On the pass: 'Yes, chef!' confirms every call, so nothing is missed"
+          ],
+          "takeaway": "A kitchen is a team sport: knowing your role, and calling back every order, is what keeps service clean."
+        }
+      ],
+      "lab": {
+        "title": "Station Set-Up Challenge",
+        "brief": "Write a prep list and station plan for a three-course dinner for 8 (starter, main and dessert), with timings counted back from service.",
+        "deliverable": "A timed prep list, and a sketch of your station with hot, cold and clean zones.",
+        "proTip": "Start with the longest job (marinades, doughs, stocks) and always build in 20 minutes of slack before service."
+      },
+      "caseStudy": {
+        "scenario": "You join a busy hotel kitchen as a commis. Service starts in 15 minutes, and your onions for the sauce aren't cut yet. What do you do?",
+        "options": [
+          {
+            "text": "Start cutting quietly and hope nobody notices if you're late.",
+            "correct": false,
+            "explanation": "Hidden problems become disasters at the pass. Kitchens rely on honesty about timing."
+          },
+          {
+            "text": "Tell your chef de partie straight away, ask for a hand or a quicker plan, and get cutting.",
+            "correct": true,
+            "explanation": "Calling problems early lets the team adjust. That's how brigades work."
+          },
+          {
+            "text": "Use yesterday's leftover onions from the bin bowl.",
+            "correct": false,
+            "explanation": "Never: it's a food safety and quality failure."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What does 'mise en place' mean in practice?",
+          "options": [
+            "Plating the food beautifully",
+            "Having every ingredient prepared and every tool ready before cooking",
+            "Cleaning down after service",
+            "Writing the menu"
+          ],
+          "correctIndex": 1,
+          "explanation": "Mise en place is preparation: everything in its place before service begins."
+        },
+        {
+          "question": "Which cut is a 3 mm cube?",
+          "options": [
+            "Julienne",
+            "Chiffonade",
+            "Brunoise",
+            "Large dice"
+          ],
+          "correctIndex": 2,
+          "explanation": "Brunoise is a 3 mm cube, usually cut from julienne strips."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Food Safety & Hygiene: Dubai Municipality Standards",
+      "objective": "Keep every guest safe: temperatures, cross-contamination, allergens and the rules every Dubai food business must follow.",
+      "slides": [
+        {
+          "title": "The Danger Zone and Safe Temperatures",
+          "body": "Bacteria multiply fastest between 5°C and 60°C, the danger zone. Dubai Municipality's food code expects cold food held at 5°C or below, hot food held at 60°C or above, and food cooked until the centre is hot enough to kill bacteria. A probe thermometer, cleaned between uses, is a cook's most important tool.",
+          "bullets": [
+            "Cold holding: 5°C or below. Freezers: −18°C or below",
+            "Hot holding: 60°C or above",
+            "Cook poultry and minced meat until the core reaches at least 75°C",
+            "Cool cooked food quickly: from 60°C to 21°C within 2 hours, then to 5°C within the next 4 hours",
+            "Reheat once only, to 75°C at the core"
+          ],
+          "example": "A pot of 20 litres of chicken stock is finished at 4pm. Cooling it safely:\n• Split it into shallow containers and set them in an ice bath, stirring.\n• By 6pm it must be at 21°C or below (2 hours).\n• By 10pm it must be at 5°C or below (4 more hours), then into the fridge, labelled and dated.\nLeaving the whole pot on the stove to cool overnight keeps it in the danger zone for hours.",
+          "takeaway": "Time and temperature are what stop food poisoning. If in doubt, probe it."
+        },
+        {
+          "title": "Cross-Contamination, Allergens and Labelling",
+          "body": "Raw meat, poultry and seafood carry bacteria that must never reach ready-to-eat food. Colour-coded boards and knives, separate storage and handwashing between tasks stop it. Allergens can be just as dangerous: a trace of peanut can kill someone with a severe allergy.",
+          "bullets": [
+            "Colour-coded boards: red for raw meat, yellow for raw poultry, blue for raw fish, green for fruit and veg, white for bakery and dairy, brown for cooked meat",
+            "Fridge order, top to bottom: ready-to-eat, then cooked, then raw fish, raw meat, and raw poultry at the bottom",
+            "Common allergens include peanuts, tree nuts, milk, egg, wheat (gluten), soy, fish, shellfish and sesame",
+            "Label everything with the name, date made and use-by date; first in, first out (FIFO)"
+          ],
+          "example": "A guest says they have a severe sesame allergy and orders hummus.\n• Hummus contains tahini (sesame paste), so it's not safe at all.\n• Tell the guest, offer a dish without sesame, and tell the chef.\n• Cook it with clean boards, tools and gloves, away from tahini and za'atar, and have it carried out separately.",
+          "takeaway": "Most food poisoning comes from cross-contamination: separate, label, and wash your hands."
+        },
+        {
+          "title": "Dubai Food Business Rules and Halal",
+          "body": "Every food business in Dubai is licensed and inspected by Dubai Municipality. Food handlers need food hygiene training, and each establishment needs a trained Person in Charge (PIC) on every shift. All meat served must be halal unless the venue is specially licensed, and pork must be stored and prepared completely separately where it's permitted.",
+          "bullets": [
+            "Person in Charge (PIC): a certified supervisor on duty for every shift",
+            "Food handlers: hygiene training, and fitness to work (no working with diarrhoea or vomiting)",
+            "Halal: meat from approved suppliers with halal certificates; no cross-contact with pork or alcohol in halal dishes",
+            "Inspections are graded; a poor grade can mean fines or closure"
+          ],
+          "takeaway": "In Dubai, food safety is the law and halal is a trust promise: keep the paperwork and practices spotless."
+        }
+      ],
+      "lab": {
+        "title": "HACCP Mini-Plan",
+        "brief": "Build a simple safety plan for a chicken shawarma station: find the steps where things could go wrong (receiving, storage, cooking, holding) and set a limit for each.",
+        "deliverable": "A table of step, hazard, control and limit (for example: cooking, bacteria survive, probe the core, at least 75°C).",
+        "proTip": "Inspectors love records: a temperature log that's filled in every day is proof you're in control."
+      },
+      "caseStudy": {
+        "scenario": "At 3pm you find a tray of cooked rice left on the counter since the lunch rush at noon. Nobody knows its temperature. What do you do?",
+        "options": [
+          {
+            "text": "Reheat it well and serve it at dinner.",
+            "correct": false,
+            "explanation": "Cooked rice left warm can grow bacteria (Bacillus cereus) whose toxins survive reheating."
+          },
+          {
+            "text": "Throw it away, record it, and remind the team to cool or hot-hold rice properly.",
+            "correct": true,
+            "explanation": "Food left in the danger zone for an unknown time must be thrown away. Recording it helps stop it happening again."
+          },
+          {
+            "text": "Put it in the fridge now; it'll be fine tomorrow.",
+            "correct": false,
+            "explanation": "Chilling now doesn't undo hours in the danger zone."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is the temperature danger zone?",
+          "options": [
+            "0°C to 30°C",
+            "5°C to 60°C",
+            "60°C to 100°C",
+            "−18°C to 0°C"
+          ],
+          "correctIndex": 1,
+          "explanation": "Between 5°C and 60°C bacteria grow fastest."
+        },
+        {
+          "question": "Which goes on the bottom shelf of the fridge?",
+          "options": [
+            "Salads",
+            "Cooked rice",
+            "Raw chicken",
+            "Desserts"
+          ],
+          "correctIndex": 2,
+          "explanation": "Raw poultry goes lowest, so its juices can't drip onto anything else."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Heat, Technique & Flavour: How Cooking Really Works",
+      "objective": "Understand what heat does to food, master the core methods and the mother sauces, and build balanced flavour.",
+      "slides": [
+        {
+          "title": "The Science of Heat: Maillard, Caramelisation and Methods",
+          "body": "Browning is flavour. The Maillard reaction, between proteins and sugars, starts at around 140°C and gives seared steak, toasted bread and roasted coffee their taste. Caramelisation of sugar begins around 160°C. Water boils at 100°C, so anything wet won't brown until the surface dries, which is why you pat meat dry and don't crowd the pan.",
+          "bullets": [
+            "Dry heat: searing, sautéing, roasting, grilling, frying: browning and crust",
+            "Moist heat: boiling, simmering, poaching, steaming: gentle and tender",
+            "Combination: braising and stewing: sear first, then cook slowly in liquid (perfect for lamb shoulder)",
+            "Rest meat after cooking so the juices settle; carry-over cooking adds a few degrees"
+          ],
+          "example": "Why a crowded pan gives grey meat:\n• 1 kg of cold beef cubes in one small pan drops it from about 200°C to well under 100°C.\n• The meat releases water, which boils, so it steams instead of browning.\n• Sear in 3 batches with space between pieces: each batch stays hot and browns properly.",
+          "takeaway": "Control heat and moisture and you control texture and flavour."
+        },
+        {
+          "title": "Stocks and the Five Mother Sauces",
+          "body": "Classical cooking builds hundreds of sauces from five mother sauces. Learn these and you can make almost any sauce on a menu.",
+          "bullets": [
+            "Béchamel: milk thickened with a white roux (butter and flour)",
+            "Velouté: light stock (chicken, fish or veal) thickened with a blond roux",
+            "Espagnole: brown stock with a brown roux, tomato and mirepoix",
+            "Tomato sauce: tomatoes, aromatics and stock",
+            "Hollandaise: egg yolks emulsified with warm butter and lemon",
+            "Mirepoix (for stocks): onion, carrot and celery in a 2 : 1 : 1 ratio"
+          ],
+          "example": "Making 1 litre of béchamel:\n• Roux: melt 50 g butter, stir in 50 g flour, and cook 2 minutes without colouring.\n• Whisk in 1 litre of warm milk a little at a time.\n• Simmer 10 minutes until it coats a spoon; season with salt, white pepper and nutmeg.\nAdd grated cheese and it becomes a Mornay sauce, a 'daughter' sauce.",
+          "takeaway": "Stocks and mother sauces are the grammar of the kitchen."
+        },
+        {
+          "title": "Balancing Flavour",
+          "body": "A dish tastes 'finished' when salt, acid, fat, sweetness, bitterness and umami are in balance. Chefs taste constantly and adjust: a flat dish usually needs salt or acid, and a harsh one needs fat or sweetness.",
+          "bullets": [
+            "Salt makes flavours brighter; add it in stages and taste",
+            "Acid (lemon, vinegar, sumac, dried lime) lifts heavy or rich food",
+            "Fat carries flavour and softens heat",
+            "Umami (tomato, parmesan, mushrooms, soy, slow-cooked meat) adds depth",
+            "Texture matters too: something crisp on something soft"
+          ],
+          "takeaway": "Taste, adjust, taste again: balance is what separates good food from great food."
+        }
+      ],
+      "lab": {
+        "title": "Mother Sauce Lab",
+        "brief": "Make a béchamel and turn it into two daughter sauces (Mornay with cheese and a mustard sauce), then taste and balance each.",
+        "deliverable": "Your recipe with weights, photos of each sauce coating a spoon, and tasting notes on what you adjusted.",
+        "proTip": "Warm milk into a hot roux, a little at a time, means no lumps."
+      },
+      "caseStudy": {
+        "scenario": "A guest says the lamb stew is 'heavy and flat'. It's well salted. What's the best fix?",
+        "options": [
+          {
+            "text": "Add more salt.",
+            "correct": false,
+            "explanation": "It's already seasoned: more salt makes it salty, not lively."
+          },
+          {
+            "text": "Finish it with acid and freshness: lemon or loomi, and fresh herbs.",
+            "correct": true,
+            "explanation": "Acid and fresh herbs cut through richness and wake up a heavy dish."
+          },
+          {
+            "text": "Add a spoonful of sugar.",
+            "correct": false,
+            "explanation": "Sweetness won't fix heaviness and may make it cloying."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Roughly when does the Maillard reaction start?",
+          "options": [
+            "40°C",
+            "100°C",
+            "140°C",
+            "300°C"
+          ],
+          "correctIndex": 2,
+          "explanation": "Browning reactions start around 140°C, which is why wet food won't brown at 100°C."
+        },
+        {
+          "question": "Which mother sauce is an emulsion of egg yolks and butter?",
+          "options": [
+            "Béchamel",
+            "Velouté",
+            "Hollandaise",
+            "Espagnole"
+          ],
+          "correctIndex": 2,
+          "explanation": "Hollandaise is egg yolk emulsified with warm butter and lemon."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Emirati Cuisine, Plating & Running a Profitable Kitchen",
+      "objective": "Cook the UAE's own dishes, plate like a fine-dining chef and price a menu that makes money.",
+      "slides": [
+        {
+          "title": "Emirati and Gulf Classics",
+          "body": "Emirati food reflects the desert, the sea and centuries of trade with India, Persia and East Africa. Spices like saffron, cardamom, cinnamon and dried lime (loomi) are the signature.",
+          "bullets": [
+            "Machboos: spiced rice cooked with chicken, lamb or fish, scented with bzar (the Emirati spice blend) and loomi",
+            "Harees: wheat and meat cooked slowly and beaten smooth, served in Ramadan and at Eid",
+            "Luqaimat: crisp fried dough balls drizzled with date syrup (dibs) and sesame",
+            "Balaleet: sweet saffron vermicelli topped with a thin omelette, a breakfast favourite",
+            "Hospitality: Arabic coffee (gahwa) with cardamom, served with dates, is the welcome"
+          ],
+          "example": "Luqaimat for 20 pieces:\n• Mix 250 g flour, 1 tsp yeast, 1 tbsp sugar, a pinch of saffron and cardamom, and about 250 ml warm water to a thick, sticky batter.\n• Leave it to rise 1 hour, until bubbly.\n• Drop spoonfuls into oil at about 175°C and fry until golden all over.\n• Drain, drizzle with date syrup, sprinkle with sesame and serve warm.",
+          "takeaway": "Cooking the food of the place you live in is the best way to understand its people."
+        },
+        {
+          "title": "Plating Like a Professional",
+          "body": "People eat with their eyes first. Fine-dining plating uses a few simple rules: a focal point, height, contrast of colour and texture, and empty space.",
+          "bullets": [
+            "Think of the plate as a clock: protein at 6 o'clock, starch at 10, vegetables at 2",
+            "Odd numbers (3 or 5 pieces) look more natural than even",
+            "Use height and leave negative space; wipe the rim clean",
+            "Sauce under or beside, not drowning, the main element",
+            "Garnish must be edible and make sense with the dish"
+          ],
+          "takeaway": "A beautiful plate raises what guests will happily pay, and how they remember you."
+        },
+        {
+          "title": "Food Cost and Menu Pricing",
+          "body": "A restaurant can serve great food and still go bankrupt. Professional kitchens cost every recipe and aim for a food cost of about 28 to 35% of the selling price, leaving room for staff, rent and profit.",
+          "bullets": [
+            "Food cost % = cost of ingredients ÷ selling price × 100",
+            "Price = plate cost ÷ target food cost %",
+            "Yield: count what's usable after trimming, not what you bought",
+            "Waste tracking and portion control protect profit every day"
+          ],
+          "example": "Pricing a grilled hammour main:\n• Fish 200 g portion: AED 14; sides and sauce: AED 4; garnish: AED 1. Plate cost: AED 19.\n• Target food cost: 30%. Price: 19 ÷ 0.30 = AED 63.\n• Put it on the menu at AED 65. Food cost: 19 ÷ 65 = 29%.",
+          "takeaway": "Know your numbers: every plate has a cost, and every price must cover it."
+        }
+      ],
+      "lab": {
+        "title": "Signature Menu Project",
+        "brief": "Design a 3-course menu with one Emirati-inspired dish, cost every recipe and plate your main course.",
+        "deliverable": "Recipes with weights, a costing sheet (plate cost, price, food cost %), and a photo of your plated main.",
+        "proTip": "Price from cost, then sense-check against the market: guests pay for value, not just ingredients."
+      },
+      "caseStudy": {
+        "scenario": "Your new café's lamb burger costs AED 22 to make, and you sell it for AED 45. The owner says the café is busy but losing money. What's the problem?",
+        "options": [
+          {
+            "text": "The burger's food cost is 49%, far above the 28 to 35% target: reprice to about AED 65 or cut the cost.",
+            "correct": true,
+            "explanation": "22 ÷ 45 is 49%. At that cost there's nothing left for wages, rent and profit."
+          },
+          {
+            "text": "Nothing: busy cafés always make money.",
+            "correct": false,
+            "explanation": "Being busy with underpriced dishes just loses money faster."
+          },
+          {
+            "text": "Cut the portion size in half without telling guests.",
+            "correct": false,
+            "explanation": "That damages trust. Fix the price or cost honestly."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is luqaimat?",
+          "options": [
+            "A spiced rice dish",
+            "Fried dough balls with date syrup",
+            "A lamb stew",
+            "Arabic coffee"
+          ],
+          "correctIndex": 1,
+          "explanation": "Luqaimat are crisp fried dough balls drizzled with date syrup."
+        },
+        {
+          "question": "A plate costs AED 15 and the target food cost is 30%. What price?",
+          "options": [
+            "AED 30",
+            "AED 45",
+            "AED 50",
+            "AED 60"
+          ],
+          "correctIndex": 2,
+          "explanation": "15 ÷ 0.30 = AED 50."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "What is mise en place?",
+        "options": [
+          "A French dessert",
+          "Having everything prepared and in place before cooking",
+          "The head chef",
+          "A plating style"
+        ],
+        "correctIndex": 1,
+        "explanation": "Mise en place means everything prepped and ready before service."
+      },
+      {
+        "question": "Which knife grip gives the most control?",
+        "options": [
+          "Holding the handle at the very end",
+          "The pinch grip, with thumb and index finger on the blade",
+          "Holding the spine with one finger",
+          "Any grip, if the knife is sharp"
+        ],
+        "correctIndex": 1,
+        "explanation": "The pinch grip gives precise control."
+      },
+      {
+        "question": "Hot food must be held at or above:",
+        "options": [
+          "30°C",
+          "45°C",
+          "60°C",
+          "100°C"
+        ],
+        "correctIndex": 2,
+        "explanation": "Hot holding is 60°C or above, out of the danger zone."
+      },
+      {
+        "question": "To what core temperature should chicken be cooked?",
+        "options": [
+          "50°C",
+          "63°C",
+          "At least 75°C",
+          "100°C"
+        ],
+        "correctIndex": 2,
+        "explanation": "Poultry is cooked to at least 75°C at the core."
+      },
+      {
+        "question": "Why pat meat dry before searing?",
+        "options": [
+          "To season it",
+          "Surface water must evaporate before browning can happen",
+          "To make it lighter",
+          "It isn't necessary"
+        ],
+        "correctIndex": 1,
+        "explanation": "Water keeps the surface at 100°C, too low for the Maillard reaction."
+      },
+      {
+        "question": "Which is NOT one of the five mother sauces?",
+        "options": [
+          "Béchamel",
+          "Hollandaise",
+          "Mayonnaise",
+          "Velouté"
+        ],
+        "correctIndex": 2,
+        "explanation": "Mayonnaise is a cold emulsion, not one of the five classical mother sauces."
+      },
+      {
+        "question": "What is the classic mirepoix ratio of onion : carrot : celery?",
+        "options": [
+          "1 : 1 : 1",
+          "2 : 1 : 1",
+          "1 : 2 : 1",
+          "3 : 2 : 2"
+        ],
+        "correctIndex": 1,
+        "explanation": "Mirepoix is two parts onion to one part each of carrot and celery."
+      },
+      {
+        "question": "What gives Emirati machboos its signature tang?",
+        "options": [
+          "Vinegar",
+          "Dried lime (loomi)",
+          "Tamarind only",
+          "Lemon juice only"
+        ],
+        "correctIndex": 1,
+        "explanation": "Loomi, dried black lime, gives machboos its tangy depth."
+      },
+      {
+        "question": "A dish costs AED 18 and sells for AED 60. What is the food cost %?",
+        "options": [
+          "18%",
+          "30%",
+          "42%",
+          "60%"
+        ],
+        "correctIndex": 1,
+        "explanation": "18 ÷ 60 = 0.30, which is 30%."
+      },
+      {
+        "question": "Who runs a station such as sauces or pastry in a brigade?",
+        "options": [
+          "Commis",
+          "Chef de partie",
+          "Plongeur",
+          "Maître d'"
+        ],
+        "correctIndex": 1,
+        "explanation": "A chef de partie runs a station, with commis cooks under them."
+      }
+    ]
+  },
+  "tuitionFee": 12000
+}

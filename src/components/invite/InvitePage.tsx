@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
-import { useCitizen } from "@/lib/citizenStore";
+import { refreshCitizen, useCitizen } from "@/lib/citizenStore";
 import { useNow } from "@/lib/dubaiClock";
 import { openPhone } from "@/components/layout/PhoneOverlay";
 import { acceptAskOut, decorOf, forgetInvite, partyDoor, inviteView, isEvent, kindOf, rememberInvite, rsvp, shareInvite, type InviteView } from "@/lib/invites";
@@ -75,6 +75,8 @@ export function InvitePage({ code, initial }: { code: string; initial: InviteVie
   const host = invite.host?.username ?? "a friend";
   const signedIn = isLoggedIn && !!citizen;
   const profileDone = signedIn && !needsOnboarding;
+  // A paid event: going means buying the ticket (once).
+  const ticket = event && (invite.price ?? 0) > 0 && !invite.paid && !invite.isHost ? invite.price! : 0;
   const authQuery = `invite=${code}${invite.host ? `&ref=${encodeURIComponent(invite.host.username)}` : ""}`;
 
   const go = async () => {
@@ -93,7 +95,8 @@ export function InvitePage({ code, initial }: { code: string; initial: InviteVie
     setBusy(false);
     if (err) { setNote(err); return; }
     gameAudio.playCoinSound();
-    setInvite({ ...invite, mine: "going", going: invite.mine === "going" ? invite.going : invite.going + 1 });
+    setInvite({ ...invite, mine: "going", paid: invite.paid || ticket > 0, going: invite.mine === "going" ? invite.going : invite.going + 1 });
+    if (ticket) void refreshCitizen();
     setNote(`You're on the list. Come back to this link at ${when(invite.startsAt)}.`);
   };
   const sayYes = async () => {
@@ -104,14 +107,19 @@ export function InvitePage({ code, initial }: { code: string; initial: InviteVie
     forgetInvite();
     gameAudio.playCoinSound();
     setInvite({ ...invite, cancelled: true, mine: "going" });
-    setNote(`💞 You and @${r.partner} are dating! Find each other in Hayati.`);
+    setNote(`💞 You and @${r.partner} are dating! Find each other in Family.`);
+  };
+  const visit = () => {
+    forgetInvite();
+    gameAudio.playClickSound();
+    router.push(invite.route);
   };
   const hire = () => {
     forgetInvite();
     router.push(`/home?hire=${encodeURIComponent(invite.host?.username ?? "")}`);
   };
   const share = async () => {
-    const r = await shareInvite(code, `Come to ${invite.title} at ${invite.label} on Dubai Life!`);
+    const r = await shareInvite(code, invite.kind === "visit" ? `Come and see ${invite.title} on Dubai Life!` : `Come to ${invite.title} at ${invite.label} on Dubai Life!`);
     if (r === "copied") setNote("Link copied. Send it to your friends!");
   };
 
@@ -124,12 +132,13 @@ export function InvitePage({ code, initial }: { code: string; initial: InviteVie
           <div className="flex justify-center"><Face look={invite.host?.look} size="w-20 h-20" /></div>
           <p className="text-sm text-white/80">{invite.kind === "ask_out" ? `@${host} wants to go on a date with you` : invite.kind === "hire_decorator" ? `@${host} is an interior decorator` : `@${host} invited you to`}</p>
           <h1 className="text-3xl font-black leading-tight">{k.icon} {invite.title}</h1>
-          <p className="font-bold">{event ? invite.label : invite.kind === "ask_out" ? "Say yes and you'll be dating in Hayati." : "They'll come to your home, buy with your budget and decorate it."}</p>
+          <p className="font-bold">{event || invite.kind === "visit" ? invite.label : invite.kind === "ask_out" ? "Say yes and you'll be dating (see the Family app)." : "They'll come to your home, buy with your budget and decorate it."}</p>
           {event ? (
             <>
               <p className={`inline-block rounded-full px-3 py-1 text-sm font-black ${ended ? "bg-white/15 text-white/70" : live ? "bg-rose-500" : "bg-amber-400 text-slate-950"}`}>
                 {ended ? "This party has ended" : live ? `● Happening now${invite.arrived ? ` · ${invite.arrived} here` : ""}` : `${when(invite.startsAt)} · Dubai time`}
               </p>
+              <p className="inline-block ml-2 rounded-full px-3 py-1 text-sm font-black bg-white/15">{(invite.price ?? 0) > 0 ? `🎟️ AED ${invite.price!.toLocaleString()}${invite.paid ? " · you have a ticket" : ""}` : "🎉 Free entry"}</p>
               {!!invite.decor?.length && <p className="text-sm text-white/85">{invite.decor.map((d) => decorOf(d)?.icon).join(" ")} Decorated for the night</p>}
               <div className="flex items-center justify-center gap-2 pt-1">
                 <div className="flex -space-x-3">{invite.guests.slice(0, 6).map((g) => <Face key={g.username} look={g.look} size="w-9 h-9" />)}</div>
@@ -146,6 +155,7 @@ export function InvitePage({ code, initial }: { code: string; initial: InviteVie
             <p className="font-black">{event ? "It's your party. Invite more people:" : "This is your link. Share it:"}</p>
             <button onClick={share} className="w-full h-12 rounded-2xl bg-emerald-600 text-white font-black">Share the invite</button>
             {event && <button onClick={go} className="w-full h-11 rounded-2xl bg-slate-100 font-black">Go there</button>}
+            {invite.kind === "visit" && <button onClick={visit} className="w-full h-11 rounded-2xl bg-slate-100 font-black">Go there</button>}
           </section>
         ) : (
           <section className="rounded-[24px] bg-slate-100 text-slate-900 p-3 space-y-2">
@@ -160,24 +170,26 @@ export function InvitePage({ code, initial }: { code: string; initial: InviteVie
               <p className="text-sm text-slate-600">Make your character and choose where you live. You&apos;ll come straight back here.</p>
               <Link href="/onboarding/look" className="h-12 rounded-2xl bg-emerald-600 text-white font-black flex items-center justify-center">Continue my profile</Link>
             </Step>
-            <Step n={3} done={!event && invite.mine === "going"} active={profileDone && !(!event && invite.mine === "going")} title={invite.kind === "ask_out" ? "Say yes to the date" : invite.kind === "hire_decorator" ? `Hire @${host}` : live ? "Head to the party" : "Say you're coming"}>
-              {invite.kind === "ask_out" ? (
+            <Step n={3} done={!event && invite.mine === "going"} active={profileDone && !(!event && invite.mine === "going")} title={invite.kind === "visit" ? "Go there" : invite.kind === "ask_out" ? "Say yes to the date" : invite.kind === "hire_decorator" ? `Hire @${host}` : live ? "Head to the party" : "Say you're coming"}>
+              {invite.kind === "visit" ? (
+                <button onClick={visit} className="w-full h-12 rounded-2xl bg-fuchsia-600 text-white font-black">{k.icon} Take me there</button>
+              ) : invite.kind === "ask_out" ? (
                 <button onClick={sayYes} disabled={busy} className="w-full h-12 rounded-2xl bg-rose-500 text-white font-black disabled:opacity-60">💞 Yes, let&apos;s go on a date</button>
               ) : invite.kind === "hire_decorator" ? (
                 <button onClick={hire} className="w-full h-12 rounded-2xl bg-emerald-600 text-white font-black">🧑‍🎨 Hire @{host} for my home</button>
               ) : live ? (
-                <button onClick={go} disabled={busy} className="w-full h-12 rounded-2xl bg-fuchsia-600 text-white font-black disabled:opacity-60">🎉 Head to the party</button>
+                <button onClick={go} disabled={busy} className="w-full h-12 rounded-2xl bg-fuchsia-600 text-white font-black disabled:opacity-60">{ticket ? `🎟️ Buy ticket · AED ${ticket.toLocaleString()} and go` : invite.kind === "seminar" ? "🎤 Head to the seminar" : "🎉 Head to the party"}</button>
               ) : invite.mine === "going" ? (
                 <p className="text-sm font-bold text-emerald-700">You&apos;re going. It starts {when(invite.startsAt)}. Come back to this link then.</p>
               ) : (
-                <button onClick={countMeIn} disabled={busy} className="w-full h-12 rounded-2xl bg-fuchsia-600 text-white font-black disabled:opacity-60">Count me in</button>
+                <button onClick={countMeIn} disabled={busy} className="w-full h-12 rounded-2xl bg-fuchsia-600 text-white font-black disabled:opacity-60">{ticket ? `🎟️ Buy ticket · AED ${ticket.toLocaleString()}` : "Count me in"}</button>
               )}
               {invite.mine === "going" && !live && <button onClick={share} className="w-full h-10 rounded-2xl bg-white font-bold text-sm">Bring friends: share the invite</button>}
             </Step>
           </section>
         )}
         {note && <p className="text-center text-sm font-bold text-amber-200">{note}</p>}
-        {invite.kind === "ask_out" && invite.mine === "going" && <button onClick={() => openPhone("hayati")} className="w-full h-12 rounded-2xl bg-white text-rose-600 font-black">Open Hayati</button>}
+        {invite.kind === "ask_out" && invite.mine === "going" && <button onClick={() => openPhone("hayati")} className="w-full h-12 rounded-2xl bg-white text-rose-600 font-black">Open Family</button>}
         <p className="text-center text-[11px] text-white/50">Dubai Life is a free life game for players aged 21+.</p>
       </div>
     </main>

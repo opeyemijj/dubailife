@@ -37,8 +37,8 @@
             "Specialized Free Zones: DMCC for commodities/tech, DIFC for financial institutions, DAFZ for logistics",
             "100% Foreign Ownership: Federal Decree-Law No. 26 of 2020 abolished the 51% local sponsor mandate for 1,000+ commercial activities"
           ],
-          "codeSnippet": "// Trade License Cost & Structure Calculation (AED)\nconst mainlandLicense = {\n  activityCode: '620101', // Computer software consultancy\n  detGovFee: 14500,\n  marketFeePct: 0.05, // 5% of commercial office lease\n  officeRentAED: 80000,\n  totalYear1: 14500 + (80000 * 0.05) + 3000 // 21,500 AED\n};",
-          "takeaway": "Choose mainland if selling directly to UAE consumers; choose free zone if exporting services globally or seeking zero-tax QFZP status."
+          "takeaway": "Choose mainland if selling directly to UAE consumers; choose free zone if exporting services globally or seeking zero-tax QFZP status.",
+          "example": "Year-one cost of a mainland software consultancy licence (activity 620101):\n• DET licence and government fees: AED 14,500\n• Market fee: 5% of the office lease (5% × AED 80,000) = AED 4,000\n• Other admin and approvals: about AED 3,000\nTotal in year one: about AED 21,500, plus the AED 80,000 office rent itself."
         },
         {
           "title": "Activity Codes & Regulatory Approvals",
@@ -116,8 +116,8 @@
             "9% statutory rate applies to all taxable net profits exceeding AED 375,000",
             "Small Business Relief: Available for resident persons with gross revenue ≤ AED 3,000,000 in any relevant tax period through 2026"
           ],
-          "codeSnippet": "// UAE Corporate Tax Calculator\nfunction calculateUAECorporateTax(netProfitAED, revenueAED) {\n  if (revenueAED <= 3000000) {\n    return { taxDue: 0, status: 'Small Business Relief Eligible (0%)' };\n  }\n  if (netProfitAED <= 375000) return { taxDue: 0, status: '0% Baseline Threshold' };\n  \n  const taxablePortion = netProfitAED - 375000;\n  const taxDue = taxablePortion * 0.09;\n  return { taxDue, effectiveRate: (taxDue / netProfitAED) * 100 };\n}",
-          "takeaway": "Every registered business entity in the UAE must register with the Federal Tax Authority (FTA) and obtain a Corporate Tax TRN, even if zero tax is due."
+          "takeaway": "Every registered business entity in the UAE must register with the Federal Tax Authority (FTA) and obtain a Corporate Tax TRN, even if zero tax is due.",
+          "example": "How UAE Corporate Tax works out:\n• Revenue of AED 3 million or less: you can choose Small Business Relief and pay 0%.\n• Above that, the first AED 375,000 of taxable profit is taxed at 0%, and everything over it at 9%.\nExample: revenue AED 5,000,000, taxable profit AED 1,000,000.\nTaxable at 9%: 1,000,000 − 375,000 = AED 625,000\nTax due: 625,000 × 9% = AED 56,250 (an effective rate of 5.6%)."
         },
         {
           "title": "Qualifying Free Zone Persons (QFZP) & De Minimis Rules",
@@ -195,8 +195,8 @@
             "Digital / SME Neo-Banks: Wio Bank, Mashreq NeoBiz, 3S Money (instant IBANs for low-risk tech profiles)",
             "Mandatory KYC Dossier: Attested parent company docs, UBO utility bills, commercial contracts/invoices, 6-month personal bank statements"
           ],
-          "codeSnippet": "// Corporate Banking Readiness Checklist\nconst kycPack = {\n  tradeLicense: 'Valid & matching DET/FZ portal',\n  memorandumOfAssociation: 'Notarized with clear UBO %',\n  tenancyContract: 'Ejari verified or FZ physical lease',\n  uboProfiles: 'Emirates ID + Passport + CV + Proof of Address',\n  commercialSubstance: 'Existing client contracts or MOUs',\n  sourceOfFunds: 'Verified bank statements of primary shareholder'\n};",
-          "takeaway": "Maintain a verified physical office lease and authentic commercial paper trail to secure Tier-1 corporate bank accounts within 10-14 days."
+          "takeaway": "Maintain a verified physical office lease and authentic commercial paper trail to secure Tier-1 corporate bank accounts within 10-14 days.",
+          "example": "What the bank asks for before opening a company account:\n• Trade licence, matching the DET or free zone portal\n• Memorandum of Association, notarised, showing each owner's share\n• Tenancy contract: Ejari, or a free zone lease\n• Each owner: Emirates ID, passport, CV and proof of address\n• Proof of real business: client contracts or MOUs\n• Source of funds: bank statements of the main shareholder"
         },
         {
           "title": "Venture Financing & SPVs in DIFC and ADGM",
@@ -274,8 +274,8 @@
             "End of Service Gratuity (EOSG): 21 days' basic wage for each year of service for the first 5 years; 30 days for each additional year",
             "Alternative Gratuity Scheme: Voluntary employer savings investment funds (Cabinet Resolution No. 96 of 2023)"
           ],
-          "codeSnippet": "// UAE End-of-Service Gratuity (EOSG) Calculation\nfunction calculateEOSG(basicSalaryAED, yearsOfService) {\n  let gratuity = 0;\n  if (yearsOfService < 1) return 0;\n  if (yearsOfService <= 5) {\n    gratuity = (basicSalaryAED / 30) * 21 * yearsOfService;\n  } else {\n    const first5Years = (basicSalaryAED / 30) * 21 * 5;\n    const extraYears = (basicSalaryAED / 30) * 30 * (yearsOfService - 5);\n    gratuity = first5Years + extraYears;\n  }\n  // Max cap: 2 years total basic salary\n  return Math.min(gratuity, basicSalaryAED * 24);\n}",
-          "takeaway": "Failure to pay at least 90% of your registered workforce through WPS on time triggers severe MOHRE portal blocks and financial penalties."
+          "takeaway": "Failure to pay at least 90% of your registered workforce through WPS on time triggers severe MOHRE portal blocks and financial penalties.",
+          "example": "End-of-service gratuity, worked out on basic salary (not allowances):\n• Under 1 year of service: nothing.\n• Years 1 to 5: 21 days' basic pay for each year.\n• Each year after 5: 30 days' basic pay.\n• Never more than 2 years' basic pay in total.\nExample: basic AED 9,000 a month, 7 years of service.\nDaily rate: 9,000 ÷ 30 = AED 300\nFirst 5 years: 300 × 21 × 5 = AED 31,500\nNext 2 years: 300 × 30 × 2 = AED 18,000\nGratuity: AED 49,500."
         },
         {
           "title": "Nafis Emiratization Quotas & The 10-Year Golden Visa",

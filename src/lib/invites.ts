@@ -14,8 +14,8 @@ import type { AvatarLookProps } from "@/components/avatar/roster";
 
 export { PARTIES };
 export type InviteKind = keyof typeof PARTIES.kinds;
-export type EventKind = "house_party" | "dinner" | "club_night" | "pool_party";
-export const isEvent = (k: InviteKind): k is EventKind => k === "house_party" || k === "dinner" || k === "club_night" || k === "pool_party";
+export type EventKind = "house_party" | "dinner" | "club_night" | "pool_party" | "seminar";
+export const isEvent = (k: InviteKind): k is EventKind => k === "house_party" || k === "dinner" || k === "club_night" || k === "pool_party" || k === "seminar";
 export const kindOf = (k: InviteKind) => PARTIES.kinds[k];
 export const decorOf = (id: string) => PARTIES.decor.find((d) => d.id === id);
 
@@ -25,12 +25,19 @@ export interface InviteView {
   host: { username: string; look?: AvatarLookProps; gender?: string } | null;
   going: number; arrived?: number; guests: { username: string; look?: AvatarLookProps }[];
   isHost: boolean; mine: "invited" | "going" | "no" | null;
+  /** Ticket price in AED (0: free), and whether I have one. */
+  price?: number; paid?: boolean;
 }
 export interface MyParty { code: string; title: string; label: string; startsAt: string; endsAt: string; going: number }
 export interface InviteRow { code: string; kind: InviteKind; title: string; label: string; route?: string; startsAt: string; endsAt: string; going?: number; arrived?: number; status?: string; host?: string }
-export interface PartyHere { code: string; kind: EventKind; title: string; decor: string[]; endsAt: string; host: string; isHost: boolean; arrived: number; lightsOut?: boolean }
+export interface PartyHere { code: string; kind: EventKind; title: string; decor: string[]; endsAt: string; host: string; isHost: boolean; arrived: number; lightsOut?: boolean; price?: number }
 
 const ERRORS: Record<string, string> = {
+  bad_route: "That page can't be shared.",
+  bad_size: "That guest list is too big. Club promoters can host up to 200.",
+  bad_price: "Tickets can be free or up to AED 5,000.",
+  insufficient_funds: "You don't have enough AED for that.",
+  too_many_links: "You've made a lot of links today. Try again tomorrow.",
   not_your_home: "You can only throw a party at a home you rent or own.",
   bad_time: "Pick a time in the next 7 days.",
   too_many_parties: "You already have 3 parties coming up.",
@@ -43,7 +50,7 @@ const ERRORS: Record<string, string> = {
   your_party: "It's your party!",
   your_link: "This is your own link. Share it!",
   no_such_player: "There's no player with that username.",
-  not_allowed: "Hayati is for a man and a woman: this link is for someone else.",
+  not_allowed: "Dating is for a man and a woman: this link is for someone else.",
   they_are_taken: "They're already with someone.",
   you_are_taken: "You're already with someone.",
   not_a_decorator: "Only interior decorators can share a hire-me link.",
@@ -56,15 +63,29 @@ export const inviteUrl = (code: string) => `${window.location.origin}/i/${code}`
 export async function createEvent(a: {
   kind: EventKind; title: string; startsAt: Date; label: string;
   flatId?: string; route?: string; placeId?: string; venueId?: string; decor: string[];
+  /** Guest list size (promoters can go up to 200). */
+  maxGuests?: number;
+  /** Ticket price in AED (0 or left out: free). */
+  price?: number;
 }): Promise<{ code?: string; error?: string }> {
   const { data, error } = await supabase().rpc("create_event", {
     p_kind: a.kind, p_title: a.title, p_starts_at: a.startsAt.toISOString(), p_label: a.label,
-    p_flat: a.flatId ?? null, p_route: a.route ?? null, p_place: a.placeId ?? null, p_venue: a.venueId ?? null, p_decor: a.decor,
+    p_flat: a.flatId ?? null, p_route: a.route ?? null, p_place: a.placeId ?? null, p_venue: a.venueId ?? null, p_decor: a.decor, p_max: a.maxGuests ?? 20, p_price: a.price ?? 0,
   });
   return error ? { error: friendly(error.message) } : { code: data as string };
 }
 export async function createLink(kind: "ask_out" | "hire_decorator"): Promise<{ code?: string; error?: string }> {
   const { data, error } = await supabase().rpc("create_link", { p_kind: kind });
+  return error ? { error: friendly(error.message) } : { code: data as string };
+}
+/** Your invite link to a place in the game (this page, by default): someone new signs up and lands right there. */
+/** A promoter's numbers: events run, guests who came, and commission earned. */
+export async function myPromotions(): Promise<{ events: number; guests: number; earned: number } | null> {
+  const { data } = await supabase().rpc("my_promotions");
+  return (data as { events: number; guests: number; earned: number } | null) ?? null;
+}
+export async function createVisit(route: string, title: string, label: string): Promise<{ code?: string; error?: string }> {
+  const { data, error } = await supabase().rpc("create_visit", { p_route: route, p_title: title, p_label: label });
   return error ? { error: friendly(error.message) } : { code: data as string };
 }
 export async function inviteView(code: string): Promise<InviteView | null> {
@@ -102,9 +123,10 @@ export async function partyHere(route: string): Promise<PartyHere | null | undef
   return (data as PartyHere | null) ?? null;
 }
 /** You're here while a party's on: checks you in. Returns what to tell you, or null. */
-export async function arriveAt(route: string): Promise<{ code: string; title: string; host: string; points: number } | null> {
+/** Checking in at an event you're at. A paid event without a ticket says so (needsTicket) instead. */
+export async function arriveAt(route: string): Promise<{ code: string; title: string; host: string; points: number; needsTicket?: boolean; price?: number } | null> {
   const { data } = await supabase().rpc("invite_arrive", { p_route: route });
-  return (data as { code: string; title: string; host: string; points: number } | null) ?? null;
+  return (data as { code: string; title: string; host: string; points: number; needsTicket?: boolean; price?: number } | null) ?? null;
 }
 /** The host turns the lights out (or back on) for everyone at the party. */
 export async function setPartyLights(code: string, out: boolean) { await supabase().rpc("party_lights", { p_code: code, p_out: out }); }

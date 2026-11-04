@@ -1,0 +1,465 @@
+{
+  "id": "dc-personal-finance",
+  "institutionId": "dc",
+  "title": "Personal Finance: Money for Life",
+  "tagline": "Budget your salary, build an emergency fund, use credit wisely, avoid debt traps and start investing, Dubai-style.",
+  "category": "Personal Finance",
+  "level": "secondary_diploma",
+  "duration": "4 Weeks (Life Skills Diploma)",
+  "rating": 4.98,
+  "enrolledCount": 3120,
+  "icon": "💰",
+  "superpower": {
+    "id": "money_wise",
+    "name": "Money Wise",
+    "icon": "💰",
+    "description": "Budgets and saves like a pro: steadier wallet and fewer money worries.",
+    "badgeText": "Money Wise",
+    "perkType": "general"
+  },
+  "syllabus": [
+    "Week 1: Budgeting your salary",
+    "Week 2: Saving and the emergency fund",
+    "Week 3: Credit cards, loans and your credit score",
+    "Week 4: Investing, compounding and avoiding scams"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Budgeting",
+      "objective": "Know where every dirham goes, and give it a job.",
+      "slides": [
+        {
+          "title": "The 50/30/20 Budget",
+          "body": "A simple starting budget splits take-home pay into needs, wants and savings. In Dubai, rent often takes more than people expect, so adjust the split to your reality.",
+          "bullets": [
+            "50% needs: rent, bills, food, transport",
+            "30% wants: eating out, shopping, trips",
+            "20% savings and debt repayment",
+            "Track spending for a month before you set limits"
+          ],
+          "example": "Take-home salary: AED 12,000 a month.\nNeeds (50%): AED 6,000, for rent of AED 4,000, bills, groceries and Metro.\nWants (30%): AED 3,600.\nSavings (20%): AED 2,400 a month, AED 28,800 a year.",
+          "takeaway": "A budget isn't a cage: it's permission to spend without guilt."
+        },
+        {
+          "title": "Fixed and Flexible Costs",
+          "body": "Fixed costs (rent, phone plan, school fees) stay the same each month; flexible ones (food, fun) change. Cutting a big fixed cost once saves every month.",
+          "bullets": [
+            "Share a flat or move further out to cut rent",
+            "Review phone, gym and streaming subscriptions",
+            "Cook more; delivery fees add up",
+            "Use the Metro and Nol card where possible"
+          ],
+          "takeaway": "Cut big fixed costs first: one decision, savings forever."
+        }
+      ],
+      "lab": {
+        "title": "Budget Lab",
+        "brief": "Track a month of spending (real or in-game), sort it into needs, wants and savings, and write next month's budget.",
+        "deliverable": "A spending table and a new budget.",
+        "proTip": "Automate savings on payday: what you don't see, you don't spend."
+      },
+      "caseStudy": {
+        "scenario": "You earn AED 9,000 and spend AED 9,200 every month. What's the best first step?",
+        "options": [
+          {
+            "text": "Take a credit card to cover the gap.",
+            "correct": false,
+            "explanation": "That builds expensive debt."
+          },
+          {
+            "text": "Track every expense, then cut the biggest costs to spend less than you earn.",
+            "correct": true,
+            "explanation": "Spending less than you earn is the foundation."
+          },
+          {
+            "text": "Ignore it; it's only AED 200.",
+            "correct": false,
+            "explanation": "Small gaps grow into big debts."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "In 50/30/20, savings are:",
+          "options": [
+            "50%",
+            "30%",
+            "20%",
+            "0%"
+          ],
+          "correctIndex": 2,
+          "explanation": "20% for savings and debt repayment."
+        },
+        {
+          "question": "A fixed cost is:",
+          "options": [
+            "Eating out",
+            "Rent",
+            "Shopping",
+            "Taxis"
+          ],
+          "correctIndex": 1,
+          "explanation": "Rent stays the same each month."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Saving and the Emergency Fund",
+      "objective": "Build a safety net so a surprise doesn't become a crisis.",
+      "slides": [
+        {
+          "title": "Your Emergency Fund",
+          "body": "Life happens: job loss, medical bills, car repairs. An emergency fund of 3 to 6 months of essential costs means you can handle it without debt. For expats, losing a job can also mean visa deadlines, so a fund matters even more.",
+          "bullets": [
+            "Target: 3 to 6 months of essential spending",
+            "Keep it in a separate savings account you can reach quickly",
+            "Only for true emergencies",
+            "Rebuild it after you use it"
+          ],
+          "example": "Essential costs: AED 7,000 a month.\nTarget: 3 to 6 months = AED 21,000 to AED 42,000.\nSaving AED 1,500 a month, you reach AED 21,000 in 14 months.",
+          "takeaway": "An emergency fund turns a crisis into an inconvenience."
+        },
+        {
+          "title": "Saving Habits",
+          "body": "Saving works best on autopilot: pay yourself first, the day salary lands.",
+          "bullets": [
+            "Standing order to savings on payday",
+            "Name your goals: 'Emergency', 'Holiday', 'Car deposit'",
+            "Save windfalls: half of any bonus straight to savings",
+            "Compare savings rates between banks"
+          ],
+          "takeaway": "Pay yourself first, then live on the rest."
+        }
+      ],
+      "lab": {
+        "title": "Emergency Fund Lab",
+        "brief": "Calculate your 3 and 6 month targets and set up an automatic monthly saving plan to reach one.",
+        "deliverable": "Your targets and a dated savings plan.",
+        "proTip": "Start small: even AED 300 a month builds the habit."
+      },
+      "caseStudy": {
+        "scenario": "Your car needs a AED 4,000 repair and you have no savings. What would an emergency fund have prevented?",
+        "options": [
+          {
+            "text": "Nothing.",
+            "correct": false,
+            "explanation": "That's exactly what it's for."
+          },
+          {
+            "text": "Borrowing on a credit card at high interest to pay for it.",
+            "correct": true,
+            "explanation": "With a fund you pay cash and avoid expensive debt."
+          },
+          {
+            "text": "The repair itself.",
+            "correct": false,
+            "explanation": "It doesn't stop repairs, it pays for them."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "A typical emergency fund target:",
+          "options": [
+            "1 week",
+            "3 to 6 months of essential costs",
+            "10 years",
+            "Nothing"
+          ],
+          "correctIndex": 1,
+          "explanation": "3 to 6 months."
+        },
+        {
+          "question": "'Pay yourself first' means:",
+          "options": [
+            "Spend first",
+            "Save on payday before spending",
+            "Pay rent late",
+            "Borrow"
+          ],
+          "correctIndex": 1,
+          "explanation": "Save first."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Credit and Debt",
+      "objective": "Use credit as a tool, never a trap.",
+      "slides": [
+        {
+          "title": "Credit Cards and Interest",
+          "body": "Credit cards are useful if you pay the full balance every month. If you don't, interest is charged monthly and compounds fast; UAE card rates are often around 3% a month, more than 36% a year.",
+          "bullets": [
+            "Pay the full statement balance every month",
+            "The 'minimum payment' mostly pays interest",
+            "Cash withdrawals on cards cost fees and interest immediately",
+            "Buy now, pay later is still debt: count it in your budget"
+          ],
+          "example": "A AED 10,000 card balance at about 3% a month:\nPaying only the minimum, you might pay around AED 300 a month in interest alone.\nThat's about AED 3,600 a year for nothing.",
+          "takeaway": "Only buy on credit what you could buy with cash today."
+        },
+        {
+          "title": "Your Credit Score",
+          "body": "The Al Etihad Credit Bureau (AECB) keeps credit reports and scores (from 300 to 900) for UAE residents. Banks check them for cards, loans and even some rentals and jobs.",
+          "bullets": [
+            "Pay every bill and instalment on time",
+            "Keep card usage low compared with your limit",
+            "Don't apply for lots of credit at once",
+            "Check your AECB report for mistakes"
+          ],
+          "takeaway": "A good score means cheaper loans and more choices."
+        }
+      ],
+      "lab": {
+        "title": "Debt Plan Lab",
+        "brief": "List all debts with balances and interest rates, then make an avalanche plan (highest rate first) and a snowball plan (smallest balance first).",
+        "deliverable": "Both plans with a timeline.",
+        "proTip": "The avalanche saves the most money; the snowball builds motivation. Either beats doing nothing."
+      },
+      "caseStudy": {
+        "scenario": "You have two debts: a card at 36% a year and a car loan at 4%. You have AED 2,000 extra. Where should it go?",
+        "options": [
+          {
+            "text": "The car loan.",
+            "correct": false,
+            "explanation": "It's much cheaper debt."
+          },
+          {
+            "text": "The credit card: it's the most expensive debt.",
+            "correct": true,
+            "explanation": "Paying the highest rate first saves the most."
+          },
+          {
+            "text": "A new phone.",
+            "correct": false,
+            "explanation": "Pay down costly debt first."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "To avoid card interest:",
+          "options": [
+            "Pay the minimum",
+            "Pay the full balance each month",
+            "Use cash withdrawals",
+            "Ignore the statement"
+          ],
+          "correctIndex": 1,
+          "explanation": "Pay in full."
+        },
+        {
+          "question": "UAE credit scores are kept by:",
+          "options": [
+            "AECB",
+            "RTA",
+            "DEWA",
+            "KHDA"
+          ],
+          "correctIndex": 0,
+          "explanation": "Al Etihad Credit Bureau."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Investing and Scams",
+      "objective": "Grow your money over time and keep it safe from scammers.",
+      "slides": [
+        {
+          "title": "Compounding and Investing",
+          "body": "Money grows faster when its growth also grows: compounding. Time matters more than timing, so starting early is the biggest advantage.",
+          "bullets": [
+            "Rule of 72: years to double ≈ 72 ÷ yearly return",
+            "Diversify: index funds spread risk across many companies",
+            "Invest only money you won't need for 5 years or more",
+            "Fees matter: a 1% fee takes a big bite over decades"
+          ],
+          "example": "AED 1,000 a month invested at 7% a year:\n• After 10 years: about AED 173,000 (AED 120,000 put in)\n• After 30 years: about AED 1.2 million (AED 360,000 put in)\nThe extra came from compounding.",
+          "takeaway": "Start early, spread risk, keep fees low, stay patient."
+        },
+        {
+          "title": "Spotting Scams",
+          "body": "Scammers target savers with promises of easy returns. If it sounds too good to be true, it is.",
+          "bullets": [
+            "Guaranteed high returns ('20% a month, no risk') are a lie",
+            "Pressure to decide now, or to keep it secret, is a red flag",
+            "Never share OTPs, card PINs or passwords: banks never ask",
+            "Check investment firms are licensed by the UAE regulators before investing"
+          ],
+          "takeaway": "No real investment is guaranteed, urgent and secret."
+        }
+      ],
+      "lab": {
+        "title": "Investment Plan Lab",
+        "brief": "Use the Rule of 72 and a compounding table to compare investing AED 500 a month from age 22 and from age 35.",
+        "deliverable": "A comparison table and three lessons.",
+        "proTip": "The best time to start was yesterday; the next best is today."
+      },
+      "caseStudy": {
+        "scenario": "A stranger on Instagram offers a 'guaranteed 15% a month' crypto plan if you send money today. What do you do?",
+        "options": [
+          {
+            "text": "Send a small amount to test it.",
+            "correct": false,
+            "explanation": "Scams often pay small amounts first to hook you."
+          },
+          {
+            "text": "Refuse, block and report it: guaranteed high returns are a scam sign.",
+            "correct": true,
+            "explanation": "Guaranteed, urgent, too-good returns are classic fraud."
+          },
+          {
+            "text": "Send your card details so they can 'verify' you.",
+            "correct": false,
+            "explanation": "Never share card details or OTPs."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "At 8% a year, money roughly doubles in:",
+          "options": [
+            "2 years",
+            "9 years",
+            "20 years",
+            "50 years"
+          ],
+          "correctIndex": 1,
+          "explanation": "72 ÷ 8 = 9 years."
+        },
+        {
+          "question": "A red flag for a scam is:",
+          "options": [
+            "A licensed bank",
+            "Guaranteed high returns and pressure to act now",
+            "Fees explained clearly",
+            "A diversified fund"
+          ],
+          "correctIndex": 1,
+          "explanation": "Guarantees and pressure are warning signs."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "50/30/20 gives needs:",
+        "options": [
+          "20%",
+          "30%",
+          "50%",
+          "70%"
+        ],
+        "correctIndex": 2,
+        "explanation": "50%."
+      },
+      {
+        "question": "An emergency fund is for:",
+        "options": [
+          "Holidays",
+          "Unexpected essential costs",
+          "Shopping",
+          "Investing"
+        ],
+        "correctIndex": 1,
+        "explanation": "True emergencies."
+      },
+      {
+        "question": "Paying only the card minimum means:",
+        "options": [
+          "No interest",
+          "Mostly paying interest",
+          "A better score",
+          "Free money"
+        ],
+        "correctIndex": 1,
+        "explanation": "Interest piles up."
+      },
+      {
+        "question": "Avalanche debt payoff targets first:",
+        "options": [
+          "Smallest balance",
+          "Highest interest rate",
+          "Newest debt",
+          "Car loan"
+        ],
+        "correctIndex": 1,
+        "explanation": "Highest rate first."
+      },
+      {
+        "question": "A good credit score helps you:",
+        "options": [
+          "Pay more interest",
+          "Get cheaper loans",
+          "Avoid paying rent",
+          "Skip taxes"
+        ],
+        "correctIndex": 1,
+        "explanation": "Lenders offer better terms."
+      },
+      {
+        "question": "The Rule of 72 estimates:",
+        "options": [
+          "Tax",
+          "Years to double money",
+          "Rent increase",
+          "Salary"
+        ],
+        "correctIndex": 1,
+        "explanation": "Doubling time."
+      },
+      {
+        "question": "Diversification means:",
+        "options": [
+          "All money in one stock",
+          "Spreading investments to reduce risk",
+          "Only cash",
+          "Only gold"
+        ],
+        "correctIndex": 1,
+        "explanation": "Spread risk."
+      },
+      {
+        "question": "Banks will never ask for your:",
+        "options": [
+          "Name",
+          "OTP or PIN",
+          "Branch",
+          "Email"
+        ],
+        "correctIndex": 1,
+        "explanation": "Never share OTPs or PINs."
+      },
+      {
+        "question": "Saving AED 1,000/month for 12 months gives:",
+        "options": [
+          "AED 1,000",
+          "AED 12,000",
+          "AED 120,000",
+          "AED 100"
+        ],
+        "correctIndex": 1,
+        "explanation": "12 × 1,000."
+      },
+      {
+        "question": "'Guaranteed 20% a month, no risk' is most likely:",
+        "options": [
+          "A great deal",
+          "A scam",
+          "A bank deposit",
+          "A government bond"
+        ],
+        "correctIndex": 1,
+        "explanation": "Classic scam promise."
+      }
+    ]
+  },
+  "tuitionFee": 1500
+}

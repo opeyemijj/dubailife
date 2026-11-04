@@ -39,8 +39,8 @@
             "Strait of Malacca: Narrow funnel between Indonesia, Malaysia, and Singapore carrying 25% of all traded goods and 60% of East Asia's oil imports",
             "Panama Canal: 82 km lock-based corridor linking the Atlantic and Pacific oceans"
           ],
-          "codeSnippet": "// Maritime Chokepoint Traffic Metric\nconst chokepoints = [\n  { name: 'Strait of Hormuz', keyCommodity: 'Global Petroleum & LNG', share: '21% of petroleum' },\n  { name: 'Strait of Malacca', keyCommodity: 'Manufactured Electronics & Crude', share: '90,000 ships/yr' },\n  { name: 'Suez Canal', keyCommodity: 'Containerized Cargo & European Energy', share: '12% of world trade' },\n  { name: 'Panama Canal', keyCommodity: 'Grain, LNG & Trans-Pacific Containers', share: '5% of world trade' }\n];",
-          "takeaway": "Disruptions at any single maritime chokepoint ripple across global inflation, insurance surcharges, and supply chain lead times."
+          "takeaway": "Disruptions at any single maritime chokepoint ripple across global inflation, insurance surcharges, and supply chain lead times.",
+          "example": "The sea routes world trade depends on:\n• Strait of Hormuz: about a fifth of the world's oil passes through it.\n• Strait of Malacca: around 90,000 ships a year, carrying electronics and crude oil to and from East Asia.\n• Suez Canal: about 12% of world trade, linking Asia and Europe.\n• Panama Canal: about 5% of world trade, with grain, gas and containers between the Pacific and the Atlantic."
         },
         {
           "title": "Containerization Economics: The 20-Foot Box That Built the Modern World",
@@ -51,8 +51,8 @@
             "Jebel Ali Port (DP World): The largest deepwater port between Rotterdam and Singapore, handling over 14 million TEUs annually",
             "Intermodal Transport: Seamless transfer of the same container between ship, rail, and flatbed truck without unpacking the contents"
           ],
-          "codeSnippet": "/* Container Shipping Efficiency */\nconst teuEconomics = {\n  shipCapacity: '24,000 TEU',\n  fuelPerContainerPerKm: '0.015 liters (Lowest carbon footprint per ton-km of any transit mode)',\n  transitTimeShanghaiToJebelAli: '14 to 18 days'\n};",
-          "takeaway": "Standardized containerization reduced global ocean transport costs by over 90%, enabling modern globalization and just-in-time manufacturing."
+          "takeaway": "Standardized containerization reduced global ocean transport costs by over 90%, enabling modern globalization and just-in-time manufacturing.",
+          "example": "Why containers made shipping so cheap:\n• The biggest ships carry about 24,000 TEU (twenty-foot containers).\n• Per tonne carried, a container ship burns less fuel per kilometre than any lorry, train or plane.\n• Shanghai to Jebel Ali takes about 14 to 18 days."
         }
       ],
       "lab": {
@@ -120,8 +120,8 @@
             "Jet Stream Wind Currents: High-altitude eastward winds (150-300 km/h) that pilots navigate into or out of to slash fuel burn and flight times",
             "ETOPS (Extended-range Twin-engine Operational Performance Standards): Regulatory rules allowing twin-engine jets (Boeing 777, Airbus A350) to fly trans-oceanic routes far from diversion airports"
           ],
-          "codeSnippet": "// Haversine Formula for Great Circle Distance on Sphere\nfunction haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number) {\n  const R = 6371; // Earth radius in km\n  const dLat = (lat2 - lat1) * Math.PI / 180;\n  const dLon = (lon2 - lon1) * Math.PI / 180;\n  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;\n  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));\n}\n// Dubai to London: ~5,500 km Great Circle arc",
-          "takeaway": "Flights curve dramatically on flat 2D maps because pilots fly 3D spherical Great Circle routes to minimize distance and fuel burn."
+          "takeaway": "Flights curve dramatically on flat 2D maps because pilots fly 3D spherical Great Circle routes to minimize distance and fuel burn.",
+          "example": "Planes fly great-circle routes, the shortest path over a round Earth, which look curved on a flat map.\nDubai to London is about 5,500 km along a great circle.\nThe distance comes from the haversine formula, using the Earth's radius (about 6,371 km) and the two cities' latitudes and longitudes."
         },
         {
           "title": "The 8-Hour Flight Radius: Dubai's Geographic Superpower",
@@ -132,8 +132,8 @@
             "Sixth-Freedom Traffic Rights: Emirates Airline's hub-and-spoke model transfers passengers between any two points on earth through DXB with one seamless stop",
             "Dubai International Airport (DXB) handles over 90 million international passengers annually, making it the #1 international airport on Earth"
           ],
-          "codeSnippet": "/* Geographic Reach of Dubai Hub */\nconst globalReach = {\n  fourHourRadiusPopulation: '2.0 Billion',\n  eightHourRadiusPopulation: '5.2 Billion (66% of humanity)',\n  annualPassengersDXB: '90M+ International',\n  timeZoneAdvantage: 'Bridges Asian market close and European market open on the same business day'\n};",
-          "takeaway": "Dubai's hub dominance is grounded in geographic physics: two-thirds of humanity lives within an 8-hour nonstop flight of its runways."
+          "takeaway": "Dubai's hub dominance is grounded in geographic physics: two-thirds of humanity lives within an 8-hour nonstop flight of its runways.",
+          "example": "Why Dubai is a natural hub:\n• About 2 billion people live within a 4-hour flight.\n• About 5.2 billion, two-thirds of humanity, live within 8 hours.\n• DXB handles over 90 million international passengers a year.\n• In the same working day, Dubai overlaps the close of Asian markets and the open of European ones."
         }
       ],
       "lab": {
@@ -201,8 +201,8 @@
             "Adiabatic Warming: As dry air sinks, it compresses and warms up, evaporating any clouds and creating permanent high-pressure clear skies with almost zero precipitation",
             "Rain Shadow Deserts: Secondary deserts (like the Mojave or Atacama) formed when high mountain ranges block moist ocean air from passing"
           ],
-          "codeSnippet": "// Atmospheric Circulation Bands\nconst climateBelts = {\n  equator: '0°: Intertropical Convergence Zone (ITCZ) - Low Pressure, Heavy Rain',\n  subtropics: '20°-30° N/S: Subtropical High Pressure - Sinking Dry Air, Arid Deserts (Arabia, Sahara)',\n  temperate: '40°-60° N/S: Ferrel Cell - Cyclonic storms, deciduous forests',\n  poles: '90°: Polar High - Sinking freezing dry air (Polar Deserts)'\n};",
-          "takeaway": "Deserts exist because planetary atmospheric physics forces dry air to descend and compress along the subtropical high-pressure belt."
+          "takeaway": "Deserts exist because planetary atmospheric physics forces dry air to descend and compress along the subtropical high-pressure belt.",
+          "example": "The Earth's climate belts, from the equator to the poles:\n• 0° (the equator): rising warm air, low pressure and heavy rain (rainforests).\n• 20° to 30° north and south: dry air sinking, high pressure, deserts like Arabia and the Sahara.\n• 40° to 60°: storms and changeable weather, with forests.\n• 90° (the poles): cold dry air sinking, polar deserts."
         },
         {
           "title": "Global Resource Belts: Oil, Rare Earths & Agricultural Breadbaskets",
@@ -213,8 +213,8 @@
             "Rare Earth Elements (REEs): Critical for electric motors and defense tech; over 70% of processing is concentrated in China",
             "Agricultural Breadbaskets: Deep Chernozem black soil belts in Ukraine, the American Midwest, and the Argentine Pampas supply global grain calories"
           ],
-          "codeSnippet": "/* Strategic Commodity Distribution */\nconst resourceMap = [\n  { commodity: 'Lithium', primaryRegion: 'South American Lithium Triangle & Australia' },\n  { commodity: 'Cobalt', primaryRegion: 'Democratic Republic of Congo (>70% of supply)' },\n  { commodity: 'Petroleum & Gas', primaryRegion: 'Arabian Gulf Basin & North America' },\n  { commodity: 'Wheat/Grains', primaryRegion: 'North American Great Plains & Eurasian Steppe' }\n];",
-          "takeaway": "No nation is completely self-sufficient; global stability depends on trade agreements bridging uneven geological resource distributions."
+          "takeaway": "No nation is completely self-sufficient; global stability depends on trade agreements bridging uneven geological resource distributions.",
+          "example": "Where the world's key resources come from:\n• Lithium: South America's 'Lithium Triangle' (Chile, Argentina, Bolivia) and Australia\n• Cobalt: Democratic Republic of Congo, over 70% of supply\n• Oil and gas: the Arabian Gulf and North America\n• Wheat and grain: North America's Great Plains and the Eurasian steppe"
         }
       ],
       "lab": {
@@ -282,8 +282,8 @@
             "WTO Most Favored Nation (MFN): Principle that an advantage granted to one WTO member must generally be extended to all, unless inside a certified Free Trade Agreement",
             "Rules of Origin: Strict criteria defining where a product was actually manufactured to prevent third-party tariff evasion"
           ],
-          "codeSnippet": "// CEPA Economic Multiplier Model\ninterface TradeDeal {\n  partner: string;\n  tariffReductionPercent: number;\n  bilateralTradeTargetUSD: string;\n}\nconst uaeCepas: TradeDeal[] = [\n  { partner: 'India', tariffReductionPercent: 90, bilateralTradeTargetUSD: '100 Billion' },\n  { partner: 'Indonesia', tariffReductionPercent: 99, bilateralTradeTargetUSD: '10 Billion' },\n  { partner: 'Turkey', tariffReductionPercent: 93, bilateralTradeTargetUSD: '40 Billion' }\n];",
-          "takeaway": "Bilateral CEPAs slash trade frictions and position the UAE as an open, interconnected neutral bridge between the Global South and Western economies."
+          "takeaway": "Bilateral CEPAs slash trade frictions and position the UAE as an open, interconnected neutral bridge between the Global South and Western economies.",
+          "example": "Some of the UAE's Comprehensive Economic Partnership Agreements (CEPAs):\n• India: tariffs removed on about 90% of goods, aiming for USD 100 billion in yearly trade\n• Indonesia: about 99% of goods, aiming for USD 10 billion\n• Türkiye: about 93% of goods, aiming for USD 40 billion"
         },
         {
           "title": "Diplomatic Protocol & The Vienna Conventions",
@@ -294,8 +294,8 @@
             "Diplomatic Immunity: Diplomats are shielded from civil lawsuits and criminal prosecution in the host state (though they can be expelled as 'Persona Non Grata')",
             "Diplomatic Pouch: Official sealed diplomatic mail and shipments cannot be opened, searched, or detained by host country customs"
           ],
-          "codeSnippet": "/* Key Diplomatic Legal Concepts */\nconst diplomaticLaw = {\n  personaNonGrata: 'State rejection of an individual diplomat without requiring explanation',\n  inviolability: 'Absolute physical protection of embassy premises, archives, and communications',\n  precedence: 'Rigid diplomatic seating order based strictly on presentation date of credentials'\n};",
-          "takeaway": "Diplomatic immunity and embassy inviolability are the bedrock of international law, ensuring open communication channels between sovereign states."
+          "takeaway": "Diplomatic immunity and embassy inviolability are the bedrock of international law, ensuring open communication channels between sovereign states.",
+          "example": "Three ideas from diplomatic law (the Vienna Conventions):\n• Persona non grata: a country can refuse a diplomat without giving a reason.\n• Inviolability: an embassy's premises, papers and messages can't be entered or seized.\n• Precedence: ambassadors are ranked by the date they presented their credentials."
         }
       ],
       "lab": {
@@ -468,4 +468,3 @@
   },
   "tuitionFee": 1400
 }
-

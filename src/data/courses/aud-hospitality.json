@@ -1,0 +1,463 @@
+{
+  "id": "aud-hospitality",
+  "institutionId": "aud",
+  "title": "Hospitality & Tourism Management",
+  "tagline": "Run hotels, restaurants and attractions in the world's hospitality capital: guest experience, revenue, operations and Dubai's tourism rules.",
+  "category": "Hospitality",
+  "level": "bachelor_degree",
+  "duration": "4 Weeks (Professional Programme)",
+  "rating": 4.94,
+  "enrolledCount": 1560,
+  "icon": "🏨",
+  "superpower": {
+    "id": "host_supreme",
+    "name": "Host Supreme",
+    "icon": "🏨",
+    "description": "Delivers five-star service: earns more at hospitality jobs and runs better events.",
+    "badgeText": "Hospitality Pro",
+    "perkType": "general"
+  },
+  "syllabus": [
+    "Week 1: Dubai's tourism economy and the guest journey",
+    "Week 2: Front office, housekeeping and service recovery",
+    "Week 3: Revenue management: ADR, occupancy and RevPAR",
+    "Week 4: Food and beverage, events and the guest bill"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Dubai's Tourism Economy",
+      "objective": "Understand why Dubai is a global destination and map the guest journey.",
+      "slides": [
+        {
+          "title": "A City Built for Visitors",
+          "body": "Tourism is one of Dubai's biggest industries, regulated by the Department of Economy and Tourism (DET). Hotels are classified by DET, and every hotel, holiday home and tour operator needs a licence.",
+          "bullets": [
+            "DET licenses and classifies hotels, hotel apartments and holiday homes",
+            "Major demand drivers: events, shopping, beaches, business travel and transit through DXB",
+            "Peak season: roughly October to April; summer brings deals and family travel",
+            "Ramadan and Eid change hours, menus and demand"
+          ],
+          "takeaway": "Know your city's calendar: demand, staffing and prices all follow it."
+        },
+        {
+          "title": "The Guest Journey",
+          "body": "Great hospitality is designed moment by moment, from the first search to the review after checkout.",
+          "bullets": [
+            "Dreaming and booking: website, OTAs (online travel agencies), reviews",
+            "Arrival: airport transfer, welcome, check-in in minutes",
+            "The stay: room, food, pool, concierge, personal touches",
+            "Departure and after: fast checkout, thank-you message, review request"
+          ],
+          "takeaway": "Every touchpoint is a chance to delight or disappoint. Design them all."
+        }
+      ],
+      "lab": {
+        "title": "Guest Journey Lab",
+        "brief": "Map the full guest journey for a family staying 4 nights at a Dubai beach resort, and find 5 'wow' moments to add.",
+        "deliverable": "A journey map with touchpoints, pain points and wow moments.",
+        "proTip": "Small personal touches (a child's name on a welcome note) are remembered for years."
+      },
+      "caseStudy": {
+        "scenario": "A five-star hotel's reviews mention long check-in queues at 3pm. What's the best fix?",
+        "options": [
+          {
+            "text": "Hire more security guards.",
+            "correct": false,
+            "explanation": "Security doesn't speed up check-in."
+          },
+          {
+            "text": "Offer online pre-check-in, more agents at peak times, and a welcome drink while guests wait.",
+            "correct": true,
+            "explanation": "Cut the wait and make the wait pleasant."
+          },
+          {
+            "text": "Move check-in time to midnight.",
+            "correct": false,
+            "explanation": "That inconveniences every guest."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Who licenses and classifies hotels in Dubai?",
+          "options": [
+            "RTA",
+            "DET (Department of Economy and Tourism)",
+            "DEWA",
+            "DHA"
+          ],
+          "correctIndex": 1,
+          "explanation": "DET regulates tourism and hotel classification."
+        },
+        {
+          "question": "Dubai's peak tourism season is roughly:",
+          "options": [
+            "June to August",
+            "October to April",
+            "Only in Ramadan",
+            "All year equally"
+          ],
+          "correctIndex": 1,
+          "explanation": "The cooler months bring the most visitors."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Front Office, Housekeeping and Service Recovery",
+      "objective": "Run smooth operations and turn complaints into loyalty.",
+      "slides": [
+        {
+          "title": "Front Office and Housekeeping",
+          "body": "The front office is the hotel's nerve centre; housekeeping delivers the product guests actually sleep in. They work as one team through room status.",
+          "bullets": [
+            "Room statuses: occupied, vacant dirty, vacant clean, inspected, out of order",
+            "Housekeeping targets: rooms cleaned per attendant per shift",
+            "Par levels: linen stock of about 3 sets per bed (one in use, one in laundry, one on the shelf)",
+            "Lost and found and guest privacy are handled strictly"
+          ],
+          "takeaway": "When front office and housekeeping talk, rooms are ready and guests are happy."
+        },
+        {
+          "title": "Service Recovery",
+          "body": "Things go wrong in every hotel. What matters is the response. Many luxury hotels train staff on a simple model to handle complaints.",
+          "bullets": [
+            "Listen without interrupting",
+            "Empathise and apologise sincerely",
+            "Resolve it quickly, with the power to act (many brands let staff spend a set amount without asking)",
+            "Follow up and record it so it doesn't happen again"
+          ],
+          "takeaway": "A complaint fixed brilliantly can create a more loyal guest than no complaint at all."
+        }
+      ],
+      "lab": {
+        "title": "Service Recovery Role-Play",
+        "brief": "Script responses to 5 common complaints (noisy room, late room, wrong order, broken AC, rude staff) using listen, empathise, resolve, follow up.",
+        "deliverable": "Five short scripts with the resolution you'd offer.",
+        "proTip": "Empower your team: the first person a guest speaks to should be able to fix most problems."
+      },
+      "caseStudy": {
+        "scenario": "A guest's room isn't ready at 3pm check-in after a long flight. What's the best response?",
+        "options": [
+          {
+            "text": "Tell them to wait in the lobby until it's ready.",
+            "correct": false,
+            "explanation": "Leaves a tired guest unhappy."
+          },
+          {
+            "text": "Apologise, store their bags, offer the pool or lounge with a drink, and call them the moment it's ready, or upgrade if one is free.",
+            "correct": true,
+            "explanation": "Turn the wait into comfort, and use upgrades when possible."
+          },
+          {
+            "text": "Blame housekeeping in front of them.",
+            "correct": false,
+            "explanation": "Blaming colleagues looks unprofessional."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What does 'vacant clean' mean?",
+          "options": [
+            "Guest in the room",
+            "Empty and cleaned",
+            "Being repaired",
+            "Dirty"
+          ],
+          "correctIndex": 1,
+          "explanation": "The room is empty and cleaned, awaiting inspection."
+        },
+        {
+          "question": "A linen par of 3 means:",
+          "options": [
+            "3 towels per hotel",
+            "3 sets per bed in rotation",
+            "3 laundries",
+            "3 guests per room"
+          ],
+          "correctIndex": 1,
+          "explanation": "One set in use, one in laundry, one ready."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Revenue Management",
+      "objective": "Price rooms to fill the hotel at the best rate.",
+      "slides": [
+        {
+          "title": "The Key Numbers",
+          "body": "Hotels measure performance with a few ratios that every manager must know.",
+          "bullets": [
+            "Occupancy % = rooms sold ÷ rooms available",
+            "ADR (Average Daily Rate) = room revenue ÷ rooms sold",
+            "RevPAR = room revenue ÷ rooms available (or ADR × occupancy)",
+            "GOPPAR: gross operating profit per available room"
+          ],
+          "example": "A 200-room hotel sells 150 rooms tonight for AED 120,000 in total.\nOccupancy: 150 ÷ 200 = 75%\nADR: 120,000 ÷ 150 = AED 800\nRevPAR: 120,000 ÷ 200 = AED 600 (also 800 × 75%)",
+          "takeaway": "RevPAR combines price and occupancy: it's the number owners watch."
+        },
+        {
+          "title": "Dynamic Pricing and Channels",
+          "body": "Prices change with demand. Big events like New Year's Eve, Gitex or the Dubai Airshow push rates up; quiet summer nights call for packages and deals.",
+          "bullets": [
+            "Forecast demand from events, bookings and history",
+            "Raise rates and set minimum stays in peak periods",
+            "Direct bookings save OTA commissions (often 15 to 25%)",
+            "Packages add value without cutting the room rate"
+          ],
+          "takeaway": "Sell the right room to the right guest at the right price, through the right channel."
+        }
+      ],
+      "lab": {
+        "title": "Revenue Lab",
+        "brief": "Calculate occupancy, ADR and RevPAR for a week of data, then set prices for a big event weekend.",
+        "deliverable": "Your calculations and a pricing plan with reasons.",
+        "proTip": "Don't chase occupancy at any price: a full hotel at a low rate can earn less than a 85% hotel at a strong rate."
+      },
+      "caseStudy": {
+        "scenario": "Next month Dubai hosts a huge exhibition and your hotel is 95% booked already at normal rates. What should revenue do?",
+        "options": [
+          {
+            "text": "Keep the normal rate.",
+            "correct": false,
+            "explanation": "That leaves money on the table when demand is high."
+          },
+          {
+            "text": "Raise rates for the remaining rooms and set a minimum stay.",
+            "correct": true,
+            "explanation": "High demand supports higher rates and longer stays."
+          },
+          {
+            "text": "Close the remaining rooms.",
+            "correct": false,
+            "explanation": "Empty rooms earn nothing."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "RevPAR for ADR AED 500 at 80% occupancy is:",
+          "options": [
+            "AED 400",
+            "AED 500",
+            "AED 580",
+            "AED 625"
+          ],
+          "correctIndex": 0,
+          "explanation": "500 × 0.80 = AED 400."
+        },
+        {
+          "question": "Why do hotels push direct bookings?",
+          "options": [
+            "To avoid guests",
+            "To save OTA commissions",
+            "It's required",
+            "To raise taxes"
+          ],
+          "correctIndex": 1,
+          "explanation": "Direct bookings avoid commission."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Food, Events and the Guest Bill",
+      "objective": "Run F&B and events, and understand every line on a Dubai hotel bill.",
+      "slides": [
+        {
+          "title": "F&B and Events",
+          "body": "Restaurants, bars, banquets and weddings can bring in a large share of a hotel's revenue. Events need tight planning: BEOs (banquet event orders) tell every department what to do.",
+          "bullets": [
+            "BEO: menu, timings, set-up, AV, staffing for each event",
+            "Covers and average spend drive restaurant revenue",
+            "Halal food and alcohol licensing rules apply",
+            "Weddings and conferences fill hotels in low seasons"
+          ],
+          "takeaway": "Events are logistics: one clear BEO keeps 10 departments in step."
+        },
+        {
+          "title": "The Dubai Hotel Bill",
+          "body": "Dubai hotel bills add charges on top of the room rate, and guests often ask about them. Front office teams must explain each one clearly.",
+          "bullets": [
+            "Service charge: typically 10%",
+            "Municipality fee: 7%",
+            "VAT: 5%",
+            "Tourism Dirham: a fixed fee per room per night, higher for more stars (up to AED 20 a night)"
+          ],
+          "example": "One night at AED 1,000 in a 5-star hotel, roughly:\n• Room: AED 1,000\n• Service charge 10%: AED 100\n• Municipality fee 7%: AED 70\n• VAT 5% (on the room and charges): about AED 59\n• Tourism Dirham: AED 20\nTotal: about AED 1,249",
+          "takeaway": "Explain charges before the guest is surprised by them."
+        }
+      ],
+      "lab": {
+        "title": "Event Plan Lab",
+        "brief": "Write a BEO for a 150-guest wedding dinner: menu, timings, set-up, staffing and AV.",
+        "deliverable": "A one-page BEO.",
+        "proTip": "Walk the event in your head minute by minute: that's where the gaps show up."
+      },
+      "caseStudy": {
+        "scenario": "A guest disputes a 'Tourism Dirham' line on their bill. What do you say?",
+        "options": [
+          {
+            "text": "It's a hotel extra you can remove.",
+            "correct": false,
+            "explanation": "It's a government fee, not a hotel extra."
+          },
+          {
+            "text": "Explain it's a Dubai government fee charged per room per night, collected by every hotel.",
+            "correct": true,
+            "explanation": "Clear, honest explanation of a mandatory fee."
+          },
+          {
+            "text": "Ignore the question.",
+            "correct": false,
+            "explanation": "Unanswered questions become bad reviews."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "What is a BEO?",
+          "options": [
+            "A bar order",
+            "A banquet event order that guides every department",
+            "A booking engine",
+            "A bill"
+          ],
+          "correctIndex": 1,
+          "explanation": "BEOs plan events across departments."
+        },
+        {
+          "question": "Dubai's municipality fee on hotel bills is:",
+          "options": [
+            "2%",
+            "5%",
+            "7%",
+            "15%"
+          ],
+          "correctIndex": 2,
+          "explanation": "The municipality fee is 7%."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "Who regulates tourism in Dubai?",
+        "options": [
+          "DET",
+          "RTA",
+          "KHDA",
+          "DEWA"
+        ],
+        "correctIndex": 0,
+        "explanation": "The Department of Economy and Tourism."
+      },
+      {
+        "question": "Occupancy is:",
+        "options": [
+          "Revenue ÷ rooms",
+          "Rooms sold ÷ rooms available",
+          "ADR × 2",
+          "Staff ÷ rooms"
+        ],
+        "correctIndex": 1,
+        "explanation": "Rooms sold divided by rooms available."
+      },
+      {
+        "question": "ADR stands for:",
+        "options": [
+          "Average Daily Rate",
+          "Annual Due Revenue",
+          "Arrival Desk Report",
+          "Average Dining Receipt"
+        ],
+        "correctIndex": 0,
+        "explanation": "Average Daily Rate."
+      },
+      {
+        "question": "RevPAR = room revenue ÷",
+        "options": [
+          "Rooms sold",
+          "Rooms available",
+          "Guests",
+          "Staff"
+        ],
+        "correctIndex": 1,
+        "explanation": "Revenue per available room."
+      },
+      {
+        "question": "The first step of service recovery is to:",
+        "options": [
+          "Offer a refund",
+          "Listen",
+          "Call security",
+          "Explain policy"
+        ],
+        "correctIndex": 1,
+        "explanation": "Listen first."
+      },
+      {
+        "question": "Linen par level of 3 means:",
+        "options": [
+          "3 sets per bed in rotation",
+          "3 towels",
+          "3 laundries",
+          "3 days"
+        ],
+        "correctIndex": 0,
+        "explanation": "In use, in laundry, on the shelf."
+      },
+      {
+        "question": "OTA commissions are often around:",
+        "options": [
+          "1%",
+          "15 to 25%",
+          "50%",
+          "70%"
+        ],
+        "correctIndex": 1,
+        "explanation": "Typically 15 to 25%."
+      },
+      {
+        "question": "Dubai VAT on hotel bills is:",
+        "options": [
+          "0%",
+          "5%",
+          "10%",
+          "20%"
+        ],
+        "correctIndex": 1,
+        "explanation": "VAT is 5%."
+      },
+      {
+        "question": "The Tourism Dirham is charged:",
+        "options": [
+          "Per guest per stay",
+          "Per room per night",
+          "Only on suites",
+          "Only in summer"
+        ],
+        "correctIndex": 1,
+        "explanation": "Per room per night."
+      },
+      {
+        "question": "During a huge event with high demand, hotels usually:",
+        "options": [
+          "Lower rates",
+          "Raise rates and set minimum stays",
+          "Close",
+          "Stop selling online"
+        ],
+        "correctIndex": 1,
+        "explanation": "Strong demand supports higher rates."
+      }
+    ]
+  },
+  "tuitionFee": 3800
+}

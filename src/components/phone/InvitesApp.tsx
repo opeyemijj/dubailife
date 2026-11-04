@@ -9,7 +9,7 @@ import { useCitizen } from "@/lib/citizenStore";
 import { useNow } from "@/lib/dubaiClock";
 import { useServices } from "@/lib/cityServices";
 import { openPartySheet } from "@/components/invite/PartySheetHost";
-import { createLink, isEvent, kindOf, myInvites, partyDoor, shareInvite, type InviteRow } from "@/lib/invites";
+import { createLink, isEvent, myPromotions, kindOf, myInvites, partyDoor, shareInvite, type InviteRow } from "@/lib/invites";
 import { AppScreen, Big, Card, Note } from "./AppScreen";
 
 const at = (iso: string) => new Date(iso).toLocaleString("en-GB", { timeZone: "Asia/Dubai", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
@@ -22,6 +22,10 @@ export function InvitesApp({ onBack, onClose }: { onBack: () => void; onClose?: 
   const [data, setData] = useState<{ hosting: InviteRow[]; invited: InviteRow[] } | null>(null);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   useEffect(() => { void myInvites().then(setData); }, []);
+  // A club promoter's numbers.
+  const isPromoter = svc?.service === "promoter";
+  const [promo, setPromo] = useState<{ events: number; guests: number; earned: number } | null>(null);
+  useEffect(() => { if (isPromoter) void myPromotions().then(setPromo); }, [isPromoter]);
 
   const open = (code: string) => { onClose?.(); router.push(`/i/${code}`); };
   const headThere = (r: InviteRow) => { onClose?.(); router.push(r.route ? partyDoor(r.route) : `/i/${r.code}`); };
@@ -59,13 +63,20 @@ export function InvitesApp({ onBack, onClose }: { onBack: () => void; onClose?: 
           <p className="text-xs font-black uppercase tracking-wider text-slate-400 px-1 pt-2">You&apos;re hosting</p>
           {data.hosting.filter((r) => isEvent(r.kind)).map((r) => row(r, true))}
           <Card className="bg-fuchsia-50">
+            {promo && (
+              <div className="rounded-2xl bg-amber-50 p-3 space-y-1">
+                <p className="font-black">📣 Club promoter</p>
+                <p className="text-sm text-slate-600">{promo.events} events · {promo.guests} guests turned up · AED {promo.earned.toLocaleString()} commission</p>
+                <p className="text-xs text-slate-500">Host at any venue for up to 200 guests. AED 150 for every guest who turns up.</p>
+              </div>
+            )}
             <p className="font-black">🎉 Throw a party</p>
-            <p className="text-sm text-slate-600">A house party or dinner at your home, a club night, a pool party, or dinner at a restaurant. Invite anyone with a link.</p>
+            <p className="text-sm text-slate-600">A house party or dinner at your home, a club night, a pool party, a seminar, or dinner at a restaurant. Free or ticketed. Invite anyone with a link.</p>
             <Big onClick={() => { onClose?.(); openPartySheet(); }}>Plan a party</Big>
           </Card>
           <Card>
             <p className="font-black">💌 Ask someone out</p>
-            <p className="text-sm text-slate-600">Send a link. If they say yes, you&apos;re dating in Hayati (a man and a woman, both agreeing).</p>
+            <p className="text-sm text-slate-600">Send a link. If they say yes, you&apos;re dating, in the Family app (a man and a woman, both agreeing).</p>
             <Big onClick={() => link("ask_out")}>Share my ask-out link</Big>
           </Card>
           {svc?.service === "decorator" && (

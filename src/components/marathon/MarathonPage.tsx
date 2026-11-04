@@ -4,6 +4,7 @@
 // and a countdown, signing up (and your bib), inviting friends, who's running, last week's podium, and
 // the start line once the race is about to begin.
 
+import { InviteHere } from "@/components/invite/InviteHere";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -11,7 +12,7 @@ import dynamic from "next/dynamic";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { DEFAULT_NEEDS, updateCitizen, useCitizen, type NeedKey } from "@/lib/citizenStore";
 import { gainSkill, lifeEvent } from "@/lib/life";
-import { MARATHON, phaseOf, raceClock, raceDate, raceLink, register, serverNow, shownKm, useMarathon } from "@/lib/marathon";
+import { MARATHON, phaseOf, raceClock, raceDate, register, serverNow, shownKm, useMarathon } from "@/lib/marathon";
 import { gameAudio } from "@/utils/gameAudio";
 
 // The 3D race loads only when it's needed.
@@ -69,12 +70,6 @@ export function MarathonPage() {
     gameAudio.playCoinSound();
     setNote(`You're in! Your bib is #${r.bib}. Invite friends to run with you.`);
   };
-  const share = async () => {
-    const url = raceLink(citizen.username);
-    const text = `I'm running the ${MARATHON.name} on ${raceDate(o.race)}. Come run with me 🏃`;
-    if (navigator.share) { try { await navigator.share({ title: MARATHON.name, text, url }); } catch { /* cancelled */ } return; }
-    try { await navigator.clipboard.writeText(`${text} ${url}`); setNote("Link copied. Send it to your friends."); } catch { /* blocked */ }
-  };
 
   return (
     <Shell>
@@ -108,7 +103,12 @@ export function MarathonPage() {
         ) : (
           <button disabled={busy} onClick={signUp} className="w-full h-16 rounded-full bg-emerald-700 text-white text-xl font-semibold shadow-[inset_0_-5px_0_rgba(0,0,0,0.2)] disabled:opacity-60">Sign up · free</button>
         )}
-        <button onClick={share} className="w-full h-12 rounded-full bg-slate-100 font-semibold">📣 Invite friends to run with you</button>
+        {/* Friends, people you've chatted with, anyone by @username, or a link for people not playing yet. */}
+        <InviteHere title={MARATHON.name} label={`${raceDate(o.race)} · Dubai time`} route="/marathon"
+          text={`🏃 I'm running the ${MARATHON.name} on ${raceDate(o.race)}. Come run with me on Dubai Life!`}
+          className="w-full h-12 rounded-full bg-slate-100 font-semibold flex items-center justify-center gap-2">
+          📣 Invite friends to run with you
+        </InviteHere>
         <p className="text-xs text-slate-400 text-center">How it works: everyone starts together. Steer and set your pace with the stick, sprint while your stamina lasts, grab water, hit the crowd boosts and dodge the cones. Top 3 win AED {MARATHON.prizes.map((p) => p.toLocaleString()).join(" / ")}; every finisher gets a medal and +{MARATHON.finisherPoints} points.</p>
       </section>
 

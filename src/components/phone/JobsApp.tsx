@@ -20,6 +20,7 @@ const SERVICE_LINE: Record<string, string> = {
   police: "Make arrests on suspicious transfers and earn a bounty when a case is won.",
   lawyer: "Players with a court date hire you for the fee you set. Prepare their defence.",
   decorator: "Players hire you to decorate their homes for the fee you set. Pick up their key and finish the look in the Decor app.",
+  promoter: "Run events at any venue for up to 200 guests and invite the city. You earn AED 150 for every guest who turns up.",
 };
 
 export function JobsApp({ onBack, onClose }: { onBack: () => void; onClose?: () => void }) {

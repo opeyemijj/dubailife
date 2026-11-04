@@ -1,0 +1,462 @@
+{
+  "id": "aud-uae-law",
+  "institutionId": "aud",
+  "title": "Your Rights in the UAE: Work, Home & Money",
+  "tagline": "Plain-English UAE law for everyday life: job contracts, gratuity, renting, consumer rights, online behaviour and resolving disputes.",
+  "category": "Law & Everyday Life",
+  "level": "bachelor_degree",
+  "duration": "4 Weeks (Professional Programme)",
+  "rating": 4.96,
+  "enrolledCount": 2380,
+  "icon": "⚖️",
+  "superpower": {
+    "id": "rights_aware",
+    "name": "Rights Aware",
+    "icon": "⚖️",
+    "description": "Knows the rules of daily life: avoids fines, scams and bad deals.",
+    "badgeText": "Know Your Rights",
+    "perkType": "general"
+  },
+  "syllabus": [
+    "Week 1: Working in the UAE: contracts, hours, leave and gratuity",
+    "Week 2: Renting a home: Ejari, rent rises and eviction rules",
+    "Week 3: Consumer rights, payments and staying safe online",
+    "Week 4: Resolving disputes and staying on the right side of the law"
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Working in the UAE",
+      "objective": "Know what the labour law gives you, and what it expects from you.",
+      "slides": [
+        {
+          "title": "Your Employment Contract",
+          "body": "Private-sector work is governed by the UAE Labour Law (Federal Decree-Law No. 33 of 2021), overseen by MOHRE, the Ministry of Human Resources and Emiratisation. All contracts are now fixed-term (they can be renewed), and they must be in writing.",
+          "bullets": [
+            "Probation: up to 6 months",
+            "Notice period: as agreed in the contract, between 30 and 90 days",
+            "Salary paid through the Wage Protection System (WPS), on time",
+            "Your employer can't keep your passport"
+          ],
+          "takeaway": "Read your contract before signing: it's the rulebook for your job."
+        },
+        {
+          "title": "Hours, Leave and End-of-Service",
+          "body": "The law sets maximum hours and minimum leave, and rewards long service with a gratuity.",
+          "bullets": [
+            "Normal hours: 8 a day, 48 a week; overtime paid at least 25% extra (50% between 10pm and 4am)",
+            "Annual leave: 30 days a year after a full year (2 days a month after 6 months)",
+            "Gratuity: 21 days' basic pay per year for the first 5 years, 30 days per year after that, capped at 2 years' pay",
+            "Public holidays are paid"
+          ],
+          "example": "Gratuity for 3 years on a basic salary of AED 6,000 a month:\nDaily rate: 6,000 ÷ 30 = AED 200\n21 days × 3 years = 63 days\n63 × 200 = AED 12,600",
+          "takeaway": "Know your hours, your leave and your gratuity: they're your rights."
+        }
+      ],
+      "lab": {
+        "title": "Contract Check Lab",
+        "brief": "Read a sample job offer and list the probation, notice, hours, leave and how gratuity would be calculated.",
+        "deliverable": "A one-page summary of the contract terms.",
+        "proTip": "Ask for everything in writing: verbal promises are hard to prove."
+      },
+      "caseStudy": {
+        "scenario": "Your employer asks you to hand over your passport 'for safekeeping'. What do you do?",
+        "options": [
+          {
+            "text": "Hand it over; it's normal.",
+            "correct": false,
+            "explanation": "Employers aren't allowed to keep employees' passports."
+          },
+          {
+            "text": "Politely decline: you can keep your own passport, and MOHRE can help if you're pressured.",
+            "correct": true,
+            "explanation": "Keeping your passport is your right."
+          },
+          {
+            "text": "Give them a photocopy and your original.",
+            "correct": false,
+            "explanation": "Copies are fine; the original stays with you."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Maximum probation under UAE labour law?",
+          "options": [
+            "1 month",
+            "3 months",
+            "6 months",
+            "1 year"
+          ],
+          "correctIndex": 2,
+          "explanation": "Probation can be up to 6 months."
+        },
+        {
+          "question": "Annual leave after one full year is:",
+          "options": [
+            "10 days",
+            "21 days",
+            "30 days",
+            "60 days"
+          ],
+          "correctIndex": 2,
+          "explanation": "30 days a year."
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Renting a Home",
+      "objective": "Rent with confidence: Ejari, deposits, rent increases and your protections.",
+      "slides": [
+        {
+          "title": "Ejari and the Tenancy Contract",
+          "body": "In Dubai, every residential lease must be registered on Ejari, the system run by RERA under the Dubai Land Department. Ejari makes the contract official: you need it for DEWA, residence visas for family, and any dispute.",
+          "bullets": [
+            "Register the tenancy on Ejari",
+            "Security deposit: commonly 5% (unfurnished) or 10% (furnished) of the yearly rent",
+            "Agency fee: commonly 5% of the yearly rent",
+            "Keep receipts and photos of the condition on move-in"
+          ],
+          "takeaway": "If it's not on Ejari, it's hard to defend."
+        },
+        {
+          "title": "Rent Increases and Eviction",
+          "body": "Dubai's rent rules protect tenants from sudden changes. Rent rises at renewal are limited by the RERA Rental Index, and changes need advance notice.",
+          "bullets": [
+            "Either side must give 90 days' notice before the contract ends to change its terms",
+            "Rent rises are capped by how far below the RERA Rental Index average you pay (0% to 20%)",
+            "Eviction to sell or for the landlord's own use needs 12 months' notice, sent through a notary public or registered mail",
+            "Disputes go to the Rental Dispute Centre"
+          ],
+          "takeaway": "Check the RERA Rental Index before agreeing to any increase."
+        }
+      ],
+      "lab": {
+        "title": "Lease Review Lab",
+        "brief": "Review a sample Dubai lease: deposit, notice, maintenance responsibilities, and what the RERA calculator allows at renewal.",
+        "deliverable": "A checklist of the key terms and the maximum legal increase.",
+        "proTip": "Photograph every room on move-in day: it protects your deposit when you leave."
+      },
+      "caseStudy": {
+        "scenario": "Your landlord messages 30 days before renewal: 'Rent goes up 25% or leave.' What are your rights?",
+        "options": [
+          {
+            "text": "You must pay or leave in 30 days.",
+            "correct": false,
+            "explanation": "Changes need 90 days' notice, and increases are capped by the Rental Index."
+          },
+          {
+            "text": "Changes need 90 days' notice, and increases are capped by the RERA calculator; you can challenge it at the Rental Dispute Centre.",
+            "correct": true,
+            "explanation": "Notice periods and caps protect you."
+          },
+          {
+            "text": "Stop paying rent.",
+            "correct": false,
+            "explanation": "Stopping rent puts you in breach."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Where are Dubai leases registered?",
+          "options": [
+            "DEWA",
+            "Ejari",
+            "RTA",
+            "MOHRE"
+          ],
+          "correctIndex": 1,
+          "explanation": "Ejari, run by RERA."
+        },
+        {
+          "question": "Notice to change lease terms before renewal is:",
+          "options": [
+            "7 days",
+            "30 days",
+            "90 days",
+            "1 year"
+          ],
+          "correctIndex": 2,
+          "explanation": "90 days before expiry."
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Consumer Rights, Payments and Online",
+      "objective": "Shop, borrow and post safely.",
+      "slides": [
+        {
+          "title": "Your Rights as a Consumer",
+          "body": "UAE consumer protection law gives shoppers rights: accurate prices, honest descriptions, receipts and warranties honoured. In Dubai, complaints go to DET's consumer protection team.",
+          "bullets": [
+            "Prices must be clearly displayed, in AED",
+            "You're entitled to a receipt in Arabic or English",
+            "Faulty goods: repair, replacement or refund under warranty",
+            "Shops must show their return policy"
+          ],
+          "takeaway": "Keep receipts and complain through official channels: they work."
+        },
+        {
+          "title": "Payments, Debt and Behaving Online",
+          "body": "Money and social media both come with rules. Bounced cheques and unpaid debts have serious consequences, and the UAE's cybercrime law covers what you post.",
+          "bullets": [
+            "A bounced cheque is mostly a civil matter now, but cheque fraud is still a crime, and debts can still lead to bans",
+            "Credit history is tracked by the Al Etihad Credit Bureau (AECB)",
+            "Never post photos of people without consent, insult people online, or spread false news: these are offences",
+            "Report scams to the police (e-Crime platform) and your bank immediately"
+          ],
+          "takeaway": "Online, assume everything you post is public and permanent."
+        }
+      ],
+      "lab": {
+        "title": "Rights in Action Lab",
+        "brief": "Write a complaint to a shop about a faulty phone under warranty, then draft how you'd escalate it to DET if the shop refuses.",
+        "deliverable": "Your complaint and an escalation plan.",
+        "proTip": "Be specific: what you bought, when, what's wrong, and what you want."
+      },
+      "caseStudy": {
+        "scenario": "Someone films a stranger arguing in a mall and posts it to mock them. Is that OK?",
+        "options": [
+          {
+            "text": "Yes, the mall is public.",
+            "correct": false,
+            "explanation": "Filming and posting people without consent breaks UAE privacy and cybercrime law."
+          },
+          {
+            "text": "No: it can be a criminal offence to film and post people without consent, especially to mock them.",
+            "correct": true,
+            "explanation": "Privacy is protected even in public places."
+          },
+          {
+            "text": "Only if they blur the face a little.",
+            "correct": false,
+            "explanation": "Mocking and sharing without consent is still the problem."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Who handles consumer complaints in Dubai?",
+          "options": [
+            "DET consumer protection",
+            "RTA",
+            "DEWA",
+            "KHDA"
+          ],
+          "correctIndex": 0,
+          "explanation": "The Department of Economy and Tourism."
+        },
+        {
+          "question": "Posting a photo of someone without consent is:",
+          "options": [
+            "Always fine",
+            "Potentially a criminal offence",
+            "Only a fine for celebrities",
+            "Allowed in malls"
+          ],
+          "correctIndex": 1,
+          "explanation": "UAE law protects privacy."
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Resolving Disputes",
+      "objective": "Solve problems through the right channel, calmly and on record.",
+      "slides": [
+        {
+          "title": "The Right Door for Each Problem",
+          "body": "Most disputes have a dedicated authority that's faster and cheaper than court.",
+          "bullets": [
+            "Work disputes: MOHRE (complaints, mediation), then the labour court",
+            "Rent: the Rental Dispute Centre (RDC)",
+            "Shops and services: DET consumer protection",
+            "Crimes, fraud and scams: Dubai Police (999 in an emergency, the e-Crime platform online)"
+          ],
+          "takeaway": "Choose the right authority and you save months."
+        },
+        {
+          "title": "Evidence and Calm",
+          "body": "Disputes are won with documents, not anger. Keep everything in writing and stay respectful: insults, even in messages, can become offences themselves.",
+          "bullets": [
+            "Keep contracts, receipts, emails and screenshots",
+            "Write a timeline of what happened",
+            "Stay polite in every message",
+            "Ask for help: legal aid and community services exist"
+          ],
+          "takeaway": "A calm person with a folder of evidence usually wins."
+        }
+      ],
+      "lab": {
+        "title": "Dispute Plan Lab",
+        "brief": "Pick a problem (unpaid salary, deposit not returned, faulty product) and write the step-by-step plan: evidence, authority, deadline.",
+        "deliverable": "A one-page dispute plan.",
+        "proTip": "Start with a polite written request: many problems end there."
+      },
+      "caseStudy": {
+        "scenario": "Your landlord won't return your deposit and stops answering. What's the best next step?",
+        "options": [
+          {
+            "text": "Post insults about them online.",
+            "correct": false,
+            "explanation": "That could make you the one breaking the law."
+          },
+          {
+            "text": "Send a polite written request with your evidence, then file at the Rental Dispute Centre if they still refuse.",
+            "correct": true,
+            "explanation": "Documented request first, then the right authority."
+          },
+          {
+            "text": "Change the locks on the flat.",
+            "correct": false,
+            "explanation": "You've moved out; that's not a remedy."
+          }
+        ]
+      },
+      "quiz": [
+        {
+          "question": "Rent disputes in Dubai go to:",
+          "options": [
+            "MOHRE",
+            "The Rental Dispute Centre",
+            "DEWA",
+            "Dubai Customs"
+          ],
+          "correctIndex": 1,
+          "explanation": "The RDC handles rental disputes."
+        },
+        {
+          "question": "The strongest thing in any dispute is:",
+          "options": [
+            "Shouting",
+            "Written evidence",
+            "Social media posts",
+            "Rumours"
+          ],
+          "correctIndex": 1,
+          "explanation": "Documents win disputes."
+        }
+      ]
+    }
+  ],
+  "finalExam": {
+    "durationSeconds": 180,
+    "passingScore": 70,
+    "questions": [
+      {
+        "question": "Which ministry oversees private-sector employment?",
+        "options": [
+          "MOHRE",
+          "MOE",
+          "RTA",
+          "DHA"
+        ],
+        "correctIndex": 0,
+        "explanation": "MOHRE."
+      },
+      {
+        "question": "Salaries are paid through:",
+        "options": [
+          "Cash only",
+          "The Wage Protection System (WPS)",
+          "Cheques only",
+          "Gifts"
+        ],
+        "correctIndex": 1,
+        "explanation": "WPS ensures salaries are paid."
+      },
+      {
+        "question": "Gratuity for the first 5 years is per year:",
+        "options": [
+          "7 days",
+          "21 days",
+          "30 days",
+          "60 days"
+        ],
+        "correctIndex": 1,
+        "explanation": "21 days' basic pay per year."
+      },
+      {
+        "question": "Overtime is paid at least:",
+        "options": [
+          "No extra",
+          "25% extra",
+          "100% extra",
+          "10% extra"
+        ],
+        "correctIndex": 1,
+        "explanation": "At least 25% extra."
+      },
+      {
+        "question": "Leases in Dubai are registered on:",
+        "options": [
+          "Ejari",
+          "Salik",
+          "Nol",
+          "EmaraTax"
+        ],
+        "correctIndex": 0,
+        "explanation": "Ejari."
+      },
+      {
+        "question": "Eviction for the landlord's own use needs:",
+        "options": [
+          "7 days",
+          "90 days",
+          "12 months' notarised notice",
+          "No notice"
+        ],
+        "correctIndex": 2,
+        "explanation": "12 months via notary or registered mail."
+      },
+      {
+        "question": "Rent increases at renewal are guided by:",
+        "options": [
+          "The landlord's mood",
+          "The RERA Rental Index",
+          "Inflation only",
+          "Nothing"
+        ],
+        "correctIndex": 1,
+        "explanation": "The RERA calculator."
+      },
+      {
+        "question": "Your employer may keep your passport:",
+        "options": [
+          "Always",
+          "Never without your consent",
+          "Only in summer",
+          "If you're on probation"
+        ],
+        "correctIndex": 1,
+        "explanation": "It's your document."
+      },
+      {
+        "question": "Credit history in the UAE is kept by:",
+        "options": [
+          "AECB",
+          "RTA",
+          "DET",
+          "DEWA"
+        ],
+        "correctIndex": 0,
+        "explanation": "Al Etihad Credit Bureau."
+      },
+      {
+        "question": "In an emergency, call the police on:",
+        "options": [
+          "998",
+          "997",
+          "999",
+          "911"
+        ],
+        "correctIndex": 2,
+        "explanation": "999 is the police."
+      }
+    ]
+  },
+  "tuitionFee": 3200
+}
