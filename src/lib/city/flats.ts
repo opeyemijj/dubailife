@@ -2,6 +2,7 @@
 
 // Flats and homes: listings, ownership and access, backed by Supabase (see supabase/migrations).
 
+import { onUserEvent } from "@/lib/userChannel";
 import { supabase } from "@/lib/supabase/client";
 import type { OwnedFurniture } from "@/lib/furniture";
 import { sendPushNotification } from "@/lib/push/client";
@@ -150,13 +151,10 @@ export async function listGuests(flatId: string) {
 
 export const removeGuest = (flatId: string, userId: string) => supabase().from("flat_guests").delete().eq("flat_id", flatId).eq("user_id", userId);
 
-/** Watches one knock until the resident answers. Returns an unsubscribe function. */
-export function watchRequest(requestId: string, onChange: (status: string) => void) {
-  const channel = supabase()
-    .channel(`entry-${requestId}-${Math.random().toString(36).slice(2, 7)}`)
-    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "entry_requests", filter: `id=eq.${requestId}` }, (payload) => onChange((payload.new as { status: string }).status))
-    .subscribe();
-  return () => { supabase().removeChannel(channel); };
+/** Watches one knock (mine) until the resident answers. Returns an unsubscribe function. */
+export function watchRequest(me: string, requestId: string, onChange: (status: string) => void) {
+  // On my own channel: the database tells the visitor when their knock is answered.
+  return onUserEvent<{ id: string; status: string }>(me, "entry_requests", (e) => { if (e.eventType === "UPDATE" && e.new?.id === requestId) onChange(e.new.status); });
 }
 
 export const ACCESS_LABEL: Record<Access, string> = {

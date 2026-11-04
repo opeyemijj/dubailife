@@ -5,6 +5,7 @@
 // found out). Relatives, babies and nannies too. Rules: src/data/life/love.json and family.json, enforced in
 // *_love.sql and *_family.sql.
 
+import { onUserEvent } from "@/lib/userChannel";
 import { useEffect, useSyncExternalStore } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { refreshCitizen } from "@/lib/citizenStore";
@@ -87,7 +88,13 @@ async function call<T>(fn: string, args: Record<string, unknown> = {}): Promise<
 
 let state: MyLove | null = null;
 const listeners = new Set<() => void>();
-export const reloadLove = () => call<MyLove>("my_love").then((r) => { if (r.data) { state = r.data; listeners.forEach((l) => l()); } });
+/** Fills in what an older database doesn't send yet (one relationship, no discoveries), so the app never breaks. */
+function normalise(d: MyLove): MyLove {
+  const relationships = d.relationships ?? (d.relationship ? [d.relationship] : []);
+  return { ...d, relationships, relationship: d.relationship ?? relationships[0] ?? null, canDate: d.canDate ?? relationships.length === 0,
+    discoveries: d.discoveries ?? [], caught: d.caught ?? [], incoming: d.incoming ?? [], outgoing: d.outgoing ?? [], invitations: d.invitations ?? [], candidates: d.candidates ?? [] };
+}
+export const reloadLove = () => call<MyLove>("my_love").then((r) => { if (r.data) { state = normalise(r.data); listeners.forEach((l) => l()); } });
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
 
 let live: { me: string; users: number; stop: () => void } | null = null;
@@ -95,11 +102,9 @@ function watch(me: string) {
   if (live?.me === me) { live.users++; return; }
   live?.stop();
   void reloadLove();
-  const db = supabase();
-  const ch = db.channel(`love:${me}`);
-  for (const table of ["love_requests", "relationships", "weddings", "family_links", "children"]) ch.on("postgres_changes", { event: "*", schema: "public", table }, () => { void reloadLove(); void reloadFamily(); });
-  ch.subscribe();
-  live = { me, users: 1, stop: () => void db.removeChannel(ch) };
+  // On my own channel: the database says when anything in my love life or family changed.
+  const stop = onUserEvent(me, "love", () => { void reloadLove(); void reloadFamily(); });
+  live = { me, users: 1, stop };
 }
 function unwatch(me: string) {
   if (live?.me !== me || --live.users > 0) return;
@@ -116,17 +121,19 @@ export function useLove(me: string | null | undefined): MyLove | null {
   return useSyncExternalStore(subscribe, () => state, () => null);
 }
 
+/** The partner, only when there's one to name (works with the database before and after Family). */
+const who = (partner?: string) => (partner ? { p_partner: partner } : {});
 const after = async <T,>(p: Promise<{ data?: T; error?: string }>) => { const r = await p; await Promise.all([reloadLove(), refreshCitizen()]); return r; };
 export const askOut = (to: string, message?: string) => after(call<number>("ask_out", { p_to: to, p_message: message ?? null }));
 export const respond = (id: number, accept: boolean) => after(call<null>("love_respond", { p_request: id, p_accept: accept }));
 export const cancelRequest = (id: number) => after(call<null>("cancel_love_request", { p_request: id }));
-export const showLove = (partner?: string) => after(call<number>("show_love", { p_partner: partner ?? null }));
-export const logDate = (place: string, partner?: string) => after(call<{ together: boolean; level?: number }>("log_date", { p_place: place, p_partner: partner ?? null }));
-export const propose = (ring: string, place: string, message?: string, partner?: string) => after(call<number>("propose", { p_ring: ring, p_place: place, p_message: message ?? null, p_partner: partner ?? null }));
-export const endRelationship = (partner?: string) => after(call<null>("end_relationship", { p_partner: partner ?? null }));
+export const showLove = (partner?: string) => after(call<number>("show_love", who(partner)));
+export const logDate = (place: string, partner?: string) => after(call<{ together: boolean; level?: number }>("log_date", { p_place: place, ...who(partner) }));
+export const propose = (ring: string, place: string, message?: string, partner?: string) => after(call<number>("propose", { p_ring: ring, p_place: place, p_message: message ?? null, ...who(partner) }));
+export const endRelationship = (partner?: string) => after(call<null>("end_relationship", who(partner)));
 export const planWedding = (venue: string, startsAt: Date, guests: number, ceremony: string, partner?: string) =>
-  after(call<string>("plan_wedding", { p_venue: venue, p_starts_at: startsAt.toISOString(), p_guests: guests, p_ceremony: ceremony, p_partner: partner ?? null }));
-export const cancelWedding = (partner?: string) => after(call<null>("cancel_wedding", { p_partner: partner ?? null }));
+  after(call<string>("plan_wedding", { p_venue: venue, p_starts_at: startsAt.toISOString(), p_guests: guests, p_ceremony: ceremony, ...who(partner) }));
+export const cancelWedding = (partner?: string) => after(call<null>("cancel_wedding", who(partner)));
 export const resolveDiscovery = (relationship: number, forgive: boolean) => after(call<null>("resolve_discovery", { p_relationship: relationship, p_forgive: forgive }));
 
 // ---------------------------------------------------------------- family: relatives and children
@@ -160,13 +167,14 @@ export function happinessOf(child: Pick<Child, "careRecent" | "nannyUntil">, now
 
 let family: MyFamily | null = null;
 const familyListeners = new Set<() => void>();
-export const reloadFamily = () => call<MyFamily>("my_family").then((r) => { if (r.data) { family = r.data; familyListeners.forEach((l) => l()); } });
+// Without the family tables yet (or offline), show an empty family rather than loading forever.
+export const reloadFamily = () => call<MyFamily>("my_family").then((r) => { family = { relatives: r.data?.relatives ?? [], children: r.data?.children ?? [] }; familyListeners.forEach((l) => l()); });
 export function useFamily(me: string | null | undefined): MyFamily | null {
   useEffect(() => { if (me) void reloadFamily(); }, [me]);
   return useSyncExternalStore((l) => { familyListeners.add(l); return () => { familyListeners.delete(l); }; }, () => family, () => null);
 }
 const afterFamily = async <T,>(p: Promise<{ data?: T; error?: string }>) => { const r = await p; await Promise.all([reloadFamily(), reloadLove(), refreshCitizen()]); return r; };
-export const askForBaby = (partner?: string) => afterFamily(call<number>("ask_for_baby", { p_partner: partner ?? null }));
+export const askForBaby = (partner?: string) => afterFamily(call<number>("ask_for_baby", who(partner)));
 export const nameChild = (child: number, name: string) => afterFamily(call<null>("name_child", { p_child: child, p_name: name }));
 export const careForChild = (child: number, action: string) => afterFamily(call<null>("care_for_child", { p_child: child, p_action: action }));
 export const hireNanny = (child: number, plan: string) => afterFamily(call<string>("hire_nanny", { p_child: child, p_plan: plan }));

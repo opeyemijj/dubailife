@@ -30,13 +30,18 @@
     "drinks": { "icon": "🍹", "label": "Drinks", "need": "fun", "amount": 15, "say": "🍹 got a drink" },
     "dance": { "icon": "💃", "label": "Dance", "seconds": 25, "need": "fun", "amount": 10, "say": "💃 is dancing" }
   },
-  "radio": { "stations": [
-    { "name": "LagosJump Radio", "url": "https://radio.lagosjumpradio.com/listen/lagosjump_radio/radio.mp3" },
-    { "name": "COSMO Afrobeats", "url": "https://wdr-cosmo-afrobeat.icecastssl.wdr.de/wdr/cosmo/afrobeat/mp3/128/stream.mp3" },
-    { "name": "Hotmix Afro Beats", "url": "https://streaming.hotmixradio.com/hotmix-afro-en-mp3" },
-    { "name": "bigFM Afrobeats", "url": "https://stream.bigfm.de/dancehall/mp3-128/radio-browser" },
-    { "name": "Afrikana Radio", "url": "https://radio.afrikanabestsounds.com/listen/live_african/radio.mp3" }
-  ] },
+  "radio": {
+    "_how": "Pick a region with the arrow on the radio (Lagos by default). Music-only stations, each checked to stream; if one is down the next in its region plays.",
+    "default": "lagos",
+    "regions": [
+      {"id": "lagos", "label": "Lagos", "flag": "🇳🇬", "stations": [{"name": "LagosJump Radio", "url": "https://radio.lagosjumpradio.com/listen/lagosjump_radio/radio.mp3"}, {"name": "COSMO Afrobeats", "url": "https://wdr-cosmo-afrobeat.icecastssl.wdr.de/wdr/cosmo/afrobeat/mp3/128/stream.mp3"}, {"name": "Hotmix Afro Beats", "url": "https://streaming.hotmixradio.com/hotmix-afro-en-mp3"}, {"name": "bigFM Afrobeats", "url": "https://stream.bigfm.de/dancehall/mp3-128/radio-browser"}, {"name": "Afrikana Radio", "url": "https://radio.afrikanabestsounds.com/listen/live_african/radio.mp3"}]},
+      {"id": "kenya", "label": "Kenya", "flag": "🇰🇪", "stations": [{"name": "Capital FM Kenya", "url": "https://atunwadigital.streamguys1.com/capitalfm"}]},
+      {"id": "france", "label": "France", "flag": "🇫🇷", "stations": [{"name": "NRJ Nouveaux Hits", "url": "https://streaming.nrjaudio.fm/ouucqs5n3nje"}, {"name": "NRJ Best Hits", "url": "https://streaming.nrjaudio.fm/ouue4t5n3nje"}, {"name": "Radio Contact", "url": "https://n22a-eu.rcs.revma.com/6gygqc1gy7uvv"}]},
+      {"id": "us", "label": "US", "flag": "🇺🇸", "stations": [{"name": "102.7 KIIS FM", "url": "https://stream.revma.ihrhls.com/zc185"}, {"name": "Z100 New York", "url": "https://stream.revma.ihrhls.com/zc2509"}, {"name": "100 Hip Hop & RnB", "url": "https://streaming.shoutcast.com/100-hip-hop-and-rnb-fm"}]},
+      {"id": "london", "label": "London", "flag": "🇬🇧", "stations": [{"name": "Capital Dance", "url": "https://media-ssl.musicradio.com/CapitalDance"}, {"name": "Heart Dance", "url": "https://media-ssl.musicradio.com/HeartDanceMP3"}]},
+      {"id": "arabic", "label": "Arabic", "flag": "🇦🇪", "stations": [{"name": "Al Arabiya 99 FM", "url": "https://stream.radiojar.com/s1mygd1frxquv"}, {"name": "Al Khaleejiya 100.9", "url": "https://stream.radiojar.com/5wpf9e4erxquv"}, {"name": "Radio Hits 88.2 Cairo", "url": "https://radiohits882.radioca.st/;"}]}
+    ]
+  },
   "maxGuests": 20,
   "reminderMinutes": 15,
   "tickets": { "maxPrice": 5000, "_how": "Any event can be free or paid. Going buys the ticket; the money goes to the host. Calling it off refunds every ticket." }

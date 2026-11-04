@@ -18,7 +18,7 @@ type NeedKey = Parameters<typeof boostNeed>[0];
 
 export type PartyPose = "dance" | "sit" | "sleep" | null;
 
-export function PartyActions({ party, lightsOut, onLights, onDance, pose, onPose, canSleep = true, announce, broadcast, className = "" }: {
+export function PartyActions({ party, lightsOut, onLights, onDance, pose, onPose, canSleep = true, announce, broadcast, className = "", list = false }: {
   party: PartyHere;
   lightsOut: boolean;
   onLights: (out: boolean) => void;
@@ -33,6 +33,8 @@ export function PartyActions({ party, lightsOut, onLights, onDance, pose, onPose
   /** Tell everyone in the room right now (lights, dancing). */
   broadcast: (action: "lights" | "dance" | "drinks", on?: boolean) => void;
   className?: string;
+  /** As a vertical list inside a popover (the side bar's 🎉 Party), without Messages (the bar has the phone). */
+  list?: boolean;
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const { citizen } = useCitizen();
@@ -60,9 +62,11 @@ export function PartyActions({ party, lightsOut, onLights, onDance, pose, onPose
     gameAudio.playClickSound();
     await setPartyLights(party.code, out);
   };
-  const btn = "shrink-0 h-12 min-w-[4.25rem] px-2 rounded-2xl bg-white/95 text-slate-900 shadow-lg flex flex-col items-center justify-center text-[10px] font-black active:scale-95 transition-transform";
+  const btn = list
+    ? "w-full h-11 px-3 rounded-2xl bg-slate-100 text-slate-900 flex flex-row items-center justify-start gap-2.5 text-sm font-black active:scale-95 transition-transform [&>span]:text-xl"
+    : "shrink-0 h-12 min-w-[4.25rem] px-2 rounded-2xl bg-white/95 text-slate-900 shadow-lg flex flex-col items-center justify-center text-[10px] font-black active:scale-95 transition-transform";
   return (
-    <div className={`fixed left-1/2 -translate-x-1/2 z-40 flex gap-1.5 max-w-[96vw] overflow-x-auto px-1 py-2 [scrollbar-width:none] ${className}`} role="toolbar" aria-label="Party actions">
+    <div className={list ? "flex flex-col gap-1.5" : `fixed left-1/2 -translate-x-1/2 z-40 flex gap-1.5 max-w-[96vw] overflow-x-auto px-1 py-2 [scrollbar-width:none] ${className}`} role="toolbar" aria-label="Party actions">
       <button onClick={() => treat("food")} disabled={busy === "food"} className={btn}><span className="text-lg leading-none">{A.food.icon}</span>{busy === "food" ? "Yum!" : "Food"}</button>
       <button onClick={() => treat("drinks")} disabled={busy === "drinks"} className={btn}><span className="text-lg leading-none">{A.drinks.icon}</span>{busy === "drinks" ? "Cheers!" : "Drinks"}</button>
       <button onClick={dance} className={`${btn} ${pose === "dance" ? "!bg-fuchsia-600 !text-white" : ""}`}><span className="text-lg leading-none">{A.dance.icon}</span>Dance</button>
@@ -76,10 +80,10 @@ export function PartyActions({ party, lightsOut, onLights, onDance, pose, onPose
           <span className="text-lg leading-none">😴</span>{pose === "sleep" ? "Wake up" : "Sleep"}
         </button>
       )}
-      <button onClick={() => openPhone("page:/phone")} className={`${btn} relative`} aria-label={unread ? `Messages, ${unread} unread` : "Messages"}>
+      {!list && <button onClick={() => openPhone("page:/phone")} className={`${btn} relative`} aria-label={unread ? `Messages, ${unread} unread` : "Messages"}>
         <span className="text-lg leading-none">💬</span>Messages
         {unread > 0 && <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center ring-2 ring-white">{unread > 99 ? "99+" : unread}</span>}
-      </button>
+      </button>}
       {party.isHost && (
         <button onClick={() => { dance(); broadcast("dance"); }} className={btn}><span className="text-lg leading-none">🪩</span>Everyone</button>
       )}

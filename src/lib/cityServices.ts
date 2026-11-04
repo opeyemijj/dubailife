@@ -4,6 +4,7 @@
 // Rules and texts: src/data/economy/city-services.json (mirrored in *_city_services.sql). Players who work
 // as doctors, police officers and lawyers serve other players; Locals step in when none is free.
 
+import { onUserEvent } from "@/lib/userChannel";
 import { useEffect, useSyncExternalStore } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { refreshCitizen } from "@/lib/citizenStore";
@@ -87,13 +88,11 @@ function watch(me: string) {
   if (live?.me === me) { live.users++; return; }
   live?.stop();
   void reloadServices();
-  const db = supabase();
-  const ch = db.channel(`services:${me}`);
-  for (const table of ["consults", "cases", "illnesses"]) ch.on("postgres_changes", { event: "*", schema: "public", table }, () => { void reloadServices(); void refreshCitizen(); });
-  ch.subscribe();
+  // On my own channel: the database says when my doctor visits, court cases or illness changed.
+  const stop = onUserEvent(me, "services", () => { void reloadServices(); void refreshCitizen(); });
   // Hearings fall due on their own; check now and then.
   const t = setInterval(() => void reloadServices(), 60_000);
-  live = { me, users: 1, stop: () => { clearInterval(t); void db.removeChannel(ch); } };
+  live = { me, users: 1, stop: () => { clearInterval(t); stop(); } };
 }
 function unwatch(me: string) {
   if (live?.me !== me || --live.users > 0) return;

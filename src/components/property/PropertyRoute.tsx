@@ -3,6 +3,8 @@
 // A flat or home: travel there, get through the door (access rules / knocking), then see the saved
 // interior. Residents and editors can furnish it; owners manage access, guests and listings.
 
+import { MoveStick } from "@/components/street/StreetWorld";
+import { isDirty } from "@/components/avatar/Flies";
 import { InviteHere } from "@/components/invite/InviteHere";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { BELOW_SPACE_TOP, PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
@@ -13,11 +15,16 @@ import { askForPush } from "@/lib/push/engage";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, DoorClosed, KeyRound, Loader2, LogOut, Settings2, ShoppingBag, UserPlus, X } from "lucide-react";
+import { ArrowLeft, DoorClosed, KeyRound, Loader2, LogOut, Menu, Settings2, ShoppingBag, Smartphone, UserPlus, X } from "lucide-react";
+import { SideBar, SideButton, SidePopover } from "@/components/layout/SideBar";
+import { openPhone } from "@/components/layout/PhoneOverlay";
+import { useUnreadTotal } from "@/lib/unread";
 import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoom";
 import { CATALOG, getCatalogItem, housingTierFor, withHomeItems, HOUSING_CONFIGS, type CatalogItem, type OwnedFurniture, type Placement, type Rotation, type HousingTier } from "@/lib/furniture";
 import { adjustBalance, useCitizen, useRequireCitizen } from "@/lib/citizenStore";
 import { getEntity } from "@/lib/city/geo";
+import { isGenericHome, towerName } from "@/lib/city/partyHome";
+import { TowerArrival } from "./TowerArrival";
 import {
   ACCESS_LABEL, addGuest, flatRoute, flatTitle, getFlat, getInterior, listFlat, listGuests, removeGuest, requestEntry, saveInterior, setAccess, watchRequest,
   type Access, type FlatView, type Listing,
@@ -40,10 +47,15 @@ export function PropertyRoute({ buildingId, unit }: { buildingId: string; unit: 
   const router = useRouter();
   const { citizen, hydrated } = useRequireCitizen();
   const flatId = `${buildingId}:${unit}`;
-  const building = getEntity(buildingId);
+  // Homes off the map ("home-al-barsha") have a generic address and no building on the map: you're there as soon as
+  // you open the link (see lib/city/partyHome.ts).
+  const generic = isGenericHome(buildingId);
+  const building = useMemo(() => getEntity(buildingId) ?? (generic ? { name: towerName(buildingId) } : undefined), [buildingId, generic]);
   const [flat, setFlat] = useState<FlatView | null | undefined>(undefined);
   const [door, setDoor] = useState<Door>({ state: "checking" });
   const [furniture, setFurniture] = useState<OwnedFurniture[]>([]);
+  // A flat in a tower off the map: you come in through the lobby and take the lift up first (once per visit).
+  const [upstairs, setUpstairs] = useState(false);
 
   const load = useCallback(async () => {
     const f = await getFlat(flatId);
@@ -58,7 +70,7 @@ export function PropertyRoute({ buildingId, unit }: { buildingId: string; unit: 
     }
   }, [flatId]);
 
-  const atBuilding = citizen?.location?.placeId === buildingId;
+  const atBuilding = generic || citizen?.location?.placeId === buildingId;
   // Fetches the flat once the citizen has arrived; state is set when the request resolves.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -66,8 +78,8 @@ export function PropertyRoute({ buildingId, unit }: { buildingId: string; unit: 
   }, [hydrated, citizen?.id, atBuilding, load]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (hydrated && citizen && building && !atBuilding) router.replace(`/explore?open=${buildingId}`);
-  }, [hydrated, citizen, building, atBuilding, buildingId, router]);
+    if (hydrated && citizen && building && !atBuilding && !generic) router.replace(`/explore?open=${buildingId}`);
+  }, [hydrated, citizen, building, atBuilding, buildingId, router, generic]);
 
   if (!hydrated || !citizen) return <Blank />;
   if (!building) return <Card><h1 className="text-xl font-black">This home doesn&apos;t exist</h1><Link href="/explore" className="mt-4 inline-block px-4 py-2 rounded-xl bg-emerald-500 text-white font-black">Back to the city</Link></Card>;
@@ -76,6 +88,9 @@ export function PropertyRoute({ buildingId, unit }: { buildingId: string; unit: 
   if (!atBuilding) return <Blank spinner />;
 
   if (flat === undefined || door.state === "checking") return <Blank spinner />;
+  if (generic && flat && !upstairs) {
+    return <TowerArrival floor={flat.floor ?? 12} unit={flat.unit} tower={building.name ?? "Residences"} look={citizen.look} onDone={() => setUpstairs(true)} />;
+  }
   if (flat === null) return <Card><h1 className="text-xl font-black">That home isn&apos;t in this building</h1><Link href={`/explore?open=${buildingId}`} className="mt-4 inline-block px-4 py-2 rounded-xl bg-emerald-500 text-white font-black">See the homes here</Link></Card>;
 
   if (door.state !== "open") {
@@ -91,7 +106,7 @@ export function PropertyRoute({ buildingId, unit }: { buildingId: string; unit: 
       furniture={furniture}
       setFurniture={setFurniture}
       look={citizen.look}
-      onExit={() => router.push(`/explore?at=${buildingId}`)}
+      onExit={() => router.push(generic ? "/explore" : `/explore?at=${buildingId}`)}
       onChanged={load}
     />
   );
@@ -103,13 +118,14 @@ function DoorStep({ flat, door, setDoor, onEnter, buildingName }: { flat: FlatVi
   const [error, setError] = useState<string | null>(null);
   const resident = flat.residentName ?? "the resident";
 
+  const { citizen: visitor } = useCitizen();
   useEffect(() => {
-    if (door.state !== "knocking") return;
-    return watchRequest(door.requestId, (status) => {
+    if (door.state !== "knocking" || !visitor?.id) return;
+    return watchRequest(visitor.id, door.requestId, (status) => {
       if (status === "approved") onEnter();
       else if (status === "denied") setDoor({ state: "denied" });
     });
-  }, [door, onEnter, setDoor]);
+  }, [door, onEnter, setDoor, visitor?.id]);
 
   const knock = async () => {
     setError(null);
@@ -147,7 +163,7 @@ function DoorStep({ flat, door, setDoor, onEnter, buildingName }: { flat: FlatVi
           <button onClick={knock} className="w-full py-3 rounded-xl bg-slate-900 text-white font-black">✊ Knock on the door</button>
         )}
         {error && <p className="text-xs font-bold text-rose-600">{error}</p>}
-        <Link href={`/explore?open=${flat.building_id}`} className="block w-full py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm">Back to the building</Link>
+        <Link href={isGenericHome(flat.building_id) ? "/explore" : `/explore?open=${flat.building_id}`} className="block w-full py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm">{isGenericHome(flat.building_id) ? "Back to the city" : "Back to the building"}</Link>
       </div>
     </Card>
   );
@@ -161,6 +177,9 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
 }) {
   // A party on here: decorations, a banner, and (for a guest) checking in.
   const party = usePartyHere(flatRoute(flat), true);
+  // The side bar's open panel.
+  const [panel, setPanel] = useState<"menu" | "party" | null>(null);
+  const unreadAll = useUnreadTotal(me);
   const [dancing, setDancing] = useState(false);
   const [pose, setPose] = useState<"sit" | "sleep" | null>(null);
   const dance = (seconds: number) => { setPose(null); setDancing(true); setTimeout(() => setDancing(false), seconds * 1000); };
@@ -245,7 +264,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   const onMove = (x: number, z: number, yaw: number, walking: boolean, lift?: number, rest?: "sit" | "sleep") => {
     setWhere({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw: Math.round(yaw * 100) / 100, walking, lift: lift ? Math.round(lift * 100) / 100 : undefined, rest });
   };
-  const room = useRoom(`flat:${flat.id}`, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : where.rest ?? myMood, lift: where.lift, level, hold: drink ?? undefined }, (e: Received) => {
+  const room = useRoom(`flat:${flat.id}`, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : where.rest ?? myMood, lift: where.lift, level, hold: drink ?? undefined, dirty: isDirty(citizen?.needs?.hygiene) }, (e: Received) => {
     if (e.type === "chat") bubble(e.from.userId, e.text);
     if (e.type === "wave") bubble(e.from.userId, "👋");
     if (e.type === "party") {
@@ -273,9 +292,10 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
       position: Number.isFinite(p.x) ? [p.x, p.lift ?? 0, p.z] : spotOf(p.userId),
       holding: drinkInHand(p.hold)?.prop,
       carryMode: drinkInHand(p.hold)?.mode,
+      dirty: p.dirty,
       rotation: p.face ?? (party ? faceNearest([p.x, 0, p.z], [[where.x, 0, where.z], ...room.peers.map((o) => [o.x, 0, o.z] as [number, number, number])]) : undefined) ?? Math.atan2(-p.x, -p.z),
       animation: p.animation,
-      label: `@${p.username}${room.unread[p.userId] ? ` · 💬${room.unread[p.userId]}` : ""}`,
+      label: `${p.away ? "💤 " : ""}@${p.username}${room.unread[p.userId] ? ` · 💬${room.unread[p.userId]}` : ""}`,
       bubble: bubbles[p.userId],
       onClick: () => { setStartChat(false); setPeerId(p.userId); },
     })),
@@ -302,7 +322,9 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   const isMultiRoom = !!rooms?.length;
   const [upView, setUpView] = useState(isMultiRoom);
   // Looking down on the home, or over the shoulder in the room.
-  const [view, setView] = useState<"above" | "inside">("above");
+  const [view, setView] = useState<"above" | "inside" | "eye">("above");
+  const stick = useRef({ x: 0, y: 0 });
+  const [stickRun, setStickRun] = useState(false);
   const [activeRoomId, setActiveRoomId] = useState<string>("living");
 
   useEffect(() => {
@@ -339,9 +361,11 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         onMove={onMove}
         seatCall={seatCall}
         holding={drinkInHand(drink)}
+        dirty={isDirty(citizen?.needs?.hygiene)}
+        stick={view !== "above" ? stick : undefined}
+        stickRun={stickRun}
         extras={<PartyHostesses runs={runs} onArrive={(r) => { if (r.who === me) handDrink(); }} onDone={(id) => setRuns((r) => r.filter((x) => x.id !== id))} />}
       />
-      {party && <PartyActions party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={(sec) => { if (where.rest) askSeat(false); dance(sec); }} pose={dancing ? "dance" : pose} onPose={(x) => { setDancing(false); setPose(x === "dance" ? null : x); if (x === "sit" || pose === "sit") askSeat(x === "sit"); }} announce={(text) => room.emit({ type: "chat", text })} broadcast={(action, on) => { room.emit({ type: "party", action, on }); if (action === "drinks") serve(me, citizen?.username ?? "you", [where.x, where.z]); }} className={canEdit ? "bottom-[10rem]" : "bottom-[6.25rem]"} />}
       {party && <PartyBanner party={party} hostAway={!room.peers.some((p) => p.username === party.host)} className={BELOW_SPACE_TOP} />}
 
       <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2">
@@ -373,7 +397,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
       </header>
 
       {/* Multi-Room Navigation & Cutaway View Pills */}
-      {rooms && rooms.length > 0 && (
+      {rooms && rooms.length > 0 && !party && (
         <div className="absolute top-[4.65rem] left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-full shadow-lg border border-slate-200 overflow-x-auto max-w-[94vw]">
           <button
             onClick={() => setUpView(!upView)}
@@ -416,13 +440,49 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         </div>
       )}
 
+      {view !== "above" && !placing && !decorating && (
+        <div className="absolute left-4 bottom-[max(6.5rem,calc(env(safe-area-inset-bottom)+6rem))] z-30"><MoveStick controls={stick} run={stickRun} onRun={() => setStickRun((r) => !r)} /></div>
+      )}
       {banner && <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 bg-slate-950/85 text-white text-xs font-bold px-4 py-2 rounded-full shadow-xl max-w-[92vw] text-center">{banner}</div>}
 
-      <div className="absolute right-3 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-2">
-        <button onClick={() => { setView((v) => (v === "inside" ? "above" : "inside")); setUpView(false); }} className="w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg border border-slate-200 flex items-center justify-center text-lg active:scale-90 transition-all" title={view === "inside" ? "View from above" : "View from inside"} aria-label={view === "inside" ? "View from above" : "View from inside"}>{view === "inside" ? "🏠" : "👤"}</button>
-        <button onClick={() => setTurns((t) => t - 1)} className="w-10 h-10 rounded-full bg-white shadow-lg font-black" aria-label="Rotate room left">⟲</button>
-        <button onClick={() => setTurns((t) => t + 1)} className="w-10 h-10 rounded-full bg-white shadow-lg font-black" aria-label="Rotate room right">⟳</button>
-      </div>
+      {/* Middle right: ☰ Menu (rooms, turning the room), 🎉 Party, the three views and the phone; Outside at the
+          bottom right (user, 2026-11-04). */}
+      <SideBar>
+        <SideButton icon={<Menu className="w-5 h-5" />} label="Menu" tone="dark" active={panel === "menu"} onClick={() => setPanel((x) => (x === "menu" ? null : "menu"))} />
+        {party && <SideButton icon="🎉" label="Party" tone="party" active={panel === "party"} onClick={() => setPanel((x) => (x === "party" ? null : "party"))} />}
+        {([["above", "🏠", "Above view"], ["inside", "👤", "Inside view"], ["eye", "👁️", "Eyes view"]] as const).map(([v, icon, label]) => (
+          <SideButton key={v} icon={icon} label={label} active={view === v} onClick={() => { setView(v); setUpView(false); }} />
+        ))}
+        <SideButton icon={<Smartphone className="w-5 h-5" />} label={unreadAll ? `Phone: ${unreadAll} unread` : "Phone"} badge={unreadAll} onClick={() => openPhone()} />
+      </SideBar>
+      {panel === "party" && party && (
+        <SidePopover title="🎉 Party" onClose={() => setPanel(null)}>
+          <PartyActions list party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={(sec) => { if (where.rest) askSeat(false); dance(sec); }} pose={dancing ? "dance" : pose} onPose={(x) => { setDancing(false); setPose(x === "dance" ? null : x); if (x === "sit" || pose === "sit") askSeat(x === "sit"); }} announce={(text) => room.emit({ type: "chat", text })} broadcast={(action, on) => { room.emit({ type: "party", action, on }); if (action === "drinks") serve(me, citizen?.username ?? "you", [where.x, where.z]); }} />
+        </SidePopover>
+      )}
+      {panel === "menu" && (
+        <SidePopover title={flatTitle(flat)} onClose={() => setPanel(null)}>
+          {(levels || (rooms && rooms.length > 0)) && (
+            <div className="flex flex-wrap gap-1">
+              {rooms && rooms.length > 0 && <button onClick={() => setUpView(!upView)} className={`px-2.5 h-8 rounded-full text-[11px] font-black ${upView ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-700"}`}>{upView ? "📐 All rooms" : "🔍 One room"}</button>}
+              {levels?.map((l, i) => (
+                <button key={l.label} onClick={() => changeLevel(i)} className={`px-2.5 h-8 rounded-full text-[11px] font-black ${level === i ? "bg-amber-400 text-slate-900" : "bg-slate-100 text-slate-700"}`}>{l.icon} {l.label}</button>
+              ))}
+              {rooms?.map((r) => (
+                <button key={r.id} onClick={() => setActiveRoomId(r.id)} className={`px-2.5 h-8 rounded-full text-[11px] font-black ${activeRoomId === r.id ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"}`}>{r.icon} {r.label}</button>
+              ))}
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-1.5 pt-1">
+            <button onClick={() => setTurns((t) => t - 1)} className="h-10 rounded-2xl bg-slate-100 text-xs font-black active:scale-95">⟲ Turn left</button>
+            <button onClick={() => setTurns((t) => t + 1)} className="h-10 rounded-2xl bg-slate-100 text-xs font-black active:scale-95">⟳ Turn right</button>
+          </div>
+        </SidePopover>
+      )}
+      {!placing && (
+        <Link href={`/street?from=${encodeURIComponent(flat.building_id)}${isGenericHome(flat.building_id) ? "&home=1" : ""}`}
+          className="fixed right-3 bottom-[max(6.25rem,calc(env(safe-area-inset-bottom)+5.75rem))] z-30 h-11 pl-3 pr-4 rounded-full bg-emerald-600 text-white shadow-lg flex items-center gap-1.5 font-black text-sm active:scale-95" aria-label="Go outside">🚪 <span>Outside</span></Link>
+      )}
 
       {/* The usual bottom bar (Home, Map, To do, Me), so you can always get back to the city. */}
       {!placing && !peer && <BottomNav />}

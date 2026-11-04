@@ -1,5 +1,7 @@
 "use client";
 
+import { Ceiling } from "@/components/interior/Ceiling";
+import { Flies } from "@/components/avatar/Flies";
 import { PartyDecor } from "@/components/invite/PartyDecor";
 import { canvasQuality } from "@/lib/device";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -9,8 +11,9 @@ import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import type { AvatarLookProps } from "../onboarding/AvatarCanvas";
 import { restPose, type RestPose } from "./restPose";
+import { HomeGrounds } from "./HomeGrounds";
 import { LuxuryDecor } from "./LuxuryDecor";
-import { buildNav, findPath, type Rect, type Seg } from "./homeNav";
+import { buildNav, findPath, walkable, type Rect, type Seg } from "./homeNav";
 import { HomeFixtures } from "./HomeFixtures";
 import { fixtureRect, fixtureSpot, fixturesFor, fixtureWallsFor, type Fixture } from "@/lib/homeFixtures";
 import { CitizenAvatar, type CarryMode, StudioEnvironment, type AvatarAnimation } from "@/components/avatar/CitizenAvatar";
@@ -18,7 +21,7 @@ import { SceneLoadingOverlay } from "@/components/GameLoadingScreen";
 import {
   AVATAR_SPOT, BUILT_INS, CELL, DOOR, GRID, LAYOUT_SCALE, ROOM_SIZE, WALL_HEIGHT, WINDOW,
   findFreePlacement, floorCenter, floorPlacementAt, getCatalogItem, isPlacementValid, levelOf, rotatedSize, wallOffsetAt, wallTransform, withHomeItems,
-  HOUSING_CONFIGS, type FloorFinish, type HomeStyle, type HousingTier, type LevelDef, type RoomZone,
+  HOUSING_CONFIGS, hasPlot, type FloorFinish, type HomeStyle, type HousingTier, type LevelDef, type RoomZone,
   type CatalogItem, type FloorPlacement, type Interaction, type OwnedFurniture, type Placement, type Rotation, type Wall,
 } from "@/lib/furniture";
 
@@ -67,12 +70,22 @@ export interface ApartmentRoomProps {
   onMove?: (x: number, z: number, yaw: number, walking: boolean, lift?: number, rest?: "sit" | "sleep") => void;
   /** Sit down (on the nearest free seat: sofa, armchair, chair, majlis) or stand up again. Each new `n` is a new ask. */
   seatCall?: { n: number; sit: boolean };
+  /** Walk to the nearest fixture of this kind (the shower for "Morning Shower") and use it; each call is a new ask. */
+  fixtureCall?: { n: number; kind: string };
   /** What you have in your hand (a drink at a party), and how you hold it. */
   holding?: { prop: React.ReactNode; mode: CarryMode };
+  /** I haven't washed: flies buzz round me. */
+  dirty?: boolean;
+  /** A fixture in use (its id): in the shower, you stand under the water while it runs. */
+  using?: string | null;
+  /** The on-screen stick (Inside and Eye views): walk or run wherever it points, sliding round furniture. */
+  stick?: React.RefObject<{ x: number; y: number }>;
+  stickRun?: boolean;
   /** How far back the camera sits, when something needs the whole home in a smaller space. */
   viewDistance?: number;
   /** "inside": an over-the-shoulder camera in the room with the citizen, instead of looking down on the home. */
-  view?: "above" | "inside";
+  /** Above, inside (over the shoulder) or eye (first person: drag to look around). */
+  view?: "above" | "inside" | "eye";
   /** Active room focus in multi-room flats (e.g. 2-bedroom) */
   activeRoomId?: string;
   onSelectRoom?: (roomId: string) => void;
@@ -104,6 +117,8 @@ export interface Person {
   /** In their hand (a drink at a party), and how they hold it. */
   holding?: React.ReactNode;
   carryMode?: CarryMode;
+  /** Hasn't washed: flies buzz round them. */
+  dirty?: boolean;
 }
 
 type LabelNodes = React.RefObject<Map<string, HTMLDivElement>>;
@@ -158,6 +173,7 @@ function PersonAvatar({ p, id, labels }: { p: Person; id: string; labels: LabelN
         <CitizenAvatar look={p.look} animation={moving ? "walk" : p.animation ?? "idle"} rotation={!moving && p.animation === "sleep" ? [-Math.PI / 2, 0, 0] : [0, 0, 0]}
           holding={p.holding} carryMode={p.holding ? (moving ? "hold" : p.carryMode ?? "hold") : undefined} />
       </group>
+      {p.dirty && <Flies />}
       {p.label && (
         <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
           <ringGeometry args={[0.36, 0.44, 32]} />
@@ -193,6 +209,12 @@ function PeopleLabels({ people, nodes }: { people: Person[]; nodes: LabelNodes }
 
 // ---------- models ----------
 
+const BED_MODEL = "/models/furniture/bed.glb";
+/** Every bed's mattress top stands this high (m), whatever its width: restPose.ts lies people on it. */
+export const BED_MATTRESS = 0.6;
+/** The mattress top in bed.glb's own units (measured: the model is 2.83 × 1.56 × 4.26). */
+const MODEL_MATTRESS = 0.942;
+
 /** Loads a furniture GLB and fits it into its footprint: centred, resting on y=0, front facing +z. */
 function useFittedModel(url: string, size: [number, number], yaw = 0, ghost?: "valid" | "invalid") {
   const { scene } = useGLTF(url);
@@ -203,9 +225,14 @@ function useFittedModel(url: string, size: [number, number], yaw = 0, ghost?: "v
     fit.add(model);
     fit.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(fit);
-    const s = Math.min((size[0] * CELL * 0.94) / (box.max.x - box.min.x), (size[1] * CELL * 0.94) / (box.max.z - box.min.z));
-    fit.scale.setScalar(s);
-    fit.position.set(-((box.min.x + box.max.x) / 2) * s, -box.min.y * s, -((box.min.z + box.max.z) / 2) * s);
+    const sx = (size[0] * CELL * 0.94) / (box.max.x - box.min.x), sz = (size[1] * CELL * 0.94) / (box.max.z - box.min.z);
+    const s = Math.min(sx, sz);
+    // Beds fill their whole footprint (a grown-up lies full length on them, even a narrow bed-space bunk) and their
+    // mattress is always at BED_MATTRESS; the rest keep their proportions.
+    const bed = url === BED_MODEL;
+    const [kx, ky, kz] = bed ? [sx, BED_MATTRESS / MODEL_MATTRESS, sz] : [s, s, s];
+    fit.scale.set(kx, ky, kz);
+    fit.position.set(-((box.min.x + box.max.x) / 2) * kx, -box.min.y * ky, -((box.min.z + box.max.z) / 2) * kz);
     const outer = new THREE.Group();
     outer.add(fit);
 
@@ -1014,6 +1041,7 @@ function CameraRig({
   follow,
   followYaw = 0,
   inside,
+  eye = false,
   onHiddenWallsChange,
 }: {
   turns: number;
@@ -1024,6 +1052,8 @@ function CameraRig({
   follow?: [number, number, number];
   followYaw?: number;
   inside?: boolean;
+  /** First person: the camera at the citizen's eyes. */
+  eye?: boolean;
   onHiddenWallsChange: (walls: Set<Wall>) => void;
 }) {
   const controls = useThree((s) => s.controls) as unknown as OrbitControlsImpl | null;
@@ -1036,11 +1066,21 @@ function CameraRig({
   // Pull back on narrow (portrait) screens so the whole room fits.
   useEffect(() => {
     if (!controls) return;
-    const dist = inside ? 4.4 : viewDistance ?? (size.width / size.height < 0.8 ? 19 : 14);
+    if (eye && follow) {
+      // Eyes: a hair behind the head, looking the way they face.
+      controls.target.set(follow[0] + Math.sin(followYaw) * 0.01, 1.62, follow[2] + Math.cos(followYaw) * 0.01);
+      camera.position.set(follow[0] - Math.sin(followYaw) * 0.12, 1.62, follow[2] - Math.cos(followYaw) * 0.12);
+      controls.update();
+      return;
+    }
+    // Inside sits back far enough to see the room around you.
+    const dist = inside ? 6.2 : viewDistance ?? (size.width / size.height < 0.8 ? 19 : 14);
     const dir = camera.position.clone().sub(controls.target).normalize();
     camera.position.copy(controls.target).addScaledVector(dir, dist);
     controls.update();
-  }, [controls, camera, size.width, size.height, inside, viewDistance]);
+    // Re-aim only when the mode or screen changes, not every step.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [controls, camera, size.width, size.height, inside, eye, viewDistance]);
   // Where the citizen was last frame, so the camera can move along with them.
   const lastFollow = useRef<[number, number, number] | null>(null);
   // Walls faded because they stand between the camera and the citizen (inside view).
@@ -1058,6 +1098,15 @@ function CameraRig({
   useFrame((_, dt) => {
     if (!controls) return;
 
+    if (eye && follow) {
+      // Eyes move with you; where you look stays yours.
+      const head = new THREE.Vector3(follow[0], 1.62, follow[2]);
+      const shift = head.clone().sub(controls.target);
+      controls.target.add(shift);
+      camera.position.add(shift);
+      controls.update();
+      return;
+    }
     if (inside && follow) {
       // Over the shoulder: aim at the citizen's head; while they walk, settle in behind them.
       const head = new THREE.Vector3(follow[0], 1.45, follow[2]);
@@ -1066,7 +1115,7 @@ function CameraRig({
       controls.target.add(shift);
       camera.position.add(shift);
       if (moved > 0.0005) {
-        const behind = new THREE.Vector3(follow[0] - Math.sin(followYaw) * 4.2, 2.9, follow[2] - Math.cos(followYaw) * 4.2);
+        const behind = new THREE.Vector3(follow[0] - Math.sin(followYaw) * 6, 3.6, follow[2] - Math.cos(followYaw) * 6);
         camera.position.lerp(behind, Math.min(1, dt * 2.5));
       }
       lastFollow.current = follow;
@@ -1164,7 +1213,12 @@ function RoomScene({
   startAt,
   onMove,
   seatCall,
+  fixtureCall,
   holding,
+  dirty,
+  using,
+  stick,
+  stickRun = false,
   furniture: ownFurniture = [],
   placing,
   decorating,
@@ -1218,6 +1272,9 @@ function RoomScene({
   useEffect(() => { moveRef.current = onMove; }, [onMove]);
   // Only two updates a walk, to keep live traffic low: where you're heading when you set off, and where you stopped.
   // Everyone else's screen walks you there in between.
+  // Steering with the stick right now, and when the room was last told where I am.
+  const steering = useRef(false);
+  const lastSteerReport = useRef(0);
   const poseRef = useRef(pose);
   useEffect(() => { poseRef.current = pose; }, [pose]);
   const walkingNow = animation === "walk";
@@ -1324,7 +1381,40 @@ function RoomScene({
   }, [currentRoom]);
 
   // Smooth frame locomotion update
-  useFrame((_, dt) => {
+  useFrame(({ camera }, dt) => {
+    // The stick: steer the way it points (relative to the camera); blocked by furniture or a wall, slide along it.
+    const sx = stick?.current.x ?? 0, sy = stick?.current.y ?? 0, mag = Math.min(1, Math.hypot(sx, sy));
+    if (mag > 0.12 && !placing && !decorating && !climbRef.current) {
+      if (walkTarget) { setWalkTarget(null); setClickBeacon(null); }
+      routeRef.current = null;
+      if (pendingAction) setPendingAction(null);
+      const fwd = new THREE.Vector3();
+      camera.getWorldDirection(fwd);
+      fwd.y = 0; fwd.normalize();
+      const right = new THREE.Vector3(-fwd.z, 0, fwd.x);
+      const l = Math.hypot(sx, sy), speed = (stickRun ? 3.8 : 1.7) * mag;
+      const vx = ((fwd.x * sy + right.x * sx) / l) * speed, vz = ((fwd.z * sy + right.z * sx) / l) * speed;
+      // Sitting or lying: up first.
+      const [cx, , cz] = pose.stand ? [pose.stand[0], 0, pose.stand[1]] : pose.position;
+      const nx = cx + vx * Math.min(dt, 0.05), nz = cz + vz * Math.min(dt, 0.05);
+      let px = cx, pz = cz;
+      if (walkable(nav, nx, nz)) { px = nx; pz = nz; }
+      else if (walkable(nav, nx, cz)) px = nx;
+      else if (walkable(nav, cx, nz)) pz = nz;
+      const want = Math.atan2(vx, vz);
+      let diff = want - pose.yaw;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      const yaw = pose.yaw + diff * Math.min(1, dt * 12);
+      setPose({ position: [px, 0, pz], yaw });
+      const mode = stickRun ? "run" : "walk";
+      if (animation !== mode) setAnimation(mode);
+      steering.current = true;
+      const now = performance.now();
+      if (now - lastSteerReport.current > 800) { lastSteerReport.current = now; moveRef.current?.(px, pz, yaw, true); }
+      return;
+    }
+    if (steering.current) { steering.current = false; setAnimation("idle"); }
     const climb = climbRef.current;
     if (climb) {
       climb.t = Math.min(1, climb.t + dt / 1.8);
@@ -1484,6 +1574,54 @@ function RoomScene({
   };
   useEffect(() => () => { if (animTimer.current) clearTimeout(animTimer.current); }, []);
 
+  // Walking over to a fixture (tapped, or asked for from the activities) to use it.
+  const goUseFixture = (f: Fixture) => {
+    if (climbRef.current) return;
+    if (animTimer.current) { clearTimeout(animTimer.current); animTimer.current = null; }
+    getUp();
+    const spot = fixtureSpot(f);
+    setWalkTarget([spot.x, spot.z]);
+    setClickBeacon({ x: spot.x, z: spot.z, time: performance.now() });
+    setPendingAction({ type: "cooler", fixture: f });
+  };
+  const fixtureN = fixtureCall?.n ?? 0;
+  useEffect(() => {
+    if (!fixtureN || !fixtureCall) return;
+    const f = fixtures.find((x) => x.kind === fixtureCall.kind);
+    if (f) goUseFixture(f);
+    // Only when a new ask comes in.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fixtureN]);
+
+  // In the shower while it runs: under the rain head, facing the tiles. On the toilet: sat on it, facing out. Then
+  // back out where you came in.
+  const showerId = using && fixtures.find((f) => f.id === using && (f.kind === "shower" || f.kind === "toilet")) ? using : null;
+  useEffect(() => {
+    if (!showerId) return;
+    const f = fixtures.find((x) => x.id === showerId)!;
+    const c = floorCenter(f.size, f.placement);
+    const turn = -f.placement.rot * (Math.PI / 2);
+    const front = fixtureSpot(f);
+    const t = setTimeout(() => {
+      if (f.kind === "toilet") {
+        // Feet a little in front of the bowl; the sit clip puts the hips back over the seat.
+        const dx = front.x - c.x, dz = front.z - c.z, d = Math.hypot(dx, dz) || 1;
+        setPose({ position: [c.x + (dx / d) * 0.3, 0, c.z + (dz / d) * 0.3], yaw: front.yaw + Math.PI });
+        setAnimation("sit");
+        return;
+      }
+      setPose({ position: [c.x, 0.06, c.z], yaw: turn + Math.PI });
+      setAnimation("idle");
+    }, 0);
+    return () => {
+      clearTimeout(t);
+      const out = fixtureSpot(f);
+      setTimeout(() => { setPose({ position: [out.x, 0, out.z], yaw: out.yaw }); setAnimation("idle"); }, 0);
+    };
+    // Only when a shower starts or ends.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showerId]);
+
   // Sit (at a party): to the nearest seat nobody's on, on this floor. With none free, the page sits you where you are.
   // Stand: up off the seat.
   const interactRef = useRef(interact);
@@ -1530,9 +1668,13 @@ function RoomScene({
         targetPos={targetPos}
         follow={upView ? undefined : pose.position}
         followYaw={pose.yaw}
-        inside={view === "inside" && !upView}
+        inside={(view === "inside" || view === "eye") && !upView}
+        eye={view === "eye" && !upView}
         onHiddenWallsChange={setHiddenWalls}
       />
+
+      {/* Eye view: the ceiling overhead (looking up shows a roof, not sky). */}
+      {view === "eye" && <Ceiling w={ROOM_SIZE} d={ROOM_SIZE} h={WALL_HEIGHT} />}
 
       {/* Floor */}
       <mesh
@@ -1572,19 +1714,12 @@ function RoomScene({
       {/* The kitchen and bathroom */}
       <HomeFixtures
         fixtures={fixtures}
+        running={using}
         walls={fixtureWalls}
         wallColor={style.wall}
         skirtingColor={config.skirtingColor}
         wallH={upView ? 1.15 : 2.6}
-        onUse={busy ? undefined : (f) => {
-          if (climbRef.current) return;
-          if (animTimer.current) { clearTimeout(animTimer.current); animTimer.current = null; }
-          getUp();
-          const spot = fixtureSpot(f);
-          setWalkTarget([spot.x, spot.z]);
-          setClickBeacon({ x: spot.x, z: spot.z, time: performance.now() });
-          setPendingAction({ type: "cooler", fixture: f });
-        }}
+        onUse={busy ? undefined : goUseFixture}
       />
 
       {/* Two-storey homes: the rooms of the floor on show */}
@@ -1615,6 +1750,8 @@ function RoomScene({
         />
       )}
       {rooms?.some((r) => r.id === "balcony") && <Balcony room={rooms.find((r) => r.id === "balcony")!} onFloorClick={handleFloorLocomotion} />}
+      {/* Townhouses and villas: the pool, garage, garden… added outside (ground floor only). */}
+      {hasPlot(housingTier) && lvl === 0 && <HomeGrounds items={style.exterior ?? []} />}
 
       {/* Visual Click-to-Walk Destination Beacon */}
       {clickBeacon && (
@@ -1691,13 +1828,14 @@ function RoomScene({
       )}
 
       <Suspense fallback={null}>
-        <group position={pose.position} rotation={[0, pose.yaw, 0]}>
+        <group position={pose.position} rotation={[0, pose.yaw, 0]} visible={view !== "eye"}>
           {/* Asleep: laid flat on the back, head along the bed. */}
           {/* Walking always shows walking (no sliding); what the page asks for (dancing, sitting) is when you stop. */}
           <group position={shownSleep && !pose.lie ? [0, 0.12, 0] : [0, 0, 0]}>
             <CitizenAvatar look={look} animation={shown} rotation={pose.lie || shownSleep ? [-Math.PI / 2, 0, 0] : [0, 0, 0]}
               holding={holding?.prop} carryMode={holding ? (animation === "walk" ? "hold" : holding.mode) : undefined} />
           </group>
+          {dirty && !pose.lie && <Flies />}
         </group>
         {people.map((p, i) => <PersonAvatar key={i} p={p} id={`p${i}`} labels={labels} />)}
       </Suspense>
@@ -1739,10 +1877,10 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
           target={[0, 0.8, 0]}
           enablePan={false}
           enableDamping
-          minPolarAngle={props.upView ? 0.2 : props.view === "inside" ? 0.6 : 0.35}
-          maxPolarAngle={props.upView ? 1.15 : props.view === "inside" ? 1.5 : 1.25}
-          minDistance={props.view === "inside" && !props.upView ? 2.5 : 6}
-          maxDistance={props.view === "inside" && !props.upView ? 7.5 : 30}
+          minPolarAngle={props.upView ? 0.2 : props.view === "eye" ? 0.35 : props.view === "inside" ? 0.6 : 0.35}
+          maxPolarAngle={props.upView ? 1.15 : props.view === "eye" ? 2.4 : props.view === "inside" ? 1.5 : 1.25}
+          minDistance={props.upView ? 6 : props.view === "eye" ? 0.05 : props.view === "inside" ? 3 : 6}
+          maxDistance={props.upView ? 30 : props.view === "eye" ? 0.2 : props.view === "inside" ? 10 : 30}
         />
       </Canvas>
       <PeopleLabels people={props.people ?? []} nodes={labels} />

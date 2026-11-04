@@ -37,8 +37,15 @@ export function InviteHere({ title, label = "", route, text, className = "", com
     setBusy(true);
     const r = await createVisit(route ?? `${window.location.pathname}${window.location.search}`, title, label);
     setBusy(false);
-    if (r.code) setCode(r.code);
-    else { setNote(r.error ?? "Couldn't make the link."); setTimeout(() => setNote(null), 3000); }
+    if (r.code) { setCode(r.code); return; }
+    // Couldn't make an invite link (e.g. the database isn't updated yet): share a plain link to this page instead,
+    // with you as the referrer, so inviting always works.
+    const url = `${window.location.origin}${route ?? window.location.pathname}${(route ?? "").includes("?") ? "&" : "?"}ref=${encodeURIComponent(citizen.username ?? "")}`;
+    const msg = text ?? `📍 Come and see ${title} with me on Dubai Life!`;
+    if (navigator.share) { try { await navigator.share({ title, text: msg, url }); } catch { /* cancelled */ } return; }
+    try { await navigator.clipboard.writeText(`${msg} ${url}`); setNote("Link copied. Paste it to your friends!"); }
+    catch { setNote(r.error ?? "Couldn't make the link."); }
+    setTimeout(() => setNote(null), 3000);
   };
   return (
     <>

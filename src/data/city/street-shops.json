@@ -1,0 +1,69 @@
+{
+  "_how": "Local shops along the street when you step outside (components/street). Which ones depend on the area: old Dubai has karak cafeterias, baqalas and barbers; the Marina has juice bars and gyms. Each shop sells a few things: `need` items fill that need (hunger, energy, fun, hygiene…) at once; `pantry` items go into your pantry at home. Names are made up (no real brands). An area is picked by keywords in the home's area or by where on the map you step out (`box`: virtual map x and y ranges).",
+  "kinds": {
+    "karak": {
+      "icon": "🫖", "label": "Karak cafeteria", "color": "#b45309",
+      "names": ["Karak House", "Al Noor Cafeteria", "Chai Junction", "Filli Corner Karak", "Al Madina Cafeteria"],
+      "items": [
+        { "id": "karak", "label": "Karak chai", "icon": "🫖", "price": 2, "need": "energy", "amount": 10, "say": "☕ Sweet, strong, cardamom: proper karak." },
+        { "id": "chapati", "label": "Chips oman chapati", "icon": "🌯", "price": 5, "need": "hunger", "amount": 18, "say": "🌯 Crunchy, cheesy, perfect with karak." },
+        { "id": "paratha", "label": "Egg paratha", "icon": "🥙", "price": 7, "need": "hunger", "amount": 25, "say": "🥙 Fresh off the tawa." }
+      ]
+    },
+    "baqala": {
+      "icon": "🛒", "label": "Baqala (grocery)", "color": "#15803d",
+      "names": ["Baqala Al Madina", "Al Safa Grocery", "Corner Baqala", "Fresh Choice Grocery", "Al Raha Supermarket"],
+      "items": [
+        { "id": "bread", "label": "Arabic bread", "icon": "🫓", "price": 3, "pantry": { "bread": 2 } },
+        { "id": "eggs", "label": "Eggs (6)", "icon": "🥚", "price": 8, "pantry": { "eggs": 6 } },
+        { "id": "milk", "label": "Milk", "icon": "🥛", "price": 6, "pantry": { "milk": 1 } },
+        { "id": "rice", "label": "Basmati rice", "icon": "🍚", "price": 18, "pantry": { "rice": 2 } },
+        { "id": "chicken", "label": "Chicken", "icon": "🍗", "price": 22, "pantry": { "chicken": 1 } },
+        { "id": "fruit", "label": "Fruit", "icon": "🍎", "price": 10, "pantry": { "fruit": 2 } },
+        { "id": "tea", "label": "Tea", "icon": "🫖", "price": 7, "pantry": { "tea": 2 } },
+        { "id": "soap", "label": "Shower gel", "icon": "🧴", "price": 9, "pantry": { "soap": 1 } }
+      ]
+    },
+    "grill": {
+      "icon": "🔥", "label": "Grill & shawarma", "color": "#b91c1c",
+      "names": ["Charcoal Grill & Shawarma", "Al Fanar Grills", "Shawarma Station", "Mashawi Corner", "Tikka & Grill House"],
+      "items": [
+        { "id": "shawarma", "label": "Chicken shawarma", "icon": "🌯", "price": 8, "need": "hunger", "amount": 35, "say": "🌯 Garlic sauce everywhere. Worth it." },
+        { "id": "mixed-grill", "label": "Mixed grill plate", "icon": "🍢", "price": 35, "need": "hunger", "amount": 65, "say": "🍢 Kebab, tikka and shish taouk off the charcoal." },
+        { "id": "fresh-juice", "label": "Fresh lemon mint", "icon": "🍋", "price": 10, "need": "energy", "amount": 12, "say": "🍋 Ice cold lemon mint." }
+      ]
+    },
+    "gym": {
+      "icon": "🏋️", "label": "Gym", "color": "#1d4ed8",
+      "names": ["Iron Sands Gym", "Fit Republic", "Pulse Fitness", "Desert Strength Gym", "Gym Nation Street"],
+      "items": [
+        { "id": "workout", "label": "Day pass: workout", "icon": "🏋️", "price": 25, "need": "fun", "amount": 25, "say": "💪 Leg day done. Barely walking.", "costs": { "energy": 15 } },
+        { "id": "class", "label": "Spin class", "icon": "🚴", "price": 40, "need": "fun", "amount": 35, "say": "🚴 45 minutes, loud music, no regrets.", "costs": { "energy": 20 } },
+        { "id": "gym-shower", "label": "Shower at the gym", "icon": "🚿", "price": 5, "need": "hygiene", "amount": 60, "say": "🚿 Fresh again." }
+      ]
+    },
+    "juice": {
+      "icon": "🥤", "label": "Juice bar", "color": "#c2410c",
+      "names": ["Juice World Corner", "Avocado Bar", "Fresh Press", "Mango Mania", "Cocktail Juice Centre"],
+      "items": [
+        { "id": "avocado", "label": "Avocado shake", "icon": "🥑", "price": 15, "need": "hunger", "amount": 20, "say": "🥑 Thick enough to need a spoon." },
+        { "id": "mango", "label": "Mango juice", "icon": "🥭", "price": 12, "need": "energy", "amount": 15, "say": "🥭 Pure mango." }
+      ]
+    },
+    "barber": {
+      "icon": "💈", "label": "Barber", "color": "#7c3aed",
+      "names": ["Gents Salon Al Fahidi", "Sharp Cuts", "Royal Gents Saloon", "Fade Masters"],
+      "items": [
+        { "id": "haircut", "label": "Haircut & shave", "icon": "💈", "price": 30, "need": "hygiene", "amount": 30, "say": "💈 Fresh fade, hot towel shave." }
+      ]
+    }
+  },
+  "areas": {
+    "old-dubai": { "label": "Old Dubai (Deira, Bur Dubai, Karama)", "match": ["deira", "bur dubai", "karama", "satwa", "al fahidi", "gold souk"], "box": [4000, 6000, -1000, 700], "shops": ["karak", "baqala", "grill", "barber", "karak", "juice", "baqala", "grill"] },
+    "barsha": { "label": "Al Barsha and JVC", "match": ["barsha", "jvc", "jumeirah village", "al quoz", "sports city"], "box": [900, 1500, 850, 1400], "shops": ["karak", "baqala", "grill", "gym", "juice", "karak", "baqala"] },
+    "marina": { "label": "Dubai Marina and JBR", "match": ["marina", "jbr", "jlt", "harbour"], "box": [0, 900, 1200, 2600], "shops": ["juice", "gym", "grill", "karak", "baqala", "juice", "gym"] },
+    "downtown": { "label": "Downtown and Business Bay", "match": ["downtown", "business bay", "difc", "creek harbour", "city walk"], "box": [1500, 4000, 300, 1250], "shops": ["juice", "gym", "karak", "grill", "baqala", "gym"] },
+    "suburbs": { "label": "Family suburbs", "match": ["arabian ranches", "damac", "dubai hills", "mirdif", "palm"], "shops": ["baqala", "karak", "gym", "grill", "juice"] },
+    "default": { "label": "Dubai", "match": [], "shops": ["karak", "baqala", "grill", "gym", "juice", "barber"] }
+  }
+}

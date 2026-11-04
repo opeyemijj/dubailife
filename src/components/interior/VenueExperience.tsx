@@ -4,8 +4,15 @@
 // compare products, try accessories on, buy (with confirmation), talk to staff, apply for a job,
 // work shifts and join activities.
 
+import { openPhone } from "@/components/layout/PhoneOverlay";
+import { useUnreadTotal } from "@/lib/unread";
+import { usePhoneButtonHere } from "@/lib/phoneButtons";
+import { MoveStick } from "@/components/street/StreetWorld";
+import { isDirty } from "@/components/avatar/Flies";
 import { InviteHere } from "@/components/invite/InviteHere";
 import { useCleanScreen } from "@/lib/cleanScreen";
+import { askText, liveRequestStatus, LIVE_REQUEST_MINUTES, sendLiveRequest, takeLiveRequests } from "@/lib/liveRequests";
+import { AWAY_EVENT } from "@/lib/idle";
 import { openPartySheet } from "@/components/invite/PartySheetHost";
 import { useServices } from "@/lib/cityServices";
 import type { EventKind } from "@/lib/invites";
@@ -89,7 +96,9 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   const [selectedAdPanel, setSelectedAdPanel] = useState<WallPanelId>("panel_main");
   const [guideOpen, setGuideOpen] = useState(false);
   // Over-the-shoulder camera in the room, or the overview.
-  const [inside, setInside] = useState(false);
+  // Above (the whole room), inside (over the shoulder) or eye (first person, drag to look around).
+  const [cam, setCam] = useState<"above" | "inside" | "eye">("above");
+  const inside = cam !== "above";
   const [clothingStoreOpen, setClothingStoreOpen] = useState(false);
   const [activeConsumption, setActiveConsumption] = useState<{ kind: "drink" | "eat"; propKind: ServeKind; tint?: string } | null>(null);
   const [vipReservations, setVipReservations] = useState<VipTableReservation[]>([]);
@@ -425,7 +434,25 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   // What others see of me: where I'm standing or heading, and what I'm doing.
   // At a party everyone dances (some sit) unless they're doing something else.
   const shownAnimation: AvatarAnimation = party && playerAnimation === "idle" && !walkTo && citizen ? partyMood(citizen.id) : playerAnimation;
-  const me = { x: walkTo?.point[0] ?? spawn[0], z: walkTo?.point[1] ?? spawn[1], face: walkTo?.face, animation: shownAnimation, lift: playerAnimation === "sit" ? seatLift : 0 };
+  // Not washed: flies (for me and everyone here).
+  const dirty = isDirty(citizen?.needs?.hygiene);
+  // Steering with the stick (Inside and Eye views): where it's taken me, for everyone to see.
+  const stick = useRef({ x: 0, y: 0 });
+  const [stickRun, setStickRun] = useState(false);
+  // Everything you can do here lives in the menu (middle right), so nothing overlaps the view or the stick.
+  // The phone is in that bar too (so the app-wide floating phone button steps aside here).
+  usePhoneButtonHere();
+  const unreadMsgs = useUnreadTotal(citizen?.id);
+  const [showButtons, setShowButtons] = useState(false);
+  const [free, setFree] = useState<{ x: number; z: number; yaw: number; moving: boolean; running: boolean } | null>(null);
+  const onStickMove = (x: number, z: number, yaw: number, moving: boolean) => {
+    // Steering takes over from any tap-to-walk.
+    if (moving && walkTo) setWalkTo(null);
+    setFree({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw, moving, running: stickRun });
+  };
+  const me = free && !walkTo
+    ? { x: free.x, z: free.z, face: free.yaw, animation: (free.moving ? (free.running ? "run" : "walk") : shownAnimation) as AvatarAnimation, lift: 0, dirty }
+    : { x: walkTo?.point[0] ?? spawn[0], z: walkTo?.point[1] ?? spawn[1], face: walkTo?.face, animation: shownAnimation, lift: playerAnimation === "sit" ? seatLift : 0, dirty };
   const [bubbles, setBubbles] = useState<Record<string, string>>({});
   const bubble = useCallback((who: string, text: string) => {
     setBubbles((b) => ({ ...b, [who]: text }));
@@ -530,7 +557,8 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       }, 18000);
     }
   };
-  const room = useRoom(`venue:${place.id}/${venue.id}`, me, onRoomEvent);
+  const roomKey = `venue:${place.id}/${venue.id}`;
+  const room = useRoom(roomKey, me, onRoomEvent);
   const { peers, events, emit, myId } = room;
   // Locals: Dubai Life's hosts, shown with a "Local" tag. They take seats too, so count them when finding one.
   const localsHere = useLocalsInRoom(place.id, venue, plan, [...peers, me]);
@@ -550,6 +578,29 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     const t = setInterval(() => setClock(Date.now()), 1000);
     return () => clearInterval(t);
   }, [panel?.kind]);
+
+  // Back from being away (or just arrived): requests people made while I was gone pop up like live invites, if
+  // they're still here.
+  useEffect(() => {
+    if (!citizen?.id) return;
+    let live = true;
+    const collect = () => setTimeout(() => {
+      if (!live) return;
+      void takeLiveRequests(roomKey).then((list) => {
+        for (const q of list) {
+          const from = peersRef.current.find((p) => p.userId === q.from.id && !p.away);
+          if (from) room.inject({ type: "invite", kind: q.kind, table: q.table ?? undefined, id: `saved-${q.id}`, from, to: citizen.id, at: Date.now() });
+          else say(`💤 While you were away, @${q.from.username} asked you ${askText(q.kind)}, but they've left.`);
+        }
+      });
+    }, 2500);
+    const first = collect();
+    const onAway = (ev: Event) => { if (!(ev as CustomEvent<boolean>).detail) collect(); };
+    window.addEventListener(AWAY_EVENT, onAway);
+    return () => { live = false; clearTimeout(first); window.removeEventListener(AWAY_EVENT, onAway); };
+    // Only per room and person; the room's helpers are read when it runs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomKey, citizen?.id]);
 
   const acceptInvite = (e: Received & { type: "invite" }) => {
     // Their table: take a free seat with them (in a restaurant, then order).
@@ -1261,7 +1312,12 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   return (
     <main className="fixed inset-0 w-screen h-[100dvh] overflow-hidden select-none font-sans bg-black text-slate-900 overscroll-none">
       <InteriorScene
-        inside={inside && !ride}
+        inside={cam === "inside" && !ride}
+        eye={cam === "eye" && !ride}
+        playerDirty={dirty}
+        stick={cam !== "above" && !ride ? stick : undefined}
+        stickRun={stickRun}
+        onStickMove={onStickMove}
         ride={ride}
         onRideEnd={onRideEnd}
         dim={!!party && !clubParty && (lightsSet ?? !!party.lightsOut)}
@@ -1311,7 +1367,11 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       {/* Hidden, not removed: the music and anything open carry on underneath. */}
       <div className={clean ? "hidden" : "contents"}>
       {party && <PartyBanner party={party} className={BELOW_SPACE_TOP} />}
-      {!party && !ride && <ClubRadioPill className="bottom-[8.5rem] sm:bottom-20" />}
+      {!party && !ride && <ClubRadioPill className={cam !== "above" ? "bottom-[11rem]" : "bottom-[max(1.5rem,env(safe-area-inset-bottom))]"} />}
+      {/* Inside and Eye views: the stick (with RUN) to walk anywhere yourself. */}
+      {cam !== "above" && !ride && !panel && (
+        <div className="absolute left-5 bottom-[max(1.5rem,env(safe-area-inset-bottom))] z-30"><MoveStick controls={stick} run={stickRun} onRun={() => setStickRun((r) => !r)} /></div>
+      )}
       {party && !ride && !clubParty && party.kind !== "seminar" && (
         <PartyActions party={party} lightsOut={lightsSet ?? !!party.lightsOut} onLights={setLightsSet}
           onDance={(seconds) => { setPlayerAnimation("dance"); setTimeout(() => setPlayerAnimation((a) => (a === "dance" ? "idle" : a)), seconds * 1000); }}
@@ -1407,7 +1467,6 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
           <span className="sm:hidden">AED {new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(citizen?.balance ?? 0)}</span>
           <span className="hidden sm:inline">AED {(citizen?.balance ?? 0).toLocaleString()}</span>
         </div>
-        <button onClick={() => setInside((v) => !v)} className="pointer-events-auto w-10 h-10 shrink-0 rounded-full bg-white/95 shadow-lg flex items-center justify-center text-lg" title={inside ? "View from above" : "View from inside"} aria-label={inside ? "View from above" : "View from inside"}>{inside ? "🏠" : "👤"}</button>
         <button onClick={() => setGuideOpen(true)} className="pointer-events-auto w-10 h-10 shrink-0 rounded-full bg-white/95 shadow-lg flex items-center justify-center text-slate-700 hover:text-slate-950 transition-colors" title="Venue Guide" aria-label="Venue Guide">
           <HelpCircle className="w-4 h-4" />
         </button>
@@ -1417,26 +1476,51 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         </button>
       </header>
 
-      {/* Quick actions (hidden during a ride: the ride's own controls are there) */}
+      {/* The menu bar, middle right: the views (Above, Inside, Eyes), then the menu with everything you can do here.
+          Hidden during a ride: the ride's own controls are there. */}
       {!panel && !ride && (
-        <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-30 flex flex-wrap justify-center gap-2 w-[min(96vw,560px)] pointer-events-auto">
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-2 pointer-events-auto">
+          <button onClick={() => setShowButtons((v) => !v)} aria-expanded={showButtons} aria-label="Menu"
+            className={`w-14 h-14 rounded-[18px] shadow-xl flex flex-col items-center justify-center text-[10px] font-black ${showButtons ? "bg-slate-900 text-white" : "bg-white/95 text-slate-800"}`}>
+            <span className="text-xl leading-none">{showButtons ? "✕" : "☰"}</span>{showButtons ? "Close" : "Menu"}
+          </button>
+          <div className="rounded-[22px] bg-white/95 shadow-xl p-1 flex flex-col gap-1">
+            {([["above", "🏠", "Above"], ["inside", "👤", "Inside"], ["eye", "👁️", "Eyes"]] as const).map(([id, icon, label]) => (
+              <button key={id} onClick={() => { gameAudio.playClickSound(); setCam(id); }} aria-pressed={cam === id} aria-label={`${label} view`}
+                className={`w-14 h-14 rounded-[18px] flex flex-col items-center justify-center text-[10px] font-black ${cam === id ? "bg-slate-900 text-white" : "text-slate-700"}`}>
+                <span className="text-xl leading-none">{icon}</span>{label}
+              </button>
+            ))}
+          </div>
+          {/* The phone, always one tap away (with unread messages). */}
+          <button onClick={() => { gameAudio.playClickSound(); openPhone(); }} aria-label={unreadMsgs ? `Phone: ${unreadMsgs} unread` : "Phone"}
+            className="relative w-14 h-14 rounded-[18px] shadow-xl bg-slate-900 text-white flex flex-col items-center justify-center text-[10px] font-black">
+            <span className="text-xl leading-none">📱</span>Phone
+            {unreadMsgs > 0 && <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center ring-2 ring-white">{unreadMsgs > 99 ? "99+" : unreadMsgs}</span>}
+          </button>
+        </div>
+      )}
+      {/* Bottom right, opposite the stick: what this place is for (its activities), and the way outside. */}
+      {!panel && !ride && (
+        <div className="absolute right-4 bottom-[max(1.5rem,env(safe-area-inset-bottom))] z-40 flex flex-col items-end gap-2">
+          {(venue.activities ?? []).length > 0 && (
+            <button onClick={() => { gameAudio.playClickSound(); setPanel({ kind: "activities" }); }}
+              className="h-11 px-4 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black shadow-xl text-xs flex items-center gap-1.5 active:scale-95 transition-all">
+              <Sparkles className="w-4 h-4 fill-slate-950" /> Activities ({(venue.activities ?? []).length})
+            </button>
+          )}
+          <button onClick={() => { gameAudio.playClickSound(); router.push(`/street?from=${encodeURIComponent(place.id)}&v=${encodeURIComponent(venue.id)}`); }}
+            className="h-12 px-5 rounded-full bg-emerald-600 text-white font-black shadow-xl text-sm flex items-center gap-1.5 active:scale-95 transition-all">🚪 Outside</button>
+        </div>
+      )}
+      {!panel && !ride && showButtons && (
+        <div className="absolute right-[5.25rem] top-1/2 -translate-y-1/2 z-40 flex flex-col items-end gap-2 max-h-[72dvh] overflow-y-auto pointer-events-auto pr-1">
           <InviteHere title={venue.name} label={`${venue.category} · ${place.name}`} text={`📍 Meet me at ${venue.name} (${place.name}) on Dubai Life!`}
             className="h-11 px-4 rounded-full bg-white text-fuchsia-700 font-black shadow-xl text-xs flex items-center gap-1.5 active:scale-95 transition-all" />
           {!party && (
             <button onClick={() => { gameAudio.playClickSound(); openPartySheet({ kind: partyKind ?? "seminar", placeId: place.id, venueId: venue.id }); }}
               className="h-11 px-4 rounded-full bg-fuchsia-600 text-white font-black shadow-xl text-xs flex items-center gap-1.5 active:scale-95 transition-all">
               {isPromoter ? "📣 Promote an event here" : partyKind ? `🎉 Host a ${partyKind === "club_night" ? "club night" : partyKind === "pool_party" ? "pool party" : "dinner"} here` : "🎤 Host a seminar here"}
-            </button>
-          )}
-          {(venue.activities ?? []).length > 0 && (
-            <button
-              onClick={() => {
-                gameAudio.playClickSound();
-                setPanel({ kind: "activities" });
-              }}
-              className="h-11 px-4 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black shadow-xl text-xs flex items-center gap-1.5 active:scale-95 transition-all"
-            >
-              <Sparkles className="w-4 h-4 fill-slate-950" /> Activities & Experiences ({(venue.activities ?? []).length})
             </button>
           )}
           {(venue.layout === "boutique" || venue.category.toLowerCase().includes("fashion")) && (
@@ -1583,6 +1667,17 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
           }}
           canInviteToTable={!!myTable && (venue.layout === "club" || venue.layout === "dining" || venue.layout === "lobby")}
           onInvite={(kind) => {
+            // They're away (not connected): save the request; it pops up when they're back (for 5 minutes).
+            if (peerPanel.away) {
+              const them = peerPanel;
+              void sendLiveRequest(roomKey, them.userId, kind, citizen?.username ?? "someone", venue.name, kind === "table" ? myTable ?? undefined : undefined).then((id) => {
+                if (!id) { say("Couldn't send that. Try again."); return; }
+                say(`💤 @${them.username} is away. They'll get your request when they're back (it lasts ${LIVE_REQUEST_MINUTES} minutes).`);
+                setTimeout(() => void liveRequestStatus(id).then((st) => { if (st !== "delivered") say(`⌛ @${them.username} didn't come back in time.`); }), LIVE_REQUEST_MINUTES * 60_000 + 5000);
+              });
+              setPanel(null);
+              return;
+            }
             emit({ type: "invite", kind, table: kind === "table" ? myTable ?? undefined : undefined }, peerPanel.userId);
             say(kind === "dance" ? `💃 Asked @${peerPanel.username} to dance` : kind === "table" ? `🪑 Invited @${peerPanel.username} to your table` : `🙌 Invited @${peerPanel.username} over`);
             setPanel(null);

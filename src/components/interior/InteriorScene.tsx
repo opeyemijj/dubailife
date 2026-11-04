@@ -3,6 +3,8 @@
 // A venue interior in 3D: the room, its fixtures and stations, staff, shoppers and the citizen.
 // Clicking a station walks the citizen there; on arrival the page opens that station's panel.
 
+import { Ceiling } from "@/components/interior/Ceiling";
+import { Flies } from "@/components/avatar/Flies";
 import { VenueLuxury } from "./VenueLuxury";
 import { canvasQuality } from "@/lib/device";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -113,6 +115,14 @@ interface Props {
   activityFX?: Activity3DFX;
   /** Over-the-shoulder camera in the room instead of the overview. */
   inside?: boolean;
+  /** First person: the camera at the citizen's eyes. */
+  eye?: boolean;
+  /** I haven't washed: flies buzz round me. */
+  playerDirty?: boolean;
+  /** The on-screen stick and RUN (Inside and Eye views), and where it takes me. */
+  stick?: React.RefObject<{ x: number; y: number }>;
+  stickRun?: boolean;
+  onStickMove?: (x: number, z: number, yaw: number, moving: boolean) => void;
 }
 
 const NATURAL_FLOOR: Partial<Record<string, string>> = { sand: "#f3dfae", deck: "#ece7df", ice: "#e0f2fe" };
@@ -125,9 +135,12 @@ function Room({
   plan,
   onFloor,
   onWallAdClick,
+  ceiling = false,
 }: {
   venue: Venue;
   plan: Plan;
+  /** Eye view indoors: a ceiling overhead. */
+  ceiling?: boolean;
   onFloor?: (point: [number, number]) => void;
   onWallAdClick?: (panelId: WallPanelId) => void;
 }) {
@@ -176,6 +189,7 @@ function Room({
         <planeGeometry args={[w, d]} />
         <meshStandardMaterial map={floor} roughness={floorKind === "marble" ? 0.18 : floorKind === "wood" ? 0.45 : 0.75} metalness={floorKind === "marble" ? 0.12 : 0} />
       </mesh>
+      {ceiling && plan.walls && <Ceiling w={w} d={d} h={WALL_H} />}
       {plan.walls && (
         <>
           <mesh position={[0, WALL_H / 2, -d / 2]} receiveShadow><boxGeometry args={[w, WALL_H, 0.12]} /><meshStandardMaterial color={venue.palette.wall} roughness={0.9} /></mesh>
@@ -540,36 +554,54 @@ function FitCamera({ width, depth }: { width: number; depth: number }) {
  * Keeps the citizen in view: from above, the camera glides along as they walk round the room; inside, it
  * sits over their shoulder and settles in behind them as they go.
  */
-function FollowCamera({ follow, inside }: { follow: Follow; inside: boolean }) {
+/** How far behind (and above) the citizen the inside camera sits: far enough to see the room around them. */
+const INSIDE_BACK = 6.2, INSIDE_UP = 3.8;
+/** Eye view: the camera is at head height, a hair behind the eyes, and turning it looks around. */
+const EYE_HEIGHT = 1.62;
+
+function FollowCamera({ follow, inside, eye = false }: { follow: Follow; inside: boolean; eye?: boolean }) {
   const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
   const camera = useThree((s) => s.camera);
   const last = useRef<THREE.Vector3 | null>(null);
   /* eslint-disable react-hooks/immutability */
   useEffect(() => {
     if (!controls) return;
-    if (inside) {
+    const me0 = follow.current.get("me");
+    if (eye && me0) {
+      const yaw = me0.rotation.y;
+      controls.target.set(me0.position.x + Math.sin(yaw) * 0.01, EYE_HEIGHT, me0.position.z + Math.cos(yaw) * 0.01);
+      camera.position.set(me0.position.x - Math.sin(yaw) * 0.12, EYE_HEIGHT, me0.position.z - Math.cos(yaw) * 0.12);
+    } else if (inside) {
       const me = follow.current.get("me");
       if (!me) return;
       controls.target.set(me.position.x, 1.45, me.position.z);
-      camera.position.set(me.position.x, 3.0, me.position.z + 4.6);
+      camera.position.set(me.position.x, INSIDE_UP, me.position.z + INSIDE_BACK);
     } else {
       controls.target.copy(TARGET);
       camera.position.set(0, 7.5, 12);
     }
     controls.update();
-  }, [inside, controls, camera, follow]);
+  }, [inside, eye, controls, camera, follow]);
   useFrame((_, dt) => {
     const me = follow.current.get("me");
     if (!controls || !me) return;
     const p = me.position;
-    if (inside) {
+    // Your own body isn't in the way of your eyes.
+    me.visible = !eye;
+    if (eye) {
+      // Look-around stays yours; the eyes move with you.
+      const head = new THREE.Vector3(p.x, EYE_HEIGHT, p.z);
+      const shift = head.clone().sub(controls.target);
+      controls.target.add(shift);
+      camera.position.add(shift);
+    } else if (inside) {
       const head = new THREE.Vector3(p.x, 1.45, p.z);
       const shift = head.clone().sub(controls.target);
       controls.target.add(shift);
       camera.position.add(shift);
       if (last.current && last.current.distanceTo(p) > 0.0005) {
         const yaw = me.rotation.y;
-        camera.position.lerp(new THREE.Vector3(p.x - Math.sin(yaw) * 4.6, 3.0, p.z - Math.cos(yaw) * 4.6), Math.min(1, dt * 2.5));
+        camera.position.lerp(new THREE.Vector3(p.x - Math.sin(yaw) * INSIDE_BACK, INSIDE_UP, p.z - Math.cos(yaw) * INSIDE_BACK), Math.min(1, dt * 2.5));
       }
     } else {
       // Glide part of the way: the room stays framed, with the citizen drifting nearer the middle.
@@ -626,6 +658,7 @@ function RemotePeer({ peer, follow, followKey, onClick, ring = "#38bdf8", carryi
           carryMode={carrying?.mode}
         />
       </Suspense>
+      {peer.dirty && <Flies />}
       {/* A soft ring so other players stand out from staff and shoppers. */}
       <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
         <ringGeometry args={[0.36, 0.44, 32]} />
@@ -648,8 +681,23 @@ function Player({
   follow,
   followKey,
   hidden = false,
+  dirty = false,
   placeAt,
+  stick,
+  stickRun = false,
+  bounds,
+  obstacles = [],
+  onStickMove,
 }: {
+  /** The on-screen stick (Inside and Eye views): walk or run wherever it points. */
+  stick?: React.RefObject<{ x: number; y: number }>;
+  stickRun?: boolean;
+  /** The room's floor (width, depth), and what's in the way (x, z, radius): the stick slides you round them. */
+  bounds?: [number, number];
+  obstacles?: Array<[number, number, number]>;
+  /** Where the stick has taken me (for others to see). */
+  onStickMove?: (x: number, z: number, yaw: number, moving: boolean) => void;
+  dirty?: boolean;
   hidden?: boolean;
   placeAt?: { point: [number, number]; key: number } | null;
   look?: AvatarLookProps;
@@ -670,6 +718,9 @@ function Player({
   const walking = !!walkTo && walkTo.key !== arrivedKey;
   const target = useRef<WalkTarget | null>(null);
   const facing = useRef<number | null>(null);
+  // Steering with the stick: walking or running, and when I last told the room where I am.
+  const [steer, setSteer] = useState<"walk" | "run" | null>(null);
+  const lastReport = useRef({ t: 0, moving: false });
 
   useEffect(() => {
     target.current = walkTo;
@@ -682,10 +733,36 @@ function Player({
     target.current = null;
   }, [placeAt]);
 
-  useFrame((_, dt) => {
+  useFrame(({ camera }, dt) => {
     const g = group.current;
-    const t = target.current;
     if (!g) return;
+    // The stick: steer the way it points (relative to the camera), sliding round anything in the way.
+    const sx = stick?.current.x ?? 0, sy = stick?.current.y ?? 0, mag = Math.min(1, Math.hypot(sx, sy));
+    if (mag > 0.12) {
+      target.current = null;
+      const fwd = new THREE.Vector3();
+      camera.getWorldDirection(fwd);
+      fwd.y = 0; fwd.normalize();
+      const right = new THREE.Vector3(-fwd.z, 0, fwd.x);
+      const speed = (stickRun ? WALK_SPEED * 2.3 : WALK_SPEED) * mag;
+      const vx = (fwd.x * sy + right.x * sx) / Math.hypot(sx, sy) * speed, vz = (fwd.z * sy + right.z * sx) / Math.hypot(sx, sy) * speed;
+      const free = (x: number, z: number) => {
+        if (bounds && (Math.abs(x) > bounds[0] / 2 - 0.35 || Math.abs(z) > bounds[1] / 2 - 0.35)) return false;
+        return !obstacles.some(([ox, oz, r]) => Math.hypot(x - ox, z - oz) < r);
+      };
+      const nx = g.position.x + vx * dt, nz = g.position.z + vz * dt;
+      if (free(nx, nz)) { g.position.x = nx; g.position.z = nz; }
+      else if (free(nx, g.position.z)) g.position.x = nx;   // slide along it
+      else if (free(g.position.x, nz)) g.position.z = nz;
+      turnToward(g, Math.atan2(vx, vz), dt);
+      const mode = stickRun ? "run" : "walk";
+      if (steer !== mode) setSteer(mode);
+      const now = performance.now();
+      if (!lastReport.current.moving || now - lastReport.current.t > 800) { lastReport.current = { t: now, moving: true }; onStickMove?.(g.position.x, g.position.z, g.rotation.y, true); }
+      return;
+    }
+    if (steer) { setSteer(null); lastReport.current = { t: performance.now(), moving: false }; onStickMove?.(g.position.x, g.position.z, g.rotation.y, false); }
+    const t = target.current;
     if (!t) {
       if (facing.current !== null) turnToward(g, facing.current, dt);
       return;
@@ -709,12 +786,13 @@ function Player({
     <group ref={group} position={[start[0], 0, start[1]]} rotation={[0, Math.PI, 0]} visible={!hidden}>
       <CitizenAvatar
         look={look}
-        animation={walking ? "walk" : animation}
+        animation={steer ?? (walking ? "walk" : animation)}
         accessories={worn}
         position={[0, walking ? 0 : lift, 0]}
         holding={carrying?.prop}
         carryMode={carrying?.mode}
       />
+      {dirty && <Flies />}
     </group>
   );
 }
@@ -776,6 +854,11 @@ export function InteriorScene({
   vipTables = [],
   activityFX,
   inside = false,
+  eye = false,
+  playerDirty = false,
+  stick,
+  stickRun = false,
+  onStickMove,
 }: Props) {
   const quality = useMemo(() => canvasQuality(), []);
   const [w, d] = plan.size;
@@ -812,7 +895,7 @@ export function InteriorScene({
       };
     }),
     { id: "staff", text: `💬 ${venue.staff.role}`, at: [plan.staff.position[0], 1.95, plan.staff.position[1]], className: "bg-slate-900/85 text-white" },
-    ...peers.map((p) => ({ id: `peer:${p.userId}`, text: `@${p.username}${peerBadges[p.userId] ? ` · 💬${peerBadges[p.userId]}` : ""}`, at: [0, p.animation === "sit" ? 1.6 : 2.05, 0] as [number, number, number], follow: p.userId, className: "bg-sky-500 text-white" })),
+    ...peers.map((p) => ({ id: `peer:${p.userId}`, text: `${p.away ? "💤 " : ""}@${p.username}${peerBadges[p.userId] ? ` · 💬${peerBadges[p.userId]}` : ""}`, at: [0, p.animation === "sit" ? 1.6 : 2.05, 0] as [number, number, number], follow: p.userId, className: p.away ? "bg-slate-500/90 text-white" : "bg-sky-500 text-white" })),
     ...locals.map((p) => ({ id: `peer:${p.userId}`, text: `✨ ${p.username}`, at: [0, p.animation === "sit" ? 1.6 : 2.05, 0] as [number, number, number], follow: p.userId, className: "bg-amber-400 text-slate-900" })),
     ...Object.entries(bubbles).map(([who, text]) => ({
       id: `bubble:${who}`, text: `💬 ${text}`, at: [0, 2.5, 0] as [number, number, number], follow: who, className: "bg-white text-slate-900 max-w-[220px] whitespace-normal",
@@ -834,7 +917,7 @@ export function InteriorScene({
       <StudioEnvironment intensity={dim ? 0.04 : venue.layout === "club" ? 0.35 : 0.45} />
       <Lights venue={venue} plan={plan} dim={dim} />
       {/* The room appears at once; everything with a model streams in on its own as it arrives. */}
-      <Room venue={venue} plan={plan} onFloor={onFloor} onWallAdClick={onWallAdClick} />
+      <Room venue={venue} plan={plan} onFloor={onFloor} onWallAdClick={onWallAdClick} ceiling={eye} />
       <Suspense fallback={null}>{plan.decor}</Suspense>
       {extras}
       {plan.stations.map((s) => (
@@ -891,6 +974,12 @@ export function InteriorScene({
           carrying={carrying}
           follow={followNodes}
           followKey="me"
+          dirty={playerDirty}
+          stick={stick}
+          stickRun={stickRun}
+          bounds={[w, d]}
+          obstacles={plan.stations.filter((s) => s.kind !== "dancefloor").map((s) => [s.position[0], s.position[1], 0.85] as [number, number, number])}
+          onStickMove={onStickMove}
           hidden={!!ride}
           placeAt={placeAt}
         />
@@ -898,19 +987,19 @@ export function InteriorScene({
       {ride && onRideEnd && <RideRig key={ride.key} active={ride} look={look} worn={worn} onEnd={onRideEnd} />}
       <ActivityFXLayer activityFX={activityFX} follow={followNodes} />
       <LabelTracker labels={labels} nodes={labelNodes} follow={followNodes} />
-      {!inside && <FitCamera width={w} depth={d} />}
-      <FollowCamera follow={followNodes} inside={inside} />
+      {!inside && !eye && <FitCamera width={w} depth={d} />}
+      <FollowCamera follow={followNodes} inside={inside || eye} eye={eye} />
       <OrbitControls
         makeDefault
         target={TARGET}
         enablePan={false}
         enableDamping
-        minPolarAngle={inside ? 0.6 : 0.45}
-        maxPolarAngle={inside ? 1.5 : 1.2}
-        minAzimuthAngle={inside ? -Infinity : -0.9}
-        maxAzimuthAngle={inside ? Infinity : 0.9}
-        minDistance={inside ? 2.5 : 6}
-        maxDistance={inside ? 8 : Math.max(w, d) + 6}
+        minPolarAngle={eye ? 0.35 : inside ? 0.6 : 0.45}
+        maxPolarAngle={eye ? 2.4 : inside ? 1.5 : 1.2}
+        minAzimuthAngle={inside || eye ? -Infinity : -0.9}
+        maxAzimuthAngle={inside || eye ? Infinity : 0.9}
+        minDistance={eye ? 0.05 : inside ? 3 : 6}
+        maxDistance={eye ? 0.2 : inside ? 11 : Math.max(w, d) + 6}
       />
     </Canvas>
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-[1]">

@@ -4,7 +4,7 @@
 export type Layout =
   | "boutique" | "tech" | "beauty" | "jewellery" | "market" | "dining" | "club" | "lobby" | "outdoor"
   // Places that aren't rooms: what the venue really is, built in 3D (see components/interior/layouts).
-  | "beach" | "pooldeck" | "waterpark" | "spa" | "theatre" | "bar" | "mosque" | "rink" | "bowling";
+  | "beach" | "pooldeck" | "waterpark" | "spa" | "theatre" | "bar" | "mosque" | "rink" | "bowling" | "yacht";
 
 /** Interactive spots inside an interior. Products and services are grouped by these. */
 export type StationKind =

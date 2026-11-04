@@ -97,6 +97,17 @@ export function Building({ x, z, w, d, h, color, facing = 1, night, awning }: { 
           <planeGeometry args={[w * 0.86, 1.3]} /><meshStandardMaterial color="#334155" emissive={night ? "#fde68a" : "#000"} emissiveIntensity={night ? 0.35 : 0} roughness={0.2} metalness={0.3} />
         </mesh>
       ))}
+      {/* window frames: the glass bands split into windows */}
+      {rows > 0 && Array.from({ length: Math.max(2, Math.floor((w * 0.86) / 1.8)) + 1 }, (_, c) => {
+        const n = Math.max(2, Math.floor((w * 0.86) / 1.8));
+        const cx = -w * 0.43 + (c * w * 0.86) / n;
+        const top = 4.6 + (rows - 1) * 3.2 + 0.65, bottom = 3.95;
+        return (
+          <mesh key={`m${c}`} position={[cx, (top + bottom) / 2, (facing * d) / 2 + facing * 0.03]} rotation={[0, facing > 0 ? 0 : Math.PI, 0]}>
+            <planeGeometry args={[0.16, top - bottom]} /><meshStandardMaterial color={color} roughness={0.7} />
+          </mesh>
+        );
+      })}
       {awning && <mesh position={[0, 3.1, (facing * d) / 2 + facing * 0.7]} rotation={[facing * 0.35, 0, 0]}><boxGeometry args={[w * 0.86, 0.06, 1.5]} /><meshStandardMaterial color={awning} /></mesh>}
     </group>
   );

@@ -4,6 +4,7 @@
 // into the room) or Not now. Unanswered invites show when the app opens (if the room is still waiting);
 // each invite is also a chat message with a Join button, and its push opens the room directly.
 
+import { onUserEvent } from "@/lib/userChannel";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
@@ -37,17 +38,16 @@ export function GameInviteListener() {
       const who = await contacts(waiting.map((i) => i.from_id));
       setInvites((l) => [...l, ...waiting.filter((i) => !l.some((x) => x.id === i.id)).map((i) => ({ id: i.id, game: i.game, code: i.code, from: { username: who.get(i.from_id)?.username ?? "someone", look: who.get(i.from_id)?.look } }))]);
     })();
-    const ch = db.channel(`game-invites-${me}-${Math.random().toString(36).slice(2, 7)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "game_invites", filter: `to_id=eq.${me}` }, async (p) => {
-        const row = p.new as { id: number; from_id: string; game: string; code: string; status: string };
-        if (!row?.id || row.status !== "sent") return;
+    // On my own channel: the database tells me about game invites for me.
+    const stop = onUserEvent<{ id: number; from_id: string; to_id: string; game: string; code: string; status: string }>(me, "game_invites", async (p) => {
+        const row = p.new;
+        if (!row?.id || row.to_id !== me || row.status !== "sent") return;
         const who = (await contacts([row.from_id])).get(row.from_id);
         gameAudio.playConfirmSound();
         try { navigator.vibrate?.([80, 50, 80]); } catch { /* not supported */ }
         setInvites((l) => [...l.filter((i) => i.id !== row.id), { id: row.id, game: row.game, code: row.code, from: { username: who?.username ?? "someone", look: who?.look } }]);
-      })
-      .subscribe();
-    return () => { void db.removeChannel(ch); };
+      });
+    return () => { stop(); };
   }, [me]);
 
   if (!invites.length) return null;

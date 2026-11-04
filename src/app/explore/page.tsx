@@ -70,6 +70,8 @@ function Explore() {
         openPlaceId={params.get("open") ?? undefined}
         journeyTo={to ? { placeId: to, venueId: params.get("venue") ?? undefined } : undefined}
         atPlaceId={params.get("at") ?? undefined}
+        filters={filters}
+        onFilter={setActiveFilter}
       />
 
       {/* Top Navigation HUD with Safe Area Padding */}

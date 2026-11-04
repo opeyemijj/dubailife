@@ -40,8 +40,16 @@ const listFor = (k: EventKind, promoter: boolean) => (promoter || k === "seminar
 const atVenue = (k: EventKind) => k === "club_night" || k === "pool_party" || k === "seminar";
 const SIZES = [20, 50, 100, 200];
 
-export function PartySheet({ flat, start, onClose }: {
-  flat: { id: string; route: string; title: string; area: string } | null;
+/** Where a house party goes: a home on the map, or (with `prepare`) a home off the map that gets its address on the
+    first party (see lib/city/partyHome.ts). `noRoom` explains why there's no home to party at. */
+export interface PartyFlat {
+  id: string; route: string; title: string; area: string;
+  prepare?: () => Promise<{ id: string; route: string } | { error: string }>;
+}
+
+export function PartySheet({ flat, start, onClose, noRoom }: {
+  flat: PartyFlat | null;
+  noRoom?: string;
   start?: PartyStart;
   onClose: () => void;
 }) {
@@ -83,13 +91,20 @@ export function PartySheet({ flat, start, onClose }: {
   const text = `${k.icon} You're invited to ${name}${where ? ` at ${where}` : ""} in Dubai Life!`;
 
   const create = async () => {
-    if (!where) { setError(home ? "Rent or buy a home on the map to party there." : "Pick a place."); return; }
+    if (!where) { setError(home ? (noRoom ?? "You need a room of your own to throw a party at home.") : "Pick a place."); return; }
     if (cost > (citizen?.balance ?? 0)) { setError(`The decorations cost ${aed(cost)}.`); return; }
     setBusy(true);
     setError(null);
     const starts = minutesFromNow(mins);
-    const r = await createEvent(home && flat
-      ? { kind, title: name, startsAt: starts, label: where, flatId: flat.id, route: flat.route, decor, price: paid ? price : 0 }
+    // A home off the map gets its address now.
+    let homeAt = flat ? { id: flat.id, route: flat.route } : null;
+    if (home && flat?.prepare) {
+      const p = await flat.prepare();
+      if ("error" in p) { setBusy(false); setError(p.error); return; }
+      homeAt = p;
+    }
+    const r = await createEvent(home && homeAt
+      ? { kind, title: name, startsAt: starts, label: where, flatId: homeAt.id, route: homeAt.route, decor, price: paid ? price : 0 }
       : { kind, title: name, startsAt: starts, label: where, placeId: venue!.place.id, venueId: venue!.venue.id, decor, price: paid ? price : 0, maxGuests: promoter ? size : 20 });
     setBusy(false);
     if (!r.code) { setError(r.error ?? "Couldn't make the party."); return; }
@@ -155,7 +170,7 @@ export function PartySheet({ flat, start, onClose }: {
 
             {home ? (
               flat ? <p className="rounded-2xl bg-slate-50 p-3 text-sm"><b>At your {flat.title}</b> · {flat.area}. Your door opens to guests.</p>
-                : <p className="rounded-2xl bg-amber-50 p-3 text-sm text-amber-900">A house party needs a home you rent or own on the map. Anyone can throw a club night, pool party or dinner at a restaurant, so pick one of those, or find a home on the map.</p>
+                : <p className="rounded-2xl bg-amber-50 p-3 text-sm text-amber-900">{noRoom ?? "A house party needs a room of your own."} Anyone can throw a club night, pool party or dinner at a restaurant, so pick one of those.</p>
             ) : (
               <div className="space-y-1.5">
                 <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={promoter || kind === "seminar" ? "Search any venue" : kind === "club_night" ? "Search clubs" : kind === "pool_party" ? "Search pools and beach clubs" : "Search restaurants"} aria-label="Search places"

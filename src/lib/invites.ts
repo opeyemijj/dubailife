@@ -70,7 +70,7 @@ export async function createEvent(a: {
 }): Promise<{ code?: string; error?: string }> {
   const { data, error } = await supabase().rpc("create_event", {
     p_kind: a.kind, p_title: a.title, p_starts_at: a.startsAt.toISOString(), p_label: a.label,
-    p_flat: a.flatId ?? null, p_route: a.route ?? null, p_place: a.placeId ?? null, p_venue: a.venueId ?? null, p_decor: a.decor, p_max: a.maxGuests ?? 20, p_price: a.price ?? 0,
+    p_flat: a.flatId ?? null, p_route: a.route ?? null, p_place: a.placeId ?? null, p_venue: a.venueId ?? null, p_decor: a.decor, p_max: a.maxGuests ?? 20, ...(a.price ? { p_price: a.price } : {}),
   });
   return error ? { error: friendly(error.message) } : { code: data as string };
 }

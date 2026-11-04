@@ -302,6 +302,21 @@ const pool = (name: string) => venue(name, "Pool", "hotel", {
 
 // ---------------------------------------------------------------- places
 
+/** A yacht at Dubai Harbour: the deck as a venue (layout "yacht"), chartered by the hour. */
+function yacht(name: string, perHour: number, guests: number, blurb: string): Venue {
+  const id = slug(name);
+  return venue(name, "Yacht charter", "club", {
+    layout: "yacht", feature: "skyline", palette: { floor: "#c9a77c", wall: "#f8fafc", accent: "#0e7490", light: "#38bdf8" }, blurb,
+    role: "Captain", noJob: true,
+    extraProducts: [ticket(`${id}:hour`, `Charter for an hour (up to ${guests} guests)`, perHour, "The yacht, captain and crew for an hour.", "🛥️")],
+    activities: [
+      { id: "dance", label: "Dance on deck", icon: "💃", animation: "dance", reward: 20, need: { kind: "fun", amount: 25 } },
+      { id: "lounge", label: "Lounge on the deck sofas", icon: "🛋️", animation: "sit", reward: 10, need: { kind: "energy", amount: 15 } },
+      { id: "sail", label: "Sail the yacht yourself", icon: "⛵", animation: "wave", reward: 60, need: { kind: "fun", amount: 40 }, desc: "Take the wheel: out of the harbour, round the buoys past JBR and Ain Dubai, and back to dock." },
+    ],
+  });
+}
+
 const single = (id: string, name: string, kind: Place["kind"], v: Venue): Place => ({ id, name, kind, blurb: v.blurb, venues: [v] });
 
 const attraction = (name: string, blurb: string, feature: Venue["feature"], products: Product[], activities?: Venue["activities"]) =>
@@ -947,6 +962,16 @@ const COAST_PLACES: Place[] = [
     outlets: [outlet("Rockfish", "Seafood restaurant", "seafood", { floor: "#e0f2fe", wall: "#f8fafc", accent: "#0369a1" }, { blurb: "Mediterranean seafood looking across to Burj Al Arab." })],
   }),
   madinatJumeirah(),
+  // Yachts to charter at Dubai Harbour: party on deck (any party can be thrown on one), or take the wheel.
+  {
+    id: "dubai-harbour-marina", name: "Dubai Harbour Marina", kind: "attraction",
+    blurb: "Yacht charters at Dubai Harbour: party on deck and sail past JBR, Ain Dubai and the Palm.",
+    venues: [
+      yacht("Azure 52 ft yacht", 1200, 12, "A sleek 52-footer for 12: sundeck, bar and a speaker system."),
+      yacht("Serenity 88 ft yacht", 2800, 30, "An 88-footer for 30 with a flybridge, deck bar and DJ spot."),
+      yacht("Royal Pearl superyacht", 7500, 60, "A 120 ft superyacht for 60: the full party deck, crew and captain."),
+    ],
+  },
   single("wild-wadi", "Wild Wadi Waterpark", "attraction", attraction("Wild Wadi Waterpark", "Waterpark beside Jumeirah Beach Hotel, famous for the Jumeirah Sceirah drop slide. Reported closed until further notice in 2026.", "pool", [
     ticket("wild-wadi:day", "Wild Wadi day pass", 299, "All slides and pools for the day.", "🌊"),
   ], [{ id: "sceirah", label: "Ride the Jumeirah Sceirah", icon: "🌊", animation: "clap", reward: 50 }])),

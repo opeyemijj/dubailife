@@ -3,6 +3,7 @@
 // Tells citizens when someone sends them money, wherever they are in the app. Row-level security
 // only delivers transfers that involve this citizen.
 
+import { onUserEvent } from "@/lib/userChannel";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { refreshCitizen, useCitizen } from "@/lib/citizenStore";
@@ -34,18 +35,17 @@ export function MoneyListener() {
       show(d.from, d.amount, null);
     };
     window.addEventListener(MONEY_EVENT, onLive);
-    const channel = supabase()
-      .channel(`transfers-${me}-${Math.random().toString(36).slice(2, 7)}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "transfers", filter: `to_id=eq.${me}` }, async (payload) => {
-        const t = payload.new as { id: number; from_id: string; amount: number; place: string | null };
-        refreshCitizen();
-        const { data } = await supabase().from("profiles").select("username").eq("id", t.from_id).maybeSingle();
-        show(data?.username ?? "someone", Number(t.amount), t.place);
-      })
-      .subscribe();
+    // On my own channel: the database tells me about money sent to me.
+    const stop = onUserEvent<{ id: number; from_id: string; to_id: string; amount: number; place: string | null }>(me, "transfers", async (e) => {
+      const t = e.new;
+      if (e.eventType !== "INSERT" || !t || t.to_id !== me) return;
+      refreshCitizen();
+      const { data } = await supabase().from("profiles").select("username").eq("id", t.from_id).maybeSingle();
+      show(data?.username ?? "someone", Number(t.amount), t.place);
+    });
     return () => {
       window.removeEventListener(MONEY_EVENT, onLive);
-      supabase().removeChannel(channel);
+      stop();
     };
   }, [me]);
 

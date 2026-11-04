@@ -81,6 +81,13 @@ function clearLine(n: NavMap, a: [number, number], b: [number, number]) {
  * Waypoints from `from` to `to`, or to the reachable spot nearest it (a tap on furniture or in a sealed-off
  * corner walks as close as the rooms allow). Empty when nowhere can be reached.
  */
+/** Can the citizen stand here (not in a wall or a piece of furniture)? Used to steer with the stick. */
+export function walkable(n: NavMap, x: number, z: number) {
+  const c = Math.floor((x - n.minX) / RES), r = Math.floor((z - n.minZ) / RES);
+  if (c < 0 || r < 0 || c >= n.cols || r >= n.rows) return false;
+  return n.open[r * n.cols + c] === 1;
+}
+
 export function findPath(n: NavMap, from: [number, number], to: [number, number]): Array<[number, number]> {
   const s = nearestOpen(n, from[0], from[1]);
   if (!s) return [];

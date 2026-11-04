@@ -1,5 +1,7 @@
 "use client";
 
+import { MoveStick } from "@/components/street/StreetWorld";
+import { isDirty } from "@/components/avatar/Flies";
 import { askLogout } from "@/components/layout/LogoutConfirm";
 import { DecoratorSheet, DecoratorStatus } from "@/components/home/Decorator";
 import { HomeActions } from "@/components/home/HomeActions";
@@ -7,6 +9,8 @@ import { useCleanScreen } from "@/lib/cleanScreen";
 import { usePhoneButtonHere } from "@/lib/phoneButtons";
 import { MoveInGuide } from "@/components/home/MoveInGuide";
 import { PartySheet } from "@/components/invite/PartySheet";
+import { SideBar, SideButton, SidePopover } from "@/components/layout/SideBar";
+import { ExteriorSheet } from "@/components/home/ExteriorSheet";
 import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyPeople } from "@/components/invite/PartyPeople";
 import { PartyActions } from "@/components/invite/PartyActions";
@@ -19,7 +23,7 @@ import { inviteFriends } from "@/lib/invite";
 import { useMyDecor } from "@/lib/decorator";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { compact, useSiteStats } from "@/lib/siteStats";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
@@ -32,10 +36,11 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { gameAudio } from "@/utils/gameAudio";
 import { isNewCitizen, useRequireCitizen, adjustBalance, buyFurniture, setFurniturePlacement, updateCitizen, DEFAULT_NEEDS, type Needs } from "@/lib/citizenStore";
 import {
-  CATALOG, FLOOR_FINISHES, PANELS_PRICE, SHOP_CATEGORIES, WALL_PAINTS, getCatalogItem, getHousingTierFromText, housingTierFor, withHomeItems, HOUSING_CONFIGS,
+  CATALOG, FLOOR_FINISHES, PANELS_PRICE, SHOP_CATEGORIES, WALL_PAINTS, getCatalogItem, getHousingTierFromText, hasPlot, housingTierFor, withHomeItems, HOUSING_CONFIGS,
   type CatalogItem, type HomeStyle, type Interaction, type Placement, type Rotation, type HousingTier, type HomeActivityDef, type ShopCategory,
 } from "@/lib/furniture";
-import { flatRoute, myFlats, type FlatView } from "@/lib/city/flats";
+import { flatRoute, getFlat, myFlats, type FlatView } from "@/lib/city/flats";
+import { areaFor, hasRoom, myPartyHome, preparePartyHome, towerName } from "@/lib/city/partyHome";
 import { getEntity } from "@/lib/city/geo";
 import { openLife } from "@/components/life/LifeHub";
 import { useOnlineCount, useOnlineUsernames, formatOnline } from "@/lib/presence";
@@ -49,7 +54,7 @@ import { gainSkill, lifeEvent } from "@/lib/life";
 import { FixtureProgress, FixtureSheet, completeFixtureAction } from "@/components/home/FixtureSheet";
 import { applyRun, RUNS, RunJourney, type RouteId } from "@/components/home/RunJourney";
 import { Sheet } from "@/components/ui/sheet";
-import type { Fixture, FixtureAction } from "@/lib/homeFixtures";
+import { fixturesFor, type Fixture, type FixtureAction } from "@/lib/homeFixtures";
 
 /** Small previews of the floor finishes in the Style tab. */
 const FLOOR_SWATCH: Record<string, string> = {
@@ -115,6 +120,14 @@ export default function HomePage() {
   // The kitchen or bathroom fixture being used, and the action under way.
   const [fixture, setFixture] = useState<Fixture | null>(null);
   const [running, setRunning] = useState<FixtureAction | null>(null);
+  // Which fixture it's at (the shower runs while you're in it).
+  const [usingFixture, setUsingFixture] = useState<string | null>(null);
+  // Walk to a fixture of this kind and use it (the shower from "Morning Shower").
+  // Outside the house: pool, garage, garden… (townhouses and villas).
+  const [exteriorOpen, setExteriorOpen] = useState(false);
+  // The 🎉 Party panel on the side bar.
+  const [partyPanel, setPartyPanel] = useState(false);
+  const [fixtureCall, setFixtureCall] = useState<{ n: number; kind: string } | undefined>(undefined);
   // Going for a run: choosing the route, then the run itself.
   const [runPicker, setRunPicker] = useState(false);
   const [runRoute, setRunRoute] = useState<RouteId>("citywalk");
@@ -204,7 +217,10 @@ export default function HomePage() {
   const homeStyle: HomeStyle = citizen?.homeStyle?.[housingTier] ?? housingConfig.finish;
   const [upView, setUpView] = useState(isMultiRoom);
   // Looking down on the home, or over the shoulder in the room.
-  const [view, setView] = useState<"above" | "inside">("above");
+  const [view, setView] = useState<"above" | "inside" | "eye">("above");
+  // Inside and Eye views: the stick (with RUN) to walk anywhere yourself.
+  const stick = useRef({ x: 0, y: 0 });
+  const [stickRun, setStickRun] = useState(false);
   const [activeRoomId, setActiveRoomId] = useState<string>("living");
   const [ritualsExpanded, setRitualsExpanded] = useState(false);
   const [tierModalOpen, setTierModalOpen] = useState(false);
@@ -263,15 +279,31 @@ export default function HomePage() {
     if (!decorFirst || !decorated) return;
     return () => updateCitizen((c) => ({ ...c, decorFirst: false }));
   }, [decorFirst, decorated]);
+  // No home on the map: the home you live in gets a generic address on your first party (lib/city/partyHome.ts).
+  // During a party you and your guests share its live room, like any other home.
+  const [starterHome, setStarterHome] = useState<FlatView | null>(null);
+  useEffect(() => {
+    if (activeFlat || !citizen?.id) return;
+    let live = true;
+    void myPartyHome().then((f) => { if (live) setStarterHome(f); });
+    return () => { live = false; };
+  }, [activeFlat, citizen?.id]);
+  const homeOff = !activeFlat && starterHome && housingTierFor(starterHome.property_type, starterHome.bedrooms) === housingTier ? starterHome : null;
+  const partyFlat = activeFlat ?? homeOff;
+  const prepareHome = async () => {
+    const r = await preparePartyHome(housingTier, furniture);
+    if (!("error" in r)) void getFlat(r.id).then((f) => f && setStarterHome(f));
+    return r;
+  };
   const shareHome = async () => {
     gameAudio.playClickSound();
-    if (!activeFlat) {
+    if (!partyFlat) {
       const r = await inviteFriends(citizen?.username);
       if (r === "copied") showToast("Invite link copied. Send it to your friends!");
       return;
     }
     const refPart = citizen?.username ? `ref=${encodeURIComponent(citizen.username)}&` : "";
-    const url = `${window.location.origin}/?${refPart}go=${encodeURIComponent(flatRoute(activeFlat))}`;
+    const url = `${window.location.origin}/?${refPart}go=${encodeURIComponent(flatRoute(partyFlat))}`;
     const text = `Come and visit my ${activeHomeTitle} (${activeHomeArea}) in Dubai Life!`;
     if (navigator.share) {
       try { await navigator.share({ title: activeHomeTitle, text, url }); return; } catch { /* cancelled */ }
@@ -279,7 +311,7 @@ export default function HomePage() {
     try { await navigator.clipboard.writeText(`${text} ${url}`); showToast("Invite link copied. Send it to your friends!"); } catch { /* blocked */ }
   };
   // A party on at this home right now (yours): its decorations go up.
-  const party = usePartyHere(activeFlat ? flatRoute(activeFlat) : null, false);
+  const party = usePartyHere(partyFlat ? flatRoute(partyFlat) : null, false);
   // During your party you're in the same live room as your guests (the one they join at your door): you see them
   // and they see you.
   const [dancing, setDancing] = useState(false);
@@ -302,7 +334,7 @@ export default function HomePage() {
   const onMove = (x: number, z: number, yaw: number, walking: boolean, lift?: number, rest?: "sit" | "sleep") => {
     setWhere({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw: Math.round(yaw * 100) / 100, walking, lift: lift ? Math.round(lift * 100) / 100 : undefined, rest });
   };
-  const partyRoom = useRoom(party && activeFlat ? `flat:${activeFlat.id}` : null, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : where.rest ?? myMood, lift: where.lift, level, hold: drink ?? undefined }, (e) => {
+  const partyRoom = useRoom(party && partyFlat ? `flat:${partyFlat.id}` : null, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : where.rest ?? myMood, lift: where.lift, level, hold: drink ?? undefined, dirty: isDirty(citizen?.needs?.hygiene) }, (e) => {
     // Drinks: the hostess goes to wherever they are.
     if (e.type === "party" && e.action === "drinks") serve(e.from.userId, e.from.username, [e.from.x, e.from.z]);
     const text = e.type === "chat" ? e.text : e.type === "wave" ? "👋" : null;
@@ -310,6 +342,13 @@ export default function HomePage() {
     setBubbles((b) => ({ ...b, [e.from.userId]: text }));
     setTimeout(() => setBubbles((b) => { const next = { ...b }; if (next[e.from.userId] === text) delete next[e.from.userId]; return next; }), 6000);
   });
+  // At a party in a home off the map, guests see the host's furniture: moving things round updates their copy.
+  const furnitureKey = JSON.stringify(furniture.filter((f) => f.placement));
+  useEffect(() => {
+    if (!party?.isHost || activeFlat || !homeOff) return;
+    const t = setTimeout(() => { void preparePartyHome(housingTier, furniture); }, 2000);
+    return () => clearTimeout(t);
+  }, [furnitureKey, party?.isHost, !!activeFlat, homeOff?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const dance = (seconds: number) => { setPose(null); setDancing(true); setTimeout(() => setDancing(false), seconds * 1000); };
   // One spot each, so nobody stands on anyone else.
   const guestSpots = spotsFor(partyRoom.peers.map((p) => p.userId));
@@ -319,10 +358,11 @@ export default function HomePage() {
     position: Number.isFinite(p.x) ? [p.x, p.lift ?? 0, p.z] : guestSpots.get(p.userId)!,
     holding: drinkInHand(p.hold)?.prop,
     carryMode: drinkInHand(p.hold)?.mode,
+    dirty: p.dirty,
     // Facing whoever's nearest, so they dance with each other.
     rotation: p.face ?? faceNearest([p.x, 0, p.z], [[where.x, 0, where.z], ...partyRoom.peers.map((o) => [o.x, 0, o.z] as [number, number, number])]) ?? 0,
     animation: p.animation,
-    label: `@${p.username}`,
+    label: `${p.away ? "💤 " : ""}@${p.username}`,
     bubble: bubbles[p.userId],
     onClick: () => setGuestId(p.userId),
   }));
@@ -337,6 +377,12 @@ export default function HomePage() {
   const setNeeds = (fn: (n: Needs) => Needs) => updateCitizen((c) => ({ ...c, needs: fn({ ...DEFAULT_NEEDS, ...c.needs }) }));
 
   const handleTriggerHomeActivity = (act: HomeActivityDef) => {
+    // A shower is taken in the shower: walk into the bathroom and use it (its sheet does the rest).
+    if (/shower/i.test(act.id) && fixturesFor(housingTier, level).some((f) => f.kind === "shower")) {
+      gameAudio.playClickSound();
+      setFixtureCall((c) => ({ n: (c?.n ?? 0) + 1, kind: "shower" }));
+      return;
+    }
     if (act.cost && walletBalance < act.cost) {
       showToast("⚠️ Not enough AED in your wallet!");
       return;
@@ -457,6 +503,8 @@ export default function HomePage() {
         onPlaceBlocked={() => showToast("🚫 It doesn't fit there. Try a green spot.")}
         onInteractObject={handleInteractObject}
         onUseFixture={(f) => setFixture(f)}
+        using={usingFixture}
+        fixtureCall={fixtureCall}
         level={level}
         onChangeLevel={changeLevel}
         homeStyle={homeStyle}
@@ -466,38 +514,38 @@ export default function HomePage() {
         onMove={party ? onMove : undefined}
         seatCall={party ? seatCall : undefined}
         holding={party ? drinkInHand(drink) : undefined}
+        dirty={isDirty(citizen?.needs?.hygiene)}
+        stick={view !== "above" ? stick : undefined}
+        stickRun={stickRun}
         extras={<PartyHostesses runs={runs} onArrive={(r) => { if (r.who === citizen?.id) handDrink(); }} onDone={(id) => setRuns((r) => r.filter((x) => x.id !== id))} />}
       />
 
-      {/* Camera controls */}
-      <div className="absolute right-3 sm:right-6 top-[36%] -translate-y-1/2 z-30 flex flex-col items-center gap-2 pointer-events-auto">
-        {!cleanScreen && (
-          <button onClick={() => { gameAudio.playClickSound(); setHomeMenuOpen(true); }} className="w-10 h-10 rounded-full bg-slate-900 text-white shadow-lg flex items-center justify-center active:scale-90 transition-transform" title="Home menu" aria-label="Home menu">
-            <Menu className="w-5 h-5" />
-          </button>
-        )}
-        <button onClick={() => setCleanScreen((c) => !c)} className="w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 active:scale-90 transition-transform" title={cleanScreen ? "Show everything" : "Clean screen"} aria-label={cleanScreen ? "Show everything" : "Clean screen"}>
-          {cleanScreen ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+      {view !== "above" && !placing && !decorating && !cleanScreen && (
+        <div className="absolute left-4 bottom-[max(6.5rem,calc(env(safe-area-inset-bottom)+6rem))] z-30"><MoveStick controls={stick} run={stickRun} onRun={() => setStickRun((r) => !r)} /></div>
+      )}
+      {/* Middle right (user, 2026-11-04): ☰ Menu (everything about the home), 🎉 Party (during a party), the three views,
+          the phone, and the clean-screen eye. Outside and Rituals are at the bottom right, beside the stick. */}
+      <SideBar>
+        {!cleanScreen && <SideButton icon={<Menu className="w-5 h-5" />} label="Menu" tone="dark" active={homeMenuOpen} onClick={() => { gameAudio.playClickSound(); setPartyPanel(false); setHomeMenuOpen((o) => !o); }} />}
+        {!cleanScreen && party && <SideButton icon="🎉" label="Party" tone="party" active={partyPanel} onClick={() => { gameAudio.playClickSound(); setHomeMenuOpen(false); setPartyPanel((o) => !o); }} />}
+        {!cleanScreen && ([["above", "🏠", "Above view"], ["inside", "👤", "Inside view"], ["eye", "👁️", "Eyes view"]] as const).map(([v, icon, label]) => (
+          <SideButton key={v} icon={icon} label={label} active={view === v} onClick={() => { gameAudio.playClickSound(); setView(v); setUpView(false); }} />
+        ))}
+        {!cleanScreen && <SideButton icon={<Smartphone className="w-5 h-5" />} label={unread ? `Phone: ${unread} unread` : "Phone"} badge={unread} onClick={() => openPhone()} />}
+        <SideButton icon={cleanScreen ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />} label={cleanScreen ? "Show everything" : "Clean screen"} onClick={() => { setHomeMenuOpen(false); setPartyPanel(false); setCleanScreen((c) => !c); }} />
+      </SideBar>
+      {partyPanel && party && !cleanScreen && (
+        <SidePopover title="🎉 Party" onClose={() => setPartyPanel(false)}>
+          <PartyActions list party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={(sec) => { if (where.rest) askSeat(false); dance(sec); }} pose={dancing ? "dance" : pose} onPose={(x) => { setDancing(false); setPose(x === "dance" ? null : x); if (x === "sit" || pose === "sit") askSeat(x === "sit"); }} announce={(text) => partyRoom.emit({ type: "chat", text })} broadcast={(action, on) => { partyRoom.emit({ type: "party", action, on }); if (action === "drinks") serve(citizen?.id ?? "me", citizen?.username ?? "you", [where.x, where.z]); }} />
+        </SidePopover>
+      )}
+      {/* Bottom right, beside the stick: going outside. */}
+      {!cleanScreen && !placing && (
+        <button onClick={() => { gameAudio.playClickSound(); router.push(`/street?home=1&from=${encodeURIComponent(activeFlat?.building_id ?? "home")}`); }}
+          className="fixed right-3 bottom-[max(5.25rem,calc(env(safe-area-inset-bottom)+4.75rem))] sm:bottom-24 z-30 h-11 pl-3 pr-4 rounded-full bg-emerald-600 text-white shadow-lg flex items-center gap-1.5 font-black text-sm active:scale-95" aria-label="Go outside">
+          🚪 <span>Outside</span>
         </button>
-        <button onClick={() => { setView((v) => (v === "inside" ? "above" : "inside")); setUpView(false); }} className="w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg border border-slate-200 flex items-center justify-center text-lg active:scale-90 transition-all" title={view === "inside" ? "View from above" : "View from inside"} aria-label={view === "inside" ? "View from above" : "View from inside"}>{view === "inside" ? "🏠" : "👤"}</button>
-        <button
-          onClick={() => setTurns((t) => t - 1)}
-          className="w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 active:scale-90 transition-all"
-          title="Rotate room left"
-          aria-label="Rotate room left"
-        >
-          <RotateCcw className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => setTurns((t) => t + 1)}
-          className="w-10 h-10 rounded-full bg-white/95 hover:bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 active:scale-90 transition-all"
-          title="Rotate room right"
-          aria-label="Rotate room right"
-        >
-          <RotateCw className="w-4 h-4" />
-        </button>
-        <span className="hidden sm:block text-[10px] font-bold text-white/90 bg-black/30 px-2 py-0.5 rounded-full text-center leading-tight">Drag to<br />look around</span>
-      </div>
+      )}
 
       {/* Decorate mode banner */}
       {decorating && !placing && (
@@ -642,7 +690,7 @@ export default function HomePage() {
       )}
 
       {/* Floors and rooms, one scrolling row. Everything else about the home is in the menu on the right. */}
-      {!cleanScreen && (levels || (rooms && rooms.length > 0)) && (
+      {!cleanScreen && !party && (levels || (rooms && rooms.length > 0)) && (
         <div className="absolute top-[4.5rem] sm:top-20 left-1/2 -translate-x-1/2 z-30 pointer-events-auto max-w-[96vw]">
           <div className="flex items-center gap-1 bg-white/95 backdrop-blur-md px-2 py-1 rounded-full shadow-lg border border-slate-200 overflow-x-auto [scrollbar-width:none]">
             {levels?.map((l, i) => (
@@ -669,34 +717,55 @@ export default function HomePage() {
         </div>
       )}
 
-      {party && !cleanScreen && !placing && <PartyActions party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={(sec) => { if (where.rest) askSeat(false); dance(sec); }} pose={dancing ? "dance" : pose} onPose={(x) => { setDancing(false); setPose(x === "dance" ? null : x); if (x === "sit" || pose === "sit") askSeat(x === "sit"); }} announce={(text) => partyRoom.emit({ type: "chat", text })} broadcast={(action, on) => { partyRoom.emit({ type: "party", action, on }); if (action === "drinks") serve(citizen?.id ?? "me", citizen?.username ?? "you", [where.x, where.z]); }} className="bottom-[8.75rem] sm:bottom-40" />}
-      {party && activeFlat && <PartyPeople room={partyRoom} place={activeHomeTitle} peerId={guestId} setPeerId={setGuestId} say={showToast} />}
+      {party && partyFlat && <PartyPeople room={partyRoom} place={activeHomeTitle} peerId={guestId} setPeerId={setGuestId} say={showToast} />}
       {party && !cleanScreen && <PartyBanner party={party} className="top-[calc(max(0.75rem,env(safe-area-inset-top))+7.25rem)]" />}
-      {partyOpen && <PartySheet flat={activeFlat ? { id: activeFlat.id, route: flatRoute(activeFlat), title: activeHomeTitle, area: activeHomeArea } : null} onClose={() => setPartyOpen(false)} />}
-      {homeMenuOpen && (
-        <div className="fixed inset-0 z-[200] bg-black/40 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-label="Home menu" onClick={() => setHomeMenuOpen(false)}>
-          <div className="w-full max-w-md bg-white text-slate-900 rounded-t-[28px] sm:rounded-[28px] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-2" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-1 pb-1">
-              <p className="text-lg font-black">Your home</p>
-              <button onClick={() => setHomeMenuOpen(false)} aria-label="Close" className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500"><X className="w-4 h-4" /></button>
-            </div>
+      {partyOpen && <PartySheet
+        flat={activeFlat ? { id: activeFlat.id, route: flatRoute(activeFlat), title: activeHomeTitle, area: activeHomeArea }
+          : hasRoom(housingTier) ? { id: homeOff?.id ?? "", route: homeOff ? flatRoute(homeOff) : "", title: housingConfig.label, area: homeOff ? towerName(homeOff.building_id) : `${areaFor(housingTier)} Residences`, prepare: prepareHome }
+          : null}
+        noRoom={!activeFlat && !hasRoom(housingTier) ? "A shared bed space isn't a room of your own. Move to a studio or bigger to host." : undefined}
+        onClose={() => setPartyOpen(false)} />}
+      {homeMenuOpen && !cleanScreen && (
+        <SidePopover title="Your home" onClose={() => setHomeMenuOpen(false)}>
             <HomeMenuRow icon={housingConfig.icon} title={activeHomeTitle} text={`${activeHomeArea} · Switch home`} onClick={() => { setHomeMenuOpen(false); setTierModalOpen(true); }} />
+            {hasPlot(housingTier) && <HomeMenuRow icon="🏡" title="Outside the house" text="Add a pool, garage, garden or car park" onClick={() => { setHomeMenuOpen(false); setExteriorOpen(true); }} />}
             <HomeMenuRow icon="🧑‍🎨" title={decorJob ? "Decorator at work" : "Employ a decorator"} text={decorJob ? "See how it's going" : "A player decorates with your budget"} onClick={() => { setHomeMenuOpen(false); setDecoratorOpen(true); }} />
             <HomeMenuRow icon="🎉" title="Throw a house party" text="Pick a time and send invite links" onClick={() => { setHomeMenuOpen(false); setPartyOpen(true); }} />
-            {activeFlat && <HomeMenuRow icon="💌" title="Invite a player to your home" text="Pick someone from your chats" onClick={() => { setHomeMenuOpen(false); router.push("/phone?tab=chats"); }} />}
-            <HomeMenuRow icon="🔗" title={activeFlat ? "Share an invite link" : "Invite a friend to Dubai Life"} text={activeFlat ? "Send it to anyone" : "Rent or buy on the map to have people over"} onClick={() => { setHomeMenuOpen(false); void shareHome(); }} />
+            {partyFlat && <HomeMenuRow icon="💌" title="Invite a player to your home" text="Pick someone from your chats" onClick={() => { setHomeMenuOpen(false); router.push("/phone?tab=chats"); }} />}
+            <HomeMenuRow icon="🔗" title={partyFlat ? "Share an invite link" : "Invite a friend to Dubai Life"} text={partyFlat ? "Send it to anyone" : "Throw a party to have people over"} onClick={() => { setHomeMenuOpen(false); void shareHome(); }} />
             {housingConfig.hasDollhouseUpView && <HomeMenuRow icon={upView ? "🔍" : "📐"} title={upView ? "Focus on one room" : "See the whole floor"} text="Change the view" onClick={() => { setUpView(!upView); setHomeMenuOpen(false); }} />}
-          </div>
-        </div>
+            {/* During a party the floors and rooms strip would sit under the party banner: it's here instead. */}
+            {party && (levels || (rooms && rooms.length > 0)) && (
+              <div className="flex flex-wrap gap-1 pt-1">
+                {levels?.map((l, i) => (
+                  <button key={l.label} onClick={() => changeLevel(i)} className={`px-2.5 h-8 rounded-full text-[11px] font-black ${level === i ? "bg-amber-400 text-slate-900" : "bg-slate-100 text-slate-700"}`}>{l.icon} {l.label}</button>
+                ))}
+                {rooms?.map((r) => (
+                  <button key={r.id} onClick={() => setActiveRoomId(r.id)} className={`px-2.5 h-8 rounded-full text-[11px] font-black ${activeRoomId === r.id ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"}`}>{r.icon} {r.label}</button>
+                ))}
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-1.5 pt-1">
+              <button onClick={() => setTurns((t) => t - 1)} className="h-10 rounded-2xl bg-slate-100 text-xs font-black flex items-center justify-center gap-1.5 active:scale-95"><RotateCcw className="w-4 h-4" /> Turn left</button>
+              <button onClick={() => setTurns((t) => t + 1)} className="h-10 rounded-2xl bg-slate-100 text-xs font-black flex items-center justify-center gap-1.5 active:scale-95"><RotateCw className="w-4 h-4" /> Turn right</button>
+            </div>
+        </SidePopover>
       )}
 
+      {exteriorOpen && (
+        <ExteriorSheet owned={homeStyle.exterior ?? []} payer="your balance"
+          onAdd={(id, price, name) => restyle({ exterior: [...(homeStyle.exterior ?? []), id] }, price, `${name} added outside`)}
+          onRemove={(id, name) => restyle({ exterior: (homeStyle.exterior ?? []).filter((x) => x !== id) }, 0, `${name} removed`)}
+          onHire={() => { setExteriorOpen(false); setDecoratorOpen(true); }}
+          onClose={() => setExteriorOpen(false)} />
+      )}
       {/* An interior decorator at work here, and the reveal when they're done; choosing one. */}
       {!cleanScreen && <DecoratorStatus tier={housingTier} job={decorJob} reload={reloadDecor} />}
       {decoratorOpen && <DecoratorSheet tier={housingTier} preselect={hireParam} onClose={() => setDecoratorOpen(false)} onHired={() => { setBuyModalOpen(false); void reloadDecor(); }} />}
 
       {/* RELATABLE HOME ACTIVITIES DOCK (Collapsible Floating Pill / Expanded Drawer) */}
       {!cleanScreen && !placing && (
-        <div className="fixed bottom-[4.85rem] sm:bottom-24 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
+        <div className={`fixed z-30 pointer-events-auto ${ritualsExpanded ? "bottom-[4.85rem] sm:bottom-24 left-1/2 -translate-x-1/2" : "right-3 bottom-[max(8.5rem,calc(env(safe-area-inset-bottom)+8rem))] sm:bottom-40"}`}>
           {!ritualsExpanded ? (
             <button
               onClick={() => {
@@ -842,16 +911,6 @@ export default function HomePage() {
               <span>Map</span>
             </button>
 
-            {/* Phone: opens over your home, like everywhere else */}
-            <button
-              onClick={() => openPhone()}
-              aria-label={unread ? `Phone: ${unread} unread` : "Phone"}
-              className="relative flex-1 min-h-[48px] py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full hover:bg-slate-100 text-slate-700 font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors"
-            >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>Phone</span>
-              {unread > 0 && <span className="absolute top-0.5 right-1 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center ring-2 ring-white">{unread > 99 ? "99+" : unread}</span>}
-            </button>
           </div>
         </div>
       )}
@@ -886,15 +945,15 @@ export default function HomePage() {
       )}
 
       {fixture && !running && (
-        <FixtureSheet fixture={fixture} onClose={() => setFixture(null)} onStart={(a) => { gameAudio.playClickSound(); setRunning(a); setFixture(null); }} />
+        <FixtureSheet fixture={fixture} onClose={() => setFixture(null)} onStart={(a) => { gameAudio.playClickSound(); setRunning(a); setUsingFixture(fixture.id); setFixture(null); }} />
       )}
       {running && (
         <div className="absolute left-3 top-[max(7.5rem,calc(env(safe-area-inset-top)+7rem))] z-40 pointer-events-auto">
           <FixtureProgress
             key={running.id}
             action={running}
-            onCancel={() => setRunning(null)}
-            onDone={() => { completeFixtureAction(running); showToast(`${running.icon} ${running.label}: done`); setRunning(null); }}
+            onCancel={() => { setRunning(null); setUsingFixture(null); }}
+            onDone={() => { completeFixtureAction(running); showToast(`${running.icon} ${running.label}: done`); setRunning(null); setUsingFixture(null); }}
           />
         </div>
       )}

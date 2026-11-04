@@ -3,6 +3,7 @@
 // wall items occupy a run of cells along one wall.
 
 import FLOORPLANS from "@/data/home/floorplans.json";
+import EXTERIOR_DATA from "@/data/home/exterior.json";
 
 export const ROOM_SIZE = 10; // metres
 export const CELL = 0.5; // metres per grid cell
@@ -315,7 +316,11 @@ export const WALL_PAINTS: Array<{ id: string; label: string; color: string; pric
   { id: "black", label: "Soft black", color: "#1f2023", price: 1400 },
 ];
 /** How a home is finished: floor, wall colour, and whether the walls are panelled with mouldings. */
-export interface HomeStyle { floor: FloorFinish; wall: string; panels: boolean }
+export interface HomeStyle { floor: FloorFinish; wall: string; panels: boolean; /** Pieces outside the house (pool, garage, garden…: src/data/home/exterior.json). */ exterior?: string[] }
+
+/** What can be added outside a house, and which homes have a plot for it. */
+export const EXTERIOR = EXTERIOR_DATA as { tiers: string[]; items: Array<{ id: string; name: string; icon: string; price: number; desc: string }> };
+export const hasPlot = (tier: HousingTier) => EXTERIOR.tiers.includes(tier);
 export const PANELS_PRICE = 5500;
 
 // ---------------------------------------------------------------- two-storey floor plans

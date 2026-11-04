@@ -1,5 +1,6 @@
 "use client";
 
+import { onUserEvent } from "@/lib/userChannel";
 import { askForPush } from "@/lib/push/engage";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -28,14 +29,9 @@ export function FriendRequestListener() {
   useEffect(() => {
     if (!me) return;
 
-    // Listen to real-time friendship events
-    const channel = supabase()
-      .channel(`friendships-${me}-${Math.random().toString(36).slice(2, 7)}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "friendships", filter: `friend_id=eq.${me}` },
-        async (payload) => {
-          const row = payload.new as { user_id: string; friend_id: string; status: string };
+    type Row = { user_id: string; friend_id: string; status: string };
+    // Someone asked me to be friends.
+    const onRequest = async (row: Row) => {
           if (row.status !== "pending") return;
 
           const who = (await contacts([row.user_id])).get(row.user_id);
@@ -59,13 +55,9 @@ export function FriendRequestListener() {
           setTimeout(() => {
             setAlerts((list) => list.filter((a) => a.id !== alertItem.id));
           }, 10000);
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "friendships", filter: `user_id=eq.${me}` },
-        async (payload) => {
-          const row = payload.new as { user_id: string; friend_id: string; status: string };
+    };
+    // Someone accepted my request.
+    const onAccepted = async (row: Row) => {
           if (row.status !== "accepted") return;
 
           const who = (await contacts([row.friend_id])).get(row.friend_id);
@@ -87,13 +79,14 @@ export function FriendRequestListener() {
           setTimeout(() => {
             setAlerts((list) => list.filter((a) => a.id !== alertItem.id));
           }, 8000);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase().removeChannel(channel);
     };
+    // On my own channel: the database tells me about requests to me and acceptances of mine.
+    return onUserEvent<Row>(me, "friendships", (e) => {
+      const row = e.new;
+      if (!row) return;
+      if (e.eventType === "INSERT" && row.friend_id === me) void onRequest(row);
+      else if (e.eventType === "UPDATE" && row.user_id === me) void onAccepted(row);
+    });
   }, [me, myUsername]);
 
   if (!alerts.length) return null;

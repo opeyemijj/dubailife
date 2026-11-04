@@ -6,7 +6,8 @@
 // and its front +z, like the rest of the furniture. Tapping one asks to use it.
 
 import * as THREE from "three";
-import type { ThreeEvent } from "@react-three/fiber";
+import { useMemo, useRef } from "react";
+import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { CELL, floorCenter } from "@/lib/furniture";
 import { fixtureRect, type Fixture, type FixtureWall } from "@/lib/homeFixtures";
 
@@ -103,9 +104,52 @@ function Toilet() {
   );
 }
 
-function Shower({ w, d }: { w: number; d: number }) {
+/** Running water from the rain head, and steam rising: shown while someone's showering. */
+function ShowerWater({ x, z, top }: { x: number; z: number; top: number }) {
+  const drops = useRef<THREE.InstancedMesh>(null);
+  const steam = useRef<THREE.Group>(null);
+  const N = 60;
+  const seeds = useMemo(() => Array.from({ length: N }, (_, i) => ({ dx: ((i * 37) % 23) / 23 - 0.5, dz: ((i * 53) % 19) / 19 - 0.5, off: (i * 0.137) % 1 })), []);
+  const m = useMemo(() => new THREE.Object3D(), []);
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    const mesh = drops.current;
+    if (mesh) {
+      seeds.forEach((s, i) => {
+        const k = (t * 1.6 + s.off) % 1;
+        m.position.set(x + s.dx * 0.28, top - k * top, z + s.dz * 0.28);
+        m.scale.set(1, 1, 1);
+        m.updateMatrix();
+        mesh.setMatrixAt(i, m.matrix);
+      });
+      mesh.instanceMatrix.needsUpdate = true;
+    }
+    steam.current?.children.forEach((c, i) => {
+      const k = (t * 0.25 + i / 5) % 1;
+      c.position.set(x + Math.sin(t + i) * 0.15, 0.8 + k * 1.6, z + Math.cos(t * 0.7 + i) * 0.15);
+      c.scale.setScalar(0.25 + k * 0.5);
+      ((c as THREE.Mesh).material as THREE.MeshBasicMaterial).opacity = 0.22 * (1 - k);
+    });
+  });
+  return (
+    <group raycast={() => null}>
+      <instancedMesh ref={drops} args={[undefined, undefined, N]} raycast={() => null}>
+        <boxGeometry args={[0.014, 0.18, 0.014]} />
+        <meshBasicMaterial color="#38bdf8" transparent opacity={0.85} />
+      </instancedMesh>
+      <group ref={steam}>
+        {Array.from({ length: 5 }, (_, i) => (
+          <mesh key={i} raycast={() => null}><sphereGeometry args={[0.5, 10, 8]} /><meshBasicMaterial color="#f8fafc" transparent opacity={0.15} depthWrite={false} /></mesh>
+        ))}
+      </group>
+    </group>
+  );
+}
+
+function Shower({ w, d, on = false }: { w: number; d: number; on?: boolean }) {
   return (
     <group>
+      {on && <ShowerWater x={w / 4} z={-d / 2 + 0.3} top={2.08} />}
       <Box p={[0, 0.03, 0]} s={[w, 0.06, d]} c="#f8fafc" r={0.3} />
       {/* tiled back and side walls */}
       <Box p={[0, 1.15, -d / 2 + 0.01]} s={[w, 2.3, 0.02]} c={TILE} r={0.3} />
@@ -146,21 +190,23 @@ function Basin({ w, double }: { w: number; double?: boolean }) {
   );
 }
 
-function FixtureVisual({ f }: { f: Fixture }) {
+function FixtureVisual({ f, on = false }: { f: Fixture; on?: boolean }) {
   const w = f.size[0] * CELL, d = f.size[1] * CELL;
   switch (f.kind) {
     case "kitchen-run": return <KitchenRun w={w} />;
     case "washer": return <Washer />;
     case "toilet": return <Toilet />;
-    case "shower": return <Shower w={w - 0.02} d={d - 0.02} />;
+    case "shower": return <Shower w={w - 0.02} d={d - 0.02} on={on} />;
     case "basin": return <Basin w={w * 0.92} />;
     case "basin-double": return <Basin w={w * 0.95} double />;
   }
 }
 
-export function HomeFixtures({ fixtures, walls, wallColor, skirtingColor, wallH, onUse }: {
+export function HomeFixtures({ fixtures, walls, wallColor, skirtingColor, wallH, onUse, running }: {
   fixtures: Fixture[]; walls: FixtureWall[]; wallColor: string; skirtingColor: string; wallH: number;
   onUse?: (f: Fixture) => void;
+  /** The fixture in use right now (the shower runs). */
+  running?: string | null;
 }) {
   const pieces = walls.flatMap((w) => {
     const len = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]);
@@ -189,7 +235,7 @@ export function HomeFixtures({ fixtures, walls, wallColor, skirtingColor, wallH,
           <group key={f.id}>
             <group position={[c.x, 0, c.z]} rotation={[0, -f.placement.rot * (Math.PI / 2), 0]} onClick={tap(f)}
               onPointerOver={() => { if (onUse) document.body.style.cursor = "pointer"; }} onPointerOut={() => { document.body.style.cursor = ""; }}>
-              <FixtureVisual f={f} />
+              <FixtureVisual f={f} on={running === f.id} />
             </group>
             {f.kind !== "kitchen-run" && f.kind !== "washer" && (
               <mesh position={[(r.minX + r.maxX) / 2, 0.004, (r.minZ + r.maxZ) / 2]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow raycast={() => null}>

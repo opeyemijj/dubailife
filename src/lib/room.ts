@@ -17,6 +17,7 @@ import { refreshCitizen, useCitizen } from "@/lib/citizenStore";
 import type { AvatarLookProps } from "@/components/avatar/roster";
 import type { AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 import { sendPushNotification } from "@/lib/push/client";
+import { AWAY_EVENT, isIdle } from "@/lib/idle";
 
 export interface Peer {
   userId: string;
@@ -34,6 +35,10 @@ export interface Peer {
   level?: number;
   /** A drink in hand at a party: sipping, or just holding the cup. */
   hold?: "sip" | "cup";
+  /** Gone quiet (idle or in the background): still shown where they were, with a 💤, but not connected. */
+  away?: boolean;
+  /** Hasn't washed: flies buzz round them. */
+  dirty?: boolean;
 }
 
 export interface Gift {
@@ -76,6 +81,8 @@ export interface ChatMessage {
 const TYPING_MS = 3000;
 /** Someone whose connection blips stays on screen this long before they count as gone. */
 const GRACE_MS = 15000;
+/** Someone who went away (idle) stays on screen, with a 💤, this long. */
+const AWAY_GRACE_MS = 15 * 60_000;
 /** How often to check I'm still announced in the room (and tidy up people who've left). */
 const HEAL_MS = 10000;
 /** Window event announcing money from someone in the same room. */
@@ -111,6 +118,8 @@ export interface Me {
   level?: number;
   /** A drink in hand at a party. */
   hold?: "sip" | "cup";
+  /** Hasn't washed (flies). */
+  dirty?: boolean;
 }
 
 const send = (channel: RealtimeChannel | null, payload: unknown) =>
@@ -143,11 +152,11 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
   // What others see of me.
   useEffect(() => {
     if (!profile) return;
-    self.current = { ...profile, x: me.x, z: me.z, face: me.face, animation: me.animation, lift: me.lift, level: me.level, hold: me.hold };
+    self.current = { ...profile, x: me.x, z: me.z, face: me.face, animation: me.animation, lift: me.lift, level: me.level, hold: me.hold, dirty: me.dirty || undefined, away: isIdle() || undefined };
     if (ready.current) channel.current?.track(self.current).catch(() => {});
     // profile is rebuilt every render; its fields are what matter.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.userId, profile?.username, profile?.name, citizen?.look, me.x, me.z, me.face, me.animation, me.lift, me.level, me.hold]);
+  }, [profile?.userId, profile?.username, profile?.name, citizen?.look, me.x, me.z, me.face, me.animation, me.lift, me.level, me.hold, me.dirty]);
 
   // A fresh channel when the old one can't recover by itself.
   const [attempt, setAttempt] = useState(0);
@@ -165,7 +174,7 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
     const people = known.current.people;
     const publish = () => {
       const now = Date.now();
-      for (const [id, k] of people) if (k.goneAt && now - k.goneAt > GRACE_MS) people.delete(id);
+      for (const [id, k] of people) if (k.goneAt && now - k.goneAt > (k.peer.away ? AWAY_GRACE_MS : GRACE_MS)) people.delete(id);
       setPeers([...people.values()].map((k) => k.peer));
     };
 
@@ -182,9 +191,10 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
           const p = metas[metas.length - 1];
           if (key === myId || !p?.userId) continue;
           here.add(p.userId);
-          people.set(p.userId, { peer: { userId: p.userId, username: p.username, name: p.name, look: p.look, x: p.x, z: p.z, face: p.face, animation: p.animation, lift: p.lift, level: p.level, hold: p.hold }, goneAt: 0 });
+          people.set(p.userId, { peer: { userId: p.userId, username: p.username, name: p.name, look: p.look, x: p.x, z: p.z, face: p.face, animation: p.animation, lift: p.lift, level: p.level, hold: p.hold, away: p.away, dirty: p.dirty }, goneAt: 0 });
         }
-        // A connection blip shouldn't make someone vanish: keep them a little while.
+        // A connection blip shouldn't make someone vanish: keep them a little while (much longer, with a 💤, when
+        // they'd said they were going away).
         const now = Date.now();
         for (const [id, k] of people) if (!here.has(id) && !k.goneAt) k.goneAt = now;
         publish();
@@ -220,18 +230,47 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
           clearTimeout(rebuild);
           // (Re)announce myself on every join, including automatic rejoins after a reconnect.
           if (self.current) ch.track(self.current).catch(() => {});
+          void loadAway();
           return;
         }
-        // The client rejoins by itself after most drops; if it hasn't within a few seconds, start over.
+        // The client rejoins by itself after most drops; if it hasn't within a few seconds, start over. Not while
+        // away: the connection was dropped on purpose (and starting over would reconnect it).
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
           clearTimeout(rebuild);
-          rebuild = setTimeout(() => { if (!ready.current && channel.current === ch) setAttempt((n) => n + 1); }, 5000);
+          rebuild = setTimeout(() => { if (!ready.current && channel.current === ch && !isIdle()) setAttempt((n) => n + 1); }, 5000);
         }
       });
+      // People who went away before I arrived: shown where they were (from their away note), with a 💤.
+      const loadAway = async () => {
+        const since = new Date(Date.now() - AWAY_GRACE_MS).toISOString();
+        const { data } = await supabase().from("room_away").select("user_id, state, away_since").eq("room", roomId).gte("away_since", since);
+        if (cancelled || !data) return;
+        for (const r of data as Array<{ user_id: string; state: Peer; away_since: string }>) {
+          if (r.user_id === myId || people.get(r.user_id)?.goneAt === 0) continue;
+          people.set(r.user_id, { peer: { ...r.state, userId: r.user_id, away: true }, goneAt: Date.parse(r.away_since) });
+        }
+        publish();
+      };
+      // Going away: tell the room (and leave a note for people who come later); back: clear it.
+      const onAway = (ev: Event) => {
+        const away = (ev as CustomEvent<boolean>).detail;
+        if (!self.current) return;
+        self.current = { ...self.current, away: away || undefined };
+        if (away) {
+          if (ready.current) ch.track(self.current).catch(() => {});
+          void supabase().from("room_away").upsert({ room: roomId, user_id: myId, state: self.current, away_since: new Date().toISOString() });
+        } else {
+          void supabase().from("room_away").delete().eq("room", roomId).eq("user_id", myId);
+          if (ready.current) ch.track(self.current).catch(() => {});
+          // Should rejoin by itself; if it hasn't shortly after coming back, start over.
+          setTimeout(() => { if (!ready.current && channel.current === ch && !isIdle()) setAttempt((n) => n + 1); }, 6000);
+        }
+      };
+      window.addEventListener(AWAY_EVENT, onAway);
       // Self-heal: if the room has lost me (e.g. a rejoin without my details), announce again.
       const heal = () => {
         publish();
-        if (!ready.current || !self.current || channel.current !== ch) return;
+        if (isIdle() || !ready.current || !self.current || channel.current !== ch) return;
         if (!ch.presenceState()[myId]) ch.track(self.current).catch(() => {});
       };
       const timer = setInterval(heal, HEAL_MS);
@@ -241,6 +280,9 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
         clearInterval(timer);
         clearTimeout(rebuild);
         document.removeEventListener("visibilitychange", onVisible);
+        window.removeEventListener(AWAY_EVENT, onAway);
+        // Leaving the room: no away note left behind.
+        if (self.current?.away) void supabase().from("room_away").delete().eq("room", roomId).eq("user_id", myId);
         if (channel.current === ch) { channel.current = null; ready.current = false; }
         leave(topic, ch);
       };
@@ -315,7 +357,13 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
 
   const isTyping = (userId: string, now: number) => now - (typing[userId] ?? 0) < TYPING_MS;
 
-  return { peers, events, emit, myId, messages, say, typingTo, isTyping, unread, openThread };
+  /** Shows an event as if it had just arrived (a request saved while I was away). */
+  const inject = useCallback((e: Received) => {
+    setEvents((list) => [...list.slice(-39), e]);
+    handler.current?.(e);
+  }, []);
+
+  return { peers, events, emit, myId, messages, say, typingTo, isTyping, unread, openThread, inject };
 }
 
 /** Pays another citizen. Resolves to an error message, or null when it went through. */
@@ -346,8 +394,11 @@ export async function sendMoney(to: Peer, amount: number, place: string): Promis
   return /\bblocked\b/.test(error.message) ? BLOCKED_TEXT
     : /transfers_frozen/.test(error.message) ? "🔒 Your bank froze transfers for an hour after the scam. Try again later."
     : /insufficient_funds/.test(error.message) ? "You don't have enough AED for that."
-    : /too_many/.test(error.message) ? "Slow down — try again in a minute."
-    : /amount_out_of_range/.test(error.message) ? "Send between 1 and AED 1,000,000."
+    : /too_many/.test(error.message) ? "Slow down: try again in a minute."
+    : /amount_out_of_range/.test(error.message) ? "You can send between AED 1 and AED 20,000,000 at a time."
+    : /daily_send_limit/.test(error.message) ? "That's over today's sending limit (AED 50,000,000 a day). Send a smaller amount now, or the rest tomorrow."
+    : /account_frozen/.test(error.message) ? "Your account is frozen while your court case is open."
+    : /recipient_missing|invalid_recipient/.test(error.message) ? "You can't send money to that player."
     : "The transfer didn't go through. Please try again.";
 }
 

@@ -9,10 +9,11 @@ import { useParams } from "next/navigation";
 import { Package, RotateCcw, RotateCw, X } from "lucide-react";
 import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoom";
 import { MoveInWalk } from "@/components/onboarding/MoveInWalk";
+import { ExteriorSheet } from "@/components/home/ExteriorSheet";
 import { useRequireCitizen } from "@/lib/citizenStore";
 import { completeDecor, decorHome, saveDecor, studioOf, type DecorHome, type DecorPlan } from "@/lib/decorator";
 import {
-  CATALOG, FLOOR_FINISHES, getCatalogItem, HOUSING_CONFIGS, PANELS_PRICE, SHOP_CATEGORIES, WALL_PAINTS, withHomeItems,
+  CATALOG, FLOOR_FINISHES, getCatalogItem, hasPlot, HOUSING_CONFIGS, PANELS_PRICE, SHOP_CATEGORIES, WALL_PAINTS, withHomeItems,
   type CatalogItem, type HomeStyle, type OwnedFurniture, type Placement, type Rotation,
 } from "@/lib/furniture";
 import { gameAudio } from "@/utils/gameAudio";
@@ -31,7 +32,7 @@ export default function DecoratePage() {
   const [bought, setBought] = useState<Record<string, number>>({});
   const [spent, setSpent] = useState(0);
   const [placing, setPlacing] = useState<PlacingState | null>(null);
-  const [store, setStore] = useState<"shop" | "storage" | "style" | null>(null);
+  const [store, setStore] = useState<"shop" | "storage" | "style" | "outside" | null>(null);
   const [cat, setCat] = useState<string>("all");
   const [find, setFind] = useState("");
   const [turns, setTurns] = useState(0);
@@ -182,6 +183,10 @@ export default function DecoratePage() {
         <button onClick={() => setTurns((t) => t + 1)} aria-label="Rotate room right" className="w-10 h-10 rounded-full bg-white/95 shadow-lg flex items-center justify-center text-slate-700"><RotateCw className="w-4 h-4" /></button>
       </div>
 
+      {store === "outside" && (
+        <ExteriorSheet owned={style.exterior ?? []} payer="the budget" onClose={() => setStore(null)}
+          onAdd={(id, price, name) => { restyle({ exterior: [...(style.exterior ?? []), id] }, price); say(`${name} added outside.`); }} />
+      )}
       {toast && <div className="absolute top-24 left-1/2 -translate-x-1/2 z-30 bg-slate-950/90 text-white text-xs font-bold px-4 py-2 rounded-full whitespace-nowrap">{toast}</div>}
 
       {placing && placingItem ? (
@@ -206,6 +211,8 @@ export default function DecoratePage() {
               <button onClick={() => setStore("style")} className="h-11 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-black">🎨 Floors &amp; walls</button>
               <button onClick={() => setStore("storage")} className="h-11 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-black">📦 Storage · {storage.length}</button>
             </div>
+            {/* Townhouses and villas: the pool, garage, garden… outside, from the same budget. */}
+            {hasPlot(home.tier) && <button onClick={() => setStore("outside")} className="w-full h-10 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-black">🏡 Outside: pool, garage, garden{style.exterior?.length ? ` · ${style.exterior.length} added` : ""}</button>}
             <button disabled={busy} onClick={finish} className="w-full h-12 rounded-2xl bg-slate-900 text-white font-black disabled:opacity-60">{busy ? "Finishing…" : `✨ Finish and earn ${aed(home.fee)}`}</button>
           </div>
         </div>

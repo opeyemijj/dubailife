@@ -15,9 +15,7 @@ import { illnessOf, useServices } from "@/lib/cityServices";
 import { useEmbedded } from "@/components/layout/Embed";
 import { usePhoneButtonHere } from "@/lib/phoneButtons";
 import { useMissions } from "@/lib/missions";
-import { dismissCityPulse, useCityPulse, usePresentCitizens } from "@/lib/presence";
-import { gatherings, SLOT_MS } from "@/lib/locals";
-import { PLACES } from "@/lib/city/places";
+import { dismissCityPulse, useCityPulse } from "@/lib/presence";
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -39,7 +37,6 @@ export function BottomNav() {
         {onMap && (
           <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2">
             <VisaChip />
-            <HotspotChip />
           </div>
         )}
         {/* One white bar: the buttons and, on the map, the About and social links under them. */}
@@ -138,63 +135,6 @@ function LivePulseBanner() {
         <X className="w-3.5 h-3.5" />
       </button>
     </div>
-  );
-}
-
-/** Funnels online players into the same 3D room: picks the busiest live player venue or the 15-min Happy Hour Hotspot. */
-function HotspotChip() {
-  const router = useRouter();
-  const present = usePresentCitizens();
-  const slot = Math.floor(Date.now() / SLOT_MS);
-  const topGathering = gatherings(slot)[0];
-
-  // Count real players by venuePath or placeId
-  const pathCounts: Record<string, number> = {};
-  for (const p of present) {
-    if (p.venuePath && p.venuePath.startsWith("/place/")) {
-      pathCounts[p.venuePath] = (pathCounts[p.venuePath] ?? 0) + 1;
-    } else if (p.placeId) {
-      const place = PLACES.find((x) => x.id === p.placeId);
-      const firstVenue = place?.venues.find((v) => !v.comingSoon);
-      if (place && firstVenue) {
-        const vp = `/place/${place.id}/${firstVenue.id}`;
-        pathCounts[vp] = (pathCounts[vp] ?? 0) + 1;
-      }
-    }
-  }
-
-  let bestHref = topGathering ? `/place/${topGathering.place.id}/${topGathering.venue.id}` : "/explore";
-  let bestName = topGathering?.venue.name ?? "Dubai Mall";
-  let liveCount = 0;
-
-  for (const [vp, c] of Object.entries(pathCounts)) {
-    if (c > liveCount) {
-      liveCount = c;
-      bestHref = vp;
-      const [, , pid, vid] = vp.split("/");
-      const pl = PLACES.find((x) => x.id === pid);
-      const vn = pl?.venues.find((v) => v.id === vid);
-      if (vn) bestName = vn.name;
-    }
-  }
-
-  const totalCrowd = liveCount + 5; // 5 hosts + live citizens
-
-  return (
-    <button
-      onClick={() => {
-        gameAudio.playClickSound();
-        router.push(bestHref);
-      }}
-      title={`Teleport to ${bestName} — Live Happy Hour Hotspot (1.5× Crowd Bonus)`}
-      className="pointer-events-auto h-9 px-3 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-lg flex items-center gap-1.5 font-black text-xs active:scale-95 transition-transform max-w-[54vw] sm:max-w-none"
-    >
-      <span className="shrink-0">🔥</span>
-      <span className="truncate">{bestName}</span>
-      <span className="shrink-0 px-1.5 py-0.5 rounded-full bg-slate-950/20 text-[10px] font-black">
-        {totalCrowd} here · 1.5×
-      </span>
-    </button>
   );
 }
 

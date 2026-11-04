@@ -8,7 +8,7 @@ import type { ReactNode } from "react";
 import type { Product, StationKind, Venue } from "@/lib/city/types";
 import type { FloorKind } from "./materials";
 import { signTexture } from "./materials";
-import { BowlingLanes, BuoyLine, GrillCounter, Jacuzzi, SaunaCabin, Steam, WaitingLift, WaxGallery, DiscoLights, EntranceArch, FlowRider, JetSki, KaraokeStage, OpenSea, SharkLagoon, SlideMountain, Slides, ThatchRoof, VolleyballNet, WavePool } from "./scenery";
+import { Helm, YachtHull, BowlingLanes, BuoyLine, GrillCounter, Jacuzzi, SaunaCabin, Steam, WaitingLift, WaxGallery, DiscoLights, EntranceArch, FlowRider, JetSki, KaraokeStage, OpenSea, SharkLagoon, SlideMountain, Slides, ThatchRoof, VolleyballNet, WavePool } from "./scenery";
 import { BEACH, BOWLING, CLUB, DINING, LOBBY, SHOPS, SPA, dubaiEvening, hasChefGrill, RINK, isKidsPool, isSkyPool, poolDeckPool, SPLASH_POOLS, WATERPARK } from "./rides/paths";
 import { hasVolleyball, parkOf, RIDES } from "@/lib/city/rides";
 import { Cabana, CinemaScreen, DockWithAbra, FoodTruck, IceRink, Kites, LazyRiver, LifeguardTower, Lounger, LoungerSet, Mihrab, Pool, RingChandelier, Candle, Sea, Seating, SignPost, SlideTower, TreatmentBed, } from "./scenery";
@@ -269,6 +269,23 @@ export function buildPlan(venue: Venue): Plan {
         {venue.feature === "aquarium" && <group position={[0, 0, -D / 2 + 0.06]}><AquariumWall width={Wd - 0.4} /></group>}
         {venue.feature === "skyline" && <group position={[0, 0, -D / 2 + 0.06]}><SkylineWindow width={Wd - 0.4} /></group>}
       </>);
+    }
+
+    case "yacht": {
+      // A yacht's open deck at Dubai Harbour (bow towards the back, -z): the deck bar at the stern, the DJ and
+      // dance floor midships, sofas along the rails, and the helm by the flybridge where you can take the wheel.
+      const Wd = 8, D = 20;
+      return plan(venue, [Wd, D], "deck", [
+        { kind: "bar", position: [0, 8.3], rotation: Math.PI, label: "Deck bar", visual: () => <Bar glow={light ?? "#f59e0b"} width={3} /> },
+        { kind: "menu", position: [-2.9, 6.6], rotation: Math.PI / 2, label: "Order here", visual: () => <MenuCounter title={venue.name} items={venue.products.filter((p) => !p.service).map((p) => ({ name: p.name, price: p.price }))} color={accent} /> },
+        { kind: "tickets", position: [2.9, 6.6], rotation: -Math.PI / 2, label: "Charter", visual: () => <TicketKiosk accent={accent} /> },
+        { kind: "dj", position: [0, -2.4], visual: () => <DJBooth glow={light ?? accent} /> },
+        { kind: "dancefloor", position: [0, 0.8], visual: () => <DanceFloor colors={[accent, "#22d3ee", "#facc15"]} size={3.2} /> },
+        ...([[-3, -4.6, Math.PI / 2], [3, -4.6, -Math.PI / 2], [-3, 3.6, Math.PI / 2], [3, 3.6, -Math.PI / 2]] as Array<[number, number, number]>).map(([x, z, r]) => ({
+          kind: "booth" as StationKind, position: [x, z] as [number, number], rotation: r, label: "Deck sofa", visual: () => <Booth tint="#e7e5e4" />,
+        })),
+        { kind: "exhibit", position: [0, -6.4], label: "⛵ Helm", visual: () => <Helm /> },
+      ], <YachtHull width={Wd} depth={D} />, false);
     }
 
     case "beach": {

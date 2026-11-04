@@ -2473,7 +2473,7 @@
     "icon": "🛏️",
     "size": [
      2,
-     4
+     5
     ],
     "col": 0,
     "row": 0,
@@ -2500,7 +2500,7 @@
     "icon": "🛏️",
     "size": [
      2,
-     4
+     5
     ],
     "col": 18,
     "row": 0,
@@ -2527,10 +2527,10 @@
     "icon": "🛏️",
     "size": [
      2,
-     4
+     5
     ],
     "col": 0,
-    "row": 11,
+    "row": 10,
     "rot": 0,
     "model": "/models/furniture/bed.glb",
     "interaction": "bed"
@@ -2554,10 +2554,10 @@
     "icon": "🛏️",
     "size": [
      2,
-     4
+     5
     ],
     "col": 18,
-    "row": 11,
+    "row": 10,
     "rot": 0,
     "model": "/models/furniture/bed.glb",
     "interaction": "bed"

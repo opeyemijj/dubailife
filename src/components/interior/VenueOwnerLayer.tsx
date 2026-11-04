@@ -50,7 +50,8 @@ export function VenueLoadingCard({ venueKey, venueName, pub, paused = false }: {
     );
   }
 
-  if (!settings.features.venue_claims) return null;
+  // Settings not loaded (offline, or an older database): nothing to show rather than a crash.
+  if (!settings?.features?.venue_claims || !settings.venue_subscription) return null;
   const plan = settings.venue_subscription;
   return (
     <Card onClose={dismiss} label="For business owners">

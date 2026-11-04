@@ -130,10 +130,10 @@ export function Pool({ w, d, color = "#0ea5e9" }: { w: number; d: number; color?
 
 // ---------------------------------------------------------------- waterpark
 
-/** A slide tower with twisting tube slides running down into the splash pool. */
+/** A slide tower with twisting open slides running down into the splash pool. */
 export function SlideTower() {
   const slides = useMemo(() => {
-    const make = (pts: Array<[number, number, number]>) => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p))), 80, 0.32, 10, false);
+    const make = (pts: Array<[number, number, number]>) => openSlideGeometry(pts, 0.32);
     return [
       { geo: make([[0.6, 7.6, 0], [2.6, 6.6, 0.8], [3.4, 4.8, -1.2], [1.6, 3.4, -2.4], [2.8, 1.6, -1], [4.6, 0.5, 1.6]]), color: "#f97316" },
       { geo: make([[-0.6, 7.6, 0], [-2.8, 6.4, -0.8], [-3.6, 4.4, 1.2], [-2, 2.8, 2.6], [-3.4, 1.2, 3.6], [-5, 0.5, 4.4]]), color: "#facc15" },
@@ -149,7 +149,7 @@ export function SlideTower() {
       <mesh position={[0, 8.6, 0]} castShadow><coneGeometry args={[1.9, 1.2, 4]} /><meshStandardMaterial color="#0e7490" /></mesh>
       {slides.map((s, i) => (
         <mesh key={i} geometry={s.geo} castShadow>
-          <meshStandardMaterial color={s.color} roughness={0.35} side={THREE.DoubleSide} transparent opacity={0.92} />
+          <meshStandardMaterial color={s.color} roughness={0.3} side={THREE.DoubleSide} />
         </mesh>
       ))}
     </group>
@@ -407,17 +407,54 @@ export function SlideMountain({ kind = "ziggurat" }: { kind?: "ziggurat" | "rock
 }
 
 /**
+ * An open water slide: the lower part of a tube (a half-pipe with its rims a little above half way), so a rider
+ * on its floor is always in view (user, 2026-11-04: "the slider should be open so the user can be seen"). The
+ * floor is where the closed tube's floor was, so riders (tracks.ts) ride on it exactly.
+ */
+export function openSlideGeometry(pts: P3[], r: number, segments = 120, radial = 14) {
+  const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p)));
+  const up = new THREE.Vector3(0, 1, 0);
+  const pos: number[] = [], idx: number[] = [];
+  let side = new THREE.Vector3(1, 0, 0);
+  const lo = -0.35, hi = Math.PI + 0.35;
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const c = curve.getPointAt(t), T = curve.getTangentAt(t);
+    const sd = new THREE.Vector3().crossVectors(T, up);
+    if (sd.lengthSq() > 1e-4) side = sd.normalize();
+    const n = new THREE.Vector3().crossVectors(T, side).normalize();
+    if (n.y > 0) n.negate();
+    for (let j = 0; j <= radial; j++) {
+      const a = lo + ((hi - lo) * j) / radial;
+      const p = c.clone().addScaledVector(side, Math.cos(a) * r).addScaledVector(n, Math.sin(a) * r);
+      pos.push(p.x, p.y, p.z);
+    }
+  }
+  for (let i = 0; i < segments; i++) for (let j = 0; j < radial; j++) {
+    const a = i * (radial + 1) + j, b = a + radial + 1;
+    idx.push(a, b, a + 1, b, b + 1, a + 1);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+
+/**
  * Slides from the top of the tower (shapes in rides/paths.ts, so riders follow them exactly): two twisting
  * tubes and the near-vertical drop slide. Aquaventure's second tube is the wide raft slide and its first
  * starts in a clear launch capsule; Wild Wadi's drop slide has a twin lane for racing.
  */
 export function Slides({ through = false }: { through?: boolean }) {
   const slides = useMemo(() => {
-    const make = (pts: P3[], r = SLIDE_RADIUS) => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p))), 90, r, 12, false);
+    // Open slides everywhere; only Aquaventure's clear tube through the shark lagoon stays a (see-through) tube.
+    const make = (pts: P3[], r = SLIDE_RADIUS) => openSlideGeometry(pts, r);
+    const tube = (pts: P3[], r = SLIDE_RADIUS) => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p))), 90, r, 12, false);
     const list = [
       { geo: make(SLIDE_POINTS.twistA), color: "#f97316", clear: false },
       { geo: make(SLIDE_POINTS.twistB, through ? RAFT_RADIUS : SLIDE_RADIUS), color: "#facc15", clear: false },
-      { geo: make(SLIDE_POINTS.drop), color: through ? "#bae6fd" : "#ec4899", clear: through },
+      { geo: through ? tube(SLIDE_POINTS.drop) : make(SLIDE_POINTS.drop), color: through ? "#bae6fd" : "#ec4899", clear: through },
     ];
     if (!through) list.push({ geo: make(SLIDE_POINTS.drop.map(([x, y, z]) => [x + TWIN_LANE, y, z] as P3)), color: "#a855f7", clear: false });
     return list;
@@ -426,9 +463,11 @@ export function Slides({ through = false }: { through?: boolean }) {
   return (
     <group>
       {slides.map((s, i) => (
-        // Tinted, see-through plastic, so riders can be watched all the way down.
+        // Open, glossy fibreglass (riders in plain view); the clear tube is see-through.
         <mesh key={i} geometry={s.geo} castShadow>
-          <meshStandardMaterial color={s.color} roughness={0.25} side={THREE.DoubleSide} transparent opacity={s.clear ? 0.4 : 0.62} depthWrite={false} />
+          {s.clear
+            ? <meshStandardMaterial color={s.color} roughness={0.25} side={THREE.DoubleSide} transparent opacity={0.4} depthWrite={false} />
+            : <meshStandardMaterial color={s.color} roughness={0.3} metalness={0.05} side={THREE.DoubleSide} />}
         </mesh>
       ))}
       {through && (
@@ -1132,6 +1171,87 @@ export function WaxGallery() {
           <group position={[0, 0.39, 0]}><Suspense fallback={null}><CitizenAvatar look={{ gender: figures[i].gender, preset: figures[i].preset }} animation="idle" pose={figures[i].pose} /></Suspense></group>
         </group>
       ))}
+    </group>
+  );
+}
+
+// ---------------------------------------------------------------- yachts (Dubai Harbour Marina)
+
+/**
+ * A yacht round its open deck (the venue floor, `width` × `depth`, bow towards -z): a white hull down to the sea,
+ * chrome rails, the flybridge cabin at the bow, and the sea with the Marina skyline and Ain Dubai beyond.
+ */
+export function YachtHull({ width, depth }: { width: number; depth: number }) {
+  const sea = useRef<THREE.Mesh>(null);
+  useFrame((s) => {
+    if (sea.current) (sea.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.16 + Math.sin(s.clock.elapsedTime * 0.8) * 0.05;
+  });
+  const hw = width / 2, hd = depth / 2;
+  const bow = useMemo(() => {
+    // The pointed bow beyond the deck's front edge.
+    const shape = new THREE.Shape();
+    shape.moveTo(-hw - 0.2, 0); shape.lineTo(0, -4.2); shape.lineTo(hw + 0.2, 0); shape.lineTo(-hw - 0.2, 0);
+    return new THREE.ExtrudeGeometry(shape, { depth: 1.7, bevelEnabled: false });
+  }, [hw]);
+  const rails = useMemo(() => {
+    const posts: Array<[number, number]> = [];
+    for (let z = -hd; z <= hd; z += 1.5) { posts.push([-hw, z]); posts.push([hw, z]); }
+    for (let x = -hw + 1.5; x < hw; x += 1.5) posts.push([x, hd]);
+    return posts;
+  }, [hw, hd]);
+  return (
+    <group>
+      {/* hull sides, stern and the bow, white with a navy stripe at the waterline */}
+      {[-1, 1].map((s) => (
+        <group key={s}>
+          <mesh position={[s * (hw + 0.1), -0.75, 0]}><boxGeometry args={[0.2, 1.7, depth]} /><meshStandardMaterial color="#f8fafc" roughness={0.3} /></mesh>
+          <mesh position={[s * (hw + 0.21), -1.35, 0]}><boxGeometry args={[0.02, 0.3, depth]} /><meshStandardMaterial color="#1e3a8a" /></mesh>
+        </group>
+      ))}
+      <mesh position={[0, -0.75, hd + 0.1]}><boxGeometry args={[width + 0.4, 1.7, 0.2]} /><meshStandardMaterial color="#f8fafc" roughness={0.3} /></mesh>
+      <mesh geometry={bow} position={[0, -1.6, -hd]} rotation={[-Math.PI / 2, 0, 0]} scale={[1, 1, 1]}><meshStandardMaterial color="#f8fafc" roughness={0.3} /></mesh>
+      {/* chrome rails round the deck */}
+      {rails.map(([x, z], i) => <mesh key={i} position={[x, 0.5, z]}><cylinderGeometry args={[0.03, 0.03, 1, 6]} /><meshStandardMaterial color="#e5e7eb" metalness={0.9} roughness={0.15} /></mesh>)}
+      {[-1, 1].map((s) => <mesh key={s} position={[s * hw, 1, 0]}><boxGeometry args={[0.05, 0.05, depth]} /><meshStandardMaterial color="#e5e7eb" metalness={0.9} roughness={0.15} /></mesh>)}
+      <mesh position={[0, 1, hd]}><boxGeometry args={[width, 0.05, 0.05]} /><meshStandardMaterial color="#e5e7eb" metalness={0.9} roughness={0.15} /></mesh>
+      {/* the flybridge cabin at the bow, with tinted glass all round */}
+      <group position={[0, 0, -hd + 1.6]}>
+        <mesh position={[0, 1.2, 0]}><boxGeometry args={[width - 1.4, 2.4, 2.6]} /><meshStandardMaterial color="#f1f5f9" roughness={0.3} /></mesh>
+        <mesh position={[0, 1.5, 1.31]}><planeGeometry args={[width - 1.8, 1.1]} /><meshStandardMaterial color="#0f172a" metalness={0.6} roughness={0.1} /></mesh>
+        <mesh position={[0, 2.5, -0.2]}><boxGeometry args={[width - 0.8, 0.12, 3.6]} /><meshStandardMaterial color="#e2e8f0" /></mesh>
+      </group>
+      {/* the sea all round, with a little wake off the stern */}
+      <mesh ref={sea} position={[0, -1.4, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
+        <planeGeometry args={[400, 400]} /><meshStandardMaterial color="#0369a1" emissive="#0ea5e9" emissiveIntensity={0.16} metalness={0.2} roughness={0.15} />
+      </mesh>
+      {[0, 1, 2].map((k) => <mesh key={k} position={[0, -1.38, hd + 2 + k * 3]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}><planeGeometry args={[1.4 + k * 1.6, 2.4]} /><meshBasicMaterial color="#e0f2fe" transparent opacity={0.5 - k * 0.14} /></mesh>)}
+      <MarinaSkyline />
+    </group>
+  );
+}
+
+/** Dubai Marina and JBR towers on the horizon, and Ain Dubai's wheel off to one side. */
+export function MarinaSkyline() {
+  const towers = useMemo(() => Array.from({ length: 22 }, (_, i) => ({ x: -120 + i * 11 + ((i * 37) % 5), h: 30 + ((i * 53) % 9) * 9, w: 5 + (i % 3) * 2, c: ["#cbd5e1", "#e2e8f0", "#94a3b8", "#d6d3d1"][i % 4] })), []);
+  return (
+    <group position={[0, -1.4, -150]}>
+      {towers.map((t, i) => <mesh key={i} position={[t.x, t.h / 2, ((i * 17) % 20) - 10]} raycast={() => null}><boxGeometry args={[t.w, t.h, 6]} /><meshStandardMaterial color={t.c} roughness={0.6} /></mesh>)}
+      {/* Ain Dubai */}
+      <group position={[110, 0, 30]}>
+        <mesh position={[0, 62, 0]} raycast={() => null}><torusGeometry args={[55, 1.6, 8, 64]} /><meshStandardMaterial color="#e5e7eb" metalness={0.6} roughness={0.3} /></mesh>
+        {[-1, 1].map((s) => <mesh key={s} position={[s * 14, 30, 0]} rotation={[0, 0, s * 0.45]} raycast={() => null}><boxGeometry args={[2.2, 64, 2.2]} /><meshStandardMaterial color="#d1d5db" /></mesh>)}
+      </group>
+    </group>
+  );
+}
+
+/** The helm: a wheel on its console, with a throttle lever. */
+export function Helm() {
+  return (
+    <group>
+      <mesh position={[0, 0.55, 0]}><boxGeometry args={[1.2, 1.1, 0.6]} /><meshStandardMaterial color="#e2e8f0" /></mesh>
+      <mesh position={[0, 1.2, 0.05]} rotation={[-0.6, 0, 0]}><torusGeometry args={[0.32, 0.04, 8, 24]} /><meshStandardMaterial color="#8b5a2b" /></mesh>
+      <mesh position={[0.45, 1.15, 0.1]} rotation={[0.4, 0, 0]}><cylinderGeometry args={[0.03, 0.03, 0.3, 8]} /><meshStandardMaterial color="#111827" /></mesh>
     </group>
   );
 }

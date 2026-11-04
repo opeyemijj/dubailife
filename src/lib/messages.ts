@@ -3,6 +3,7 @@
 // Direct messages between citizens, saved for 7 days (public.messages). The phone lists the
 // conversations; rooms in venues and homes use the same table for their chat.
 
+import { onUserEvent } from "@/lib/userChannel";
 import { chatRefused } from "@/lib/safety";
 import { askForPush } from "@/lib/push/engage";
 import { supabase } from "@/lib/supabase/client";
@@ -109,11 +110,8 @@ export async function sendMessage(me: string, to: string, body: string, place: s
 
 /** Calls back for every message sent to me, until the returned function is called. */
 export function onIncoming(me: string, cb: (m: Message) => void) {
-  const channel = supabase()
-    .channel(`inbox-${me}-${Math.random().toString(36).slice(2, 7)}`)
-    .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `to_id=eq.${me}` }, (p) => cb(p.new as Message))
-    .subscribe();
-  return () => { supabase().removeChannel(channel); };
+  // On my own channel: the database sends me each message addressed to me.
+  return onUserEvent<Message>(me, "messages", (e) => { if (e.eventType === "INSERT" && e.new && e.new.to_id === me) cb(e.new); });
 }
 
 /** Finds citizens by username or name (for starting a chat, adding a friend or inviting to a game). */

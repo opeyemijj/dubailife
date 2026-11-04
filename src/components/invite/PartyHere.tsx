@@ -120,7 +120,8 @@ function usePartySpace(party: PartyHere | null, route: string | null) {
   }, [code, isHost, title, host, route, endsAt]);
 }
 
-// Party music: a live Afrobeats music station (see parties.json), the built-in groove, or off.
+// Party music: a live radio station (Lagos Afrobeats by default, or Kenya, France, the US, London or Arabic; see
+// parties.json), the built-in groove, or off.
 // The choice is remembered; the game's own mute silences it too.
 export type MusicMode = "radio" | "groove" | "off";
 const MODE = "dl_party_music";
@@ -146,7 +147,21 @@ const setStation = (n: string | null) => { stationName = n; stationListeners.for
 interface Station { name: string; url_resolved: string }
 /** Music-only stations (Afrobeats, non-stop: no talk shows), LagosJump Radio first. Fixed in parties.json and each
     checked to stream; if one is down the next plays. */
-const musicStations = (): Station[] => PARTIES.radio.stations.map((x) => ({ name: x.name, url_resolved: x.url }));
+// The region: Lagos by default; the arrow on the radio picks Kenya, France, the US, London or Arabic. Remembered.
+export type RadioRegion = (typeof PARTIES.radio.regions)[number];
+export const RADIO_REGIONS: RadioRegion[] = PARTIES.radio.regions;
+const REGION_KEY = "dl_radio_region";
+const regionListeners = new Set<(id: string) => void>();
+export const currentRegion = (): string => {
+  try { const r = localStorage.getItem(REGION_KEY); if (r && RADIO_REGIONS.some((x) => x.id === r)) return r; } catch { /* storage blocked */ }
+  return PARTIES.radio.default;
+};
+export function setRadioRegion(id: string) {
+  try { localStorage.setItem(REGION_KEY, id); } catch { /* storage blocked */ }
+  regionListeners.forEach((f) => f(id));
+}
+const musicStations = (): Station[] =>
+  (RADIO_REGIONS.find((r) => r.id === currentRegion()) ?? RADIO_REGIONS[0]).stations.map((x) => ({ name: x.name, url_resolved: x.url }));
 
 // One audio player for the radio, kept for the whole visit. Phones only let audio start from a tap, so if the
 // station can't start by itself it waits, with its station already loaded, and the next tap anywhere plays it
@@ -252,6 +267,9 @@ function usePartyMusic(active: boolean) {
     window.addEventListener("touchend", wake, opts);
     window.addEventListener("click", wake, opts);
     modeListeners.add(play);
+    // A new region: its first station, now.
+    const onRegion = () => { if (currentMode() === "radio") play("radio"); };
+    regionListeners.add(onRegion);
     const skip = () => {
       if (currentMode() !== "radio" || !list.length) return;
       tries = (tries + 1) % list.length;
@@ -266,11 +284,38 @@ function usePartyMusic(active: boolean) {
       window.removeEventListener("click", wake, opts);
       modeListeners.delete(play);
       skipListeners.delete(skip);
+      regionListeners.delete(onRegion);
       stop();
       void ctx?.close();
       gameAudio.holdMusic(false);
     };
   }, [active]);
+}
+
+/** The arrow on the radio: pick where the music comes from. */
+function RegionPicker({ dark = true, down = false }: { dark?: boolean; down?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [region, setRegion] = useState(currentRegion);
+  useEffect(() => { const f = (id: string) => setRegion(id); regionListeners.add(f); return () => { regionListeners.delete(f); }; }, []);
+  const now = RADIO_REGIONS.find((r) => r.id === region) ?? RADIO_REGIONS[0];
+  return (
+    <span className="relative shrink-0">
+      <button onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }} aria-label={`Radio from ${now.label}. Choose another`} aria-expanded={open}
+        className={`h-7 pl-1.5 pr-1 rounded-full text-[11px] font-black flex items-center gap-0.5 ${dark ? "bg-white/15" : "bg-white/25"}`}>
+        {now.flag}<span className="text-[9px]">▾</span>
+      </button>
+      {open && (
+        <span className={`absolute ${down ? "top-9" : "bottom-9"} left-0 z-50 w-40 rounded-2xl bg-white text-slate-900 shadow-2xl p-1 flex flex-col`}>
+          {RADIO_REGIONS.map((r) => (
+            <button key={r.id} onClick={(e) => { e.stopPropagation(); setRadioRegion(r.id); setMusicMode("radio"); setOpen(false); }}
+              className={`h-9 px-2.5 rounded-xl text-left text-xs font-black flex items-center gap-2 ${r.id === region ? "bg-slate-900 text-white" : "hover:bg-slate-100"}`}>
+              <span className="text-base">{r.flag}</span>{r.label}
+            </button>
+          ))}
+        </span>
+      )}
+    </span>
+  );
 }
 
 /** Below the Space bar, so a live Space never covers it. */
@@ -288,6 +333,7 @@ export function ClubRadioPill({ className = "bottom-20" }: { className?: string 
         className="h-7 pl-2 pr-2 rounded-full text-[11px] font-black truncate min-w-0">
         {mode === "radio" ? `📻 ${station ?? "Tuning…"}` : mode === "groove" ? "🥁 Groove" : "🔇 Music off"}
       </button>
+      <RegionPicker />
       {mode === "radio" && <button onClick={nextStation} aria-label="Next station" className="shrink-0 w-7 h-7 rounded-full bg-white/15 text-[12px] font-black">⏭</button>}
     </div>
   );
@@ -311,6 +357,7 @@ export function PartyBanner({ party, hostAway, className = "" }: { party: PartyH
         className="shrink-0 h-7 px-2 rounded-full bg-white/20 text-[11px] font-black max-w-[9rem] truncate">
         {mode === "radio" ? `📻 ${station ?? "Radio"}` : mode === "groove" ? "🥁 Groove" : "🔇"}
       </button>
+      <RegionPicker dark={false} down />
       {mode === "radio" && <button onClick={nextStation} aria-label="Next station" className="shrink-0 w-7 h-7 rounded-full bg-white/20 text-[11px] font-black">⏭</button>}
       <button onClick={() => setInviting(true)} className="shrink-0 h-7 px-3 rounded-full bg-white text-fuchsia-700 text-[11px] font-black">Invite</button>
       {party.isHost && (ending === "ask" ? (

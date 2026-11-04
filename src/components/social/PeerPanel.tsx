@@ -13,6 +13,9 @@ export type SocialContext = "club" | "dining" | "home" | "venue";
 
 const AMOUNTS = [20, 50, 100, 500];
 
+/** Asking someone who's away: it waits for them. */
+const AWAY_NOTE = "💤 They're away: they'll see it when they're back (5 minutes)";
+
 export function PeerPanel({
   peer, context, balance, treat, onClose, onChat, onSendMoney, onWave, onInvite, onTreat, onFriend, canInviteToTable = false,
   messages, typing, onTyping, onThread, startIn = "menu", unread = 0,
@@ -101,7 +104,7 @@ export function PeerPanel({
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-fuchsia-500 text-white font-black flex items-center justify-center">{peer.name.slice(0, 1).toUpperCase()}</div>
           <div className="flex-1 min-w-0">
             <div className="font-black leading-tight truncate">{peer.name}</div>
-            <div className="text-[11px] font-bold text-sky-600">@{peer.username}</div>
+            <div className="text-[11px] font-bold text-sky-600">@{peer.username}{peer.away && <span className="ml-1.5 text-slate-500">· 💤 Away</span>}</div>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center" aria-label="Close"><X className="w-4 h-4" /></button>
         </div>
@@ -113,9 +116,9 @@ export function PeerPanel({
               {action("💸", "Send money", () => setMode("money"), "Straight from your wallet")}
               {context === "club" && treat && onTreat && action("🍸", `Buy them a ${treat.name.toLowerCase()}`, onTreat, `AED ${treat.price} · served at the bar`)}
               {context === "dining" && treat && onTreat && action(treat.icon, `Treat them to ${treat.name.toLowerCase()}`, onTreat, `AED ${treat.price}`)}
-              {canInviteToTable && action("🪑", "Invite to my table", () => onInvite("table"), "They'll take a free seat with you if they accept")}
-              {context === "club" && action("💃", "Dance together", () => onInvite("dance"), "You'll dance facing each other")}
-              {context !== "home" && !canInviteToTable && action("🙌", "Come join me", () => onInvite("join"), "They'll walk over if they accept")}
+              {canInviteToTable && action("🪑", "Invite to my table", () => onInvite("table"), peer.away ? AWAY_NOTE : "They'll take a free seat with you if they accept")}
+              {context === "club" && action("💃", "Dance together", () => onInvite("dance"), peer.away ? AWAY_NOTE : "You'll dance facing each other")}
+              {context !== "home" && !canInviteToTable && action("🙌", "Come join me", () => onInvite("join"), peer.away ? AWAY_NOTE : "They'll walk over if they accept")}
               {action("👋", "Wave", onWave)}
               {action("🤝", "Add friend", async () => setNote(await onFriend()), "Friends can visit each other's homes")}
               {note && <p className="text-xs font-bold text-emerald-700 text-center">{note}</p>}

@@ -17,7 +17,7 @@ export type RestPose = {
 const CLIP_SEAT_HEIGHT = 0.46;
 const CLIP_SEAT_BACK = 0.12;
 // How far the back of a lying body is below its feet line once laid flat.
-const LYING_BACK = 0.22;
+const LYING_BACK = -0.1;
 
 type Seat = { x: number; z: number; h: number; face: 1 | -1; /** Where to stand (z), when not just in front. */ standZ?: number };
 type Bed = { along: "z" | "x"; h: number; across: number };
@@ -38,7 +38,8 @@ const SEATS: Record<string, Seat> = {
 };
 /** Beds by model: which way the body lies (head at the negative end) and the mattress height. */
 const BEDS: Record<string, Bed> = {
-  "/models/furniture/bed.glb": { along: "z", h: 0.52, across: 0 },
+  // Stretched to fill its footprint, mattress always 0.6 m up (BED_MATTRESS in ApartmentRoom.tsx).
+  "/models/furniture/bed.glb": { along: "z", h: 0.6, across: 0 },
   "/models/furniture/couch.glb": { along: "x", h: 0.44, across: 0.12 },
   "visual:canopy-bed": { along: "z", h: 0.54, across: -0.35 },
 };
@@ -59,7 +60,7 @@ export function restPose(item: CatalogItem, placement: Placement | null | undefi
   if (kind === "bed") {
     const bed = BEDS[key] ?? { along: "z", h: 0.52, across: 0 };
     const half = ((bed.along === "z" ? item.size[1] : item.size[0]) * CELL * 0.94) / 2;
-    const head = -half + 0.24;                             // top of the head resting on the pillow, forward of the headboard
+    const head = -half + 0.14;                             // top of the head resting on the pillow, forward of the headboard
     const feet = Math.min(half + 0.08, head + height);
     const side = ((bed.along === "z" ? item.size[0] : item.size[1]) * CELL * 0.94) / 2 + 0.35;
     const [fx, fz] = bed.along === "z" ? toRoom(item, placement, bed.across, feet) : toRoom(item, placement, feet, bed.across);

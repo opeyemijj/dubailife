@@ -3,6 +3,7 @@
 // The citizen's phone: real conversations (kept 7 days), friends and people to find, and alerts
 // for money, knocks and friend requests — all live from the database.
 
+import { blockUser, myBlocks, unblockUser } from "@/lib/safety";
 import Link from "next/link";
 import { GAMES } from "@/lib/games/registry";
 import { askForPush } from "@/lib/push/engage";
@@ -165,6 +166,17 @@ function Thread({ me, other, online, onBack }: { me: string; other: string; onli
   const [failed, setFailed] = useState(false);
   const [paying, setPaying] = useState(false);
   const end = useRef<HTMLDivElement>(null);
+  // Blocking: they can't message, add, pay or knock for you any more (they aren't told).
+  const [isBlocked, setIsBlocked] = useState(false);
+  useEffect(() => { void myBlocks().then((b) => setIsBlocked(b.has(other))); }, [other]);
+  const toggleBlock = async () => {
+    if (!who) return;
+    if (!isBlocked && !confirm(`Block @${who.username}? They won't be able to message you, add you, send you money or knock on your door. They aren't told.`)) return;
+    const err = isBlocked ? await unblockUser(other) : await blockUser(other);
+    if (err) { window.dispatchEvent(new CustomEvent("dubai:toast", { detail: err })); return; }
+    setIsBlocked(!isBlocked);
+    window.dispatchEvent(new CustomEvent("dubai:toast", { detail: isBlocked ? `@${who.username} is unblocked.` : `🚫 @${who.username} is blocked.` }));
+  };
 
   useEffect(() => {
     contacts([other]).then((m) => setWho(m.get(other) ?? null));
@@ -220,8 +232,14 @@ function Thread({ me, other, online, onBack }: { me: string; other: string; onli
         {who && <Face c={who} online={online.has(who.username)} size={40} />}
         <div className="min-w-0">
           <div className="font-bold truncate">{who?.name ?? "…"}</div>
-          <div className="text-[11px] text-sky-300">{who ? `@${who.username}` : ""}{who && online.has(who.username) ? " · online" : ""}</div>
+          <div className="text-[11px] text-sky-300">{who ? `@${who.username}` : ""}{who && online.has(who.username) ? " · online" : ""}{isBlocked ? " · blocked" : ""}</div>
         </div>
+        <div className="flex-1" />
+        {who && (
+          <button onClick={toggleBlock} className={`shrink-0 h-9 px-3 rounded-full text-xs font-bold ${isBlocked ? "bg-white/10 text-white" : "bg-rose-500/15 text-rose-300"}`}>
+            {isBlocked ? "Unblock" : "🚫 Block"}
+          </button>
+        )}
       </header>
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-4 space-y-1.5 max-w-md w-full mx-auto">
         {messages.length === 0 && <p className="text-center text-sm text-white/40 py-10">Say hello 👋</p>}

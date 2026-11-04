@@ -13,6 +13,7 @@ import { mapConfig } from '@/data/mapSeed';
 import { CITY_ENTITIES, savableEntities } from '@/lib/city/mapEntities';
 import { PALM_VIEW, WORLD_TOP } from '@/lib/city/palm';
 import { GAME_CITY } from '@/lib/city/gameCity';
+import { MapSideBar, type MapFilter } from './MapSideBar';
 import { CELL, blockCells, mosaicBlocks, type SectionKey } from '@/lib/city/floorMosaic';
 import { isLowPower } from '@/lib/device';
 import { MapLoadProgress } from './MapLoadProgress';
@@ -210,6 +211,9 @@ export const isSpecialPlaceVenue = (loc: any, catInfo: any) => {
 export interface InteractiveMapProps {
   hideTopHUD?: boolean;
   activeFilter?: string;
+  /** Kinds of place the 📍 Places popup can show, and what to do when one is picked. */
+  filters?: MapFilter[];
+  onFilter?: (id: string) => void;
   searchQuery?: string;
   interactionDisabled?: boolean;
   /** Guests (not signed in) can look around; tapping a place calls this with it. */
@@ -225,6 +229,8 @@ export interface InteractiveMapProps {
 export function InteractiveMap({
   hideTopHUD = false,
   activeFilter,
+  filters,
+  onFilter,
   searchQuery,
   interactionDisabled = false,
   onAttemptInteract,
@@ -1128,61 +1134,22 @@ export function InteractiveMap({
         </div>
       )}
 
-      {/* Mobile-Friendly District Quick-Jumper Bar (Safely above BottomNav) */}
+      {/* Middle right: 📍 Places (areas to fly to, kinds of place to show) and 🔥 where people are. */}
       {!interactionDisabled && (
-        <div className="flex absolute bottom-24 sm:bottom-28 left-3 sm:left-6 z-30 items-center gap-1.5 pointer-events-auto overflow-x-auto max-w-[calc(100vw-130px)] sm:max-w-none scrollbar-hide py-1">
-          <div className="flex items-center gap-1.5 bg-slate-950/80 backdrop-blur-xl border border-white/20 p-1 rounded-2xl shadow-2xl">
-            <button
-              onClick={() => jumpToDistrict(1871, 743, 'Downtown Dubai')}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 text-white font-bold text-xs whitespace-nowrap transition-all"
-            >
-              <span>🗼</span>
-              <span>Downtown</span>
-            </button>
-            <button
-              onClick={() => jumpToDistrict(PALM_VIEW.x, PALM_VIEW.y, 'Palm Jumeirah')}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 text-white font-bold text-xs whitespace-nowrap transition-all"
-            >
-              <span>🌴</span>
-              <span>Palm</span>
-            </button>
-            <button
-              onClick={() => jumpToDistrict(720, 2280, 'Dubai Marina')}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 text-white font-bold text-xs whitespace-nowrap transition-all"
-            >
-              <span>⛵</span>
-              <span>Marina</span>
-            </button>
-            <button
-              onClick={() => jumpToDistrict(1980, 1180, 'Business Bay')}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 text-white font-bold text-xs whitespace-nowrap transition-all"
-            >
-              <span>🏢</span>
-              <span>Bay</span>
-            </button>
-            <button
-              onClick={() => jumpToDistrict(GAME_CITY.x, GAME_CITY.y, 'Game City')}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 text-white font-bold text-xs whitespace-nowrap transition-all"
-            >
-              <span>🎮</span>
-              <span>Games</span>
-            </button>
-            <button
-              onClick={() => jumpToDistrict(ACADEMIC_MAP_CENTER.x + 100, ACADEMIC_MAP_CENTER.y, 'Academic City')}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 text-white font-bold text-xs whitespace-nowrap transition-all"
-            >
-              <span>🎓</span>
-              <span>Academic</span>
-            </button>
-            <button
-              onClick={() => jumpToDistrict(4638, 159, 'Dubai Int Airport (DXB)')}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-90 text-white font-bold text-xs whitespace-nowrap transition-all"
-            >
-              <span>✈️</span>
-              <span>DXB</span>
-            </button>
-          </div>
-        </div>
+        <MapSideBar
+          districts={[
+            { id: 'downtown', icon: '🗼', label: 'Downtown', go: () => jumpToDistrict(1871, 743, 'Downtown Dubai') },
+            { id: 'palm', icon: '🌴', label: 'Palm', go: () => jumpToDistrict(PALM_VIEW.x, PALM_VIEW.y, 'Palm Jumeirah') },
+            { id: 'marina', icon: '⛵', label: 'Marina', go: () => jumpToDistrict(720, 2280, 'Dubai Marina') },
+            { id: 'bay', icon: '🏢', label: 'Business Bay', go: () => jumpToDistrict(1980, 1180, 'Business Bay') },
+            { id: 'games', icon: '🎮', label: 'Game City', go: () => jumpToDistrict(GAME_CITY.x, GAME_CITY.y, 'Game City') },
+            { id: 'academic', icon: '🎓', label: 'Academic City', go: () => jumpToDistrict(ACADEMIC_MAP_CENTER.x + 100, ACADEMIC_MAP_CENTER.y, 'Academic City') },
+            { id: 'dxb', icon: '✈️', label: 'Airport (DXB)', go: () => jumpToDistrict(4638, 159, 'Dubai Int Airport (DXB)') },
+          ]}
+          filters={filters}
+          activeFilter={activeFilter}
+          onFilter={onFilter}
+        />
       )}
 
       {/* Floating Zoom Navigation & Ambient Audio Controls (Safely above BottomNav on right side) */}
