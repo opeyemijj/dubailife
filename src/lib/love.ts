@@ -53,6 +53,9 @@ export const weddingCost = (venue: string, guests: number, ceremony: string) => 
 };
 
 const ERRORS: Record<string, string> = {
+  no_home: "You need a home to move in together: rent or buy one, or throw a house party at yours first.",
+  not_together: "You're not together any more.",
+  "function public.move_in_together": "Moving in together is coming in the next update.",
   friends_first: "Be friends first. Add them in Phone → People.",
   not_allowed: "Relationships on Dubai Life follow UAE law: a man and a woman.",
   you_are_taken: "You can't start another relationship right now.",
@@ -128,6 +131,12 @@ export const askOut = (to: string, message?: string) => after(call<number>("ask_
 export const respond = (id: number, accept: boolean) => after(call<null>("love_respond", { p_request: id, p_accept: accept }));
 export const cancelRequest = (id: number) => after(call<null>("cancel_love_request", { p_request: id }));
 export const showLove = (partner?: string) => after(call<number>("show_love", who(partner)));
+
+/** Living together (family phase 2): your partner moves into your home, or you into theirs. */
+export interface SharedHome { partner: string; flat: string; building: string; unit: string; type: string; host: boolean }
+export const myHousehold = async (): Promise<SharedHome[]> => (await call<SharedHome[]>("my_household")).data ?? [];
+export const moveInTogether = (partner: string) => call<string>("move_in_together", { p_partner: partner });
+export const moveOut = (partner: string) => call<null>("move_out", { p_partner: partner });
 export const logDate = (place: string, partner?: string) => after(call<{ together: boolean; level?: number }>("log_date", { p_place: place, ...who(partner) }));
 export const propose = (ring: string, place: string, message?: string, partner?: string) => after(call<number>("propose", { p_ring: ring, p_place: place, p_message: message ?? null, ...who(partner) }));
 export const endRelationship = (partner?: string) => after(call<null>("end_relationship", who(partner)));

@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { arriveAt, endParty, partyHere, PARTIES, kindOf, type PartyHere } from "@/lib/invites";
 import { InviteSheet } from "./InviteSheet";
-import { RaceMusic } from "@/components/marathon/raceMusic";
 import { activeSpaceId, hostNewSpace, joinSpace, leaveSpace, lockSpace, spaceExists } from "@/lib/spaces";
 import { supabase } from "@/lib/supabase/client";
 import { gameAudio } from "@/utils/gameAudio";
@@ -121,16 +120,16 @@ function usePartySpace(party: PartyHere | null, route: string | null) {
 }
 
 // Party music: a live radio station (Lagos Afrobeats by default, or Kenya, France, the US, London or Arabic; see
-// parties.json), the built-in groove, or off.
+// parties.json), or off. (The built-in groove was removed: user, 2026-11-04.)
 // The choice is remembered; the game's own mute silences it too.
-export type MusicMode = "radio" | "groove" | "off";
+export type MusicMode = "radio" | "off";
 const MODE = "dl_party_music";
 const modeListeners = new Set<(m: MusicMode) => void>();
 const currentMode = (): MusicMode => {
   try {
     if (gameAudio.getIsMuted()) return "off";
     const m = localStorage.getItem(MODE);
-    return m === "groove" || m === "off" ? m : "radio";
+    return m === "off" ? "off" : "radio";
   } catch { return "radio"; }
 };
 export function setMusicMode(m: MusicMode) {
@@ -202,9 +201,6 @@ export function useClubRadio(active: boolean) { usePartyMusic(active); }
 function usePartyMusic(active: boolean) {
   useEffect(() => {
     if (!active) return;
-    const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    let ctx: AudioContext | null = null;
-    let groove: RaceMusic | null = null;
     let gone = false;
     let waitingForTap = false;
     let tries = 0;
@@ -213,20 +209,12 @@ function usePartyMusic(active: boolean) {
     gameAudio.holdMusic(true);
 
     const stopRadio = () => { el.pause(); waitingForTap = false; };
-    const stop = () => { groove?.stop(); groove = null; stopRadio(); setStation(null); };
-    const playGroove = () => {
-      if (!AC) return;
-      ctx ??= new AC();
-      if (ctx.state === "suspended") void ctx.resume();
-      groove = new RaceMusic(ctx);
-      groove.setMood("race");
-      groove.start();
-    };
+    const stop = () => { stopRadio(); setStation(null); };
     // Try the current station; on a refusal that needs a tap, wait for one; on a dead stream, the next station.
     const tryStation = async () => {
       if (gone || currentMode() !== "radio") return;
       const st = list[tries];
-      if (!st) { playGroove(); return; }
+      if (!st) { setStation("No station right now"); return; }
       if (el.src !== st.url_resolved) el.src = st.url_resolved;
       try {
         await el.play();
@@ -247,13 +235,11 @@ function usePartyMusic(active: boolean) {
     const play = (m: MusicMode) => {
       stop();
       if (m === "radio") void playRadio();
-      else if (m === "groove") playGroove();
     };
     play(currentMode());
 
     // A tap anywhere: start whatever is waiting, right inside the tap.
     const wake = () => {
-      if (ctx?.state === "suspended") void ctx.resume();
       if (currentMode() === "radio" && (waitingForTap || (el.paused && el.src))) {
         el.play().then(() => {
           waitingForTap = false;
@@ -286,7 +272,6 @@ function usePartyMusic(active: boolean) {
       skipListeners.delete(skip);
       regionListeners.delete(onRegion);
       stop();
-      void ctx?.close();
       gameAudio.holdMusic(false);
     };
   }, [active]);
@@ -321,17 +306,17 @@ function RegionPicker({ dark = true, down = false }: { dark?: boolean; down?: bo
 /** Below the Space bar, so a live Space never covers it. */
 export const BELOW_SPACE_TOP = "top-[calc(max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))+3.5rem)]";
 
-/** The club's radio, bottom left where the DJ booth player sits: the station playing, and a tap to switch radio → groove → off, and ⏭ for the next station. */
+/** The club's radio, bottom left where the DJ booth player sits: the station playing, and a tap to switch the radio on or off, and ⏭ for the next station. */
 export function ClubRadioPill({ className = "bottom-20" }: { className?: string }) {
   const [mode, setMode] = useState<MusicMode>(currentMode);
   const [station, setStationName] = useState<string | null>(stationName);
   useEffect(() => { stationListeners.add(setStationName); return () => { stationListeners.delete(setStationName); }; }, []);
-  const next: MusicMode = mode === "radio" ? "groove" : mode === "groove" ? "off" : "radio";
+  const next: MusicMode = mode === "radio" ? "off" : "radio";
   return (
     <div className={`fixed left-3 z-40 flex items-center gap-1 rounded-full bg-slate-950/90 text-white border border-white/10 shadow-xl p-1 max-w-[70vw] ${className}`}>
-      <button onClick={() => { setMusicMode(next); setMode(next); }} aria-label={`Music: ${mode === "radio" ? "radio" : mode === "groove" ? "groove" : "off"}. Tap for ${next}.`}
+      <button onClick={() => { setMusicMode(next); setMode(next); }} aria-label={`Music: ${mode === "radio" ? "radio" : "off"}. Tap for ${next}.`}
         className="h-7 pl-2 pr-2 rounded-full text-[11px] font-black truncate min-w-0">
-        {mode === "radio" ? `📻 ${station ?? "Tuning…"}` : mode === "groove" ? "🥁 Groove" : "🔇 Music off"}
+        {mode === "radio" ? `📻 ${station ?? "Tuning…"}` : "🔇 Music off"}
       </button>
       <RegionPicker />
       {mode === "radio" && <button onClick={nextStation} aria-label="Next station" className="shrink-0 w-7 h-7 rounded-full bg-white/15 text-[12px] font-black">⏭</button>}
@@ -345,17 +330,17 @@ export function PartyBanner({ party, hostAway, className = "" }: { party: PartyH
   const [mode, setMode] = useState<MusicMode>(currentMode);
   const [station, setStationName] = useState<string | null>(stationName);
   useEffect(() => { stationListeners.add(setStationName); return () => { stationListeners.delete(setStationName); }; }, []);
-  const next: MusicMode = mode === "radio" ? "groove" : mode === "groove" ? "off" : "radio";
+  const next: MusicMode = mode === "radio" ? "off" : "radio";
   const k = kindOf(party.kind);
   return (
     <div className={`fixed left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 rounded-full bg-fuchsia-600 text-white shadow-xl pl-3 pr-1 py-1 max-w-[94vw] ${className}`}>
       <Link href={`/i/${party.code}`} className="min-w-0 flex-1 text-xs font-black truncate">
         {k.icon} {party.isHost ? "Your" : `@${party.host}'s`} {party.title} · {party.arrived} here{hostAway ? ` · @${party.host} is out` : ""}
       </Link>
-      <button onClick={() => { setMusicMode(next); setMode(next); }} title={mode === "radio" ? station ?? "Tuning…" : mode === "groove" ? "Party groove" : "Music off"}
-        aria-label={`Music: ${mode === "radio" ? "radio" : mode === "groove" ? "party groove" : "off"}. Tap for ${next}.`}
+      <button onClick={() => { setMusicMode(next); setMode(next); }} title={mode === "radio" ? station ?? "Tuning…" : "Music off"}
+        aria-label={`Music: ${mode === "radio" ? "radio" : "off"}. Tap for ${next}.`}
         className="shrink-0 h-7 px-2 rounded-full bg-white/20 text-[11px] font-black max-w-[9rem] truncate">
-        {mode === "radio" ? `📻 ${station ?? "Radio"}` : mode === "groove" ? "🥁 Groove" : "🔇"}
+        {mode === "radio" ? `📻 ${station ?? "Radio"}` : "🔇"}
       </button>
       <RegionPicker dark={false} down />
       {mode === "radio" && <button onClick={nextStation} aria-label="Next station" className="shrink-0 w-7 h-7 rounded-full bg-white/20 text-[11px] font-black">⏭</button>}

@@ -19,12 +19,12 @@ import { CitizenAvatar, type AvatarAnimation } from "@/components/avatar/Citizen
 import type { AvatarLookProps } from "@/components/avatar/roster";
 import { Flies } from "@/components/avatar/Flies";
 import { dubaiSky, SkyAndLight } from "@/components/transit/TransitWorld";
-import { Building, Lamp, StreetPalm } from "@/components/home/RunJourney";
+import { Building, Lamp, StreetPalm, Villa } from "@/components/home/RunJourney";
 import { canvasQuality } from "@/lib/device";
 import type { Peer } from "@/lib/room";
 
 export interface StreetDoor { id: string; name: string; icon: string; metres: number; href: string; x: number; z: number; mine?: boolean; /** A local shop (karak, baqala…): opens its counter instead of a page. */ shop?: string; color?: string }
-export interface Controls { x: number; y: number }
+export interface Controls { x: number; y: number; /** Pushed to the rim: run. */ sprint?: boolean }
 
 const HALF_ROAD = 9, KERB = 9.3, PAVE_OUT = 15;
 const WALK = 1.8, RUN = 5.2;
@@ -93,8 +93,20 @@ function Street({ from, to, night }: { from: number; to: number; night: boolean 
 }
 
 /** Towers between the shops, and the shopfronts themselves with their signs and doors. */
-function Blocks({ doors, from, to, night }: { doors: StreetDoor[]; from: number; to: number; night: boolean }) {
+function Blocks({ doors, from, to, night, villas = false }: { doors: StreetDoor[]; from: number; to: number; night: boolean; villas?: boolean }) {
+  // A villa community (Palm Jumeirah, Arabian Ranches…): walled villas with gardens either side, no towers.
+  const homes = useMemo(() => {
+    if (!villas) return [];
+    const out: Array<{ s: number; z: number; color: string }> = [];
+    const colors = ["#efe6d6", "#e7ddcb", "#f5efe3", "#ede3cf"];
+    for (const s of [-1, 1]) for (let z = from - 6, i = 0; z > to; z -= 16, i++) {
+      if (doors.some((d) => Math.sign(d.x) === s && Math.abs(d.z - z) < 12)) continue;
+      out.push({ s, z, color: colors[(i + (s > 0 ? 1 : 0)) % colors.length] });
+    }
+    return out;
+  }, [villas, doors, from, to]);
   const towers = useMemo(() => {
+    if (villas) return [];
     const out: Array<{ x: number; z: number; w: number; h: number; color: string }> = [];
     const colors = ["#cbd5e1", "#e2e8f0", "#b6c4d4", "#d6d3d1", "#9fb3c8", "#e7e0d2"];
     for (const s of [-1, 1]) {
@@ -105,15 +117,23 @@ function Blocks({ doors, from, to, night }: { doors: StreetDoor[]; from: number;
       }
     }
     return out;
-  }, [doors, from, to]);
+  }, [doors, from, to, villas]);
   return (
     <group>
+      {homes.map((v) => (
+        <group key={`${v.s}:${v.z}`} position={[v.s * 21, 0, v.z]} rotation={[0, v.s > 0 ? -Math.PI / 2 : Math.PI / 2, 0]}>
+          <Villa x={0} z={0} color={v.color} />
+          <StreetPalm x={-6.5} z={4} h={6} /><StreetPalm x={6.5} z={4} h={5.5} />
+        </group>
+      ))}
       {towers.map((t, i) => <Building key={i} x={t.x} z={t.z} w={t.w} d={18} h={t.h} color={t.color} facing={t.x > 0 ? -1 : 1} night={night} />)}
       {doors.map((d) => {
         const s = Math.sign(d.x);
         return (
           <group key={d.id}>
-            <Building x={s * 22} z={d.z} w={13} d={13} h={d.mine ? 18 : d.shop ? 14 + (d.name.length % 3) * 8 : 9 + (d.name.length % 4) * 3} color={d.mine ? "#e7e0d2" : d.shop ? "#e9e2d4" : "#f1ede4"} facing={s > 0 ? -1 : 1} night={night} awning={d.mine ? undefined : d.color ?? ["#0f766e", "#b91c1c", "#1d4ed8", "#a16207"][d.name.length % 4]} />
+            {d.mine && villas ? (
+              <group position={[s * 21, 0, d.z]} rotation={[0, s > 0 ? -Math.PI / 2 : Math.PI / 2, 0]}><Villa x={0} z={0} color="#f3ead8" /></group>
+            ) : <Building x={s * 22} z={d.z} w={13} d={13} h={d.mine ? 18 : d.shop ? 14 + (d.name.length % 3) * 8 : 9 + (d.name.length % 4) * 3} color={d.mine ? "#e7e0d2" : d.shop ? "#e9e2d4" : "#f1ede4"} facing={s > 0 ? -1 : 1} night={night} awning={d.mine ? undefined : d.color ?? ["#0f766e", "#b91c1c", "#1d4ed8", "#a16207"][d.name.length % 4]} />}
             {/* the door, glowing so it's easy to find */}
             <mesh position={[s * 15.4, 1.2, d.z]} rotation={[0, s > 0 ? -Math.PI / 2 : Math.PI / 2, 0]}>
               <planeGeometry args={[1.8, 2.4]} /><meshStandardMaterial color={d.mine ? "#7c2d12" : "#0f172a"} emissive={d.mine ? "#f59e0b" : "#38bdf8"} emissiveIntensity={0.35} />
@@ -294,7 +314,7 @@ function Me({ look, dirty, controls, run, auto, start, limits, onMove, onNear, d
     let ix = controls.current.x + (k.has("d") || k.has("arrowright") ? 1 : 0) - (k.has("a") || k.has("arrowleft") ? 1 : 0);
     let iy = controls.current.y + (k.has("w") || k.has("arrowup") ? 1 : 0) - (k.has("s") || k.has("arrowdown") ? 1 : 0);
     const mag = Math.min(1, Math.hypot(ix, iy));
-    let vx = 0, vz = 0, running = run || k.has("shift");
+    let vx = 0, vz = 0, running = run || k.has("shift") || !!controls.current.sprint;
     if (mag > 0.08) {
       auto.current = null;   // taking the stick takes over from "Where to?"
       const fwd = new THREE.Vector3(P.x - camera.position.x, 0, P.z - camera.position.z).normalize();
@@ -359,9 +379,10 @@ function Me({ look, dirty, controls, run, auto, start, limits, onMove, onNear, d
 
 // ---------------------------------------------------------------- the scene
 
-export function StreetScene({ doors, look, dirty, controls, run, auto, peers, onMove, onNear }: {
+export function StreetScene({ doors, look, dirty, controls, run, auto, peers, onMove, onNear, villas }: {
   doors: StreetDoor[]; look?: AvatarLookProps; dirty: boolean; controls: React.RefObject<Controls>; run: boolean; auto: React.RefObject<AutoWalk | null>;
   peers: Peer[]; onMove: (x: number, z: number, yaw: number, moving: boolean, running: boolean) => void; onNear: (d: StreetDoor | null) => void;
+  /** A villa community street instead of towers. */ villas?: boolean;
 }) {
   const quality = useMemo(() => canvasQuality(), []);
   const sky = useMemo(() => dubaiSky(), []);
@@ -374,7 +395,7 @@ export function StreetScene({ doors, look, dirty, controls, run, auto, peers, on
       <SkyAndLight sky={sky} />
       <fog attach="fog" args={[night ? "#0b1324" : "#dbe7f3", 110, 420]} />
       <Street from={from} to={to} night={night} />
-      <Blocks doors={doors} from={from} to={to} night={night} />
+      <Blocks doors={doors} from={from} to={to} night={night} villas={villas} />
       <Traffic from={from} to={to} />
       <Crossings from={from} to={to} />
       <BusStops from={from} to={to} night={night} />
@@ -387,13 +408,28 @@ export function StreetScene({ doors, look, dirty, controls, run, auto, peers, on
   );
 }
 
-/** The stick: drag any way to walk that way (further to go faster). It springs back when you let go. */
-export function MoveStick({ controls, run, onRun }: { controls: React.RefObject<Controls>; run?: boolean; onRun?: () => void }) {
+/**
+ * The stick, like a PlayStation analog stick: put your thumb on it and push the way you want to go. A small push
+ * walks slowly, further walks faster, and pushing it all the way to the rim (anywhere round it) runs that way:
+ * the rim lights up yellow. Let go and it springs back to the middle.
+ */
+export const STICK_DEAD = 0.12;
+export const STICK_SPRINT = 0.9;
+export function MoveStick({ controls }: { controls: React.RefObject<Controls>; run?: boolean; onRun?: () => void }) {
   const knob = useRef<HTMLSpanElement>(null);
-  const R = 52;
-  const set = (x: number, y: number) => {
-    controls.current.x = x; controls.current.y = y;
-    if (knob.current) knob.current.style.transform = `translate(${x * R}px, ${-y * R}px)`;
+  const rim = useRef<HTMLSpanElement>(null);
+  const R = 56;
+  const set = (rawX: number, rawY: number, springBack = false) => {
+    const m = Math.hypot(rawX, rawY);
+    // Dead zone in the middle (no drift), then the push scaled back up to the full range.
+    const k = m < STICK_DEAD ? 0 : Math.min(1, (m - STICK_DEAD) / (1 - STICK_DEAD)) / (m || 1);
+    controls.current.x = rawX * k; controls.current.y = rawY * k;
+    controls.current.sprint = m >= STICK_SPRINT;
+    if (knob.current) {
+      knob.current.style.transition = springBack ? "transform 0.14s ease-out" : "none";
+      knob.current.style.transform = `translate(${rawX * R}px, ${-rawY * R}px)`;
+    }
+    if (rim.current) rim.current.dataset.sprint = controls.current.sprint ? "1" : "0";
   };
   const move = (e: React.PointerEvent<HTMLDivElement>) => {
     const b = e.currentTarget.getBoundingClientRect();
@@ -401,18 +437,19 @@ export function MoveStick({ controls, run, onRun }: { controls: React.RefObject<
     const l = Math.hypot(dx, dy), k = l > 1 ? 1 / l : 1;
     set(dx * k, dy * k);
   };
+  const release = () => set(0, 0, true);
   return (
-    <div aria-label="Walk: drag the way you want to go" className="relative w-36 h-36 rounded-full bg-black/20 backdrop-blur-sm ring-2 ring-white/60 touch-none select-none flex items-center justify-center"
+    <div aria-label="Move: push the stick the way you want to go, all the way to the edge to run"
+      className="relative w-40 h-40 rounded-full touch-none select-none flex items-center justify-center"
       onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); move(e); }}
-      onPointerMove={(e) => { if (e.buttons || e.pointerType === "touch") move(e); }}
-      onPointerUp={() => set(0, 0)} onPointerCancel={() => set(0, 0)}>
-      <span ref={knob} className="w-14 h-14 rounded-full bg-white/90 shadow-xl pointer-events-none" />
-      {onRun && (
-        <button onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onRun(); }} aria-pressed={run}
-          className={`absolute -top-2 -right-4 w-16 h-16 rounded-full font-black text-xs shadow-xl ring-2 ring-white/80 ${run ? "bg-amber-400 text-slate-950" : "bg-yellow-300/90 text-slate-900"}`}>
-          {run ? "RUNNING" : "RUN"}
-        </button>
-      )}
+      onPointerMove={(e) => { if (e.currentTarget.hasPointerCapture(e.pointerId)) move(e); }}
+      onPointerUp={release} onPointerCancel={release} onLostPointerCapture={release}>
+      {/* the base, its rim (yellow while running) and the RUN hint round the top */}
+      <span className="absolute inset-0 rounded-full bg-black/25 backdrop-blur-sm" />
+      <span ref={rim} data-sprint="0" className="absolute inset-0 rounded-full ring-[3px] ring-white/60 transition-[box-shadow,background-color] data-[sprint='1']:ring-amber-400 data-[sprint='1']:bg-amber-400/25 data-[sprint='1']:shadow-[0_0_24px_rgba(251,191,36,0.8)]" />
+      <span className="absolute top-1.5 text-[9px] font-black tracking-widest text-white/80 pointer-events-none">RUN</span>
+      <span className="absolute w-[4.5rem] h-[4.5rem] rounded-full ring-1 ring-white/25 pointer-events-none" />
+      <span ref={knob} className="relative w-16 h-16 rounded-full bg-gradient-to-b from-white to-slate-200 shadow-[0_6px_16px_rgba(0,0,0,0.35)] ring-2 ring-white pointer-events-none" />
     </div>
   );
 }

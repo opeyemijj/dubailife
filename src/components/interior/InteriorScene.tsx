@@ -117,10 +117,12 @@ interface Props {
   inside?: boolean;
   /** First person: the camera at the citizen's eyes. */
   eye?: boolean;
+  /** On a yacht: the whole boat seen from out on the water. */
+  boat?: boolean;
   /** I haven't washed: flies buzz round me. */
   playerDirty?: boolean;
   /** The on-screen stick and RUN (Inside and Eye views), and where it takes me. */
-  stick?: React.RefObject<{ x: number; y: number }>;
+  stick?: React.RefObject<{ x: number; y: number; sprint?: boolean }>;
   stickRun?: boolean;
   onStickMove?: (x: number, z: number, yaw: number, moving: boolean) => void;
 }
@@ -559,7 +561,7 @@ const INSIDE_BACK = 6.2, INSIDE_UP = 3.8;
 /** Eye view: the camera is at head height, a hair behind the eyes, and turning it looks around. */
 const EYE_HEIGHT = 1.62;
 
-function FollowCamera({ follow, inside, eye = false }: { follow: Follow; inside: boolean; eye?: boolean }) {
+function FollowCamera({ follow, inside, eye = false, boat = false }: { follow: Follow; inside: boolean; eye?: boolean; boat?: boolean }) {
   const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
   const camera = useThree((s) => s.camera);
   const last = useRef<THREE.Vector3 | null>(null);
@@ -576,12 +578,16 @@ function FollowCamera({ follow, inside, eye = false }: { follow: Follow; inside:
       if (!me) return;
       controls.target.set(me.position.x, 1.45, me.position.z);
       camera.position.set(me.position.x, INSIDE_UP, me.position.z + INSIDE_BACK);
+    } else if (boat) {
+      // Out on the water off the yacht's quarter, the whole boat and the skyline in view.
+      controls.target.set(0, -0.5, 0);
+      camera.position.set(22, 9, 26);
     } else {
       controls.target.copy(TARGET);
       camera.position.set(0, 7.5, 12);
     }
     controls.update();
-  }, [inside, eye, controls, camera, follow]);
+  }, [inside, eye, boat, controls, camera, follow]);
   useFrame((_, dt) => {
     const me = follow.current.get("me");
     if (!controls || !me) return;
@@ -690,7 +696,7 @@ function Player({
   onStickMove,
 }: {
   /** The on-screen stick (Inside and Eye views): walk or run wherever it points. */
-  stick?: React.RefObject<{ x: number; y: number }>;
+  stick?: React.RefObject<{ x: number; y: number; sprint?: boolean }>;
   stickRun?: boolean;
   /** The room's floor (width, depth), and what's in the way (x, z, radius): the stick slides you round them. */
   bounds?: [number, number];
@@ -744,7 +750,8 @@ function Player({
       camera.getWorldDirection(fwd);
       fwd.y = 0; fwd.normalize();
       const right = new THREE.Vector3(-fwd.z, 0, fwd.x);
-      const speed = (stickRun ? WALK_SPEED * 2.3 : WALK_SPEED) * mag;
+      const sprint = stickRun || !!stick?.current.sprint;
+      const speed = (sprint ? WALK_SPEED * 2.3 : WALK_SPEED) * mag;
       const vx = (fwd.x * sy + right.x * sx) / Math.hypot(sx, sy) * speed, vz = (fwd.z * sy + right.z * sx) / Math.hypot(sx, sy) * speed;
       const free = (x: number, z: number) => {
         if (bounds && (Math.abs(x) > bounds[0] / 2 - 0.35 || Math.abs(z) > bounds[1] / 2 - 0.35)) return false;
@@ -755,7 +762,7 @@ function Player({
       else if (free(nx, g.position.z)) g.position.x = nx;   // slide along it
       else if (free(g.position.x, nz)) g.position.z = nz;
       turnToward(g, Math.atan2(vx, vz), dt);
-      const mode = stickRun ? "run" : "walk";
+      const mode = sprint ? "run" : "walk";
       if (steer !== mode) setSteer(mode);
       const now = performance.now();
       if (!lastReport.current.moving || now - lastReport.current.t > 800) { lastReport.current = { t: now, moving: true }; onStickMove?.(g.position.x, g.position.z, g.rotation.y, true); }
@@ -855,6 +862,7 @@ export function InteriorScene({
   activityFX,
   inside = false,
   eye = false,
+  boat = false,
   playerDirty = false,
   stick,
   stickRun = false,
@@ -987,19 +995,19 @@ export function InteriorScene({
       {ride && onRideEnd && <RideRig key={ride.key} active={ride} look={look} worn={worn} onEnd={onRideEnd} />}
       <ActivityFXLayer activityFX={activityFX} follow={followNodes} />
       <LabelTracker labels={labels} nodes={labelNodes} follow={followNodes} />
-      {!inside && !eye && <FitCamera width={w} depth={d} />}
-      <FollowCamera follow={followNodes} inside={inside || eye} eye={eye} />
+      {!inside && !eye && !boat && <FitCamera width={w} depth={d} />}
+      <FollowCamera follow={followNodes} inside={inside || eye} eye={eye} boat={boat} />
       <OrbitControls
         makeDefault
         target={TARGET}
         enablePan={false}
         enableDamping
         minPolarAngle={eye ? 0.35 : inside ? 0.6 : 0.45}
-        maxPolarAngle={eye ? 2.4 : inside ? 1.5 : 1.2}
-        minAzimuthAngle={inside || eye ? -Infinity : -0.9}
-        maxAzimuthAngle={inside || eye ? Infinity : 0.9}
+        maxPolarAngle={eye ? 2.4 : inside ? 1.5 : boat ? 1.45 : 1.2}
+        minAzimuthAngle={inside || eye || boat ? -Infinity : -0.9}
+        maxAzimuthAngle={inside || eye || boat ? Infinity : 0.9}
         minDistance={eye ? 0.05 : inside ? 3 : 6}
-        maxDistance={eye ? 0.2 : inside ? 11 : Math.max(w, d) + 6}
+        maxDistance={eye ? 0.2 : inside ? 11 : boat ? 70 : Math.max(w, d) + 6}
       />
     </Canvas>
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-[1]">

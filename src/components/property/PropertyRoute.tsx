@@ -16,7 +16,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, DoorClosed, KeyRound, Loader2, LogOut, Menu, Settings2, ShoppingBag, Smartphone, UserPlus, X } from "lucide-react";
-import { SideBar, SideButton, SidePopover } from "@/components/layout/SideBar";
+import { FloatMenu, SideBar, SideButton, SidePopover, ViewCycle } from "@/components/layout/SideBar";
 import { openPhone } from "@/components/layout/PhoneOverlay";
 import { useUnreadTotal } from "@/lib/unread";
 import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoom";
@@ -323,7 +323,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   const [upView, setUpView] = useState(isMultiRoom);
   // Looking down on the home, or over the shoulder in the room.
   const [view, setView] = useState<"above" | "inside" | "eye">("above");
-  const stick = useRef({ x: 0, y: 0 });
+  const stick = useRef<{ x: number; y: number; sprint?: boolean }>({ x: 0, y: 0 });
   const [stickRun, setStickRun] = useState(false);
   const [activeRoomId, setActiveRoomId] = useState<string>("living");
 
@@ -450,15 +450,13 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
       <SideBar>
         <SideButton icon={<Menu className="w-5 h-5" />} label="Menu" tone="dark" active={panel === "menu"} onClick={() => setPanel((x) => (x === "menu" ? null : "menu"))} />
         {party && <SideButton icon="🎉" label="Party" tone="party" active={panel === "party"} onClick={() => setPanel((x) => (x === "party" ? null : "party"))} />}
-        {([["above", "🏠", "Above view"], ["inside", "👤", "Inside view"], ["eye", "👁️", "Eyes view"]] as const).map(([v, icon, label]) => (
-          <SideButton key={v} icon={icon} label={label} active={view === v} onClick={() => { setView(v); setUpView(false); }} />
-        ))}
+        <ViewCycle view={view} onChange={(v) => { setView(v as "above" | "inside" | "eye"); setUpView(false); }} />
         <SideButton icon={<Smartphone className="w-5 h-5" />} label={unreadAll ? `Phone: ${unreadAll} unread` : "Phone"} badge={unreadAll} onClick={() => openPhone()} />
       </SideBar>
       {panel === "party" && party && (
-        <SidePopover title="🎉 Party" onClose={() => setPanel(null)}>
+        <FloatMenu label="Party" onClose={() => setPanel(null)}>
           <PartyActions list party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={(sec) => { if (where.rest) askSeat(false); dance(sec); }} pose={dancing ? "dance" : pose} onPose={(x) => { setDancing(false); setPose(x === "dance" ? null : x); if (x === "sit" || pose === "sit") askSeat(x === "sit"); }} announce={(text) => room.emit({ type: "chat", text })} broadcast={(action, on) => { room.emit({ type: "party", action, on }); if (action === "drinks") serve(me, citizen?.username ?? "you", [where.x, where.z]); }} />
-        </SidePopover>
+        </FloatMenu>
       )}
       {panel === "menu" && (
         <SidePopover title={flatTitle(flat)} onClose={() => setPanel(null)}>
@@ -480,7 +478,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         </SidePopover>
       )}
       {!placing && (
-        <Link href={`/street?from=${encodeURIComponent(flat.building_id)}${isGenericHome(flat.building_id) ? "&home=1" : ""}`}
+        <Link href={`/street?from=${encodeURIComponent(flat.building_id)}${isGenericHome(flat.building_id) ? "&home=1" : ""}${/villa|townhouse/i.test(flat.property_type) ? "&villa=1" : ""}`}
           className="fixed right-3 bottom-[max(6.25rem,calc(env(safe-area-inset-bottom)+5.75rem))] z-30 h-11 pl-3 pr-4 rounded-full bg-emerald-600 text-white shadow-lg flex items-center gap-1.5 font-black text-sm active:scale-95" aria-label="Go outside">🚪 <span>Outside</span></Link>
       )}
 

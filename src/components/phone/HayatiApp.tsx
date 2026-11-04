@@ -12,7 +12,7 @@ import { Heart } from "lucide-react";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { useCitizen } from "@/lib/citizenStore";
 import {
-  addRelative, askForBaby, askOut, cancelRequest, careForChild, datePlaceOf, endRelationship, FAMILY, happinessOf, hireNanny, logDate, LOVE,
+  addRelative, askForBaby, moveInTogether, moveOut, myHousehold, type SharedHome, askOut, cancelRequest, careForChild, datePlaceOf, endRelationship, FAMILY, happinessOf, hireNanny, logDate, LOVE,
   nameChild, planWedding, propose, relationLabel, removeRelative, resolveDiscovery, respond, respondRelative, ringOf, showLove, stageOf,
   useFamily, useLove, venueOf, weddingCost, weddingLink, type Child, type Person, type Relation, type Relationship, type Relative,
 } from "@/lib/love";
@@ -204,6 +204,7 @@ function Together({ rel, busy, run, me, many }: { rel: Relationship; busy: boole
         )}
         <Big tone="red" disabled={busy || rel.lovedToday} onClick={() => run(() => showLove(who), `💗 @${p.username} felt that.`)}>{rel.lovedToday ? "💗 Love shown today" : "💗 Show love (+1 a day)"}</Big>
       </Card>
+      <LivingTogether partnerId={p.id} partner={p.username} busy={busy} run={run} />
 
       <Card>
         <p className="font-black">🌅 Date today (+{LOVE.levels.date} together)</p>
@@ -491,5 +492,35 @@ function Relatives({ me, relatives, busy, run }: { me: string; relatives: Relati
           ))}
       </Card>
     </>
+  );
+}
+
+/** Moving in together: your partner moves into your home (they get the keys: come and go, decorate), or you see the
+    home you share and can go there. Either of you can move out. */
+function LivingTogether({ partnerId, partner, busy, run }: { partnerId: string; partner: string; busy: boolean; run: Run }) {
+  const [homes, setHomes] = useState<SharedHome[] | null>(null);
+  const load = () => void myHousehold().then(setHomes);
+  useEffect(() => { load(); }, [partnerId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const shared = homes?.find((h) => h.partner === partnerId);
+  if (!homes) return null;
+  if (!shared) {
+    return (
+      <Card>
+        <p className="font-black">🏠 Live together</p>
+        <p className="text-sm text-slate-500">@{partner} moves into your home: they come and go as they like and can decorate it with you.</p>
+        <Big tone="green" disabled={busy} onClick={async () => { await run(() => moveInTogether(partnerId), `🏠 @${partner} moved in with you!`); load(); }}>Ask @{partner} to move in</Big>
+      </Card>
+    );
+  }
+  const where = /^\d/.test(shared.unit) ? `${shared.type} ${shared.unit}` : `${shared.type} · ${shared.unit}`;
+  const href = shared.host ? "/home" : `/property/${shared.building}/${encodeURIComponent(shared.unit)}`;
+  return (
+    <Card className="bg-emerald-50">
+      <p className="font-black">🏠 Living together</p>
+      <p className="text-sm text-slate-600">{shared.host ? `@${partner} lives with you at your ${where}.` : `You live with @${partner} at their ${where}.`}</p>
+      <Link href={href} className="block w-full h-12 leading-[3rem] text-center rounded-2xl bg-emerald-600 text-white font-black">Go home</Link>
+      <button disabled={busy} onClick={async () => { if (confirm("Stop living together?")) { await run(() => moveOut(partnerId), "You don't live together any more."); load(); } }}
+        className="w-full text-sm font-semibold text-slate-400 py-1">Move out</button>
+    </Card>
   );
 }

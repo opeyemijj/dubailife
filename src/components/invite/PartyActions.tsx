@@ -63,10 +63,10 @@ export function PartyActions({ party, lightsOut, onLights, onDance, pose, onPose
     await setPartyLights(party.code, out);
   };
   const btn = list
-    ? "w-full h-11 px-3 rounded-2xl bg-slate-100 text-slate-900 flex flex-row items-center justify-start gap-2.5 text-sm font-black active:scale-95 transition-transform [&>span]:text-xl"
+    ? "h-11 pl-3 pr-4 rounded-full bg-white/95 text-slate-900 shadow-xl flex flex-row items-center gap-2 text-xs font-black active:scale-95 transition-transform [&>span]:text-lg"
     : "shrink-0 h-12 min-w-[4.25rem] px-2 rounded-2xl bg-white/95 text-slate-900 shadow-lg flex flex-col items-center justify-center text-[10px] font-black active:scale-95 transition-transform";
   return (
-    <div className={list ? "flex flex-col gap-1.5" : `fixed left-1/2 -translate-x-1/2 z-40 flex gap-1.5 max-w-[96vw] overflow-x-auto px-1 py-2 [scrollbar-width:none] ${className}`} role="toolbar" aria-label="Party actions">
+    <div className={list ? "flex flex-col items-end gap-2" : `fixed left-1/2 -translate-x-1/2 z-40 flex gap-1.5 max-w-[96vw] overflow-x-auto px-1 py-2 [scrollbar-width:none] ${className}`} role="toolbar" aria-label="Party actions">
       <button onClick={() => treat("food")} disabled={busy === "food"} className={btn}><span className="text-lg leading-none">{A.food.icon}</span>{busy === "food" ? "Yum!" : "Food"}</button>
       <button onClick={() => treat("drinks")} disabled={busy === "drinks"} className={btn}><span className="text-lg leading-none">{A.drinks.icon}</span>{busy === "drinks" ? "Cheers!" : "Drinks"}</button>
       <button onClick={dance} className={`${btn} ${pose === "dance" ? "!bg-fuchsia-600 !text-white" : ""}`}><span className="text-lg leading-none">{A.dance.icon}</span>Dance</button>

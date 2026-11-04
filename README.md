@@ -64,20 +64,26 @@ cartoon **flies** on dirty players, and a **boat cruise** you can watch sail.
 | 9 | **Roof or ceiling visible in Eye view** (home and venues) | ✅ Done (2026-11-04) | `ApartmentRoom.tsx`, `InteriorScene.tsx` |
 | 10 | **Stick and RUN in Inside and Eye views** (homes and venues), with semi-auto obstacle avoidance | ✅ Done (2026-11-04) | `ApartmentRoom.tsx` (walk/nav: `homeNav`), `InteriorScene.tsx` (`Player`, `walkTo`), reuse `MoveStick` from `components/street/StreetWorld.tsx` |
 | 11 | **Anyone renting can throw a house party**, including homes not on the map (generic address) | ✅ Done (2026-11-04), needs migration `20261222000000_party_homes.sql` | `components/invite/PartySheet.tsx`, `PartySheetHost.tsx`, SQL `create_event` (latest in `20261218000000_tickets_seminars.sql`), visiting a home without a flat (new route) |
-| 12 | **Redesign outside the house**: make rooms bigger (move walls out), add a garage, pool, car park, garden (owner or decorator, paid from budget) | 🟡 In progress (Agent A, 2026-11-04): user said go; following Agent B's plan below | `ApartmentRoom.tsx` (render outside the walls; only the plot/outside part), `app/decorate/[jobId]/page.tsx`, `lib/furniture.ts`, new `src/data/home/exterior.json`, new `*_home_exterior.sql` |
-| 13 | **Yacht**: yacht-party event type, yacht venues (Dubai Marina), a **Boat** view, and sailing it yourself (like the car journey) | 🟡 In progress (Agent A, 2026-11-04): user said go; following Agent B's plan below | `src/data/life/parties.json`, new `src/data/venues/yachts.json`, new `*_yacht.sql`, new `components/yacht/` (`YachtScene.tsx`, `SailJourney.tsx`), `lib/city/places.ts` (Marina jetty place only) |
+| 12 | **Redesign outside the house**: make rooms bigger (move walls out), add a garage, pool, car park, garden (owner or decorator, paid from budget) | ✅ Done (2026-11-04): townhouses and villas, optional, owner (Menu › Outside the house) or decorator | `ApartmentRoom.tsx` (render outside the walls; only the plot/outside part), `app/decorate/[jobId]/page.tsx`, `lib/furniture.ts`, new `src/data/home/exterior.json`, new `*_home_exterior.sql` |
+| 13 | **Yacht**: yacht-party event type, yacht venues (Dubai Marina), a **Boat** view, and sailing it yourself (like the car journey) | ✅ Done (2026-11-04): Dubai Harbour Marina yachts, deck layout, Boat view, Sail it yourself, yacht parties | `src/data/life/parties.json`, new `src/data/venues/yachts.json`, new `*_yacht.sql`, new `components/yacht/` (`YachtScene.tsx`, `SailJourney.tsx`), `lib/city/places.ts` (Marina jetty place only) |
 | 14 | Ticket tiers for paid events (early bird, phases, squad packs, VIP tables, QR pass at the door) | ⛔ Dropped (user, 2026-11-04: "ignore this one") | `20261218000000_tickets_seminars.sql`, `components/invite/` |
 | 16 | **Venue screen layout** (user's rules): middle-right bar of ☰ Menu (every venue action, listed vertically), then Above / Inside / Eyes, then 📱 Phone; **Outside** and the venue's **Activities** at the bottom right; the stick with RUN at the bottom left; nothing overlapping | ✅ Done (2026-11-04) | `components/interior/VenueExperience.tsx` |
 | 17 | **Radio regions**: an arrow on the radio picks Lagos (default), Kenya, France, US, London or Arabic | ✅ Done (2026-11-04) | `src/data/life/parties.json` (`radio.regions`), `components/invite/PartyHere.tsx` (`RegionPicker`) |
-| 18 | Same layout for **homes**: middle-right bar (Menu, views, Phone), Outside at the bottom right next to the stick | 🟡 Queued (Agent A, 2026-11-04) | `app/home/page.tsx`, `property/PropertyRoute.tsx` |
-| 4b | **Street looks more like Dubai**: windows and glass on the towers facing the street, lighter road with visible lanes, bus stops, crossings, passers-by (Locals) to talk to, as in reference 07 | 🟡 Queued (Agent A, 2026-11-04) | `components/street/StreetWorld.tsx` (`Blocks`, `Street`), `components/home/RunJourney.tsx` (`Building`) |
+| 18 | Same layout for **homes**: middle-right bar (Menu, views, Phone), Outside at the bottom right next to the stick | ✅ Done (2026-11-04): home and visited homes | `app/home/page.tsx`, `property/PropertyRoute.tsx` |
+| 4b | **Street looks more like Dubai**: windows and glass on the towers facing the street, lighter road with visible lanes, bus stops, crossings, passers-by (Locals) to talk to, as in reference 07 | ✅ Done (2026-11-04): area shops, crossings, bus stops, Locals, textured towers, villa streets | `components/street/StreetWorld.tsx` (`Blocks`, `Street`), `components/home/RunJourney.tsx` (`Building`) |
 | 19 | **Raise the daily send limit** above AED 5,000,000 (user said yes, 2026-11-04); keep the 1,231 base in the online count | ✅ Done (2026-11-04), needs migration `20261221000000_send_limit.sql` | `20261221000000_send_limit.sql`, `lib/room.ts` (message text) |
 | 20 | **Map middle-right bar**: 📍 Places (fly to an area, show a kind of place) and 🔥 where people are, instead of the district strip and the orange pill over it | ✅ Done (2026-11-04) | `components/map/MapSideBar.tsx`, `InteractiveMap.tsx`, `layout/BottomNav.tsx`, `app/explore/page.tsx` |
 | 21 | **Bed space**: the character floats above the bed seen from the side; bunks too short | ✅ Done (2026-11-04): beds fill their footprint, mattress always 0.6 m (`BED_MATTRESS`), bed-space bunks 2.35 m long, away roommates sit on the mattress edge | `ApartmentRoom.tsx` (`useFittedModel`), `restPose.ts`, `data/home/floorplans.json`, `lib/bedspace.ts` |
 | 22 | **Toilet and shower poses**: sit on the toilet when using it; walk into the bathroom (shower) to shower | ✅ Done (2026-11-04): toilet use sits you on it; "Morning Shower" walks you into the shower (`fixtureCall`) | `ApartmentRoom.tsx`, `app/home/page.tsx` (activities) |
 | 23 | **"Move into a home" to-do doesn't tick** after moving in | ✅ Done (2026-11-04), needs migration `20261223000000_home_goal.sql`: the home chosen at sign-up counts | `20261223000000_home_goal.sql` |
-| 24 | **Wild Wadi slides**: you're hidden inside a closed slide; show the rider inside it, or make the slide open | 🟡 Queued (Agent A, 2026-11-04) | `components/interior/scenery.tsx`, `components/interior/rides/` |
-| 15 | Family, phase 2: **move in together**, and **kids shown in the 3D home** at their stage | 🟡 Queued (Agent A, 2026-11-04) | `lib/love.ts`, `components/phone/HayatiApp.tsx`, `ApartmentRoom.tsx`, `supabase/migrations/20261216000000_family.sql` |
+| 24 | **Wild Wadi slides**: you're hidden inside a closed slide; show the rider inside it, or make the slide open | ✅ Done (2026-11-04): open half-pipe slides (Aquaventure clear tube kept) | `components/interior/scenery.tsx`, `components/interior/rides/` |
+| 25 | **One view button** (Above → Inside → Eyes, → Boat on yachts) and **🎉 Party** under one icon on the right at every party or seminar, items floating; menus show a tap and close themselves | ✅ Done (2026-11-04) | `components/layout/SideBar.tsx` (`ViewCycle`, `FloatMenu`, `TapLayer`), `VenueExperience.tsx`, `app/home/page.tsx`, `PropertyRoute.tsx` |
+| 26 | **Stick like a PS5 analog**: dead zone, speed by push, full push to the rim runs (rim lights up); no RUN button | ✅ Done (2026-11-04) | `components/street/StreetWorld.tsx` (`MoveStick`, `Controls.sprint`), `ApartmentRoom.tsx`, `InteriorScene.tsx` |
+| 27 | **Drinks at venue parties**: a waitress with a sparkler brings them, you hold the drink (it used to make everyone dance) | ✅ Done (2026-11-04) | `VenueExperience.tsx` |
+| 28 | **Popups**: Live Space banner (party/marathon) has ✕ and stays hidden; Locals offer and Claim venue cards on top of everything | ✅ Done (2026-11-04) | `social/LiveSpaceBanner.tsx`, `VenueExperience.tsx`, `VenueOwnerLayer.tsx` |
+| 29 | **Groove removed** from party music (radio or off) | ✅ Done (2026-11-04) | `invite/PartyHere.tsx` |
+| 30 | **Battery**: 3D scenes draw 60 times a second even when still, and keep drawing behind the phone | 🟢 To do (analysis in the notes) | every `<Canvas>`, `lib/device.ts` |
+| 15 | Family, phase 2: **move in together**, and **kids shown in the 3D home** at their stage | ✅ Done (2026-11-04), needs migration `20261224000000_move_in.sql`: live together; kids in the 3D home | `lib/love.ts`, `components/phone/HayatiApp.tsx`, `ApartmentRoom.tsx`, `supabase/migrations/20261216000000_family.sql` |
 
 ### Details and "done when"
 
@@ -226,14 +232,23 @@ Check with the user how "renting" is recorded for homes not on the map.
   - Online list from pings instead of city-wide presence.
   - Tested end to end with two real temporary accounts: 24 out of 24 checks passed.
 
+**#30, battery (analysis, 2026-11-04).** The heavy part is the 3D: 27 `<Canvas>` use the default `frameloop="always"`,
+so the GPU draws about 60 frames a second even when nothing moves, and keeps drawing behind the phone overlay. Phones
+already get a lower resolution (dpr up to 1.5) and no shadows (`lib/device.ts`), realtime disconnects after 2 minutes
+idle or 30 seconds hidden (`lib/idle.ts`), and browsers stop drawing hidden tabs. Fix: on low-power devices draw at
+30 fps (`frameloop="demand"` plus a 30 fps `invalidate`), stop drawing while the phone or a full-screen sheet covers
+the scene, and cut per-frame label updates (drei `Html`). Expected: about half the GPU work in 3D.
+
 ## Migrations waiting
 
-Everything up to `20261220000000_user_channel.sql` is applied. Waiting for the user's "run migration":
+Everything up to `20261224000000_move_in.sql` is applied (2026-11-04). Nothing waiting. Applied in this batch:
 - `20261221000000_send_limit.sql`: AED 50,000,000 a day, AED 20,000,000 per transfer (both in `app_settings.limits`).
 - `20261222000000_party_homes.sql`: `flats.home_of`, `party_home`, `my_party_home`, and `flat_permissions`,
   `is_flat_manager` and `create_event` accepting generic homes. Before it runs, a party at a home off the map says
   "coming in the next update"; nothing else breaks.
 - `20261223000000_home_goal.sql`: "Move into your home" ticks for the home chosen at sign-up.
+- `20261224000000_move_in.sql`: `couple_homes` (not `households`: the roommates feature has that name), `move_in_together`,
+  `move_out`, `my_household`. Needs `20261222000000_party_homes.sql` first (uses `flats.home_of`).
 
 ## Messages between agents
 

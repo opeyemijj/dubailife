@@ -19,6 +19,9 @@ import type { EventKind } from "@/lib/invites";
 import { BELOW_SPACE_TOP, ClubRadioPill, PartyBanner, useClubRadio, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyDecor } from "@/components/invite/PartyDecor";
 import { PartyActions } from "@/components/invite/PartyActions";
+import { FloatMenu, tapThenClose, ViewCycle } from "@/components/layout/SideBar";
+import { SailJourney } from "@/components/yacht/SailJourney";
+import { PartyHostesses, drinkInHand, usePartyDrink, type HostessRun } from "@/components/invite/PartyHostess";
 import { partyMood } from "@/lib/invites";
 import { askForPush } from "@/lib/push/engage";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -97,8 +100,15 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   const [guideOpen, setGuideOpen] = useState(false);
   // Over-the-shoulder camera in the room, or the overview.
   // Above (the whole room), inside (over the shoulder) or eye (first person, drag to look around).
-  const [cam, setCam] = useState<"above" | "inside" | "eye">("above");
-  const inside = cam !== "above";
+  const [cam, setCam] = useState<"above" | "inside" | "eye" | "boat">("above");
+  const inside = cam === "inside" || cam === "eye";
+  // The 🎉 Party items, floating by the bar; sailing the yacht yourself.
+  const [partyOpen, setPartyOpen] = useState(false);
+  // Party drinks: the waitress runs (with a sparkler) and the drink I'm handed.
+  const [hostessRuns, setHostessRuns] = useState<HostessRun[]>([]);
+  const serveDrinks = (id: string, name: string, to: [number, number]) => setHostessRuns((r) => [...r, { id: `${id}-${Date.now()}`, name, to, who: id }].slice(-6));
+  const [partyDrink, handPartyDrink] = usePartyDrink();
+  const [sailing, setSailing] = useState(false);
   const [clothingStoreOpen, setClothingStoreOpen] = useState(false);
   const [activeConsumption, setActiveConsumption] = useState<{ kind: "drink" | "eat"; propKind: ServeKind; tint?: string } | null>(null);
   const [vipReservations, setVipReservations] = useState<VipTableReservation[]>([]);
@@ -139,7 +149,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   // The party you can throw here: a club night at a club, a pool party at a pool or beach club, dinner at a restaurant.
   // Club promoters can put on an event at any venue.
   const isPromoter = useServices(citizen?.id)?.service === "promoter";
-  const partyKind: EventKind | null = venue.layout === "club" ? "club_night" : venue.feature === "pool" && venue.layout !== "waterpark" ? "pool_party" : venue.layout === "dining" ? "dinner" : null;
+  const partyKind: EventKind | null = venue.layout === "club" || venue.layout === "yacht" ? "club_night" : venue.feature === "pool" && venue.layout !== "waterpark" ? "pool_party" : venue.layout === "dining" ? "dinner" : null;
   const [lightsSet, setLightsSet] = useState<boolean | null>(null);
   // Clean screen: everything over the venue hidden (the floating Space bar too) for the whole view.
   const [clean, setClean] = useState(false);
@@ -437,7 +447,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   // Not washed: flies (for me and everyone here).
   const dirty = isDirty(citizen?.needs?.hygiene);
   // Steering with the stick (Inside and Eye views): where it's taken me, for everyone to see.
-  const stick = useRef({ x: 0, y: 0 });
+  const stick = useRef<{ x: number; y: number; sprint?: boolean }>({ x: 0, y: 0 });
   const [stickRun, setStickRun] = useState(false);
   // Everything you can do here lives in the menu (middle right), so nothing overlaps the view or the stick.
   // The phone is in that bar too (so the app-wide floating phone button steps aside here).
@@ -448,7 +458,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   const onStickMove = (x: number, z: number, yaw: number, moving: boolean) => {
     // Steering takes over from any tap-to-walk.
     if (moving && walkTo) setWalkTo(null);
-    setFree({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw, moving, running: stickRun });
+    setFree({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw, moving, running: stickRun || !!stick.current.sprint });
   };
   const me = free && !walkTo
     ? { x: free.x, z: free.z, face: free.yaw, animation: (free.moving ? (free.running ? "run" : "walk") : shownAnimation) as AvatarAnimation, lift: 0, dirty }
@@ -518,6 +528,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     // The party host's lights switch and "everyone dance", live.
     if (e.type === "party") {
       if (e.action === "lights") setLightsSet(!!e.on);
+      else if (e.action === "drinks") serveDrinks(e.from.userId, e.from.username, [e.from.x, e.from.z]);
       else { setPlayerAnimation("dance"); setTimeout(() => setPlayerAnimation((a) => (a === "dance" ? "idle" : a)), 25_000); bubble(e.from.userId, "🪩 Everyone dance!"); }
     }
     if (e.type === "chat") {
@@ -940,6 +951,8 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     if (a.price) {
       adjustBalance(-a.price);
     }
+    // On a yacht: take the wheel and sail it yourself.
+    if (a.id === "sail" && venue.layout === "yacht") { setSailing(true); return; }
     // Rides and water activities are acted out in 3D (hire paid above).
     const def = rideFor(a);
     if (def && !ride && beginRide(def, a, at)) return;
@@ -1307,15 +1320,16 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         prop: <HandHeldProp kind={activeConsumption.propKind} tint={activeConsumption.tint} />,
         mode: activeConsumption.kind === "drink" ? "drink" : "eat",
       }
-    : undefined;
+    : drinkInHand(partyDrink);
 
   return (
     <main className="fixed inset-0 w-screen h-[100dvh] overflow-hidden select-none font-sans bg-black text-slate-900 overscroll-none">
       <InteriorScene
         inside={cam === "inside" && !ride}
         eye={cam === "eye" && !ride}
+        boat={cam === "boat" && !ride}
         playerDirty={dirty}
-        stick={cam !== "above" && !ride ? stick : undefined}
+        stick={inside && !ride ? stick : undefined}
         stickRun={stickRun}
         onStickMove={onStickMove}
         ride={ride}
@@ -1324,6 +1338,8 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         extras={<>
           {castles.map((c) => <group key={`${c.at[0]},${c.at[1]}`} position={[c.at[0], 0, c.at[1]]}><SandCastle stage={c.stage} /></group>)}
           {party && <PartyDecor decor={party.decor} w={plan.size[0]} d={plan.size[1]} h={4.4} />}
+          {/* Drinks at a party: a waitress brings them with a sparkler, to whoever ordered. */}
+          <PartyHostesses runs={hostessRuns} onArrive={(r) => { if (r.who === citizen?.id) handPartyDrink(); }} onDone={(id) => setHostessRuns((list) => list.filter((x) => x.id !== id))} />
         </>}
         placeAt={placeAt}
         venue={venue}
@@ -1367,19 +1383,20 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       {/* Hidden, not removed: the music and anything open carry on underneath. */}
       <div className={clean ? "hidden" : "contents"}>
       {party && <PartyBanner party={party} className={BELOW_SPACE_TOP} />}
-      {!party && !ride && <ClubRadioPill className={cam !== "above" ? "bottom-[11rem]" : "bottom-[max(1.5rem,env(safe-area-inset-bottom))]"} />}
+      {!party && !ride && <ClubRadioPill className={inside ? "bottom-[11rem]" : "bottom-[max(1.5rem,env(safe-area-inset-bottom))]"} />}
       {/* Inside and Eye views: the stick (with RUN) to walk anywhere yourself. */}
-      {cam !== "above" && !ride && !panel && (
+      {inside && !ride && !panel && (
         <div className="absolute left-5 bottom-[max(1.5rem,env(safe-area-inset-bottom))] z-30"><MoveStick controls={stick} run={stickRun} onRun={() => setStickRun((r) => !r)} /></div>
       )}
-      {party && !ride && !clubParty && party.kind !== "seminar" && (
-        <PartyActions party={party} lightsOut={lightsSet ?? !!party.lightsOut} onLights={setLightsSet}
-          onDance={(seconds) => { setPlayerAnimation("dance"); setTimeout(() => setPlayerAnimation((a) => (a === "dance" ? "idle" : a)), seconds * 1000); }}
-          pose={playerAnimation === "dance" || playerAnimation === "sit" ? playerAnimation : null} canSleep={false}
-          onPose={(x) => setPlayerAnimation(x === "sit" ? "sit" : "idle")}
-          announce={(text) => room.emit({ type: "chat", text })} broadcast={(action, on) => room.emit({ type: "party", action, on })} className="bottom-28" />
-      )}
 
+
+      {sailing && (
+        <SailJourney name={venue.name} onDone={(r) => {
+          setSailing(false);
+          if (r.finished) { adjustBalance(60); boostNeed("fun", 40); say(`⛵ Docked in ${r.seconds}s after all ${r.buoys} buoys · +AED 60`); }
+          else say(`⛵ Back to the jetty · ${r.buoys} buoy${r.buoys === 1 ? "" : "s"} rounded`);
+        }} />
+      )}
       {ride && (
         <RideHUD
           key={ride.key}
@@ -1480,18 +1497,18 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
           Hidden during a ride: the ride's own controls are there. */}
       {!panel && !ride && (
         <div className="absolute right-3 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-2 pointer-events-auto">
-          <button onClick={() => setShowButtons((v) => !v)} aria-expanded={showButtons} aria-label="Menu"
+          <button onClick={() => { setPartyOpen(false); setShowButtons((v) => !v); }} aria-expanded={showButtons} aria-label="Menu"
             className={`w-14 h-14 rounded-[18px] shadow-xl flex flex-col items-center justify-center text-[10px] font-black ${showButtons ? "bg-slate-900 text-white" : "bg-white/95 text-slate-800"}`}>
             <span className="text-xl leading-none">{showButtons ? "✕" : "☰"}</span>{showButtons ? "Close" : "Menu"}
           </button>
-          <div className="rounded-[22px] bg-white/95 shadow-xl p-1 flex flex-col gap-1">
-            {([["above", "🏠", "Above"], ["inside", "👤", "Inside"], ["eye", "👁️", "Eyes"]] as const).map(([id, icon, label]) => (
-              <button key={id} onClick={() => { gameAudio.playClickSound(); setCam(id); }} aria-pressed={cam === id} aria-label={`${label} view`}
-                className={`w-14 h-14 rounded-[18px] flex flex-col items-center justify-center text-[10px] font-black ${cam === id ? "bg-slate-900 text-white" : "text-slate-700"}`}>
-                <span className="text-xl leading-none">{icon}</span>{label}
-              </button>
-            ))}
-          </div>
+          {/* One button for the views: tap to go Above → Inside → Eyes (→ Boat on a yacht). */}
+          <ViewCycle big view={cam} views={venue.layout === "yacht" ? ["above", "inside", "eye", "boat"] : ["above", "inside", "eye"]} onChange={(v) => { gameAudio.playClickSound(); setCam(v as typeof cam); }} />
+          {party && (
+            <button onClick={() => { gameAudio.playClickSound(); setShowButtons(false); setPartyOpen((o) => !o); }} aria-expanded={partyOpen} aria-label="Party"
+              className={`w-14 h-14 rounded-[18px] shadow-xl flex flex-col items-center justify-center text-[10px] font-black ${partyOpen ? "bg-slate-900 text-white" : "bg-gradient-to-br from-fuchsia-500 to-amber-400 text-white"}`}>
+              <span className="text-xl leading-none">🎉</span>Party
+            </button>
+          )}
           {/* The phone, always one tap away (with unread messages). */}
           <button onClick={() => { gameAudio.playClickSound(); openPhone(); }} aria-label={unreadMsgs ? `Phone: ${unreadMsgs} unread` : "Phone"}
             className="relative w-14 h-14 rounded-[18px] shadow-xl bg-slate-900 text-white flex flex-col items-center justify-center text-[10px] font-black">
@@ -1513,14 +1530,23 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
             className="h-12 px-5 rounded-full bg-emerald-600 text-white font-black shadow-xl text-sm flex items-center gap-1.5 active:scale-95 transition-all">🚪 Outside</button>
         </div>
       )}
+      {!panel && !ride && partyOpen && party && (
+        <FloatMenu label="Party" onClose={() => setPartyOpen(false)}>
+          <PartyActions list party={party} lightsOut={lightsSet ?? !!party.lightsOut} onLights={setLightsSet}
+          onDance={(seconds) => { setPlayerAnimation("dance"); setTimeout(() => setPlayerAnimation((a) => (a === "dance" ? "idle" : a)), seconds * 1000); }}
+          pose={playerAnimation === "dance" || playerAnimation === "sit" ? playerAnimation : null} canSleep={false}
+          onPose={(x) => setPlayerAnimation(x === "sit" ? "sit" : "idle")}
+          announce={(text) => room.emit({ type: "chat", text })} broadcast={(action, on) => { room.emit({ type: "party", action, on }); if (action === "drinks") serveDrinks(citizen?.id ?? "me", citizen?.username ?? "you", [me.x, me.z]); }} />
+        </FloatMenu>
+      )}
       {!panel && !ride && showButtons && (
-        <div className="absolute right-[5.25rem] top-1/2 -translate-y-1/2 z-40 flex flex-col items-end gap-2 max-h-[72dvh] overflow-y-auto pointer-events-auto pr-1">
-          <InviteHere title={venue.name} label={`${venue.category} · ${place.name}`} text={`📍 Meet me at ${venue.name} (${place.name}) on Dubai Life!`}
-            className="h-11 px-4 rounded-full bg-white text-fuchsia-700 font-black shadow-xl text-xs flex items-center gap-1.5 active:scale-95 transition-all" />
+        <div onClickCapture={tapThenClose(() => setShowButtons(false))} className="absolute right-[5.25rem] top-1/2 -translate-y-1/2 z-40 flex flex-col items-end gap-2 max-h-[72dvh] overflow-y-auto pointer-events-auto pr-1">
+          <span data-keep-menu className="contents"><InviteHere title={venue.name} label={`${venue.category} · ${place.name}`} text={`📍 Meet me at ${venue.name} (${place.name}) on Dubai Life!`}
+            className="h-11 px-4 rounded-full bg-white text-fuchsia-700 font-black shadow-xl text-xs flex items-center gap-1.5 active:scale-95 transition-all" /></span>
           {!party && (
             <button onClick={() => { gameAudio.playClickSound(); openPartySheet({ kind: partyKind ?? "seminar", placeId: place.id, venueId: venue.id }); }}
               className="h-11 px-4 rounded-full bg-fuchsia-600 text-white font-black shadow-xl text-xs flex items-center gap-1.5 active:scale-95 transition-all">
-              {isPromoter ? "📣 Promote an event here" : partyKind ? `🎉 Host a ${partyKind === "club_night" ? "club night" : partyKind === "pool_party" ? "pool party" : "dinner"} here` : "🎤 Host a seminar here"}
+              {isPromoter ? "📣 Promote an event here" : venue.layout === "yacht" ? "🛥️ Host a yacht party here" : partyKind ? `🎉 Host a ${partyKind === "club_night" ? "club night" : partyKind === "pool_party" ? "pool party" : "dinner"} here` : "🎤 Host a seminar here"}
             </button>
           )}
           {(venue.layout === "boutique" || venue.category.toLowerCase().includes("fashion")) && (
@@ -1600,7 +1626,8 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
 
       {/* A Local's offer: a gift, or come along somewhere else */}
       {offer && !panel && !ride && (
-        <div className="absolute bottom-[calc(max(1rem,env(safe-area-inset-bottom))+6.5rem)] sm:bottom-[calc(max(1rem,env(safe-area-inset-bottom))+3.75rem)] left-1/2 -translate-x-1/2 z-30 w-[min(92vw,400px)] pointer-events-auto">
+        // On top of everything (above the bars and buttons) so it can always be taken or closed.
+        <div className="absolute bottom-[calc(max(1rem,env(safe-area-inset-bottom))+8.75rem)] sm:bottom-[calc(max(1rem,env(safe-area-inset-bottom))+3.75rem)] left-1/2 -translate-x-1/2 z-[60] w-[min(92vw,400px)] pointer-events-auto">
           <div className="rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 shadow-2xl p-3 flex items-center gap-3 animate-in slide-in-from-bottom-4 fade-in duration-300">
             <span className="text-2xl">{offer.kind === "invite" ? "🎉" : "🎁"}</span>
             <div className="flex-1 min-w-0 text-xs">

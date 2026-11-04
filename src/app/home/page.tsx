@@ -9,7 +9,7 @@ import { useCleanScreen } from "@/lib/cleanScreen";
 import { usePhoneButtonHere } from "@/lib/phoneButtons";
 import { MoveInGuide } from "@/components/home/MoveInGuide";
 import { PartySheet } from "@/components/invite/PartySheet";
-import { SideBar, SideButton, SidePopover } from "@/components/layout/SideBar";
+import { FloatMenu, SideBar, SideButton, SidePopover, ViewCycle } from "@/components/layout/SideBar";
 import { ExteriorSheet } from "@/components/home/ExteriorSheet";
 import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyPeople } from "@/components/invite/PartyPeople";
@@ -32,6 +32,8 @@ import {
   RotateCw, RotateCcw, Keyboard, Move, Package, LogOut, Shirt, Bell
 } from "lucide-react";
 import { ApartmentRoom, type Person, type PlacingState } from "@/components/home/ApartmentRoom";
+import { stageOf, useFamily } from "@/lib/love";
+import { useNow } from "@/lib/dubaiClock";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { gameAudio } from "@/utils/gameAudio";
 import { isNewCitizen, useRequireCitizen, adjustBalance, buyFurniture, setFurniturePlacement, updateCitizen, DEFAULT_NEEDS, type Needs } from "@/lib/citizenStore";
@@ -219,7 +221,7 @@ export default function HomePage() {
   // Looking down on the home, or over the shoulder in the room.
   const [view, setView] = useState<"above" | "inside" | "eye">("above");
   // Inside and Eye views: the stick (with RUN) to walk anywhere yourself.
-  const stick = useRef({ x: 0, y: 0 });
+  const stick = useRef<{ x: number; y: number; sprint?: boolean }>({ x: 0, y: 0 });
   const [stickRun, setStickRun] = useState(false);
   const [activeRoomId, setActiveRoomId] = useState<string>("living");
   const [ritualsExpanded, setRitualsExpanded] = useState(false);
@@ -295,6 +297,23 @@ export default function HomePage() {
     if (!("error" in r)) void getFlat(r.id).then((f) => f && setStarterHome(f));
     return r;
   };
+  // Your children at home, at their age: a newborn lying down, a crawler sitting, then up and about, growing taller
+  // each week (Family app for their care). Tap one to open the Family app.
+  const family = useFamily(citizen?.id);
+  const nowMs = useNow();
+  const kidsAtHome: Person[] = (family?.children ?? []).filter((c) => c.born).slice(0, 6).map((c, i) => {
+    const { weeks, stage } = stageOf(c, nowMs);
+    const scale = Math.min(0.75, 0.32 + weeks * 0.05);
+    return {
+      look: { gender: c.gender === "girl" ? "woman" : "man" },
+      position: [-1.6 + (i % 3) * 0.9, 0, 1.6 + Math.floor(i / 3) * 0.9] as [number, number, number],
+      rotation: Math.PI,
+      animation: stage.id === "newborn" ? "sleep" : stage.id === "crawling" ? "sit" : weeks < 4 ? "wave" : "idle",
+      scale,
+      label: `${stage.icon} ${c.name ?? (c.gender === "girl" ? "Baby girl" : "Baby boy")} · ${stage.label}`,
+      onClick: () => openPhone("hayati"),
+    };
+  });
   const shareHome = async () => {
     gameAudio.playClickSound();
     if (!partyFlat) {
@@ -487,7 +506,7 @@ export default function HomePage() {
       
       {/* 3D Isometric Apartment Interior */}
       <ApartmentRoom
-        people={[...matesInRoom(bedspace, onlineNames, (m) => router.push(`/phone?tab=chats&chat=${m.id}`)), ...guests]}
+        people={[...matesInRoom(bedspace, onlineNames, (m) => router.push(`/phone?tab=chats&chat=${m.id}`)), ...guests, ...kidsAtHome]}
         look={citizen?.look}
         furniture={furniture}
         placing={placing}
@@ -528,20 +547,18 @@ export default function HomePage() {
       <SideBar>
         {!cleanScreen && <SideButton icon={<Menu className="w-5 h-5" />} label="Menu" tone="dark" active={homeMenuOpen} onClick={() => { gameAudio.playClickSound(); setPartyPanel(false); setHomeMenuOpen((o) => !o); }} />}
         {!cleanScreen && party && <SideButton icon="🎉" label="Party" tone="party" active={partyPanel} onClick={() => { gameAudio.playClickSound(); setHomeMenuOpen(false); setPartyPanel((o) => !o); }} />}
-        {!cleanScreen && ([["above", "🏠", "Above view"], ["inside", "👤", "Inside view"], ["eye", "👁️", "Eyes view"]] as const).map(([v, icon, label]) => (
-          <SideButton key={v} icon={icon} label={label} active={view === v} onClick={() => { gameAudio.playClickSound(); setView(v); setUpView(false); }} />
-        ))}
+        {!cleanScreen && <ViewCycle view={view} onChange={(v) => { gameAudio.playClickSound(); setView(v as "above" | "inside" | "eye"); setUpView(false); }} />}
         {!cleanScreen && <SideButton icon={<Smartphone className="w-5 h-5" />} label={unread ? `Phone: ${unread} unread` : "Phone"} badge={unread} onClick={() => openPhone()} />}
         <SideButton icon={cleanScreen ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />} label={cleanScreen ? "Show everything" : "Clean screen"} onClick={() => { setHomeMenuOpen(false); setPartyPanel(false); setCleanScreen((c) => !c); }} />
       </SideBar>
       {partyPanel && party && !cleanScreen && (
-        <SidePopover title="🎉 Party" onClose={() => setPartyPanel(false)}>
+        <FloatMenu label="Party" onClose={() => setPartyPanel(false)}>
           <PartyActions list party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={(sec) => { if (where.rest) askSeat(false); dance(sec); }} pose={dancing ? "dance" : pose} onPose={(x) => { setDancing(false); setPose(x === "dance" ? null : x); if (x === "sit" || pose === "sit") askSeat(x === "sit"); }} announce={(text) => partyRoom.emit({ type: "chat", text })} broadcast={(action, on) => { partyRoom.emit({ type: "party", action, on }); if (action === "drinks") serve(citizen?.id ?? "me", citizen?.username ?? "you", [where.x, where.z]); }} />
-        </SidePopover>
+        </FloatMenu>
       )}
       {/* Bottom right, beside the stick: going outside. */}
       {!cleanScreen && !placing && (
-        <button onClick={() => { gameAudio.playClickSound(); router.push(`/street?home=1&from=${encodeURIComponent(activeFlat?.building_id ?? "home")}`); }}
+        <button onClick={() => { gameAudio.playClickSound(); router.push(`/street?home=1&from=${encodeURIComponent(activeFlat?.building_id ?? "home")}&area=${encodeURIComponent(activeFlat ? activeBuildingName ?? housingConfig.area : housingConfig.area)}${hasPlot(housingTier) ? "&villa=1" : ""}`); }}
           className="fixed right-3 bottom-[max(5.25rem,calc(env(safe-area-inset-bottom)+4.75rem))] sm:bottom-24 z-30 h-11 pl-3 pr-4 rounded-full bg-emerald-600 text-white shadow-lg flex items-center gap-1.5 font-black text-sm active:scale-95" aria-label="Go outside">
           🚪 <span>Outside</span>
         </button>

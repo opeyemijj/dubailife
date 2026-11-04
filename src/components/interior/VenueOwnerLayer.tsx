@@ -70,7 +70,8 @@ export function VenueLoadingCard({ venueKey, venueName, pub, paused = false }: {
 
 function Card({ label, onClose, children }: { label: string; onClose: () => void; children: React.ReactNode }) {
   return (
-    <div className="absolute z-[35] left-3 right-3 bottom-[calc(max(1rem,env(safe-area-inset-bottom))+6.5rem)] sm:left-auto sm:right-4 sm:bottom-24 sm:w-[320px] pointer-events-auto animate-in slide-in-from-bottom-4 fade-in duration-300">
+    // On top of everything, clear of the bottom-right buttons, so it can always be claimed or closed.
+    <div className="absolute z-[60] left-3 right-3 bottom-[calc(max(1rem,env(safe-area-inset-bottom))+8.75rem)] sm:left-auto sm:right-4 sm:bottom-24 sm:w-[320px] pointer-events-auto animate-in slide-in-from-bottom-4 fade-in duration-300">
       <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white p-3">
         <div className="flex items-center mb-1.5">
           <span className="flex-1 text-[10px] font-black uppercase tracking-wider text-slate-400">{label}</span>

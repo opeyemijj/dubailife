@@ -83,37 +83,70 @@ export function Lamp({ x, z, night }: { x: number; z: number; night: boolean }) 
   );
 }
 
+// One shared facade texture for every building (frames white, glass dark: tinted by each building's colour), and a
+// lit-windows map for night. Each wall shows it repeated per floor and bay, so a tower is one box with real-looking
+// windows on every side instead of a mesh per floor (much lighter on phones).
+let FACADE: [THREE.CanvasTexture, THREE.CanvasTexture] | null = null;
+function facadeTextures(): [THREE.CanvasTexture, THREE.CanvasTexture] {
+  if (FACADE) return FACADE;
+  const make = (lit: boolean) => {
+    const c = document.createElement("canvas");
+    c.width = c.height = 128;
+    const g = c.getContext("2d")!;
+    g.fillStyle = lit ? "#000" : "#fff";
+    g.fillRect(0, 0, 128, 128);
+    // Two bays across, two floors up; a slab line between floors.
+    for (let r = 0; r < 2; r++) for (let k = 0; k < 2; k++) {
+      const x = k * 64 + 7, y = r * 64 + 9, w = 50, h = 44;
+      if (lit) {
+        g.fillStyle = (r * 2 + k) % 3 === 0 ? "#ffd58a" : (r + k) % 2 ? "#3a2a10" : "#000";
+        g.fillRect(x, y, w, h);
+      } else {
+        g.fillStyle = "#4b5b73"; g.fillRect(x, y, w, h);
+        g.fillStyle = "rgba(255,255,255,0.28)"; g.fillRect(x + 3, y + 3, w * 0.3, h - 6);
+        g.fillStyle = "#d9d9d9"; g.fillRect(x + w / 2 - 1, y, 2, h);
+      }
+      if (!lit) { g.fillStyle = "#cfcfcf"; g.fillRect(0, r * 64 + 60, 128, 4); }
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    if (!lit) t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 4;
+    return t;
+  };
+  FACADE = [make(false), make(true)];
+  return FACADE;
+}
+
 export function Building({ x, z, w, d, h, color, facing = 1, night, awning }: { x: number; z: number; w: number; d: number; h: number; color: string; facing?: 1 | -1; night: boolean; awning?: string }) {
-  const rows = Math.max(1, Math.floor((h - 4) / 3.2));
+  const mats = useMemo(() => {
+    const [base, lit] = facadeTextures();
+    const floors = Math.max(1, Math.round(h / 6.4));
+    const side = (span: number) => {
+      const map = base.clone(); map.needsUpdate = true; map.repeat.set(Math.max(1, Math.round(span / 4.8)), floors);
+      const glow = lit.clone(); glow.needsUpdate = true; glow.repeat.copy(map.repeat);
+      return new THREE.MeshStandardMaterial({ color, map, roughness: 0.55, metalness: 0.1, emissive: night ? "#ffcf7a" : "#000000", emissiveMap: night ? glow : null, emissiveIntensity: night ? 0.85 : 0 });
+    };
+    const top = new THREE.MeshStandardMaterial({ color, roughness: 0.9 });
+    const sx = side(d), sz = side(w);
+    return [sx, sx, top, top, sz, sz];
+  }, [w, d, h, color, night]);
+  useEffect(() => () => { new Set(mats).forEach((m) => { m.map?.dispose(); m.emissiveMap?.dispose(); m.dispose(); }); }, [mats]);
   return (
     <group position={[x, 0, z]}>
-      <mesh position={[0, h / 2, 0]} castShadow receiveShadow><boxGeometry args={[w, h, d]} /><meshStandardMaterial color={color} roughness={0.75} /></mesh>
-      {/* the glass shopfront at street level, and lit windows above */}
-      <mesh position={[0, 1.6, (facing * d) / 2 + facing * 0.01]} rotation={[0, facing > 0 ? 0 : Math.PI, 0]}>
+      <mesh position={[0, h / 2, 0]} material={mats} castShadow receiveShadow><boxGeometry args={[w, h, d]} /></mesh>
+      {/* the glass shopfront at street level */}
+      <mesh position={[0, 1.6, (facing * d) / 2 + facing * 0.02]} rotation={[0, facing > 0 ? 0 : Math.PI, 0]}>
         <planeGeometry args={[w * 0.82, 2.6]} /><meshStandardMaterial color="#1e3a5f" emissive={night ? "#f8d48a" : "#000"} emissiveIntensity={night ? 0.5 : 0} roughness={0.15} metalness={0.4} />
       </mesh>
-      {Array.from({ length: rows }, (_, r) => (
-        <mesh key={r} position={[0, 4.6 + r * 3.2, (facing * d) / 2 + facing * 0.01]} rotation={[0, facing > 0 ? 0 : Math.PI, 0]}>
-          <planeGeometry args={[w * 0.86, 1.3]} /><meshStandardMaterial color="#334155" emissive={night ? "#fde68a" : "#000"} emissiveIntensity={night ? 0.35 : 0} roughness={0.2} metalness={0.3} />
-        </mesh>
-      ))}
-      {/* window frames: the glass bands split into windows */}
-      {rows > 0 && Array.from({ length: Math.max(2, Math.floor((w * 0.86) / 1.8)) + 1 }, (_, c) => {
-        const n = Math.max(2, Math.floor((w * 0.86) / 1.8));
-        const cx = -w * 0.43 + (c * w * 0.86) / n;
-        const top = 4.6 + (rows - 1) * 3.2 + 0.65, bottom = 3.95;
-        return (
-          <mesh key={`m${c}`} position={[cx, (top + bottom) / 2, (facing * d) / 2 + facing * 0.03]} rotation={[0, facing > 0 ? 0 : Math.PI, 0]}>
-            <planeGeometry args={[0.16, top - bottom]} /><meshStandardMaterial color={color} roughness={0.7} />
-          </mesh>
-        );
-      })}
+      {/* rooftop plant room */}
+      {h > 12 && <mesh position={[0, h + 1, 0]}><boxGeometry args={[w * 0.45, 2, d * 0.45]} /><meshStandardMaterial color="#cbd5e1" roughness={0.8} /></mesh>}
       {awning && <mesh position={[0, 3.1, (facing * d) / 2 + facing * 0.7]} rotation={[facing * 0.35, 0, 0]}><boxGeometry args={[w * 0.86, 0.06, 1.5]} /><meshStandardMaterial color={awning} /></mesh>}
     </group>
   );
 }
 
-function Villa({ x, z, facing = 1, color = "#efe6d6" }: { x: number; z: number; facing?: 1 | -1; color?: string }) {
+export function Villa({ x, z, facing = 1, color = "#efe6d6" }: { x: number; z: number; facing?: 1 | -1; color?: string }) {
   return (
     <group position={[x, 0, z]} rotation={[0, facing > 0 ? 0 : Math.PI, 0]}>
       <mesh position={[0, 0.4, 0]} receiveShadow><boxGeometry args={[11, 0.8, 11]} /><meshStandardMaterial color="#9ab973" /></mesh>

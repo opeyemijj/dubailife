@@ -79,7 +79,7 @@ export interface ApartmentRoomProps {
   /** A fixture in use (its id): in the shower, you stand under the water while it runs. */
   using?: string | null;
   /** The on-screen stick (Inside and Eye views): walk or run wherever it points, sliding round furniture. */
-  stick?: React.RefObject<{ x: number; y: number }>;
+  stick?: React.RefObject<{ x: number; y: number; sprint?: boolean }>;
   stickRun?: boolean;
   /** How far back the camera sits, when something needs the whole home in a smaller space. */
   viewDistance?: number;
@@ -119,6 +119,8 @@ export interface Person {
   carryMode?: CarryMode;
   /** Hasn't washed: flies buzz round them. */
   dirty?: boolean;
+  /** Smaller than a grown-up (children: a baby is about a third). */
+  scale?: number;
 }
 
 type LabelNodes = React.RefObject<Map<string, HTMLDivElement>>;
@@ -153,7 +155,7 @@ function PersonAvatar({ p, id, labels }: { p: Person; id: string; labels: LabelN
       const el = labels.current.get(`${id}:${suffix}`);
       if (!el) continue;
       g.getWorldPosition(v);
-      v.y += lift;
+      v.y += lift * (p.scale ?? 1) + ((p.scale ?? 1) < 1 ? 0.3 : 0);
       v.project(camera);
       el.style.display = v.z < 1 ? "" : "none";
       el.style.transform = `translate(${((v.x + 1) / 2) * size.width}px, ${((1 - v.y) / 2) * size.height}px) translate(-50%, -50%)`;
@@ -169,7 +171,7 @@ function PersonAvatar({ p, id, labels }: { p: Person; id: string; labels: LabelN
       onPointerOut={p.onClick ? () => (document.body.style.cursor = "") : undefined}
     >
       {/* Asleep: lying on the floor where they were. */}
-      <group position={!moving && p.animation === "sleep" ? [0, 0.12, 0] : [0, 0, 0]}>
+      <group position={!moving && p.animation === "sleep" ? [0, 0.12, 0] : [0, 0, 0]} scale={p.scale ?? 1}>
         <CitizenAvatar look={p.look} animation={moving ? "walk" : p.animation ?? "idle"} rotation={!moving && p.animation === "sleep" ? [-Math.PI / 2, 0, 0] : [0, 0, 0]}
           holding={p.holding} carryMode={p.holding ? (moving ? "hold" : p.carryMode ?? "hold") : undefined} />
       </group>
@@ -1392,7 +1394,8 @@ function RoomScene({
       camera.getWorldDirection(fwd);
       fwd.y = 0; fwd.normalize();
       const right = new THREE.Vector3(-fwd.z, 0, fwd.x);
-      const l = Math.hypot(sx, sy), speed = (stickRun ? 3.8 : 1.7) * mag;
+      const sprint = stickRun || !!stick?.current.sprint;
+      const l = Math.hypot(sx, sy), speed = (sprint ? 3.8 : 1.7) * mag;
       const vx = ((fwd.x * sy + right.x * sx) / l) * speed, vz = ((fwd.z * sy + right.z * sx) / l) * speed;
       // Sitting or lying: up first.
       const [cx, , cz] = pose.stand ? [pose.stand[0], 0, pose.stand[1]] : pose.position;
@@ -1407,7 +1410,7 @@ function RoomScene({
       while (diff > Math.PI) diff -= Math.PI * 2;
       const yaw = pose.yaw + diff * Math.min(1, dt * 12);
       setPose({ position: [px, 0, pz], yaw });
-      const mode = stickRun ? "run" : "walk";
+      const mode = sprint ? "run" : "walk";
       if (animation !== mode) setAnimation(mode);
       steering.current = true;
       const now = performance.now();

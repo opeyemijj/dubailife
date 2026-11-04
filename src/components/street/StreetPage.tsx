@@ -43,7 +43,9 @@ export function StreetPage() {
   const origin = useMemo(() => entranceOf(from) ?? (fromHome ? HOME_SPOT : null), [from, fromHome]);
   const originName = getPlace(from)?.name ?? (fromHome ? "Home" : getEntity(from)?.name ?? "Where you were");
   // Which part of Dubai this is: the home's area (a starter home in Deira) or where on the map.
-  const homeArea = fromHome ? (isGenericHome(from) ? genericArea(from) : HOUSING_CONFIGS[getHousingTierFromText(citizen?.home ?? "studio")]?.area) : undefined;
+  const homeArea = fromHome ? (sp.get("area") ?? (isGenericHome(from) ? genericArea(from) : HOUSING_CONFIGS[getHousingTierFromText(citizen?.home ?? "studio")]?.area)) : undefined;
+  // Where you live decides the street: a villa or townhouse opens onto a villa community, a flat onto towers.
+  const villas = sp.get("villa") === "1" || (fromHome && !isGenericHome(from) && /villa|townhouse/.test(getHousingTierFromText(citizen?.home ?? "studio")) && !sp.get("area"));
   const area = useMemo(() => streetArea(origin, homeArea), [origin, homeArea]);
   const [shopAt, setShopAt] = useState<StreetDoor | null>(null);
   const [shopNote, setShopNote] = useState<string | null>(null);
@@ -60,12 +62,12 @@ export function StreetPage() {
       .slice(0, ON_STREET);
     const places = near.map((x, i): StreetDoor => ({ id: x.p.id, name: x.p.name, icon: placeIcon(x.p.id), metres: x.m, href: placeHref(x.p.id), x: i % 2 ? -15 : 15, z: -30 - i * 34 }));
     // The local shops of this area across the road from each real place (karak, baqala, grill, gym…).
-    const locals = streetShops(area, near.length, from).map((sh, i): StreetDoor => {
+    const locals = streetShops(area, villas ? Math.min(3, near.length) : near.length, from).map((sh, i): StreetDoor => {
       const k = shopKind(sh.kind);
       return { id: `shop-${i}`, name: sh.name, icon: k.icon, metres: 25 + i * 34, href: "", x: i % 2 ? 15 : -15, z: -30 - i * 34, shop: sh.kind, color: k.color };
     });
     return [mine, ...places, ...locals];
-  }, [from, venue, fromHome, origin, originName, area]);
+  }, [from, venue, fromHome, origin, originName, area, villas]);
 
   const controls = useRef<Controls>({ x: 0, y: 0 });
   const auto = useRef<AutoWalk | null>(null);
@@ -109,13 +111,13 @@ export function StreetPage() {
 
   return (
     <main className="fixed inset-0 w-screen h-[100dvh] overflow-hidden select-none bg-sky-200 text-slate-900 overscroll-none">
-      <StreetScene doors={doors} look={citizen?.look} dirty={isDirty(citizen?.needs?.hygiene)} controls={controls} run={run} auto={auto} peers={room.peers} onMove={onMove} onNear={setNear} />
+      <StreetScene villas={villas} doors={doors} look={citizen?.look} dirty={isDirty(citizen?.needs?.hygiene)} controls={controls} run={run} auto={auto} peers={room.peers} onMove={onMove} onNear={setNear} />
 
       <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2 pointer-events-none">
         <button onClick={() => go(doors[0].href)} className="pointer-events-auto w-10 h-10 rounded-full bg-white/95 shadow-lg flex items-center justify-center" aria-label={`Back inside ${doors[0].name}`}><ArrowLeft className="w-4 h-4" /></button>
         <div className="pointer-events-auto bg-white/95 rounded-2xl shadow-lg px-3 py-1.5 min-w-0">
           <div className="font-black text-sm truncate">🚶 Outside {originName}</div>
-          <div className="text-[11px] text-slate-500 truncate">{areaLabel(area)} · {room.peers.length ? `${room.peers.length} out here with you` : "walk anywhere or tap Where to?"}</div>
+          <div className="text-[11px] text-slate-500 truncate">{villas ? "Villa community" : areaLabel(area)} · {room.peers.length ? `${room.peers.length} out here with you` : "walk anywhere or tap Where to?"}</div>
         </div>
         <div className="flex-1" />
         <button onClick={() => setWhere(true)} className="pointer-events-auto h-10 px-4 rounded-full bg-slate-900 text-white shadow-lg flex items-center gap-1.5 text-xs font-black"><MapPin className="w-4 h-4" /> Where to?</button>

@@ -28,8 +28,10 @@ const minutesFromNow = (mins: number) => new Date(Date.now() + mins * 60_000);
 
 // Venues a party can be at: clubs for club nights, pools and beach clubs for pool parties, restaurants for dinners.
 const VENUES = PLACES.flatMap((p) => p.venues.filter((v) => !v.comingSoon).map((v) => ({ place: p, venue: v })));
-const CLUBS = VENUES.filter((x) => x.place.kind === "club" || (x.venue.layout === "club" && !/entertainment/i.test(x.venue.category)));
-const POOLS = VENUES.filter((x) => x.venue.feature === "pool" && x.venue.layout !== "waterpark");
+// Yachts at Dubai Harbour take club nights and pool parties too (a yacht party).
+const YACHTS = VENUES.filter((x) => x.venue.layout === "yacht");
+const CLUBS = [...YACHTS, ...VENUES.filter((x) => x.place.kind === "club" || (x.venue.layout === "club" && !/entertainment/i.test(x.venue.category)))];
+const POOLS = [...YACHTS, ...VENUES.filter((x) => x.venue.feature === "pool" && x.venue.layout !== "waterpark")];
 const RESTAURANTS = VENUES.filter((x) => x.venue.layout === "dining" && /restaurant|dining|grill|steak|lounge|bistro|brasserie|kitchen/i.test(`${x.venue.category} ${x.venue.name}`));
 
 /** Where to start: a kind of party, and a venue already picked (opened from the venue itself). */

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { PhoneFab } from "@/components/layout/PhoneFab";
 import { ConnectionSaver } from "@/lib/idle";
+import { TapLayer } from "@/components/layout/SideBar";
 import { PartySheetHost } from "@/components/invite/PartySheetHost";
 import { Fredoka } from "next/font/google";
 import "./globals.css";
@@ -236,6 +237,7 @@ export default function RootLayout({
           <PhoneFab />
           <ConnectionSaver />
           <PartySheetHost />
+          <TapLayer />
           <HudSheets />
           <LoveListener />
           <GameInviteListener />
