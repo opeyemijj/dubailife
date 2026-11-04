@@ -560,6 +560,8 @@ function FitCamera({ width, depth }: { width: number; depth: number }) {
 const INSIDE_BACK = 6.2, INSIDE_UP = 3.8;
 /** Eye view: the camera is at head height, a hair behind the eyes, and turning it looks around. */
 const EYE_HEIGHT = 1.62;
+/** Eyes view: wide lens, camera a little behind the head (user, 2026-11-04: "too zoomed in"). */
+const EYE_FOV = 74, EYE_BACK = 0.45;
 
 function FollowCamera({ follow, inside, eye = false, boat = false }: { follow: Follow; inside: boolean; eye?: boolean; boat?: boolean }) {
   const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
@@ -569,10 +571,14 @@ function FollowCamera({ follow, inside, eye = false, boat = false }: { follow: F
   useEffect(() => {
     if (!controls) return;
     const me0 = follow.current.get("me");
+    // Eyes see wide (not zoomed in); Above has its own lens (FitCamera), Inside a little wider than Above.
+    const cam = camera as THREE.PerspectiveCamera;
+    const fov = eye ? EYE_FOV : inside ? 52 : null;
+    if (fov && cam.fov !== fov) { cam.fov = fov; cam.updateProjectionMatrix(); }
     if (eye && me0) {
       const yaw = me0.rotation.y;
       controls.target.set(me0.position.x + Math.sin(yaw) * 0.01, EYE_HEIGHT, me0.position.z + Math.cos(yaw) * 0.01);
-      camera.position.set(me0.position.x - Math.sin(yaw) * 0.12, EYE_HEIGHT, me0.position.z - Math.cos(yaw) * 0.12);
+      camera.position.set(me0.position.x - Math.sin(yaw) * EYE_BACK, EYE_HEIGHT + 0.06, me0.position.z - Math.cos(yaw) * EYE_BACK);
     } else if (inside) {
       const me = follow.current.get("me");
       if (!me) return;
@@ -1007,7 +1013,7 @@ export function InteriorScene({
         minAzimuthAngle={inside || eye || boat ? -Infinity : -0.9}
         maxAzimuthAngle={inside || eye || boat ? Infinity : 0.9}
         minDistance={eye ? 0.05 : inside ? 3 : 6}
-        maxDistance={eye ? 0.2 : inside ? 11 : boat ? 70 : Math.max(w, d) + 6}
+        maxDistance={eye ? EYE_BACK + 0.15 : inside ? 11 : boat ? 70 : Math.max(w, d) + 6}
       />
     </Canvas>
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-[1]">

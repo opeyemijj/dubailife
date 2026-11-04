@@ -5,12 +5,18 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { X } from "lucide-react";
 import { useCitizen } from "@/lib/citizenStore";
 import { kindOf, myInvites, partyDoor, type InviteRow } from "@/lib/invites";
 import { gameAudio } from "@/utils/gameAudio";
 import { primePartyAudio } from "./PartyHere";
 
+// Ones you closed with ✕: never shown again (on this device).
+const HIDDEN = "dl_hidden_back";
+const readHidden = (): string[] => { try { return JSON.parse(localStorage.getItem(HIDDEN) ?? "[]"); } catch { return []; } };
+
 export function BackToParty() {
+  const [hidden, setHidden] = useState<string[]>(() => (typeof window === "undefined" ? [] : readHidden()));
   const { citizen } = useCitizen();
   const path = usePathname() ?? "";
   const router = useRouter();
@@ -25,8 +31,9 @@ export function BackToParty() {
       const r = await myInvites();
       const now = Date.now();
       const on = (x: InviteRow) => !!x.route && Date.parse(x.startsAt) <= now && Date.parse(x.endsAt) > now;
-      const mine = r.hosting.find(on);
-      const going = r.invited.find((x) => x.status === "going" && on(x));
+      const shown = (x: InviteRow) => on(x) && !readHidden().includes(x.code);
+      const mine = r.hosting.find(shown);
+      const going = r.invited.find((x) => x.status === "going" && shown(x));
       if (alive) setLive(going ? { row: going, hosting: false } : mine ? { row: mine, hosting: true } : null);
     };
     const first = setTimeout(() => void load(), 0);
@@ -35,16 +42,24 @@ export function BackToParty() {
   }, [citizen?.id, here]);
 
   // The host is already at their party when they're home.
-  if (!live || !here || (live.hosting && path.startsWith("/home") && live.row.route?.startsWith("/property/"))) return null;
+  if (!live || !here || hidden.includes(live.row.code) || (live.hosting && path.startsWith("/home") && live.row.route?.startsWith("/property/"))) return null;
   const k = kindOf(live.row.kind);
   const go = () => {
     gameAudio.playClickSound();
     router.push(live.hosting && live.row.route?.startsWith("/property/") ? "/home" : partyDoor(live.row.route!));
   };
+  const close = () => {
+    const next = [...new Set([...hidden, live.row.code])].slice(-100);
+    setHidden(next);
+    try { localStorage.setItem(HIDDEN, JSON.stringify(next)); } catch { /* storage blocked */ }
+  };
   return (
-    <button onClick={go} className="fixed right-3 top-[calc(env(safe-area-inset-top)+7.5rem)] z-[58] max-w-[min(260px,calc(100vw-1.5rem))] flex items-center gap-2 h-11 pl-3 pr-4 rounded-full bg-fuchsia-600 text-white shadow-xl text-sm font-black">
-      <span className="w-2 h-2 rounded-full bg-white animate-pulse shrink-0" />
-      <span className="truncate">{k.icon} Back to {live.row.title}</span>
-    </button>
+    <div className="fixed right-3 top-[calc(env(safe-area-inset-top)+7.5rem)] z-[58] max-w-[min(300px,calc(100vw-1.5rem))] flex items-center h-11 rounded-full bg-fuchsia-600 text-white shadow-xl text-sm font-black">
+      <button onClick={go} className="flex items-center gap-2 h-full pl-3 pr-2 min-w-0">
+        <span className="w-2 h-2 rounded-full bg-white animate-pulse shrink-0" />
+        <span className="truncate">{k.icon} Back to {live.row.title}</span>
+      </button>
+      <button onClick={close} aria-label={`Hide: back to ${live.row.title}`} className="w-9 h-9 mr-1 shrink-0 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center"><X className="w-4 h-4" /></button>
+    </div>
   );
 }

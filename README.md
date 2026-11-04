@@ -83,6 +83,10 @@ cartoon **flies** on dirty players, and a **boat cruise** you can watch sail.
 | 28 | **Popups**: Live Space banner (party/marathon) has ✕ and stays hidden; Locals offer and Claim venue cards on top of everything | ✅ Done (2026-11-04) | `social/LiveSpaceBanner.tsx`, `VenueExperience.tsx`, `VenueOwnerLayer.tsx` |
 | 29 | **Groove removed** from party music (radio or off) | ✅ Done (2026-11-04) | `invite/PartyHere.tsx` |
 | 30 | **Battery**: 3D scenes draw 60 times a second even when still, and keep drawing behind the phone | 🟢 To do (analysis in the notes) | every `<Canvas>`, `lib/device.ts` |
+| 31 | **Purple "Back to …" pill** (parties, the marathon) gets ✕ and stays hidden | ✅ Done (2026-11-04) | `invite/BackToParty.tsx` |
+| 32 | **Eyes view less zoomed**: 74° lens, camera 0.45 m behind the head (homes and venues) | ✅ Done (2026-11-04) | `ApartmentRoom.tsx`, `InteriorScene.tsx` |
+| 33 | **Leaving a Space asks first** (✕ on the floating Space bar: Leave / Stay) | ✅ Done (2026-11-04) | `social/FloatingSpaceOverlay.tsx` |
+| 34 | **Courses: no wait between steps** (was 20 hours: next lesson and the week's test open as soon as you pass) | ✅ Done (2026-11-04), migration applied | `lib/academy/progress.ts` (`UNLOCK_HOURS`) |
 | 15 | Family, phase 2: **move in together**, and **kids shown in the 3D home** at their stage | ✅ Done (2026-11-04), needs migration `20261224000000_move_in.sql`: live together; kids in the 3D home | `lib/love.ts`, `components/phone/HayatiApp.tsx`, `ApartmentRoom.tsx`, `supabase/migrations/20261216000000_family.sql` |
 
 ### Details and "done when"
@@ -241,7 +245,7 @@ the scene, and cut per-frame label updates (drei `Html`). Expected: about half t
 
 ## Migrations waiting
 
-Everything up to `20261224000000_move_in.sql` is applied (2026-11-04). Nothing waiting. Applied in this batch:
+Everything up to `20261225000000_academy_no_wait.sql` is applied (2026-11-04). Nothing waiting. Applied in the last batches:
 - `20261221000000_send_limit.sql`: AED 50,000,000 a day, AED 20,000,000 per transfer (both in `app_settings.limits`).
 - `20261222000000_party_homes.sql`: `flats.home_of`, `party_home`, `my_party_home`, and `flat_permissions`,
   `is_flat_manager` and `create_event` accepting generic homes. Before it runs, a party at a home off the map says

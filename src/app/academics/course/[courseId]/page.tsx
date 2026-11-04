@@ -63,7 +63,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
     honors: "Pass" | "Cum Laude" | "Magna Cum Laude" | "Summa Cum Laude";
   } | null>(null);
 
-  // Progress recorded on the server: lessons in order, one new lesson (or the exam) a day.
+  // Progress recorded on the server: lessons in order, each one (and the exam) open as soon as the one before is passed.
   const [progress, setProgress] = useState<AcademyProgress | null | undefined>(undefined);
   const [stepNote, setStepNote] = useState<string | null>(null);
   const submitting = useRef(false);
@@ -138,7 +138,7 @@ export default function CourseViewerPage({ params }: { params: Promise<{ courseI
     gameAudio.playCoinSound();
     const ok = enrollInCourse(course.id, tuition.final);
     if (ok) {
-      setTimeout(() => askForPush({ icon: "📚", title: "Don't miss tomorrow's lesson", text: "Turn on notifications and we'll remind you when your next lesson unlocks." }), 1500);
+      setTimeout(() => askForPush({ icon: "📚", title: "Keep your studies going", text: "Turn on notifications for reminders about your course and new lessons." }), 1500);
       setActiveTab("lesson");
       setSelectedLessonIdx(0);
       setCurrentSlideIdx(0);

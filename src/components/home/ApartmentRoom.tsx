@@ -211,6 +211,9 @@ function PeopleLabels({ people, nodes }: { people: Person[]; nodes: LabelNodes }
 
 // ---------- models ----------
 
+/** Eyes view: a wide lens and the camera a little behind the head, so it isn't too zoomed in (user, 2026-11-04). */
+export const EYE_FOV = 74;
+export const EYE_BACK = 0.45;
 const BED_MODEL = "/models/furniture/bed.glb";
 /** Every bed's mattress top stands this high (m), whatever its width: restPose.ts lies people on it. */
 export const BED_MATTRESS = 0.6;
@@ -1068,10 +1071,15 @@ function CameraRig({
   // Pull back on narrow (portrait) screens so the whole room fits.
   useEffect(() => {
     if (!controls) return;
+    // Eyes see wide (like your own eyes: not zoomed in); the other views keep the room's lens.
+    const cam = camera as THREE.PerspectiveCamera;
+    const fov = eye && follow ? EYE_FOV : 35;
+    // eslint-disable-next-line react-hooks/immutability -- the three.js camera is changed in place
+    if (cam.fov !== fov) { cam.fov = fov; cam.updateProjectionMatrix(); }
     if (eye && follow) {
-      // Eyes: a hair behind the head, looking the way they face.
+      // Eyes: a little behind the head (so it isn't too close), looking the way they face.
       controls.target.set(follow[0] + Math.sin(followYaw) * 0.01, 1.62, follow[2] + Math.cos(followYaw) * 0.01);
-      camera.position.set(follow[0] - Math.sin(followYaw) * 0.12, 1.62, follow[2] - Math.cos(followYaw) * 0.12);
+      camera.position.set(follow[0] - Math.sin(followYaw) * EYE_BACK, 1.68, follow[2] - Math.cos(followYaw) * EYE_BACK);
       controls.update();
       return;
     }
@@ -1883,7 +1891,7 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
           minPolarAngle={props.upView ? 0.2 : props.view === "eye" ? 0.35 : props.view === "inside" ? 0.6 : 0.35}
           maxPolarAngle={props.upView ? 1.15 : props.view === "eye" ? 2.4 : props.view === "inside" ? 1.5 : 1.25}
           minDistance={props.upView ? 6 : props.view === "eye" ? 0.05 : props.view === "inside" ? 3 : 6}
-          maxDistance={props.upView ? 30 : props.view === "eye" ? 0.2 : props.view === "inside" ? 10 : 30}
+          maxDistance={props.upView ? 30 : props.view === "eye" ? EYE_BACK + 0.15 : props.view === "inside" ? 10 : 30}
         />
       </Canvas>
       <PeopleLabels people={props.people ?? []} nodes={labels} />

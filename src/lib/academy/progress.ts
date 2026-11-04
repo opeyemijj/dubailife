@@ -20,7 +20,8 @@ export interface GradeResult {
   next?: number;
 }
 
-export const UNLOCK_HOURS = 20;
+// No wait between steps (app_settings.academy.unlock_hours = 0 since 2026-11-04).
+export const UNLOCK_HOURS = 0;
 
 /** The player's server-side progress on a course, or null if nothing is recorded yet. */
 export async function academyProgress(courseId: string): Promise<AcademyProgress | null> {
