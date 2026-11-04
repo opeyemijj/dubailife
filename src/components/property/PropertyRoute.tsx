@@ -385,7 +385,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         level={level}
         onChangeLevel={changeLevel}
         onPlace={(uid, p) => place(uid, p)}
-        onPickUp={(uid) => { const f = withHomeItems(furniture, housingTier).find((x) => x.uid === uid); if (f) setPlacing({ uid, itemId: f.itemId, rot: f.placement?.kind === "floor" ? f.placement.rot : 0 }); }}
+        onPickUp={(uid) => { const f = withHomeItems(furniture, housingTier).find((x) => x.uid === uid); if (f) setPlacing({ uid, itemId: f.itemId, rot: f.placement?.kind === "floor" ? f.placement.rot : 0, layer: f.placement?.kind === "floor" ? f.placement.layer : undefined }); }}
         onPlaceBlocked={() => say("🚫 It doesn't fit there.")}
         partyDecor={party?.decor}
         lightsOut={lightsOut}
@@ -542,6 +542,8 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
           <span className="text-2xl">{placingItem.icon}</span>
           <span className="text-xs font-bold">{placingItem.kind === "wall" ? "Tap a wall" : "Tap the floor"} to place</span>
           {placingItem.kind !== "wall" && <button onClick={() => setPlacing({ ...placing, rot: (((placing.rot + 1) % 4) as Rotation) })} className="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-black">Rotate</button>}
+          {placingItem.kind !== "wall" && <button onClick={() => setPlacing({ ...placing, layer: Math.min(6, (placing.layer ?? 0) + 1) })} aria-label="Bring forward" className="px-2.5 py-1.5 rounded-xl bg-slate-100 text-xs font-black">⬆</button>}
+          {placingItem.kind !== "wall" && <button onClick={() => setPlacing({ ...placing, layer: Math.max(-3, (placing.layer ?? 0) - 1) })} aria-label="Send back" className="px-2.5 py-1.5 rounded-xl bg-slate-100 text-xs font-black">⬇</button>}
           <button onClick={() => place(placing.uid, null)} className="px-3 py-1.5 rounded-xl bg-slate-100 text-xs font-bold">Store</button>
           <button onClick={() => setPlacing(null)} className="px-3 py-1.5 rounded-xl bg-slate-100 text-xs font-bold">Cancel</button>
         </div>

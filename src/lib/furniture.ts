@@ -26,6 +26,8 @@ export interface FloorPlacement {
   level?: number;
   /** The grid it was placed on: absent for the old 14-cell homes (moved on load, see migratePlacement). */
   g?: number;
+  /** Which shows on top where pieces overlap (higher sits a little above): Bring forward / Send back. */
+  layer?: number;
 }
 
 export interface WallPlacement {
@@ -914,7 +916,12 @@ function spansOverlap(a: number, aw: number, b: number, bw: number) {
 }
 
 /** Whether `item` can go at `placement` given everything else already in the room. */
-export function isPlacementValid(item: CatalogItem, placement: Placement, others: OwnedFurniture[], ignoreUid?: string): boolean {
+/**
+ * Whether a piece can go there. By hand (`loose`), pieces may overlap and stand close (a chair on a rug, a lamp by
+ * the sofa; the layer decides which shows on top): only the room's bounds, the doorway and the window count. Placing
+ * automatically keeps everything apart.
+ */
+export function isPlacementValid(item: CatalogItem, placement: Placement, others: OwnedFurniture[], ignoreUid?: string, loose = false): boolean {
   // Only what's on the same floor matters.
   const level = levelOf(placement);
   const placed = others.filter((o) => o.uid !== ignoreUid && o.placement && levelOf(o.placement) === level);
@@ -926,6 +933,7 @@ export function isPlacementValid(item: CatalogItem, placement: Placement, others
     // The front door is downstairs only.
     if (level === 0 && placement.wall === DOOR.wall && spansOverlap(placement.offset, w, DOOR.offset, DOOR.width)) return false;
     if (placement.wall === WINDOW.wall && spansOverlap(placement.offset, w, WINDOW.offset, WINDOW.width)) return false;
+    if (loose) return true;
     return !placed.some((o) => {
       const p = o.placement!;
       const other = getCatalogItem(o.itemId);
@@ -944,6 +952,7 @@ export function isPlacementValid(item: CatalogItem, placement: Placement, others
   if (layer === "solid" && level === 0) {
     for (const [c, r] of RESERVED_CELLS) if (mine.has(`${c},${r}`)) return false;
   }
+  if (loose) return true;
   return !placed.some((o) => {
     const p = o.placement!;
     const other = getCatalogItem(o.itemId);

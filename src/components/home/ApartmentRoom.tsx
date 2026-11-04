@@ -41,6 +41,8 @@ export interface PlacingState {
   uid: string;
   itemId: string;
   rot: Rotation;
+  /** Which shows on top where it overlaps something (Bring forward / Send back). */
+  layer?: number;
 }
 
 export interface ApartmentRoomProps {
@@ -694,13 +696,17 @@ function ItemVisual({ item, ghost, activity }: { item: CatalogItem; ghost?: "val
 }
 
 
+/** How far each layer lifts a piece (metres). */
+const LAYER_STEP = 0.012;
+
 function PlacedTransform({ item, placement, children }: { item: CatalogItem | { size: [number, number] }; placement: Placement; children: React.ReactNode }) {
   if (placement.kind === "wall") {
     const t = wallTransform(item.size, placement);
     return <group position={[t.x, t.y, t.z]} rotation={[0, t.yaw, 0]}>{children}</group>;
   }
   const c = floorCenter(item.size, placement);
-  return <group position={[c.x, 0, c.z]} rotation={[0, -placement.rot * (Math.PI / 2), 0]}>{children}</group>;
+  // Overlapping pieces: the higher layer sits a hair above, so it shows on top (a rug over a rug, a chair on a rug).
+  return <group position={[c.x, (placement.layer ?? 0) * LAYER_STEP, c.z]} rotation={[0, -placement.rot * (Math.PI / 2), 0]}>{children}</group>;
 }
 
 // ---------- room shell ----------
@@ -1585,20 +1591,24 @@ function RoomScene({
   const placingItem = placing ? getCatalogItem(placing.itemId) ?? null : null;
   const busy = !!placing || !!decorating;
 
+  // The layer chosen while placing (Bring forward / Send back) goes with the piece.
+  const placingLayer = placing?.layer ?? 0;
+  const withLayer = (p: Placement): Placement => (p.kind === "floor" ? { ...p, layer: placingLayer || undefined } : p);
   // The ghost starts where the item already is (or the nearest free spot), follows the pointer,
   // and keeps its centre when rotated.
   const ghost = useMemo<Placement | null>(() => {
     if (!placing || !placingItem) return null;
+    const layered = (p: Placement): Placement => (p.kind === "floor" ? { ...p, layer: placingLayer || undefined } : p);
     const base = moved?.uid === placing.uid ? moved.placement : furniture.find((f) => f.uid === placing.uid)?.placement;
     if (base && levelOf(base) === lvl && base.kind === (placingItem.kind === "wall" ? "wall" : "floor")) {
-      return base.kind === "floor" ? floorPlacementAt(placingItem.size, placing.rot, floorCenter(placingItem.size, base), lvl) : base;
+      return layered(base.kind === "floor" ? floorPlacementAt(placingItem.size, placing.rot, floorCenter(placingItem.size, base), lvl) : base);
     }
     const others = furniture.filter((f) => f.uid !== placing.uid);
-    return findFreePlacement(placingItem, others, placingItem.kind === "wall" ? undefined : placing.rot, lvl)
-      ?? (placingItem.kind === "wall" ? { kind: "wall", wall: "north", offset: 1, ...(lvl ? { level: lvl } : {}) } : floorPlacementAt(placingItem.size, placing.rot, { x: 0, z: 0.5 }, lvl));
-  }, [placing, placingItem, moved, furniture, lvl]);
+    return layered(findFreePlacement(placingItem, others, placingItem.kind === "wall" ? undefined : placing.rot, lvl)
+      ?? (placingItem.kind === "wall" ? { kind: "wall", wall: "north", offset: 1, ...(lvl ? { level: lvl } : {}) } : floorPlacementAt(placingItem.size, placing.rot, { x: 0, z: 0.5 }, lvl)));
+  }, [placing, placingItem, moved, furniture, lvl, placingLayer]);
 
-  const ghostValid = !!(ghost && placingItem && isPlacementValid(placingItem, ghost, furniture, placing?.uid));
+  const ghostValid = !!(ghost && placingItem && isPlacementValid(placingItem, ghost, furniture, placing?.uid, true));
 
   const onFloorPointer = (e: ThreeEvent<PointerEvent> | ThreeEvent<MouseEvent>, click: boolean) => {
     if (placing && placingItem && placingItem.kind !== "wall") {
@@ -1607,7 +1617,7 @@ function RoomScene({
       setMoved({ uid: placing.uid, placement: next });
       if (click) {
         e.stopPropagation();
-        if (isPlacementValid(placingItem, next, furniture, placing.uid)) onPlace?.(placing.uid, next);
+        if (isPlacementValid(placingItem, withLayer(next), furniture, placing.uid, true)) onPlace?.(placing.uid, withLayer(next));
         else onPlaceBlocked?.();
       }
       return;
@@ -1627,7 +1637,7 @@ function RoomScene({
     setMoved({ uid: placing.uid, placement: next });
     if (click) {
       e.stopPropagation();
-      if (isPlacementValid(placingItem, next, furniture, placing.uid)) onPlace?.(placing.uid, next);
+      if (isPlacementValid(placingItem, withLayer(next), furniture, placing.uid, true)) onPlace?.(placing.uid, withLayer(next));
       else onPlaceBlocked?.();
     }
   };

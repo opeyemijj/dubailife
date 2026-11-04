@@ -112,7 +112,7 @@ export default function DecoratePage() {
     const f = furniture.find((x) => x.uid === uid);
     if (!f) return;
     gameAudio.playClickSound();
-    setPlacing({ uid, itemId: f.itemId, rot: f.placement?.kind === "floor" ? f.placement.rot : 0 });
+    setPlacing({ uid, itemId: f.itemId, rot: f.placement?.kind === "floor" ? f.placement.rot : 0, layer: f.placement?.kind === "floor" ? f.placement.layer : undefined });
   };
   const putAway = () => {
     if (!placing) return;
@@ -195,6 +195,8 @@ export default function DecoratePage() {
             <p className="text-sm font-black">{placingItem.icon} {placingItem.name}: {placingItem.kind === "wall" ? "tap a wall" : "tap the floor"}</p>
             <div className="flex gap-2">
               {placingItem.kind !== "wall" && <button onClick={() => setPlacing((p) => (p ? { ...p, rot: ((p.rot + 1) % 4) as Rotation } : p))} className="flex-1 h-10 rounded-xl bg-slate-900 text-white text-xs font-black">Rotate</button>}
+              {placingItem.kind !== "wall" && <button onClick={() => setPlacing((p) => (p ? { ...p, layer: Math.min(6, (p.layer ?? 0) + 1) } : p))} aria-label="Bring forward" className="w-11 h-10 rounded-xl bg-slate-100 text-sm font-black">⬆</button>}
+              {placingItem.kind !== "wall" && <button onClick={() => setPlacing((p) => (p ? { ...p, layer: Math.max(-3, (p.layer ?? 0) - 1) } : p))} aria-label="Send back" className="w-11 h-10 rounded-xl bg-slate-100 text-sm font-black">⬇</button>}
               {bought[placing.uid] !== undefined
                 ? <button onClick={giveBack} className="flex-1 h-10 rounded-xl bg-slate-100 text-xs font-bold">Return to store</button>
                 : <button onClick={putAway} className="flex-1 h-10 rounded-xl bg-slate-100 text-xs font-bold flex items-center justify-center gap-1"><Package className="w-3.5 h-3.5" /> Storage</button>}

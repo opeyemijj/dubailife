@@ -523,10 +523,12 @@ export default function HomePage() {
     const f = withHomeItems(furniture, housingTier).find((x) => x.uid === uid);
     if (!f) return;
     gameAudio.playClickSound();
-    setPlacing({ uid, itemId: f.itemId, rot: f.placement?.kind === "floor" ? f.placement.rot : 0 });
+    setPlacing({ uid, itemId: f.itemId, rot: f.placement?.kind === "floor" ? f.placement.rot : 0, layer: f.placement?.kind === "floor" ? f.placement.layer : undefined });
   };
 
   const rotatePlacing = () => setPlacing((p) => (p ? { ...p, rot: (((p.rot + 1) % 4) as Rotation) } : p));
+  // Where pieces overlap: which one shows on top.
+  const layerPlacing = (by: number) => setPlacing((p) => (p ? { ...p, layer: Math.max(-3, Math.min(6, (p.layer ?? 0) + by)) } : p));
 
   const storePlacing = () => {
     if (!placing) return;
@@ -658,12 +660,18 @@ export default function HomePage() {
               <div className="min-w-0">
                 <div className="font-black text-sm text-slate-900 truncate">{placingItem.name}</div>
                 <div className="text-[11px] font-semibold text-slate-500">
-                  {placingItem.kind === "wall" ? "Tap a wall to hang it." : "Tap the floor to place it."} Green means it fits.
+                  {placingItem.kind === "wall" ? "Tap a wall to hang it." : "Tap the floor to place it. It can go over a rug or close to other pieces: ⬆ ⬇ choose which is on top."}
                   <span className="hidden sm:inline"> R rotates · Esc cancels.</span>
                 </div>
               </div>
             </div>
             <div className="flex gap-2">
+              {placingItem.kind !== "wall" && (
+                <>
+                  <button onClick={() => layerPlacing(1)} aria-label="Bring forward" title="Bring forward: show on top" className="w-11 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-sm active:scale-95">⬆</button>
+                  <button onClick={() => layerPlacing(-1)} aria-label="Send back" title="Send back: go underneath" className="w-11 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-sm active:scale-95">⬇</button>
+                </>
+              )}
               {placingItem.kind !== "wall" && (
                 <button onClick={rotatePlacing} className="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs flex items-center justify-center gap-1.5 active:scale-95">
                   <RotateCw className="w-3.5 h-3.5" /> Rotate
