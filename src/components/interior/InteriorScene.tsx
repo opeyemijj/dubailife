@@ -563,7 +563,7 @@ const EYE_HEIGHT = 1.62;
 /** Eyes view: wide lens, camera a little behind the head (user, 2026-11-04: "too zoomed in"). */
 const EYE_FOV = 74, EYE_BACK = 0.45;
 
-function FollowCamera({ follow, inside, eye = false, boat = false }: { follow: Follow; inside: boolean; eye?: boolean; boat?: boolean }) {
+function FollowCamera({ follow, inside, eye = false, boat = false, hideMe = false }: { follow: Follow; inside: boolean; eye?: boolean; boat?: boolean; /** On a ride or activity: the ride draws you, so your standing self is hidden (no double). */ hideMe?: boolean }) {
   const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
   const camera = useThree((s) => s.camera);
   const last = useRef<THREE.Vector3 | null>(null);
@@ -598,8 +598,8 @@ function FollowCamera({ follow, inside, eye = false, boat = false }: { follow: F
     const me = follow.current.get("me");
     if (!controls || !me) return;
     const p = me.position;
-    // Your own body isn't in the way of your eyes.
-    me.visible = !eye;
+    // Your own body isn't in the way of your eyes, and on a ride the rider is you (so no second you standing by).
+    me.visible = !eye && !hideMe;
     if (eye) {
       // Look-around stays yours; the eyes move with you.
       const head = new THREE.Vector3(p.x, EYE_HEIGHT, p.z);
@@ -1002,7 +1002,7 @@ export function InteriorScene({
       <ActivityFXLayer activityFX={activityFX} follow={followNodes} />
       <LabelTracker labels={labels} nodes={labelNodes} follow={followNodes} />
       {!inside && !eye && !boat && <FitCamera width={w} depth={d} />}
-      <FollowCamera follow={followNodes} inside={inside || eye} eye={eye} boat={boat} />
+      <FollowCamera follow={followNodes} inside={inside || eye} eye={eye} boat={boat} hideMe={!!ride} />
       <OrbitControls
         makeDefault
         target={TARGET}
