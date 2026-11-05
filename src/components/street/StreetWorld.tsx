@@ -143,8 +143,8 @@ function Blocks({ doors, from, to, night, villas = false, lot }: { doors: Street
         return (
           <group key={d.id}>
             {d.mine && villas ? (
-              <group position={[s * 21, 0, d.z]} rotation={[0, s > 0 ? -Math.PI / 2 : Math.PI / 2, 0]}>
-                {lot ? <ModernVilla /> : <Villa x={0} z={0} color="#f3ead8" />}
+              <group position={[s * (lot ? 22.6 : 21), 0, d.z]} rotation={[0, s > 0 ? -Math.PI / 2 : Math.PI / 2, 0]}>
+                {lot ? <><VillaPlot /><ModernVilla /></> : <Villa x={0} z={0} color="#f3ead8" />}
                 {/* Your plot beside it: the pool on one side, the driveway with your car on the other. */}
                 {lot?.pool && <VillaPool />}
                 {lot && <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-8.5, 0.02, 2]}><planeGeometry args={[5, 9]} /><meshStandardMaterial color="#a8a29e" /></mesh>}
@@ -204,16 +204,67 @@ function Traffic({ from, to }: { from: number; to: number }) {
 }
 
 
+/** Your villa's whole plot as one walled unit: a lawn under the house, the pool and the driveway, a garden wall all
+    the way round, a small gate to the front door and a sliding gate where the car drives out. In the villa's frame
+    (street towards +z; the driveway is on the -x side, the pool on the +x side). */
+const PLOT = { minX: -12.5, maxX: 12.5, back: -6.2, front: 6.6, h: 1.8 };
+function VillaPlot() {
+  const wall = "#efe6d4", cap = "#d6cbb5";
+  const { minX, maxX, back, front, h } = PLOT;
+  // Front wall pieces between the car gate (x -11…-6) and the door gate (x -4.3…-2.5).
+  const fronts: Array<[number, number]> = [[minX, -11], [-6, -4.3], [-2.5, maxX]];
+  const seg = (x0: number, z0: number, x1: number, z1: number, key: string) => {
+    const len = Math.hypot(x1 - x0, z1 - z0), alongX = Math.abs(x1 - x0) > Math.abs(z1 - z0);
+    return (
+      <group key={key} position={[(x0 + x1) / 2, 0, (z0 + z1) / 2]}>
+        <mesh position={[0, h / 2, 0]} castShadow receiveShadow><boxGeometry args={alongX ? [len, h, 0.28] : [0.28, h, len]} /><meshStandardMaterial color={wall} roughness={0.85} /></mesh>
+        <mesh position={[0, h + 0.05, 0]}><boxGeometry args={alongX ? [len + 0.1, 0.1, 0.4] : [0.4, 0.1, len + 0.1]} /><meshStandardMaterial color={cap} /></mesh>
+      </group>
+    );
+  };
+  const pillar = (x: number, z: number, lamp = false) => (
+    <group key={`p${x}:${z}`} position={[x, 0, z]}>
+      <mesh position={[0, (h + 0.3) / 2, 0]}><boxGeometry args={[0.55, h + 0.3, 0.55]} /><meshStandardMaterial color={cap} /></mesh>
+      {lamp && <mesh position={[0, h + 0.5, 0]}><boxGeometry args={[0.25, 0.3, 0.25]} /><meshStandardMaterial color="#fde68a" emissive="#fbbf24" emissiveIntensity={0.9} /></mesh>}
+    </group>
+  );
+  return (
+    <group>
+      {/* one lawn for the whole plot */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[(minX + maxX) / 2, 0.03, (back + front) / 2]} receiveShadow>
+        <planeGeometry args={[maxX - minX, front - back]} /><meshStandardMaterial color="#6fa356" roughness={1} />
+      </mesh>
+      {/* the wall: back, sides, and the front either side of the two gates */}
+      {seg(minX, back, maxX, back, "back")}
+      {seg(minX, back, minX, front, "left")}
+      {seg(maxX, back, maxX, front, "right")}
+      {fronts.map(([a, b], i) => seg(a, front, b, front, `f${i}`))}
+      {[[minX, back], [maxX, back], [minX, front], [maxX, front]].map(([x, z]) => pillar(x, z))}
+      {/* the sliding car gate: dark metal bars, closed, the driveway behind it */}
+      {pillar(-11, front, true)}{pillar(-6, front, true)}
+      <group position={[-8.5, 0, front]}>
+        <mesh position={[0, 0.12, 0]}><boxGeometry args={[4.9, 0.08, 0.12]} /><meshStandardMaterial color="#1f2937" metalness={0.7} roughness={0.35} /></mesh>
+        <mesh position={[0, 1.55, 0]}><boxGeometry args={[4.9, 0.08, 0.12]} /><meshStandardMaterial color="#1f2937" metalness={0.7} roughness={0.35} /></mesh>
+        {Array.from({ length: 15 }, (_, i) => <mesh key={i} position={[-2.35 + i * 0.335, 0.83, 0]}><boxGeometry args={[0.06, 1.45, 0.06]} /><meshStandardMaterial color="#1f2937" metalness={0.7} roughness={0.35} /></mesh>)}
+      </group>
+      {/* the small gate to the front door */}
+      {pillar(-4.3, front, true)}{pillar(-2.5, front, true)}
+      <group position={[-3.4, 0, front]}>
+        {Array.from({ length: 5 }, (_, i) => <mesh key={i} position={[-0.6 + i * 0.3, 0.7, 0]}><boxGeometry args={[0.05, 1.3, 0.05]} /><meshStandardMaterial color="#1f2937" metalness={0.7} /></mesh>)}
+        <mesh position={[0, 1.35, 0]}><boxGeometry args={[1.5, 0.06, 0.08]} /><meshStandardMaterial color="#1f2937" metalness={0.7} /></mesh>
+      </group>
+    </group>
+  );
+}
+
 /** Your own villa as you step out of it: a modern two-storey Dubai villa (white render, tall glass, a flat roof with
     a deep overhang, a balcony, an entrance canopy with lights), on a lawn with palms. Its front faces +z (the street). */
 function ModernVilla() {
   const glass = <meshStandardMaterial color="#1e3a5f" metalness={0.6} roughness={0.08} emissive="#f8d48a" emissiveIntensity={0.08} />;
   return (
     <group>
-      {/* lawn, garden wall with a gate gap, and the path to the door */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]} receiveShadow><planeGeometry args={[13, 13]} /><meshStandardMaterial color="#6fa356" roughness={1} /></mesh>
-      {[-1, 1].map((k) => <mesh key={k} position={[k * 4.1, 0.55, 6.4]}><boxGeometry args={[4.8, 1.1, 0.25]} /><meshStandardMaterial color="#efe6d4" /></mesh>)}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 4]}><planeGeometry args={[1.8, 5]} /><meshStandardMaterial color="#d6d3d1" /></mesh>
+      {/* the path from the gate to the front door */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-3.4, 0.045, 4.5]}><planeGeometry args={[1.6, 4.2]} /><meshStandardMaterial color="#d6d3d1" /></mesh>
       {/* ground floor: white, mostly glass at the front */}
       <mesh position={[0, 1.7, -1.2]} castShadow receiveShadow><boxGeometry args={[9, 3.4, 7]} /><meshStandardMaterial color="#f8f6f1" roughness={0.6} /></mesh>
       <mesh position={[0.6, 1.5, 2.32]}><planeGeometry args={[6.4, 2.6]} />{glass}</mesh>
