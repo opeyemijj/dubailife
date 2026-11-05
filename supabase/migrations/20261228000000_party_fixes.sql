@@ -2,6 +2,7 @@
 -- 1. "There's already a party there" was wrong: a shared visit link for the home (kind 'visit', valid a month) counted
 --    as a party at that time. Only events count now.
 -- 2. The host can end any party now (pool parties and seminars too).
+-- 2b. Making a new party where I already have one ends mine (or calls off an upcoming one) instead of refusing.
 -- 3. A party nobody is at ends by itself: everyone there checks in every minute (party_ping); one empty for 5 minutes
 --    is ended (every minute, by cron).
 
@@ -39,7 +40,22 @@ begin
     v_route := '/place/' || p_place || '/' || p_venue;
   end if;
   -- Only one party at a time in a place, so everyone arriving knows whose it is.
-  -- Only events count (not the month-long visit links people share for a home).
+  -- My own party there at that time makes way for the new one: on now, it ends; still to come, it's called off
+  -- (with any tickets refunded, as cancel_invite does). Only events count (not the month-long visit links people
+  -- share for a home), and someone else's party there still blocks mine.
+  update invites set ends_at = now(), lights_out = false
+    where invites.route = v_route and host_id = me and not cancelled and invites.kind in ('house_party', 'dinner', 'club_night', 'pool_party', 'seminar')
+      and starts_at <= now() and ends_at > now() and starts_at < p_starts_at + make_interval(hours => hours) and ends_at > p_starts_at;
+  for iid in select id from invites
+    where invites.route = v_route and host_id = me and not cancelled and invites.kind in ('house_party', 'dinner', 'club_night', 'pool_party', 'seminar')
+      and starts_at > now() and starts_at < p_starts_at + make_interval(hours => hours) and ends_at > p_starts_at
+  loop
+    perform coin_move(me, -g.paid, 'refund', 'Ticket refunded: event replaced', 'ticket-unsale:' || iid || ':' || g.user_id),
+            coin_move(g.user_id, g.paid, 'refund', 'Ticket refunded: event called off', 'ticket-refund:' || iid || ':' || g.user_id)
+      from invite_guests g where g.invite_id = iid and g.paid > 0;
+    update invites set cancelled = true where id = iid;
+  end loop;
+  iid := null;
   if exists (select 1 from invites where invites.route = v_route and not cancelled and invites.kind in ('house_party', 'dinner', 'club_night', 'pool_party', 'seminar')
              and starts_at < p_starts_at + make_interval(hours => hours) and ends_at > p_starts_at) then
     raise exception 'place_taken';

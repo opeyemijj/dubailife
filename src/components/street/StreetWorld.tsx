@@ -144,15 +144,15 @@ function Blocks({ doors, from, to, night, villas = false, lot }: { doors: Street
           <group key={d.id}>
             {d.mine && villas ? (
               <group position={[s * 21, 0, d.z]} rotation={[0, s > 0 ? -Math.PI / 2 : Math.PI / 2, 0]}>
-                <Villa x={0} z={0} color="#f3ead8" />
+                {lot ? <ModernVilla /> : <Villa x={0} z={0} color="#f3ead8" />}
                 {/* Your plot beside it: the pool on one side, the driveway with your car on the other. */}
                 {lot?.pool && <VillaPool />}
                 {lot && <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-8.5, 0.02, 2]}><planeGeometry args={[5, 9]} /><meshStandardMaterial color="#a8a29e" /></mesh>}
                 {lot?.car && <group position={[-8.5, 0, 2.5]}><Suspense fallback={null}><CarModel car={lot.car.car} plate={lot.car.plate} /></Suspense></group>}
               </group>
             ) : <Building x={s * 22} z={d.z} w={13} d={13} h={d.mine ? 18 : d.shop ? 14 + (d.name.length % 3) * 8 : 9 + (d.name.length % 4) * 3} color={d.mine ? "#e7e0d2" : d.shop ? "#e9e2d4" : "#f1ede4"} facing={s > 0 ? -1 : 1} night={night} awning={d.mine ? undefined : d.color ?? ["#0f766e", "#b91c1c", "#1d4ed8", "#a16207"][d.name.length % 4]} />}
-            {/* the door, glowing so it's easy to find */}
-            <mesh position={[s * 15.4, 1.2, d.z]} rotation={[0, s > 0 ? -Math.PI / 2 : Math.PI / 2, 0]}>
+            {/* the door, glowing so it's easy to find (your own villa has its real front door) */}
+            <mesh visible={!(d.mine && lot)} position={[s * 15.4, 1.2, d.z]} rotation={[0, s > 0 ? -Math.PI / 2 : Math.PI / 2, 0]}>
               <planeGeometry args={[1.8, 2.4]} /><meshStandardMaterial color={d.mine ? "#7c2d12" : "#0f172a"} emissive={d.mine ? "#f59e0b" : "#38bdf8"} emissiveIntensity={0.35} />
             </mesh>
             <Html position={[s * 15.2, 3.3, d.z]} center zIndexRange={[10, 0]} distanceFactor={14}>
@@ -203,6 +203,40 @@ function Traffic({ from, to }: { from: number; to: number }) {
   );
 }
 
+
+/** Your own villa as you step out of it: a modern two-storey Dubai villa (white render, tall glass, a flat roof with
+    a deep overhang, a balcony, an entrance canopy with lights), on a lawn with palms. Its front faces +z (the street). */
+function ModernVilla() {
+  const glass = <meshStandardMaterial color="#1e3a5f" metalness={0.6} roughness={0.08} emissive="#f8d48a" emissiveIntensity={0.08} />;
+  return (
+    <group>
+      {/* lawn, garden wall with a gate gap, and the path to the door */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]} receiveShadow><planeGeometry args={[13, 13]} /><meshStandardMaterial color="#6fa356" roughness={1} /></mesh>
+      {[-1, 1].map((k) => <mesh key={k} position={[k * 4.1, 0.55, 6.4]}><boxGeometry args={[4.8, 1.1, 0.25]} /><meshStandardMaterial color="#efe6d4" /></mesh>)}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 4]}><planeGeometry args={[1.8, 5]} /><meshStandardMaterial color="#d6d3d1" /></mesh>
+      {/* ground floor: white, mostly glass at the front */}
+      <mesh position={[0, 1.7, -1.2]} castShadow receiveShadow><boxGeometry args={[9, 3.4, 7]} /><meshStandardMaterial color="#f8f6f1" roughness={0.6} /></mesh>
+      <mesh position={[0.6, 1.5, 2.32]}><planeGeometry args={[6.4, 2.6]} />{glass}</mesh>
+      {[-2.6, -0.4, 1.8, 3.8].map((x) => <mesh key={x} position={[x, 1.5, 2.34]}><boxGeometry args={[0.08, 2.6, 0.04]} /><meshStandardMaterial color="#d1d5db" metalness={0.7} /></mesh>)}
+      {/* the front door with its canopy and two lights */}
+      <mesh position={[-3.4, 1.3, 2.33]}><planeGeometry args={[1.2, 2.5]} /><meshStandardMaterial color="#5b3a22" roughness={0.5} /></mesh>
+      <mesh position={[-3.4, 2.8, 2.9]}><boxGeometry args={[2.2, 0.15, 1.4]} /><meshStandardMaterial color="#e5e7eb" /></mesh>
+      {[-4.25, -2.55].map((x) => <mesh key={x} position={[x, 2.1, 2.4]}><boxGeometry args={[0.12, 0.3, 0.12]} /><meshStandardMaterial color="#fde68a" emissive="#fbbf24" emissiveIntensity={0.8} /></mesh>)}
+      {/* upper floor, set back, with a glass balcony */}
+      <mesh position={[1, 4.9, -2]} castShadow><boxGeometry args={[7, 3, 5.4]} /><meshStandardMaterial color="#f4f1ea" roughness={0.6} /></mesh>
+      <mesh position={[1, 4.8, 0.72]}><planeGeometry args={[5.4, 2.2]} />{glass}</mesh>
+      <mesh position={[1, 3.45, 1.6]}><boxGeometry args={[7.4, 0.12, 1.8]} /><meshStandardMaterial color="#e7e5e4" /></mesh>
+      <mesh position={[1, 3.95, 2.48]}><boxGeometry args={[7.4, 0.9, 0.04]} /><meshStandardMaterial color="#bae6fd" transparent opacity={0.4} /></mesh>
+      {/* flat roofs with deep overhangs, and wooden slats on the side */}
+      <mesh position={[0, 3.45, -1.2]}><boxGeometry args={[9.6, 0.25, 7.8]} /><meshStandardMaterial color="#e7e5e4" /></mesh>
+      <mesh position={[1, 6.5, -1.6]}><boxGeometry args={[8, 0.25, 6.6]} /><meshStandardMaterial color="#e7e5e4" /></mesh>
+      {Array.from({ length: 7 }, (_, i) => <mesh key={i} position={[-2.35, 4.9, -0.2 - i * 0.45]}><boxGeometry args={[0.06, 2.8, 0.18]} /><meshStandardMaterial color="#a16207" /></mesh>)}
+      {/* palms and planting along the front */}
+      {[[-5.4, 4.6], [5.4, 4.6]].map(([x, z]) => <StreetPalm key={x} x={x} z={z} h={6} />)}
+      {[-1.6, 1.6].map((x) => <mesh key={x} position={[x, 0.35, 4.6]}><sphereGeometry args={[0.5, 12, 8]} /><meshStandardMaterial color="#2f7d32" roughness={1} /></mesh>)}
+    </group>
+  );
+}
 
 /** A villa's pool, beside the house (in the villa's own frame: the street is towards +z). */
 function VillaPool() {
@@ -421,8 +455,9 @@ export function StreetScene({ doors, look, dirty, controls, run, auto, peers, on
   const mine = doors.find((d) => d.mine);
   const start: [number, number] = [12.8, (mine?.z ?? 6) - 1.5];
   const from = 40, to = Math.min(...doors.map((d) => d.z)) - 60;
+  // From your own villa: framed on your house, its pool and your car. Otherwise behind you, down the street.
   return (
-    <Canvas shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false} dpr={quality.dpr} camera={{ position: [start[0] - 10, 10, start[1] + 13], fov: 66 }}>
+    <Canvas shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false} dpr={quality.dpr} camera={{ position: lot ? [start[0] - 26, 13, start[1] + 2] : [start[0] - 10, 10, start[1] + 13], fov: 66 }}>
       <SkyAndLight sky={sky} />
       <fog attach="fog" args={[night ? "#0b1324" : "#dbe7f3", 110, 420]} />
       <Street from={from} to={to} night={night} />
@@ -434,7 +469,7 @@ export function StreetScene({ doors, look, dirty, controls, run, auto, peers, on
       {peers.map((p) => <Walker key={p.userId} peer={p} />)}
       <Me look={look} dirty={dirty} controls={controls} run={run} auto={auto} start={start} limits={[from - 5, to + 5]} onMove={onMove} onNear={onNear} doors={doors} />
       {/* A wide view behind you: drag to look around, pinch to zoom. */}
-      <OrbitControls makeDefault target={[start[0], 1.4, start[1]]} enablePan={false} enableDamping minDistance={4} maxDistance={22} minPolarAngle={0.35} maxPolarAngle={1.45} />
+      <OrbitControls makeDefault target={lot ? [start[0] + 3, 2.4, start[1]] : [start[0], 1.4, start[1]]} enablePan={false} enableDamping minDistance={4} maxDistance={lot ? 40 : 22} minPolarAngle={0.35} maxPolarAngle={1.45} />
     </Canvas>
   );
 }
