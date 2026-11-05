@@ -25,6 +25,11 @@ const WHEN = [
 const at = (iso: string) => new Date(iso).toLocaleString("en-GB", { timeZone: "Asia/Dubai", weekday: "short", hour: "numeric", minute: "2-digit" });
 const aed = (n: number) => `AED ${n.toLocaleString()}`;
 const minutesFromNow = (mins: number) => new Date(Date.now() + mins * 60_000);
+/** A date as the datetime-local input wants it (local time, to the minute). */
+const localInput = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+/** From now to 7 days ahead (what the server accepts). */
+const scheduleRange = () => ({ min: localInput(new Date()), max: localInput(new Date(Date.now() + 7 * 86_400_000 - 60_000)) });
+const inNextWeek = (d: Date) => !Number.isNaN(d.getTime()) && d.getTime() >= Date.now() - 600_000 && d.getTime() <= Date.now() + 7 * 86_400_000;
 
 // Venues a party can be at: clubs for club nights, pools and beach clubs for pool parties, restaurants for dinners.
 const VENUES = PLACES.flatMap((p) => p.venues.filter((v) => !v.comingSoon).map((v) => ({ place: p, venue: v })));
@@ -67,6 +72,9 @@ export function PartySheet({ flat, start, onClose, noRoom }: {
   const [q, setQ] = useState("");
   const [title, setTitle] = useState("");
   const [mins, setMins] = useState<number>(0);
+  // A chosen date and time (datetime-local text), instead of the quick choices.
+  const [whenAt, setWhenAt] = useState("");
+  const [whenRange] = useState(scheduleRange);
   const [decor, setDecor] = useState<string[]>([]);
   const [everyone, setEveryone] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -97,7 +105,10 @@ export function PartySheet({ flat, start, onClose, noRoom }: {
     if (cost > (citizen?.balance ?? 0)) { setError(`The decorations cost ${aed(cost)}.`); return; }
     setBusy(true);
     setError(null);
-    const starts = minutesFromNow(mins);
+    const starts = whenAt ? new Date(whenAt) : minutesFromNow(mins);
+    if (whenAt && !inNextWeek(starts)) {
+      setBusy(false); setError("Pick a time in the next 7 days."); return;
+    }
     // A home off the map gets its address now.
     let homeAt = flat ? { id: flat.id, route: flat.route } : null;
     if (home && flat?.prepare) {
@@ -112,7 +123,7 @@ export function PartySheet({ flat, start, onClose, noRoom }: {
     if (!r.code) { setError(r.error ?? "Couldn't make the party."); return; }
     gameAudio.playCoinSound();
     if (everyone) {
-      broadcastCityPulse({ kind: "party", icon: k.icon, title: `@${citizen?.username ?? "someone"}: ${name}`, subtitle: `${where} · ${mins ? `starts ${at(starts.toISOString())}` : "happening now"}`, href: `/i/${r.code}`, cta: "See invite ›", from: citizen?.username ?? "someone" });
+      broadcastCityPulse({ kind: "party", icon: k.icon, title: `@${citizen?.username ?? "someone"}: ${name}`, subtitle: `${where} · ${whenAt || mins ? `starts ${at(starts.toISOString())}` : "happening now"}`, href: `/i/${r.code}`, cta: "See invite ›", from: citizen?.username ?? "someone" });
     }
     setMade({ code: r.code, title: name });
   };
@@ -195,8 +206,14 @@ export function PartySheet({ flat, start, onClose, noRoom }: {
             <input value={title} onChange={(e) => setTitle(e.target.value.slice(0, 60))} placeholder={name} aria-label="Party name"
               className="w-full h-11 rounded-xl bg-slate-50 border border-slate-200 px-3 font-bold outline-none" />
             <div className="grid grid-cols-4 gap-1.5">
-              {WHEN.map((w) => <button key={w.label} onClick={() => setMins(w.mins)} className={`h-10 rounded-xl text-xs font-black ${mins === w.mins ? "bg-fuchsia-600 text-white" : "bg-slate-100 text-slate-700"}`}>{w.label}</button>)}
+              {WHEN.map((w) => <button key={w.label} onClick={() => { setMins(w.mins); setWhenAt(""); }} className={`h-10 rounded-xl text-xs font-black ${!whenAt && mins === w.mins ? "bg-fuchsia-600 text-white" : "bg-slate-100 text-slate-700"}`}>{w.label}</button>)}
             </div>
+            {/* Scheduled: any date and time in the next 7 days; share the link now, it opens on the day. */}
+            <label className={`flex items-center gap-2 h-11 rounded-xl px-3 border ${whenAt ? "border-fuchsia-500 bg-fuchsia-50" : "border-slate-200 bg-slate-50"}`}>
+              <span className="text-xs font-black text-slate-600 shrink-0">📅 Pick a date &amp; time</span>
+              <input type="datetime-local" value={whenAt} min={whenRange.min} max={whenRange.max}
+                onChange={(e) => setWhenAt(e.target.value)} aria-label="Party date and time" className="flex-1 min-w-0 bg-transparent text-sm font-bold outline-none" />
+            </label>
 
             <div className="space-y-1.5">
               <p className="text-xs font-black uppercase tracking-wider text-slate-400">Entry</p>

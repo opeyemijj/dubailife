@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { arriveAt, endParty, partyHere, PARTIES, kindOf, type PartyHere } from "@/lib/invites";
+import { arriveAt, endParty, partyHere, pingParty, PARTIES, kindOf, type PartyHere } from "@/lib/invites";
 import { InviteSheet } from "./InviteSheet";
 import { activeSpaceId, hostNewSpace, joinSpace, leaveSpace, lockSpace, spaceExists } from "@/lib/spaces";
 import { supabase } from "@/lib/supabase/client";
@@ -44,6 +44,13 @@ export function usePartyHere(route: string | null, arrive: boolean): PartyHere |
     endChannels.set(code, ch);
     return () => { enders.delete(code); endChannels.delete(code); void supabase().removeChannel(ch); };
   }, [code, host, isHost]);
+  // While I'm here, the party isn't empty: a check-in now and every minute (an empty party ends after 5 minutes).
+  useEffect(() => {
+    if (!code) return;
+    void pingParty(code);
+    const t = setInterval(() => { if (document.visibilityState === "visible") void pingParty(code); }, 60_000);
+    return () => clearInterval(t);
+  }, [code]);
   useEffect(() => {
     if (!route) return;
     let live = true;

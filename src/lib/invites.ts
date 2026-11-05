@@ -131,6 +131,8 @@ export async function arriveAt(route: string): Promise<{ code: string; title: st
 /** The host turns the lights out (or back on) for everyone at the party. */
 export async function setPartyLights(code: string, out: boolean) { await supabase().rpc("party_lights", { p_code: code, p_out: out }); }
 /** The host ends the party that's on now. Everyone there is told straight away (see usePartyHere). */
+/** I'm at this party (host or guest): it isn't empty. A party nobody checks into for 5 minutes ends by itself. */
+export async function pingParty(code: string) { await supabase().rpc("party_ping", { p_code: code }); }
 export async function endParty(code: string): Promise<boolean> {
   const { error } = await supabase().rpc("end_party", { p_code: code });
   return !error;

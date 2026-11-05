@@ -10,6 +10,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { CitizenAvatar } from "@/components/avatar/CitizenAvatar";
+import { CarModel } from "@/components/cars/CarModel";
 import type { AvatarLookProps } from "@/components/avatar/roster";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { TAXI, taxiQuote } from "@/lib/transit";
@@ -27,8 +28,12 @@ const PAVE_X = ROAD.half + ROAD.median / 2 + 1.6;
 
 interface Hud { stage: Stage; meter: number; speed: number; km: number; message: string; subtitle: string; progress: number }
 
-export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCancel }: {
+/** A ride booked in an app (Yalla Ride): your class of car and driver instead of a taxi, already paid. */
+export interface BookedRide { app: string; name: string; icon: string; color: string; model3d: string; paid: number }
+
+export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCancel, ride }: {
   metres: number; destination: string; look?: AvatarLookProps;
+  ride?: BookedRide;
   /** Charges the fare (with any tip); false when the citizen can't pay. */
   onPay: (amount: number) => boolean;
   onArrive: () => void;
@@ -52,6 +57,12 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => { warmUpVoices(); const id = setInterval(() => setShown({ ...hudRef.current }), 120); return () => { clearInterval(id); stopLoops(); stopSpeech(); }; }, []);
+  // A booked ride: the driver is already on the way when this opens.
+  useEffect(() => {
+    if (!ride) return;
+    const t = setTimeout(() => { directorRef.current = { stage: "pullup", t: 0, said: -1, salik: false, tick: 0 }; hudRef.current.stage = "pullup"; }, 600);
+    return () => clearTimeout(t);
+  }, [ride]);
 
   const hail = () => { directorRef.current = { stage: "pullup", t: 0, said: -1, salik: false, tick: 0 }; hudRef.current.stage = "pullup"; };
   const pay = (how: "card" | "cash") => {
@@ -63,8 +74,9 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
     setShown({ ...hudRef.current });
   };
   const skip = () => {
-    // Skipping still pays the fare (no tip).
+    // Skipping still pays the fare (no tip); a booked ride is already paid.
     stopLoops(); stopSpeech();
+    if (ride) { onArrive(); return; }
     if (!onPay(quote.total)) { setError("Not enough AED for the fare."); return; }
     onArrive();
   };
@@ -82,21 +94,21 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
           <CityBlocks travel={travel} sky={sky} districtAt={districtAt} />
           <BurjKhalifa travel={travel} p={120} x={-150} />
           {quote.salik > 0 && <SalikGate travel={travel} p={salikAt} />}
-          <TheTaxi taxiRef={taxiRef} roof={roof} inside={view !== "outside" && ["ride", "arrive", "pay"].includes(shown.stage)} meter={shown.meter} />
+          <TheTaxi taxiRef={taxiRef} roof={roof} inside={view !== "outside" && ["ride", "arrive", "pay"].includes(shown.stage)} meter={shown.meter} ride={ride} />
           <Rider look={look} taxiRef={taxiRef} directorRef={directorRef} />
-          <Director travelRef={travel} taxiRef={taxiRef} directorRef={directorRef} hudRef={hudRef} quote={quote} length={length} salikAt={salikAt} view={view} />
+          <Director travelRef={travel} taxiRef={taxiRef} directorRef={directorRef} hudRef={hudRef} quote={quote} length={length} salikAt={salikAt} view={view} booked={!!ride} />
         </Canvas>
 
         {/* Top: where you're going, the meter, the speed */}
         <div className="absolute top-3 inset-x-3 flex justify-center pointer-events-none">
           <div className="w-full max-w-xl rounded-2xl bg-slate-950/85 text-white shadow-2xl backdrop-blur px-4 py-3 pointer-events-auto">
             <div className="flex items-center gap-2">
-              <span className="text-xl">🚕</span>
+              <span className="text-xl">{ride ? ride.icon : "🚕"}</span>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-black truncate">Dubai Taxi · to {destination}</div>
-                <div className="text-[11px] text-slate-300 truncate">≈ {quote.km.toFixed(1)} km · AED {quote.flag.toFixed(2)} flag-fall · AED {TAXI.perKm.toFixed(2)}/km{quote.salik ? ` · Salik AED ${quote.salik}` : ""}</div>
+                <div className="text-sm font-black truncate">{ride ? `${ride.app} ${ride.name}` : "Dubai Taxi"} · to {destination}</div>
+                <div className="text-[11px] text-slate-300 truncate">{ride ? `≈ ${quote.km.toFixed(1)} km · paid AED ${ride.paid.toLocaleString()} in the app` : `≈ ${quote.km.toFixed(1)} km · AED ${quote.flag.toFixed(2)} flag-fall · AED ${TAXI.perKm.toFixed(2)}/km${quote.salik ? ` · Salik AED ${quote.salik}` : ""}`}</div>
               </div>
-              <div className="rounded-lg bg-black px-2.5 py-1 font-mono text-lg font-black text-emerald-400 tabular-nums">{shown.meter.toFixed(2)}</div>
+              {!ride && <div className="rounded-lg bg-black px-2.5 py-1 font-mono text-lg font-black text-emerald-400 tabular-nums">{shown.meter.toFixed(2)}</div>}
               <button onClick={() => { const m = !muted; setMuted(m); setTransitMuted(m); }} className="w-8 h-8 rounded-lg bg-white/10 text-sm" aria-label={muted ? "Sound on" : "Sound off"}>{muted ? "🔇" : "🔊"}</button>
               {!["pay", "done"].includes(shown.stage) && (
                 <button onClick={() => (shown.stage === "kerb" || shown.stage === "pullup" ? onCancel() : skip())} className="h-8 px-2.5 rounded-lg bg-white/10 text-xs font-black">{shown.stage === "kerb" || shown.stage === "pullup" ? "Cancel" : "Skip ⏭"}</button>
@@ -112,7 +124,8 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
 
         <div className="absolute bottom-[max(1.25rem,env(safe-area-inset-bottom))] inset-x-3 flex flex-col items-center gap-2">
           {error && <p className="rounded-xl bg-rose-600 text-white text-xs font-black px-3 py-2">{error}</p>}
-          {shown.stage === "kerb" && <button onClick={hail} className="h-16 px-6 rounded-[1.5rem] bg-amber-400 text-slate-950 font-black text-lg shadow-2xl active:scale-95">✋ Hail a taxi</button>}
+          {shown.stage === "kerb" && ride && <div className="rounded-2xl bg-white/95 px-4 py-2.5 text-sm font-black text-slate-900 shadow-xl">{ride.icon} Your {ride.name} driver is arriving…</div>}
+          {shown.stage === "kerb" && !ride && <button onClick={hail} className="h-16 px-6 rounded-[1.5rem] bg-amber-400 text-slate-950 font-black text-lg shadow-2xl active:scale-95">✋ Hail a taxi</button>}
           {shown.stage === "ride" && (
             <div className="flex flex-wrap justify-center gap-2">
               {(["seat", "window", "outside"] as View[]).map((v) => (
@@ -122,7 +135,15 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
               ))}
             </div>
           )}
-          {shown.stage === "pay" && (
+          {shown.stage === "pay" && ride && (
+            <div className="w-full max-w-sm rounded-[1.75rem] bg-white text-slate-900 shadow-2xl p-5 space-y-3 text-center">
+              <div className="text-4xl">{ride.icon}</div>
+              <h2 className="text-lg font-black">You&apos;ve arrived: {destination}</h2>
+              <p className="text-sm text-slate-500">{quote.km.toFixed(1)} km · paid AED {ride.paid.toLocaleString()} in {ride.app}</p>
+              <button onClick={() => { doorThud(); onArrive(); }} className="w-full h-12 rounded-2xl bg-emerald-600 text-white font-black">Step out</button>
+            </div>
+          )}
+          {shown.stage === "pay" && !ride && (
             <div className="w-full max-w-sm rounded-[1.75rem] bg-white text-slate-900 shadow-2xl p-5 space-y-3">
               <div className="text-center"><div className="text-3xl">🧾</div><h2 className="text-lg font-black">We&apos;re here: {destination}</h2></div>
               <dl className="text-sm space-y-1">
@@ -169,7 +190,7 @@ function MeterScreen({ value }: { value: number }) {
 }
 
 /** The taxi: outside, a cream saloon with its coloured roof; inside, the cabin seen from the back seat. */
-function TheTaxi({ taxiRef, roof, inside, meter }: { taxiRef: React.RefObject<{ z: number; x: number; door: number }>; roof: string; inside: boolean; meter: number }) {
+function TheTaxi({ taxiRef, roof, inside, meter, ride }: { taxiRef: React.RefObject<{ z: number; x: number; door: number }>; roof: string; inside: boolean; meter: number; ride?: BookedRide }) {
   const g = useRef<THREE.Group>(null);
   const door = useRef<THREE.Group>(null);
   useFrame(() => {
@@ -181,9 +202,11 @@ function TheTaxi({ taxiRef, roof, inside, meter }: { taxiRef: React.RefObject<{ 
   return (
     <group ref={g}>
       <group visible={!inside}>
-        <Sedan color="#f5e6c8" taxiRoof={roof} />
+        {ride
+          ? <group rotation={[0, Math.PI, 0]}><Suspense fallback={<Sedan color={ride.color} />}><CarModel car={{ id: "ride", make: "", model: ride.name, color: ride.color, model3d: ride.model3d } as never} plate="YALLA" /></Suspense></group>
+          : <Sedan color="#f5e6c8" taxiRoof={roof} />}
         {/* the rear kerb-side door, hinged at its front edge */}
-        <group position={[0.92, 0, 0.05]}><group ref={door}><mesh position={[0.02, 0.85, 0.55]}><boxGeometry args={[0.06, 0.9, 1.05]} /><meshStandardMaterial color="#f5e6c8" metalness={0.4} roughness={0.35} /></mesh></group></group>
+        <group position={[0.92, 0, 0.05]}><group ref={door}><mesh position={[0.02, 0.85, 0.55]}><boxGeometry args={[0.06, 0.9, 1.05]} /><meshStandardMaterial color={ride?.color ?? "#f5e6c8"} metalness={0.4} roughness={0.35} /></mesh></group></group>
       </group>
       {inside && (
         <group>
@@ -202,7 +225,7 @@ function TheTaxi({ taxiRef, roof, inside, meter }: { taxiRef: React.RefObject<{ 
           {/* steering wheel (left-hand drive), the mirror, and the meter on the dash */}
           <mesh position={[-0.42, 0.98, -1.05]} rotation={[1.1, 0, 0]}><torusGeometry args={[0.18, 0.025, 8, 24]} /><meshStandardMaterial color="#0b0b0b" /></mesh>
           <mesh position={[0, 1.4, -1.08]}><boxGeometry args={[0.24, 0.07, 0.03]} /><meshStandardMaterial color="#0b0b0b" metalness={0.5} /></mesh>
-          <group position={[0.12, 1.05, -1.06]} rotation={[-0.35, 0, 0]}><MeterScreen value={meter} /></group>
+          {!ride && <group position={[0.12, 1.05, -1.06]} rotation={[-0.35, 0, 0]}><MeterScreen value={meter} /></group>}
           {/* the driver */}
           <Suspense fallback={null}><group position={[-0.42, 0.18, -0.55]} rotation={[0, Math.PI, 0]}><CitizenAvatar look={{ gender: "man", preset: "Male_Adult_08" }} animation="sit" /></group></Suspense>
         </group>
@@ -241,7 +264,9 @@ function Rider({ look, taxiRef, directorRef }: { look?: AvatarLookProps; taxiRef
 }
 
 /** Runs the ride: pulling in, boarding, the drive with its meter and events, pulling over. Moves the camera. */
-function Director({ travelRef, taxiRef, directorRef, hudRef, quote, length, salikAt, view }: {
+function Director({ travelRef, taxiRef, directorRef, hudRef, quote, length, salikAt, view, booked = false }: {
+  /** A ride booked and paid in an app: no meter. */
+  booked?: boolean;
   travelRef: Travel; taxiRef: React.RefObject<{ z: number; x: number; door: number; lane: number }>;
   directorRef: React.RefObject<{ stage: Stage; t: number; said: number; salik: boolean; tick: number }>; hudRef: React.RefObject<Hud>;
   quote: ReturnType<typeof taxiQuote>; length: number; salikAt: number; view: View;
@@ -277,7 +302,7 @@ function Director({ travelRef, taxiRef, directorRef, hudRef, quote, length, sali
       }
       case "board":
         tx.door = d.t < 1.8 ? Math.min(1, d.t / 0.5) : Math.max(0, 1 - (d.t - 1.8) / 0.4);
-        if (d.t > 2.2 && d.said < 0) { d.said = 0; doorThud(); say(TAXI.greetings[Math.floor(Math.random() * TAXI.greetings.length)]); h.message = "🔒 Seatbelt on · the meter starts"; }
+        if (d.t > 2.2 && d.said < 0) { d.said = 0; doorThud(); say(TAXI.greetings[Math.floor(Math.random() * TAXI.greetings.length)]); h.message = booked ? "🔒 Seatbelt on · enjoy the ride" : "🔒 Seatbelt on · the meter starts"; }
         if (d.t > 4.6) { h.message = ""; startLoop("road", 0.08); meterTick(); go("ride"); }
         break;
       case "ride": {

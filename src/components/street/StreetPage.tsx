@@ -16,6 +16,9 @@ import { gameAudio } from "@/utils/gameAudio";
 import { areaLabel, buyAtShop, shopKind, streetArea, streetShops, type ShopKind } from "@/lib/city/streetShops";
 import { genericArea, isGenericHome } from "@/lib/city/partyHome";
 import { getHousingTierFromText, HOUSING_CONFIGS } from "@/lib/furniture";
+import { DriveSheet } from "@/components/home/DriveSheet";
+import { drivables, useGarage } from "@/lib/cars";
+import { useNow } from "@/lib/dubaiClock";
 import { StreetScene, MoveStick, STREET_LIMIT_X, type AutoWalk, type Controls, type StreetDoor } from "./StreetWorld";
 import type { AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 
@@ -48,6 +51,12 @@ export function StreetPage() {
   const villas = sp.get("villa") === "1" || (fromHome && !isGenericHome(from) && /villa|townhouse/.test(getHousingTierFromText(citizen?.home ?? "studio")) && !sp.get("area"));
   const area = useMemo(() => streetArea(origin, homeArea), [origin, homeArea]);
   const [shopAt, setShopAt] = useState<StreetDoor | null>(null);
+  // Your plot (from home): what's outside your villa, and your car (owned or rented; none if you have none).
+  const homeExt = useMemo(() => (sp.get("ext") ?? "").split(",").filter(Boolean), [sp]);
+  const { garage } = useGarage(citizen?.id);
+  const nowCar = useNow();
+  const myCar = useMemo(() => { const d = drivables(garage, nowCar)[0]; return d ? { car: d.car, plate: d.plate } : null; }, [garage, nowCar]);
+  const [driveOpen, setDriveOpen] = useState(false);
   const [shopNote, setShopNote] = useState<string | null>(null);
   // My own door, then the nearest places along the street (alternating sides), in their real order.
   const doors = useMemo<StreetDoor[]>(() => {
@@ -66,8 +75,12 @@ export function StreetPage() {
       const k = shopKind(sh.kind);
       return { id: `shop-${i}`, name: sh.name, icon: k.icon, metres: 25 + i * 34, href: "", x: i % 2 ? 15 : -15, z: -30 - i * 34, shop: sh.kind, color: k.color };
     });
-    return [mine, ...places, ...locals];
-  }, [from, venue, fromHome, origin, originName, area, villas]);
+    // Your own villa's plot: walk up to your car (and drive off) or your pool.
+    const extras: StreetDoor[] = [];
+    if (villas && fromHome && myCar) extras.push({ id: "my-car", name: `Your ${myCar.car.make} ${myCar.car.model}`, icon: "🚗", metres: 0, href: "", x: 15, z: mine.z - 8.5, prop: "car" });
+    if (villas && fromHome && homeExt.includes("pool")) extras.push({ id: "my-pool", name: "Your pool", icon: "🏊", metres: 0, href: "/home?use=pool", x: 15, z: mine.z + 8.5, prop: "pool" });
+    return [mine, ...extras, ...places, ...locals];
+  }, [from, venue, fromHome, origin, originName, area, villas, myCar, homeExt]);
 
   const controls = useRef<Controls>({ x: 0, y: 0 });
   const auto = useRef<AutoWalk | null>(null);
@@ -88,7 +101,7 @@ export function StreetPage() {
   const walkTo = (d: StreetDoor) => {
     setWhere(false);
     const side = Math.sign(d.x);
-    auto.current = { points: [[side * 12.6, me.z], [side * 12.6, d.z], [side * STREET_LIMIT_X, d.z]], run, then: () => (d.shop ? (setShopNote(null), setShopAt(d)) : go(d.href)) };
+    auto.current = { points: [[side * 12.6, me.z], [side * 12.6, d.z], [side * STREET_LIMIT_X, d.z]], run, then: () => (d.prop === "car" ? setDriveOpen(true) : d.shop ? (setShopNote(null), setShopAt(d)) : go(d.href)) };
     gameAudio.playClickSound();
   };
   // Further away: the walk fast-forwarded, or a taxi.
@@ -111,7 +124,7 @@ export function StreetPage() {
 
   return (
     <main className="fixed inset-0 w-screen h-[100dvh] overflow-hidden select-none bg-sky-200 text-slate-900 overscroll-none">
-      <StreetScene villas={villas} doors={doors} look={citizen?.look} dirty={isDirty(citizen?.needs?.hygiene)} controls={controls} run={run} auto={auto} peers={room.peers} onMove={onMove} onNear={setNear} />
+      <StreetScene villas={villas} lot={villas && fromHome ? { pool: homeExt.includes("pool"), car: homeExt.includes("carpark") || homeExt.includes("garage") ? myCar : null } : undefined} doors={doors} look={citizen?.look} dirty={isDirty(citizen?.needs?.hygiene)} controls={controls} run={run} auto={auto} peers={room.peers} onMove={onMove} onNear={setNear} />
 
       <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2 pointer-events-none">
         <button onClick={() => go(doors[0].href)} className="pointer-events-auto w-10 h-10 rounded-full bg-white/95 shadow-lg flex items-center justify-center" aria-label={`Back inside ${doors[0].name}`}><ArrowLeft className="w-4 h-4" /></button>
@@ -124,11 +137,12 @@ export function StreetPage() {
       </header>
 
       {near && !trip && (
-        <button onClick={() => (near.shop ? (gameAudio.playClickSound(), setShopNote(null), setShopAt(near)) : go(near.href))} className="absolute right-4 bottom-[max(2rem,calc(env(safe-area-inset-bottom)+1.5rem))] z-30 h-12 px-5 rounded-full bg-emerald-500 text-white font-black shadow-2xl text-sm animate-in fade-in">
-          {near.mine ? `🚪 Back inside ${near.name}` : near.shop ? `${near.icon} ${near.name}` : `🚪 Go into ${near.icon} ${near.name}`}
+        <button onClick={() => (near.prop === "car" ? (gameAudio.playClickSound(), setDriveOpen(true)) : near.shop ? (gameAudio.playClickSound(), setShopNote(null), setShopAt(near)) : go(near.href))} className="absolute right-4 bottom-[max(2rem,calc(env(safe-area-inset-bottom)+1.5rem))] z-30 h-12 px-5 rounded-full bg-emerald-500 text-white font-black shadow-2xl text-sm animate-in fade-in">
+          {near.mine ? `🚪 Back inside ${near.name}` : near.prop === "car" ? `🚗 Get in your car` : near.prop === "pool" ? `🏊 Go for a swim` : near.shop ? `${near.icon} ${near.name}` : `🚪 Go into ${near.icon} ${near.name}`}
         </button>
       )}
 
+      {driveOpen && <DriveSheet car={myCar?.car ?? null} onClose={() => setDriveOpen(false)} />}
       {shopAt?.shop && (
         <div className="fixed inset-0 z-[200] bg-black/40 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-label={shopAt.name} onClick={() => setShopAt(null)}>
           <div className="w-full max-w-md bg-white rounded-t-[28px] sm:rounded-[28px] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-2" onClick={(e) => e.stopPropagation()}>

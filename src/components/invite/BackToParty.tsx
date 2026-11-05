@@ -9,7 +9,7 @@ import { X } from "lucide-react";
 import { useCitizen } from "@/lib/citizenStore";
 import { kindOf, myInvites, partyDoor, type InviteRow } from "@/lib/invites";
 import { gameAudio } from "@/utils/gameAudio";
-import { primePartyAudio } from "./PartyHere";
+import { endPartyNow, primePartyAudio } from "./PartyHere";
 
 // Ones you closed with ✕: never shown again (on this device).
 const HIDDEN = "dl_hidden_back";
@@ -48,7 +48,13 @@ export function BackToParty() {
     gameAudio.playClickSound();
     router.push(live.hosting && live.row.route?.startsWith("/property/") ? "/home" : partyDoor(live.row.route!));
   };
-  const close = () => {
+  const close = async () => {
+    // The host closing it ends the party (for everyone); a guest just hides it.
+    if (live.hosting) {
+      if (!confirm(`End your party "${live.row.title}" now? Everyone there is told.`)) return;
+      if (!(await endPartyNow(live.row.code))) { window.dispatchEvent(new CustomEvent("dubai:toast", { detail: "Couldn't end the party. Try again." })); return; }
+      window.dispatchEvent(new CustomEvent("dubai:toast", { detail: "🎉 Party ended. Thanks for hosting!" }));
+    }
     const next = [...new Set([...hidden, live.row.code])].slice(-100);
     setHidden(next);
     try { localStorage.setItem(HIDDEN, JSON.stringify(next)); } catch { /* storage blocked */ }
@@ -59,7 +65,7 @@ export function BackToParty() {
         <span className="w-2 h-2 rounded-full bg-white animate-pulse shrink-0" />
         <span className="truncate">{k.icon} Back to {live.row.title}</span>
       </button>
-      <button onClick={close} aria-label={`Hide: back to ${live.row.title}`} className="w-9 h-9 mr-1 shrink-0 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center"><X className="w-4 h-4" /></button>
+      <button onClick={close} aria-label={live.hosting ? `End your party: ${live.row.title}` : `Hide: back to ${live.row.title}`} className="w-9 h-9 mr-1 shrink-0 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center"><X className="w-4 h-4" /></button>
     </div>
   );
 }

@@ -2,6 +2,24 @@
   "_note": "The kitchen and bathroom built into every home: what each fixture is, what you can do with it (time, needs, the pantry ingredients it uses) and where it sits in each home type. Cells are 0.5 m on the 14 × 14 floor (col 0 is the west wall, row 0 the north wall); rot 0 faces south, 1 west, 2 north, 3 east. Bathroom walls are [x, z] metres with an optional doorway [from, to] metres along the wall.",
 
   "kinds": {
+    "pool": {
+      "name": "Your pool", "icon": "🏊", "size": [8, 16],
+      "desc": "Out in the garden: swim, relax in the water or sunbathe.",
+      "actions": [
+        { "id": "swim-laps", "label": "Swim laps", "icon": "🏊", "seconds": 9, "needs": { "fun": 30, "hygiene": 10, "energy": -10 }, "uses": {}, "serve": "swim" },
+        { "id": "relax-water", "label": "Relax in the water", "icon": "🫧", "seconds": 7, "needs": { "fun": 20, "energy": 15 }, "uses": {}, "serve": "relax" },
+        { "id": "sunbathe", "label": "Sunbathe on a lounger", "icon": "☀️", "seconds": 7, "needs": { "energy": 20, "fun": 10 }, "uses": {}, "serve": "sunbathe" }
+      ]
+    },
+    "car": {
+      "name": "Your car", "icon": "🚗", "size": [4, 10],
+      "desc": "Parked in the driveway.",
+      "actions": [
+        { "id": "drive-somewhere", "label": "Get in and drive somewhere", "icon": "🚗", "seconds": 1, "needs": {}, "uses": {}, "serve": "drive" },
+        { "id": "wash-car", "label": "Wash the car", "icon": "🧽", "seconds": 7, "needs": { "fun": 10, "hygiene": -5 }, "uses": {}, "serve": "wash" },
+        { "id": "car-photo", "label": "Take a photo with it", "icon": "📸", "seconds": 3, "needs": { "fun": 10 }, "uses": {}, "serve": "photo" }
+      ]
+    },
     "tv": {
       "name": "TV", "icon": "📺", "size": [4, 1],
       "desc": "Sit back and watch something.",

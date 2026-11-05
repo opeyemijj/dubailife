@@ -11,7 +11,8 @@ import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import type { AvatarLookProps } from "../onboarding/AvatarCanvas";
 import { restPose, type RestPose } from "./restPose";
-import { HomeGrounds } from "./HomeGrounds";
+import { GROUNDS, HomeGrounds } from "./HomeGrounds";
+import type { Car } from "@/lib/cars";
 import { LuxuryDecor } from "./LuxuryDecor";
 import { buildNav, findPath, walkable, type Rect, type Seg } from "./homeNav";
 import { HomeFixtures } from "./HomeFixtures";
@@ -76,6 +77,10 @@ export interface ApartmentRoomProps {
   fixtureCall?: { n: number; kind: string };
   /** What an object in use is showing (the meal on the table, flakes in the tank, the TV on…): its action's `serve`. */
   activity?: string;
+  /** Your own car, parked outside a house with a driveway or garage (its model, colour and plate). */
+  ownCar?: { car: Car; plate: string } | null;
+  /** Go straight out to the pool or the car (each ask is new). */
+  groundsCall?: { n: number; what: "pool" | "car" };
   /** What you have in your hand (a drink at a party), and how you hold it. */
   holding?: { prop: React.ReactNode; mode: CarryMode };
   /** I haven't washed: flies buzz round me. */
@@ -1302,6 +1307,8 @@ function RoomScene({
   seatCall,
   fixtureCall,
   activity,
+  ownCar,
+  groundsCall,
   holding,
   dirty,
   using,
@@ -1684,10 +1691,60 @@ function RoomScene({
     setObjectFx(f);
     goUseFixture(f);
   };
+  // Out in the garden: the pool and the car (out of the front door, then there).
+  const startGroundsUse = (what: "pool" | "car") => {
+    if (climbRef.current) return;
+    getUp();
+    const f: Fixture = { id: `grounds-${what}`, kind: what as Fixture["kind"], size: [1, 1], placement: { kind: "floor", col: 0, row: 0, rot: 0 } };
+    setObjectFx(f);
+    onUseFixture?.(f);
+  };
+  const groundsN = groundsCall?.n ?? 0;
+  useEffect(() => {
+    if (groundsN && groundsCall) startGroundsUse(groundsCall.what);
+    // Only when a new ask comes in.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groundsN]);
   // While an object is in use: seated at the table, facing the TV, at the counter or the tank. Back where you were after.
   const objectInUse = using && objectFx?.id === using ? objectFx : null;
+  // In the pool or by the car: where, by what's being done (swimming laps, in the water, on a lounger, at the car).
   useEffect(() => {
-    if (!objectInUse) return;
+    if (!objectInUse || (objectInUse.kind !== "pool" && objectInUse.kind !== "car")) return;
+    const P = GROUNDS.pool;
+    let lap: ReturnType<typeof setInterval> | null = null;
+    const t = setTimeout(() => {
+      if (objectInUse.kind === "car") {
+        const d = GROUNDS.driveway;
+        setPose({ position: [d.x + 1.6, 0, d.z], yaw: -Math.PI / 2 });
+        setAnimation(activity === "photo" ? "wave" : "talk");
+      } else if (activity === "swim") {
+        // Laps: up and down the pool, swimming.
+        let k = 0;
+        const step = () => { k++; const z = P.z + Math.sin(k * 0.25) * (P.l / 2 - 1); setPose({ position: [P.x, P.water - 0.32, z], yaw: Math.cos(k * 0.25) > 0 ? Math.PI : 0, lie: true }); };
+        step();
+        lap = setInterval(step, 250);
+        setAnimation("swim");
+      } else if (activity === "sunbathe") {
+        const [lx, lz] = GROUNDS.loungers[0];
+        setPose({ position: [lx, 0.38, lz + 0.9], yaw: Math.PI, lie: true });
+        setAnimation("sleep");
+      } else {
+        // Standing in the water, chest deep.
+        setPose({ position: [P.x, P.floor + 0.35, P.z + 1], yaw: Math.PI / 2 });
+        setAnimation("idle");
+      }
+    }, 0);
+    return () => {
+      clearTimeout(t);
+      if (lap) clearInterval(lap);
+      // Back indoors, by the front of the room.
+      setTimeout(() => { setPose({ position: [0, 0, 3.2], yaw: 0 }); setAnimation("idle"); }, 0);
+    };
+    // When a use starts or ends, or the action changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [objectInUse?.id, activity]);
+  useEffect(() => {
+    if (!objectInUse || objectInUse.kind === "pool" || objectInUse.kind === "car") return;
     const f = objectInUse;
     const front = fixtureSpot(f);
     const c = floorCenter(f.size, f.placement);
@@ -1877,7 +1934,10 @@ function RoomScene({
       )}
       {rooms?.some((r) => r.id === "balcony") && <Balcony room={rooms.find((r) => r.id === "balcony")!} onFloorClick={handleFloorLocomotion} />}
       {/* Townhouses and villas: the pool, garage, garden… added outside (ground floor only). */}
-      {hasPlot(housingTier) && lvl === 0 && <HomeGrounds items={style.exterior ?? []} />}
+      {hasPlot(housingTier) && lvl === 0 && (
+        <HomeGrounds items={style.exterior ?? []} car={ownCar} activity={objectInUse?.kind === "car" ? activity : undefined}
+          onUse={busy ? undefined : (what) => startGroundsUse(what)} />
+      )}
 
       {/* Visual Click-to-Walk Destination Beacon */}
       {clickBeacon && (

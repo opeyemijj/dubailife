@@ -6,6 +6,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { TaxiJourney } from "@/components/transit/TaxiJourney";
 import { Search } from "lucide-react";
 import { useCitizen, adjustBalance, updateCitizen } from "@/lib/citizenStore";
 import { PLACES } from "@/lib/city/places";
@@ -58,15 +59,30 @@ export function RideApp({ onBack, onClose, onMetro }: { onBack: () => void; onCl
     const c = APPS.rides.classes.find((x) => x.id === cls)!;
     if (!adjustBalance(-fare(dest.metres, c.multiplier))) return setNote("Not enough AED in your wallet.");
     gameAudio.playCoinSound();
-    setRiding(`${c.icon} Your driver is on the way…`);
-    setTimeout(() => setRiding(`${c.icon} On the way to ${dest.p.name}…`), 1800);
-    setTimeout(() => {
-      const at = entranceOf(dest.p.id)!;
-      updateCitizen((x) => ({ ...x, location: { ...at, placeId: dest.p.id } }));
-      onClose();
-      router.push(`/place/${dest.p.id}`);
-    }, 4200);
+    // The ride itself, in 3D: your car pulls up, you get in the back, your driver takes you there.
+    setTrip({ id: dest.p.id, name: dest.p.name, metres: dest.metres, paid: fare(dest.metres, c.multiplier), cls: c.id });
   };
+  const [trip, setTrip] = useState<{ id: string; name: string; metres: number; paid: number; cls: string } | null>(null);
+
+  if (trip) {
+    const c = APPS.rides.classes.find((x) => x.id === trip.cls) ?? APPS.rides.classes[0];
+    // Each class turns up in its own car: an everyday saloon, a newer sport saloon, or a black luxury car.
+    const look = trip.cls === "business" ? { color: "#0f172a", model3d: "sport-sedan" } : trip.cls === "comfort" ? { color: "#e5e7eb", model3d: "suv" } : { color: "#f8fafc", model3d: "sedan" };
+    return (
+      <TaxiJourney metres={trip.metres} destination={trip.name} look={citizen?.look}
+        ride={{ app: APPS.rides.app.name, name: c.name, icon: c.icon, paid: trip.paid, ...look }}
+        onPay={() => true}
+        onArrive={() => {
+          const at = entranceOf(trip.id)!;
+          updateCitizen((x) => ({ ...x, location: { ...at, placeId: trip.id } }));
+          setTrip(null);
+          onClose();
+          router.push(`/place/${trip.id}`);
+        }}
+        // Cancelled before you're picked up: the fare comes back.
+        onCancel={() => { adjustBalance(trip.paid); setTrip(null); }} />
+    );
+  }
 
   const list = (
     <>

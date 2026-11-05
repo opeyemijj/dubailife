@@ -20,10 +20,13 @@ import type { AvatarLookProps } from "@/components/avatar/roster";
 import { Flies } from "@/components/avatar/Flies";
 import { dubaiSky, SkyAndLight } from "@/components/transit/TransitWorld";
 import { Building, Lamp, StreetPalm, Villa } from "@/components/home/RunJourney";
+import { CarModel } from "@/components/cars/CarModel";
+import type { Car } from "@/lib/cars";
 import { canvasQuality } from "@/lib/device";
 import type { Peer } from "@/lib/room";
 
-export interface StreetDoor { id: string; name: string; icon: string; metres: number; href: string; x: number; z: number; mine?: boolean; /** A local shop (karak, baqala…): opens its counter instead of a page. */ shop?: string; color?: string }
+export interface StreetDoor { id: string; name: string; icon: string; metres: number; href: string; x: number; z: number; mine?: boolean; /** A local shop (karak, baqala…): opens its counter instead of a page. */ shop?: string; color?: string;
+  /** Not a building: your own car or pool out front (drawn by your villa's plot). */ prop?: "car" | "pool" }
 export interface Controls { x: number; y: number; /** Pushed to the rim: run. */ sprint?: boolean }
 
 const HALF_ROAD = 9, KERB = 9.3, PAVE_OUT = 15;
@@ -93,14 +96,16 @@ function Street({ from, to, night }: { from: number; to: number; night: boolean 
 }
 
 /** Towers between the shops, and the shopfronts themselves with their signs and doors. */
-function Blocks({ doors, from, to, night, villas = false }: { doors: StreetDoor[]; from: number; to: number; night: boolean; villas?: boolean }) {
+function Blocks({ doors, from, to, night, villas = false, lot }: { doors: StreetDoor[]; from: number; to: number; night: boolean; villas?: boolean;
+  /** Your villa's plot: the pool and your car beside it. */ lot?: { pool: boolean; car: { car: Car; plate: string } | null } }) {
   // A villa community (Palm Jumeirah, Arabian Ranches…): walled villas with gardens either side, no towers.
   const homes = useMemo(() => {
     if (!villas) return [];
     const out: Array<{ s: number; z: number; color: string }> = [];
     const colors = ["#efe6d6", "#e7ddcb", "#f5efe3", "#ede3cf"];
     for (const s of [-1, 1]) for (let z = from - 6, i = 0; z > to; z -= 16, i++) {
-      if (doors.some((d) => Math.sign(d.x) === s && Math.abs(d.z - z) < 12)) continue;
+      // Room round each door; more round your own villa, for its pool and driveway.
+      if (doors.some((d) => Math.sign(d.x) === s && Math.abs(d.z - z) < (d.mine ? 24 : 12))) continue;
       out.push({ s, z, color: colors[(i + (s > 0 ? 1 : 0)) % colors.length] });
     }
     return out;
@@ -129,10 +134,22 @@ function Blocks({ doors, from, to, night, villas = false }: { doors: StreetDoor[
       {towers.map((t, i) => <Building key={i} x={t.x} z={t.z} w={t.w} d={18} h={t.h} color={t.color} facing={t.x > 0 ? -1 : 1} night={night} />)}
       {doors.map((d) => {
         const s = Math.sign(d.x);
+        // Your car and pool: drawn with your villa's plot, only their label here.
+        if (d.prop) return (
+          <Html key={d.id} position={[s * 15.2, 2.6, d.z]} center zIndexRange={[10, 0]} distanceFactor={14}>
+            <div className="whitespace-nowrap rounded-xl px-3 py-1.5 shadow-xl bg-amber-400 text-slate-950 text-sm font-black pointer-events-none">{d.icon} {d.name}</div>
+          </Html>
+        );
         return (
           <group key={d.id}>
             {d.mine && villas ? (
-              <group position={[s * 21, 0, d.z]} rotation={[0, s > 0 ? -Math.PI / 2 : Math.PI / 2, 0]}><Villa x={0} z={0} color="#f3ead8" /></group>
+              <group position={[s * 21, 0, d.z]} rotation={[0, s > 0 ? -Math.PI / 2 : Math.PI / 2, 0]}>
+                <Villa x={0} z={0} color="#f3ead8" />
+                {/* Your plot beside it: the pool on one side, the driveway with your car on the other. */}
+                {lot?.pool && <VillaPool />}
+                {lot && <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-8.5, 0.02, 2]}><planeGeometry args={[5, 9]} /><meshStandardMaterial color="#a8a29e" /></mesh>}
+                {lot?.car && <group position={[-8.5, 0, 2.5]}><Suspense fallback={null}><CarModel car={lot.car.car} plate={lot.car.plate} /></Suspense></group>}
+              </group>
             ) : <Building x={s * 22} z={d.z} w={13} d={13} h={d.mine ? 18 : d.shop ? 14 + (d.name.length % 3) * 8 : 9 + (d.name.length % 4) * 3} color={d.mine ? "#e7e0d2" : d.shop ? "#e9e2d4" : "#f1ede4"} facing={s > 0 ? -1 : 1} night={night} awning={d.mine ? undefined : d.color ?? ["#0f766e", "#b91c1c", "#1d4ed8", "#a16207"][d.name.length % 4]} />}
             {/* the door, glowing so it's easy to find */}
             <mesh position={[s * 15.4, 1.2, d.z]} rotation={[0, s > 0 ? -Math.PI / 2 : Math.PI / 2, 0]}>
@@ -186,6 +203,19 @@ function Traffic({ from, to }: { from: number; to: number }) {
   );
 }
 
+
+/** A villa's pool, beside the house (in the villa's own frame: the street is towards +z). */
+function VillaPool() {
+  return (
+    <group position={[8.5, 0, 0.5]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}><planeGeometry args={[6, 9]} /><meshStandardMaterial color="#e7dfcf" /></mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}><planeGeometry args={[3.6, 6.6]} /><meshStandardMaterial color="#22d3ee" emissive="#0891b2" emissiveIntensity={0.25} roughness={0.05} /></mesh>
+      {[-1, 1].map((k) => <mesh key={k} position={[2.4, 0.3, k * 1.6]}><boxGeometry args={[0.7, 0.12, 1.8]} /><meshStandardMaterial color="#fafafa" /></mesh>)}
+      <mesh position={[2.4, 1.3, 0]}><cylinderGeometry args={[0.04, 0.04, 2.6, 8]} /><meshStandardMaterial color="#78716c" /></mesh>
+      <mesh position={[2.4, 2.55, 0]}><coneGeometry args={[1.4, 0.6, 12]} /><meshStandardMaterial color="#0e7490" /></mesh>
+    </group>
+  );
+}
 
 // ---------------------------------------------------------------- street life
 
@@ -379,10 +409,11 @@ function Me({ look, dirty, controls, run, auto, start, limits, onMove, onNear, d
 
 // ---------------------------------------------------------------- the scene
 
-export function StreetScene({ doors, look, dirty, controls, run, auto, peers, onMove, onNear, villas }: {
+export function StreetScene({ doors, look, dirty, controls, run, auto, peers, onMove, onNear, villas, lot }: {
   doors: StreetDoor[]; look?: AvatarLookProps; dirty: boolean; controls: React.RefObject<Controls>; run: boolean; auto: React.RefObject<AutoWalk | null>;
   peers: Peer[]; onMove: (x: number, z: number, yaw: number, moving: boolean, running: boolean) => void; onNear: (d: StreetDoor | null) => void;
   /** A villa community street instead of towers. */ villas?: boolean;
+  /** Your villa's plot (pool, your car). */ lot?: { pool: boolean; car: { car: Car; plate: string } | null };
 }) {
   const quality = useMemo(() => canvasQuality(), []);
   const sky = useMemo(() => dubaiSky(), []);
@@ -395,7 +426,7 @@ export function StreetScene({ doors, look, dirty, controls, run, auto, peers, on
       <SkyAndLight sky={sky} />
       <fog attach="fog" args={[night ? "#0b1324" : "#dbe7f3", 110, 420]} />
       <Street from={from} to={to} night={night} />
-      <Blocks doors={doors} from={from} to={to} night={night} villas={villas} />
+      <Blocks doors={doors} from={from} to={to} night={night} villas={villas} lot={lot} />
       <Traffic from={from} to={to} />
       <Crossings from={from} to={to} />
       <BusStops from={from} to={to} night={night} />

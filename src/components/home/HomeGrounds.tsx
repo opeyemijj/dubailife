@@ -5,29 +5,71 @@
 // src/data/home/exterior.json. The house is the 10 m square in the middle (x and z from -5 to 5); the front door
 // faces south (+z). Pool to the east, garage and driveway to the west, BBQ and majlis in the front garden.
 
-import { useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { Suspense, useMemo, useRef } from "react";
+import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
+import { CarModel } from "@/components/cars/CarModel";
+import type { Car } from "@/lib/cars";
+
+/** Where things are on the plot (room coordinates), shared with the room so people go to the right spot. */
+export const GROUNDS = {
+  pool: { x: 10.5, z: 1, w: 4, l: 8, water: -0.08, floor: -1.4 },
+  loungers: [[13.6, -1.4], [13.6, 1.4]] as Array<[number, number]>,
+  driveway: { x: -10.5, z: 9 },
+};
 
 const noRay = () => null;
 
-export function HomeGrounds({ items }: { items: string[] }) {
+export function HomeGrounds({ items, car, onUse, activity }: {
+  items: string[];
+  /** Your own car (its model, colour and plate), parked in the driveway or the garage. */
+  car?: { car: Car; plate: string } | null;
+  /** Tapping the pool or the car: go and use it. */
+  onUse?: (what: "pool" | "car") => void;
+  /** What's happening outside (someone washing the car…). */
+  activity?: string;
+}) {
   const has = (id: string) => items.includes(id);
+  const pool = has("pool");
+  // The plot, with a hole where the pool is sunk into it.
+  const plot = useMemo(() => {
+    const shape = new THREE.Shape();
+    shape.moveTo(-17, -17); shape.lineTo(17, -17); shape.lineTo(17, 13); shape.lineTo(-17, 13); shape.lineTo(-17, -17);
+    if (pool) {
+      const P = GROUNDS.pool, hole = new THREE.Path();
+      // Shape y is world -z once laid flat.
+      hole.moveTo(P.x - P.w / 2 - 2, -(P.z - P.l / 2 - 2)); hole.lineTo(P.x + P.w / 2 + 2, -(P.z - P.l / 2 - 2));
+      hole.lineTo(P.x + P.w / 2 + 2, -(P.z + P.l / 2 + 2)); hole.lineTo(P.x - P.w / 2 - 2, -(P.z + P.l / 2 + 2)); hole.lineTo(P.x - P.w / 2 - 2, -(P.z - P.l / 2 - 2));
+      shape.holes.push(hole);
+    }
+    return new THREE.ShapeGeometry(shape);
+  }, [pool]);
   if (!items.length) return null;
+  const tap = (what: "pool" | "car") => onUse ? (e: ThreeEvent<MouseEvent>) => { if (e.delta > 6) return; e.stopPropagation(); onUse(what); } : undefined;
+  const parked = car && (has("carpark") || has("garage")) ? car : null;
   return (
     <group>
       {/* the plot: sand by default, a lawn with the garden */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.03, 2]} raycast={noRay} receiveShadow>
-        <planeGeometry args={[34, 30]} /><meshStandardMaterial color={has("garden") ? "#6fa356" : "#e2cfa6"} roughness={1} />
+      <mesh geometry={plot} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.03, 0]} raycast={noRay} receiveShadow>
+        <meshStandardMaterial color={has("garden") ? "#6fa356" : "#e2cfa6"} roughness={1} />
       </mesh>
       {/* the boundary wall */}
       {([[0, -13, 34, 0.3], [0, 17, 34, 0.3], [-17, 2, 0.3, 30], [17, 2, 0.3, 30]] as const).map(([x, z, w, d], i) => (
         <mesh key={i} position={[x, 0.9, z]} raycast={noRay}><boxGeometry args={[w, 1.8, d]} /><meshStandardMaterial color="#efe6d4" roughness={0.9} /></mesh>
       ))}
       {has("garden") && <Garden />}
-      {has("pool") && <Pool />}
+      {pool && <group onClick={tap("pool")} onPointerOver={onUse ? () => (document.body.style.cursor = "pointer") : undefined} onPointerOut={() => (document.body.style.cursor = "")}><Pool /></group>}
+      {/* No stand-in cars: only the car you own or have rented is ever parked here. */}
       {has("garage") && <Garage />}
-      {has("carpark") && <CarPark withCar={!has("garage")} />}
+      {has("carpark") && <CarPark />}
+      {/* Your car: on the driveway (in the garage if there's no driveway); tap it to drive somewhere. */}
+      {parked && (
+        <group position={has("carpark") ? [GROUNDS.driveway.x, 0, GROUNDS.driveway.z] : [-11.7, 0, -1.4]} onClick={tap("car")}
+          onPointerOver={onUse ? () => (document.body.style.cursor = "pointer") : undefined} onPointerOut={() => (document.body.style.cursor = "")}>
+          <Suspense fallback={null}><CarModel car={parked.car} plate={parked.plate} /></Suspense>
+          {activity === "wash" && <Foam />}
+        </group>
+      )}
       {has("bbq") && <Bbq />}
       {has("majlis") && <Majlis />}
     </group>
@@ -69,37 +111,49 @@ function Pool() {
   const water = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
     const m = water.current?.material as THREE.MeshStandardMaterial | undefined;
-    if (m) m.emissiveIntensity = 0.18 + Math.sin(clock.elapsedTime * 1.4) * 0.05;
+    if (m) m.emissiveIntensity = 0.22 + Math.sin(clock.elapsedTime * 1.4) * 0.06;
   });
+  const P = GROUNDS.pool, depth = -P.floor;
   return (
-    <group position={[10.5, 0, 1]}>
-      {/* stone deck, the pool sunk into it, a step ladder, loungers and an umbrella */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} raycast={noRay}><planeGeometry args={[8, 12]} /><meshStandardMaterial color="#e7dfcf" roughness={0.8} /></mesh>
-      <mesh position={[0, 0.06, 0]} raycast={noRay}><boxGeometry args={[4.6, 0.12, 8.6]} /><meshStandardMaterial color="#f5f5f4" /></mesh>
-      <mesh ref={water} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.13, 0]} raycast={noRay}>
-        <planeGeometry args={[4, 8]} /><meshStandardMaterial color="#22d3ee" emissive="#0891b2" emissiveIntensity={0.2} transparent opacity={0.85} roughness={0.05} metalness={0.2} />
+    <group position={[P.x, 0, P.z]}>
+      {/* stone deck round the pool (a frame: the pool is sunk into the ground) */}
+      {([[0, -(P.l / 2 + 1), P.w + 4, 2], [0, P.l / 2 + 1, P.w + 4, 2], [-(P.w / 2 + 1), 0, 2, P.l], [P.w / 2 + 1, 0, 2, P.l]] as const).map(([x, z, w, l], i) => (
+        <mesh key={i} position={[x, 0.01, z]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[w, l]} /><meshStandardMaterial color="#e7dfcf" roughness={0.8} /></mesh>
+      ))}
+      {/* white coping on the edge */}
+      {([[0, -P.l / 2, P.w + 0.3, 0.3], [0, P.l / 2, P.w + 0.3, 0.3], [-P.w / 2, 0, 0.3, P.l], [P.w / 2, 0, 0.3, P.l]] as const).map(([x, z, w, l], i) => (
+        <mesh key={`c${i}`} position={[x, 0.04, z]}><boxGeometry args={[w, 0.08, l]} /><meshStandardMaterial color="#f8fafc" /></mesh>
+      ))}
+      {/* the tiled basin, down to the floor */}
+      {([[0, -P.l / 2, P.w, 0.05], [0, P.l / 2, P.w, 0.05], [-P.w / 2, 0, 0.05, P.l], [P.w / 2, 0, 0.05, P.l]] as const).map(([x, z, w, l], i) => (
+        <mesh key={`w${i}`} position={[x, -depth / 2, z]}><boxGeometry args={[w, depth, l]} /><meshStandardMaterial color="#38bdf8" roughness={0.3} /></mesh>
+      ))}
+      <mesh position={[0, P.floor, 0]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[P.w, P.l]} /><meshStandardMaterial color="#0ea5e9" roughness={0.4} /></mesh>
+      <mesh ref={water} rotation={[-Math.PI / 2, 0, 0]} position={[0, P.water, 0]}>
+        <planeGeometry args={[P.w, P.l]} /><meshStandardMaterial color="#22d3ee" emissive="#0891b2" emissiveIntensity={0.22} transparent opacity={0.55} roughness={0.05} metalness={0.2} depthWrite={false} />
       </mesh>
-      {[-0.35, 0.35].map((x) => <mesh key={x} position={[x - 1.6, 0.6, -3.6]} raycast={noRay}><cylinderGeometry args={[0.04, 0.04, 1, 8]} /><meshStandardMaterial color="#d1d5db" metalness={0.8} /></mesh>)}
-      {[-1.4, 1.4].map((z) => (
-        <group key={z} position={[3.1, 0, z]} rotation={[0, -Math.PI / 2, 0]}>
-          <mesh position={[0, 0.3, 0]} raycast={noRay}><boxGeometry args={[0.7, 0.12, 1.8]} /><meshStandardMaterial color="#fafafa" /></mesh>
-          <mesh position={[0, 0.55, -0.75]} rotation={[0.6, 0, 0]} raycast={noRay}><boxGeometry args={[0.7, 0.1, 0.6]} /><meshStandardMaterial color="#fafafa" /></mesh>
+      {/* steps down at one end */}
+      {[0, 1, 2].map((k) => <mesh key={`s${k}`} position={[-P.w / 2 + 0.6, -0.3 - k * 0.3, -P.l / 2 + 0.3 + k * 0.4]}><boxGeometry args={[1, 0.08, 0.4]} /><meshStandardMaterial color="#e0f2fe" /></mesh>)}
+      {/* loungers and an umbrella on the deck */}
+      {GROUNDS.loungers.map(([lx, lz]) => (
+        <group key={lz} position={[lx - P.x, 0, lz - P.z]} rotation={[0, -Math.PI / 2, 0]}>
+          <mesh position={[0, 0.3, 0]}><boxGeometry args={[0.7, 0.12, 1.8]} /><meshStandardMaterial color="#fafafa" /></mesh>
+          <mesh position={[0, 0.55, -0.75]} rotation={[0.6, 0, 0]}><boxGeometry args={[0.7, 0.1, 0.6]} /><meshStandardMaterial color="#fafafa" /></mesh>
         </group>
       ))}
-      <mesh position={[3.1, 1.3, 0]} raycast={noRay}><cylinderGeometry args={[0.04, 0.04, 2.6, 8]} /><meshStandardMaterial color="#78716c" /></mesh>
-      <mesh position={[3.1, 2.55, 0]} raycast={noRay}><coneGeometry args={[1.5, 0.6, 12]} /><meshStandardMaterial color="#0e7490" /></mesh>
+      <mesh position={[3.1, 1.3, 0]}><cylinderGeometry args={[0.04, 0.04, 2.6, 8]} /><meshStandardMaterial color="#78716c" /></mesh>
+      <mesh position={[3.1, 2.55, 0]}><coneGeometry args={[1.5, 0.6, 12]} /><meshStandardMaterial color="#0e7490" /></mesh>
     </group>
   );
 }
 
-function Car({ color = "#f8fafc" }: { color?: string }) {
+/** Soap suds on the car while it's being washed. */
+function Foam() {
+  const g = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => { g.current?.children.forEach((m, i) => { m.position.y = 0.9 + Math.sin(clock.elapsedTime * 2 + i) * 0.1; }); });
   return (
-    <group>
-      <mesh position={[0, 0.55, 0]} raycast={noRay}><boxGeometry args={[1.8, 0.7, 4.3]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.3} /></mesh>
-      <mesh position={[0, 1.1, -0.2]} raycast={noRay}><boxGeometry args={[1.6, 0.5, 2.2]} /><meshStandardMaterial color="#1e293b" roughness={0.2} metalness={0.5} /></mesh>
-      {[[-0.8, 1.4], [0.8, 1.4], [-0.8, -1.4], [0.8, -1.4]].map(([x, z]) => (
-        <mesh key={`${x}${z}`} position={[x, 0.32, z]} rotation={[0, 0, Math.PI / 2]} raycast={noRay}><cylinderGeometry args={[0.32, 0.32, 0.22, 10]} /><meshStandardMaterial color="#111" /></mesh>
-      ))}
+    <group ref={g}>
+      {Array.from({ length: 10 }, (_, i) => <mesh key={i} position={[Math.sin(i * 2.1) * 0.8, 0.9, Math.cos(i * 1.3) * 2]} raycast={noRay}><sphereGeometry args={[0.18, 10, 8]} /><meshStandardMaterial color="#f8fafc" transparent opacity={0.85} /></mesh>)}
     </group>
   );
 }
@@ -112,12 +166,12 @@ function Garage() {
       {/* the roll-up door, half open, and the car inside */}
       <mesh position={[0, 2.2, 3.31]} raycast={noRay}><planeGeometry args={[5.2, 1.6]} /><meshStandardMaterial color="#9ca3af" metalness={0.5} roughness={0.4} /></mesh>
       <mesh position={[0, 0.7, 3.3]} raycast={noRay}><planeGeometry args={[5.2, 1.4]} /><meshStandardMaterial color="#111827" /></mesh>
-      <group position={[-1.2, 0, 0.6]}><Car color="#0f172a" /></group>
+
     </group>
   );
 }
 
-function CarPark({ withCar }: { withCar: boolean }) {
+function CarPark() {
   const lines = useMemo(() => [-12.6, -10.5, -8.4], []);
   return (
     <group>
@@ -126,7 +180,6 @@ function CarPark({ withCar }: { withCar: boolean }) {
       {lines.map((x) => <mesh key={x} rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.012, 9]} raycast={noRay}><planeGeometry args={[0.12, 5]} /><meshBasicMaterial color="#fafafa" /></mesh>)}
       {/* the gate in the front wall */}
       <mesh position={[-10.5, 1, 17]} raycast={noRay}><boxGeometry args={[6, 2, 0.15]} /><meshStandardMaterial color="#44403c" metalness={0.6} /></mesh>
-      {withCar && <group position={[-11.55, 0, 9]}><Car color="#f8fafc" /></group>}
     </group>
   );
 }

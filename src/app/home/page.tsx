@@ -11,6 +11,8 @@ import { MoveInGuide } from "@/components/home/MoveInGuide";
 import { PartySheet } from "@/components/invite/PartySheet";
 import { FloatMenu, SideBar, SideButton, SidePopover, ViewCycle } from "@/components/layout/SideBar";
 import { ExteriorSheet } from "@/components/home/ExteriorSheet";
+import { DriveSheet } from "@/components/home/DriveSheet";
+import { drivables, useGarage } from "@/lib/cars";
 import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyPeople } from "@/components/invite/PartyPeople";
 import { PartyActions } from "@/components/invite/PartyActions";
@@ -132,6 +134,18 @@ export default function HomePage() {
   // Walk to a fixture of this kind and use it (the shower from "Morning Shower").
   // Outside the house: pool, garage, garden… (townhouses and villas).
   const [exteriorOpen, setExteriorOpen] = useState(false);
+  // My car (owned, or rented now): parked outside a house with a driveway or garage. No car, no car parked.
+  const { garage } = useGarage(citizen?.id);
+  const nowForCar = useNow();
+  const myCar = React.useMemo(() => { const d = drivables(garage, nowForCar)[0]; return d ? { car: d.car, plate: d.plate } : null; }, [garage, nowForCar]);
+  const [driveOpen, setDriveOpen] = useState(false);
+  // Back from the street to swim: straight out to the pool.
+  const [groundsCall, setGroundsCall] = useState<{ n: number; what: "pool" | "car" } | undefined>(undefined);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const use = new URLSearchParams(window.location.search).get("use");
+    if (use === "pool" || use === "car") { const t = setTimeout(() => setGroundsCall({ n: Date.now(), what: use }), 1200); return () => clearTimeout(t); }
+  }, []);
   // The 🎉 Party panel on the side bar.
   const [partyPanel, setPartyPanel] = useState(false);
   const [fixtureCall, setFixtureCall] = useState<{ n: number; kind: string } | undefined>(undefined);
@@ -594,6 +608,8 @@ export default function HomePage() {
         onUseFixture={(f) => setFixture(f)}
         using={usingFixture}
         activity={running?.serve}
+        ownCar={myCar}
+        groundsCall={groundsCall}
         fixtureCall={fixtureCall}
         level={level}
         onChangeLevel={changeLevel}
@@ -636,7 +652,7 @@ export default function HomePage() {
       )}
       {/* Bottom right, beside the stick: going outside. */}
       {!cleanScreen && !placing && (
-        <button onClick={() => { gameAudio.playClickSound(); router.push(`/street?home=1&from=${encodeURIComponent(activeFlat?.building_id ?? "home")}&area=${encodeURIComponent(activeFlat ? activeBuildingName ?? housingConfig.area : housingConfig.area)}${hasPlot(housingTier) ? "&villa=1" : ""}`); }}
+        <button onClick={() => { gameAudio.playClickSound(); router.push(`/street?home=1&from=${encodeURIComponent(activeFlat?.building_id ?? "home")}&area=${encodeURIComponent(activeFlat ? activeBuildingName ?? housingConfig.area : housingConfig.area)}${hasPlot(housingTier) ? `&villa=1&ext=${encodeURIComponent((homeStyle.exterior ?? []).join(","))}` : ""}`); }}
           className="fixed right-3 bottom-[max(5.25rem,calc(env(safe-area-inset-bottom)+4.75rem))] sm:bottom-24 z-30 h-11 pl-3 pr-4 rounded-full bg-emerald-600 text-white shadow-lg flex items-center gap-1.5 font-black text-sm active:scale-95" aria-label="Go outside">
           🚪 <span>Outside</span>
         </button>
@@ -860,6 +876,7 @@ export default function HomePage() {
           onHire={() => { setExteriorOpen(false); setDecoratorOpen(true); }}
           onClose={() => setExteriorOpen(false)} />
       )}
+      {driveOpen && <DriveSheet car={myCar?.car ?? null} onClose={() => setDriveOpen(false)} />}
       {/* An interior decorator at work here, and the reveal when they're done; choosing one. */}
       {!cleanScreen && <DecoratorStatus tier={housingTier} job={decorJob} reload={() => { reloadDecor(); void sharedHome.reload(); }} />}
       {decoratorOpen && <DecoratorSheet tier={housingTier} preselect={hireParam} onClose={() => setDecoratorOpen(false)} onHired={() => { setBuyModalOpen(false); void reloadDecor(); }} />}
@@ -1046,7 +1063,12 @@ export default function HomePage() {
       )}
 
       {fixture && !running && (
-        <FixtureSheet fixture={fixture} onClose={() => setFixture(null)} onStart={(a) => { gameAudio.playClickSound(); setRunning(a); setUsingFixture(fixture.id); setFixture(null); }} />
+        <FixtureSheet fixture={fixture} onClose={() => setFixture(null)} onStart={(a) => {
+          gameAudio.playClickSound();
+          // Getting into the car: where to? (the trip itself is on the map, by car).
+          if (a.serve === "drive") { setFixture(null); setDriveOpen(true); return; }
+          setRunning(a); setUsingFixture(fixture.id); setFixture(null);
+        }} />
       )}
       {running && (
         <div className="absolute left-3 top-[max(7.5rem,calc(env(safe-area-inset-top)+7rem))] z-40 pointer-events-auto">
