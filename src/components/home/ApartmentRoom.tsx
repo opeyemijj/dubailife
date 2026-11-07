@@ -1446,16 +1446,19 @@ function RoomScene({
           const dx = poseRef.current.position[0] - other.position[0];
           const dz = poseRef.current.position[2] - other.position[2];
           const d = Math.hypot(dx, dz) || 1;
-          const spotX = other.position[0] + (dx / d) * 0.72;
-          const spotZ = other.position[2] + (dz / d) * 0.72;
+          const spotX = other.position[0] + (dx / d) * 0.46;
+          const spotZ = other.position[2] + (dz / d) * 0.46;
           handleLocomotionRef.current?.(new THREE.Vector3(spotX, 0, spotZ));
+          // Face away from partner so backside is against their waistline
+          const faceYaw = Math.atan2(spotX - other.position[0], spotZ - other.position[2]);
           setTimeout(() => {
-            setAnimation(look?.gender === "man" ? "rock_male" : "rock_female");
+            setPose((prev) => ({ ...prev, yaw: faceYaw }));
+            setAnimation("rock_female");
             setTimeout(() => setAnimation("idle"), 9000);
           }, 1200);
           return;
         }
-        setAnimation(look?.gender === "man" ? "rock_male" : "rock_female");
+        setAnimation("rock_female");
         setTimeout(() => setAnimation("idle"), 9000);
       } else if (t === "slap") {
         setAnimation("slap");

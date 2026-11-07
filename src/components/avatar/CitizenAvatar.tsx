@@ -64,8 +64,8 @@ const SPEED_FOR: Partial<Record<AvatarAnimation, number>> = {
   swim: 1.5,
   skate: 0.55,
   run: 1.85,
-  rock_female: 1.45,
-  rock_male: 1.15,
+  rock_female: 0.85,
+  rock_male: 0.85,
   slap: 2.2,
   fight: 1.9,
   knocked: 0.25,
@@ -470,16 +470,55 @@ function useSpecialAnimationPose(model: { scene: THREE.Object3D }, animation: Av
     const t = clock.getElapsedTime();
     const { pelvis, spine, spine1, neck, rUpper, rFore, rHand, lUpper, lFore, lHand } = bones;
     if (animation === "rock_female") {
-      // Bend torso forward and shake hips/pelvis rhythmically on the beat
-      if (spine) spine.rotation.z += 0.42;
-      if (spine1) spine1.rotation.z += 0.25;
+      // Bend torso forward at 45° angle to the ground, with backside moving slowly on partner's waistline
+      // 45 degrees = ~0.785 rad forward spine bend (0.48 + 0.31 = 0.79 rad ~ 45.3°)
+      if (spine) spine.rotation.z += 0.48;
+      if (spine1) spine1.rotation.z += 0.31;
+      // Head holds up playfully, looking back over shoulder towards partner
+      if (neck) {
+        neck.rotation.z -= 0.38;
+        neck.rotation.y += Math.sin(t * 2.8) * 0.14;
+      }
+      // Hands rest on thighs/hips for balance in the arched 45° posture
+      if (rUpper && lUpper && rFore && lFore) {
+        rUpper.rotation.z += 0.36;
+        rUpper.rotation.y += 0.16;
+        lUpper.rotation.z += 0.36;
+        lUpper.rotation.y -= 0.16;
+        rFore.rotation.z += 0.42;
+        lFore.rotation.z += 0.42;
+      }
+      // Slow sensual Afrobeats whining motion against partner's waistline
+      const slowWine = t * 2.8;
+      const wineCycleX = Math.sin(slowWine);
+      const wineCycleZ = Math.cos(slowWine);
       if (pelvis) {
-        pelvis.rotation.x += Math.sin(t * 14) * 0.22;
-        pelvis.rotation.z += Math.cos(t * 14) * 0.16;
+        pelvis.rotation.x += wineCycleX * 0.28; // rolling side-to-side wine
+        pelvis.rotation.y += wineCycleZ * 0.22; // circular hip gyration
+        pelvis.rotation.z += 0.06 + wineCycleZ * 0.12; // deep arch & pelvic pulse
+        // Physical displacement moving backside directly on the waistline slowly:
+        pelvis.position.x += wineCycleX * 0.035;
+        pelvis.position.z += wineCycleZ * 0.045; // rhythmic back-and-forth contact on waistline
+        pelvis.position.y += Math.abs(wineCycleX) * 0.015;
       }
     } else if (animation === "rock_male") {
-      if (spine) spine.rotation.z -= 0.14;
-      if (pelvis) pelvis.rotation.z += Math.sin(t * 7) * 0.1;
+      // Partner standing behind: hands framing waistline, swaying slowly with the wine
+      const partnerWine = t * 2.8;
+      if (spine) spine.rotation.z += 0.08;
+      if (pelvis) {
+        pelvis.rotation.x += Math.sin(partnerWine) * 0.18;
+        pelvis.rotation.y += Math.cos(partnerWine) * 0.15;
+        pelvis.position.z += Math.cos(partnerWine) * 0.025;
+      }
+      // Hands held forward at waistline height framing the dancer's hips
+      if (rUpper && lUpper && rFore && lFore) {
+        rUpper.rotation.z -= 0.22;
+        rUpper.rotation.x += 0.42;
+        lUpper.rotation.z -= 0.22;
+        lUpper.rotation.x -= 0.42;
+        rFore.rotation.z += 0.55;
+        lFore.rotation.z += 0.55;
+      }
     } else if (animation === "slap") {
       const swing = Math.sin(t * 16);
       if (rUpper) rUpper.rotation.y += swing * 0.95;

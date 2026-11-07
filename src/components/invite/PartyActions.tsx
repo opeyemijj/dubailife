@@ -152,19 +152,22 @@ export function PartyActions({
         </button>
         <button
           onClick={() => {
-            if ((citizen?.balance ?? 0) < 100) return;
-            adjustBalance(-100);
-            boostNeed("social", 20);
+            if ((citizen?.balance ?? 0) < 10000) {
+              announce("⚠️ Minimum AED 10,000 required to spray money!");
+              return;
+            }
+            adjustBalance(-10000);
+            boostNeed("social", 25);
             gameAudio.playCoinSound();
-            announce("💸✨ sprayed AED 100 cash in the air!");
+            announce("💸✨ sprayed AED 10,000 cash in the air!");
             broadcastRoomEvent({
               type: "spray_money",
-              amount: 100,
+              amount: 10000,
             });
           }}
           className={btn}
         >
-          <span className="text-lg leading-none">💸</span>Spray AED 100
+          <span className="text-lg leading-none">💸</span>Spray AED 10,000
         </button>
         <button
           onClick={() => {
@@ -335,16 +338,19 @@ export function PartyActions({
                   👗 1-Tap Wear Emerald &amp; Gold Asoebi
                 </button>
                 <div className="grid grid-cols-3 gap-1.5">
-                  {[100, 500, 1000].map((amt) => (
+                  {[10000, 25000, 50000].map((amt) => (
                     <button
                       key={amt}
                       type="button"
                       onClick={() => {
-                        if (!adjustBalance(-amt)) return;
+                        if (!adjustBalance(-amt)) {
+                          announce("⚠️ Not enough AED in your wallet to spray!");
+                          return;
+                        }
                         gameAudio.playCoinSound();
                         boostNeed("social", 25);
                         announce(
-                          `💸🇳🇬 Oshey! Sprayed AED ${amt} at the Owambe!`,
+                          `💸🇳🇬 Oshey! Sprayed AED ${amt.toLocaleString()} at the Owambe!`,
                         );
                         broadcastRoomEvent({
                           type: "spray_money",
@@ -353,7 +359,7 @@ export function PartyActions({
                       }}
                       className="py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs active:scale-95"
                     >
-                      💸 Spray {amt}
+                      💸 Spray {amt >= 1000 ? `${amt / 1000}k` : amt}
                     </button>
                   ))}
                 </div>

@@ -116,6 +116,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   const [vipReservations, setVipReservations] = useState<VipTableReservation[]>([]);
   const [vipCelebration, setVipCelebration] = useState<{ username: string; mine: boolean } | null>(null);
   const [peerConsumptions, setPeerConsumptions] = useState<Record<string, { action: "drink" | "eat"; prop: string; tint?: string }>>({});
+  const [peerSpraying, setPeerSpraying] = useState<Record<string, boolean>>({});
   const [activeActivity, setActiveActivity] = useState<NonNullable<Venue["activities"]>[number] | null>(null);
   const [activityFX, setActivityFX] = useState<Activity3DFX>({ active: false, type: "dance", combo: 0, burstKey: 0 });
   const [incomingBoxingChallenge, setIncomingBoxingChallenge] = useState<{
@@ -635,7 +636,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     if (e.type === "rock" && (e.targetId === myId || e.targetUsername === citizen?.username)) {
       const faceYaw = Math.atan2(e.from.x - me.x, e.from.z - me.z);
       walkThen([me.x, me.z], () => {
-        setPlayerAnimation(citizen?.look?.gender === "man" ? "rock_male" : "rock_female");
+        setPlayerAnimation("rock_male");
         boostNeed("fun", 10);
         boostNeed("social", 8);
       }, faceYaw);
@@ -649,6 +650,21 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
           return next;
         });
       }, 18000);
+    }
+    if (e.type === "spray_money") {
+      gameAudio.playCoinSound();
+      bubble(e.from.userId, `💸✨ Sprayed AED ${e.amount.toLocaleString()}!`);
+      say(`💸✨ @${e.from.username} sprayed AED ${e.amount.toLocaleString()} cash in the room!`);
+      boostNeed("fun", 15);
+      boostNeed("social", 15);
+      setPeerSpraying((prev) => ({ ...prev, [e.from.userId]: true }));
+      setTimeout(() => {
+        setPeerSpraying((prev) => {
+          const next = { ...prev };
+          delete next[e.from.userId];
+          return next;
+        });
+      }, 4500);
     }
   };
   const roomKey = `venue:${place.id}/${venue.id}`;
@@ -1456,6 +1472,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         }}
         carrying={carryingState}
         peerConsumptions={peerConsumptions}
+        peerSpraying={peerSpraying}
         vipTables={vipReservations}
         activityFX={activityFX}
       />
@@ -1837,13 +1854,23 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
             const dx = me.x - targetPeer.x;
             const dz = me.z - targetPeer.z;
             const d = Math.hypot(dx, dz) || 1;
-            const spot: [number, number] = [targetPeer.x + (dx / d) * 0.72, targetPeer.z + (dz / d) * 0.72];
-            const faceYaw = Math.atan2(targetPeer.x - spot[0], targetPeer.z - spot[1]);
+            // Approach close (~0.46m) so backside is directly against the partner's waistline
+            const spot: [number, number] = [targetPeer.x + (dx / d) * 0.46, targetPeer.z + (dz / d) * 0.46];
+            // Face AWAY from targetPeer so backside is against their waistline
+            const faceYaw = Math.atan2(spot[0] - targetPeer.x, spot[1] - targetPeer.z);
             walkThen(spot, () => {
-              setPlayerAnimation(citizen?.look?.gender === "man" ? "rock_male" : "rock_female");
+              setPlayerAnimation("rock_female");
               boostNeed("fun", 10);
               boostNeed("social", 8);
             }, faceYaw);
+          }}
+          onSpray={(amount) => {
+            setPlayerAnimation("spray_money");
+            bubble("me", `💸✨ Sprayed AED ${amount.toLocaleString()}!`);
+            say(`💸✨ You sprayed AED ${amount.toLocaleString()} cash!`);
+            setTimeout(() => {
+              setPlayerAnimation((a) => (a === "spray_money" ? "idle" : a));
+            }, 4500);
           }}
           canInviteToTable={!!myTable && (venue.layout === "club" || venue.layout === "dining" || venue.layout === "lobby")}
           onInvite={(kind) => {

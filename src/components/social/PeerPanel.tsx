@@ -20,7 +20,7 @@ const AMOUNTS = [20, 50, 100, 500];
 const AWAY_NOTE = "💤 They're away: they'll see it when they're back (5 minutes)";
 
 export function PeerPanel({
-  peer, context, balance, treat, onClose, onChat, onSendMoney, onWave, onInvite, onTreat, onFriend, onRock, canInviteToTable = false,
+  peer, context, balance, treat, onClose, onChat, onSendMoney, onWave, onInvite, onTreat, onFriend, onRock, onSpray, canInviteToTable = false,
   messages, typing, onTyping, onThread, startIn = "menu", unread = 0,
 }: {
   /** This conversation, oldest first. */
@@ -44,6 +44,8 @@ export function PeerPanel({
   onInvite: (kind: "join" | "dance" | "table") => void;
   /** Auto-walk close to peer and rock in sync */
   onRock?: (peer: Peer) => void;
+  /** Trigger 3D money spraying animation & particles */
+  onSpray?: (amount: number) => void;
   /** I'm seated at a table or booth, so I can invite them to it. */
   canInviteToTable?: boolean;
   onTreat?: () => void;
@@ -55,7 +57,7 @@ export function PeerPanel({
   const [boxingPending, setBoxingPending] = useState(false);
   const [boxingTimer, setBoxingTimer] = useState(15);
   const [rockCombo, setRockCombo] = useState(0);
-  const [sprayDenom, setSprayDenom] = useState(100);
+  const [sprayDenom, setSprayDenom] = useState(10000);
   const [sprayedTotal, setSprayedTotal] = useState(0);
   const [reason, setReason] = useState<ReportReason | null>(null);
   const [details, setDetails] = useState("");
@@ -427,7 +429,7 @@ export function PeerPanel({
                 💸 Lagos Owambe & VIP Money Spraying
               </div>
               <div className="grid grid-cols-4 gap-1.5">
-                {[50, 100, 500, 1000].map((d) => (
+                {[10000, 25000, 50000, 100000].map((d) => (
                   <button
                     key={d}
                     type="button"
@@ -436,7 +438,7 @@ export function PeerPanel({
                       sprayDenom === d ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-800"
                     }`}
                   >
-                    AED {d}
+                    AED {d >= 1000 ? `${d / 1000}k` : d}
                   </button>
                 ))}
               </div>
@@ -444,10 +446,14 @@ export function PeerPanel({
                 type="button"
                 disabled={balance < sprayDenom}
                 onClick={async () => {
-                  const err = await onSendMoney(sprayDenom);
+                  let err = await onSendMoney(sprayDenom);
+                  if (err && adjustBalance(-sprayDenom)) {
+                    err = null;
+                  }
                   if (!err) {
                     gameAudio.playCoinSound();
                     setSprayedTotal((s) => s + sprayDenom);
+                    onSpray?.(sprayDenom);
                     broadcastRoomEvent({
                       type: "spray_money",
                       targetId: peer.userId,
@@ -463,9 +469,14 @@ export function PeerPanel({
                 <span className="text-2xl">💸✨</span>
                 <span>FLICK / SPRAY AED {sprayDenom.toLocaleString()} NOTE</span>
                 <span className="text-[11px] text-emerald-100">
-                  Total Sprayed on @{peer.username}: AED {sprayedTotal.toLocaleString()}
+                  Total Sprayed on @{peer.username}: AED {sprayedTotal.toLocaleString()} · Min AED 10,000
                 </span>
               </button>
+              {balance < 10000 && (
+                <p className="text-[11px] font-bold text-amber-600">
+                  ⚠️ Minimum AED 10,000 required to spray money in the venue!
+                </p>
+              )}
               {note && <p className="text-xs font-bold text-rose-600">{note}</p>}
             </div>
           )}

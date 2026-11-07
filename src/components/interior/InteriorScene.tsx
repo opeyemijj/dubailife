@@ -107,6 +107,8 @@ interface Props {
   carrying?: CarryingState;
   /** Active food or drink consumption for peers in the room */
   peerConsumptions?: Record<string, { action: "drink" | "eat"; prop: string; tint?: string }>;
+  /** Active money spraying state for peers in the room */
+  peerSpraying?: Record<string, boolean>;
   /** VIP booths reserved by citizens */
   vipTables?: VipTableReservation[];
   /** Tapped an in-venue wall advertisement screen */
@@ -641,7 +643,7 @@ function useFollowable(follow: Follow, key: string, group: React.RefObject<THREE
   }, [follow, key, group]);
 }
 
-function RemotePeer({ peer, follow, followKey, onClick, ring = "#38bdf8", carrying }: { peer: Peer; follow: Follow; followKey: string; onClick: () => void; ring?: string; carrying?: CarryingState }) {
+function RemotePeer({ peer, follow, followKey, onClick, ring = "#38bdf8", carrying, overrideAnimation }: { peer: Peer; follow: Follow; followKey: string; onClick: () => void; ring?: string; carrying?: CarryingState; overrideAnimation?: AvatarAnimation }) {
   const group = useRef<THREE.Group>(null);
   const [walking, setWalking] = useState(false);
   const moving = useRef(false);
@@ -664,7 +666,7 @@ function RemotePeer({ peer, follow, followKey, onClick, ring = "#38bdf8", carryi
       <Suspense fallback={null}>
         <CitizenAvatar
           look={peer.look}
-          animation={walking ? "walk" : peer.animation}
+          animation={overrideAnimation ?? (walking ? "walk" : peer.animation)}
           position={[0, !walking && peer.animation === "sit" ? peer.lift ?? 0 : 0, 0]}
           holding={carrying?.prop}
           carryMode={carrying?.mode}
@@ -741,7 +743,7 @@ function Player({
       const t = detail?.event?.type;
       if (!t) return;
       if (t === "rock") {
-        setActionAnim(look?.gender === "man" ? "rock_male" : "rock_female");
+        setActionAnim("rock_female");
         setTimeout(() => setActionAnim(null), 9000);
       } else if (t === "slap") {
         setActionAnim("slap");
@@ -889,6 +891,7 @@ export function InteriorScene({
   onWallAdClick,
   carrying,
   peerConsumptions,
+  peerSpraying,
   vipTables = [],
   activityFX,
   inside = false,
@@ -998,7 +1001,17 @@ export function InteriorScene({
         const peerCarrying: CarryingState | undefined = pc
           ? { prop: <HandHeldProp kind={pc.prop as ServeKind} tint={pc.tint} />, mode: pc.action }
           : undefined;
-        return <RemotePeer key={p.userId} peer={p} follow={followNodes} followKey={p.userId} onClick={() => onPeer?.(p)} carrying={peerCarrying} />;
+        return (
+          <RemotePeer
+            key={p.userId}
+            peer={p}
+            follow={followNodes}
+            followKey={p.userId}
+            onClick={() => onPeer?.(p)}
+            carrying={peerCarrying}
+            overrideAnimation={peerSpraying?.[p.userId] ? "spray_money" : undefined}
+          />
+        );
       })}
       {locals.map((p) => <RemotePeer key={p.userId} peer={p} follow={followNodes} followKey={p.userId} ring="#f59e0b" onClick={() => onLocal?.(p)} />)}
       <Suspense fallback={null}>
