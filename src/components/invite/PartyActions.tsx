@@ -135,23 +135,6 @@ export function PartyActions({
         </button>
         <button
           onClick={() => {
-            boostNeed("fun", 18);
-            boostNeed("social", 15);
-            gameAudio.playClickSound();
-            announce("🍑🔥 is rocking on the beat!");
-            broadcastRoomEvent({
-              type: "rock",
-              targetId: party.host,
-              targetUsername: party.host,
-            });
-            onDance(12);
-          }}
-          className={btn}
-        >
-          <span className="text-lg leading-none">🍑</span>Rock
-        </button>
-        <button
-          onClick={() => {
             if ((citizen?.balance ?? 0) < 10000) {
               announce("⚠️ Minimum AED 10,000 required to spray money!");
               return;

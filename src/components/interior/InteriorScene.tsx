@@ -52,6 +52,8 @@ export interface WalkTarget {
   key: number;
   /** Which way to face on arrival (e.g. sitting down); otherwise the way they walked. */
   face?: number;
+  /** Custom walk animation (e.g. "angry_walk" for stomping in anger before slap or fight). */
+  anim?: AvatarAnimation;
 }
 
 /** Bottle service on its way: hosts walk from `from` to their spots at the table, then back. */
@@ -127,6 +129,7 @@ interface Props {
   stick?: React.RefObject<{ x: number; y: number; sprint?: boolean }>;
   stickRun?: boolean;
   onStickMove?: (x: number, z: number, yaw: number, moving: boolean) => void;
+  onAutoWalkStep?: (x: number, z: number, yaw: number, moving: boolean, anim?: AvatarAnimation) => void;
 }
 
 const NATURAL_FLOOR: Partial<Record<string, string>> = { sand: "#f3dfae", deck: "#ece7df", ice: "#e0f2fe" };
@@ -702,6 +705,7 @@ function Player({
   bounds,
   obstacles = [],
   onStickMove,
+  onAutoWalkStep,
 }: {
   /** The on-screen stick (Inside and Eye views): walk or run wherever it points. */
   stick?: React.RefObject<{ x: number; y: number; sprint?: boolean }>;
@@ -711,6 +715,7 @@ function Player({
   obstacles?: Array<[number, number, number]>;
   /** Where the stick has taken me (for others to see). */
   onStickMove?: (x: number, z: number, yaw: number, moving: boolean) => void;
+  onAutoWalkStep?: (x: number, z: number, yaw: number, moving: boolean, anim?: AvatarAnimation) => void;
   dirty?: boolean;
   hidden?: boolean;
   placeAt?: { point: [number, number]; key: number } | null;
@@ -736,16 +741,14 @@ function Player({
   const [steer, setSteer] = useState<"walk" | "run" | null>(null);
   const [actionAnim, setActionAnim] = useState<AvatarAnimation | null>(null);
   const lastReport = useRef({ t: 0, moving: false });
+  const lastAutoReport = useRef({ t: 0 });
 
   useEffect(() => {
     const onRoomAction = (ev: Event) => {
       const detail = (ev as CustomEvent<{ event?: { type?: string } }>).detail;
       const t = detail?.event?.type;
       if (!t) return;
-      if (t === "rock") {
-        setActionAnim("rock_female");
-        setTimeout(() => setActionAnim(null), 60000);
-      } else if (t === "slap") {
+      if (t === "slap") {
         setActionAnim("slap");
         setTimeout(() => setActionAnim(null), 2200);
       } else if (t === "brawl" || t === "gang_beat") {
@@ -813,20 +816,30 @@ function Player({
     if (dist < 0.05) {
       target.current = null;
       setArrivedKey(t.key);
+      if (facing.current !== null) {
+        g.rotation.y = facing.current;
+      }
       onArrive(t.key);
+      onAutoWalkStep?.(g.position.x, g.position.z, facing.current ?? g.rotation.y, false, t.anim);
       return;
     }
-    const step = Math.min(dist, WALK_SPEED * dt);
+    const speed = t.anim === "angry_walk" ? WALK_SPEED * 1.35 : WALK_SPEED;
+    const step = Math.min(dist, speed * dt);
     g.position.x += (dx / dist) * step;
     g.position.z += (dz / dist) * step;
     turnToward(g, Math.atan2(dx, dz), dt);
+    const now = performance.now();
+    if (now - lastAutoReport.current.t > 160) {
+      lastAutoReport.current.t = now;
+      onAutoWalkStep?.(g.position.x, g.position.z, g.rotation.y, true, t.anim);
+    }
   });
 
   return (
     <group ref={group} position={[start[0], 0, start[1]]} rotation={[0, Math.PI, 0]} visible={!hidden}>
       <CitizenAvatar
         look={look}
-        animation={steer ?? (walking ? "walk" : actionAnim ?? animation)}
+        animation={steer ?? (walking ? (walkTo?.anim ?? "walk") : actionAnim ?? animation)}
         accessories={worn}
         position={[0, walking ? 0 : lift, 0]}
         holding={carrying?.prop}
@@ -901,6 +914,7 @@ export function InteriorScene({
   stick,
   stickRun = false,
   onStickMove,
+  onAutoWalkStep,
 }: Props) {
   const quality = useMemo(() => canvasQuality(), []);
   const [w, d] = plan.size;
@@ -1032,6 +1046,7 @@ export function InteriorScene({
           bounds={[w, d]}
           obstacles={plan.stations.filter((s) => s.kind !== "dancefloor").map((s) => [s.position[0], s.position[1], 0.85] as [number, number, number])}
           onStickMove={onStickMove}
+          onAutoWalkStep={onAutoWalkStep}
           hidden={!!ride}
           placeAt={placeAt}
         />

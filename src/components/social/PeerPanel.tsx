@@ -21,7 +21,7 @@ const AMOUNTS = [20, 50, 100, 500];
 const AWAY_NOTE = "💤 They're away: they'll see it when they're back (5 minutes)";
 
 export function PeerPanel({
-  peer, context, balance, treat, onClose, onChat, onSendMoney, onWave, onInvite, onTreat, onFriend, onRock, onSlap, onFight, onSpray, canInviteToTable = false,
+  peer, context, balance, treat, onClose, onChat, onSendMoney, onWave, onInvite, onTreat, onFriend, onSlap, onFight, onSpray, canInviteToTable = false,
   messages, typing, onTyping, onThread, startIn = "menu", unread = 0,
 }: {
   /** This conversation, oldest first. */
@@ -43,8 +43,6 @@ export function PeerPanel({
   onSendMoney: (amount: number) => Promise<string | null>;
   onWave: () => void;
   onInvite: (kind: "join" | "dance" | "table") => void;
-  /** Auto-walk close to peer and rock in sync */
-  onRock?: (peer: Peer) => void;
   /** Auto-walk close to peer and deliver slap */
   onSlap?: (peer: Peer) => void;
   /** Auto-walk close to peer and brawl/fight */
@@ -57,12 +55,10 @@ export function PeerPanel({
   onFriend: () => Promise<string>;
 }) {
   const { citizen } = useCitizen();
-  const [mode, setMode] = useState<"menu" | "chat" | "money" | "safety" | "rock" | "spray">(startIn);
+  const [mode, setMode] = useState<"menu" | "chat" | "money" | "safety" | "spray">(startIn);
   const [boxingOpen, setBoxingOpen] = useState(false);
   const [boxingPending, setBoxingPending] = useState(false);
   const [boxingTimer, setBoxingTimer] = useState(15);
-  const [rockCombo, setRockCombo] = useState(0);
-  const [rockTimer, setRockTimer] = useState(60);
   const [sprayDenom, setSprayDenom] = useState(10000);
   const [sprayedTotal, setSprayedTotal] = useState(0);
   const [reason, setReason] = useState<ReportReason | null>(null);
@@ -102,23 +98,6 @@ export function PeerPanel({
     return () => onThread(false);
   }, [mode, onThread]);
 
-  // Rocking duration limit: exactly 1 minute (60s) max, then auto-stops
-  useEffect(() => {
-    if (mode !== "rock") return;
-    setRockTimer(60);
-    const interval = setInterval(() => {
-      setRockTimer((t) => {
-        if (t <= 1) {
-          clearInterval(interval);
-          setMode("menu");
-          setNote("✨ 1-Minute Rocking Session complete! What a vibe!");
-          return 0;
-        }
-        return t - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [mode]);
   // Keep the newest line in view.
   useEffect(() => {
     thread.current?.scrollTo({ top: thread.current.scrollHeight, behavior: "smooth" });
@@ -242,18 +221,6 @@ export function PeerPanel({
               {canInviteToTable && action("🪑", "Invite to my table", () => onInvite("table"), peer.away ? AWAY_NOTE : "They'll take a free seat with you if they accept")}
               {context === "club" && action("💃", "Dance together", () => onInvite("dance"), peer.away ? AWAY_NOTE : "You'll dance facing each other")}
               {action(
-                "🍑",
-                `Rock with @${peer.username}`,
-                () => {
-                  gameAudio.playClickSound();
-                  onRock?.(peer);
-                  broadcastRoomEvent({ type: "rock", targetId: peer.userId, targetUsername: peer.username });
-                  setRockCombo(1);
-                  setMode("rock");
-                },
-                "Auto-walk close and start 2-Player Beat-Sync Party Rocking"
-              )}
-              {action(
                 "💸",
                 `Spray Money on @${peer.username}`,
                 () => {
@@ -304,36 +271,35 @@ export function PeerPanel({
                 `Slap @${peer.username}`,
                 () => {
                   gameAudio.playClickSound();
+                  onClose();
                   if (onSlap) {
                     onSlap(peer);
-                    setNote(`🚶 Auto-walking close to slap @${peer.username}...`);
                   } else {
                     broadcastRoomEvent({ type: "slap", targetId: peer.userId, targetUsername: peer.username });
-                    setNote(`👋⚡ You slapped @${peer.username}! They have 1.2s to dodge or fight back!`);
                   }
                 },
-                "Auto-walk close and deliver a direct slap (1.2s dodge QTE)"
+                "Auto-walk up to them in anger and deliver a direct slap"
               )}
               {action(
                 "🥊💥",
                 `Fight @${peer.username} (1v1 Brawl)`,
                 () => {
                   gameAudio.playClickSound();
+                  onClose();
                   if (onFight) {
                     onFight(peer);
-                    setNote(`🚶 Auto-walking close to fight @${peer.username}...`);
                   } else {
                     broadcastRoomEvent({ type: "brawl", targetId: peer.userId, targetUsername: peer.username });
-                    setNote(`🥊💥 BRAWL! Fighting with @${peer.username}!`);
                   }
                 },
-                "Auto-walk close and square up in a 1v1 street brawl"
+                "Auto-walk up to them in anger before breaking into a brawl"
               )}
               {action(
                 "👊🔥",
                 `Rally Gang Beat vs @${peer.username}`,
                 () => {
                   gameAudio.playClickSound();
+                  onClose();
                   if (onFight) {
                     onFight(peer);
                   }
@@ -343,7 +309,6 @@ export function PeerPanel({
                     targetUsername: peer.username,
                     allies: [citizen?.username ?? "you"],
                   });
-                  setNote(`👊🔥 Rallied the room to gang-jump @${peer.username}! Waiting for 2+ allies...`);
                 },
                 "Auto-walk close and call players to jump them together"
               )}
@@ -488,57 +453,6 @@ export function PeerPanel({
               </button>
               {note && <p className="text-xs font-bold text-rose-600 text-center">{note}</p>}
             </>
-          )}
-
-          {mode === "rock" && (
-            <div className="space-y-3 text-center py-2">
-              <div className="text-xs font-black uppercase tracking-wider text-fuchsia-600">
-                🍑 2-Player Party Rocking Beat-Sync
-              </div>
-              <p className="text-xs text-slate-600">
-                Bending forward & rocking on the beat with <span className="font-black text-slate-900">@{peer.username}</span>!
-              </p>
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-xs font-mono font-bold bg-fuchsia-100 text-fuchsia-800 px-3 py-1 rounded-full">
-                  ⏳ {rockTimer}s left (1 min max)
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode("menu");
-                    setNote("⏹ Rocking session ended.");
-                  }}
-                  className="text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-full transition"
-                >
-                  ⏹ Stop
-                </button>
-              </div>
-              <div className="py-2 flex flex-col items-center justify-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    gameAudio.playClickSound();
-                    const next = rockCombo + 1;
-                    setRockCombo(next);
-                    boostNeed("fun", 6);
-                    boostNeed("social", 6);
-                    onRock?.(peer);
-                    broadcastRoomEvent({ type: "rock", targetId: peer.userId, targetUsername: peer.username });
-                    if (next % 5 === 0) {
-                      adjustBalance(100);
-                      gameAudio.playCoinSound();
-                      setNote(`🔥 ${next}× ROCKING FEVER COMBO! Crowd throws +AED 100!`);
-                    }
-                  }}
-                  className="w-28 h-28 rounded-full bg-gradient-to-br from-fuchsia-500 via-pink-500 to-amber-400 text-white font-black shadow-xl ring-4 ring-fuchsia-300 active:scale-90 transition flex flex-col items-center justify-center"
-                >
-                  <span className="text-2xl">🍑🔥</span>
-                  <span className="text-xs">TAP BEAT</span>
-                  <span className="text-[11px] text-amber-100">Combo ×{rockCombo}</span>
-                </button>
-              </div>
-              {note && <p className="text-xs font-black text-emerald-600">{note}</p>}
-            </div>
           )}
 
           {mode === "spray" && (

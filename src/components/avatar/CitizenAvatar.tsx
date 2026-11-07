@@ -32,6 +32,7 @@ export type AvatarAnimation =
   | "wave"
   | "clap"
   | "walk"
+  | "angry_walk"
   | "dance"
   | "talk"
   | "sleep"
@@ -51,6 +52,7 @@ const CLIP_FOR: Partial<Record<AvatarAnimation, AvatarAnimation>> = {
   sleep: "idle",
   swim: "walk",
   skate: "walk",
+  angry_walk: "walk",
   rock_female: "dance",
   rock_male: "dance",
   slap: "wave",
@@ -64,6 +66,7 @@ const SPEED_FOR: Partial<Record<AvatarAnimation, number>> = {
   swim: 1.5,
   skate: 0.55,
   run: 1.85,
+  angry_walk: 1.35,
   rock_female: 0.85,
   rock_male: 0.85,
   slap: 2.2,
@@ -517,6 +520,18 @@ function useSpecialAnimationPose(model: { scene: THREE.Object3D }, animation: Av
         lUpper.rotation.z -= 0.22;
         lUpper.rotation.x -= 0.42;
         rFore.rotation.z += 0.55;
+        lFore.rotation.z += 0.55;
+      }
+    } else if (animation === "angry_walk") {
+      // Aggressive determined stomp: torso tilted forward, arms clenched with heavy swinging cadence
+      if (spine) spine.rotation.x += 0.22;
+      if (spine1) spine1.rotation.x += 0.12;
+      if (neck) neck.rotation.x -= 0.18; // intense forward head glare
+      const stomp = Math.sin(t * 10);
+      if (rUpper && lUpper && rFore && lFore) {
+        rUpper.rotation.x += stomp * 0.45;
+        lUpper.rotation.x -= stomp * 0.45;
+        rFore.rotation.z += 0.55; // clenched fists
         lFore.rotation.z += 0.55;
       }
     } else if (animation === "slap") {

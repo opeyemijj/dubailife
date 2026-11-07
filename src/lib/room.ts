@@ -65,8 +65,7 @@ export type RoomEvent =
   | { type: "party"; action: "lights" | "dance" | "drinks"; on?: boolean }
   // Someone changed the home (furniture, walls, floor, bedding): everyone there reloads its one shared copy.
   | { type: "home" }
-  // Interactive Party & Combat Events (#1, #2, #3, #4, #14)
-  | { type: "rock"; targetId: string; targetUsername: string }
+  // Interactive Party & Combat Events
   | { type: "slap"; targetId: string; targetUsername: string }
   | { type: "brawl"; targetId: string; targetUsername: string }
   | { type: "separate"; fighterA: string; fighterB: string }

@@ -69,11 +69,6 @@ function describe(e: Received): { icon: string; text: string } {
       };
     case "home":
       return { icon: "🛋️", text: `${who} changed something in the home` };
-    case "rock":
-      return {
-        icon: "🍑",
-        text: `${who} is rocking on the beat with @${e.targetUsername}!`,
-      };
     case "slap":
       return {
         icon: "👋⚡",

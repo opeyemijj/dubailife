@@ -289,10 +289,10 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     return kinds;
   }, [citizen?.worn, inventory, tryOn]);
 
-  const walkThen = useCallback((point: [number, number], open: () => void, face?: number) => {
+  const walkThen = useCallback((point: [number, number], open: () => void, face?: number, anim?: AvatarAnimation) => {
     const key = Date.now();
     setPlayerAnimation("idle");
-    setWalkTo({ point, key, face });
+    setWalkTo({ point, key, face, anim });
     setPending({ key, open });
   }, []);
 
@@ -500,15 +500,18 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   usePhoneButtonHere();
   const unreadMsgs = useUnreadTotal(citizen?.id);
   const [showButtons, setShowButtons] = useState(false);
-  const [free, setFree] = useState<{ x: number; z: number; yaw: number; moving: boolean; running: boolean } | null>(null);
+  const [free, setFree] = useState<{ x: number; z: number; yaw: number; moving: boolean; running: boolean; walkAnim?: AvatarAnimation } | null>(null);
   const onStickMove = (x: number, z: number, yaw: number, moving: boolean) => {
     // Steering takes over from any tap-to-walk.
     if (moving && walkTo) setWalkTo(null);
     setFree({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw, moving, running: stickRun || !!stick.current.sprint });
   };
-  const me = free && !walkTo
-    ? { x: free.x, z: free.z, face: free.yaw, animation: (free.moving ? (free.running ? "run" : "walk") : shownAnimation) as AvatarAnimation, lift: 0, dirty }
-    : { x: walkTo?.point[0] ?? spawn[0], z: walkTo?.point[1] ?? spawn[1], face: walkTo?.face, animation: walkTo ? "walk" : shownAnimation, lift: playerAnimation === "sit" ? seatLift : 0, dirty };
+  const onAutoWalkStep = useCallback((x: number, z: number, yaw: number, moving: boolean, anim?: AvatarAnimation) => {
+    setFree({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw, moving, running: false, walkAnim: anim });
+  }, []);
+  const me = free
+    ? { x: free.x, z: free.z, face: free.yaw, animation: (free.moving ? (free.walkAnim ?? (free.running ? "run" : "walk")) : shownAnimation) as AvatarAnimation, lift: playerAnimation === "sit" ? seatLift : 0, dirty }
+    : { x: walkTo?.point[0] ?? spawn[0], z: walkTo?.point[1] ?? spawn[1], face: walkTo?.face, animation: walkTo ? (walkTo.anim ?? "walk") : shownAnimation, lift: playerAnimation === "sit" ? seatLift : 0, dirty };
   const [bubbles, setBubbles] = useState<Record<string, string>>({});
   const bubble = useCallback((who: string, text: string) => {
     setBubbles((b) => ({ ...b, [who]: text }));
@@ -632,17 +635,6 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       gameAudio.playClickSound();
       setIncomingBoxingChallenge(null);
       say(`❌ @${e.opponentUsername ?? "Opponent"} declined the boxing challenge. No fight.`);
-    }
-    if (e.type === "rock" && (e.targetId === myId || e.targetUsername === citizen?.username)) {
-      const faceYaw = Math.atan2(e.from.x - me.x, e.from.z - me.z);
-      walkThen([me.x, me.z], () => {
-        setPlayerAnimation("rock_male");
-        boostNeed("fun", 10);
-        boostNeed("social", 8);
-        setTimeout(() => {
-          setPlayerAnimation((a) => (a === "rock_male" ? "idle" : a));
-        }, 60000);
-      }, faceYaw);
     }
     if (e.type === "slap" && (e.targetId === myId || e.targetUsername === citizen?.username)) {
       gameAudio.playClickSound();
@@ -1460,6 +1452,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         stick={inside && !ride ? stick : undefined}
         stickRun={stickRun}
         onStickMove={onStickMove}
+        onAutoWalkStep={onAutoWalkStep}
         ride={ride}
         onRideEnd={onRideEnd}
         dim={!!party && !clubParty && (lightsSet ?? !!party.lightsOut)}
@@ -1878,23 +1871,6 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
             bubble("me", "👋");
             setPanel(null);
           }}
-          onRock={(targetPeer) => {
-            const dx = me.x - targetPeer.x;
-            const dz = me.z - targetPeer.z;
-            const d = Math.hypot(dx, dz) || 1;
-            // Approach close (~0.46m) so backside is directly against the partner's waistline
-            const spot: [number, number] = [targetPeer.x + (dx / d) * 0.46, targetPeer.z + (dz / d) * 0.46];
-            // Face AWAY from targetPeer so backside is against their waistline
-            const faceYaw = Math.atan2(spot[0] - targetPeer.x, spot[1] - targetPeer.z);
-            walkThen(spot, () => {
-              setPlayerAnimation("rock_female");
-              boostNeed("fun", 10);
-              boostNeed("social", 8);
-              setTimeout(() => {
-                setPlayerAnimation((a) => (a === "rock_female" ? "idle" : a));
-              }, 60000);
-            }, faceYaw);
-          }}
           onSlap={(targetPeer) => {
             const dx = me.x - targetPeer.x;
             const dz = me.z - targetPeer.z;
@@ -1914,14 +1890,11 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
               }, 2200);
             };
 
-            if (d > 0.65) {
-              const spot: [number, number] = [targetPeer.x + (dx / d) * 0.55, targetPeer.z + (dz / d) * 0.55];
-              const faceYaw = Math.atan2(targetPeer.x - spot[0], targetPeer.z - spot[1]);
-              say(`🚶 Walking close to @${targetPeer.username}...`);
-              walkThen(spot, doSlap, faceYaw);
-            } else {
-              doSlap();
-            }
+            const spot: [number, number] = [targetPeer.x + (dx / d) * 0.55, targetPeer.z + (dz / d) * 0.55];
+            const faceYaw = Math.atan2(targetPeer.x - spot[0], targetPeer.z - spot[1]);
+            bubble("me", "😡 Watch it!");
+            say(`🚶 Marching to slap @${targetPeer.username}...`);
+            walkThen(spot, doSlap, faceYaw, "angry_walk");
           }}
           onFight={(targetPeer) => {
             const dx = me.x - targetPeer.x;
@@ -1942,14 +1915,11 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
               }, 7500);
             };
 
-            if (d > 0.75) {
-              const spot: [number, number] = [targetPeer.x + (dx / d) * 0.65, targetPeer.z + (dz / d) * 0.65];
-              const faceYaw = Math.atan2(targetPeer.x - spot[0], targetPeer.z - spot[1]);
-              say(`🚶 Walking close to @${targetPeer.username} to fight...`);
-              walkThen(spot, doFight, faceYaw);
-            } else {
-              doFight();
-            }
+            const spot: [number, number] = [targetPeer.x + (dx / d) * 0.65, targetPeer.z + (dz / d) * 0.65];
+            const faceYaw = Math.atan2(targetPeer.x - spot[0], targetPeer.z - spot[1]);
+            bubble("me", `😡 We're fighting now, @${targetPeer.username}!`);
+            say(`😡 Stomping towards @${targetPeer.username} in anger...`);
+            walkThen(spot, doFight, faceYaw, "angry_walk");
           }}
           onSpray={(targetPeer, amount) => {
             const dx = me.x - targetPeer.x;
