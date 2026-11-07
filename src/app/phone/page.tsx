@@ -21,7 +21,7 @@ import { supabase } from "@/lib/supabase/client";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { SmallLoader } from "@/components/GameLoadingScreen";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
-import { useOnlineUsernames } from "@/lib/presence";
+import { broadcastCityPulse, useOnlineUsernames } from "@/lib/presence";
 import {
   MESSAGE_DAYS, contacts, findPeople, listConversations, loadConversation, onIncoming, sendMessage,
   type Contact, type Conversation, type Message,
@@ -106,10 +106,60 @@ function Phone() {
 
 // ---------------------------------------------------------------- chats
 
+interface SquadGroup {
+  id: string;
+  tag: string;
+  name: string;
+  members: string[];
+  messages: { sender: string; text: string; time: string }[];
+}
+
+const DEFAULT_SQUADS: SquadGroup[] = [
+  {
+    id: "squad-owambe",
+    tag: "🇳🇬 Asoebi Committee",
+    name: "Lagos Owambe & Asoebi VIPs",
+    members: ["layla", "chidi", "tunde"],
+    messages: [{ sender: "chidi", text: "Emerald & Gold Asoebi is ready for Saturday! 💸", time: "Just now" }],
+  },
+  {
+    id: "squad-gym",
+    tag: "🏋️ Gym Squad",
+    name: "Marina Fitness & Spotters",
+    members: ["omar", "zayed"],
+    messages: [{ sender: "omar", text: "Who is spotting me on 120kg bench press today? 🤝", time: "5m ago" }],
+  },
+];
+
 function Chats({ me, online, open }: { me: string; online: ReadonlySet<string>; open: (id: string) => void }) {
+  const { citizen } = useCitizen();
   const [list, setList] = useState<Conversation[] | null>(null);
   const unread = useUnreadCounts(me);
   const [q, setQ] = useState("");
+  // #23: Activity Squad Group Chats
+  const [squads, setSquads] = useState<SquadGroup[]>(() => {
+    if (typeof window === "undefined") return DEFAULT_SQUADS;
+    try {
+      const saved = localStorage.getItem("dl_activity_squads_v1");
+      return saved ? (JSON.parse(saved) as SquadGroup[]) : DEFAULT_SQUADS;
+    } catch {
+      return DEFAULT_SQUADS;
+    }
+  });
+  const [creatingSquad, setCreatingSquad] = useState(false);
+  const [squadTag, setSquadTag] = useState("🍾 Club VIPs");
+  const [squadName, setSquadName] = useState("");
+  const [squadMembersInput, setSquadMembersInput] = useState("");
+  const [activeSquadId, setActiveSquadId] = useState<string | null>(null);
+  const [squadMsg, setSquadMsg] = useState("");
+
+  const saveSquads = (next: SquadGroup[]) => {
+    setSquads(next);
+    try {
+      localStorage.setItem("dl_activity_squads_v1", JSON.stringify(next));
+    } catch {}
+  };
+
   const refresh = useCallback(() => { listConversations(me).then(setList); }, [me]);
   useEffect(() => {
     refresh();
@@ -117,8 +167,191 @@ function Chats({ me, online, open }: { me: string; online: ReadonlySet<string>; 
   }, [me, refresh]);
 
   const shown = (list ?? []).filter((c) => !q || `${c.with.name} ${c.with.username} ${c.last.body}`.toLowerCase().includes(q.toLowerCase()));
+  const activeSquad = squads.find((s) => s.id === activeSquadId) ?? null;
+
   return (
     <div className="space-y-3">
+      {/* #23: Activity Squad Group Chats */}
+      <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-2.5">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs font-black uppercase tracking-wider text-amber-300">👥 Activity Squad Group Chats</div>
+            <div className="text-[11px] text-white/60">Create a group for Gym, Asoebi, Clubbing, Boxing or Dinner &amp; rally everyone!</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setCreatingSquad((v) => !v)}
+            className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-black text-xs shrink-0"
+          >
+            {creatingSquad ? "Close" : "+ New Squad"}
+          </button>
+        </div>
+
+        {creatingSquad && (
+          <div className="p-2.5 rounded-xl bg-zinc-900 border border-white/10 space-y-2">
+            <div className="flex gap-1.5 overflow-x-auto pb-1">
+              {["🏋️ Gym Squad", "🇳🇬 Asoebi Committee", "🍾 Club VIPs", "👶 Parents Club", "🥊 Boxing Crew", "🍽️ Dinner Table"].map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => setSquadTag(tag)}
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-black whitespace-nowrap ${
+                    squadTag === tag ? "bg-sky-500 text-white" : "bg-white/10 text-white/70"
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+            <input
+              value={squadName}
+              onChange={(e) => setSquadName(e.target.value)}
+              placeholder="Group name (e.g. Marina Rooftop Squad)"
+              className="w-full h-9 rounded-xl bg-white/5 border border-white/10 px-3 text-xs outline-none"
+            />
+            <input
+              value={squadMembersInput}
+              onChange={(e) => setSquadMembersInput(e.target.value)}
+              placeholder="Invite @usernames separated by commas"
+              className="w-full h-9 rounded-xl bg-white/5 border border-white/10 px-3 text-xs outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const name = squadName.trim() || `${squadTag} Chat`;
+                const members = squadMembersInput
+                  .split(",")
+                  .map((s) => s.trim().replace(/^@/, ""))
+                  .filter(Boolean);
+                const created: SquadGroup = {
+                  id: `squad-${Date.now()}`,
+                  tag: squadTag,
+                  name,
+                  members: members.length ? members : ["bestie"],
+                  messages: [{ sender: citizen?.username ?? "you", text: `Created ${name}! Let's link up 🚀`, time: "Now" }],
+                };
+                saveSquads([created, ...squads]);
+                setSquadName("");
+                setSquadMembersInput("");
+                setCreatingSquad(false);
+                setActiveSquadId(created.id);
+              }}
+              className="w-full py-2 rounded-xl bg-emerald-500 text-zinc-950 font-black text-xs"
+            >
+              Create Activity Group Chat
+            </button>
+          </div>
+        )}
+
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {squads.map((sq) => (
+            <button
+              key={sq.id}
+              type="button"
+              onClick={() => setActiveSquadId(activeSquadId === sq.id ? null : sq.id)}
+              className={`shrink-0 p-2.5 rounded-xl border text-left max-w-[200px] transition-all ${
+                activeSquadId === sq.id
+                  ? "bg-sky-500/20 border-sky-400"
+                  : "bg-white/5 border-white/10 hover:bg-white/10"
+              }`}
+            >
+              <div className="text-[10px] font-black text-amber-300 truncate">{sq.tag}</div>
+              <div className="text-xs font-bold text-white truncate">{sq.name}</div>
+              <div className="text-[10px] text-white/50 truncate">{sq.members.length + 1} members</div>
+            </button>
+          ))}
+        </div>
+
+        {activeSquad && (
+          <div className="p-3 rounded-xl bg-zinc-900 border border-sky-400/30 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <div className="text-xs font-black text-white">{activeSquad.name}</div>
+                <div className="text-[10px] text-sky-300">
+                  {activeSquad.tag} · @{activeSquad.members.join(", @")}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const placeId = citizen?.location?.placeId ?? "dubai-mall";
+                  const placeName = getPlace(placeId)?.name ?? "Dubai Mall";
+                  broadcastCityPulse({
+                    kind: "party",
+                    icon: "🚀",
+                    title: `${activeSquad.name}: Rally at ${placeName}!`,
+                    subtitle: `@${citizen?.username ?? "Squad Leader"} summoned the ${activeSquad.tag}`,
+                    href: `/explore?open=${placeId}`,
+                    cta: "Join Squad ›",
+                    from: citizen?.username ?? "someone",
+                  });
+                  const updated = squads.map((s) =>
+                    s.id === activeSquad.id
+                      ? {
+                          ...s,
+                          messages: [
+                            ...s.messages,
+                            { sender: citizen?.username ?? "you", text: `🚀 Rallied squad to ${placeName}! Tap to teleport.`, time: "Now" },
+                          ],
+                        }
+                      : s
+                  );
+                  saveSquads(updated);
+                }}
+                className="px-2.5 py-1.5 rounded-xl bg-emerald-500 text-zinc-950 font-black text-[11px] shrink-0 active:scale-95"
+              >
+                🚀 Rally Squad Here
+              </button>
+            </div>
+
+            <div className="max-h-28 overflow-y-auto space-y-1 pr-1">
+              {activeSquad.messages.map((m, i) => (
+                <div key={i} className="text-xs bg-white/5 rounded-lg px-2.5 py-1.5">
+                  <span className="font-black text-amber-300">@{m.sender}: </span>
+                  <span className="text-white/90">{m.text}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-1.5">
+              <input
+                value={squadMsg}
+                onChange={(e) => setSquadMsg(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && squadMsg.trim()) {
+                    const updated = squads.map((s) =>
+                      s.id === activeSquad.id
+                        ? { ...s, messages: [...s.messages, { sender: citizen?.username ?? "you", text: squadMsg.trim(), time: "Now" }] }
+                        : s
+                    );
+                    saveSquads(updated);
+                    setSquadMsg("");
+                  }
+                }}
+                placeholder={`Message ${activeSquad.name}...`}
+                className="flex-1 h-9 rounded-xl bg-white/5 border border-white/10 px-2.5 text-xs outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (!squadMsg.trim()) return;
+                  const updated = squads.map((s) =>
+                    s.id === activeSquad.id
+                      ? { ...s, messages: [...s.messages, { sender: citizen?.username ?? "you", text: squadMsg.trim(), time: "Now" }] }
+                      : s
+                  );
+                  saveSquads(updated);
+                  setSquadMsg("");
+                }}
+                className="px-3 h-9 rounded-xl bg-sky-500 text-white font-black text-xs"
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       <label className="flex items-center gap-2 h-12 rounded-xl bg-white/5 border border-white/10 px-3">
         <Search className="w-4 h-4 text-white/40" />
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search messages" className="flex-1 bg-transparent outline-none text-sm placeholder:text-white/40" />
@@ -278,7 +511,7 @@ function Thread({ me, other, online, onBack }: { me: string; other: string; onli
   );
 }
 
-/** Send money to someone from a conversation. */
+/** Send money to someone from a conversation (zero limit — any amount up to full wallet balance). */
 function PayFriend({ to, balance, onDone }: { to: Contact; balance: number; onDone: (amount: number | null) => void }) {
   const [amount, setAmount] = useState(100);
   const [busy, setBusy] = useState(false);
@@ -290,18 +523,32 @@ function PayFriend({ to, balance, onDone }: { to: Contact; balance: number; onDo
     if (e) setError(e);
     else onDone(amount);
   };
+  const presets = [
+    { label: "100", val: 100 },
+    { label: "1K", val: 1_000 },
+    { label: "10K", val: 10_000 },
+    { label: "100K", val: 100_000 },
+    { label: "1M", val: 1_000_000 },
+    { label: "MAX", val: Math.max(1, balance) },
+  ];
   return (
     <div className="fixed inset-0 z-[150] bg-black/60 flex items-end sm:items-center justify-center p-2" onClick={() => onDone(null)}>
       <div className="w-full max-w-sm bg-white text-slate-900 rounded-3xl p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
-        <h3 className="font-black text-lg">Send money to @{to.username}</h3>
-        <div className="grid grid-cols-4 gap-2">
-          {[50, 100, 500, 1000].map((a) => <button key={a} onClick={() => setAmount(a)} className={`h-10 rounded-xl text-sm font-black ${amount === a ? "bg-emerald-500 text-white" : "bg-slate-100"}`}>{a}</button>)}
+        <div className="flex items-center justify-between">
+          <h3 className="font-black text-lg">Send money to @{to.username}</h3>
+          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Zero Limit</span>
+        </div>
+        <div className="grid grid-cols-6 gap-1.5">
+          {presets.map((p) => (
+            <button key={p.label} onClick={() => setAmount(p.val)} className={`h-9 rounded-xl text-xs font-black ${amount === p.val ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-800"}`}>{p.label}</button>
+          ))}
         </div>
         <label className="flex items-center gap-2 h-11 rounded-xl border border-slate-200 px-3">
           <span className="text-xs font-black text-slate-400">AED</span>
-          <input type="number" min={1} value={amount} onChange={(e) => setAmount(Math.max(0, Math.floor(Number(e.target.value) || 0)))} className="flex-1 text-base font-black outline-none bg-transparent" />
+          <input type="number" min={1} step="any" value={amount} onChange={(e) => setAmount(Math.max(0, Math.floor(Number(e.target.value) || 0)))} className="flex-1 text-base font-black outline-none bg-transparent" />
+          <button type="button" onClick={() => setAmount(Math.max(1, balance))} className="text-[11px] font-black text-emerald-600 hover:text-emerald-700">MAX</button>
         </label>
-        <p className="text-xs text-slate-500">You have AED {balance.toLocaleString()} (virtual)</p>
+        <p className="text-xs text-slate-500">Wallet: AED {balance.toLocaleString()} · After: AED {Math.max(0, balance - amount).toLocaleString()}</p>
         {error && <p className="text-sm font-bold text-rose-600">{error}</p>}
         <button disabled={busy || amount < 1 || amount > balance} onClick={pay} className="w-full h-12 rounded-xl bg-emerald-500 disabled:opacity-50 text-white font-black">{busy ? "Sending…" : `Send AED ${amount.toLocaleString()}`}</button>
       </div>

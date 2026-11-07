@@ -10,7 +10,7 @@ import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js
 
 const isFacePart = (m: THREE.Mesh) => {
   const name = (Array.isArray(m.material) ? m.material[0] : m.material)?.name ?? "";
-  return /_head$|_opacity$/i.test(name);
+  return /_head$|_opacity$|_keffiyeh$/i.test(name);
 };
 
 /** A new model: `outfit`'s body and clothes with `face`'s head and hair. */

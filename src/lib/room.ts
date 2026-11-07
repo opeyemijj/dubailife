@@ -64,7 +64,15 @@ export type RoomEvent =
   // At a party: the host turns the lights out or on, or gets everyone dancing.
   | { type: "party"; action: "lights" | "dance" | "drinks"; on?: boolean }
   // Someone changed the home (furniture, walls, floor, bedding): everyone there reloads its one shared copy.
-  | { type: "home" };
+  | { type: "home" }
+  // Interactive Party & Combat Events (#1, #2, #3, #4, #14)
+  | { type: "rock"; targetId: string; targetUsername: string }
+  | { type: "slap"; targetId: string; targetUsername: string }
+  | { type: "brawl"; targetId: string; targetUsername: string }
+  | { type: "separate"; fighterA: string; fighterB: string }
+  | { type: "gang_beat"; targetId: string; targetUsername: string; allies: string[] }
+  | { type: "boxing"; targetId: string; targetUsername: string; purse: number }
+  | { type: "spray_money"; targetId?: string; targetUsername?: string; amount: number };
 
 export type Received = RoomEvent & { id: string; from: Peer; to?: string; at: number };
 
@@ -89,7 +97,18 @@ const AWAY_GRACE_MS = 15 * 60_000;
 const HEAL_MS = 10000;
 /** Window event announcing money from someone in the same room. */
 export const MONEY_EVENT = "cometodubai:money";
+export const ROOM_ACTION_EVENT = "cometodubai:room-action";
 const HISTORY_DAYS = 7;
+
+let activeRoomEmitter: ((event: RoomEvent, to?: string) => void) | null = null;
+
+/** Broadcasts an interactive room event (rocking, slap, brawl, gang beat, boxing, money spray) to the current room. */
+export function broadcastRoomEvent(event: RoomEvent, to?: string) {
+  activeRoomEmitter?.(event, to);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent(ROOM_ACTION_EVENT, { detail: { event, to } }));
+  }
+}
 
 /** Adds messages to a conversation list, skipping ones already there, oldest first. */
 function merge(list: ChatMessage[], more: ChatMessage[]) {
@@ -306,6 +325,13 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
     send(channel.current, { ...event, id, from: self.current, to });
   };
 
+  useEffect(() => {
+    activeRoomEmitter = (ev, to) => emit(ev, to);
+    return () => {
+      activeRoomEmitter = null;
+    };
+  });
+
   /** Sends a chat line: shown at once, delivered live, and saved for a week. */
   const say = (to: string, text: string, place?: string) => {
     if (!myId) return;
@@ -394,12 +420,8 @@ export async function sendMoney(to: Peer, amount: number, place: string): Promis
     return null;
   }
   return /\bblocked\b/.test(error.message) ? BLOCKED_TEXT
-    : /transfers_frozen/.test(error.message) ? "🔒 Your bank froze transfers for an hour after the scam. Try again later."
-    : /insufficient_funds/.test(error.message) ? "You don't have enough AED for that."
-    : /too_many/.test(error.message) ? "Slow down: try again in a minute."
-    : /amount_out_of_range/.test(error.message) ? "You can send between AED 1 and AED 20,000,000 at a time."
-    : /daily_send_limit/.test(error.message) ? "That's over today's sending limit (AED 50,000,000 a day). Send a smaller amount now, or the rest tomorrow."
-    : /account_frozen/.test(error.message) ? "Your account is frozen while your court case is open."
+    : /insufficient_funds/.test(error.message) ? "You don't have enough AED in your wallet for that."
+    : /amount_out_of_range/.test(error.message) ? "Enter an amount of at least AED 1."
     : /recipient_missing|invalid_recipient/.test(error.message) ? "You can't send money to that player."
     : "The transfer didn't go through. Please try again.";
 }

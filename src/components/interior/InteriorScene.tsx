@@ -732,7 +732,31 @@ function Player({
   const facing = useRef<number | null>(null);
   // Steering with the stick: walking or running, and when I last told the room where I am.
   const [steer, setSteer] = useState<"walk" | "run" | null>(null);
+  const [actionAnim, setActionAnim] = useState<AvatarAnimation | null>(null);
   const lastReport = useRef({ t: 0, moving: false });
+
+  useEffect(() => {
+    const onRoomAction = (ev: Event) => {
+      const detail = (ev as CustomEvent<{ event?: { type?: string } }>).detail;
+      const t = detail?.event?.type;
+      if (!t) return;
+      if (t === "rock") {
+        setActionAnim(look?.gender === "man" ? "rock_male" : "rock_female");
+        setTimeout(() => setActionAnim(null), 9000);
+      } else if (t === "slap") {
+        setActionAnim("slap");
+        setTimeout(() => setActionAnim(null), 2200);
+      } else if (t === "brawl" || t === "gang_beat") {
+        setActionAnim("fight");
+        setTimeout(() => setActionAnim(null), 7500);
+      } else if (t === "spray_money") {
+        setActionAnim("spray_money");
+        setTimeout(() => setActionAnim(null), 4500);
+      }
+    };
+    window.addEventListener("cometodubai:room-action", onRoomAction);
+    return () => window.removeEventListener("cometodubai:room-action", onRoomAction);
+  }, [look?.gender]);
 
   useEffect(() => {
     target.current = walkTo;
@@ -756,8 +780,9 @@ function Player({
       camera.getWorldDirection(fwd);
       fwd.y = 0; fwd.normalize();
       const right = new THREE.Vector3(-fwd.z, 0, fwd.x);
-      const sprint = stickRun || !!stick?.current.sprint;
-      const speed = (sprint ? WALK_SPEED * 2.3 : WALK_SPEED) * mag;
+      // Inside a venue: strictly walking speed (no running indoors).
+      const sprint = false;
+      const speed = WALK_SPEED * mag;
       const vx = (fwd.x * sy + right.x * sx) / Math.hypot(sx, sy) * speed, vz = (fwd.z * sy + right.z * sx) / Math.hypot(sx, sy) * speed;
       const free = (x: number, z: number) => {
         if (bounds && (Math.abs(x) > bounds[0] / 2 - 0.35 || Math.abs(z) > bounds[1] / 2 - 0.35)) return false;
@@ -799,7 +824,7 @@ function Player({
     <group ref={group} position={[start[0], 0, start[1]]} rotation={[0, Math.PI, 0]} visible={!hidden}>
       <CitizenAvatar
         look={look}
-        animation={steer ?? (walking ? "walk" : animation)}
+        animation={steer ?? (walking ? "walk" : actionAnim ?? animation)}
         accessories={worn}
         position={[0, walking ? 0 : lift, 0]}
         holding={carrying?.prop}

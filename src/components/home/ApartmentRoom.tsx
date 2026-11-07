@@ -3,8 +3,8 @@
 import { Ceiling } from "@/components/interior/Ceiling";
 import { Flies } from "@/components/avatar/Flies";
 import { PartyDecor } from "@/components/invite/PartyDecor";
-import { canvasQuality } from "@/lib/device";
-import React, { createContext, Suspense, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { canvasQuality, isWebGLAvailable, resetWebGLCache } from "@/lib/device";
+import React, { createContext, Suspense, useContext, useEffect, useMemo, useRef, useState, Component } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
@@ -16,13 +16,16 @@ import type { Car } from "@/lib/cars";
 import { LuxuryDecor } from "./LuxuryDecor";
 import { buildNav, findPath, walkable, type Rect, type Seg } from "./homeNav";
 import { HomeFixtures } from "./HomeFixtures";
-import { fixtureRect, fixtureSpot, fixturesFor, fixtureWallsFor, type Fixture } from "@/lib/homeFixtures";
+import { fixtureRect, fixtureSpot, fixturesFor, fixtureWallsFor, kindOf, type Fixture } from "@/lib/homeFixtures";
 import { CitizenAvatar, type CarryMode, StudioEnvironment, type AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 import { SceneLoadingOverlay } from "@/components/GameLoadingScreen";
+import { adjustBalance, DEFAULT_NEEDS, updateCitizen } from "@/lib/citizenStore";
+import { gainSkill } from "@/lib/life";
+import { gameAudio } from "@/utils/gameAudio";
 import {
   AVATAR_SPOT, BUILT_INS, CELL, DOOR, GRID, LAYOUT_SCALE, ROOM_SIZE, WALL_HEIGHT, WINDOW,
   findFreePlacement, floorCenter, floorPlacementAt, getCatalogItem, isPlacementValid, levelOf, rotatedSize, wallOffsetAt, wallTransform, withHomeItems,
-  HOUSING_CONFIGS, hasPlot, homeObjectOf, type HomeObject, type FloorFinish, type HomeStyle, type HousingTier, type LevelDef, type RoomZone,
+  HOUSING_CONFIGS, hasPlot, homeObjectOf, type HomeObject, type HomeActivityDef, type FloorFinish, type HomeStyle, type HousingTier, type LevelDef, type RoomZone,
   type CatalogItem, type FloorPlacement, type Interaction, type OwnedFurniture, type Placement, type Rotation, type Wall,
 } from "@/lib/furniture";
 
@@ -37,6 +40,7 @@ type Pose = { position: [number, number, number]; yaw: number; lie?: boolean; st
 const STAND: Pose = { position: [AVATAR_SPOT.x, 0, AVATAR_SPOT.z], yaw: Math.PI / 4 };
 const WALL_THICKNESS = 0.16;
 const DRAG_THRESHOLD = 6; // px; anything more is a camera drag, not a tap
+const DEFAULT_ORBIT_TARGET: [number, number, number] = [0, 0.8, 0];
 
 export interface PlacingState {
   uid: string;
@@ -105,6 +109,8 @@ export interface ApartmentRoomProps {
   onInteractObject?: (type: Interaction) => void;
   /** A kitchen or bathroom fixture was reached and is being used (see HomeFixtures). */
   onUseFixture?: (f: Fixture) => void;
+  /** Trigger a home activity/ritual directly (e.g. from the proximity bar when approaching a room or fixture). */
+  onTriggerActivity?: (act: HomeActivityDef) => void;
   /** Two-storey homes: the floor on show (0 downstairs, 1 upstairs). Taking the stairs asks to change it. */
   level?: number;
   onChangeLevel?: (level: number) => void;
@@ -236,7 +242,7 @@ const MODEL_MATTRESS = 0.942;
 /** The bed sheets' colour in this home (HomeStyle.bedding), for every bed. */
 const BeddingContext = createContext<string | undefined>(undefined);
 
-function useFittedModel(url: string, size: [number, number], yaw = 0, ghost?: "valid" | "invalid", bedding?: string) {
+function useFittedModel(url: string, size: [number, number], yaw = 0, ghost?: "valid" | "invalid", bedding?: string, customColor?: string) {
   const { scene } = useGLTF(url);
   return useMemo(() => {
     const model = scene.clone(true);
@@ -260,16 +266,23 @@ function useFittedModel(url: string, size: [number, number], yaw = 0, ghost?: "v
       ? new THREE.MeshStandardMaterial({ color: ghost === "valid" ? "#34d399" : "#f87171", transparent: true, opacity: 0.55, depthWrite: false })
       : null;
     // Bed sheets: the duvet in the chosen colour, the pillows a paler shade of it.
-    const sheet = bedding && !ghost ? new THREE.Color(bedding) : null;
+    const sheet = (customColor || bedding) && !ghost ? new THREE.Color(customColor ?? bedding) : null;
+    const itemTint = customColor && !ghost ? new THREE.Color(customColor) : null;
     outer.traverse((o) => {
       const m = o as THREE.Mesh;
       if (!m.isMesh) return;
-      if (sheet) {
+      if (sheet && bed) {
         const part = `${m.name} ${m.parent?.name ?? ""}`;
         if (/comforter|duvet|blanket/i.test(part) || /pillow/i.test(part)) {
           const mat = (Array.isArray(m.material) ? m.material[0] : m.material).clone() as THREE.MeshStandardMaterial;
           mat.map = null;
           mat.color = /pillow/i.test(part) ? sheet.clone().lerp(new THREE.Color("#ffffff"), 0.6) : sheet.clone();
+          m.material = mat;
+        }
+      } else if (itemTint) {
+        const mat = (Array.isArray(m.material) ? m.material[0] : m.material).clone() as THREE.MeshStandardMaterial;
+        if (mat.color) {
+          mat.color = mat.color.clone().lerp(itemTint, 0.72);
           m.material = mat;
         }
       }
@@ -282,12 +295,12 @@ function useFittedModel(url: string, size: [number, number], yaw = 0, ghost?: "v
       }
     });
     return outer;
-  }, [scene, size, yaw, ghost, bedding]);
+  }, [scene, size, yaw, ghost, bedding, customColor]);
 }
 
-function FurnitureModel({ url, size, yaw, ghost }: { url: string; size: [number, number]; yaw?: number; ghost?: "valid" | "invalid" }) {
+function FurnitureModel({ url, size, yaw, ghost, customColor }: { url: string; size: [number, number]; yaw?: number; ghost?: "valid" | "invalid"; customColor?: string }) {
   const bedding = useContext(BeddingContext);
-  const object = useFittedModel(url, size, yaw, ghost, url === BED_MODEL ? bedding : undefined);
+  const object = useFittedModel(url, size, yaw, ghost, url === BED_MODEL ? bedding : undefined, customColor);
   return <primitive object={object} />;
 }
 
@@ -693,11 +706,11 @@ function FlatScreenTVOnStand({ size, ghost, activity }: { size: [number, number]
 }
 
 
-function ItemVisual({ item, ghost, activity }: { item: CatalogItem; ghost?: "valid" | "invalid"; activity?: string }) {
-  if (item.visual) return <LuxuryDecor visual={item.visual} size={item.size} ghost={ghost} tint={item.tint} activity={activity} />;
+function ItemVisual({ item, ghost, activity, customColor }: { item: CatalogItem; ghost?: "valid" | "invalid"; activity?: string; customColor?: string }) {
+  if (item.visual) return <LuxuryDecor visual={item.visual} size={item.size} ghost={ghost} tint={customColor ?? item.tint} activity={activity} />;
   if (item.id === "tv" || item.id.includes("tv")) return <FlatScreenTVOnStand size={item.size} ghost={ghost} activity={activity} />;
   if (item.kind === "wall") return <SunsetPainting size={item.size} ghost={ghost} />;
-  return <FurnitureModel url={item.model!} size={item.size} yaw={item.yaw} ghost={ghost} />;
+  return <FurnitureModel url={item.model!} size={item.size} yaw={item.yaw} ghost={ghost} customColor={customColor} />;
 }
 
 
@@ -1129,6 +1142,8 @@ function CameraRig({
   followYaw = 0,
   inside,
   eye = false,
+  panTarget,
+  panNudgeRef,
   onHiddenWallsChange,
 }: {
   turns: number;
@@ -1141,6 +1156,10 @@ function CameraRig({
   inside?: boolean;
   /** First person: the camera at the citizen's eyes. */
   eye?: boolean;
+  /** Outdoor zone camera target selected from the Plot Scroll Bar. */
+  panTarget?: [number, number] | null;
+  /** Side-to-side camera scroll nudge (◀ / ▶). */
+  panNudgeRef?: React.MutableRefObject<{ dx: number; dz: number } | null>;
   onHiddenWallsChange: (walls: Set<Wall>) => void;
 }) {
   const controls = useThree((s) => s.controls) as unknown as OrbitControlsImpl | null;
@@ -1167,7 +1186,9 @@ function CameraRig({
     }
     // Inside sits back far enough to see the room around you.
     const dist = inside ? 6.2 : viewDistance ?? (size.width / size.height < 0.8 ? 19 : 14);
-    const dir = camera.position.clone().sub(controls.target).normalize();
+    const dir = camera.position.clone().sub(controls.target);
+    if (dir.lengthSq() < 1e-6) dir.set(1, 1, 1);
+    dir.normalize();
     camera.position.copy(controls.target).addScaledVector(dir, dist);
     controls.update();
     // Re-aim only when the mode or screen changes, not every step.
@@ -1228,23 +1249,52 @@ function CameraRig({
         for (const h of ray.intersectObjects(walls, false)) blocking.add(h.object as THREE.Mesh);
       }
       for (const m of blocking) {
-        const mat = m.material as THREE.MeshStandardMaterial;
+        const mat = (Array.isArray(m.material) ? m.material[0] : m.material) as THREE.MeshStandardMaterial | undefined;
+        if (!mat) continue;
         if (!faded.current.has(m)) { mat.transparent = true; mat.depthWrite = false; mat.needsUpdate = true; faded.current.add(m); }
         mat.opacity += (0.12 - mat.opacity) * Math.min(1, dt * 8);
       }
       for (const m of [...faded.current]) {
         if (blocking.has(m)) continue;
-        const mat = m.material as THREE.MeshStandardMaterial;
+        const mat = (Array.isArray(m.material) ? m.material[0] : m.material) as THREE.MeshStandardMaterial | undefined;
+        if (!mat) continue;
         mat.opacity += (1 - mat.opacity) * Math.min(1, dt * 6);
         if (mat.opacity > 0.98) { mat.opacity = 1; mat.transparent = false; mat.depthWrite = true; mat.needsUpdate = true; faded.current.delete(m); }
       }
+    } else if (panNudgeRef?.current && (Math.abs(panNudgeRef.current.dx) > 0.01 || Math.abs(panNudgeRef.current.dz) > 0.01)) {
+      // Side-to-side manual scroll nudge (◀ / ▶) across the villa plot
+      const stepX = panNudgeRef.current.dx;
+      const stepZ = panNudgeRef.current.dz;
+      panNudgeRef.current.dx = 0;
+      panNudgeRef.current.dz = 0;
+      const right = new THREE.Vector3().subVectors(controls.target, camera.position).setY(0).normalize().cross(new THREE.Vector3(0, 1, 0));
+      const shiftX = THREE.MathUtils.clamp(controls.target.x + right.x * stepX + stepZ * 0.5, -16, 16) - controls.target.x;
+      const shiftZ = THREE.MathUtils.clamp(controls.target.z + right.z * stepX + stepZ * 0.5, -13, 16) - controls.target.z;
+      controls.target.x += shiftX;
+      controls.target.z += shiftZ;
+      camera.position.x += shiftX;
+      camera.position.z += shiftZ;
+    } else if (panTarget) {
+      // Smoothly glide camera over to the selected outdoor zone (Pool, Garden, BBQ, Majlis, Car Park, or House)
+      const k = Math.min(1, dt * 4.5);
+      const dx = (panTarget[0] - controls.target.x) * k;
+      const dy = (0.8 - controls.target.y) * k;
+      const dz = (panTarget[1] - controls.target.z) * k;
+      controls.target.x += dx;
+      controls.target.y += dy;
+      controls.target.z += dz;
+      camera.position.x += dx;
+      camera.position.z += dz;
     } else if (follow && !upView) {
-      // Above: follow the citizen from room to room, gliding rather than jumping.
-      const k = Math.min(1, dt * 3);
-      const dx = (follow[0] - controls.target.x) * k, dz = (follow[2] - controls.target.z) * k;
-      controls.target.x += dx; controls.target.z += dz;
-      camera.position.x += dx; camera.position.z += dz;
+      // Above: follow the citizen while they are actively walking, leaving the camera free to pan when standing still.
+      const moved = lastFollow.current ? Math.hypot(follow[0] - lastFollow.current[0], follow[2] - lastFollow.current[2]) : 1;
       lastFollow.current = follow;
+      if (moved > 0.001) {
+        const k = Math.min(1, dt * 4);
+        const dx = (follow[0] - controls.target.x) * k, dz = (follow[2] - controls.target.z) * k;
+        controls.target.x += dx; controls.target.z += dz;
+        camera.position.x += dx; camera.position.z += dz;
+      }
     } else if (targetPos) {
       // Smooth gliding towards the active room (or the middle, from above)
       const lerpFactor = Math.min(1, dt * 5.0);
@@ -1332,9 +1382,18 @@ function RoomScene({
   level = 0,
   onChangeLevel,
   homeStyle,
+  partyDecor,
   people = [],
   labels,
-}: ApartmentRoomProps & { labels: LabelNodes }) {
+  panTarget,
+  panNudgeRef,
+  walkRequestRef,
+}: ApartmentRoomProps & {
+  labels: LabelNodes;
+  panTarget?: [number, number] | null;
+  panNudgeRef?: React.MutableRefObject<{ dx: number; dz: number } | null>;
+  walkRequestRef?: React.MutableRefObject<((x: number, z: number) => void) | null>;
+}) {
   const config = HOUSING_CONFIGS[housingTier] ?? HOUSING_CONFIGS.studio;
   // Two-storey homes show one floor at a time; everything else is a single floor 0.
   const levelDef = config.levels ? config.levels[Math.min(level, config.levels.length - 1)] : undefined;
@@ -1357,8 +1416,44 @@ function RoomScene({
   // Where the user last pointed the item being placed (cleared by switching items).
   const [moved, setMoved] = useState<{ uid: string; placement: Placement } | null>(null);
   const [animation, setAnimation] = useState<AvatarAnimation>("idle");
-  // Walking, talking, or sitting / lying on a piece of furniture shows that; otherwise what the page asks for (dancing).
-  const shown: AvatarAnimation = animation === "walk" || animation === "talk" || animation === "sit" || animation === "sleep" || !myAnimation ? animation : myAnimation;
+  // Listen for interactive room actions (rocking dance, slap, brawl, gang beat, money spraying)
+  useEffect(() => {
+    const onRoomAction = (ev: Event) => {
+      const detail = (ev as CustomEvent<{ event?: { type?: string } }>).detail;
+      const t = detail?.event?.type;
+      if (!t) return;
+      if (t === "rock") {
+        setAnimation(look?.gender === "man" ? "rock_male" : "rock_female");
+        setTimeout(() => setAnimation("idle"), 9000);
+      } else if (t === "slap") {
+        setAnimation("slap");
+        setTimeout(() => setAnimation("idle"), 2200);
+      } else if (t === "brawl" || t === "gang_beat") {
+        setAnimation("fight");
+        setTimeout(() => setAnimation("idle"), 7500);
+      } else if (t === "spray_money") {
+        setAnimation("spray_money");
+        setTimeout(() => setAnimation("idle"), 4500);
+      }
+    };
+    window.addEventListener("cometodubai:room-action", onRoomAction);
+    return () => window.removeEventListener("cometodubai:room-action", onRoomAction);
+  }, [look?.gender]);
+  // Walking, talking, interactive party/combat animations, or sitting / lying on a piece of furniture shows that; otherwise what the page asks for (dancing).
+  const shown: AvatarAnimation =
+    animation === "walk" ||
+    animation === "talk" ||
+    animation === "sit" ||
+    animation === "sleep" ||
+    animation === "rock_female" ||
+    animation === "rock_male" ||
+    animation === "slap" ||
+    animation === "fight" ||
+    animation === "box" ||
+    animation === "spray_money" ||
+    !myAnimation
+      ? animation
+      : myAnimation;
   const shownSleep = shown === "sleep";
   const [pose, setPose] = useState<Pose>(() => (startAt ? { position: [startAt[0], 0, startAt[1]], yaw: Math.PI / 4 } : STAND));
   const [walkTarget, setWalkTarget] = useState<[number, number] | null>(null);
@@ -1387,13 +1482,35 @@ function RoomScene({
   const fixtures = useMemo(() => fixturesFor(housingTier, lvl), [housingTier, lvl]);
   const fixtureWalls = useMemo(() => fixtureWallsFor(housingTier, lvl), [housingTier, lvl]);
   const nav = useMemo(() => {
-    // The whole floor (room zones leave gaps round the walls; the walls themselves keep rooms apart), and the balcony.
-    const roomRects: Rect[] = [{ minX: -HALF, maxX: HALF, minZ: -HALF, maxZ: HALF }, ...(rooms ?? []).filter((r) => r.id === "balcony").map((r) => r.bounds)];
+    const plotGround = hasPlot(housingTier) && lvl === 0;
+    // The whole floor (and the outdoor villa plot on the ground floor so players & party guests can walk out through the doors).
+    const roomRects: Rect[] = [
+      { minX: -HALF, maxX: HALF, minZ: -HALF, maxZ: HALF },
+      ...(rooms ?? []).filter((r) => r.id === "balcony").map((r) => r.bounds),
+      ...(plotGround ? [{ minX: -16.2, maxX: 16.2, minZ: -12.2, maxZ: 16.2 }] : []),
+    ];
     const walls: Seg[] = [...(levelDef ? levelDef.walls : config.walls ?? [])];
-    // The south wall, with its glass door out to the balcony.
-    if (rooms?.some((r) => r.id === "balcony")) walls.push({ a: [-HALF, HALF], b: [HALF, HALF], door: [HALF - 0.5, HALF + 0.5] });
+    // The south wall, with its glass door out to the balcony or garden/pool.
+    if (rooms?.some((r) => r.id === "balcony") || plotGround) {
+      walls.push({ a: [-HALF, HALF], b: [HALF, HALF], door: [HALF - 0.75, HALF + 0.75] });
+    }
+    if (plotGround) {
+      // Outer house walls on the ground floor: north & east are solid; west has the front door at z=0 ([4.25, 5.75]).
+      walls.push(
+        { a: [-HALF, -HALF], b: [HALF, -HALF] },
+        { a: [HALF, -HALF], b: [HALF, HALF] },
+        { a: [-HALF, -HALF], b: [-HALF, HALF], door: [HALF - 0.75, HALF + 0.75] },
+      );
+    }
     walls.push(...fixtureWalls);
-    const blocks: Rect[] = [...(levelDef ? [] : config.blocks ?? []), ...fixtures.map(fixtureRect)];
+    const blocks: Rect[] = [
+      ...(levelDef ? [] : config.blocks ?? []),
+      ...fixtures.map(fixtureRect),
+      // Keep walkers from walking straight over the deep pool water (tapping the pool swims in it)
+      ...(plotGround && (style.exterior ?? []).includes("pool")
+        ? [{ minX: GROUNDS.pool.x - GROUNDS.pool.w / 2, maxX: GROUNDS.pool.x + GROUNDS.pool.w / 2, minZ: GROUNDS.pool.z - GROUNDS.pool.l / 2, maxZ: GROUNDS.pool.z + GROUNDS.pool.l / 2 }]
+        : []),
+    ];
     for (const f of withHomeItems(furniture, housingTier)) {
       if (f.placement?.kind !== "floor" || levelOf(f.placement) !== lvl) continue;
       const item = getCatalogItem(f.itemId);
@@ -1404,7 +1521,7 @@ function RoomScene({
       blocks.push({ minX: c.x - (w * CELL) / 2, maxX: c.x + (w * CELL) / 2, minZ: c.z - (d * CELL) / 2, maxZ: c.z + (d * CELL) / 2 });
     }
     return buildNav(roomRects, walls, blocks);
-  }, [rooms, levelDef, config, furniture, housingTier, lvl, fixtures, fixtureWalls]);
+  }, [rooms, levelDef, config, furniture, housingTier, lvl, fixtures, fixtureWalls, style.exterior]);
   const [clickBeacon, setClickBeacon] = useState<{ x: number; z: number; time: number } | null>(null);
   const [pendingAction, setPendingAction] = useState<{ type: Interaction; rest?: RestPose; fixture?: Fixture } | null>(null);
   const avatarHeight = look?.gender === "man" ? 1.8 : 1.68;
@@ -1439,11 +1556,16 @@ function RoomScene({
     return undefined;
   }, [upView, currentRoom]);
 
-  // Click-to-walk destination locomotion
+  // Click-to-walk destination locomotion (supports walking out through the doors onto the villa plot!)
   const handleFloorLocomotion = (point: THREE.Vector3) => {
     if (busy || climbRef.current) return;
-    const clampedX = Math.max(-HALF + 0.3, Math.min(HALF - 0.3, point.x));
-    const clampedZ = Math.max(-HALF + 0.3, Math.min(HALF + (rooms?.some((r) => r.id === "balcony") ? 1.6 : -0.3), point.z));
+    const plotGround = hasPlot(housingTier) && lvl === 0;
+    const clampedX = plotGround
+      ? Math.max(-15.8, Math.min(15.8, point.x))
+      : Math.max(-HALF + 0.3, Math.min(HALF - 0.3, point.x));
+    const clampedZ = plotGround
+      ? Math.max(-11.8, Math.min(15.8, point.z))
+      : Math.max(-HALF + 0.3, Math.min(HALF + (rooms?.some((r) => r.id === "balcony") ? 1.6 : -0.3), point.z));
 
     if (animTimer.current) {
       clearTimeout(animTimer.current);
@@ -1487,8 +1609,9 @@ function RoomScene({
       camera.getWorldDirection(fwd);
       fwd.y = 0; fwd.normalize();
       const right = new THREE.Vector3(-fwd.z, 0, fwd.x);
-      const sprint = stickRun || !!stick?.current.sprint;
-      const l = Math.hypot(sx, sy), speed = (sprint ? 3.8 : 1.7) * mag;
+      // Inside a home or venue: strictly walking speed (no running indoors).
+      const sprint = false;
+      const l = Math.hypot(sx, sy), speed = 1.7 * mag;
       const vx = ((fwd.x * sy + right.x * sx) / l) * speed, vz = ((fwd.z * sy + right.z * sx) / l) * speed;
       // Sitting or lying: up first.
       const [cx, , cz] = pose.stand ? [pose.stand[0], 0, pose.stand[1]] : pose.position;
@@ -1842,6 +1965,16 @@ function RoomScene({
 
   const hoverCursor = (on: boolean) => () => { document.body.style.cursor = on ? "pointer" : ""; };
 
+  useEffect(() => {
+    if (!walkRequestRef) return;
+    walkRequestRef.current = (x: number, z: number) => {
+      handleFloorLocomotion(new THREE.Vector3(x, 0, z));
+    };
+    return () => {
+      walkRequestRef.current = null;
+    };
+  });
+
   return (
     <BeddingContext.Provider value={style.bedding}>
       <CameraRig
@@ -1849,6 +1982,8 @@ function RoomScene({
         upView={upView}
         viewDistance={viewDistance}
         targetPos={targetPos}
+        panTarget={panTarget}
+        panNudgeRef={panNudgeRef}
         follow={upView ? undefined : pose.position}
         followYaw={pose.yaw}
         inside={(view === "inside" || view === "eye") && !upView}
@@ -1886,12 +2021,18 @@ function RoomScene({
         wallTargeting={placingItem?.kind === "wall"}
         interactive={!busy}
         onWallPointer={onWallPointer}
-        onDoor={() => interact("door")}
+        onDoor={() => {
+          if (hasPlot(housingTier) && lvl === 0) {
+            handleFloorLocomotion(new THREE.Vector3(0, 0, pose.position[2] > 4.8 ? 2.5 : 6.8));
+          } else {
+            interact("door");
+          }
+        }}
         wallColor={style.wall}
         skirtingColor={config.skirtingColor}
         upstairs={lvl > 0}
         panels={style.panels}
-        balcony={!!rooms?.some((r) => r.id === "balcony")}
+        balcony={!!rooms?.some((r) => r.id === "balcony") || (hasPlot(housingTier) && lvl === 0)}
       />
 
       {/* The kitchen and bathroom */}
@@ -1935,8 +2076,33 @@ function RoomScene({
       {rooms?.some((r) => r.id === "balcony") && <Balcony room={rooms.find((r) => r.id === "balcony")!} onFloorClick={handleFloorLocomotion} />}
       {/* Townhouses and villas: the pool, garage, garden… added outside (ground floor only). */}
       {hasPlot(housingTier) && lvl === 0 && (
-        <HomeGrounds items={style.exterior ?? []} car={ownCar} activity={objectInUse?.kind === "car" ? activity : undefined}
-          onUse={busy ? undefined : (what) => startGroundsUse(what)} />
+        <HomeGrounds
+          items={style.exterior ?? []}
+          car={ownCar}
+          activity={objectInUse?.kind === "car" ? activity : undefined}
+          onUse={busy ? undefined : (what) => startGroundsUse(what)}
+          onGroundClick={busy ? undefined : handleFloorLocomotion}
+        />
+      )}
+
+      {/* Outdoor Pool & Garden Party Vibes when hosting a house party on a villa/townhouse plot */}
+      {hasPlot(housingTier) && lvl === 0 && partyDecor && (
+        <group>
+          <pointLight position={[1.5, 2.2, 10.6]} intensity={5} distance={10} color="#ec4899" />
+          <pointLight position={[10.0, 2.2, 6.0]} intensity={4} distance={9} color="#38bdf8" />
+          <pointLight position={[-8.5, 2.2, 11.2]} intensity={4} distance={9} color="#f59e0b" />
+          <Suspense fallback={null}>
+            <group position={[5.8, 0, 8.8]} rotation={[0, -0.7, 0]}>
+              <CitizenAvatar look={{ gender: "woman", outfit: "party" }} animation="dance" holding="champagne" carryMode="drink" />
+            </group>
+            <group position={[-2.8, 0, 8.6]} rotation={[0, 0.6, 0]}>
+              <CitizenAvatar look={{ gender: "man", outfit: "casual" }} animation="dance" holding="cocktail" carryMode="drink" />
+            </group>
+            <group position={[9.4, 0, 6.2]} rotation={[0, -1.2, 0]}>
+              <CitizenAvatar look={{ gender: "woman", outfit: "casual" }} animation="dance" holding="cocktail" carryMode="drink" />
+            </group>
+          </Suspense>
+        </group>
       )}
 
       {/* Visual Click-to-Walk Destination Beacon */}
@@ -1975,7 +2141,7 @@ function RoomScene({
                 onPointerOver={(decorating && !placing && !item.fixed) || ((item.interaction || homeObjectOf(item)) && !busy) ? hoverCursor(true) : undefined}
                 onPointerOut={hoverCursor(false)}
               >
-                <ItemVisual item={item} activity={using === f.uid ? activity : undefined} />
+                <ItemVisual item={item} activity={using === f.uid ? activity : undefined} customColor={f.customColor} />
 
                 {/* Tactile Decorate-mode hit plate and visual highlight for every movable item */}
                 {decorating && !placing && !item.fixed && f.placement.kind === "floor" && (
@@ -2032,47 +2198,288 @@ function RoomScene({
   );
 }
 
+const PLOT_ZONES: { id: string; label: string; icon: string; cam: [number, number]; walk: [number, number] }[] = [
+  { id: "inside", label: "Inside", icon: "🏠", cam: [0, 0], walk: [0, 1.5] },
+  { id: "pool", label: "Pool", icon: "🏊", cam: [1.5, 10.6], walk: [1.5, 7.6] },
+  { id: "garden", label: "Garden & BBQ", icon: "🌳", cam: [10.0, 4.5], walk: [10.0, 6.2] },
+  { id: "majlis", label: "Majlis", icon: "⛺", cam: [-8.5, 11.2], walk: [-8.5, 11.2] },
+  { id: "carpark", label: "Car Park", icon: "🚗", cam: [-10.2, 2.0], walk: [-7.2, 2.0] },
+];
+
+interface WebGLErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+class WebGLErrorBoundary extends Component<
+  { children: React.ReactNode; onRetry?: () => void },
+  WebGLErrorBoundaryState
+> {
+  constructor(props: { children: React.ReactNode; onRetry?: () => void }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): WebGLErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.warn("WebGL Canvas failed to initialize:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/95 text-white p-6 text-center z-50">
+          <div className="w-16 h-16 rounded-3xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-3xl mb-4 border border-amber-400/30">
+            🏙️
+          </div>
+          <h2 className="text-base sm:text-lg font-black mb-1.5">3D Dubai Scene Loading Paused</h2>
+          <p className="text-xs text-slate-300 max-w-sm mb-5 leading-relaxed">
+            Your browser temporarily paused WebGL hardware acceleration. Tap below to re-activate the 3D apartment engine.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              this.setState({ hasError: false });
+              this.props.onRetry?.();
+            }}
+            className="px-6 py-2.5 rounded-full bg-amber-400 text-slate-950 font-black text-xs hover:bg-amber-300 active:scale-95 transition shadow-xl cursor-pointer"
+          >
+            🔄 Re-open 3D Apartment
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: string; /** "transparent" shows the page behind the room. */ background?: string }) {
   const labels = useRef(new Map<string, HTMLDivElement>());
+  const [localToast, setLocalToast] = useState<string | null>(null);
+  const [webglRetryKey, setWebglRetryKey] = useState(0);
+  const [webglSupported, setWebglSupported] = useState(() => (typeof window === "undefined" ? true : isWebGLAvailable()));
   const quality = useMemo(() => canvasQuality(), []);
+  const [panTarget, setPanTarget] = useState<[number, number] | null>(null);
+  const [activePlotZone, setActivePlotZone] = useState<string>("inside");
+  const panNudgeRef = useRef<{ dx: number; dz: number } | null>(null);
+  const walkRequestRef = useRef<((x: number, z: number) => void) | null>(null);
+  const showPlotScroll = hasPlot(props.housingTier ?? "studio") && (props.level ?? 0) === 0;
+
+  useEffect(() => {
+    setWebglSupported(isWebGLAvailable());
+  }, []);
+
+  const triggerActivity = (act: HomeActivityDef) => {
+    if (props.onTriggerActivity) {
+      props.onTriggerActivity(act);
+      return;
+    }
+    if (act.cost && !adjustBalance(-act.cost)) {
+      setLocalToast("⚠️ Not enough AED in your wallet!");
+      setTimeout(() => setLocalToast(null), 2600);
+      return;
+    }
+    gameAudio.playClickSound();
+    updateCitizen((c) => {
+      const cur = { ...DEFAULT_NEEDS, ...c.needs };
+      return {
+        ...c,
+        needs: {
+          ...cur,
+          [act.need.kind]: Math.min(100, (cur[act.need.kind] ?? 70) + act.need.amount),
+        },
+      };
+    });
+    if (act.statBoost) {
+      gainSkill(act.statBoost.name as Parameters<typeof gainSkill>[0], act.statBoost.amount);
+    }
+    setLocalToast(`${act.icon} ${act.label} · +${act.need.amount} ${act.need.kind.toUpperCase()}`);
+    setTimeout(() => setLocalToast(null), 2600);
+  };
+
+  const tierConfig = HOUSING_CONFIGS[props.housingTier ?? "studio"] ?? HOUSING_CONFIGS.studio;
+  const availableActivities = tierConfig.activities ?? [];
+
   return (
     <div className="w-full h-full relative select-none">
       <SceneLoadingOverlay label={props.loadingLabel ?? "Opening your apartment"} />
-      <Canvas shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false} camera={{ position: [11.5, 10.7, 11.5], fov: 35 }} dpr={quality.dpr}>
-        {props.background !== "transparent" && <color attach="background" args={[props.background ?? "#7f9c78"]} />}
-        <StudioEnvironment intensity={props.lightsOut ? 0.04 : 0.35} />
-        <hemisphereLight args={props.lightsOut ? ["#7c3aed", "#0f172a", 0.25] : ["#fff7ed", "#6b7280", 1.0]} />
-        <directionalLight
-          position={[5, 9, 4]}
-          intensity={props.lightsOut ? 0.15 : 2.2}
-          castShadow
-          shadow-mapSize={[2048, 2048]}
-          shadow-camera-left={-6}
-          shadow-camera-right={6}
-          shadow-camera-top={6}
-          shadow-camera-bottom={-6}
-          shadow-bias={-0.0005}
-        />
-        <pointLight position={[0, 2.6, 0]} intensity={props.lightsOut ? 1.2 : 6} distance={9} color={props.lightsOut ? "#c084fc" : "#fde68a"} />
+      {!webglSupported ? (
+        <div className="absolute inset-0 flex flex-col items-center justify-between p-4 sm:p-6 bg-gradient-to-b from-slate-900 via-slate-800 to-indigo-950 text-white z-20 overflow-y-auto">
+          <div className="w-full max-w-lg mx-auto flex flex-col items-center text-center mt-6">
+            <div className="w-16 h-16 rounded-3xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-3xl mb-3 border border-amber-400/30 shadow-lg">
+              🏙️
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white mb-1">
+              {tierConfig.label}
+            </h2>
+            <p className="text-xs text-slate-300 max-w-md leading-relaxed mb-4">
+              WebGL 3D hardware acceleration is currently disabled or sandboxed in this browser. Your residence, furniture, rituals, and stats remain active in 2.5D Mode.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                resetWebGLCache();
+                const avail = isWebGLAvailable();
+                setWebglSupported(avail);
+                if (avail) setWebglRetryKey((k) => k + 1);
+              }}
+              className="px-5 py-2.5 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs active:scale-95 transition shadow-xl cursor-pointer flex items-center gap-2"
+            >
+              <span>🔄</span> Retry 3D Acceleration
+            </button>
+          </div>
 
-        <Suspense fallback={null}>
-          <RoomScene {...props} labels={labels} />
-        </Suspense>
-        {props.extras}
-        {props.partyDecor && <PartyDecor decor={props.partyDecor} w={ROOM_SIZE} d={ROOM_SIZE} h={WALL_HEIGHT} />}
+          {/* Quick Room Stations & Daily Rituals */}
+          <div className="w-full max-w-xl mx-auto space-y-3 pb-20 mt-4">
+            <div className="text-[11px] font-black uppercase tracking-wider text-amber-400/90 text-center">
+              Room Stations & Daily Rituals
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              {(availableActivities.length > 0 ? availableActivities : [
+                { id: "shower", label: "Master Shower", icon: "🚿", desc: "Freshen up", animation: "drink" as const, need: { kind: "hygiene" as const, amount: 35 } },
+                { id: "cook", label: "Gourmet Kitchen", icon: "🍳", desc: "Replenish hunger", animation: "eat" as const, need: { kind: "hunger" as const, amount: 35 } },
+                { id: "sleep", label: "King Bed", icon: "🛏️", desc: "Deep sleep", animation: "sit" as const, need: { kind: "energy" as const, amount: 40 } },
+                { id: "lounge", label: "Smart TV & Lounge", icon: "📺", desc: "Relax and chill", animation: "sit" as const, need: { kind: "fun" as const, amount: 30 } },
+              ]).map((act) => (
+                <button
+                  key={act.id}
+                  type="button"
+                  onClick={() => triggerActivity(act)}
+                  className="flex flex-col items-start p-3 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 backdrop-blur-md text-left transition active:scale-95 cursor-pointer shadow-md"
+                >
+                  <span className="text-2xl mb-1">{act.icon}</span>
+                  <span className="text-xs font-black text-white">{act.label}</span>
+                  <span className="text-[10px] text-white/70 line-clamp-1">{act.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <WebGLErrorBoundary
+          key={webglRetryKey}
+          onRetry={() => {
+            resetWebGLCache();
+            setWebglRetryKey((k) => k + 1);
+          }}
+        >
+          <Canvas
+            shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false}
+            camera={{ position: [11.5, 10.7, 11.5], fov: 35 }}
+            dpr={quality.dpr}
+            gl={{
+              powerPreference: "default",
+              failIfMajorPerformanceCaveat: false,
+              preserveDrawingBuffer: false,
+              antialias: true,
+            }}
+          >
+            {props.background !== "transparent" && <color attach="background" args={[props.background ?? "#7f9c78"]} />}
+            <StudioEnvironment intensity={props.lightsOut ? 0.04 : 0.35} />
+            <hemisphereLight args={props.lightsOut ? ["#7c3aed", "#0f172a", 0.25] : ["#fff7ed", "#6b7280", 1.0]} />
+            <directionalLight
+              position={[5, 9, 4]}
+              intensity={props.lightsOut ? 0.15 : 2.2}
+              castShadow
+              shadow-mapSize={[2048, 2048]}
+              shadow-camera-left={-6}
+              shadow-camera-right={6}
+              shadow-camera-top={6}
+              shadow-camera-bottom={-6}
+              shadow-bias={-0.0005}
+            />
+            <pointLight position={[0, 2.6, 0]} intensity={props.lightsOut ? 1.2 : 6} distance={9} color={props.lightsOut ? "#c084fc" : "#fde68a"} />
 
-        <OrbitControls
-          makeDefault
-          target={[0, 0.8, 0]}
-          enablePan={false}
-          enableDamping
-          minPolarAngle={props.upView ? 0.2 : props.view === "eye" ? 0.35 : props.view === "inside" ? 0.6 : 0.35}
-          maxPolarAngle={props.upView ? 1.15 : props.view === "eye" ? 2.4 : props.view === "inside" ? 1.5 : 1.25}
-          minDistance={props.upView ? 6 : props.view === "eye" ? 0.05 : props.view === "inside" ? 3 : 6}
-          maxDistance={props.upView ? 30 : props.view === "eye" ? EYE_BACK + 0.15 : props.view === "inside" ? 10 : 30}
-        />
-      </Canvas>
+            <Suspense fallback={null}>
+              <RoomScene
+                {...props}
+                labels={labels}
+                panTarget={panTarget}
+                panNudgeRef={panNudgeRef}
+                walkRequestRef={walkRequestRef}
+              />
+            </Suspense>
+            {props.extras}
+            {props.partyDecor && <PartyDecor decor={props.partyDecor} w={ROOM_SIZE} d={ROOM_SIZE} h={WALL_HEIGHT} />}
+
+            <OrbitControls
+              makeDefault
+              target={DEFAULT_ORBIT_TARGET}
+              enablePan={true}
+              screenSpacePanning={true}
+              enableDamping
+              minPolarAngle={props.upView ? 0.2 : props.view === "eye" ? 0.35 : props.view === "inside" ? 0.6 : 0.35}
+              maxPolarAngle={props.upView ? 1.15 : props.view === "eye" ? 2.4 : props.view === "inside" ? 1.5 : 1.25}
+              minDistance={props.upView ? 6 : props.view === "eye" ? 0.05 : props.view === "inside" ? 3 : 6}
+              maxDistance={props.upView ? 38 : props.view === "eye" ? EYE_BACK + 0.15 : props.view === "inside" ? 14 : showPlotScroll ? 38 : 30}
+            />
+          </Canvas>
+        </WebGLErrorBoundary>
+      )}
       <PeopleLabels people={props.people ?? []} nodes={labels} />
+
+      {localToast && (
+        <div className="pointer-events-none absolute top-24 left-1/2 -translate-x-1/2 z-40 rounded-full bg-slate-900/95 text-white px-4 py-2 text-xs font-black shadow-2xl border border-white/20">
+          {localToast}
+        </div>
+      )}
+
+      {/* Outdoor Villa Plot Scroll & Walk-Through-Doorway Bar */}
+      {showPlotScroll && !props.decorating && (
+        <div
+          className="pointer-events-auto absolute left-1/2 -translate-x-1/2 bottom-20 z-20 flex items-center gap-1 rounded-full border border-white/15 bg-black/75 px-2 py-1 text-[11px] font-semibold text-white shadow-xl backdrop-blur-md max-w-[95vw] overflow-x-auto"
+          title="Scroll the camera across your villa grounds or tap a zone to walk outside through the patio doorway"
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setPanTarget(null);
+              panNudgeRef.current = { dx: -3.2, dz: 0 };
+            }}
+            className="rounded-full bg-white/10 hover:bg-white/20 px-2 py-1 text-amber-300 transition active:scale-95"
+            aria-label="Scroll plot left"
+          >
+            ◀
+          </button>
+          {PLOT_ZONES.map((z) => {
+            const active = activePlotZone === z.id;
+            return (
+              <button
+                key={z.id}
+                type="button"
+                onClick={() => {
+                  setActivePlotZone(z.id);
+                  setPanTarget(z.cam);
+                  setTimeout(() => setPanTarget(null), 1200);
+                  walkRequestRef.current?.(z.walk[0], z.walk[1]);
+                }}
+                className={`flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 transition active:scale-95 ${
+                  active
+                    ? "bg-amber-400 text-black font-bold shadow"
+                    : "bg-white/5 text-white/85 hover:bg-white/15"
+                }`}
+              >
+                <span>{z.icon}</span>
+                <span>{z.label}</span>
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => {
+              setPanTarget(null);
+              panNudgeRef.current = { dx: 3.2, dz: 0 };
+            }}
+            className="rounded-full bg-white/10 hover:bg-white/20 px-2 py-1 text-amber-300 transition active:scale-95"
+            aria-label="Scroll plot right"
+          >
+            ▶
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -231,7 +231,12 @@ export function prepareForShaping(meshes: THREE.Mesh[]) {
   }
 }
 
-export function applyBodyShape(meshes: THREE.Mesh[], frame: BodyFrame, gender: "woman" | "man", bodyType: string) {
+export function applyBodyShape(
+  meshes: THREE.Mesh[],
+  frame: BodyFrame,
+  gender: "woman" | "man",
+  bodyType: string,
+) {
   const shape = shapeFor(gender, bodyType);
   const v = new THREE.Vector3();
   const rel = new THREE.Vector3();

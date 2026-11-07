@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Sparkles, Trophy, Flame, Zap, Coffee, Music, Camera, Check, X, Dumbbell, Award, Compass, Heart } from "lucide-react";
 import type { VenueActivity } from "@/lib/city/types";
+import { adjustBalance } from "@/lib/citizenStore";
+import { broadcastRoomEvent } from "@/lib/room";
 import { gameAudio } from "@/utils/gameAudio";
 
 export type ActivityCategory = "dance" | "workout" | "taste" | "explore";
@@ -52,6 +54,9 @@ export function ActivityExperienceOverlay({
   // Mode B: Workout Power Needle (0 to 100%)
   const [needlePos, setNeedlePos] = useState(20);
   const needleDir = useRef<"up" | "down">("up");
+  // #9: Interactive Gym Stations & 2-Player "Spot Me, Bro!" Co-Op
+  const [gymStation, setGymStation] = useState<"bench" | "treadmill" | "curl">("bench");
+  const [spottedCoOp, setSpottedCoOp] = useState(false);
   // Mode C: Taste actions count
   const [tasteReps, setTasteReps] = useState(0);
 
@@ -392,7 +397,53 @@ export function ActivityExperienceOverlay({
           )}
 
           {category === "workout" && (
-            <div className="bg-slate-950/90 backdrop-blur-2xl border border-white/20 p-4 rounded-3xl shadow-2xl flex flex-col items-center gap-3">
+            <div className="bg-slate-950/90 backdrop-blur-2xl border border-white/20 p-4 rounded-3xl shadow-2xl flex flex-col items-center gap-2.5">
+              {/* #9: 3 Gym Stations + 2-Player "Spot Me, Bro!" Co-Op */}
+              <div className="w-full flex items-center justify-between gap-1.5">
+                <div className="flex gap-1">
+                  {[
+                    { id: "bench" as const, label: "🏋️ Bench" },
+                    { id: "treadmill" as const, label: "🏃 Sprint" },
+                    { id: "curl" as const, label: "💪 Curls" },
+                  ].map((st) => (
+                    <button
+                      key={st.id}
+                      type="button"
+                      onClick={() => {
+                        gameAudio.playClickSound();
+                        setGymStation(st.id);
+                      }}
+                      className={`px-2.5 py-1 rounded-xl text-[10px] font-black border ${
+                        gymStation === st.id
+                          ? "bg-amber-400 text-slate-950 border-amber-300"
+                          : "bg-white/10 text-white/80 border-white/10"
+                      }`}
+                    >
+                      {st.label}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playCoinSound();
+                    if (!spottedCoOp) {
+                      setSpottedCoOp(true);
+                      adjustBalance(100);
+                      broadcastRoomEvent({ type: "chat", text: "🤝 Spotting 2P Co-Op on the bench!" });
+                    }
+                    setScore((s) => s + 150);
+                  }}
+                  className={`px-2.5 py-1 rounded-xl text-[10px] font-black border transition-all active:scale-95 ${
+                    spottedCoOp
+                      ? "bg-emerald-500 text-slate-950 border-emerald-300"
+                      : "bg-sky-500/20 text-sky-300 border-sky-400/40"
+                  }`}
+                >
+                  {spottedCoOp ? "🤝 Spotted 2× (+AED 100)" : "🤝 Spot Me, Bro! (2P Co-Op)"}
+                </button>
+              </div>
+
               {/* Needle Power Gauge */}
               <div className="w-full relative h-7 bg-slate-900 border border-white/20 rounded-full overflow-hidden flex items-center">
                 {/* Optimal Power Green Zone (65% to 85%) */}
@@ -412,7 +463,13 @@ export function ActivityExperienceOverlay({
                 className="w-full py-4 rounded-2xl bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400 hover:opacity-95 active:scale-95 text-slate-950 font-black text-base shadow-[0_8px_30px_rgba(249,115,22,0.5)] border border-white/30 transition-all flex items-center justify-center gap-2"
               >
                 <Dumbbell className="w-5 h-5" />
-                <span>POWER STRIDE / REP!</span>
+                <span>
+                  {gymStation === "bench"
+                    ? "BENCH PRESS REP!"
+                    : gymStation === "treadmill"
+                      ? "TREADMILL SPRINT STRIDE!"
+                      : "DUMBBELL CURL REP!"}
+                </span>
                 <span className="text-[10px] text-slate-900 font-bold bg-white/40 px-2 py-0.5 rounded-full hidden sm:inline">Spacebar</span>
               </button>
             </div>

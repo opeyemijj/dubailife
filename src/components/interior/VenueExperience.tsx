@@ -278,18 +278,35 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     gameAudio.playClickSound();
     setActiveStation(s.id);
     setPanel(null);
-    if (s.kind === "fitting" || (venue.layout === "boutique" && s.kind === "rack")) {
-      walkThen(approachPoint(s, 0.85), () => setClothingStoreOpen(true));
+    const pt = approachPoint(s, 0.85);
+    if (inside) {
+      if (s.kind === "fitting" || (venue.layout === "boutique" && s.kind === "rack")) {
+        setClothingStoreOpen(true);
+      } else {
+        setPanel({ kind: "station", station: s });
+      }
+      setWalkTo({ point: pt, key: Date.now() });
       return;
     }
-    walkThen(approachPoint(s, 0.85), () => setPanel({ kind: "station", station: s }));
+    if (s.kind === "fitting" || (venue.layout === "boutique" && s.kind === "rack")) {
+      walkThen(pt, () => setClothingStoreOpen(true));
+      return;
+    }
+    walkThen(pt, () => setPanel({ kind: "station", station: s }));
   };
 
   const openStaff = () => {
     gameAudio.playClickSound();
     const [x, z] = plan.staff.position;
     const r = plan.staff.rotation;
-    walkThen([x + Math.sin(r) * 1.9, z + Math.cos(r) * 1.9], () => { setNow(Date.now()); setPanel({ kind: "staff" }); });
+    const pt: [number, number] = [x + Math.sin(r) * 1.9, z + Math.cos(r) * 1.9];
+    if (inside) {
+      setNow(Date.now());
+      setPanel({ kind: "staff" });
+      setWalkTo({ point: pt, key: Date.now() });
+      return;
+    }
+    walkThen(pt, () => { setNow(Date.now()); setPanel({ kind: "staff" }); });
   };
 
   // ---------------------------------------------------------------- serving
@@ -1066,7 +1083,8 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   if (panel?.kind === "station") {
     const s = panel.station;
     const products = productsAt(s);
-    const activities = activitiesAt(s);
+    const stationActs = activitiesAt(s);
+    const activities = stationActs.length > 0 ? stationActs : (venue.activities ?? []);
     const ownedWearables = inventory.filter((i) => i.wearable);
     sheet = (
       <Sheet onClose={closeAll} title={s.label} subtitle={venue.name}>
@@ -1384,10 +1402,67 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       <div className={clean ? "hidden" : "contents"}>
       {party && <PartyBanner party={party} className={BELOW_SPACE_TOP} />}
       {!party && !ride && <ClubRadioPill className={inside ? "bottom-[11rem]" : "bottom-[max(1.5rem,env(safe-area-inset-bottom))]"} />}
-      {/* Inside and Eye views: the stick (with RUN) to walk anywhere yourself. */}
+      {/* Inside and Eye views: the stick (walk-only indoors) to walk anywhere yourself. */}
       {inside && !ride && !panel && (
-        <div className="absolute left-5 bottom-[max(1.5rem,env(safe-area-inset-bottom))] z-30"><MoveStick controls={stick} run={stickRun} onRun={() => setStickRun((r) => !r)} /></div>
+        <div className="absolute left-5 bottom-[max(1.5rem,env(safe-area-inset-bottom))] z-30"><MoveStick controls={stick} allowRun={false} /></div>
       )}
+
+      {/* Proximity Station Actions & Venue Activities Bar in Inside & Eye views */}
+      {inside && !ride && !panel && !activeActivity && (() => {
+        const nearStations = plan.stations
+          .map((s) => ({ s, d: Math.hypot(me.x - s.position[0], me.z - s.position[1]) }))
+          .filter((x) => x.d <= 2.85)
+          .sort((a, b) => a.d - b.d)
+          .slice(0, 2)
+          .map((x) => x.s);
+        const staffDist = Math.hypot(me.x - plan.staff.position[0], me.z - plan.staff.position[1]);
+        const nearStaff = staffDist <= 2.6;
+        if (nearStations.length === 0 && !nearStaff) return null;
+        const primary = nearStations[0];
+        const acts = primary ? (activitiesAt(primary).length > 0 ? activitiesAt(primary) : (venue.activities ?? [])) : (venue.activities ?? []);
+        return (
+          <div className="pointer-events-auto absolute left-1/2 -translate-x-1/2 bottom-[max(1.5rem,env(safe-area-inset-bottom))] z-30 w-[92vw] max-w-md rounded-2xl border border-white/20 bg-slate-900/90 px-3 py-2 text-white shadow-2xl backdrop-blur-xl">
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <span className="text-[11px] font-black text-amber-300 truncate">
+                ✨ {primary ? primary.label : venue.staff.role} · Actions & Activities
+              </span>
+              <span className="text-[9px] font-bold text-white/60">Tap to interact</span>
+            </div>
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none]">
+              {nearStations.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => openStation(s)}
+                  className="flex items-center gap-1.5 shrink-0 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 px-2.5 py-1.5 text-left font-black text-[11px] shadow-sm transition active:scale-95"
+                >
+                  <span>✨ {s.label}</span>
+                </button>
+              ))}
+              {nearStaff && (
+                <button
+                  type="button"
+                  onClick={() => openStaff()}
+                  className="flex items-center gap-1.5 shrink-0 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 px-2.5 py-1.5 text-left font-black text-[11px] shadow-sm transition active:scale-95"
+                >
+                  <span>🧑‍💼 Talk to {venue.staff.role}</span>
+                </button>
+              )}
+              {acts.slice(0, 3).map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => startActivity(a, primary)}
+                  className="flex items-center gap-1.5 shrink-0 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white px-2.5 py-1.5 text-left text-[11px] font-black transition active:scale-95"
+                >
+                  <span>{a.icon}</span>
+                  <span>{a.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
 
       {sailing && (

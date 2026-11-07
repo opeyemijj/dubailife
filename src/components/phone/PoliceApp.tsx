@@ -5,7 +5,7 @@
 // Officers: the arrests they made.
 
 import { useEffect, useState } from "react";
-import { useCitizen } from "@/lib/citizenStore";
+import { adjustBalance, useCitizen } from "@/lib/citizenStore";
 import { useOnlineUsernames } from "@/lib/presence";
 import { goToCourt, hireLawyer, prepareDefence, professionals, SERVICES, setServiceFee, useServices, type CaseView, type Professional } from "@/lib/cityServices";
 import { gameAudio } from "@/utils/gameAudio";
@@ -25,6 +25,13 @@ export function PoliceApp({ onBack }: { onBack: () => void }) {
   const s = useServices(citizen?.id);
   const open = s?.cases.filter((c) => c.status === "open") ?? [];
   const past = s?.cases.filter((c) => c.status !== "open") ?? [];
+  // #10: Interactive Courthouse (OBJECTION! Evidence QTE, Citizen Jury Tug-of-War & Pre-Nup/Asset Split Slider)
+  const [courtTab, setCourtTab] = useState<"objection" | "jury" | "prenup">("objection");
+  const [objectionSolved, setObjectionSolved] = useState(false);
+  const [juryMeter, setJuryMeter] = useState(58);
+  const [juryRewarded, setJuryRewarded] = useState(false);
+  const [assetSplit, setAssetSplit] = useState(50);
+  const [prenupSigned, setPrenupSigned] = useState(false);
 
   return (
     <AppScreen title="Dubai Police" onBack={onBack} accent="text-blue-700">
@@ -36,6 +43,140 @@ export function PoliceApp({ onBack }: { onBack: () => void }) {
             : s.arrests.map((a) => <p key={a.id} className="flex justify-between"><span>@{a.suspect} · {aed(a.held)}</span><span className="font-semibold">{a.status === "open" ? "Awaiting court" : a.status === "guilty" ? "Guilty · bounty paid" : "Cleared"}</span></p>)}
         </Card>
       )}
+
+      {/* #10: Interactive Dubai Courthouse: OBJECTION!, Citizen Jury Tug-of-War & Civil Pre-Nup/Asset Split */}
+      <Card className="bg-gradient-to-br from-amber-50 via-slate-50 to-indigo-50 border border-amber-300/80">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-black text-base text-slate-900">⚖️ Interactive Dubai Courthouse</p>
+            <p className="text-xs text-slate-600">Slam OBJECTION!, vote on the Citizen Jury Tug-of-War &amp; draft Civil Pre-Nups!</p>
+          </div>
+          <span className="text-2xl">🏛️</span>
+        </div>
+
+        <div className="grid grid-cols-3 gap-1.5">
+          {[
+            { id: "objection" as const, label: "❗ OBJECTION!" },
+            { id: "jury" as const, label: "⚖️ Jury Vote" },
+            { id: "prenup" as const, label: "📜 Pre-Nup Split" },
+          ].map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => {
+                gameAudio.playClickSound();
+                setCourtTab(t.id);
+              }}
+              className={`py-2 rounded-xl text-xs font-black ${
+                courtTab === t.id ? "bg-slate-900 text-amber-300" : "bg-white text-slate-700 border border-slate-200"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {courtTab === "objection" && (
+          <div className="p-3 rounded-2xl bg-white border border-amber-200 space-y-2">
+            <div className="text-xs font-black text-slate-900">
+              Docket #DXB-409: Witness claims the suspect was in Deira at 23:00, but Salik Toll Gate logged their G-Wagon on Palm Jumeirah at 23:01!
+            </div>
+            {!objectionSolved ? (
+              <button
+                type="button"
+                onClick={() => {
+                  gameAudio.playCoinSound();
+                  setObjectionSolved(true);
+                  adjustBalance(200);
+                }}
+                className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs shadow active:scale-95"
+              >
+                ❗ SLAM &ldquo;OBJECTION!&rdquo; — Present Salik Toll Receipt (+AED 200)
+              </button>
+            ) : (
+              <div className="flex items-center justify-between p-2 rounded-xl bg-emerald-100 text-emerald-900 text-xs font-black">
+                <span>👨‍⚖️ Judge Sustained! Contradiction Exposed (+AED 200)</span>
+                <button type="button" onClick={() => setObjectionSolved(false)} className="underline">Next</button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {courtTab === "jury" && (
+          <div className="p-3 rounded-2xl bg-white border border-indigo-200 space-y-2.5">
+            <div className="flex items-center justify-between text-xs font-black">
+              <span className="text-emerald-700">🟢 Clear ({juryMeter}%)</span>
+              <span className="text-slate-500">Live Citizen Jury Tug-of-War</span>
+              <span className="text-rose-700">🔴 Guilty ({100 - juryMeter}%)</span>
+            </div>
+            <div className="h-3 rounded-full bg-rose-500 overflow-hidden">
+              <div className="h-full bg-emerald-500 transition-all" style={{ width: `${juryMeter}%` }} />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  gameAudio.playClickSound();
+                  setJuryMeter((m) => Math.min(95, m + 8));
+                  if (!juryRewarded) {
+                    setJuryRewarded(true);
+                    adjustBalance(150);
+                  }
+                }}
+                className="py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs active:scale-95"
+              >
+                🟢 Vote Innocent (+AED 150)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  gameAudio.playClickSound();
+                  setJuryMeter((m) => Math.max(5, m - 8));
+                  if (!juryRewarded) {
+                    setJuryRewarded(true);
+                    adjustBalance(150);
+                  }
+                }}
+                className="py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs active:scale-95"
+              >
+                🔴 Vote Guilty (+AED 150)
+              </button>
+            </div>
+          </div>
+        )}
+
+        {courtTab === "prenup" && (
+          <div className="p-3 rounded-2xl bg-white border border-slate-200 space-y-2">
+            <div className="flex items-center justify-between text-xs font-black text-slate-900">
+              <span>📜 Civil Pre-Nup / Settlement Asset Split</span>
+              <span className="text-indigo-700">{assetSplit}% / {100 - assetSplit}%</span>
+            </div>
+            <input
+              type="range"
+              min={10}
+              max={90}
+              value={assetSplit}
+              onChange={(e) => {
+                setAssetSplit(Number(e.target.value));
+                setPrenupSigned(false);
+              }}
+              className="w-full accent-indigo-600"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                gameAudio.playCoinSound();
+                setPrenupSigned(true);
+              }}
+              className="w-full py-2 rounded-xl bg-slate-900 text-amber-300 font-black text-xs active:scale-95"
+            >
+              {prenupSigned
+                ? `✅ Notarized by Dubai Civil Court (${assetSplit}% / ${100 - assetSplit}%)`
+                : `🖋️ Notarize ${assetSplit}% / ${100 - assetSplit}% Civil Agreement`}
+            </button>
+          </div>
+        )}
+      </Card>
 
       {open.map((c) => <OpenCase key={c.id} c={c} />)}
       {open.length === 0 && (

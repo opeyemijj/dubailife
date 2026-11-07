@@ -56,6 +56,14 @@ export interface SpaceActivityState {
   dropClaimedBy?: string[];
   gameId?: string;
   gameName?: string;
+  hypePoints?: number;
+  hypeGoal?: number;
+}
+
+export interface SpaceSeatSnapshot {
+  role: SpaceRole;
+  muted: boolean;
+  handRaised: boolean;
 }
 
 export interface SpaceRoom {
@@ -69,6 +77,8 @@ export interface SpaceRoom {
   expiresAt: number;
   scheduledFor?: number; // if upcoming
   participants: SpaceParticipant[];
+  /** Authoritative stage roster so Host, Co-Hosts & Speakers automatically reclaim their exact role after a network drop. */
+  stageSeats?: Record<string, SpaceSeatSnapshot>;
   activity: SpaceActivityState;
   aiSafetyCheck: boolean;
   /** A party's own Space: where the party is (so it leads there, not to the Spaces app), and whose party it is. */
@@ -155,13 +165,115 @@ const peerConnections = new Map<string, RTCPeerConnection>();
 const peerMeta = new Map<string, { makingOffer: boolean; ignoreOffer: boolean; pendingIce: RTCIceCandidateInit[] }>();
 // When each room's host was last heard from: hosts re-announce, so a room whose host has gone disappears.
 const roomLastSeen = new Map<string, number>();
-const HOST_BEAT_MS = 20000;
-// Long enough that a host whose phone goes to the background for a bit doesn't lose their room.
-const HOST_GONE_MS = 180000;
+// Scaled for 1M concurrent users: 35s heartbeat & 4-minute grace window so temporary mobile drops never kill a room.
+const HOST_BEAT_MS = 35000;
+const HOST_GONE_MS = 240000;
+const SPACE_SESSION_KEY = "dl_space_session_v1";
 let beatInterval: ReturnType<typeof setInterval> | null = null;
+let netRecoveryAttached = false;
 let micStarting = false;
 let pendingJoinId: string | null = null;
 const remoteAudioElements = new Map<string, HTMLAudioElement>();
+const remoteAnalysers = new Map<string, { analyser: AnalyserNode; data: Uint8Array<ArrayBuffer> }>();
+
+interface PersistedSpaceSession {
+  spaceId: string;
+  userId: string;
+  role: SpaceRole;
+  muted: boolean;
+  roomSnapshot: SpaceRoom;
+  savedAt: number;
+}
+
+function saveSpaceSession() {
+  if (typeof window === "undefined") return;
+  try {
+    const activeId = state.activeSpaceId;
+    if (!activeId) {
+      window.localStorage.removeItem(SPACE_SESSION_KEY);
+      return;
+    }
+    const room = state.rooms.find((r) => r.id === activeId);
+    const me = meInfo();
+    if (!room || me.id === "guest") return;
+    const myPart = room.participants.find((p) => p.id === me.id);
+    const role: SpaceRole =
+      room.hostId === me.id
+        ? "host"
+        : myPart?.role ?? room.stageSeats?.[me.id]?.role ?? "listener";
+    const session: PersistedSpaceSession = {
+      spaceId: activeId,
+      userId: me.id,
+      role,
+      muted: myPart?.muted ?? (role === "listener"),
+      roomSnapshot: room,
+      savedAt: Date.now(),
+    };
+    window.localStorage.setItem(SPACE_SESSION_KEY, JSON.stringify(session));
+  } catch {
+    /* ignore storage errors */
+  }
+}
+
+function loadSavedSpaceSession(spaceId?: string): PersistedSpaceSession | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(SPACE_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedSpaceSession;
+    if (!parsed || !parsed.spaceId || !parsed.roomSnapshot) return null;
+    if (Date.now() >= parsed.roomSnapshot.expiresAt) {
+      window.localStorage.removeItem(SPACE_SESSION_KEY);
+      return null;
+    }
+    if (spaceId && parsed.spaceId !== spaceId) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function attachNetworkRecovery() {
+  if (netRecoveryAttached || typeof window === "undefined") return;
+  netRecoveryAttached = true;
+  const recover = () => {
+    const activeId = state.activeSpaceId;
+    if (!activeId) {
+      // Check if we had an active Host / Co-Host / Speaker session before a page reload or network drop
+      const saved = loadSavedSpaceSession();
+      const me = meInfo();
+      if (saved && saved.userId === me.id && me.id !== "guest") {
+        if (!state.rooms.some((r) => r.id === saved.spaceId)) {
+          state = { ...state, rooms: [saved.roomSnapshot, ...state.rooms] };
+        }
+        joinSpace(saved.spaceId);
+      }
+      return;
+    }
+    const room = state.rooms.find((r) => r.id === activeId);
+    const me = meInfo();
+    if (!room) return;
+    const myPart = room.participants.find((p) => p.id === me.id);
+    // Restart ICE on existing WebRTC peers and re-announce our seat (Host, Co-Host, Speaker, or Listener)
+    peerConnections.forEach((pc) => {
+      try {
+        if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
+          pc.restartIce();
+        }
+      } catch { /* ignore */ }
+    });
+    if (myPart) {
+      roomChannel?.send({ type: "broadcast", event: "participant-join", payload: myPart }).catch(() => {});
+    }
+    if (room.hostId === me.id) {
+      announceMyRoom();
+    }
+  };
+  window.addEventListener("online", recover);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") recover();
+  });
+}
 // Phones only let audio start from a tap. A voice can arrive long after your last tap (a speaker brought up later),
 // so this many players are readied while you're tapping to host or join, and each voice takes one when it comes.
 const audioPool: HTMLAudioElement[] = [];
@@ -180,6 +292,7 @@ function meInfo(): { id: string; username: string; preset: string; placeId: stri
 
 function connectLobby() {
   loadIceServers();
+  attachNetworkRecovery();
   if (lobbyChannel) return;
   if (typeof window === "undefined") return;
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return;
@@ -202,11 +315,19 @@ function connectLobby() {
           ? state.rooms.map((r) => {
               if (r.id !== incoming.id) return r;
               // The host's roster wins, but I know my own seat best (it may not have reached them yet).
-              // Except my role, which is the host's to give.
+              // Also preserve any stage seat from stageSeats (Host, Co-Host, Speaker).
               const mine = incoming.id === state.activeSpaceId ? r.participants.find((p) => p.id === myId) : undefined;
-              const given = incoming.participants.find((p) => p.id === myId)?.role;
+              const given = incoming.participants.find((p) => p.id === myId)?.role ?? incoming.stageSeats?.[myId]?.role;
               const others = incoming.participants.filter((p) => p.id !== myId);
-              return { ...r, ...incoming, participants: mine ? [...others, { ...mine, role: given ?? mine.role }] : incoming.participants };
+              const mergedStageSeats = { ...(r.stageSeats ?? {}), ...(incoming.stageSeats ?? {}) };
+              return {
+                ...r,
+                ...incoming,
+                stageSeats: mergedStageSeats,
+                participants: mine
+                  ? [...others, { ...mine, role: given && given !== "listener" ? given : mine.role }]
+                  : incoming.participants,
+              };
             })
           : [incoming, ...state.rooms],
       };
@@ -255,10 +376,21 @@ function connectLobby() {
       emit();
     })
     .subscribe((status) => {
-      // Rooms aren't stored anywhere: ask the hosts who are live to say so.
+      // Ask live hosts to announce, and auto-restore any active Host/Co-Host/Speaker session after a network blip or reload.
       if (status === "SUBSCRIBED") {
         lobbyChannel?.send({ type: "broadcast", event: "space-list", payload: {} }).catch(() => {});
         announceMyRoom();
+        if (!state.activeSpaceId) {
+          const saved = loadSavedSpaceSession();
+          const me = meInfo();
+          if (saved && saved.userId === me.id && me.id !== "guest") {
+            if (!state.rooms.some((r) => r.id === saved.spaceId)) {
+              state = { ...state, rooms: [saved.roomSnapshot, ...state.rooms] };
+              emit();
+            }
+            joinSpace(saved.spaceId);
+          }
+        }
       }
     });
 
@@ -450,14 +582,29 @@ async function ensureLocalMic(unmuted: boolean) {
       vadInterval = setInterval(() => {
         if (!localStream || !localStream.getAudioTracks()[0]?.enabled) {
           setMySpeaking(false);
-          return;
+        } else {
+          analyser.getByteFrequencyData(data);
+          let sum = 0;
+          for (let i = 0; i < data.length; i++) sum += data[i];
+          const avg = sum / data.length;
+          setMySpeaking(avg > 16);
         }
-        analyser.getByteFrequencyData(data);
-        let sum = 0;
-        for (let i = 0; i < data.length; i++) sum += data[i];
-        const avg = sum / data.length;
-        setMySpeaking(avg > 16);
-      }, 220);
+        // Sample remote speaker streams locally (zero WebSocket traffic for 1M-user scalability)
+        const sid = state.activeSpaceId;
+        if (sid) {
+          remoteAnalysers.forEach(({ analyser: ra, data: rd }, peerId) => {
+            ra.getByteFrequencyData(rd);
+            let rSum = 0;
+            for (let i = 0; i < rd.length; i++) rSum += rd[i];
+            const rSpeaking = rSum / rd.length > 14;
+            const room = state.rooms.find((r) => r.id === sid);
+            const part = room?.participants.find((p) => p.id === peerId);
+            if (part && !part.muted && part.speaking !== rSpeaking) {
+              updateParticipantInRoom(sid, peerId, { speaking: rSpeaking });
+            }
+          });
+        }
+      }, 320);
     }
   } catch {
     micBlocked("Microphone access is blocked. Allow it for this site to speak. You can still listen, comment and react.");
@@ -496,16 +643,8 @@ function setMySpeaking(speaking: boolean) {
   const myPart = room.participants.find((p) => p.id === me.id);
   if (!myPart || myPart.speaking === speaking) return;
 
+  // Local store update only — remote peers compute speaking rings locally from incoming WebRTC audio tracks (zero WebSocket spam).
   updateParticipantInRoom(spaceId, me.id, { speaking });
-  if (roomChannel) {
-    roomChannel
-      .send({
-        type: "broadcast",
-        event: "speaking",
-        payload: { userId: me.id, speaking },
-      })
-      .catch(() => {});
-  }
 }
 
 function updateParticipantInRoom(
@@ -517,12 +656,28 @@ function updateParticipantInRoom(
     ...state,
     rooms: state.rooms.map((r) => {
       if (r.id !== spaceId) return r;
+      const nextParticipants = r.participants.map((p) => (p.id === userId ? { ...p, ...patch } : p));
+      const updated = nextParticipants.find((p) => p.id === userId);
+      const nextStageSeats = { ...(r.stageSeats ?? {}) };
+      if (updated) {
+        if (updated.role !== "listener") {
+          nextStageSeats[userId] = {
+            role: updated.role,
+            muted: updated.muted,
+            handRaised: updated.handRaised,
+          };
+        } else {
+          delete nextStageSeats[userId];
+        }
+      }
       return {
         ...r,
-        participants: r.participants.map((p) => (p.id === userId ? { ...p, ...patch } : p)),
+        participants: nextParticipants,
+        stageSeats: nextStageSeats,
       };
     }),
   };
+  saveSpaceSession();
   emit();
 }
 
@@ -553,6 +708,7 @@ function dropPeer(peerId: string) {
   peerConnections.get(peerId)?.close();
   peerConnections.delete(peerId);
   peerMeta.delete(peerId);
+  remoteAnalysers.delete(peerId);
   const audio = remoteAudioElements.get(peerId);
   if (audio) {
     audio.pause();
@@ -608,6 +764,18 @@ function getOrCreatePeerConnection(peerId: string): RTCPeerConnection {
     audio.srcObject = remoteStream;
     audio.muted = state.soundOff;
     audio.play().catch(() => {});
+    // Attach client-side AnalyserNode so speaking indicators run locally with zero WebSocket broadcasts.
+    try {
+      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (Ctx) {
+        if (!audioCtx) audioCtx = new Ctx();
+        const src = audioCtx.createMediaStreamSource(remoteStream);
+        const an = audioCtx.createAnalyser();
+        an.fftSize = 128;
+        src.connect(an);
+        remoteAnalysers.set(peerId, { analyser: an, data: new Uint8Array(an.frequencyBinCount) });
+      }
+    } catch { /* ignore analyser errors */ }
   };
 
   addLocalTracks(pc);
@@ -645,15 +813,41 @@ function subscribeToSpaceChannel(spaceId: string, onReady?: () => void) {
           if (r.participants.length >= MAX_ROOM_CAPACITY && !r.participants.some((x) => x.id === p.id)) {
             return r;
           }
-          const exists = r.participants.some((x) => x.id === p.id);
+          // Preserve stage role (Host, Co-Host, Speaker) if they dropped network and reconnected!
+          const savedSeat = r.stageSeats?.[p.id];
+          const existing = r.participants.find((x) => x.id === p.id);
+          const restoredRole: SpaceRole =
+            r.hostId === p.id
+              ? "host"
+              : savedSeat?.role && savedSeat.role !== "listener"
+              ? savedSeat.role
+              : existing?.role && existing.role !== "listener"
+              ? existing.role
+              : p.role;
+          const restoredParticipant: SpaceParticipant = {
+            ...p,
+            role: restoredRole,
+            muted: restoredRole === "listener" ? true : p.muted,
+          };
+          const nextStageSeats = { ...(r.stageSeats ?? {}) };
+          if (restoredRole !== "listener") {
+            nextStageSeats[p.id] = {
+              role: restoredRole,
+              muted: restoredParticipant.muted,
+              handRaised: restoredParticipant.handRaised,
+            };
+          }
+          const exists = Boolean(existing);
           return {
             ...r,
+            stageSeats: nextStageSeats,
             participants: exists
-              ? r.participants.map((x) => (x.id === p.id ? { ...x, ...p } : x))
-              : [...r.participants, p],
+              ? r.participants.map((x) => (x.id === p.id ? { ...x, ...restoredParticipant } : x))
+              : [...r.participants, restoredParticipant],
           };
         }),
       };
+      saveSpaceSession();
       emit();
 
       // The host tells the lobby who's here, and anyone with a mic going connects to the newcomer.
@@ -839,7 +1033,10 @@ export function hostNewSpace(opts: {
     startedAt: now,
     expiresAt: opts.endsAt && opts.endsAt > now ? opts.endsAt : now + SPACE_DURATION_MS,
     aiSafetyCheck: true,
-    activity,
+    activity: { ...activity, hypePoints: 10, hypeGoal: 100 },
+    stageSeats: {
+      [me.id]: { role: "host", muted: false, handRaised: false },
+    },
     participants: [
       {
         id: me.id,
@@ -869,6 +1066,7 @@ export function hostNewSpace(opts: {
     ],
     reactions: [],
   };
+  saveSpaceSession();
   emit();
 
   roomLastSeen.set(id, now);
@@ -894,10 +1092,15 @@ export function hostNewSpace(opts: {
   return newRoom;
 }
 
-/** Join an existing Space as a Listener (or reclaim Host role if it's your room) */
+/** Join an existing Space as a Listener (or automatically reclaim Host, Co-Host, or Speaker role if you were on stage) */
 export function joinSpace(spaceId: string): { ok: boolean; reason?: string } {
   connectLobby();
-  const room = state.rooms.find((r) => r.id === spaceId);
+  let room = state.rooms.find((r) => r.id === spaceId);
+  const savedSession = loadSavedSpaceSession(spaceId);
+  if (!room && savedSession) {
+    room = savedSession.roomSnapshot;
+    state = { ...state, rooms: [room, ...state.rooms] };
+  }
   if (!room) {
     // Opened from a link before the host has announced it: join as soon as they do.
     pendingJoinId = spaceId;
@@ -906,7 +1109,8 @@ export function joinSpace(spaceId: string): { ok: boolean; reason?: string } {
   }
 
   const me = meInfo();
-  const alreadyIn = room.participants.some((p) => p.id === me.id);
+  const existingPart = room.participants.find((p) => p.id === me.id);
+  const alreadyIn = Boolean(existingPart);
   if (!alreadyIn && room.participants.length >= MAX_ROOM_CAPACITY) {
     return {
       ok: false,
@@ -918,16 +1122,33 @@ export function joinSpace(spaceId: string): { ok: boolean; reason?: string } {
     cleanupActiveRoom();
   }
 
-  const myRole: SpaceRole = room.hostId === me.id ? "host" : "listener";
+  // Restore exact stage role (Host, Co-Host, Speaker) across network drops or page reloads
+  const savedSeat = room.stageSeats?.[me.id];
+  const myRole: SpaceRole =
+    room.hostId === me.id
+      ? "host"
+      : savedSeat?.role && savedSeat.role !== "listener"
+      ? savedSeat.role
+      : existingPart?.role && existingPart.role !== "listener"
+      ? existingPart.role
+      : savedSession?.userId === me.id && savedSession.role !== "listener"
+      ? savedSession.role
+      : "listener";
+
+  const myMuted =
+    myRole === "listener"
+      ? true
+      : savedSeat?.muted ?? existingPart?.muted ?? (savedSession?.userId === me.id ? savedSession.muted : false);
+
   const myParticipant: SpaceParticipant = {
     id: me.id,
     username: me.username,
     preset: me.preset,
     role: myRole,
-    muted: myRole === "listener",
-    handRaised: false,
+    muted: myMuted,
+    handRaised: savedSeat?.handRaised ?? existingPart?.handRaised ?? false,
     speaking: false,
-    joinedAt: Date.now(),
+    joinedAt: existingPart?.joinedAt ?? Date.now(),
   };
 
   state = {
@@ -936,24 +1157,31 @@ export function joinSpace(spaceId: string): { ok: boolean; reason?: string } {
     rooms: state.rooms.map((r) => {
       if (r.id !== spaceId) return r;
       const hasMe = r.participants.some((p) => p.id === me.id);
+      const nextStageSeats = { ...(r.stageSeats ?? {}) };
+      if (myRole !== "listener") {
+        nextStageSeats[me.id] = { role: myRole, muted: myMuted, handRaised: myParticipant.handRaised };
+      }
       return {
         ...r,
+        stageSeats: nextStageSeats,
         participants: hasMe
           ? r.participants.map((p) => (p.id === me.id ? myParticipant : p))
           : [...r.participants, myParticipant],
       };
     }),
   };
+  saveSpaceSession();
   emit();
 
   // Say hello once connected (also after a dropped connection), so the host adds you and speakers connect to you.
   subscribeToSpaceChannel(spaceId, () => {
     roomChannel?.send({ type: "broadcast", event: "participant-join", payload: myParticipant }).catch(() => {});
+    if (myRole === "host") announceMyRoom();
   });
   startExpiryWatcher();
   gameAudio.holdMusic(true);
   unlockAudio();
-  if (myRole !== "listener") {
+  if (myRole !== "listener" && !myMuted) {
     ensureLocalMic(true);
   }
   gameAudio.sfx("open");
@@ -994,6 +1222,7 @@ export function leaveSpace() {
       })
       .filter((r) => r.hostId !== me.id || r.id !== spaceId),
   };
+  saveSpaceSession();
   gameAudio.sfx("tap");
   emit();
 }
@@ -1182,10 +1411,21 @@ export function triggerStageActivity() {
     }
   }
 
+  const curHype = act.hypePoints ?? 10;
+  const nextHype = curHype + 15 >= 100 ? 10 : curHype + 15;
+  if (curHype + 15 >= 100) {
+    adjustBalance(150);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("dubai:toast", { detail: "🔥 STAGE FEVER MAXED! +AED 150 Hype Bonus!" }));
+    }
+  }
+  nextAct = { ...nextAct, hypePoints: nextHype, hypeGoal: 100 };
+
   state = {
     ...state,
     rooms: state.rooms.map((r) => (r.id === spaceId ? { ...r, activity: nextAct } : r)),
   };
+  saveSpaceSession();
   emit();
 
   if (roomChannel) {
@@ -1236,15 +1476,22 @@ export function switchSpaceActivity(kind: SpaceActivityKind, gameId?: string, ga
           applauseCount: room.activity.applauseCount,
         };
 
+  const withHype: SpaceActivityState = {
+    ...nextAct,
+    hypePoints: room.activity.hypePoints ?? 10,
+    hypeGoal: 100,
+  };
+
   state = {
     ...state,
-    rooms: state.rooms.map((r) => (r.id === spaceId ? { ...r, activity: nextAct } : r)),
+    rooms: state.rooms.map((r) => (r.id === spaceId ? { ...r, activity: withHype } : r)),
   };
+  saveSpaceSession();
   emit();
 
   if (roomChannel) {
     roomChannel
-      .send({ type: "broadcast", event: "activity-update", payload: nextAct })
+      .send({ type: "broadcast", event: "activity-update", payload: withHype })
       .catch(() => {});
   }
   gameAudio.sfx("chime");

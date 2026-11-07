@@ -544,6 +544,45 @@ export default function HomePage() {
   // Where pieces overlap: which one shows on top.
   const layerPlacing = (by: number) => setPlacing((p) => (p ? { ...p, layer: Math.max(-3, Math.min(6, (p.layer ?? 0) + by)) } : p));
 
+  // #18 & #22: Per-item color customization for any furniture item in the house
+  const placingOwned = placing ? withHomeItems(furniture, housingTier).find((x) => x.uid === placing.uid) : null;
+  const colorPlacing = (hex?: string) => {
+    if (!placing) return;
+    gameAudio.playClickSound();
+    if (sh) {
+      const base = withHomeItems(sh.furniture, housingTier);
+      const exists = base.some((f) => f.uid === placing.uid);
+      const next = exists
+        ? base.map((f) => (f.uid === placing.uid ? { ...f, customColor: hex } : f))
+        : [...base, { uid: placing.uid, itemId: placing.itemId, placement: null, customColor: hex }];
+      void saveShared({ ...sh, furniture: next });
+    } else {
+      updateCitizen((c) => {
+        const base = withHomeItems(c.furniture ?? [], housingTier);
+        const exists = base.some((f) => f.uid === placing.uid);
+        const next = exists
+          ? base.map((f) => (f.uid === placing.uid ? { ...f, customColor: hex } : f))
+          : [...base, { uid: placing.uid, itemId: placing.itemId, placement: null, customColor: hex }];
+        return { ...c, furniture: next };
+      });
+    }
+    showToast(hex ? `🎨 Colored ${placingItem?.name ?? "item"} ${hex.toUpperCase()}` : "🎨 Reset item to original finish");
+  };
+
+  // #5: Gift-to-Friend & 3-Tap Mystery Gift Unboxing state
+  const [giftTargetItem, setGiftTargetItem] = useState<CatalogItem | null>(null);
+  const [giftRecipient, setGiftRecipient] = useState("");
+  const [giftNote, setGiftNote] = useState("Thought this would look amazing in your Dubai home! ✨");
+  const [unboxItem, setUnboxItem] = useState<{ item: CatalogItem; from: string; note: string; taps: number } | null>(null);
+
+  // #19: Interactive Nursery Baby Care Mini-Game state
+  const [nurseryGame, setNurseryGame] = useState<{
+    step: "bottle" | "diaper" | "lullaby" | "done";
+    temp: number;
+    swipes: number;
+    notes: number;
+  } | null>(null);
+
   const storePlacing = () => {
     if (!placing) return;
     if (sh) placeShared(placing.uid, null);
@@ -606,6 +645,7 @@ export default function HomePage() {
         onPlaceBlocked={() => showToast("🚫 It doesn't fit there. Try a green spot.")}
         onInteractObject={handleInteractObject}
         onUseFixture={(f) => setFixture(f)}
+        onTriggerActivity={handleTriggerHomeActivity}
         using={usingFixture}
         activity={running?.serve}
         ownCar={myCar}
@@ -627,7 +667,7 @@ export default function HomePage() {
       />
 
       {view !== "above" && !placing && !decorating && !cleanScreen && (
-        <div className="absolute left-4 bottom-[max(6.5rem,calc(env(safe-area-inset-bottom)+6rem))] z-30"><MoveStick controls={stick} run={stickRun} onRun={() => setStickRun((r) => !r)} /></div>
+        <div className="absolute left-4 bottom-[max(6.5rem,calc(env(safe-area-inset-bottom)+6rem))] z-30"><MoveStick controls={stick} allowRun={false} /></div>
       )}
       {/* Middle right (user, 2026-11-04): ☰ Menu (everything about the home), 🎉 Party (during a party), the three views,
           the phone, and the clean-screen eye. Outside and Rituals are at the bottom right, beside the stick. */}
@@ -680,6 +720,52 @@ export default function HomePage() {
                   <span className="hidden sm:inline"> R rotates · Esc cancels.</span>
                 </div>
               </div>
+            </div>
+            {/* #18 & #22: Per-item live color customizer */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 shrink-0">🎨 Color:</span>
+              {[
+                { hex: "#d4af37", label: "Royal Gold" },
+                { hex: "#f8fafc", label: "Pearl White" },
+                { hex: "#0f172a", label: "Obsidian" },
+                { hex: "#065f46", label: "Emerald" },
+                { hex: "#1e3a8a", label: "Sapphire" },
+                { hex: "#9f1239", label: "Ruby Velvet" },
+                { hex: "#f472b6", label: "Blush Rose" },
+                { hex: "#38bdf8", label: "Baby Blue" },
+                { hex: "#a855f7", label: "Cyber Violet" },
+                { hex: "#d97706", label: "Warm Teak" },
+              ].map((sw) => {
+                const active = (placingOwned?.customColor ?? "").toLowerCase() === sw.hex;
+                return (
+                  <button
+                    key={sw.hex}
+                    type="button"
+                    title={sw.label}
+                    onClick={() => colorPlacing(sw.hex)}
+                    className={`w-6 h-6 rounded-full border shrink-0 transition-transform active:scale-90 ${active ? "ring-2 ring-slate-900 scale-110 border-white" : "border-black/15"}`}
+                    style={{ background: sw.hex }}
+                  />
+                );
+              })}
+              <label className="w-6 h-6 rounded-full border border-slate-300 bg-gradient-to-tr from-rose-400 via-amber-300 to-sky-400 flex items-center justify-center text-[10px] cursor-pointer shrink-0" title="Custom RGB Color">
+                <input
+                  type="color"
+                  value={placingOwned?.customColor || "#d4af37"}
+                  onChange={(e) => colorPlacing(e.target.value)}
+                  className="sr-only"
+                />
+                +
+              </label>
+              {placingOwned?.customColor && (
+                <button
+                  type="button"
+                  onClick={() => colorPlacing(undefined)}
+                  className="px-2 py-0.5 rounded-full bg-slate-100 hover:bg-slate-200 text-[10px] font-black text-slate-600 shrink-0"
+                >
+                  Reset
+                </button>
+              )}
             </div>
             <div className="flex gap-2">
               {placingItem.kind !== "wall" && (
@@ -1063,12 +1149,18 @@ export default function HomePage() {
       )}
 
       {fixture && !running && (
-        <FixtureSheet fixture={fixture} onClose={() => setFixture(null)} onStart={(a) => {
-          gameAudio.playClickSound();
-          // Getting into the car: where to? (the trip itself is on the map, by car).
-          if (a.serve === "drive") { setFixture(null); setDriveOpen(true); return; }
-          setRunning(a); setUsingFixture(fixture.id); setFixture(null);
-        }} />
+        <FixtureSheet
+          fixture={fixture}
+          housingTier={housingTier}
+          onTriggerActivity={handleTriggerHomeActivity}
+          onClose={() => setFixture(null)}
+          onStart={(a) => {
+            gameAudio.playClickSound();
+            // Getting into the car: where to? (the trip itself is on the map, by car).
+            if (a.serve === "drive") { setFixture(null); setDriveOpen(true); return; }
+            setRunning(a); setUsingFixture(fixture.id); setFixture(null);
+          }}
+        />
       )}
       {running && (
         <div className="absolute left-3 top-[max(7.5rem,calc(env(safe-area-inset-top)+7rem))] z-40 pointer-events-auto">
@@ -1152,7 +1244,18 @@ export default function HomePage() {
                 </div>
               </section>
               <section>
-                <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Wall paint</h4>
+                <div className="flex items-center justify-between mb-1.5">
+                  <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-400">Wall paint</h4>
+                  <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 text-white text-[10px] font-black cursor-pointer active:scale-95">
+                    🎨 Custom RGB (AED 300)
+                    <input
+                      type="color"
+                      value={homeStyle.wall || "#f6f1e7"}
+                      onChange={(e) => restyle({ wall: e.target.value }, 300, `Walls painted ${e.target.value.toUpperCase()}`)}
+                      className="sr-only"
+                    />
+                  </label>
+                </div>
                 <div className="grid grid-cols-4 gap-2">
                   {WALL_PAINTS.map((w) => {
                     const current = homeStyle.wall.toLowerCase() === w.color;
@@ -1185,7 +1288,18 @@ export default function HomePage() {
                 </button>
               </section>
               <section className="space-y-2">
-                <h4 className="text-xs font-black text-slate-900">🛏️ Bed sheets</h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black text-slate-900">🛏️ Bed sheets</h4>
+                  <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 text-white text-[10px] font-black cursor-pointer active:scale-95">
+                    🎨 Custom Sheets (AED 150)
+                    <input
+                      type="color"
+                      value={homeStyle.bedding ?? BEDDING[0].color}
+                      onChange={(e) => restyle({ bedding: e.target.value }, 150, `Custom sheets: ${e.target.value.toUpperCase()}`)}
+                      className="sr-only"
+                    />
+                  </label>
+                </div>
                 <div className="grid grid-cols-4 gap-1.5">
                   {BEDDING.map((b) => {
                     const current = (homeStyle.bedding ?? BEDDING[0].color).toLowerCase() === b.color.toLowerCase();
@@ -1214,6 +1328,208 @@ export default function HomePage() {
                   </button>
                 ))}
               </div>
+
+              {/* #19: Interactive Nursery Baby Care Mini-Game Banner */}
+              {shopCat === "nursery" && (
+                <div className="p-3 rounded-2xl bg-gradient-to-r from-pink-50 via-amber-50 to-sky-50 border border-pink-200 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <div className="text-xs font-black text-slate-900">👶 Nursery Baby Care Challenge</div>
+                      <div className="text-[11px] text-slate-600">Warm milk to 37°C, speed-swap diapers & hum a lullaby (+AED 120)!</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        gameAudio.playClickSound();
+                        setNurseryGame({ step: "bottle", temp: 24, swipes: 0, notes: 0 });
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-pink-600 hover:bg-pink-500 text-white font-black text-xs shrink-0 active:scale-95"
+                    >
+                      🍼 Play Care
+                    </button>
+                  </div>
+                  {nurseryGame && (
+                    <div className="p-2.5 rounded-xl bg-white border border-pink-200 space-y-2">
+                      {nurseryGame.step === "bottle" && (
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between text-xs font-black text-slate-800">
+                            <span>Step 1/3: 🍼 Warm Formula to 36–38°C</span>
+                            <span className={nurseryGame.temp >= 36 && nurseryGame.temp <= 38 ? "text-emerald-600" : "text-amber-600"}>
+                              {nurseryGame.temp}°C
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min={20}
+                            max={45}
+                            value={nurseryGame.temp}
+                            onChange={(e) => setNurseryGame({ ...nurseryGame, temp: Number(e.target.value) })}
+                            className="w-full accent-pink-500"
+                          />
+                          <button
+                            type="button"
+                            disabled={nurseryGame.temp < 36 || nurseryGame.temp > 38}
+                            onClick={() => {
+                              gameAudio.playClickSound();
+                              setNurseryGame({ ...nurseryGame, step: "diaper" });
+                            }}
+                            className="w-full py-1.5 rounded-xl bg-emerald-600 disabled:bg-slate-200 disabled:text-slate-400 text-white font-black text-xs"
+                          >
+                            {nurseryGame.temp >= 36 && nurseryGame.temp <= 38 ? "✅ Perfect 37°C — Next: Diaper Swap" : "Slide to 37°C Sweet Spot"}
+                          </button>
+                        </div>
+                      )}
+                      {nurseryGame.step === "diaper" && (
+                        <div className="space-y-1.5">
+                          <div className="text-xs font-black text-slate-800">
+                            Step 2/3: 🧷 Diaper Speed-Swap ({nurseryGame.swipes}/3 Fastener Taps)
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              gameAudio.playClickSound();
+                              const nextSwipes = nurseryGame.swipes + 1;
+                              if (nextSwipes >= 3) {
+                                setNurseryGame({ ...nurseryGame, swipes: 3, step: "lullaby" });
+                              } else {
+                                setNurseryGame({ ...nurseryGame, swipes: nextSwipes });
+                              }
+                            }}
+                            className="w-full py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-black text-xs active:scale-95"
+                          >
+                            🧷 Tap to Fasten Clean Diaper ({nurseryGame.swipes}/3)
+                          </button>
+                        </div>
+                      )}
+                      {nurseryGame.step === "lullaby" && (
+                        <div className="space-y-1.5">
+                          <div className="text-xs font-black text-slate-800">
+                            Step 3/3: 🎵 Rocking Chair Lullaby ({nurseryGame.notes}/3 Notes)
+                          </div>
+                          <div className="grid grid-cols-3 gap-1.5">
+                            {["🎵 Do-Re", "🎶 Mi-Fa", "✨ Sleep"].map((lbl, idx) => (
+                              <button
+                                key={lbl}
+                                type="button"
+                                onClick={() => {
+                                  gameAudio.playCoinSound();
+                                  const nextNotes = nurseryGame.notes + 1;
+                                  if (nextNotes >= 3) {
+                                    adjustBalance(120);
+                                    setNeeds((prev) => ({ ...prev, fun: Math.min(100, prev.fun + 25) }));
+                                    showToast("👶 Baby is fast asleep! +AED 120 Family Care Bonus & +25 FUN");
+                                    setNurseryGame(null);
+                                  } else {
+                                    setNurseryGame({ ...nurseryGame, notes: nextNotes });
+                                  }
+                                }}
+                                className="py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs active:scale-95"
+                              >
+                                {lbl} #{idx + 1}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* #5: Gift-to-Friend & 3-Tap Mystery Gift Unboxing Panel */}
+              {giftTargetItem && (
+                <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-amber-950">
+                      🎁 Send {giftTargetItem.icon} {giftTargetItem.name} (AED {giftTargetItem.price.toLocaleString()})
+                    </span>
+                    <button onClick={() => setGiftTargetItem(null)} className="text-xs font-black text-slate-400 hover:text-slate-700">✕</button>
+                  </div>
+                  <input
+                    type="text"
+                    value={giftRecipient}
+                    onChange={(e) => setGiftRecipient(e.target.value)}
+                    placeholder="Friend's @username (e.g. @layla)"
+                    className="w-full px-3 py-1.5 rounded-xl bg-white border border-amber-200 text-xs font-bold text-slate-900"
+                  />
+                  <input
+                    type="text"
+                    value={giftNote}
+                    onChange={(e) => setGiftNote(e.target.value)}
+                    placeholder="Add a luxury gift card note..."
+                    className="w-full px-3 py-1.5 rounded-xl bg-white border border-amber-200 text-xs text-slate-700"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const to = giftRecipient.trim().replace(/^@/, "") || "bestie";
+                        if (!adjustBalance(-giftTargetItem.price)) {
+                          showToast("⚠️ Not enough AED in your wallet!");
+                          return;
+                        }
+                        gameAudio.playCoinSound();
+                        const sent = giftTargetItem;
+                        setGiftTargetItem(null);
+                        setUnboxItem({ item: sent, from: citizen?.username ?? "You", note: giftNote, taps: 0 });
+                        showToast(`🎁 Wrapped & sent ${sent.name} to @${to}!`);
+                      }}
+                      className="flex-1 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs active:scale-95"
+                    >
+                      🎀 Pay & Send Mystery Box
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {unboxItem && (
+                <div className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white border border-amber-400/40 text-center space-y-2 shadow-xl">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-amber-300">
+                    3-Tap Mystery Gift Unboxing · From @{unboxItem.from}
+                  </div>
+                  <div className="text-3xl py-1 animate-bounce">
+                    {unboxItem.taps === 0 ? "🎁" : unboxItem.taps === 1 ? "🎀" : unboxItem.taps === 2 ? "✨📦✨" : unboxItem.item.icon}
+                  </div>
+                  <p className="text-xs text-white/80 italic">&ldquo;{unboxItem.note}&rdquo;</p>
+                  {unboxItem.taps < 3 ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        gameAudio.playClickSound();
+                        const next = unboxItem.taps + 1;
+                        if (next >= 3) {
+                          gameAudio.playCoinSound();
+                          const uid = newFurnitureUid(unboxItem.item.id);
+                          if (sh) void saveShared({ ...sh, furniture: [...sh.furniture, { uid, itemId: unboxItem.item.id, placement: null }] });
+                          else updateCitizen((c) => ({ ...c, furniture: [...(c.furniture ?? []), { uid, itemId: unboxItem.item.id, placement: null }] }));
+                        }
+                        setUnboxItem({ ...unboxItem, taps: next });
+                      }}
+                      className="w-full py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs active:scale-95"
+                    >
+                      {unboxItem.taps === 0
+                        ? "Tap 1/3: 📳 Shake Luxury Box"
+                        : unboxItem.taps === 1
+                          ? "Tap 2/3: 🎀 Untie Gold Ribbon"
+                          : "Tap 3/3: 🎉 Pop Confetti & Reveal!"}
+                    </button>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <div className="text-xs font-black text-emerald-300">
+                        🎉 Unlocked {unboxItem.item.name}! Added to Storage.
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setUnboxItem(null)}
+                        className="px-4 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-black text-xs"
+                      >
+                        Done
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {CATALOG.filter((item) => shopCat === "all" || item.category === shopCat).map(item => {
                 const owned = furniture.filter((f) => f.itemId === item.id).length;
                 return (
@@ -1226,12 +1542,24 @@ export default function HomePage() {
                         <span className="text-xs font-mono font-extrabold text-emerald-600 mt-0.5 block">AED {item.price.toLocaleString()}</span>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleBuy(item)}
-                      className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs transition-all active:scale-95"
-                    >
-                      Buy
-                    </button>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        onClick={() => {
+                          gameAudio.playClickSound();
+                          setGiftTargetItem(item);
+                        }}
+                        title="Buy & Gift to a Friend"
+                        className="px-2.5 py-1.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 font-black text-xs transition-all active:scale-95"
+                      >
+                        🎁 Gift
+                      </button>
+                      <button
+                        onClick={() => handleBuy(item)}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs transition-all active:scale-95"
+                      >
+                        Buy
+                      </button>
+                    </div>
                   </div>
                 );
               })}

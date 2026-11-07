@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
-import { useCitizen } from "@/lib/citizenStore";
+import { adjustBalance, updateCitizen, useCitizen } from "@/lib/citizenStore";
 import {
   addRelative, askForBaby, askMoveIn, respondMoveIn, myMoveInRequests, moveOut, myHousehold, type SharedHome, type MoveInRequest, askOut, cancelRequest, careForChild, datePlaceOf, endRelationship, FAMILY, happinessOf, hireNanny, logDate, LOVE,
   nameChild, planWedding, propose, relationLabel, removeRelative, resolveDiscovery, respond, respondRelative, ringOf, showLove, stageOf,
@@ -329,9 +329,41 @@ function Planner({ onDone, run, busy, who }: { onDone: () => void; run: Run; bus
 
 // ---------------------------------------------------------------- kids
 
+const DUBAI_KIDS_SCHOOLS = [
+  { id: "little_gems", name: "🧸 Little Gems Nursery", fee: 0, perk: "Early speech & social play" },
+  { id: "gems_royal", name: "🏫 GEMS Royal Dubai Academy", fee: 500, perk: "+15% Honor Roll Bonus" },
+  { id: "swiss_intl", name: "🏔️ Swiss International Scientific School", fee: 1200, perk: "Bilingual IB & STEM Lab" },
+  { id: "future_coding", name: "🤖 Dubai Future Coding & Robotics", fee: 2000, perk: "AI & Robotics prodigy track" },
+] as const;
+
+const HOMEWORK_QUIZZES = [
+  {
+    q: "1/3 Geography: Which is the tallest tower in Dubai and the world?",
+    options: ["Burj Khalifa (828m)", "Dubai Frame", "Cayan Tower"],
+    answer: 0,
+  },
+  {
+    q: "2/3 Math: If a school bus has 12 seats with 2 kids per seat, how many kids ride?",
+    options: ["18 kids", "24 kids", "30 kids"],
+    answer: 1,
+  },
+  {
+    q: "3/3 STEM: What powers the clean solar park in Mohammed bin Rashid Al Maktoum Solar Park?",
+    options: ["Coal turbines", "Sunlight & photovoltaic panels", "Diesel generators"],
+    answer: 1,
+  },
+] as const;
+
 function Kids({ rels, kids, busy, run, me }: { rels: Relationship[]; kids: Child[] | null; busy: boolean; run: Run; me: string }) {
   const now = useNow();
   const expecting = (p: Person) => kids?.some((k) => !k.born && Date.parse(k.dueAt) > now && (k.mother.id === p.id || k.father.id === p.id));
+  const [bumpPreview, setBumpPreview] = useState<number>(0);
+  const [deliveryRole, setDeliveryRole] = useState<"mother" | "father" | "doctor">("mother");
+  const [deliveryProgress, setDeliveryProgress] = useState<number>(0);
+  const [schoolId, setSchoolId] = useState<string>("gems_royal");
+  const [quizStep, setQuizStep] = useState<number | null>(null);
+  const [quizCorrect, setQuizCorrect] = useState<number>(0);
+
   return (
     <>
       {rels.length === 0 && !kids?.length && (
@@ -346,6 +378,208 @@ function Kids({ rels, kids, busy, run, me }: { rels: Relationship[]; kids: Child
           {expecting(r.partner) ? `🤰 Expecting with @${r.partner.username}` : `👶 Have a baby with @${r.partner.username}`}
         </Big>
       ))}
+
+      {/* #6: 3D Pregnancy Bump Customizer & 3-Role Hospital Delivery Room Mini-Game */}
+      <Card className="bg-gradient-to-br from-pink-50 via-rose-50 to-amber-50 border border-pink-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-black text-base text-rose-950">🤰 3D Pregnancy Bump &amp; Delivery Suite</p>
+            <p className="text-xs text-slate-600">Sync your 3D trimester bump &amp; play the 3-Role Hospital Delivery Mini-Game!</p>
+          </div>
+          <span className="text-2xl">🏥</span>
+        </div>
+
+        {/* 3D Baby Bump Trimester Switcher */}
+        <div className="space-y-1.5">
+          <p className="text-xs font-black text-slate-700">🤰 3D Avatar Baby Bump Stage:</p>
+          <div className="grid grid-cols-4 gap-1.5">
+            {[
+              { w: 0, label: "None" },
+              { w: 1, label: "Tri 1" },
+              { w: 2, label: "Tri 2" },
+              { w: 3, label: "Tri 3 (Full)" },
+            ].map((b) => (
+              <button
+                key={b.w}
+                type="button"
+                onClick={() => {
+                  gameAudio.playClickSound();
+                  setBumpPreview(b.w);
+                  updateCitizen((c) => ({
+                    ...c,
+                    look: { ...(c.look ?? { gender: "woman" }), pregnantWeeks: b.w || undefined },
+                  }));
+                }}
+                className={`py-2 rounded-xl text-xs font-black border transition-all ${
+                  bumpPreview === b.w
+                    ? "bg-rose-600 text-white border-rose-600"
+                    : "bg-white text-slate-700 border-rose-200"
+                }`}
+              >
+                {b.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 3-Role Hospital Childbirth Mini-Game */}
+        <div className="p-3 rounded-2xl bg-white border border-rose-200 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black text-slate-900">🏥 3-Role Hospital Delivery Room</span>
+            <span className="text-[11px] font-bold text-rose-600">{deliveryProgress}/3 Steps</span>
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
+            {[
+              { id: "mother" as const, label: "🤰 Mother" },
+              { id: "father" as const, label: "🤝 Partner" },
+              { id: "doctor" as const, label: "🩺 Doctor" },
+            ].map((r) => (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => {
+                  gameAudio.playClickSound();
+                  setDeliveryRole(r.id);
+                }}
+                className={`py-1.5 rounded-xl text-xs font-black ${
+                  deliveryRole === r.id ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"
+                }`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-slate-600">
+            {deliveryRole === "mother"
+              ? "🤰 Mother Role: Tap on the contraction breathing ring to keep calm & push safely!"
+              : deliveryRole === "father"
+                ? "🤝 Partner Role: Hold hand, wipe brow & coach breathing to boost comfort to 100%!"
+                : "🩺 Doctor Role: Monitor fetal heartbeat, guide delivery & stamp the Dubai Birth Certificate!"}
+          </p>
+          {deliveryProgress < 3 ? (
+            <button
+              type="button"
+              onClick={() => {
+                gameAudio.playClickSound();
+                const next = deliveryProgress + 1;
+                setDeliveryProgress(next);
+                if (next >= 3) {
+                  gameAudio.playCoinSound();
+                  adjustBalance(300);
+                }
+              }}
+              className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs active:scale-95"
+            >
+              {deliveryRole === "mother"
+                ? `🌬️ Breathe & Push (${deliveryProgress}/3)`
+                : deliveryRole === "father"
+                  ? `🤝 Hold Hand & Wipe Brow (${deliveryProgress}/3)`
+                  : `🩺 Guide Safe Delivery (${deliveryProgress}/3)`}
+            </button>
+          ) : (
+            <div className="space-y-1.5 text-center">
+              <div className="text-xs font-black text-emerald-700">
+                👶🎉 Healthy Delivery Complete! Official Dubai Birth Certificate Issued (+AED 300 Bonus)!
+              </div>
+              <button
+                type="button"
+                onClick={() => setDeliveryProgress(0)}
+                className="px-4 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-black text-xs"
+              >
+                Replay Delivery Suite
+              </button>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* #7: Dubai Kids' Schools & Playable Homework Speed-Quiz */}
+      <Card className="bg-gradient-to-br from-indigo-50 via-sky-50 to-emerald-50 border border-indigo-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-black text-base text-indigo-950">🎓 Dubai Kids&apos; Academy &amp; Homework Quiz</p>
+            <p className="text-xs text-slate-600">Enroll your kids in top Dubai schools &amp; help them ace their 3-question speed homework!</p>
+          </div>
+          <span className="text-2xl">🏫</span>
+        </div>
+
+        <div className="space-y-1.5">
+          {DUBAI_KIDS_SCHOOLS.map((sc) => (
+            <button
+              key={sc.id}
+              type="button"
+              onClick={() => {
+                gameAudio.playClickSound();
+                setSchoolId(sc.id);
+              }}
+              className={`w-full p-2.5 rounded-2xl text-left border flex items-center justify-between transition-all ${
+                schoolId === sc.id ? "bg-white border-indigo-500 ring-2 ring-indigo-200" : "bg-white/60 border-slate-200"
+              }`}
+            >
+              <div>
+                <div className="text-xs font-black text-slate-900">{sc.name}</div>
+                <div className="text-[11px] text-slate-500">{sc.perk}</div>
+              </div>
+              <span className="text-xs font-black text-indigo-700">{sc.fee ? aed(sc.fee) : "Free"}</span>
+            </button>
+          ))}
+        </div>
+
+        {quizStep === null ? (
+          <button
+            type="button"
+            onClick={() => {
+              gameAudio.playClickSound();
+              setQuizStep(0);
+              setQuizCorrect(0);
+            }}
+            className="w-full py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs active:scale-95"
+          >
+            📝 Play 30s Homework Speed-Quiz (+AED 250 Honor Roll Scholarship)
+          </button>
+        ) : quizStep < HOMEWORK_QUIZZES.length ? (
+          <div className="p-3 rounded-2xl bg-white border border-indigo-200 space-y-2">
+            <div className="text-xs font-black text-slate-900">{HOMEWORK_QUIZZES[quizStep].q}</div>
+            <div className="space-y-1.5">
+              {HOMEWORK_QUIZZES[quizStep].options.map((opt, idx) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => {
+                    const isRight = idx === HOMEWORK_QUIZZES[quizStep].answer;
+                    const nextRight = quizCorrect + (isRight ? 1 : 0);
+                    setQuizCorrect(nextRight);
+                    if (quizStep + 1 >= HOMEWORK_QUIZZES.length) {
+                      gameAudio.playCoinSound();
+                      if (nextRight >= 2) adjustBalance(250);
+                    } else {
+                      gameAudio.playClickSound();
+                    }
+                    setQuizStep(quizStep + 1);
+                  }}
+                  className="w-full py-2 px-3 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 text-left text-xs font-bold text-slate-800"
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="p-3 rounded-2xl bg-white border border-emerald-200 text-center space-y-2">
+            <div className="text-sm font-black text-emerald-700">
+              🎓 Scored {quizCorrect}/{HOMEWORK_QUIZZES.length}! {quizCorrect >= 2 ? "Honor Roll Scholarship +AED 250 Awarded!" : "Good practice!"}
+            </div>
+            <button
+              type="button"
+              onClick={() => setQuizStep(null)}
+              className="px-4 py-1.5 rounded-xl bg-indigo-600 text-white font-black text-xs"
+            >
+              Done
+            </button>
+          </div>
+        )}
+      </Card>
+
       {kids === null ? <p className="text-center text-slate-500 py-4">Loading…</p> : kids.map((k) => <ChildCard key={k.id} child={k} busy={busy} run={run} me={me} now={now} />)}
     </>
   );

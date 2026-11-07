@@ -63,6 +63,8 @@ export interface OwnedFurniture {
   uid: string;
   itemId: string;
   placement: Placement | null;
+  /** Player-chosen custom hex color tint (#18, #22). */
+  customColor?: string;
 }
 
 export interface CatalogItem {
@@ -93,11 +95,12 @@ export interface CatalogItem {
   fixed?: boolean;
 }
 
-export type ShopCategory = "living" | "bedroom" | "dining" | "lighting" | "wall" | "decor";
+export type ShopCategory = "living" | "bedroom" | "dining" | "nursery" | "lighting" | "wall" | "decor";
 export const SHOP_CATEGORIES: Array<{ id: ShopCategory; label: string; icon: string }> = [
   { id: "living", label: "Living", icon: "🛋️" },
   { id: "bedroom", label: "Bedroom", icon: "🛏️" },
   { id: "dining", label: "Dining & kitchen", icon: "🍽️" },
+  { id: "nursery", label: "Nursery & Baby", icon: "👶" },
   { id: "lighting", label: "Lighting", icon: "💡" },
   { id: "wall", label: "Wall art & mirrors", icon: "🖼️" },
   { id: "decor", label: "Decor", icon: "🏺" },
@@ -170,6 +173,22 @@ export const CATALOG: CatalogItem[] = [
   { id: "art-geometric", name: "Islamic Geometric Star", desc: "An eight-point star pattern in teal and gold.", icon: "✴️", price: 4600, kind: "wall", size: [2, 2], visual: "art-geometric", category: "wall" },
   { id: "art-botanical", name: "Tropical Botanical Print", desc: "Big green leaves on cream.", icon: "🌿", price: 2200, kind: "wall", size: [2, 3], visual: "art-botanical", category: "wall" },
   { id: "art-pop", name: "Colour-Block Modern Art", desc: "Bold primaries in a gallery frame.", icon: "🟥", price: 3900, kind: "wall", size: [3, 3], visual: "art-pop", category: "wall" },
+  // 4 New Designer Collections (#18): Arabian Royal Gold, Nordic Japandi, Palm Beach Resort, Cyberpunk Penthouse
+  { id: "royal-gold-majlis", name: "24K Royal Gold Palace Majlis", desc: "Hand-embroidered gold brocade cushions for VIP guests.", icon: "👑", price: 8800, kind: "floor", size: [4, 4], visual: "majlis", tint: "#d4af37", category: "living", interaction: "chair" },
+  { id: "royal-gold-throne", name: "Emirati Velvet & Brass Throne Chair", desc: "Regal amber-gold velvet armchair.", icon: "🪑", price: 4200, kind: "floor", size: [2, 2], visual: "armchair", tint: "#b45309", category: "living", interaction: "chair" },
+  { id: "japandi-boucle-chair", name: "Japandi Warm Sand Bouclé Lounge", desc: "Minimalist Nordic-Japanese organic comfort.", icon: "🤍", price: 3100, kind: "floor", size: [2, 2], visual: "armchair", tint: "#d6d3d1", category: "living", interaction: "chair" },
+  { id: "japandi-linen-bed", name: "Japandi Floating Ash Canopy Bed", desc: "Serene natural linen four-poster bed.", icon: "🛏️", price: 14500, kind: "floor", size: [4, 5], visual: "canopy-bed", tint: "#e7e5e4", category: "bedroom", interaction: "bed" },
+  { id: "resort-turquoise-sofa", name: "Palm Lagoon Velvet Armchair", desc: "Breezy Arabian Gulf turquoise resort seating.", icon: "🏖️", price: 3300, kind: "floor", size: [2, 2], visual: "armchair", tint: "#0d9488", category: "living", interaction: "chair" },
+  { id: "resort-coral-rug", name: "Sunset Coral Silk Round Rug", desc: "Hand-tufted Palm Jumeirah coral motif.", icon: "🌺", price: 3800, kind: "rug", size: [5, 5], visual: "rug-round", tint: "#f43f5e", category: "decor" },
+  { id: "cyber-violet-armchair", name: "Neon Violet Penthouse Pod Chair", desc: "Futuristic Downtown Dubai lounge seat.", icon: "🔮", price: 3900, kind: "floor", size: [2, 2], visual: "armchair", tint: "#7c3aed", category: "living", interaction: "chair" },
+  { id: "cyber-obsidian-bed", name: "Obsidian Indigo Canopy Bed", desc: "Sleek midnight penthouse master bed.", icon: "🌌", price: 17500, kind: "floor", size: [4, 5], visual: "canopy-bed", tint: "#312e81", category: "bedroom", interaction: "bed" },
+  // 3D Nursery & Baby Collection (#19)
+  { id: "nursery-crib-gold", name: "Royal Canopy Baby Crib & Mobile", desc: "Interactive baby crib with lullaby mobile & soothing rock.", icon: "👶", price: 3200, kind: "floor", size: [2, 3], visual: "canopy-bed", tint: "#fef3c7", category: "nursery", interaction: "bed" },
+  { id: "nursery-changing-table", name: "Smart Baby Changing & Diaper Station", desc: "Equipped with warmers, wipes & baby care mini-games.", icon: "🍼", price: 1850, kind: "floor", size: [2, 1], visual: "vanity", tint: "#e0f2fe", category: "nursery", interaction: "cooler" },
+  { id: "nursery-rocking-chair", name: "Velvet Nursing Glider Chair", desc: "Plush pastel glider for midnight bottle feeds & lullabies.", icon: "🩷", price: 2100, kind: "floor", size: [2, 2], visual: "armchair", tint: "#fbcfe8", category: "nursery", interaction: "chair" },
+  { id: "nursery-playmat", name: "Soft Cloud Baby Playmat Rug", desc: "Cushioned sensory tummy-time mat for crawlers.", icon: "☁️", price: 1100, kind: "rug", size: [4, 4], visual: "rug-round", tint: "#bae6fd", category: "nursery" },
+  { id: "nursery-toy-chest", name: "Montessori Storybook & Toy Shelf", desc: "Wall-mounted nursery books, plushies & blocks.", icon: "🧸", price: 1250, kind: "wall", size: [3, 2], visual: "shelves", tint: "#fde68a", category: "nursery" },
+  { id: "nursery-nightlight", name: "Starlight Lullaby Nursery Lamp", desc: "Projects gentle stars across the nursery ceiling.", icon: "🌟", price: 850, kind: "floor", size: [1, 1], visual: "tripod-lamp", tint: "#c084fc", category: "nursery" },
 ];
 
 export const getCatalogItem = (id: string) => CATALOG.find((c) => c.id === id) ?? HOME_ITEMS.find((c) => c.id === id);

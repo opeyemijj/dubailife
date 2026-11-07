@@ -5,9 +5,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Ban, Flag, HandCoins, MessageCircle, Send, X } from "lucide-react";
-import type { ChatMessage, Peer } from "@/lib/room";
+import { broadcastRoomEvent, type ChatMessage, type Peer } from "@/lib/room";
 import type { Product } from "@/lib/city/types";
 import { blockUser, REPORT_REASONS, reportUser, type ReportReason } from "@/lib/safety";
+import { adjustBalance, boostNeed, useCitizen } from "@/lib/citizenStore";
+import { CelebrityBoxingModal } from "@/components/games/CelebrityBoxingModal";
+import { gameAudio } from "@/utils/gameAudio";
 
 export type SocialContext = "club" | "dining" | "home" | "venue";
 
@@ -44,7 +47,12 @@ export function PeerPanel({
   onTreat?: () => void;
   onFriend: () => Promise<string>;
 }) {
-  const [mode, setMode] = useState<"menu" | "chat" | "money" | "safety">(startIn);
+  const { citizen } = useCitizen();
+  const [mode, setMode] = useState<"menu" | "chat" | "money" | "safety" | "rock" | "spray">(startIn);
+  const [boxingOpen, setBoxingOpen] = useState(false);
+  const [rockCombo, setRockCombo] = useState(0);
+  const [sprayDenom, setSprayDenom] = useState(100);
+  const [sprayedTotal, setSprayedTotal] = useState(0);
   const [reason, setReason] = useState<ReportReason | null>(null);
   const [details, setDetails] = useState("");
   const [confirmBlock, setConfirmBlock] = useState(false);
@@ -118,6 +126,62 @@ export function PeerPanel({
               {context === "dining" && treat && onTreat && action(treat.icon, `Treat them to ${treat.name.toLowerCase()}`, onTreat, `AED ${treat.price}`)}
               {canInviteToTable && action("🪑", "Invite to my table", () => onInvite("table"), peer.away ? AWAY_NOTE : "They'll take a free seat with you if they accept")}
               {context === "club" && action("💃", "Dance together", () => onInvite("dance"), peer.away ? AWAY_NOTE : "You'll dance facing each other")}
+              {action(
+                "🍑",
+                `Rock with @${peer.username}`,
+                () => {
+                  gameAudio.playClickSound();
+                  broadcastRoomEvent({ type: "rock", targetId: peer.userId, targetUsername: peer.username });
+                  setRockCombo(1);
+                  setMode("rock");
+                },
+                "2-Player Beat-Sync Party Rocking Dance (+Social & Hype)"
+              )}
+              {action(
+                "💸",
+                `Spray Money on @${peer.username}`,
+                () => {
+                  gameAudio.playClickSound();
+                  setSprayedTotal(0);
+                  setMode("spray");
+                },
+                "Flick crisp AED bills into the air (Owambe & VIP style)"
+              )}
+              {action(
+                "🥊",
+                `Challenge to Celebrity Boxing`,
+                () => {
+                  gameAudio.playClickSound();
+                  broadcastRoomEvent({ type: "boxing", targetId: peer.userId, targetUsername: peer.username, purse: 2500 });
+                  setBoxingOpen(true);
+                },
+                "Enter the 3D Boxing Ring for a live prize purse bout"
+              )}
+              {action(
+                "👋⚡",
+                `Slap @${peer.username}`,
+                () => {
+                  gameAudio.playClickSound();
+                  broadcastRoomEvent({ type: "slap", targetId: peer.userId, targetUsername: peer.username });
+                  setNote(`👋⚡ You slapped @${peer.username}! They have 1.2s to dodge or fight back!`);
+                },
+                "Triggers 1.2s reflex dodge QTE or 1v1 brawl"
+              )}
+              {action(
+                "👊🔥",
+                `Rally Gang Beat vs @${peer.username}`,
+                () => {
+                  gameAudio.playClickSound();
+                  broadcastRoomEvent({
+                    type: "gang_beat",
+                    targetId: peer.userId,
+                    targetUsername: peer.username,
+                    allies: [citizen?.username ?? "you"],
+                  });
+                  setNote(`👊🔥 Rallied the room to gang-jump @${peer.username}! Waiting for 2+ allies...`);
+                },
+                "Call 2+ players in the room to jump them together"
+              )}
               {context !== "home" && !canInviteToTable && action("🙌", "Come join me", () => onInvite("join"), peer.away ? AWAY_NOTE : "They'll walk over if they accept")}
               {action("👋", "Wave", onWave)}
               {action("🤝", "Add friend", async () => setNote(await onFriend()), "Friends can visit each other's homes")}
@@ -209,24 +273,131 @@ export function PeerPanel({
 
           {mode === "money" && (
             <>
-              <div className="grid grid-cols-4 gap-2">
-                {AMOUNTS.map((a) => (
-                  <button key={a} onClick={() => setAmount(a)} className={`h-10 rounded-xl text-sm font-black ${amount === a ? "bg-emerald-500 text-white" : "bg-slate-100"}`}>{a}</button>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black text-slate-700">Quick Amount</span>
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Zero Limit</span>
+              </div>
+              <div className="grid grid-cols-6 gap-1.5">
+                {[
+                  { label: "100", val: 100 },
+                  { label: "1K", val: 1_000 },
+                  { label: "10K", val: 10_000 },
+                  { label: "100K", val: 100_000 },
+                  { label: "1M", val: 1_000_000 },
+                  { label: "MAX", val: Math.max(1, balance) },
+                ].map((a) => (
+                  <button key={a.label} onClick={() => setAmount(a.val)} className={`h-9 rounded-xl text-xs font-black ${amount === a.val ? "bg-emerald-500 text-white" : "bg-slate-100"}`}>{a.label}</button>
                 ))}
               </div>
               <label className="flex items-center gap-2 h-11 rounded-xl border border-slate-200 px-3">
                 <span className="text-xs font-black text-slate-400">AED</span>
-                <input type="number" min={1} max={10000000} value={amount} onChange={(e) => setAmount(Math.max(0, Math.floor(Number(e.target.value) || 0)))} className="flex-1 text-base font-black outline-none bg-transparent" />
+                <input type="number" min={1} step="any" value={amount} onChange={(e) => setAmount(Math.max(0, Math.floor(Number(e.target.value) || 0)))} className="flex-1 text-base font-black outline-none bg-transparent" />
+                <button type="button" onClick={() => setAmount(Math.max(1, balance))} className="text-[11px] font-black text-emerald-600 hover:text-emerald-700">MAX</button>
               </label>
-              <p className="text-[11px] text-slate-500">You have AED {balance.toLocaleString()} · after: AED {(balance - amount).toLocaleString()}</p>
+              <p className="text-[11px] text-slate-500">You have AED {balance.toLocaleString()} · after: AED {Math.max(0, balance - amount).toLocaleString()}</p>
               <button disabled={busy || amount < 1 || amount > balance} onClick={pay} className="w-full h-12 rounded-xl bg-emerald-500 disabled:opacity-50 text-white font-black flex items-center justify-center gap-2">
                 <HandCoins className="w-4 h-4" /> {busy ? "Sending…" : `Send AED ${amount.toLocaleString()} to @${peer.username}`}
               </button>
               {note && <p className="text-xs font-bold text-rose-600 text-center">{note}</p>}
             </>
           )}
+
+          {mode === "rock" && (
+            <div className="space-y-3 text-center py-2">
+              <div className="text-xs font-black uppercase tracking-wider text-fuchsia-600">
+                🍑 2-Player Party Rocking Beat-Sync
+              </div>
+              <p className="text-xs text-slate-600">
+                Bending forward & rocking on the beat with <span className="font-black text-slate-900">@{peer.username}</span>! Tap on the rhythm pulse to build your Hype Combo!
+              </p>
+              <div className="py-3 flex flex-col items-center justify-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playClickSound();
+                    const next = rockCombo + 1;
+                    setRockCombo(next);
+                    boostNeed("fun", 6);
+                    boostNeed("social", 6);
+                    broadcastRoomEvent({ type: "rock", targetId: peer.userId, targetUsername: peer.username });
+                    if (next % 5 === 0) {
+                      adjustBalance(100);
+                      gameAudio.playCoinSound();
+                      setNote(`🔥 ${next}× ROCKING FEVER COMBO! Crowd throws +AED 100!`);
+                    }
+                  }}
+                  className="w-28 h-28 rounded-full bg-gradient-to-br from-fuchsia-500 via-pink-500 to-amber-400 text-white font-black shadow-xl ring-4 ring-fuchsia-300 active:scale-90 transition flex flex-col items-center justify-center"
+                >
+                  <span className="text-2xl">🍑🔥</span>
+                  <span className="text-xs">TAP BEAT</span>
+                  <span className="text-[11px] text-amber-100">Combo ×{rockCombo}</span>
+                </button>
+              </div>
+              {note && <p className="text-xs font-black text-emerald-600">{note}</p>}
+            </div>
+          )}
+
+          {mode === "spray" && (
+            <div className="space-y-3 text-center py-1">
+              <div className="text-xs font-black uppercase tracking-wider text-emerald-700">
+                💸 Lagos Owambe & VIP Money Spraying
+              </div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {[50, 100, 500, 1000].map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setSprayDenom(d)}
+                    className={`h-9 rounded-xl text-xs font-black ${
+                      sprayDenom === d ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-800"
+                    }`}
+                  >
+                    AED {d}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                disabled={balance < sprayDenom}
+                onClick={async () => {
+                  const err = await onSendMoney(sprayDenom);
+                  if (!err) {
+                    gameAudio.playCoinSound();
+                    setSprayedTotal((s) => s + sprayDenom);
+                    broadcastRoomEvent({
+                      type: "spray_money",
+                      targetId: peer.userId,
+                      targetUsername: peer.username,
+                      amount: sprayDenom,
+                    });
+                  } else {
+                    setNote(err);
+                  }
+                }}
+                className="w-full py-5 rounded-2xl bg-gradient-to-r from-emerald-600 via-amber-500 to-emerald-600 disabled:opacity-40 text-white font-black text-sm shadow-lg active:scale-95 transition flex flex-col items-center gap-1"
+              >
+                <span className="text-2xl">💸✨</span>
+                <span>FLICK / SPRAY AED {sprayDenom.toLocaleString()} NOTE</span>
+                <span className="text-[11px] text-emerald-100">
+                  Total Sprayed on @{peer.username}: AED {sprayedTotal.toLocaleString()}
+                </span>
+              </button>
+              {note && <p className="text-xs font-bold text-rose-600">{note}</p>}
+            </div>
+          )}
         </div>
       </div>
+
+      <CelebrityBoxingModal
+        open={boxingOpen}
+        onOpenChange={setBoxingOpen}
+        opponent={{
+          userId: peer.userId,
+          username: peer.username,
+          name: peer.name,
+          look: peer.look,
+        }}
+      />
     </div>
   );
 }

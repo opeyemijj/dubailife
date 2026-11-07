@@ -28,6 +28,19 @@ const PAVE_X = ROAD.half + ROAD.median / 2 + 1.6;
 
 interface Hud { stage: Stage; meter: number; speed: number; km: number; message: string; subtitle: string; progress: number }
 
+interface DriverQuiz {
+  q: string;
+  options: string[];
+  answer: number;
+}
+
+const DRIVER_QUIZZES: DriverQuiz[] = [
+  { q: "Habibi, quick Dubai quiz for AED 25 cashback! How many floors does Burj Khalifa have?", options: ["163 floors", "102 floors", "210 floors"], answer: 0 },
+  { q: "Tell me my friend — what highway are we driving on right now?", options: ["E11 Sheikh Zayed Rd", "Route 66", "M25 Orbital"], answer: 0 },
+  { q: "Win AED 25 off your ride! Which island is shaped like a palm tree?", options: ["Palm Jumeirah", "Bluewaters", "Al Maryah"], answer: 0 },
+  { q: "Quick one! What is the toll gate system in Dubai called?", options: ["Salik", "Darb", "Nol Pass"], answer: 0 },
+];
+
 /** A ride booked in an app (Yalla Ride): your class of car and driver instead of a taxi, already paid. */
 export interface BookedRide { app: string; name: string; icon: string; color: string; model3d: string; paid: number }
 
@@ -48,6 +61,8 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
   const travel = useRef({ s: 0, speed: 0 });
   const taxiRef = useRef({ z: 90, x: laneX(KERB_LANE), door: 0, lane: KERB_LANE });
   const directorRef = useRef<{ stage: Stage; t: number; said: number; salik: boolean; tick: number }>({ stage: "kerb", t: 0, said: -1, salik: false, tick: 0 });
+  const startedRef = useRef(false);
+  const steerCmdRef = useRef<{ dir: -1 | 0 | 1; boostUntil: number }>({ dir: 0, boostUntil: 0 });
   const firstHud: Hud = { stage: "kerb", meter: quote.flag, speed: 0, km: 0, message: "", subtitle: "", progress: 0 };
   const hudRef = useRef<Hud>(firstHud);
   const [shown, setShown] = useState<Hud>(firstHud);
@@ -55,18 +70,73 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
   const [muted, setMuted] = useState(isTransitMuted());
   const [tip, setTip] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  // Interactive Crazy-Taxi features: Near-Miss Weave Combo, Driver Trivia Cashback & Carpool Split
+  const [weaveScore, setWeaveScore] = useState(0);
+  const [boostActive, setBoostActive] = useState(false);
+  const [carpoolJoined, setCarpoolJoined] = useState(false);
+  const [quizIndex] = useState(() => Math.floor(Math.random() * DRIVER_QUIZZES.length));
+  const [quizAnswered, setQuizAnswered] = useState<number | null>(null);
+  const [quizCashback, setQuizCashback] = useState(0);
 
   useEffect(() => { warmUpVoices(); const id = setInterval(() => setShown({ ...hudRef.current }), 120); return () => { clearInterval(id); stopLoops(); stopSpeech(); }; }, []);
-  // A booked ride: the driver is already on the way when this opens.
-  useEffect(() => {
-    if (!ride) return;
-    const t = setTimeout(() => { directorRef.current = { stage: "pullup", t: 0, said: -1, salik: false, tick: 0 }; hudRef.current.stage = "pullup"; }, 600);
-    return () => clearTimeout(t);
-  }, [ride]);
 
-  const hail = () => { directorRef.current = { stage: "pullup", t: 0, said: -1, salik: false, tick: 0 }; hudRef.current.stage = "pullup"; };
+  // Start pickup immediately (0.25s) and NEVER reset directorRef if parent re-renders with a new `ride` object reference.
+  useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    const t = setTimeout(() => {
+      if (directorRef.current.stage === "kerb") {
+        directorRef.current = { stage: "pullup", t: 0, said: -1, salik: false, tick: 0 };
+        hudRef.current.stage = "pullup";
+      }
+    }, 250);
+    return () => clearTimeout(t);
+  }, []);
+
+  const hail = () => {
+    startedRef.current = true;
+    directorRef.current = { stage: "pullup", t: 0, said: -1, salik: false, tick: 0 };
+    hudRef.current.stage = "pullup";
+  };
+
+  const triggerLaneWeave = (dir: -1 | 1) => {
+    steerCmdRef.current.dir = dir;
+    indicatorTick();
+    setWeaveScore((s) => s + 15);
+    hudRef.current.message = `🏎️ Clean Lane Weave! +AED 15 Rush Bonus`;
+    setTimeout(() => {
+      if (hudRef.current.message.startsWith("🏎️")) hudRef.current.message = "";
+    }, 1400);
+  };
+
+  const triggerBoost = () => {
+    // eslint-disable-next-line react-hooks/purity
+    steerCmdRef.current.boostUntil = performance.now() + 3000;
+    setBoostActive(true);
+    setWeaveScore((s) => s + 20);
+    hudRef.current.message = "⚡ YALLA TURBO BOOST! 1.6× Speed";
+    setTimeout(() => {
+      setBoostActive(false);
+      if (hudRef.current.message.startsWith("⚡")) hudRef.current.message = "";
+    }, 3000);
+  };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (hudRef.current.stage !== "ride") return;
+      if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") triggerLaneWeave(-1);
+      else if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") triggerLaneWeave(1);
+      else if (e.key === " " || e.key === "ArrowUp" || e.key === "w" || e.key === "W") triggerBoost();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const discount = quizCashback + Math.min(45, weaveScore) + (carpoolJoined ? Math.round(quote.total * 0.5) : 0);
+  const finalFare = Math.max(0, quote.total + tip - discount);
+
   const pay = (how: "card" | "cash") => {
-    if (!onPay(quote.total + tip)) { setError("Payment declined — not enough AED in your wallet."); return; }
+    if (!onPay(finalFare)) { setError("Payment declined — not enough AED in your wallet."); return; }
     if (how === "card") nolTap();
     doorThud();
     announce([{ text: tip ? "Thank you so much! Have a lovely day." : "Thank you, have a nice day!", lang: "en" }], undefined, "driver");
@@ -76,8 +146,12 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
   const skip = () => {
     // Skipping still pays the fare (no tip); a booked ride is already paid.
     stopLoops(); stopSpeech();
-    if (ride) { onArrive(); return; }
-    if (!onPay(quote.total)) { setError("Not enough AED for the fare."); return; }
+    if (ride) {
+      if (discount > 0) onPay(-discount); // credit cashback earned during booked ride
+      onArrive();
+      return;
+    }
+    if (!onPay(finalFare)) { setError("Not enough AED for the fare."); return; }
     onArrive();
   };
 
@@ -96,7 +170,7 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
           {quote.salik > 0 && <SalikGate travel={travel} p={salikAt} />}
           <TheTaxi taxiRef={taxiRef} roof={roof} inside={view !== "outside" && ["ride", "arrive", "pay"].includes(shown.stage)} meter={shown.meter} ride={ride} />
           <Rider look={look} taxiRef={taxiRef} directorRef={directorRef} />
-          <Director travelRef={travel} taxiRef={taxiRef} directorRef={directorRef} hudRef={hudRef} quote={quote} length={length} salikAt={salikAt} view={view} booked={!!ride} />
+          <Director travelRef={travel} taxiRef={taxiRef} directorRef={directorRef} hudRef={hudRef} quote={quote} length={length} salikAt={salikAt} view={view} booked={!!ride} steerCmdRef={steerCmdRef} />
         </Canvas>
 
         {/* Top: where you're going, the meter, the speed */}
@@ -108,6 +182,11 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
                 <div className="text-sm font-black truncate">{ride ? `${ride.app} ${ride.name}` : "Dubai Taxi"} · to {destination}</div>
                 <div className="text-[11px] text-slate-300 truncate">{ride ? `≈ ${quote.km.toFixed(1)} km · paid AED ${ride.paid.toLocaleString()} in the app` : `≈ ${quote.km.toFixed(1)} km · AED ${quote.flag.toFixed(2)} flag-fall · AED ${TAXI.perKm.toFixed(2)}/km${quote.salik ? ` · Salik AED ${quote.salik}` : ""}`}</div>
               </div>
+              {discount > 0 && (
+                <div className="rounded-lg bg-emerald-500/20 border border-emerald-400/40 px-2 py-1 text-[11px] font-black text-emerald-300">
+                  -AED {discount} Bonus
+                </div>
+              )}
               {!ride && <div className="rounded-lg bg-black px-2.5 py-1 font-mono text-lg font-black text-emerald-400 tabular-nums">{shown.meter.toFixed(2)}</div>}
               <button onClick={() => { const m = !muted; setMuted(m); setTransitMuted(m); }} className="w-8 h-8 rounded-lg bg-white/10 text-sm" aria-label={muted ? "Sound on" : "Sound off"}>{muted ? "🔇" : "🔊"}</button>
               {!["pay", "done"].includes(shown.stage) && (
@@ -115,32 +194,127 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
               )}
             </div>
             <div className="mt-2 h-1.5 rounded-full bg-white/15 overflow-hidden"><div className="h-full bg-amber-400 transition-[width] duration-100" style={{ width: `${Math.round(shown.progress * 100)}%` }} /></div>
-            {shown.stage === "ride" && <div className="mt-1.5 text-[11px] text-slate-300">🛣️ Sheikh Zayed Road · {Math.round(shown.speed)} km/h · {shown.km.toFixed(1)} km</div>}
+            {shown.stage === "ride" && (
+              <div className="mt-1.5 flex items-center justify-between text-[11px] text-slate-300">
+                <span>🛣️ Sheikh Zayed Road · {Math.round(shown.speed)} km/h · {shown.km.toFixed(1)} km</span>
+                <span className="text-amber-300 font-black">🏎️ Weave Bonus: AED {Math.min(45, weaveScore)}/45</span>
+              </div>
+            )}
           </div>
         </div>
 
-        {shown.message && <div className="absolute top-32 inset-x-0 text-center pointer-events-none"><span className="inline-block rounded-2xl bg-white/95 px-4 py-2 text-sm font-black text-slate-900 shadow-xl">{shown.message}</span></div>}
-        {shown.subtitle && <div className="absolute bottom-28 inset-x-0 text-center pointer-events-none px-6"><span className="inline-block rounded-xl bg-black/75 px-3 py-1.5 text-sm text-white">🧔 {shown.subtitle}</span></div>}
+        {/* Driver Cashback Trivia Card mid-ride */}
+        {shown.stage === "ride" && shown.progress > 0.22 && shown.progress < 0.85 && quizAnswered === null && (
+          <div className="absolute top-28 inset-x-3 flex justify-center z-20 pointer-events-none">
+            <div className="w-full max-w-md rounded-2xl bg-slate-900/95 border border-amber-400/50 text-white shadow-2xl p-3.5 pointer-events-auto space-y-2 animate-in fade-in slide-in-from-top-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-400">🧔 Driver Cashback Trivia · Win AED 25</span>
+                <button onClick={() => setQuizAnswered(-1)} className="text-xs text-slate-400 hover:text-white font-bold">✕</button>
+              </div>
+              <p className="text-xs font-bold text-slate-100">{DRIVER_QUIZZES[quizIndex].q}</p>
+              <div className="grid grid-cols-3 gap-1.5">
+                {DRIVER_QUIZZES[quizIndex].options.map((opt, idx) => (
+                  <button
+                    key={opt}
+                    onClick={() => {
+                      setQuizAnswered(idx);
+                      if (idx === DRIVER_QUIZZES[quizIndex].answer) {
+                        setQuizCashback(25);
+                        hudRef.current.message = "🎉 Spot on, Habibi! +AED 25 Cashback unlocked!";
+                      } else {
+                        hudRef.current.message = "😅 Close one! Next time, my friend.";
+                      }
+                    }}
+                    className="py-2 px-2 rounded-xl bg-white/10 hover:bg-amber-400 hover:text-slate-950 text-[11px] font-black transition-colors"
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {shown.message && <div className="absolute top-32 inset-x-0 text-center pointer-events-none z-10"><span className="inline-block rounded-2xl bg-white/95 px-4 py-2 text-sm font-black text-slate-900 shadow-xl">{shown.message}</span></div>}
+        {shown.subtitle && <div className="absolute bottom-36 inset-x-0 text-center pointer-events-none px-6"><span className="inline-block rounded-xl bg-black/75 px-3 py-1.5 text-sm text-white">🧔 {shown.subtitle}</span></div>}
 
         <div className="absolute bottom-[max(1.25rem,env(safe-area-inset-bottom))] inset-x-3 flex flex-col items-center gap-2">
           {error && <p className="rounded-xl bg-rose-600 text-white text-xs font-black px-3 py-2">{error}</p>}
-          {shown.stage === "kerb" && ride && <div className="rounded-2xl bg-white/95 px-4 py-2.5 text-sm font-black text-slate-900 shadow-xl">{ride.icon} Your {ride.name} driver is arriving…</div>}
-          {shown.stage === "kerb" && !ride && <button onClick={hail} className="h-16 px-6 rounded-[1.5rem] bg-amber-400 text-slate-950 font-black text-lg shadow-2xl active:scale-95">✋ Hail a taxi</button>}
+          {(shown.stage === "kerb" || shown.stage === "pullup") && (
+            <div className="flex items-center gap-2">
+              <div className="rounded-2xl bg-white/95 px-4 py-2.5 text-sm font-black text-slate-900 shadow-xl">
+                {ride ? `${ride.icon} Your ${ride.name} is pulling up now…` : "🚕 Dubai Taxi is pulling up to the kerb…"}
+              </div>
+              {shown.stage === "kerb" && (
+                <button onClick={hail} className="h-10 px-4 rounded-2xl bg-amber-400 text-slate-950 font-black text-xs shadow-xl active:scale-95">✋ Wave</button>
+              )}
+            </div>
+          )}
           {shown.stage === "ride" && (
-            <div className="flex flex-wrap justify-center gap-2">
-              {(["seat", "window", "outside"] as View[]).map((v) => (
-                <button key={v} onClick={() => setView(v)} className={`h-10 px-3.5 rounded-xl text-xs font-black shadow-lg ${view === v ? "bg-amber-400 text-slate-950" : "bg-white/90 text-slate-900"}`}>
-                  {v === "seat" ? "🪑 Back seat" : v === "window" ? "🪟 Side window" : "🎥 Outside"}
+            <div className="flex flex-col items-center gap-2 w-full max-w-md">
+              {/* Interactive Crazy-Taxi Lane-Weave & Turbo Boost Bar */}
+              <div className="flex items-center justify-center gap-2 w-full">
+                <button
+                  onClick={() => triggerLaneWeave(-1)}
+                  className="flex-1 h-11 rounded-2xl bg-slate-900/90 border border-white/20 text-white text-xs font-black shadow-xl active:scale-95 flex items-center justify-center gap-1"
+                >
+                  ◀ Weave Left
                 </button>
-              ))}
+                <button
+                  onClick={triggerBoost}
+                  className={`flex-1 h-11 rounded-2xl text-xs font-black shadow-xl active:scale-95 flex items-center justify-center gap-1 transition-all ${
+                    boostActive ? "bg-amber-400 text-slate-950 ring-2 ring-amber-200 scale-105" : "bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950"
+                  }`}
+                >
+                  ⚡ {boostActive ? "BOOSTING!" : "Yalla Boost"}
+                </button>
+                <button
+                  onClick={() => triggerLaneWeave(1)}
+                  className="flex-1 h-11 rounded-2xl bg-slate-900/90 border border-white/20 text-white text-xs font-black shadow-xl active:scale-95 flex items-center justify-center gap-1"
+                >
+                  Weave Right ▶
+                </button>
+              </div>
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {(["seat", "window", "outside"] as View[]).map((v) => (
+                  <button key={v} onClick={() => setView(v)} className={`h-9 px-3 rounded-xl text-xs font-black shadow-lg ${view === v ? "bg-amber-400 text-slate-950" : "bg-white/90 text-slate-900"}`}>
+                    {v === "seat" ? "🪑 Back seat" : v === "window" ? "🪟 Side window" : "🎥 Outside"}
+                  </button>
+                ))}
+                <button
+                  onClick={() => {
+                    if (!carpoolJoined) {
+                      setCarpoolJoined(true);
+                      hudRef.current.message = "👥 Carpool Seat Shared! 50% Fare Split unlocked!";
+                    }
+                  }}
+                  className={`h-9 px-3 rounded-xl text-xs font-black shadow-lg ${
+                    carpoolJoined ? "bg-emerald-500 text-white" : "bg-white/90 text-emerald-800"
+                  }`}
+                >
+                  {carpoolJoined ? "👥 Carpool 50% Off ✓" : "👥 Split Carpool (-50%)"}
+                </button>
+              </div>
             </div>
           )}
           {shown.stage === "pay" && ride && (
             <div className="w-full max-w-sm rounded-[1.75rem] bg-white text-slate-900 shadow-2xl p-5 space-y-3 text-center">
               <div className="text-4xl">{ride.icon}</div>
               <h2 className="text-lg font-black">You&apos;ve arrived: {destination}</h2>
-              <p className="text-sm text-slate-500">{quote.km.toFixed(1)} km · paid AED {ride.paid.toLocaleString()} in {ride.app}</p>
-              <button onClick={() => { doorThud(); onArrive(); }} className="w-full h-12 rounded-2xl bg-emerald-600 text-white font-black">Step out</button>
+              <p className="text-sm text-slate-500">
+                {quote.km.toFixed(1)} km · paid AED {ride.paid.toLocaleString()} in {ride.app}
+                {discount > 0 ? ` · +AED ${discount} Cashback earned!` : ""}
+              </p>
+              <button
+                onClick={() => {
+                  doorThud();
+                  if (discount > 0) onPay(-discount);
+                  onArrive();
+                }}
+                className="w-full h-12 rounded-2xl bg-emerald-600 text-white font-black"
+              >
+                Step out{discount > 0 ? ` (+AED ${discount} Cashback)` : ""}
+              </button>
             </div>
           )}
           {shown.stage === "pay" && !ride && (
@@ -149,8 +323,9 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
               <dl className="text-sm space-y-1">
                 <div className="flex justify-between"><dt className="text-slate-500">Meter</dt><dd className="font-bold">AED {quote.meter.toFixed(2)}</dd></div>
                 {quote.salik > 0 && <div className="flex justify-between"><dt className="text-slate-500">Salik toll</dt><dd className="font-bold">AED {quote.salik.toFixed(2)}</dd></div>}
+                {discount > 0 && <div className="flex justify-between text-emerald-600"><dt className="font-bold">Weave / Trivia / Carpool Bonus</dt><dd className="font-black">-AED {discount.toFixed(2)}</dd></div>}
                 {tip > 0 && <div className="flex justify-between"><dt className="text-slate-500">Tip</dt><dd className="font-bold">AED {tip.toFixed(2)}</dd></div>}
-                <div className="flex justify-between border-t border-slate-100 pt-1"><dt className="font-black">Total</dt><dd className="font-black">AED {(quote.total + tip).toFixed(2)}</dd></div>
+                <div className="flex justify-between border-t border-slate-100 pt-1"><dt className="font-black">Total</dt><dd className="font-black">AED {finalFare.toFixed(2)}</dd></div>
               </dl>
               <div className="flex gap-1.5">{[0, 5, 10].map((t) => <button key={t} onClick={() => setTip(t)} className={`flex-1 h-9 rounded-xl text-xs font-black ${tip === t ? "bg-amber-400" : "bg-slate-100"}`}>{t ? `Tip AED ${t}` : "No tip"}</button>)}</div>
               <div className="flex gap-2">
@@ -163,7 +338,7 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
             <div className="w-full max-w-sm rounded-[1.75rem] bg-white text-slate-900 shadow-2xl p-5 space-y-3 text-center">
               <div className="text-4xl">🚕</div>
               <h2 className="text-lg font-black">Thanks for riding with Dubai Taxi</h2>
-              <p className="text-sm text-slate-500">{quote.km.toFixed(1)} km · paid AED {(quote.total + tip).toFixed(2)}</p>
+              <p className="text-sm text-slate-500">{quote.km.toFixed(1)} km · paid AED {finalFare.toFixed(2)}</p>
               <button onClick={onArrive} className="w-full h-12 rounded-2xl bg-amber-400 text-slate-950 font-black">Step out at {destination}</button>
             </div>
           )}
@@ -247,16 +422,16 @@ function Rider({ look, taxiRef, directorRef }: { look?: AvatarLookProps; taxiRef
     let next: "idle" | "walk" | "wave" = "idle";
     // Facing the road (it's on the -x side of the pavement), looking a little up the traffic for a taxi.
     if (d.stage === "kerb") { grp.position.copy(kerb); grp.rotation.y = -Math.PI / 2 + 0.4; }
-    else if (d.stage === "pullup") { grp.position.copy(kerb); grp.rotation.y = -Math.PI / 2 + 0.4; next = d.t < 2.5 ? "wave" : "idle"; }
+    else if (d.stage === "pullup") { grp.position.copy(kerb); grp.rotation.y = -Math.PI / 2 + 0.4; next = d.t < 1.5 ? "wave" : "idle"; }
     else if (d.stage === "board") {
-      const k = Math.max(0, Math.min(1, (d.t - 0.6) / 1.4));
+      const k = Math.max(0, Math.min(1, (d.t - 0.3) / 0.9));
       grp.position.lerpVectors(kerb, door, k);
       grp.rotation.y = -Math.PI / 2;
       next = k > 0 && k < 1 ? "walk" : "idle";
     } else if (d.stage === "pay" || d.stage === "done") {
       grp.position.copy(new THREE.Vector3(PAVE_X, 0.16, t.z + 0.4)); grp.rotation.y = -Math.PI / 2;
     }
-    const show = d.stage === "kerb" || d.stage === "pullup" || (d.stage === "board" && d.t < 2.1) || d.stage === "done";
+    const show = d.stage === "kerb" || d.stage === "pullup" || (d.stage === "board" && d.t < 1.3) || d.stage === "done";
     if (show !== visible) setVisible(show);
     if (next !== anim) setAnim(next);
   });
@@ -264,12 +439,13 @@ function Rider({ look, taxiRef, directorRef }: { look?: AvatarLookProps; taxiRef
 }
 
 /** Runs the ride: pulling in, boarding, the drive with its meter and events, pulling over. Moves the camera. */
-function Director({ travelRef, taxiRef, directorRef, hudRef, quote, length, salikAt, view, booked = false }: {
+function Director({ travelRef, taxiRef, directorRef, hudRef, quote, length, salikAt, view, booked = false, steerCmdRef }: {
   /** A ride booked and paid in an app: no meter. */
   booked?: boolean;
   travelRef: Travel; taxiRef: React.RefObject<{ z: number; x: number; door: number; lane: number }>;
   directorRef: React.RefObject<{ stage: Stage; t: number; said: number; salik: boolean; tick: number }>; hudRef: React.RefObject<Hud>;
   quote: ReturnType<typeof taxiQuote>; length: number; salikAt: number; view: View;
+  steerCmdRef?: React.RefObject<{ dir: -1 | 0 | 1; boostUntil: number }>;
 }) {
   const camera = useThree((s) => s.camera);
   const camPos = useRef(new THREE.Vector3(PAVE_X + 3, 2.2, 10));
@@ -289,26 +465,29 @@ function Director({ travelRef, taxiRef, directorRef, hudRef, quote, length, sali
 
     switch (d.stage) {
       case "kerb":
-        h.message = "You're on the pavement — hail a passing taxi";
+        h.message = "Your ride is pulling in…";
         break;
       case "pullup": {
         h.message = "";
-        // Pulls in from behind and brakes beside you.
-        const k = Math.min(1, d.t / 4);
-        tx.z = 90 * (1 - k) ** 2 + 0.2;
+        // Pulls in briskly (1.8s) from behind and brakes right beside you.
+        const k = Math.min(1, d.t / 1.8);
+        tx.z = 70 * (1 - k) ** 2 + 0.2;
         tx.x = laneX(KERB_LANE);
         if (k >= 1) { go("board"); doorThud(); }
         break;
       }
       case "board":
-        tx.door = d.t < 1.8 ? Math.min(1, d.t / 0.5) : Math.max(0, 1 - (d.t - 1.8) / 0.4);
-        if (d.t > 2.2 && d.said < 0) { d.said = 0; doorThud(); say(TAXI.greetings[Math.floor(Math.random() * TAXI.greetings.length)]); h.message = booked ? "🔒 Seatbelt on · enjoy the ride" : "🔒 Seatbelt on · the meter starts"; }
-        if (d.t > 4.6) { h.message = ""; startLoop("road", 0.08); meterTick(); go("ride"); }
+        tx.door = d.t < 1.1 ? Math.min(1, d.t / 0.35) : Math.max(0, 1 - (d.t - 1.1) / 0.3);
+        if (d.t > 1.2 && d.said < 0) { d.said = 0; doorThud(); say(TAXI.greetings[Math.floor(Math.random() * TAXI.greetings.length)]); h.message = booked ? "🔒 Seatbelt on · enjoy the ride" : "🔒 Seatbelt on · the meter starts"; }
+        if (d.t > 2.2) { h.message = ""; startLoop("road", 0.08); meterTick(); go("ride"); }
         break;
       case "ride": {
         const remaining = length - tr.s;
-        const want = Math.min(VMAX, Math.sqrt(Math.max(0, 2 * ACCEL * remaining)));
-        tr.speed = want > tr.speed ? Math.min(want, tr.speed + ACCEL * dt) : want;
+        const boosting = (steerCmdRef?.current?.boostUntil ?? 0) > performance.now();
+        const maxV = boosting ? VMAX * 1.65 : VMAX;
+        const accelRate = boosting ? ACCEL * 2.2 : ACCEL;
+        const want = Math.min(maxV, Math.sqrt(Math.max(0, 2 * accelRate * remaining)));
+        tr.speed = want > tr.speed ? Math.min(want, tr.speed + accelRate * dt) : want;
         tr.s = Math.min(length, tr.s + tr.speed * dt);
         setLoopSpeed("road", tr.speed / VMAX);
         h.speed = (tr.speed / VMAX) * 90;
@@ -317,15 +496,22 @@ function Director({ travelRef, taxiRef, directorRef, hudRef, quote, length, sali
         // The meter climbs from the flag-fall to the fare, ticking at each AED 0.50.
         const m = Math.max(quote.flag, Math.round((quote.flag + (quote.meter - quote.flag) * f) * 2) / 2);
         if (m > h.meter) { h.meter = m; meterTick(); }
-        // Lane changes now and then (out of the kerb lane first), with the indicator.
+        // Player manual lane-weave or automatic lane changes.
         const L = lane.current;
-        if (d.t > L.nextChange && remaining > 120 && L.t >= 1) {
+        const userDir = steerCmdRef?.current?.dir ?? 0;
+        if (userDir !== 0 && steerCmdRef?.current) {
+          steerCmdRef.current.dir = 0;
+          L.from = L.to;
+          L.to = Math.max(1, Math.min(3, L.to + userDir));
+          L.t = 0;
+          L.nextChange = d.t + 10;
+        } else if (d.t > L.nextChange && remaining > 120 && L.t >= 1) {
           L.from = L.to; L.to = L.from === KERB_LANE ? 2 : Math.max(1, Math.min(3, L.from + (Math.random() < 0.5 ? -1 : 1))); L.t = 0;
           L.nextChange = d.t + 9 + Math.random() * 8;
         }
         if (remaining <= 120 && L.to !== KERB_LANE && L.t >= 1) { L.from = L.to; L.to = KERB_LANE; L.t = 0; }
         if (L.t < 1) {
-          L.t = Math.min(1, L.t + dt / 2.4);
+          L.t = Math.min(1, L.t + dt / 1.4);
           if (Math.floor(d.t * 2.5) !== d.tick) { d.tick = Math.floor(d.t * 2.5); indicatorTick(); }
         }
         tx.lane = L.to;

@@ -12,23 +12,66 @@ import * as THREE from "three";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { applyBodyShape, buildBodyFrame, defaultBodyType, prepareForShaping } from "./bodyShape";
-import { isOutfit, presetFor, rosterAnimations, rosterModel, type AvatarLookProps, type Gender } from "./roster";
+import { isOutfit, outfitById, presetFor, rosterAnimations, rosterModel, type AvatarLookProps, type Gender } from "./roster";
 import { composeOutfit } from "./outfit";
 import { createRetargeter } from "./retarget";
 import { useAvatarUrl } from "./customAvatarStore";
-import { attachAccessories, buildAccessoryRig } from "./accessories";
+import { attachAccessories, attachLookExtras, buildAccessoryRig } from "./accessories";
+import { MoneySpray3D } from "./MoneySpray3D";
 import type { Accessory } from "@/lib/city/types";
 
 export type { AvatarLookProps } from "./roster";
 /**
  * "sleep" and "swim" have no clips of their own: sleep is the idle clip slowed to a sleeper's breathing,
  * swim is the walk clip sped up for the leg kick (the scene lays the body down; BodyPose moves the arms).
+ * Also includes interactive party & combat animations: "rock_female", "rock_male", "slap", "fight", "knocked", "box", "spray_money".
  */
-export type AvatarAnimation = "idle" | "sit" | "wave" | "clap" | "walk" | "dance" | "talk" | "sleep" | "swim" | "skate" | "run";
+export type AvatarAnimation =
+  | "idle"
+  | "sit"
+  | "wave"
+  | "clap"
+  | "walk"
+  | "dance"
+  | "talk"
+  | "sleep"
+  | "swim"
+  | "skate"
+  | "run"
+  | "rock_female"
+  | "rock_male"
+  | "slap"
+  | "fight"
+  | "knocked"
+  | "box"
+  | "spray_money";
 // skate: the walk clip slowed right down, for long gliding strides; run: its own clip, built from the walk
 // (see makeRunClip), played at a runner's cadence.
-const CLIP_FOR: Partial<Record<AvatarAnimation, AvatarAnimation>> = { sleep: "idle", swim: "walk", skate: "walk" };
-const SPEED_FOR: Partial<Record<AvatarAnimation, number>> = { sleep: 0.3, swim: 1.5, skate: 0.55, run: 1.85 };
+const CLIP_FOR: Partial<Record<AvatarAnimation, AvatarAnimation>> = {
+  sleep: "idle",
+  swim: "walk",
+  skate: "walk",
+  rock_female: "dance",
+  rock_male: "dance",
+  slap: "wave",
+  fight: "dance",
+  knocked: "idle",
+  box: "dance",
+  spray_money: "dance",
+};
+const SPEED_FOR: Partial<Record<AvatarAnimation, number>> = {
+  sleep: 0.3,
+  swim: 1.5,
+  skate: 0.55,
+  run: 1.85,
+  rock_female: 1.45,
+  rock_male: 1.15,
+  slap: 2.2,
+  fight: 1.9,
+  knocked: 0.25,
+  box: 1.8,
+  spray_money: 1.3,
+};
 
 /**
  * Arm poses laid over whatever clip is playing, for rides and water: arms crossed on the chest (slides),
@@ -41,7 +84,7 @@ export type BodyPose = "armsCrossed" | "armsUp" | "swim" | "balance" | "grip" | 
 export const DEFAULT_LOOK: AvatarLookProps = { gender: "woman", bodyType: "Hourglass" };
 
 const HEIGHT: Record<Gender, number> = { woman: 1.68, man: 1.8 };
-const CLIPS: Exclude<AvatarAnimation, "sleep" | "swim" | "skate" | "run">[] = ["idle", "sit", "wave", "clap", "walk", "dance", "talk"];
+const CLIPS: ("idle" | "sit" | "wave" | "clap" | "walk" | "dance" | "talk")[] = ["idle", "sit", "wave", "clap", "walk", "dance", "talk"];
 
 /** Soft studio lighting for realistic skin, generated in code (no HDR download). */
 export function StudioEnvironment({ intensity = 0.6 }: { intensity?: number }) {
@@ -226,13 +269,199 @@ interface Placement {
   rotation?: [number, number, number];
 }
 
-/** Keeps the worn accessories attached to the model's skeleton. */
-function useAccessories(model: { rig: ReturnType<typeof buildAccessoryRig> }, accessories: Accessory[] | undefined) {
+/** Keeps the worn accessories, wigs, nails, shoes, and pregnancy bump attached to the model's skeleton. */
+function useAccessories(model: { rig: ReturnType<typeof buildAccessoryRig> }, accessories: Accessory[] | undefined, look: AvatarLookProps) {
   const key = (accessories ?? []).slice().sort().join(",");
   useEffect(() => {
     if (!key) return;
     return attachAccessories(model.rig, key.split(",") as Accessory[]);
   }, [model, key]);
+
+  const extrasKey = `${look.wear ?? ""}|${look.wigId ?? ""}|${look.shoeId ?? ""}|${look.nailId ?? ""}|${look.nailColor ?? ""}|${look.primaryColor ?? ""}|${look.secondaryColor ?? ""}|${look.pregnantWeeks ?? 0}`;
+  useEffect(() => {
+    return attachLookExtras(model.rig, look);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [model, extrasKey]);
+}
+
+/** Tints clothing materials in real time (#20, #28) with exact vibrant hue while keeping hands, face, and skin untouched. */
+function useClothingTint(model: { scene: THREE.Object3D; meshes: THREE.Mesh[] }, look: AvatarLookProps) {
+  const outfit = outfitById(look.wear);
+  const tintHex = look.primaryColor ?? look.outfitColor ?? outfit?.defaultPrimaryColor;
+
+  useEffect(() => {
+    if (!tintHex) return;
+    const targetColor = new THREE.Color(tintHex);
+
+    for (const m of model.meshes) {
+      if (m.userData.borrowedFace) continue;
+      const skinned = m as THREE.SkinnedMesh;
+
+      // Ensure geometry has isolation attribute (aIsExempt = 1.0 for hands, shoes, and legs; 0.0 for outfit)
+      const count = m.geometry.attributes.position ? m.geometry.attributes.position.count : 0;
+      if (count > 0) {
+        const isExemptArray = new Float32Array(count);
+        if (
+          skinned.isSkinnedMesh &&
+          skinned.skeleton &&
+          skinned.geometry.attributes.skinIndex &&
+          skinned.geometry.attributes.skinWeight
+        ) {
+          const skinIndex = skinned.geometry.attributes.skinIndex;
+          const skinWeight = skinned.geometry.attributes.skinWeight;
+          const isFloorRobe =
+            look.wear === "Male_Adult_21" ||
+            look.wear === "Male_Adult_19" ||
+            outfit?.baseModel === "Male_Adult_21" ||
+            outfit?.baseModel === "Male_Adult_19";
+
+          const exemptBoneMask = skinned.skeleton.bones.map((b) => {
+            const n = (b?.name || "").toLowerCase();
+            const isHand = n.includes("hand") || n.includes("finger");
+            const isShoe = n.includes("foot") || n.includes("toe");
+            const isLeg = !isFloorRobe && (n.includes("calf") || n.includes("leg"));
+            return isHand || isShoe || isLeg;
+          });
+
+          for (let i = 0; i < count; i++) {
+            let ew = 0;
+            for (let c = 0; c < 4; c++) {
+              const boneIdx = skinIndex.getComponent(i, c);
+              const w = skinWeight.getComponent(i, c);
+              if (exemptBoneMask[boneIdx]) {
+                ew += w;
+              }
+            }
+            isExemptArray[i] = ew > 0.05 ? 1.0 : 0.0;
+          }
+        }
+        m.geometry.setAttribute("aIsExempt", new THREE.BufferAttribute(isExemptArray, 1));
+      }
+
+      const list = Array.isArray(m.material) ? m.material : [m.material];
+      for (const raw of list) {
+        const mat = raw as THREE.MeshStandardMaterial;
+        if (!mat) continue;
+        const name = (mat.name || "").toLowerCase();
+        // Skip head, skin, eyes, eyelashes, and hair materials
+        if (
+          name.includes("head") ||
+          name.includes("opacity") ||
+          name.includes("skin") ||
+          name.includes("eye") ||
+          name.includes("hair")
+        ) {
+          continue;
+        }
+
+        // If material already has our exact clothing shader, update uniform in real-time
+        if (mat.userData?.clothingColor) {
+          mat.userData.clothingColor.value.copy(targetColor);
+          continue;
+        }
+
+        const cloned = mat.clone();
+        cloned.userData.clothingColor = { value: targetColor.clone() };
+        cloned.customProgramCacheKey = () => "clothing_exact_tint_v3";
+
+        cloned.onBeforeCompile = (shader) => {
+          shader.uniforms.uClothingColor = cloned.userData.clothingColor;
+          shader.vertexShader = `
+            attribute float aIsExempt;
+            varying float vIsExempt;
+            ${shader.vertexShader}
+          `.replace(
+            "#include <begin_vertex>",
+            `#include <begin_vertex>
+             vIsExempt = aIsExempt;`
+          );
+          shader.fragmentShader = `
+            uniform vec3 uClothingColor;
+            varying float vIsExempt;
+            ${shader.fragmentShader}
+          `.replace(
+            "#include <map_fragment>",
+            `#ifdef USE_MAP
+              vec4 sampledDiffuseColor = texture2D( map, vMapUv );
+              if (vIsExempt > 0.5) {
+                // Shoes, legs, feet, hands, and skin remain completely untouched
+                diffuseColor = sampledDiffuseColor;
+              } else {
+                // Exact clothing color with fabric fold & seam luminance
+                float lum = dot(sampledDiffuseColor.rgb, vec3(0.299, 0.587, 0.114));
+                float foldShade = clamp(lum * 1.25 + 0.18, 0.48, 1.28);
+                diffuseColor = vec4(uClothingColor * foldShade, sampledDiffuseColor.a);
+              }
+            #else
+              diffuseColor = vec4(uClothingColor, 1.0);
+            #endif`
+          );
+        };
+
+        if (Array.isArray(m.material)) {
+          const idx = m.material.indexOf(raw);
+          if (idx >= 0) m.material[idx] = cloned;
+        } else {
+          m.material = cloned;
+        }
+      }
+    }
+  }, [model, tintHex]);
+}
+
+/**
+ * Procedural bone modulation for interactive party & combat animations:
+ * - "rock_female": bends spine forward ~38° and oscillates pelvis/hips rhythmically (#1)
+ * - "rock_male": slight groove lean-back with hands near waist (#1)
+ * - "slap": cross-body right-hand slap swing (#2)
+ * - "fight" / "box": rapid alternating left/right jab & hook punches (#2, #3, #4)
+ * - "spray_money": left hand holds cash stack while right arm flicks bills upward (#14)
+ */
+function useSpecialAnimationPose(model: { scene: THREE.Object3D }, animation: AvatarAnimation) {
+  const bones = useMemo(() => {
+    const named = (...names: string[]) => names.map((n) => model.scene.getObjectByName(n)).find(Boolean);
+    return {
+      pelvis: named("Bip01_Pelvis", "Hips"),
+      spine: named("Bip01_Spine", "Spine"),
+      spine1: named("Bip01_Spine1", "Spine1", "Spine2"),
+      rUpper: named("Bip01_R_UpperArm", "RightArm"),
+      rFore: named("Bip01_R_Forearm", "RightForeArm"),
+      lUpper: named("Bip01_L_UpperArm", "LeftArm"),
+      lFore: named("Bip01_L_Forearm", "LeftForeArm"),
+    };
+  }, [model]);
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    const { pelvis, spine, spine1, rUpper, rFore, lUpper, lFore } = bones;
+    if (animation === "rock_female") {
+      // Bend torso forward and shake hips/pelvis rhythmically on the beat
+      if (spine) spine.rotation.z += 0.42;
+      if (spine1) spine1.rotation.z += 0.25;
+      if (pelvis) {
+        pelvis.rotation.x += Math.sin(t * 14) * 0.22;
+        pelvis.rotation.z += Math.cos(t * 14) * 0.16;
+      }
+    } else if (animation === "rock_male") {
+      if (spine) spine.rotation.z -= 0.14;
+      if (pelvis) pelvis.rotation.z += Math.sin(t * 7) * 0.1;
+    } else if (animation === "slap") {
+      const swing = Math.sin(t * 16);
+      if (rUpper) rUpper.rotation.y += swing * 0.95;
+      if (rFore) rFore.rotation.z += 0.45;
+    } else if (animation === "fight" || animation === "box") {
+      const jab = Math.sin(t * 15);
+      if (rUpper) rUpper.rotation.z += 0.65 + Math.max(0, jab) * 0.75;
+      if (lUpper) lUpper.rotation.z += 0.65 + Math.max(0, -jab) * 0.75;
+      if (rFore) rFore.rotation.z += 0.55;
+      if (lFore) lFore.rotation.z += 0.55;
+    } else if (animation === "spray_money") {
+      const flick = Math.abs(Math.sin(t * 9));
+      if (lUpper) lUpper.rotation.z += 0.5;
+      if (rUpper) rUpper.rotation.z += 0.7 + flick * 0.65;
+      if (rFore) rFore.rotation.x += Math.sin(t * 18) * 0.45;
+    }
+  });
 }
 
 /** Places a model: real-world height, feet on the floor, facing +z, then the caller's position. */
@@ -542,6 +771,62 @@ function useBodyPose(model: { scene: THREE.Object3D }, pose: BodyPose | undefine
   });
 }
 
+function useAvatarHairAndShoeReplacement(
+  model: ReturnType<typeof usePreparedModel>,
+  look: AvatarLookProps,
+  accessories?: Accessory[]
+) {
+  const wearOutfit = outfitById(look.wear);
+  const rawWig = look.wigId ?? wearOutfit?.defaultWigId;
+  const isCapOrWig = Boolean((rawWig && rawWig !== "none") || accessories?.includes("cap"));
+
+  useEffect(() => {
+    // Traverse the full scene so borrowed face/hair meshes from composeOutfit are also targeted
+    model.scene.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (!m.isMesh) return;
+      const list = Array.isArray(m.material) ? m.material : [m.material];
+      let hasHairMat = false;
+      let hasHeadOrBodyMat = false;
+
+      for (const mat of list) {
+        if (!mat) continue;
+        const matName = (mat.name || "").toLowerCase();
+        const isHeadOrBody =
+          matName.includes("head") ||
+          matName.includes("body") ||
+          matName.includes("face") ||
+          matName.includes("skin");
+
+        if (isHeadOrBody) {
+          hasHeadOrBodyMat = true;
+        } else if (matName.includes("opacity") || matName.includes("hair")) {
+          hasHairMat = true;
+          // Hide or restore hair cards cleanly — when wearing a cap, hair cards must never lap or show on the cap
+          mat.opacity = isCapOrWig ? 0 : 1;
+          mat.transparent = true;
+          mat.depthWrite = !isCapOrWig;
+          mat.visible = !isCapOrWig;
+          mat.needsUpdate = true;
+        }
+      }
+
+      const meshName = (m.name || "").toLowerCase();
+      const isHairMesh =
+        hasHairMat ||
+        (!hasHeadOrBodyMat && (meshName.includes("hair") || (meshName.includes("opacity") && !meshName.includes("hipoly"))));
+
+      // If the mesh is purely dedicated to hair cards and has no head or body primitives
+      if (isHairMesh && !hasHeadOrBodyMat) {
+        m.visible = !isCapOrWig;
+      } else if (hasHeadOrBodyMat) {
+        // Face and body MUST ALWAYS remain visible! Never hide the face when wearing caps or wigs!
+        m.visible = true;
+      }
+    });
+  }, [model, isCapOrWig]);
+}
+
 function RosterAvatar({
   look,
   animation,
@@ -567,12 +852,15 @@ function RosterAvatar({
   const wearGltf = useGLTF(rosterModel(wearId ?? presetFor(look)));
   const source = useMemo(() => (wearId ? composeOutfit(gltf.scene, wearGltf.scene) : gltf.scene), [wearId, gltf.scene, wearGltf.scene]);
   const model = usePreparedModel(source, true);
-  useAccessories(model, accessories);
+  useAccessories(model, accessories, look);
+  useClothingTint(model, look);
+  useAvatarHairAndShoeReplacement(model, look, accessories);
   const clips = useRosterClips(look.gender);
   const root = useRef<THREE.Group>(null);
   const { actions } = useAnimations(clips, root);
   usePlay(actions, animation);
   useRunArms(model, animation === "run");
+  useSpecialAnimationPose(model, animation);
   const held = useRef<THREE.Group>(null);
   const effectiveMode: CarryMode | false = carryMode ?? (raiseHand ? "raise" : !!holding ? "hold" : false);
   // The pose first, so anything held follows the posed hand.
@@ -581,7 +869,9 @@ function RosterAvatar({
 
   const bodyType = look.bodyType ?? defaultBodyType(look.gender);
   useEffect(() => {
-    if (model.frame) applyBodyShape(model.meshes, model.frame, look.gender, bodyType);
+    if (model.frame) {
+      applyBodyShape(model.meshes, model.frame, look.gender, bodyType);
+    }
   }, [model, look.gender, bodyType]);
 
   return (
@@ -590,6 +880,7 @@ function RosterAvatar({
         <group ref={root}>
           <primitive object={model.scene} />
         </group>
+        {animation === "spray_money" && <MoneySpray3D active />}
       </Framed>
       {holding && <group ref={held}>{holding}</group>}
     </>
@@ -619,7 +910,9 @@ function CustomAvatar({
 }) {
   const gltf = useGLTF(url);
   const model = usePreparedModel(gltf.scene, false);
-  useAccessories(model, accessories);
+  useAccessories(model, accessories, look);
+  useClothingTint(model, look);
+  useAvatarHairAndShoeReplacement(model, look, accessories);
 
   // Invisible Rocketbox skeleton that plays the clip we copy from.
   const sourceGltf = useGLTF(rosterModel(presetFor({ gender: look.gender })));
@@ -646,6 +939,7 @@ function CustomAvatar({
     <>
       <Framed model={model} gender={look.gender} placement={placement}>
         <primitive object={model.scene} />
+        <MoneySpray3D active={animation === "spray_money"} />
       </Framed>
       {holding && <group ref={held}>{holding}</group>}
     </>

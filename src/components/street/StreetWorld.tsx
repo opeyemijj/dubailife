@@ -532,7 +532,7 @@ export function StreetScene({ doors, look, dirty, controls, run, auto, peers, on
  */
 export const STICK_DEAD = 0.12;
 export const STICK_SPRINT = 0.9;
-export function MoveStick({ controls }: { controls: React.RefObject<Controls>; run?: boolean; onRun?: () => void }) {
+export function MoveStick({ controls, allowRun = true }: { controls: React.RefObject<Controls>; run?: boolean; onRun?: () => void; allowRun?: boolean }) {
   const knob = useRef<HTMLSpanElement>(null);
   const rim = useRef<HTMLSpanElement>(null);
   const R = 56;
@@ -541,7 +541,7 @@ export function MoveStick({ controls }: { controls: React.RefObject<Controls>; r
     // Dead zone in the middle (no drift), then the push scaled back up to the full range.
     const k = m < STICK_DEAD ? 0 : Math.min(1, (m - STICK_DEAD) / (1 - STICK_DEAD)) / (m || 1);
     controls.current.x = rawX * k; controls.current.y = rawY * k;
-    controls.current.sprint = m >= STICK_SPRINT;
+    controls.current.sprint = allowRun && m >= STICK_SPRINT;
     if (knob.current) {
       knob.current.style.transition = springBack ? "transform 0.14s ease-out" : "none";
       knob.current.style.transform = `translate(${rawX * R}px, ${-rawY * R}px)`;
@@ -556,15 +556,19 @@ export function MoveStick({ controls }: { controls: React.RefObject<Controls>; r
   };
   const release = () => set(0, 0, true);
   return (
-    <div aria-label="Move: push the stick the way you want to go, all the way to the edge to run"
+    <div aria-label={allowRun ? "Move: push the stick the way you want to go, all the way to the edge to run" : "Move: push the stick the way you want to walk"}
       className="relative w-40 h-40 rounded-full touch-none select-none flex items-center justify-center"
       onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); move(e); }}
       onPointerMove={(e) => { if (e.currentTarget.hasPointerCapture(e.pointerId)) move(e); }}
       onPointerUp={release} onPointerCancel={release} onLostPointerCapture={release}>
-      {/* the base, its rim (yellow while running) and the RUN hint round the top */}
+      {/* the base, its rim (yellow while running outdoors) and the RUN/WALK hint round the top */}
       <span className="absolute inset-0 rounded-full bg-black/25 backdrop-blur-sm" />
       <span ref={rim} data-sprint="0" className="absolute inset-0 rounded-full ring-[3px] ring-white/60 transition-[box-shadow,background-color] data-[sprint='1']:ring-amber-400 data-[sprint='1']:bg-amber-400/25 data-[sprint='1']:shadow-[0_0_24px_rgba(251,191,36,0.8)]" />
-      <span className="absolute top-1.5 text-[9px] font-black tracking-widest text-white/80 pointer-events-none">RUN</span>
+      {allowRun ? (
+        <span className="absolute top-1.5 text-[9px] font-black tracking-widest text-white/80 pointer-events-none">RUN</span>
+      ) : (
+        <span className="absolute top-1.5 text-[9px] font-black tracking-widest text-white/65 pointer-events-none">WALK</span>
+      )}
       <span className="absolute w-[4.5rem] h-[4.5rem] rounded-full ring-1 ring-white/25 pointer-events-none" />
       <span ref={knob} className="relative w-16 h-16 rounded-full bg-gradient-to-b from-white to-slate-200 shadow-[0_6px_16px_rgba(0,0,0,0.35)] ring-2 ring-white pointer-events-none" />
     </div>

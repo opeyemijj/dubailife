@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from "react";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
-import { useCitizen } from "@/lib/citizenStore";
+import { adjustBalance, boostNeed, useCitizen } from "@/lib/citizenStore";
 import { useOnlineUsernames } from "@/lib/presence";
 import { cancelConsult, illnessOf, localClinic, professionals, requestDoctor, SERVICES, setServiceFee, treatPatient, useServices, type Professional } from "@/lib/cityServices";
 import { gameAudio } from "@/utils/gameAudio";
@@ -18,6 +18,10 @@ export function ClinicApp({ onBack }: { onBack: () => void }) {
   const [doctors, setDoctors] = useState<Professional[] | null>(null);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  // #8: Interactive 3-Step Hospital Diagnosis, X-Ray Scanner & Defib/IV Rhythm Game
+  const [medGameStep, setMedGameStep] = useState<"idle" | "triage" | "xray" | "rhythm" | "done">("idle");
+  const [xrayPos, setXrayPos] = useState(25);
+  const [rhythmPulses, setRhythmPulses] = useState(0);
   const ill = illnessOf(s?.illness?.kind);
 
   useEffect(() => { void professionals("doctor").then((r) => setDoctors(r.data ?? [])); }, []);
@@ -36,6 +40,123 @@ export function ClinicApp({ onBack }: { onBack: () => void }) {
       {note && <Note ok={note.ok}>{note.text}</Note>}
 
       {s?.service === "doctor" && <DoctorDesk />}
+
+      {/* #8: Interactive 3-Step Hospital Triage, X-Ray Scanner & Treatment Mini-Game */}
+      <Card className="bg-gradient-to-br from-teal-50 via-cyan-50 to-emerald-50 border border-teal-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-black text-base text-teal-950">🏥 Interactive ER Scanner &amp; Triage Suite</p>
+            <p className="text-xs text-slate-600">Run 3-step vitals triage, X-ray scan &amp; IV rhythm therapy (+AED 180 &amp; +30 Energy)!</p>
+          </div>
+          <span className="text-2xl">🩻</span>
+        </div>
+
+        {medGameStep === "idle" && (
+          <button
+            type="button"
+            onClick={() => {
+              gameAudio.playClickSound();
+              setMedGameStep("triage");
+              setXrayPos(25);
+              setRhythmPulses(0);
+            }}
+            className="w-full py-2.5 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-black text-xs active:scale-95"
+          >
+            🩺 Start 3-Step Hospital Diagnosis &amp; Treatment
+          </button>
+        )}
+
+        {medGameStep === "triage" && (
+          <div className="p-3 rounded-2xl bg-white border border-teal-200 space-y-2">
+            <div className="text-xs font-black text-slate-900">Step 1/3: 🩺 Triage Vitals Check</div>
+            <p className="text-xs text-slate-600">Patient pulse: 108 BPM · Temp: 37.9°C · Dehydration detected. Select initial triage protocol:</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  gameAudio.playClickSound();
+                  setMedGameStep("xray");
+                }}
+                className="py-2 px-2.5 rounded-xl bg-teal-600 text-white font-black text-xs active:scale-95"
+              >
+                ✅ Stabilize &amp; Prep X-Ray
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  gameAudio.playClickSound();
+                  setMedGameStep("xray");
+                }}
+                className="py-2 px-2.5 rounded-xl bg-slate-100 text-slate-800 font-bold text-xs active:scale-95"
+              >
+                🫀 Hook ECG Monitor
+              </button>
+            </div>
+          </div>
+        )}
+
+        {medGameStep === "xray" && (
+          <div className="p-3 rounded-2xl bg-slate-950 text-white border border-teal-400/40 space-y-2">
+            <div className="flex items-center justify-between text-xs font-black">
+              <span className="text-teal-300">Step 2/3: 🩻 Drag X-Ray Scanner to Target (62–78%)</span>
+              <span className={xrayPos >= 62 && xrayPos <= 78 ? "text-emerald-400" : "text-amber-400"}>{xrayPos}%</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={xrayPos}
+              onChange={(e) => setXrayPos(Number(e.target.value))}
+              className="w-full accent-teal-400"
+            />
+            <button
+              type="button"
+              disabled={xrayPos < 62 || xrayPos > 78}
+              onClick={() => {
+                gameAudio.playClickSound();
+                setMedGameStep("rhythm");
+              }}
+              className="w-full py-2 rounded-xl bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-black text-xs"
+            >
+              {xrayPos >= 62 && xrayPos <= 78 ? "🎯 Target Locked — Proceed to IV Rhythm Pulse" : "Slide Scanner to 62–78% Target Zone"}
+            </button>
+          </div>
+        )}
+
+        {medGameStep === "rhythm" && (
+          <div className="p-3 rounded-2xl bg-white border border-teal-200 space-y-2">
+            <div className="text-xs font-black text-slate-900">
+              Step 3/3: ⚡ Synchronized IV &amp; Pulse Therapy ({rhythmPulses}/3 Beats)
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                gameAudio.playClickSound();
+                const next = rhythmPulses + 1;
+                setRhythmPulses(next);
+                if (next >= 3) {
+                  gameAudio.playCoinSound();
+                  adjustBalance(180);
+                  boostNeed("energy", 30);
+                  boostNeed("hygiene", 25);
+                  setMedGameStep("done");
+                  setNote({ ok: true, text: "🏥 ER Treatment Complete! +AED 180 Wellness Bonus & +30 Energy restored!" });
+                }
+              }}
+              className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs active:scale-95"
+            >
+              💓 Tap on Heartbeat Pulse ({rhythmPulses}/3)
+            </button>
+          </div>
+        )}
+
+        {medGameStep === "done" && (
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-100 text-emerald-900 text-xs font-black">
+            <span>✅ Patient Discharged at 100% Vitals (+AED 180)</span>
+            <button type="button" onClick={() => setMedGameStep("idle")} className="underline">Again</button>
+          </div>
+        )}
+      </Card>
 
       {ill ? (
         <Card className="bg-lime-50">

@@ -203,6 +203,36 @@ export function PartySheet({ flat, start, onClose, noRoom }: {
               </div>
             )}
 
+            {/* #11, #12, #13, #14, #15, #17: Special Celebration Themes */}
+            <div className="space-y-1">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Celebration Themes (Optional)</p>
+              <div className="flex gap-1.5 overflow-x-auto pb-1">
+                {[
+                  { label: "💍 Proposal Party", title: `💍 @${citizen?.username ?? "my"}'s Proposal Party`, kind: "house_party" as EventKind },
+                  { label: "🥂 Engagement Party", title: `🥂 @${citizen?.username ?? "my"}'s Engagement Party`, kind: "house_party" as EventKind },
+                  { label: "🇳🇬 Lagos Owambe", title: `🇳🇬 @${citizen?.username ?? "my"}'s Lagos Owambe & Asoebi`, kind: "house_party" as EventKind },
+                  { label: "🍼 Baby Shower", title: `🍼 @${citizen?.username ?? "my"}'s Baby Shower & Gender Reveal`, kind: "house_party" as EventKind },
+                  { label: "💔 Breakup Glow-Up", title: `💔 @${citizen?.username ?? "my"}'s Breakup & Piñata Party`, kind: "house_party" as EventKind },
+                  { label: "🍽️ Luxury 4-Course Dinner", title: `🍽️ @${citizen?.username ?? "my"}'s Luxury Dinner with Friends`, kind: "dinner" as EventKind },
+                ].map((th) => (
+                  <button
+                    key={th.label}
+                    type="button"
+                    onClick={() => {
+                      gameAudio.playClickSound();
+                      setTitle(th.title);
+                      if (flat || th.kind === "dinner") setKind(th.kind);
+                    }}
+                    className={`px-2.5 py-1.5 rounded-full text-[11px] font-black whitespace-nowrap border transition-all ${
+                      title === th.title ? "bg-slate-900 text-amber-300 border-slate-900" : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                    }`}
+                  >
+                    {th.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <input value={title} onChange={(e) => setTitle(e.target.value.slice(0, 60))} placeholder={name} aria-label="Party name"
               className="w-full h-11 rounded-xl bg-slate-50 border border-slate-200 px-3 font-bold outline-none" />
             <div className="grid grid-cols-4 gap-1.5">

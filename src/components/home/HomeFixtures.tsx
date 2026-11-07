@@ -231,11 +231,23 @@ export function HomeFixtures({ fixtures, walls, wallColor, skirtingColor, wallH,
       {fixtures.map((f) => {
         const c = floorCenter(f.size, f.placement);
         const r = fixtureRect(f);
+        const fw = f.size[0] * CELL;
+        const fd = f.size[1] * CELL;
         return (
           <group key={f.id}>
-            <group position={[c.x, 0, c.z]} rotation={[0, -f.placement.rot * (Math.PI / 2), 0]} onClick={tap(f)}
-              onPointerOver={() => { if (onUse) document.body.style.cursor = "pointer"; }} onPointerOut={() => { document.body.style.cursor = ""; }}>
+            <group
+              position={[c.x, 0, c.z]}
+              rotation={[0, -f.placement.rot * (Math.PI / 2), 0]}
+              onClick={tap(f)}
+              onPointerOver={() => { if (onUse) document.body.style.cursor = "pointer"; }}
+              onPointerOut={() => { document.body.style.cursor = ""; }}
+            >
               <FixtureVisual f={f} on={running === f.id} />
+              {/* Generous invisible interaction collider so tapping in Inside / Eye view always registers */}
+              <mesh position={[0, 0.95, 0]}>
+                <boxGeometry args={[fw + 0.18, 1.9, fd + 0.18]} />
+                <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+              </mesh>
             </group>
             {f.kind !== "kitchen-run" && f.kind !== "washer" && (
               <mesh position={[(r.minX + r.maxX) / 2, 0.004, (r.minZ + r.maxZ) / 2]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow raycast={() => null}>

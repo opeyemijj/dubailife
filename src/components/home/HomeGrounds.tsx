@@ -20,12 +20,14 @@ export const GROUNDS = {
 
 const noRay = () => null;
 
-export function HomeGrounds({ items, car, onUse, activity }: {
+export function HomeGrounds({ items, car, onUse, onGroundClick, activity }: {
   items: string[];
   /** Your own car (its model, colour and plate), parked in the driveway or the garage. */
   car?: { car: Car; plate: string } | null;
   /** Tapping the pool or the car: go and use it. */
   onUse?: (what: "pool" | "car") => void;
+  /** Tapping anywhere on the lawn, garden, patio, BBQ, majlis, or car park: walk there through the doorway. */
+  onGroundClick?: (point: THREE.Vector3) => void;
   /** What's happening outside (someone washing the car…). */
   activity?: string;
 }) {
@@ -46,11 +48,18 @@ export function HomeGrounds({ items, car, onUse, activity }: {
   }, [pool]);
   if (!items.length) return null;
   const tap = (what: "pool" | "car") => onUse ? (e: ThreeEvent<MouseEvent>) => { if (e.delta > 6) return; e.stopPropagation(); onUse(what); } : undefined;
+  const tapGround = onGroundClick ? (e: ThreeEvent<MouseEvent>) => {
+    if (e.delta > 6) return;
+    // Ignore clicks inside the 10x10 indoor floor square so indoor floor handler handles those
+    if (Math.abs(e.point.x) < 4.95 && Math.abs(e.point.z) < 4.95) return;
+    e.stopPropagation();
+    onGroundClick(e.point);
+  } : undefined;
   const parked = car && (has("carpark") || has("garage")) ? car : null;
   return (
     <group>
-      {/* the plot: sand by default, a lawn with the garden */}
-      <mesh geometry={plot} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.03, 0]} raycast={noRay} receiveShadow>
+      {/* the plot: sand by default, a lawn with the garden — tappable to walk outside */}
+      <mesh geometry={plot} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.03, 0]} onClick={tapGround} receiveShadow>
         <meshStandardMaterial color={has("garden") ? "#6fa356" : "#e2cfa6"} roughness={1} />
       </mesh>
       {/* the boundary wall */}
@@ -61,7 +70,7 @@ export function HomeGrounds({ items, car, onUse, activity }: {
       {pool && <group onClick={tap("pool")} onPointerOver={onUse ? () => (document.body.style.cursor = "pointer") : undefined} onPointerOut={() => (document.body.style.cursor = "")}><Pool /></group>}
       {/* No stand-in cars: only the car you own or have rented is ever parked here. */}
       {has("garage") && <Garage />}
-      {has("carpark") && <CarPark />}
+      {has("carpark") && <CarPark onGroundClick={onGroundClick} />}
       {/* Your car: on the driveway (in the garage if there's no driveway); tap it to drive somewhere. */}
       {parked && (
         <group position={has("carpark") ? [GROUNDS.driveway.x, 0, GROUNDS.driveway.z] : [-11.7, 0, -1.4]} onClick={tap("car")}
@@ -70,8 +79,8 @@ export function HomeGrounds({ items, car, onUse, activity }: {
           {activity === "wash" && <Foam />}
         </group>
       )}
-      {has("bbq") && <Bbq />}
-      {has("majlis") && <Majlis />}
+      {has("bbq") && <Bbq onGroundClick={onGroundClick} />}
+      {has("majlis") && <Majlis onGroundClick={onGroundClick} />}
     </group>
   );
 }
@@ -171,12 +180,12 @@ function Garage() {
   );
 }
 
-function CarPark() {
+function CarPark({ onGroundClick }: { onGroundClick?: (point: THREE.Vector3) => void }) {
   const lines = useMemo(() => [-12.6, -10.5, -8.4], []);
   return (
     <group>
       {/* paving from the gate to the garage, with two bays */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-10.5, 0.005, 9]} raycast={noRay}><planeGeometry args={[6.4, 14]} /><meshStandardMaterial color="#a8a29e" roughness={0.9} /></mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-10.5, 0.005, 9]} onClick={(e) => { if (e.delta > 6) return; e.stopPropagation(); onGroundClick?.(e.point); }}><planeGeometry args={[6.4, 14]} /><meshStandardMaterial color="#a8a29e" roughness={0.9} /></mesh>
       {lines.map((x) => <mesh key={x} rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.012, 9]} raycast={noRay}><planeGeometry args={[0.12, 5]} /><meshBasicMaterial color="#fafafa" /></mesh>)}
       {/* the gate in the front wall */}
       <mesh position={[-10.5, 1, 17]} raycast={noRay}><boxGeometry args={[6, 2, 0.15]} /><meshStandardMaterial color="#44403c" metalness={0.6} /></mesh>
@@ -184,10 +193,10 @@ function CarPark() {
   );
 }
 
-function Bbq() {
+function Bbq({ onGroundClick }: { onGroundClick?: (point: THREE.Vector3) => void }) {
   return (
-    <group position={[8.5, 0, 10]}>
-      <mesh position={[0, 0.5, 0]} raycast={noRay}><boxGeometry args={[2.2, 1, 0.8]} /><meshStandardMaterial color="#a8a29e" /></mesh>
+    <group position={[8.5, 0, 10]} onClick={(e) => { if (e.delta > 6) return; e.stopPropagation(); onGroundClick?.(new THREE.Vector3(8.5, 0, 8.8)); }}>
+      <mesh position={[0, 0.5, 0]}><boxGeometry args={[2.2, 1, 0.8]} /><meshStandardMaterial color="#a8a29e" /></mesh>
       <mesh position={[0, 1.02, 0]} raycast={noRay}><boxGeometry args={[1.2, 0.05, 0.6]} /><meshStandardMaterial color="#1c1917" emissive="#ea580c" emissiveIntensity={0.4} /></mesh>
       <mesh position={[0, 0.4, 2.2]} raycast={noRay}><boxGeometry args={[2.6, 0.08, 1.2]} /><meshStandardMaterial color="#8b6b4a" /></mesh>
       {[-1, 1].map((x) => <mesh key={x} position={[x, 0.2, 2.2]} raycast={noRay}><boxGeometry args={[0.08, 0.4, 1]} /><meshStandardMaterial color="#57534e" /></mesh>)}
@@ -195,12 +204,12 @@ function Bbq() {
   );
 }
 
-function Majlis() {
+function Majlis({ onGroundClick }: { onGroundClick?: (point: THREE.Vector3) => void }) {
   return (
-    <group position={[0, 0, 12.5]}>
+    <group position={[0, 0, 12.5]} onClick={(e) => { if (e.delta > 6) return; e.stopPropagation(); onGroundClick?.(new THREE.Vector3(0, 0, 11.5)); }}>
       <mesh position={[0, 2.4, 0]} raycast={noRay}><coneGeometry args={[3.4, 1.4, 4]} /><meshStandardMaterial color="#f5f0e6" side={THREE.DoubleSide} /></mesh>
       {[[-2.3, -2.3], [2.3, -2.3], [-2.3, 2.3], [2.3, 2.3]].map(([x, z]) => <mesh key={`${x}${z}`} position={[x, 0.85, z]} raycast={noRay}><cylinderGeometry args={[0.06, 0.06, 1.7, 8]} /><meshStandardMaterial color="#8b6b4a" /></mesh>)}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} raycast={noRay}><planeGeometry args={[4.4, 4.4]} /><meshStandardMaterial color="#7f1d1d" /></mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}><planeGeometry args={[4.4, 4.4]} /><meshStandardMaterial color="#7f1d1d" /></mesh>
       {[[0, -1.8, 3.6, 0.7], [-1.8, 0, 0.7, 3.6], [1.8, 0, 0.7, 3.6]].map(([x, z, w, d], i) => (
         <mesh key={i} position={[x, 0.18, z]} raycast={noRay}><boxGeometry args={[w, 0.36, d]} /><meshStandardMaterial color="#b45309" /></mesh>
       ))}
