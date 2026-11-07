@@ -779,7 +779,7 @@ function Player({
     if (!g) return;
     // The stick: steer the way it points (relative to the camera), sliding round anything in the way.
     const sx = stick?.current.x ?? 0, sy = stick?.current.y ?? 0, mag = Math.min(1, Math.hypot(sx, sy));
-    if (mag > 0.12) {
+    if (mag > 0.04) {
       target.current = null;
       const fwd = new THREE.Vector3();
       camera.getWorldDirection(fwd);

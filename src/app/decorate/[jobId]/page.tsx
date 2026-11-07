@@ -6,8 +6,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Package, RotateCcw, RotateCw, X } from "lucide-react";
-import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoom";
+import { Check, Package, RotateCcw, RotateCw, X } from "lucide-react";
+import { ApartmentRoom, type PlacingState, type CandidatePlacement } from "@/components/home/ApartmentRoom";
 import { MoveInWalk } from "@/components/onboarding/MoveInWalk";
 import { ExteriorSheet } from "@/components/home/ExteriorSheet";
 import { useRequireCitizen } from "@/lib/citizenStore";
@@ -38,6 +38,7 @@ export default function DecoratePage() {
   const [turns, setTurns] = useState(0);
   const [level, setLevel] = useState(0);
   const [room, setRoom] = useState("living");
+  const [candidatePlacement, setCandidatePlacement] = useState<CandidatePlacement | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [finished, setFinished] = useState<{ fee: number; back: number } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -147,6 +148,21 @@ export default function DecoratePage() {
     setFinished({ fee: r.data ?? home.fee, back: left });
   };
 
+  const handleDonePlacing = () => {
+    if (!placing) return;
+    if (candidatePlacement) {
+      if (!candidatePlacement.isValid) {
+        say("It doesn't fit there. Try a green spot.");
+        return;
+      }
+      place(placing.uid, candidatePlacement.placement);
+      return;
+    }
+    const current = furniture.find((f) => f.uid === placing.uid)?.placement;
+    if (current) place(placing.uid, current);
+    else setPlacing(null);
+  };
+
   return (
     <main className="fixed inset-0 bg-stone-200 overflow-hidden select-none">
       <ApartmentRoom
@@ -160,6 +176,7 @@ export default function DecoratePage() {
         view="above"
         activeRoomId={room}
         onSelectRoom={setRoom}
+        onGhostChange={setCandidatePlacement}
         onPlace={place}
         onPickUp={pickUp}
         onPlaceBlocked={() => say("It doesn't fit there. Try a green spot.")}
@@ -192,7 +209,7 @@ export default function DecoratePage() {
       {placing && placingItem ? (
         <div className="absolute bottom-3 inset-x-3 flex justify-center">
           <div className="w-full max-w-md rounded-3xl bg-white text-slate-900 shadow-2xl p-3 space-y-2">
-            <p className="text-sm font-black">{placingItem.icon} {placingItem.name}: {placingItem.kind === "wall" ? "tap a wall" : "tap the floor"}</p>
+            <p className="text-sm font-black">{placingItem.icon} {placingItem.name}: tap or drag to move, then tap Done</p>
             <div className="flex gap-2">
               {placingItem.kind !== "wall" && <button onClick={() => setPlacing((p) => (p ? { ...p, rot: ((p.rot + 1) % 4) as Rotation } : p))} className="flex-1 h-10 rounded-xl bg-slate-900 text-white text-xs font-black">Rotate</button>}
               {placingItem.kind !== "wall" && <button onClick={() => setPlacing((p) => (p ? { ...p, layer: Math.min(6, (p.layer ?? 0) + 1) } : p))} aria-label="Bring forward" className="w-11 h-10 rounded-xl bg-slate-100 text-sm font-black">⬆</button>}
@@ -200,7 +217,7 @@ export default function DecoratePage() {
               {bought[placing.uid] !== undefined
                 ? <button onClick={giveBack} className="flex-1 h-10 rounded-xl bg-slate-100 text-xs font-bold">Return to store</button>
                 : <button onClick={putAway} className="flex-1 h-10 rounded-xl bg-slate-100 text-xs font-bold flex items-center justify-center gap-1"><Package className="w-3.5 h-3.5" /> Storage</button>}
-              <button onClick={() => setPlacing(null)} className="flex-1 h-10 rounded-xl bg-slate-100 text-xs font-bold">Cancel</button>
+              <button onClick={handleDonePlacing} className="flex-1 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/30 active:scale-95 transition-all"><Check className="w-4 h-4 stroke-[3]" /> Done</button>
             </div>
           </div>
         </div>

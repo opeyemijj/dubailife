@@ -50,6 +50,11 @@ export interface PlacingState {
   layer?: number;
 }
 
+export interface CandidatePlacement {
+  placement: Placement;
+  isValid: boolean;
+}
+
 export interface ApartmentRoomProps {
   look?: AvatarLookProps;
   furniture?: OwnedFurniture[];
@@ -102,6 +107,8 @@ export interface ApartmentRoomProps {
   /** Active room focus in multi-room flats (e.g. 2-bedroom) */
   activeRoomId?: string;
   onSelectRoom?: (roomId: string) => void;
+  /** Fired whenever the item candidate placement moves or updates validity. */
+  onGhostChange?: (candidate: CandidatePlacement | null) => void;
   onPlace?: (uid: string, placement: Placement) => void;
   onPickUp?: (uid: string) => void;
   /** Called when a tap lands somewhere the item doesn't fit. */
@@ -1391,6 +1398,7 @@ function RoomScene({
   view = "above",
   activeRoomId,
   onSelectRoom,
+  onGhostChange,
   onPlace,
   onPickUp,
   onPlaceBlocked,
@@ -1405,11 +1413,15 @@ function RoomScene({
   panTarget,
   panNudgeRef,
   walkRequestRef,
+  isDraggingItem,
+  setIsDraggingItem,
 }: ApartmentRoomProps & {
   labels: LabelNodes;
   panTarget?: [number, number] | null;
   panNudgeRef?: React.MutableRefObject<{ dx: number; dz: number } | null>;
   walkRequestRef?: React.MutableRefObject<((x: number, z: number) => void) | null>;
+  isDraggingItem?: boolean;
+  setIsDraggingItem?: (dragging: boolean) => void;
 }) {
   const config = HOUSING_CONFIGS[housingTier] ?? HOUSING_CONFIGS.studio;
   // Two-storey homes show one floor at a time; everything else is a single floor 0.
@@ -1685,7 +1697,7 @@ function RoomScene({
   useFrame(({ camera }, dt) => {
     // The stick: steer the way it points (relative to the camera); blocked by furniture or a wall, slide along it.
     const sx = stick?.current.x ?? 0, sy = stick?.current.y ?? 0, mag = Math.min(1, Math.hypot(sx, sy));
-    if (mag > 0.12 && !placing && !decorating && !climbRef.current) {
+    if (mag > 0.04 && !placing && !decorating && !climbRef.current) {
       if (walkTarget) { setWalkTarget(null); setClickBeacon(null); }
       routeRef.current = null;
       if (pendingAction) setPendingAction(null);
@@ -1824,20 +1836,59 @@ function RoomScene({
 
   const ghostValid = !!(ghost && placingItem && isPlacementValid(placingItem, ghost, furniture, placing?.uid, true));
 
-  const onFloorPointer = (e: ThreeEvent<PointerEvent> | ThreeEvent<MouseEvent>, click: boolean) => {
+  // Reset moved placement and dragging status whenever placing finishes or changes item
+  useEffect(() => {
+    if (!placing) {
+      setMoved(null);
+      setIsDraggingItem?.(false);
+    } else if (moved && moved.uid !== placing.uid) {
+      setMoved(null);
+    }
+  }, [placing?.uid]);
+
+  // Report candidate placement (ghost) and its validity to parent so Done button can finalize
+  useEffect(() => {
+    if (placing && ghost) {
+      onGhostChange?.({ placement: ghost, isValid: ghostValid });
+    } else {
+      onGhostChange?.(null);
+    }
+  }, [placing, ghost, ghostValid, onGhostChange]);
+
+  const isPointerDownRef = useRef(false);
+
+  const onFloorPointerDown = (e: ThreeEvent<PointerEvent>) => {
     if (placing && placingItem && placingItem.kind !== "wall") {
-      if (click && e.delta > DRAG_THRESHOLD) return;
+      isPointerDownRef.current = true;
+    }
+  };
+
+  const onFloorPointerMove = (e: ThreeEvent<PointerEvent>) => {
+    if (placing && placingItem && placingItem.kind !== "wall") {
+      // Item should ONLY be moved to point dragged to or tapped, NOT on mouse hover!
+      if (!isPointerDownRef.current && (e.buttons ?? 0) === 0) return;
+      setIsDraggingItem?.(true);
       const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl);
       setMoved({ uid: placing.uid, placement: next });
-      if (click) {
-        e.stopPropagation();
-        if (isPlacementValid(placingItem, withLayer(next), furniture, placing.uid, true)) onPlace?.(placing.uid, withLayer(next));
-        else onPlaceBlocked?.();
-      }
+    }
+  };
+
+  const onFloorPointerUp = () => {
+    isPointerDownRef.current = false;
+    setIsDraggingItem?.(false);
+  };
+
+  const onFloorClick = (e: ThreeEvent<MouseEvent>) => {
+    if (placing && placingItem && placingItem.kind !== "wall") {
+      e.stopPropagation();
+      // Tap lands on the floor: only move the item to this tapped point!
+      // No immediate placement on tap; user clicks Done button to complete move.
+      const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl);
+      setMoved({ uid: placing.uid, placement: next });
       return;
     }
 
-    if (click && !decorating) {
+    if (!decorating) {
       if (e.delta > DRAG_THRESHOLD) return;
       e.stopPropagation();
       handleFloorLocomotion(e.point);
@@ -1846,13 +1897,16 @@ function RoomScene({
 
   const onWallPointer = (wall: Wall, e: ThreeEvent<PointerEvent> | ThreeEvent<MouseEvent>, click: boolean) => {
     if (!placing || !placingItem || placingItem.kind !== "wall") return;
+    const isDrag = !click && (isPointerDownRef.current || (e.buttons ?? 0) > 0);
+    // Only move if tapped or actively dragged, not on mouse hover!
+    if (!click && !isDrag) return;
+
     if (click && e.delta > DRAG_THRESHOLD) return;
     const next = { kind: "wall" as const, wall, offset: wallOffsetAt(wall, e.point, placingItem.size[0]), ...(lvl ? { level: lvl } : {}) };
     setMoved({ uid: placing.uid, placement: next });
     if (click) {
       e.stopPropagation();
-      if (isPlacementValid(placingItem, withLayer(next), furniture, placing.uid, true)) onPlace?.(placing.uid, withLayer(next));
-      else onPlaceBlocked?.();
+      // Tap only moves it to this wall spot; Done button commits.
     }
   };
 
@@ -2082,8 +2136,10 @@ function RoomScene({
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
-        onPointerMove={(e) => onFloorPointer(e, false)}
-        onClick={(e) => onFloorPointer(e, true)}
+        onPointerDown={onFloorPointerDown}
+        onPointerMove={onFloorPointerMove}
+        onPointerUp={onFloorPointerUp}
+        onClick={onFloorClick}
       >
         <planeGeometry args={[ROOM_SIZE, ROOM_SIZE]} />
         <meshStandardMaterial
@@ -2256,9 +2312,53 @@ function RoomScene({
       {/* Placement ghost + footprint */}
       {placingItem && ghost && !(ghost.kind === "wall" && hiddenWalls.has(ghost.wall)) && (
         <PlacedTransform item={placingItem} placement={ghost}>
-          <Suspense fallback={null}><ItemVisual item={placingItem} ghost={ghostValid ? "valid" : "invalid"} /></Suspense>
+          <Suspense fallback={null}>
+            <group
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                isPointerDownRef.current = true;
+                setIsDraggingItem?.(true);
+              }}
+              onPointerMove={(e) => {
+                if (!isPointerDownRef.current && (e.buttons ?? 0) === 0) return;
+                e.stopPropagation();
+                if (placing && placingItem.kind !== "wall") {
+                  const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl);
+                  setMoved({ uid: placing.uid, placement: next });
+                }
+              }}
+              onPointerUp={(e) => {
+                e.stopPropagation();
+                isPointerDownRef.current = false;
+                setIsDraggingItem?.(false);
+              }}
+            >
+              <ItemVisual item={placingItem} ghost={ghostValid ? "valid" : "invalid"} />
+            </group>
+          </Suspense>
           {ghost.kind === "floor" && (
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]} raycast={() => null}>
+            <mesh
+              rotation={[-Math.PI / 2, 0, 0]}
+              position={[0, 0.012, 0]}
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                isPointerDownRef.current = true;
+                setIsDraggingItem?.(true);
+              }}
+              onPointerMove={(e) => {
+                if (!isPointerDownRef.current && (e.buttons ?? 0) === 0) return;
+                e.stopPropagation();
+                if (placing) {
+                  const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl);
+                  setMoved({ uid: placing.uid, placement: next });
+                }
+              }}
+              onPointerUp={(e) => {
+                e.stopPropagation();
+                isPointerDownRef.current = false;
+                setIsDraggingItem?.(false);
+              }}
+            >
               <planeGeometry args={[placingItem.size[0] * CELL, placingItem.size[1] * CELL]} />
               <meshBasicMaterial color={ghostValid ? "#10b981" : "#ef4444"} transparent opacity={0.35} depthWrite={false} />
             </mesh>
@@ -2343,6 +2443,7 @@ class WebGLErrorBoundary extends Component<
 export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: string; /** "transparent" shows the page behind the room. */ background?: string }) {
   const labels = useRef(new Map<string, HTMLDivElement>());
   const [localToast, setLocalToast] = useState<string | null>(null);
+  const [isDraggingItem, setIsDraggingItem] = useState(false);
   const [webglRetryKey, setWebglRetryKey] = useState(0);
   const [webglSupported, setWebglSupported] = useState(() => (typeof window === "undefined" ? true : isWebGLAvailable()));
   const quality = useMemo(() => canvasQuality(), []);
@@ -2484,6 +2585,8 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
                 panTarget={panTarget}
                 panNudgeRef={panNudgeRef}
                 walkRequestRef={walkRequestRef}
+                isDraggingItem={isDraggingItem}
+                setIsDraggingItem={setIsDraggingItem}
               />
             </Suspense>
             {props.extras}
@@ -2495,6 +2598,7 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
               enablePan={true}
               screenSpacePanning={true}
               enableDamping
+              enabled={!isDraggingItem}
               minPolarAngle={props.upView ? 0.2 : props.view === "eye" ? 0.35 : props.view === "inside" ? 0.6 : 0.35}
               maxPolarAngle={props.upView ? 1.15 : props.view === "eye" ? 2.4 : props.view === "inside" ? 1.5 : 1.25}
               minDistance={props.upView ? 6 : props.view === "eye" ? 0.05 : props.view === "inside" ? 3 : 6}

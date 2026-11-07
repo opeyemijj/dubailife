@@ -430,7 +430,7 @@ function Me({ look, dirty, controls, run, auto, start, limits, onMove, onNear, d
     let iy = controls.current.y + (k.has("w") || k.has("arrowup") ? 1 : 0) - (k.has("s") || k.has("arrowdown") ? 1 : 0);
     const mag = Math.min(1, Math.hypot(ix, iy));
     let vx = 0, vz = 0, running = run || k.has("shift") || !!controls.current.sprint;
-    if (mag > 0.08) {
+    if (mag > 0.04) {
       auto.current = null;   // taking the stick takes over from "Where to?"
       const fwd = new THREE.Vector3(P.x - camera.position.x, 0, P.z - camera.position.z).normalize();
       const right = new THREE.Vector3(-fwd.z, 0, fwd.x);
@@ -527,39 +527,81 @@ export function StreetScene({ doors, look, dirty, controls, run, auto, peers, on
 
 /**
  * The stick, like a PlayStation analog stick: put your thumb on it and push the way you want to go. A small push
- * walks slowly, further walks faster, and pushing it all the way to the rim (anywhere round it) runs that way:
- * the rim lights up yellow. Let go and it springs back to the middle.
+ * walks slowly with fine precision, further walks faster, and pushing it all the way to the rim runs that way.
+ * Uses a dynamic touch anchor and exponential sensitivity curve so it never snaps or jerks out of control.
  */
-export const STICK_DEAD = 0.12;
-export const STICK_SPRINT = 0.9;
+export const STICK_DEAD = 0.15;
+export const STICK_SPRINT = 0.88;
 export function MoveStick({ controls, allowRun = true }: { controls: React.RefObject<Controls>; run?: boolean; onRun?: () => void; allowRun?: boolean }) {
   const knob = useRef<HTMLSpanElement>(null);
   const rim = useRef<HTMLSpanElement>(null);
-  const R = 56;
+  const originRef = useRef<{ x: number; y: number } | null>(null);
+  const R = 54;
+
   const set = (rawX: number, rawY: number, springBack = false) => {
     const m = Math.hypot(rawX, rawY);
-    // Dead zone in the middle (no drift), then the push scaled back up to the full range.
-    const k = m < STICK_DEAD ? 0 : Math.min(1, (m - STICK_DEAD) / (1 - STICK_DEAD)) / (m || 1);
-    controls.current.x = rawX * k; controls.current.y = rawY * k;
-    controls.current.sprint = allowRun && m >= STICK_SPRINT;
+    // Exponential sensitivity curve with 15% dead zone:
+    // When m <= STICK_DEAD: 0 movement (no jitter or drift).
+    // Above dead zone: normalized range (0..1) raised to power of 1.7.
+    // Provides silky-smooth, calm precision for micro-adjustments,
+    // scaling gracefully to full speed at the rim.
+    if (m <= STICK_DEAD) {
+      controls.current.x = 0;
+      controls.current.y = 0;
+      controls.current.sprint = false;
+    } else {
+      const norm = Math.min(1, (m - STICK_DEAD) / (1 - STICK_DEAD));
+      const speedFactor = Math.pow(norm, 1.7) / m;
+      controls.current.x = rawX * speedFactor;
+      controls.current.y = rawY * speedFactor;
+      controls.current.sprint = allowRun && m >= STICK_SPRINT;
+    }
+
     if (knob.current) {
-      knob.current.style.transition = springBack ? "transform 0.14s ease-out" : "none";
+      knob.current.style.transition = springBack ? "transform 0.14s cubic-bezier(0.2, 0.9, 0.3, 1)" : "none";
       knob.current.style.transform = `translate(${rawX * R}px, ${-rawY * R}px)`;
     }
     if (rim.current) rim.current.dataset.sprint = controls.current.sprint ? "1" : "0";
   };
-  const move = (e: React.PointerEvent<HTMLDivElement>) => {
-    const b = e.currentTarget.getBoundingClientRect();
-    const dx = (e.clientX - (b.left + b.width / 2)) / R, dy = -(e.clientY - (b.top + b.height / 2)) / R;
-    const l = Math.hypot(dx, dy), k = l > 1 ? 1 / l : 1;
-    set(dx * k, dy * k);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    // Anchor movement to where the thumb touched down so the stick never jerks on initial touch
+    originRef.current = { x: e.clientX, y: e.clientY };
+    set(0, 0, false);
   };
-  const release = () => set(0, 0, true);
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+    if (!originRef.current) {
+      originRef.current = { x: e.clientX, y: e.clientY };
+    }
+    const deltaX = e.clientX - originRef.current.x;
+    const deltaY = -(e.clientY - originRef.current.y);
+    const dist = Math.hypot(deltaX, deltaY);
+
+    if (dist > R) {
+      // Dynamic follow anchor: clamp knob to R and smoothly pull the anchor along
+      // so reversing thumb direction responds immediately without dead travel.
+      const angle = Math.atan2(e.clientY - originRef.current.y, e.clientX - originRef.current.x);
+      originRef.current.x = e.clientX - Math.cos(angle) * R;
+      originRef.current.y = e.clientY - Math.sin(angle) * R;
+      set(Math.cos(angle), -Math.sin(angle), false);
+    } else {
+      set(deltaX / R, deltaY / R, false);
+    }
+  };
+
+  const release = () => {
+    originRef.current = null;
+    set(0, 0, true);
+  };
+
   return (
     <div aria-label={allowRun ? "Move: push the stick the way you want to go, all the way to the edge to run" : "Move: push the stick the way you want to walk"}
       className="relative w-40 h-40 rounded-full touch-none select-none flex items-center justify-center"
-      onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); move(e); }}
-      onPointerMove={(e) => { if (e.currentTarget.hasPointerCapture(e.pointerId)) move(e); }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
       onPointerUp={release} onPointerCancel={release} onLostPointerCapture={release}>
       {/* the base, its rim (yellow while running outdoors) and the RUN/WALK hint round the top */}
       <span className="absolute inset-0 rounded-full bg-black/25 backdrop-blur-sm" />
