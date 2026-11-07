@@ -40,8 +40,10 @@ import { VenueWallAdModal } from "./VenueWallAdModal";
 import { VenueGuideModal } from "./VenueGuideModal";
 import { ClothingStoreModal } from "@/components/commerce/ClothingStoreModal";
 import { countVisit, useVenuePublic, venueKey, withOwnerContent } from "@/lib/venueContent";
-import { befriend, sendMoney, useRoom, type Peer, type Received } from "@/lib/room";
+import { befriend, broadcastRoomEvent, sendMoney, useRoom, type Peer, type Received } from "@/lib/room";
 import { PeerPanel, type SocialContext } from "@/components/social/PeerPanel";
+import { CelebrityBoxingModal, type BoxingOpponent } from "@/components/games/CelebrityBoxingModal";
+import type { AvatarLookProps } from "@/components/avatar/roster";
 import { SocialFeed } from "@/components/social/SocialFeed";
 import { HandHeldProp, serveKindOf, type ServeKind, type ServedDef } from "./served";
 import { SceneLoadingOverlay } from "@/components/GameLoadingScreen";
@@ -116,6 +118,16 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   const [peerConsumptions, setPeerConsumptions] = useState<Record<string, { action: "drink" | "eat"; prop: string; tint?: string }>>({});
   const [activeActivity, setActiveActivity] = useState<NonNullable<Venue["activities"]>[number] | null>(null);
   const [activityFX, setActivityFX] = useState<Activity3DFX>({ active: false, type: "dance", combo: 0, burstKey: 0 });
+  const [incomingBoxingChallenge, setIncomingBoxingChallenge] = useState<{
+    challengerId: string;
+    challengerUsername: string;
+    challengerName: string;
+    purse: number;
+    challengerLook?: AvatarLookProps;
+  } | null>(null);
+  const [boxingOpponent, setBoxingOpponent] = useState<BoxingOpponent | null>(null);
+  const [boxingPurse, setBoxingPurse] = useState(2500);
+  const [boxingModalOpen, setBoxingModalOpen] = useState(false);
 
   // The venue guide opens by itself once: the first time a player walks into any venue. After that it's
   // behind the guide button.
@@ -133,6 +145,22 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   useEffect(() => { countVisit(key); }, [key]);
   const router = useRouter();
   const { citizen } = useCitizen();
+
+  // Auto-expire incoming boxing challenge if not answered within 15 seconds
+  useEffect(() => {
+    if (!incomingBoxingChallenge) return;
+    const timer = setTimeout(() => {
+      broadcastRoomEvent({
+        type: "boxing_decline",
+        challengerId: incomingBoxingChallenge.challengerId,
+        challengerUsername: incomingBoxingChallenge.challengerUsername,
+        opponentId: citizen?.id ?? citizen?.username ?? "opponent",
+        opponentUsername: citizen?.username ?? "Opponent",
+      });
+      setIncomingBoxingChallenge(null);
+    }, 15000);
+    return () => clearTimeout(timer);
+  }, [incomingBoxingChallenge, citizen?.id, citizen?.username]);
   // Going into a beach, club, waterpark, restaurant (brunch), attraction or hotel counts for Life & Fun goals.
   useEffect(() => {
     const kind = funKindOf(place, venue);
@@ -574,6 +602,44 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     if (e.type === "wave") bubble(e.from.userId, "👋");
     if (e.type === "money") gameAudio.playCoinSound();
     if (e.type === "gift") boostNeed("social", 10);
+    if (e.type === "boxing_challenge" && (e.targetId === myId || e.targetUsername === citizen?.username)) {
+      gameAudio.playClickSound();
+      setIncomingBoxingChallenge({
+        challengerId: e.challengerId,
+        challengerUsername: e.challengerUsername,
+        challengerName: e.challengerName,
+        purse: e.purse,
+        challengerLook: e.challengerLook,
+      });
+    }
+    if (e.type === "boxing_accept" && (e.challengerId === myId || e.challengerUsername === citizen?.username)) {
+      gameAudio.playConfirmSound();
+      setIncomingBoxingChallenge(null);
+      say(`🔔 @${e.opponentUsername ?? "Opponent"} accepted the boxing bout! Ring ready!`);
+      if (panel?.kind !== "peer") {
+        setBoxingOpponent({
+          userId: e.opponentId,
+          username: e.opponentUsername ?? "Opponent",
+          name: e.opponentUsername ?? "Opponent",
+          look: e.opponentLook,
+        });
+        if (e.purse) setBoxingPurse(e.purse);
+        setBoxingModalOpen(true);
+      }
+    }
+    if (e.type === "boxing_decline" && (e.challengerId === myId || e.challengerUsername === citizen?.username)) {
+      gameAudio.playClickSound();
+      setIncomingBoxingChallenge(null);
+      say(`❌ @${e.opponentUsername ?? "Opponent"} declined the boxing challenge. No fight.`);
+    }
+    if (e.type === "rock" && (e.targetId === myId || e.targetUsername === citizen?.username)) {
+      const faceYaw = Math.atan2(e.from.x - me.x, e.from.z - me.z);
+      walkThen([me.x, me.z], () => {
+        setPlayerAnimation(citizen?.look?.gender === "man" ? "rock_male" : "rock_female");
+        boostNeed("fun", 10);
+        boostNeed("social", 8);
+      }, faceYaw);
+    }
     if (e.type === "consumption") {
       setPeerConsumptions((prev) => ({ ...prev, [e.from.userId]: { action: e.action, prop: e.prop, tint: e.tint } }));
       setTimeout(() => {
@@ -1767,6 +1833,18 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
             bubble("me", "👋");
             setPanel(null);
           }}
+          onRock={(targetPeer) => {
+            const dx = me.x - targetPeer.x;
+            const dz = me.z - targetPeer.z;
+            const d = Math.hypot(dx, dz) || 1;
+            const spot: [number, number] = [targetPeer.x + (dx / d) * 0.72, targetPeer.z + (dz / d) * 0.72];
+            const faceYaw = Math.atan2(targetPeer.x - spot[0], targetPeer.z - spot[1]);
+            walkThen(spot, () => {
+              setPlayerAnimation(citizen?.look?.gender === "man" ? "rock_male" : "rock_female");
+              boostNeed("fun", 10);
+              boostNeed("social", 8);
+            }, faceYaw);
+          }}
           canInviteToTable={!!myTable && (venue.layout === "club" || venue.layout === "dining" || venue.layout === "lobby")}
           onInvite={(kind) => {
             // They're away (not connected): save the request; it pops up when they're back (for 5 minutes).
@@ -1815,6 +1893,91 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 bg-slate-950/90 text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-full shadow-2xl flex items-center gap-2">
           <Check className="w-4 h-4 text-emerald-400" /> {toast}
         </div>
+      )}
+
+      {incomingBoxingChallenge && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 w-[92vw] max-w-md bg-gradient-to-r from-red-950 via-slate-900 to-red-950 text-white rounded-3xl p-4 shadow-2xl border-2 border-red-500/80 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-red-600 flex items-center justify-center text-2xl shadow-lg shrink-0">
+              🥊
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-red-500 text-white px-2 py-0.5 rounded-full">
+                  Bout Challenge
+                </span>
+                <span className="text-[11px] font-mono font-bold text-amber-400">
+                  Purse: AED {incomingBoxingChallenge.purse.toLocaleString()}
+                </span>
+              </div>
+              <h4 className="text-sm font-black text-white mt-1 truncate">
+                @{incomingBoxingChallenge.challengerUsername} challenged you!
+              </h4>
+              <p className="text-[11px] text-slate-300 mt-0.5">
+                Full 3D Celebrity Boxing Ring match. Accept to enter the ring, or decline to cancel.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/10">
+            <button
+              onClick={() => {
+                gameAudio.playClickSound();
+                broadcastRoomEvent({
+                  type: "boxing_decline",
+                  challengerId: incomingBoxingChallenge.challengerId,
+                  challengerUsername: incomingBoxingChallenge.challengerUsername,
+                  opponentId: myId ?? citizen?.username ?? "opponent",
+                  opponentUsername: citizen?.username ?? "Opponent",
+                });
+                setIncomingBoxingChallenge(null);
+                say("❌ Declined boxing challenge.");
+              }}
+              className="flex-1 py-2 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-black transition active:scale-95"
+            >
+              ✕ Decline
+            </button>
+            <button
+              onClick={() => {
+                gameAudio.playConfirmSound();
+                broadcastRoomEvent({
+                  type: "boxing_accept",
+                  challengerId: incomingBoxingChallenge.challengerId,
+                  challengerUsername: incomingBoxingChallenge.challengerUsername,
+                  opponentId: myId ?? citizen?.username ?? "opponent",
+                  opponentUsername: citizen?.username ?? "Opponent",
+                  purse: incomingBoxingChallenge.purse,
+                  opponentLook: citizen?.look,
+                });
+                setBoxingOpponent({
+                  userId: incomingBoxingChallenge.challengerId,
+                  username: incomingBoxingChallenge.challengerUsername,
+                  name: incomingBoxingChallenge.challengerName || incomingBoxingChallenge.challengerUsername,
+                  look: incomingBoxingChallenge.challengerLook,
+                });
+                setBoxingPurse(incomingBoxingChallenge.purse);
+                setBoxingModalOpen(true);
+                setIncomingBoxingChallenge(null);
+                say("🔔 Boxing bout accepted! Entering the 3D Ring!");
+              }}
+              className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-red-600 to-amber-500 hover:brightness-110 text-white text-xs font-black shadow-lg shadow-red-600/40 transition active:scale-95 flex items-center justify-center gap-1.5"
+            >
+              <span>🥊</span> Accept Bout
+            </button>
+          </div>
+        </div>
+      )}
+
+      {boxingModalOpen && boxingOpponent && (
+        <CelebrityBoxingModal
+          open={boxingModalOpen}
+          onOpenChange={setBoxingModalOpen}
+          opponent={boxingOpponent}
+          initialPurse={boxingPurse}
+          onBroadcastResult={(summary) => {
+            say(summary);
+          }}
+        />
       )}
       </div>
     </main>

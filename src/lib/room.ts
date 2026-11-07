@@ -72,6 +72,9 @@ export type RoomEvent =
   | { type: "separate"; fighterA: string; fighterB: string }
   | { type: "gang_beat"; targetId: string; targetUsername: string; allies: string[] }
   | { type: "boxing"; targetId: string; targetUsername: string; purse: number }
+  | { type: "boxing_challenge"; targetId: string; targetUsername: string; challengerId: string; challengerUsername: string; challengerName: string; purse: number; challengerLook?: AvatarLookProps }
+  | { type: "boxing_accept"; challengerId: string; challengerUsername?: string; opponentId: string; opponentUsername?: string; purse?: number; opponentLook?: AvatarLookProps }
+  | { type: "boxing_decline"; challengerId: string; challengerUsername?: string; opponentId: string; opponentUsername?: string }
   | { type: "spray_money"; targetId?: string; targetUsername?: string; amount: number };
 
 export type Received = RoomEvent & { id: string; from: Peer; to?: string; at: number };
@@ -240,6 +243,9 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
           refreshCitizen();
           // The app-wide notice shows it now, rather than waiting for the database event.
           window.dispatchEvent(new CustomEvent(MONEY_EVENT, { detail: { from: e.from.username, amount: e.amount } }));
+        }
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent(ROOM_ACTION_EVENT, { detail: { event: e, from: e.from } }));
         }
         handler.current?.(e);
       });

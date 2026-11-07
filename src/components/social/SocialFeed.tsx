@@ -105,6 +105,23 @@ function describe(e: Received): { icon: string; text: string } {
           e.targetUsername ? ` on @${e.targetUsername}` : ""
         }!`,
       };
+    case "boxing_challenge":
+      return {
+        icon: "🥊",
+        text: `${who} challenged @${e.targetUsername} to Celebrity Boxing (AED ${e.purse.toLocaleString()})!`,
+      };
+    case "boxing_accept":
+      return {
+        icon: "🥊🔔",
+        text: `@${e.opponentUsername ?? who} accepted the boxing bout! Let's get ready to rumble!`,
+      };
+    case "boxing_decline":
+      return {
+        icon: "🥊❌",
+        text: `@${e.opponentUsername ?? who} declined the boxing challenge.`,
+      };
+    default:
+      return { icon: "✨", text: `${who} shared an update` };
   }
 }
 

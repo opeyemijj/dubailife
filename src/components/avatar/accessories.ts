@@ -5,7 +5,7 @@
 
 import * as THREE from "three";
 import type { Accessory } from "@/lib/city/types";
-import { NAILS_CATALOG, SHOES_CATALOG, WIGS_CATALOG, outfitById, type AvatarLookProps } from "./roster";
+import { SHOES_CATALOG, WIGS_CATALOG, outfitById, type AvatarLookProps } from "./roster";
 
 export interface Anchor {
   bone: THREE.Object3D;
@@ -582,110 +582,43 @@ export function attachLookExtras(rig: AccessoryRig, look: AvatarLookProps): () =
         g.add(veil);
       }
       mountToAnchor(rig, "head", g, new THREE.Vector3(0, browY, 0), attached);
+    } else if (wigId === "fulani_beaded") {
+      // Fulani Tribal Braids: authentic gold cuffs & cowrie beads along the hairline & side tresses
+      for (const s of [-1, 1] as const) {
+        for (let b = 0; b < 3; b++) {
+          const cuff = new THREE.Mesh(new THREE.TorusGeometry(r * 0.09, r * 0.025, 8, 16), gold());
+          cuff.position.set(s * r * 0.92, -r * (0.12 + b * 0.3), r * (0.22 - b * 0.04));
+          cuff.rotation.set(0.12, 0, s * 0.15);
+          g.add(cuff);
+          const bead = new THREE.Mesh(new THREE.SphereGeometry(r * 0.065, 8, 8), gold());
+          bead.position.set(s * r * 0.92, -r * (0.18 + b * 0.3), r * (0.22 - b * 0.04));
+          g.add(bead);
+        }
+      }
+      mountToAnchor(rig, "head", g, new THREE.Vector3(0, browY, 0), attached);
+    } else if (wigId === "high_sleek_pony") {
+      // Sleek snatched ponytail gold cuff hair accessory
+      const cuff = new THREE.Mesh(new THREE.TorusGeometry(r * 0.22, r * 0.05, 10, 20), gold());
+      cuff.position.set(0, r * 0.58, -r * 0.72);
+      cuff.rotation.set(0.45, 0, 0);
+      g.add(cuff);
+      mountToAnchor(rig, "head", g, new THREE.Vector3(0, browY, 0), attached);
     } else if (wigId === "afro_puff_crown") {
-      const puff = new THREE.Mesh(new THREE.SphereGeometry(r * 1.38, 22, 18), mat);
-      puff.position.set(0, r * 0.42, -r * 0.14);
-      g.add(puff);
+      // Royal afro puff gold hair band crown
       const goldBand = new THREE.Mesh(new THREE.TorusGeometry(r * 1.0, r * 0.055, 10, 26), gold());
       goldBand.rotation.set(Math.PI / 2 - 0.18, 0, 0);
-      goldBand.position.set(0, r * 0.06, r * 0.04);
+      goldBand.position.set(0, r * 0.08, r * 0.04);
       g.add(goldBand);
       mountToAnchor(rig, "head", g, new THREE.Vector3(0, browY, 0), attached);
-    } else {
-      // Flowing 30" Bone Straight / Body Wave / Knotless Braids / Fulani Beads / Burgundy Curls / Platinum Bob / Sleek Ponytail
-      // Full cranial wig cap + front face-framing side bundles + lush back hair cascade
-      const cap = new THREE.Mesh(new THREE.SphereGeometry(r * 1.08, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.58), mat);
-      cap.position.set(0, r * 0.06, -r * 0.02);
-      g.add(cap);
-      const isBob = wigId.includes("bob");
-      const isPony = wigId.includes("pony");
-      const length = isBob ? H * 0.15 : H * 0.34;
-      if (isPony) {
-        const cuff = new THREE.Mesh(new THREE.TorusGeometry(r * 0.26, r * 0.06, 10, 20), gold());
-        cuff.position.set(0, r * 0.55, -r * 0.85);
-        cuff.rotation.set(0.45, 0, 0);
-        g.add(cuff);
-        const ponyTail = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.24, r * 0.48, H * 0.32, 16), mat);
-        ponyTail.position.set(0, r * 0.55 - H * 0.14, -r * 1.08);
-        ponyTail.rotation.set(0.22, 0, 0);
-        g.add(ponyTail);
-      } else {
-        // Back cascade
-        const backLocks = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.92, r * 1.12, length, 18), mat);
-        backLocks.position.set(0, -length * 0.44, -r * 0.38);
-        g.add(backLocks);
-        // Front left & right face-framing shoulder tresses so the wig shows clearly from the front!
-        for (const s of [-1, 1] as const) {
-          const frontStrand = new THREE.Mesh(
-            new THREE.CylinderGeometry(r * 0.26, r * (isBob ? 0.28 : 0.34), length * 0.92, 12),
-            mat,
-          );
-          frontStrand.position.set(s * r * 0.84, -length * 0.38, r * 0.22);
-          frontStrand.rotation.set(0.08, 0, -s * 0.08);
-          g.add(frontStrand);
-        }
-        if (wigId === "fulani_beaded") {
-          for (const s of [-1, 1] as const) {
-            for (let b = 0; b < 3; b++) {
-              const bead = new THREE.Mesh(new THREE.SphereGeometry(r * 0.12, 10, 8), gold());
-              bead.position.set(s * r * 0.9, -r * (0.35 + b * 0.42), r * 0.32);
-              g.add(bead);
-            }
-          }
-        }
-      }
-      mountToAnchor(rig, "head", g, new THREE.Vector3(0, browY, 0), attached);
     }
+    // Note: For natural flowing hairstyles (Bone Straight, Body Wave, Knotless Braids, Platinum Bob, Burgundy Curls),
+    // we deliberately do not spawn rigid plastic geometry here. Their authentic, multi-layered textured hair cards
+    // are rendered directly by the Rocketbox character and dynamically tinted with exact salon pigments in CitizenAvatar.
   }
 
-  // 2. 3D Manicure & Acrylic Nails (#21 — Strictly Ladies Only)
-  if (look.nailId && look.gender !== "man") {
-    const nailDef = NAILS_CATALOG.find((n) => n.id === look.nailId);
-    const nailHex = look.nailColor ?? nailDef?.color ?? "#ec4899";
-    const nailMat = new THREE.MeshStandardMaterial({
-      color: nailHex,
-      roughness: 0.1,
-      metalness: look.nailId === "gold_foil_stiletto" || look.nailId === "french_diamond" ? 0.65 : 0.35,
-    });
-    const gemMat = new THREE.MeshStandardMaterial({ color: "#e0f2fe", roughness: 0.05, metalness: 0.95 });
-    const isStiletto = look.nailId.includes("stiletto") || look.nailId.includes("coffin");
-    const nailLen = isStiletto ? H * 0.032 : H * 0.024;
-    for (const handKey of ["leftHand", "rightHand"] as const) {
-      if (!rig[handKey]) continue;
-      const side = handKey === "leftHand" ? 1 : -1;
-      const g = new THREE.Group();
-      // 4 fingers fan
-      for (let f = -1.5; f <= 1.5; f += 1) {
-        const claw = new THREE.Mesh(
-          new THREE.ConeGeometry(H * 0.0052, nailLen, 8),
-          nailMat,
-        );
-        claw.position.set(f * H * 0.011, -H * 0.052, H * 0.012);
-        claw.rotation.set(Math.PI - 0.18, 0, f * 0.06);
-        claw.scale.set(1.0, 1.0, 0.55);
-        g.add(claw);
-        // 3D Nail Gem / Gold Stud on Ring & Index nails
-        if (Math.abs(f) === 0.5) {
-          const gem = new THREE.Mesh(
-            new THREE.SphereGeometry(H * 0.0036, 8, 8),
-            look.nailId === "gold_foil_stiletto" ? gold() : gemMat,
-          );
-          gem.position.set(f * H * 0.011, -H * 0.044, H * 0.016);
-          g.add(gem);
-        }
-      }
-      // Thumb acrylic nail
-      const thumbClaw = new THREE.Mesh(
-        new THREE.ConeGeometry(H * 0.0055, nailLen * 0.88, 8),
-        nailMat,
-      );
-      thumbClaw.position.set(side * H * 0.024, -H * 0.032, H * 0.018);
-      thumbClaw.rotation.set(Math.PI - 0.25, 0, side * 0.35);
-      thumbClaw.scale.set(1.0, 1.0, 0.55);
-      g.add(thumbClaw);
-      mountToAnchor(rig, handKey, g, new THREE.Vector3(0, 0, 0), attached);
-    }
-  }
+  // 2. Acrylic Nails & Manicure (#21 — Gamified in Wardrobe VIP Salon)
+  // Nails are interactive in the Wardrobe VIP Nail Studio (5-finger canvas, 2 coats, UV LED curing lamp, CV points),
+  // avoiding floating detached cones off animated hands.
 
   // 3. Footwear styling is modeled authentically into each Rocketbox outfit mesh.
 
@@ -808,6 +741,71 @@ export function attachLookExtras(rig: AccessoryRig, look: AvatarLookProps): () =
         gCoral.add(coralBangle);
         mountToAnchor(rig, hand, gCoral, new THREE.Vector3(0, 0, 0), attached);
       }
+    }
+  }
+
+  // 6. Professional 3D Boxing Gloves (Red Corner / Blue Corner Prizefighter Gear)
+  if (look.gloves && look.gloves !== "none") {
+    const isRed = look.gloves === "boxing_red";
+    const gloveHex = isRed ? "#dc2626" : "#2563eb";
+    const gloveMat = new THREE.MeshStandardMaterial({
+      color: gloveHex,
+      roughness: 0.28,
+      metalness: 0.15,
+    });
+    const cuffMat = new THREE.MeshStandardMaterial({
+      color: "#f8fafc",
+      roughness: 0.35,
+      metalness: 0.05,
+    });
+    const goldMat = new THREE.MeshStandardMaterial({
+      color: "#f59e0b",
+      roughness: 0.25,
+      metalness: 0.85,
+    });
+
+    for (const handKey of ["leftHand", "rightHand"] as const) {
+      if (!rig[handKey]) continue;
+      const isLeft = handKey === "leftHand";
+      const s = isLeft ? 1 : -1;
+      const g = new THREE.Group();
+
+      // Main padded knuckle cushion (rounded pro glove)
+      const knuckle = new THREE.Mesh(
+        new THREE.SphereGeometry(H * 0.038, 16, 14),
+        gloveMat
+      );
+      knuckle.scale.set(1.15, 1.35, 1.05);
+      knuckle.position.set(0, -H * 0.042, H * 0.008);
+      g.add(knuckle);
+
+      // Padded thumb compartment tucked along the inner palm
+      const thumb = new THREE.Mesh(
+        new THREE.SphereGeometry(H * 0.019, 12, 10),
+        gloveMat
+      );
+      thumb.scale.set(0.9, 1.25, 0.95);
+      thumb.position.set(s * H * 0.024, -H * 0.028, H * 0.016);
+      thumb.rotation.set(0.2, 0, s * 0.35);
+      g.add(thumb);
+
+      // Laced white wrist cuff / support wrap
+      const cuff = new THREE.Mesh(
+        new THREE.CylinderGeometry(H * 0.029, H * 0.033, H * 0.034, 16),
+        cuffMat
+      );
+      cuff.position.set(0, -H * 0.015, 0);
+      g.add(cuff);
+
+      // Gold championship patch / emblem on wrist
+      const patch = new THREE.Mesh(
+        new THREE.BoxGeometry(H * 0.016, H * 0.014, H * 0.004),
+        goldMat
+      );
+      patch.position.set(0, -H * 0.014, H * 0.031);
+      g.add(patch);
+
+      mountToAnchor(rig, handKey, g, new THREE.Vector3(0, 0, 0), attached);
     }
   }
 

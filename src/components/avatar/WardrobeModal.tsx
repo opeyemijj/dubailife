@@ -1120,8 +1120,42 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
               <div className="space-y-4">
                 {gender === "woman" && (
                   <>
-                    {/* Step 1: Select 3D Acrylic Nail Shape */}
+                    {/* Step 1: Select Acrylic Nail Shape or Natural Bare Nails */}
                     <div className="grid grid-cols-2 gap-2">
+                      {(() => {
+                        const isBare = !selectedLook.nailId || selectedLook.nailId === "none";
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedLook((prev) => ({
+                                ...prev,
+                                nailId: undefined,
+                                nailColor: undefined,
+                              }));
+                              setFingerCoats([0, 0, 0, 0, 0]);
+                              setFingerGems([false, false, false, false, false]);
+                              setUvCureProgress(0);
+                              gameAudio.playClickSound();
+                              showToast("✨ Natural bare nails restored (No acrylics)");
+                            }}
+                            className={`p-3 rounded-2xl border flex items-center gap-2.5 text-left transition ${
+                              isBare
+                                ? "bg-emerald-500/20 border-emerald-400 text-white"
+                                : "bg-slate-800/70 border-white/10 text-slate-200 hover:bg-slate-800"
+                            }`}
+                          >
+                            <span className="text-2xl">💅</span>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-black truncate">Natural Bare Nails</div>
+                              <div className="text-[10px] text-emerald-400 font-bold">
+                                Clean Natural Fingernails
+                              </div>
+                            </div>
+                            {isBare && <Check className="w-4 h-4 text-emerald-400 shrink-0" />}
+                          </button>
+                        );
+                      })()}
                       {nailsFor(gender).map((n) => {
                         const active = selectedLook.nailId === n.id;
                         const isOwned = ownedCloset.includes(n.id) || active;

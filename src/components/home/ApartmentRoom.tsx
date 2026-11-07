@@ -1169,31 +1169,49 @@ function CameraRig({
   const swing = useRef<{ from: number; to: number; t: number } | null>(null);
   const lastKey = useRef("");
 
-  // Pull back on narrow (portrait) screens so the whole room fits.
+  // Re-aim and adjust camera whenever the view mode (above, inside, eye) or screen changes.
   useEffect(() => {
     if (!controls) return;
-    // Eyes see wide (like your own eyes: not zoomed in); the other views keep the room's lens.
     const cam = camera as THREE.PerspectiveCamera;
     const fov = eye && follow ? EYE_FOV : 35;
     // eslint-disable-next-line react-hooks/immutability -- the three.js camera is changed in place
-    if (cam.fov !== fov) { cam.fov = fov; cam.updateProjectionMatrix(); }
+    if (cam.fov !== fov) {
+      cam.fov = fov;
+      cam.updateProjectionMatrix();
+    }
+
     if (eye && follow) {
-      // Eyes: a little behind the head (so it isn't too close), looking the way they face.
+      // Eyes: first-person, camera at eye height looking forward
       controls.target.set(follow[0] + Math.sin(followYaw) * 0.01, 1.62, follow[2] + Math.cos(followYaw) * 0.01);
       camera.position.set(follow[0] - Math.sin(followYaw) * EYE_BACK, 1.68, follow[2] - Math.cos(followYaw) * EYE_BACK);
       controls.update();
       return;
     }
-    // Inside sits back far enough to see the room around you.
-    const dist = inside ? 6.2 : viewDistance ?? (size.width / size.height < 0.8 ? 19 : 14);
-    const dir = camera.position.clone().sub(controls.target);
-    if (dir.lengthSq() < 1e-6) dir.set(1, 1, 1);
-    dir.normalize();
-    camera.position.copy(controls.target).addScaledVector(dir, dist);
+
+    if (inside && follow) {
+      // Inside: over-the-shoulder view of the citizen in the room
+      controls.target.set(follow[0], 1.45, follow[2]);
+      camera.position.set(follow[0] - Math.sin(followYaw) * 6.0, 3.6, follow[2] - Math.cos(followYaw) * 6.0);
+      controls.update();
+      return;
+    }
+
+    // Above: ALWAYS restore the proper isometric overview looking down into the room from above!
+    const t = targetPos ?? DEFAULT_ORBIT_TARGET;
+    controls.target.set(t[0], t[1], t[2]);
+    const dist = viewDistance ?? (size.width / size.height < 0.8 ? 19 : 14);
+    const angle = turns * (Math.PI / 2) + Math.PI / 4;
+    const elev = upView ? 0.92 : 0.68;
+    const horiz = Math.sqrt(Math.max(0.01, 1 - elev * elev));
+    camera.position.set(
+      t[0] + Math.cos(angle) * horiz * dist,
+      t[1] + elev * dist,
+      t[2] + Math.sin(angle) * horiz * dist
+    );
     controls.update();
-    // Re-aim only when the mode or screen changes, not every step.
+    // Re-aim only when the mode, turns, or screen changes, not every step.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [controls, camera, size.width, size.height, inside, eye, viewDistance]);
+  }, [controls, camera, size.width, size.height, inside, eye, viewDistance, upView, turns]);
   // Where the citizen was last frame, so the camera can move along with them.
   const lastFollow = useRef<[number, number, number] | null>(null);
   // Walls faded because they stand between the camera and the citizen (inside view).
@@ -1308,9 +1326,8 @@ function CameraRig({
       camera.position.z += dz;
     }
 
-    const targetElevation = upView ? 15.0 : 7.2;
-    if (!inside && Math.abs(camera.position.y - targetElevation) > 0.05) {
-      camera.position.y += (targetElevation - camera.position.y) * Math.min(1, dt * 3.5);
+    if (upView && Math.abs(camera.position.y - 15.0) > 0.05) {
+      camera.position.y += (15.0 - camera.position.y) * Math.min(1, dt * 3.5);
     }
     controls.update();
 
@@ -1416,6 +1433,7 @@ function RoomScene({
   // Where the user last pointed the item being placed (cleared by switching items).
   const [moved, setMoved] = useState<{ uid: string; placement: Placement } | null>(null);
   const [animation, setAnimation] = useState<AvatarAnimation>("idle");
+  const handleLocomotionRef = useRef<((point: THREE.Vector3) => void) | null>(null);
   // Listen for interactive room actions (rocking dance, slap, brawl, gang beat, money spraying)
   useEffect(() => {
     const onRoomAction = (ev: Event) => {
@@ -1423,6 +1441,20 @@ function RoomScene({
       const t = detail?.event?.type;
       if (!t) return;
       if (t === "rock") {
+        const other = people[0];
+        if (other) {
+          const dx = poseRef.current.position[0] - other.position[0];
+          const dz = poseRef.current.position[2] - other.position[2];
+          const d = Math.hypot(dx, dz) || 1;
+          const spotX = other.position[0] + (dx / d) * 0.72;
+          const spotZ = other.position[2] + (dz / d) * 0.72;
+          handleLocomotionRef.current?.(new THREE.Vector3(spotX, 0, spotZ));
+          setTimeout(() => {
+            setAnimation(look?.gender === "man" ? "rock_male" : "rock_female");
+            setTimeout(() => setAnimation("idle"), 9000);
+          }, 1200);
+          return;
+        }
         setAnimation(look?.gender === "man" ? "rock_male" : "rock_female");
         setTimeout(() => setAnimation("idle"), 9000);
       } else if (t === "slap") {
@@ -1589,6 +1621,7 @@ function RoomScene({
       }
     }
   };
+  handleLocomotionRef.current = handleFloorLocomotion;
 
   useEffect(() => {
     if (currentRoom) {

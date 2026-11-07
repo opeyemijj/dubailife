@@ -83,15 +83,30 @@ function BoxingRing3D({
         </group>
       ))}
 
-      {/* Player Fighter (Left / Red Corner) */}
+      {/* Player Fighter (Left / Red Corner Prizefighter) */}
       <Suspense fallback={null}>
         <group position={[-0.75 + myOffset, -0.84, 0]} rotation={[0, Math.PI / 2, 0]}>
-          <CitizenAvatar look={myLook} animation={myAnim} />
+          <CitizenAvatar
+            look={{
+              ...myLook,
+              gender: myLook?.gender ?? "man",
+              wear: myLook?.gender === "woman" ? "Sports_Female_02" : "Male_Adult_10",
+              primaryColor: "#dc2626",
+              gloves: "boxing_red",
+            }}
+            animation={myAnim}
+          />
         </group>
-        {/* Opponent Fighter (Right / Blue Corner) */}
+        {/* Opponent Fighter (Right / Blue Corner Prizefighter) */}
         <group position={[0.75 + oppOffset, -0.84, 0]} rotation={[0, -Math.PI / 2, 0]}>
           <CitizenAvatar
-            look={oppLook ?? { gender: "man", preset: "Male_Adult_10" }}
+            look={{
+              ...(oppLook ?? { gender: "man", preset: "Male_Adult_10" }),
+              gender: oppLook?.gender ?? "man",
+              wear: (oppLook?.gender ?? "man") === "woman" ? "Sports_Female_02" : "Male_Adult_10",
+              primaryColor: "#2563eb",
+              gloves: "boxing_blue",
+            }}
             animation={oppAnim}
           />
         </group>

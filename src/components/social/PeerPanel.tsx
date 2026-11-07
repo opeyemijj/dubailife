@@ -20,7 +20,7 @@ const AMOUNTS = [20, 50, 100, 500];
 const AWAY_NOTE = "💤 They're away: they'll see it when they're back (5 minutes)";
 
 export function PeerPanel({
-  peer, context, balance, treat, onClose, onChat, onSendMoney, onWave, onInvite, onTreat, onFriend, canInviteToTable = false,
+  peer, context, balance, treat, onClose, onChat, onSendMoney, onWave, onInvite, onTreat, onFriend, onRock, canInviteToTable = false,
   messages, typing, onTyping, onThread, startIn = "menu", unread = 0,
 }: {
   /** This conversation, oldest first. */
@@ -42,6 +42,8 @@ export function PeerPanel({
   onSendMoney: (amount: number) => Promise<string | null>;
   onWave: () => void;
   onInvite: (kind: "join" | "dance" | "table") => void;
+  /** Auto-walk close to peer and rock in sync */
+  onRock?: (peer: Peer) => void;
   /** I'm seated at a table or booth, so I can invite them to it. */
   canInviteToTable?: boolean;
   onTreat?: () => void;
@@ -50,6 +52,8 @@ export function PeerPanel({
   const { citizen } = useCitizen();
   const [mode, setMode] = useState<"menu" | "chat" | "money" | "safety" | "rock" | "spray">(startIn);
   const [boxingOpen, setBoxingOpen] = useState(false);
+  const [boxingPending, setBoxingPending] = useState(false);
+  const [boxingTimer, setBoxingTimer] = useState(15);
   const [rockCombo, setRockCombo] = useState(0);
   const [sprayDenom, setSprayDenom] = useState(100);
   const [sprayedTotal, setSprayedTotal] = useState(0);
@@ -66,6 +70,58 @@ export function PeerPanel({
   useEffect(() => {
     thread.current?.scrollTo({ top: thread.current.scrollHeight, behavior: "smooth" });
   }, [messages.length, typing, mode]);
+  // Countdown timer for pending boxing challenge
+  useEffect(() => {
+    if (!boxingPending) return;
+    const interval = setInterval(() => {
+      setBoxingTimer((t) => {
+        if (t <= 1) {
+          clearInterval(interval);
+          setBoxingPending(false);
+          setNote(`⏱️ Challenge timed out. @${peer.username} did not respond. No fight.`);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [boxingPending, peer.username]);
+
+  // Listen for boxing challenge response (acceptance or decline)
+  useEffect(() => {
+    const onRoomAction = (ev: Event) => {
+      const detail = (ev as CustomEvent<{
+        event?: {
+          type?: string;
+          challengerId?: string;
+          challengerUsername?: string;
+          opponentId?: string;
+          opponentUsername?: string;
+        };
+      }>).detail;
+      const t = detail?.event?.type;
+      if (!t) return;
+      const isMyChallenge =
+        detail?.event?.challengerId === (citizen?.id ?? "me") ||
+        detail?.event?.challengerUsername === citizen?.username;
+
+      if (!isMyChallenge) return;
+
+      if (t === "boxing_accept") {
+        gameAudio.playConfirmSound();
+        setBoxingPending(false);
+        setNote(`🔔 Bout accepted by @${peer.username}! Entering the 3D Boxing Ring!`);
+        setBoxingOpen(true);
+      } else if (t === "boxing_decline") {
+        gameAudio.playClickSound();
+        setBoxingPending(false);
+        setNote(`❌ @${peer.username} declined the boxing challenge. No fight.`);
+      }
+    };
+    window.addEventListener("cometodubai:room-action", onRoomAction);
+    return () => window.removeEventListener("cometodubai:room-action", onRoomAction);
+  }, [citizen?.id, citizen?.username, peer.username]);
+
   const [text, setText] = useState("");
   const [amount, setAmount] = useState(50);
   const [busy, setBusy] = useState(false);
@@ -131,11 +187,12 @@ export function PeerPanel({
                 `Rock with @${peer.username}`,
                 () => {
                   gameAudio.playClickSound();
+                  onRock?.(peer);
                   broadcastRoomEvent({ type: "rock", targetId: peer.userId, targetUsername: peer.username });
                   setRockCombo(1);
                   setMode("rock");
                 },
-                "2-Player Beat-Sync Party Rocking Dance (+Social & Hype)"
+                "Auto-walk close and start 2-Player Beat-Sync Party Rocking"
               )}
               {action(
                 "💸",
@@ -149,13 +206,39 @@ export function PeerPanel({
               )}
               {action(
                 "🥊",
-                `Challenge to Celebrity Boxing`,
+                boxingPending ? `⏳ Waiting for @${peer.username}... (${boxingTimer}s)` : `Challenge to Celebrity Boxing`,
                 () => {
+                  if (boxingPending) {
+                    setBoxingPending(false);
+                    broadcastRoomEvent({
+                      type: "boxing_decline",
+                      challengerId: citizen?.id ?? "me",
+                      opponentId: peer.userId,
+                      opponentUsername: peer.username,
+                    });
+                    setNote("✕ Boxing challenge cancelled.");
+                    return;
+                  }
+                  if ((citizen?.balance ?? 0) < 2500) {
+                    setNote("⚠️ You need at least AED 2,500 in your wallet to stake this bout purse!");
+                    return;
+                  }
                   gameAudio.playClickSound();
-                  broadcastRoomEvent({ type: "boxing", targetId: peer.userId, targetUsername: peer.username, purse: 2500 });
-                  setBoxingOpen(true);
+                  broadcastRoomEvent({
+                    type: "boxing_challenge",
+                    targetId: peer.userId,
+                    targetUsername: peer.username,
+                    challengerId: citizen?.id ?? "me",
+                    challengerUsername: citizen?.username ?? "you",
+                    challengerName: citizen?.name ?? "Fighter",
+                    purse: 2500,
+                    challengerLook: citizen?.look,
+                  });
+                  setBoxingPending(true);
+                  setBoxingTimer(15);
+                  setNote(`🥊 Bout challenge sent to @${peer.username}! Waiting for them to accept the AED 2,500 match...`);
                 },
-                "Enter the 3D Boxing Ring for a live prize purse bout"
+                boxingPending ? "Tap to cancel challenge" : "Requires opponent to accept before entering ring"
               )}
               {action(
                 "👋⚡",
@@ -319,6 +402,7 @@ export function PeerPanel({
                     setRockCombo(next);
                     boostNeed("fun", 6);
                     boostNeed("social", 6);
+                    onRock?.(peer);
                     broadcastRoomEvent({ type: "rock", targetId: peer.userId, targetUsername: peer.username });
                     if (next % 5 === 0) {
                       adjustBalance(100);

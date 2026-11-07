@@ -12,7 +12,7 @@ import * as THREE from "three";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { applyBodyShape, buildBodyFrame, defaultBodyType, prepareForShaping } from "./bodyShape";
-import { isOutfit, outfitById, presetFor, rosterAnimations, rosterModel, type AvatarLookProps, type Gender } from "./roster";
+import { WIGS_CATALOG, isOutfit, outfitById, presetFor, rosterAnimations, rosterModel, type AvatarLookProps, type Gender } from "./roster";
 import { composeOutfit } from "./outfit";
 import { createRetargeter } from "./retarget";
 import { useAvatarUrl } from "./customAvatarStore";
@@ -277,7 +277,7 @@ function useAccessories(model: { rig: ReturnType<typeof buildAccessoryRig> }, ac
     return attachAccessories(model.rig, key.split(",") as Accessory[]);
   }, [model, key]);
 
-  const extrasKey = `${look.wear ?? ""}|${look.wigId ?? ""}|${look.shoeId ?? ""}|${look.nailId ?? ""}|${look.nailColor ?? ""}|${look.primaryColor ?? ""}|${look.secondaryColor ?? ""}|${look.pregnantWeeks ?? 0}`;
+  const extrasKey = `${look.wear ?? ""}|${look.wigId ?? ""}|${look.shoeId ?? ""}|${look.nailId ?? ""}|${look.nailColor ?? ""}|${look.primaryColor ?? ""}|${look.secondaryColor ?? ""}|${look.pregnantWeeks ?? 0}|${look.gloves ?? ""}`;
   useEffect(() => {
     return attachLookExtras(model.rig, look);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -417,6 +417,23 @@ function useClothingTint(model: { scene: THREE.Object3D; meshes: THREE.Mesh[] },
  * - "fight" / "box": rapid alternating left/right jab & hook punches (#2, #3, #4)
  * - "spray_money": left hand holds cash stack while right arm flicks bills upward (#14)
  */
+/** Points `bone` so the line from it to `child` runs along `dir` (world space), blended by `w`. */
+function aimBone(
+  bone: THREE.Object3D,
+  child: THREE.Object3D,
+  dir: THREE.Vector3,
+  w: number,
+  t: { a: THREE.Vector3; b: THREE.Vector3; q: THREE.Quaternion; q2: THREE.Quaternion; id: THREE.Quaternion }
+) {
+  if (!bone.parent) return;
+  const from = child.getWorldPosition(t.b).sub(bone.getWorldPosition(t.a)).normalize();
+  t.id.setFromUnitVectors(from, dir);
+  t.q.identity().slerp(t.id, w);
+  bone.getWorldQuaternion(t.q2).premultiply(t.q);
+  bone.quaternion.copy(bone.parent.getWorldQuaternion(t.q).invert().multiply(t.q2));
+  bone.updateWorldMatrix(false, true);
+}
+
 function useSpecialAnimationPose(model: { scene: THREE.Object3D }, animation: AvatarAnimation) {
   const bones = useMemo(() => {
     const named = (...names: string[]) => names.map((n) => model.scene.getObjectByName(n)).find(Boolean);
@@ -424,16 +441,34 @@ function useSpecialAnimationPose(model: { scene: THREE.Object3D }, animation: Av
       pelvis: named("Bip01_Pelvis", "Hips"),
       spine: named("Bip01_Spine", "Spine"),
       spine1: named("Bip01_Spine1", "Spine1", "Spine2"),
+      neck: named("Bip01_Neck", "Neck"),
       rUpper: named("Bip01_R_UpperArm", "RightArm"),
       rFore: named("Bip01_R_Forearm", "RightForeArm"),
+      rHand: named("Bip01_R_Hand", "RightHand"),
       lUpper: named("Bip01_L_UpperArm", "LeftArm"),
       lFore: named("Bip01_L_Forearm", "LeftForeArm"),
+      lHand: named("Bip01_L_Hand", "LeftHand"),
     };
   }, [model]);
 
+  const tVec = useMemo(
+    () => ({
+      a: new THREE.Vector3(),
+      b: new THREE.Vector3(),
+      up: new THREE.Vector3(),
+      right: new THREE.Vector3(),
+      fwd: new THREE.Vector3(),
+      d: new THREE.Vector3(),
+      q: new THREE.Quaternion(),
+      q2: new THREE.Quaternion(),
+      id: new THREE.Quaternion(),
+    }),
+    []
+  );
+
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
-    const { pelvis, spine, spine1, rUpper, rFore, lUpper, lFore } = bones;
+    const { pelvis, spine, spine1, neck, rUpper, rFore, rHand, lUpper, lFore, lHand } = bones;
     if (animation === "rock_female") {
       // Bend torso forward and shake hips/pelvis rhythmically on the beat
       if (spine) spine.rotation.z += 0.42;
@@ -450,11 +485,55 @@ function useSpecialAnimationPose(model: { scene: THREE.Object3D }, animation: Av
       if (rUpper) rUpper.rotation.y += swing * 0.95;
       if (rFore) rFore.rotation.z += 0.45;
     } else if (animation === "fight" || animation === "box") {
-      const jab = Math.sin(t * 15);
-      if (rUpper) rUpper.rotation.z += 0.65 + Math.max(0, jab) * 0.75;
-      if (lUpper) lUpper.rotation.z += 0.65 + Math.max(0, -jab) * 0.75;
-      if (rFore) rFore.rotation.z += 0.55;
-      if (lFore) lFore.rotation.z += 0.55;
+      // Authentic Boxing Stance: High Chin Guard with snapping forward Jabs & Crosses
+      // Fists and arms point FORWARD at the opponent, never backwards!
+      if (pelvis && (neck ?? spine1 ?? spine) && rUpper && rFore && rHand && lUpper && lFore && lHand) {
+        model.scene.updateWorldMatrix(true, true);
+        const top = neck ?? spine1 ?? spine!;
+        const up = top.getWorldPosition(tVec.up).sub(pelvis.getWorldPosition(tVec.a)).normalize();
+        const right = rUpper.getWorldPosition(tVec.right).sub(lUpper.getWorldPosition(tVec.a)).normalize();
+        const fwd = tVec.fwd.crossVectors(up, right).normalize();
+        const dir = (u: number, f: number, r: number) =>
+          tVec.d.set(0, 0, 0).addScaledVector(up, u).addScaledVector(fwd, f).addScaledVector(right, r).normalize();
+
+        const jabCycle = Math.sin(t * 12);
+        const isRightPunching = jabCycle > 0;
+        const punchExt = Math.abs(jabCycle);
+
+        // Left Arm: Snapping Lead Jab vs High Chin Guard
+        let leftUpperDir: THREE.Vector3;
+        let leftForeDir: THREE.Vector3;
+        if (!isRightPunching) {
+          // Left Jab driving straight forward towards opponent
+          leftUpperDir = dir(0.04, 0.78 + punchExt * 0.22, -0.12).clone();
+          leftForeDir = dir(0.06, 0.96 + punchExt * 0.04, -0.04).clone();
+        } else {
+          // Left High Guard protecting chin & cheekbone
+          leftUpperDir = dir(-0.38, 0.52, -0.2).clone();
+          leftForeDir = dir(0.85, 0.42, 0.16).clone();
+        }
+        aimBone(lUpper, lFore, leftUpperDir, 1, tVec);
+        aimBone(lFore, lHand, leftForeDir, 1, tVec);
+
+        // Right Arm: Power Cross vs High Chin Guard
+        let rightUpperDir: THREE.Vector3;
+        let rightForeDir: THREE.Vector3;
+        if (isRightPunching) {
+          // Right Cross driving forward with power
+          rightUpperDir = dir(0.04, 0.78 + punchExt * 0.22, 0.12).clone();
+          rightForeDir = dir(0.06, 0.96 + punchExt * 0.04, 0.04).clone();
+        } else {
+          // Right High Guard tucked tight to chin
+          rightUpperDir = dir(-0.38, 0.52, 0.2).clone();
+          rightForeDir = dir(0.85, 0.42, -0.16).clone();
+        }
+        aimBone(rUpper, rFore, rightUpperDir, 1, tVec);
+        aimBone(rFore, rHand, rightForeDir, 1, tVec);
+
+        // Torso rotates rhythmically with the punches
+        if (spine) spine.rotation.y = Math.sin(t * 12) * 0.2;
+        if (spine1) spine1.rotation.x = 0.08;
+      }
     } else if (animation === "spray_money") {
       const flick = Math.abs(Math.sin(t * 9));
       if (lUpper) lUpper.rotation.z += 0.5;
@@ -676,18 +755,6 @@ function useCarry(model: { scene: THREE.Object3D }, mode: CarryMode | false, hel
   });
 }
 
-/** Points `bone` so the line from it to `child` runs along `dir` (world space), blended by `w`. */
-function aimBone(bone: THREE.Object3D, child: THREE.Object3D, dir: THREE.Vector3, w: number, t: { a: THREE.Vector3; b: THREE.Vector3; q: THREE.Quaternion; q2: THREE.Quaternion; id: THREE.Quaternion }) {
-  if (!bone.parent) return;
-  const from = child.getWorldPosition(t.b).sub(bone.getWorldPosition(t.a)).normalize();
-  // The turn from where the bone points now to `dir`, eased in by the pose's weight.
-  t.id.setFromUnitVectors(from, dir);
-  t.q.identity().slerp(t.id, w);
-  bone.getWorldQuaternion(t.q2).premultiply(t.q);
-  bone.quaternion.copy(bone.parent.getWorldQuaternion(t.q).invert().multiply(t.q2));
-  bone.updateWorldMatrix(false, true);
-}
-
 /** Lays a BodyPose over the playing clip. Works on both skeletons (Rocketbox and custom avatars). */
 function useBodyPose(model: { scene: THREE.Object3D }, pose: BodyPose | undefined) {
   const bones = useMemo(() => {
@@ -778,7 +845,26 @@ function useAvatarHairAndShoeReplacement(
 ) {
   const wearOutfit = outfitById(look.wear);
   const rawWig = look.wigId ?? wearOutfit?.defaultWigId;
-  const isCapOrWig = Boolean((rawWig && rawWig !== "none") || accessories?.includes("cap"));
+
+  // Headwear that physically encases the skull: caps, geles, turbans, kofias, okukus, agals
+  const isEnclosingHeadwear = Boolean(
+    (rawWig &&
+      rawWig !== "none" &&
+      (rawWig.includes("cap") ||
+        rawWig.includes("gele") ||
+        rawWig.includes("okuku") ||
+        rawWig.includes("turban") ||
+        rawWig.includes("kofia") ||
+        rawWig.includes("hat") ||
+        rawWig === "fila_cap" ||
+        rawWig === "igbo_red_cap" ||
+        rawWig === "emirati_ghutra_agal" ||
+        rawWig === "tanyi_crown")) ||
+      accessories?.includes("cap")
+  );
+
+  const wigDef = rawWig && rawWig !== "none" ? WIGS_CATALOG.find((w) => w.id === rawWig) : undefined;
+  const hairColorHex = wigDef?.color;
 
   useEffect(() => {
     // Traverse the full scene so borrowed face/hair meshes from composeOutfit are also targeted
@@ -802,11 +888,23 @@ function useAvatarHairAndShoeReplacement(
           hasHeadOrBodyMat = true;
         } else if (matName.includes("opacity") || matName.includes("hair")) {
           hasHairMat = true;
-          // Hide or restore hair cards cleanly — when wearing a cap, hair cards must never lap or show on the cap
-          mat.opacity = isCapOrWig ? 0 : 1;
+          // Hide or restore hair cards cleanly — only skull-enclosing headwear hides them!
+          mat.opacity = isEnclosingHeadwear ? 0 : 1;
           mat.transparent = true;
-          mat.depthWrite = !isCapOrWig;
-          mat.visible = !isCapOrWig;
+          mat.depthWrite = !isEnclosingHeadwear;
+          mat.visible = !isEnclosingHeadwear;
+
+          const stdMat = mat as THREE.MeshStandardMaterial;
+          if (stdMat.color) {
+            if (stdMat.userData.origHairHex === undefined) {
+              stdMat.userData.origHairHex = stdMat.color.getHex();
+            }
+            if (!isEnclosingHeadwear && hairColorHex) {
+              stdMat.color.set(hairColorHex);
+            } else if (stdMat.userData.origHairHex !== undefined) {
+              stdMat.color.setHex(stdMat.userData.origHairHex);
+            }
+          }
           mat.needsUpdate = true;
         }
       }
@@ -818,13 +916,13 @@ function useAvatarHairAndShoeReplacement(
 
       // If the mesh is purely dedicated to hair cards and has no head or body primitives
       if (isHairMesh && !hasHeadOrBodyMat) {
-        m.visible = !isCapOrWig;
+        m.visible = !isEnclosingHeadwear;
       } else if (hasHeadOrBodyMat) {
         // Face and body MUST ALWAYS remain visible! Never hide the face when wearing caps or wigs!
         m.visible = true;
       }
     });
-  }, [model, isCapOrWig]);
+  }, [model, isEnclosingHeadwear, hairColorHex]);
 }
 
 function RosterAvatar({

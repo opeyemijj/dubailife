@@ -27,6 +27,8 @@ export interface AvatarLookProps {
   nailColor?: string;
   /** Pregnancy progression (weeks 1..3) for 3D belly morphing (#6). */
   pregnantWeeks?: number;
+  /** Equipped 3D Boxing Gloves for bouts and fight animations. */
+  gloves?: "boxing_red" | "boxing_blue" | "none";
   // Fields from the earlier stylised avatar; kept so old saved citizens still load.
   hairstyle?: string;
   outfit?: string;
