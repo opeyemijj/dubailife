@@ -523,46 +523,82 @@ function Thread({ me, other, online, onBack }: { me: string; other: string; onli
   );
 }
 
-/** Send money to someone from a conversation (unrestricted — any amount, even 50,000,000,000). */
+/** Send money to someone from a conversation (up to your wallet balance). */
 function PayFriend({ to, balance, onDone }: { to: Contact; balance: number; onDone: (amount: number | null) => void }) {
-  const [amount, setAmount] = useState(100);
+  const [amount, setAmount] = useState(Math.min(balance, 1000));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const pay = async () => {
+    if (amount > balance) {
+      setError(`You cannot send more than your wallet balance (AED ${balance.toLocaleString()}).`);
+      return;
+    }
     setBusy(true);
     const e = await sendMoney({ userId: to.id, username: to.username, name: to.name, x: 0, z: 0, animation: "idle" }, amount, "Phone");
     setBusy(false);
     if (e) setError(e);
     else onDone(amount);
   };
-  const presets = [
+
+  const candidatePresets = [
+    { label: "1K", val: 1_000 },
     { label: "10K", val: 10_000 },
+    { label: "100K", val: 100_000 },
     { label: "1M", val: 1_000_000 },
-    { label: "100M", val: 100_000_000 },
-    { label: "1B", val: 1_000_000_000 },
-    { label: "10B", val: 10_000_000_000 },
-    { label: "50B", val: 50_000_000_000 },
+    { label: "50M", val: 50_000_000 },
   ];
+  const presets = candidatePresets.filter((p) => p.val <= balance);
+
+  const exceedsBalance = amount > balance;
+
   return (
     <div className="fixed inset-0 z-[150] bg-black/60 flex items-end sm:items-center justify-center p-2" onClick={() => onDone(null)}>
       <div className="w-full max-w-sm bg-white text-slate-900 rounded-3xl p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="font-black text-lg">Send money to @{to.username}</h3>
-          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">No Restriction</span>
+          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Wallet Transfer</span>
+        </div>
+        <div className="flex items-center justify-between text-xs text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+          <span>Your Balance:</span>
+          <span className="font-mono font-black text-slate-900">AED {balance.toLocaleString()}</span>
         </div>
         <div className="grid grid-cols-6 gap-1.5">
           {presets.map((p) => (
-            <button key={p.label} onClick={() => setAmount(p.val)} className={`h-9 rounded-xl text-xs font-black ${amount === p.val ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-800"}`}>{p.label}</button>
+            <button key={p.label} onClick={() => { setAmount(p.val); setError(null); }} className={`h-9 rounded-xl text-xs font-black ${amount === p.val ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-800"}`}>{p.label}</button>
           ))}
+          <button onClick={() => { setAmount(balance); setError(null); }} className={`h-9 rounded-xl text-xs font-black ${amount === balance ? "bg-emerald-600 text-white" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`}>MAX</button>
         </div>
-        <label className="flex items-center gap-2 h-11 rounded-xl border border-slate-200 px-3">
+        <label className={`flex items-center gap-2 h-11 rounded-xl border px-3 ${exceedsBalance ? "border-rose-400 bg-rose-50/50" : "border-slate-200"}`}>
           <span className="text-xs font-black text-slate-400">AED</span>
-          <input type="number" min={1} step="any" value={amount} onChange={(e) => setAmount(Math.max(0, Math.floor(Number(e.target.value) || 0)))} className="flex-1 text-base font-black outline-none bg-transparent" />
-          <button type="button" onClick={() => setAmount(50_000_000_000)} className="text-[11px] font-black text-emerald-600 hover:text-emerald-700">50B</button>
+          <input
+            type="number"
+            min={1}
+            max={balance}
+            step="any"
+            value={amount}
+            onChange={(e) => {
+              const val = Math.max(0, Math.floor(Number(e.target.value) || 0));
+              setAmount(val);
+              setError(null);
+            }}
+            className="flex-1 text-base font-black outline-none bg-transparent"
+          />
+          <button type="button" onClick={() => { setAmount(balance); setError(null); }} className="text-[11px] font-black text-emerald-600 hover:text-emerald-700">MAX</button>
         </label>
-        <p className="text-xs text-slate-500">Unrestricted transfer: send any amount up to 50,000,000,000+ AED</p>
+        {exceedsBalance && (
+          <p className="text-xs font-bold text-rose-600">
+            Cannot exceed wallet balance of AED {balance.toLocaleString()}
+          </p>
+        )}
         {error && <p className="text-sm font-bold text-rose-600">{error}</p>}
-        <button disabled={busy || amount < 1} onClick={pay} className="w-full h-12 rounded-xl bg-emerald-500 disabled:opacity-50 text-white font-black">{busy ? "Sending…" : `Send AED ${amount.toLocaleString()}`}</button>
+        <button
+          disabled={busy || amount < 1 || exceedsBalance}
+          onClick={pay}
+          className="w-full h-12 rounded-xl bg-emerald-500 disabled:opacity-50 text-white font-black"
+        >
+          {busy ? "Sending…" : exceedsBalance ? "Insufficient Balance" : `Send AED ${amount.toLocaleString()}`}
+        </button>
       </div>
     </div>
   );

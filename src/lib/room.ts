@@ -443,15 +443,12 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
   return { peers, events, emit, myId, messages, say, typingTo, isTyping, unread, openThread, inject };
 }
 
-/** Pays another citizen with zero restrictions (any amount, even 50B+). Resolves to null on success or error string. */
+/** Pays another citizen up to your current balance. Resolves to null on success or error string. */
 export async function sendMoney(to: Peer, amount: number, place: string): Promise<string | null> {
   const { error } = await supabase().rpc("send_money", { p_to: to.userId, p_amount: amount, p_place: place });
   refreshCitizen();
 
-  // If successfully processed by backend, OR if backend balks on balance/limits, fulfill unrestricted
-  const isBalanceOrLimitError = error && /insufficient_funds|amount_out_of_range|transfer_limit|too_many_transfers/i.test(error.message);
-
-  if (!error || isBalanceOrLimitError) {
+  if (!error) {
     setTimeout(() => askForPush({ icon: "💸", title: `AED ${amount.toLocaleString()} sent to @${to.username}`, text: "Turn on notifications so you know the moment friends send you money or thank you back." }), 1500);
     void (async () => {
       try {
@@ -473,6 +470,9 @@ export async function sendMoney(to: Peer, amount: number, place: string): Promis
     return null;
   }
   return /\bblocked\b/.test(error.message) ? BLOCKED_TEXT
+    : /insufficient_funds/.test(error.message) ? "You don't have enough AED in your wallet."
+    : /amount_out_of_range/.test(error.message) ? "Enter an amount of at least AED 1."
+    : /too_many_transfers/.test(error.message) ? "You're sending money a bit too fast — wait a moment."
     : /recipient_missing|invalid_recipient/.test(error.message) ? "You can't send money to that player."
     : "The transfer didn't go through. Please try again.";
 }
