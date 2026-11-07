@@ -36,7 +36,7 @@ export function PartyPeople({ room, place, peerId, setPeerId, say }: {
           balance={citizen?.balance ?? 0}
           startIn={startChat ? "chat" : "menu"}
           unread={room.unread[peer.userId] ?? 0}
-          messages={room.messages.filter((m) => m.with === peer.userId)}
+          messages={room.messages.filter((m) => m.with === peer.userId || m.with === peer.username || m.with?.toLowerCase() === peer.username.toLowerCase())}
           typing={room.isTyping(peer.userId, clock)}
           onTyping={() => room.typingTo(peer.userId)}
           onThread={(open) => room.openThread(open ? peer.userId : null)}

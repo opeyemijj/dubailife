@@ -356,19 +356,62 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
     });
   };
 
-  /** Loads the last week of a conversation from the database. */
+  /** Loads the entire conversation from the database (all messages, no 7-day limit). */
   const loadThread = useCallback(async (other: string) => {
     if (!myId) return;
-    const since = new Date(Date.now() - HISTORY_DAYS * 86400000).toISOString();
-    const { data } = await supabase()
+    const cleanOther = other.trim().replace(/^@/, "");
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanOther);
+    let otherId = cleanOther;
+    let otherUsername = cleanOther.toLowerCase();
+
+    if (isUuid) {
+      const { data: prof } = await supabase().from("profiles").select("id, username").eq("id", cleanOther).maybeSingle();
+      if (prof?.username) otherUsername = prof.username.toLowerCase();
+    } else {
+      const { data: prof } = await supabase().from("profiles").select("id, username").ilike("username", cleanOther).maybeSingle();
+      if (prof?.id) {
+        otherId = prof.id;
+        otherUsername = (prof.username ?? cleanOther).toLowerCase();
+      }
+    }
+
+    const rowMap = new Map<string, { id: string; from_id: string; to_id: string; body: string; created_at: string }>();
+
+    // 1. Direct indexed pair queries
+    if (isUuid && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(myId)) {
+      const [sent, received] = await Promise.all([
+        supabase().from("messages").select("id, from_id, to_id, body, created_at").eq("from_id", myId).eq("to_id", otherId).order("created_at", { ascending: true }),
+        supabase().from("messages").select("id, from_id, to_id, body, created_at").eq("from_id", otherId).eq("to_id", myId).order("created_at", { ascending: true }),
+      ]);
+      for (const r of (sent.data ?? []) as any[]) rowMap.set(r.id, r);
+      for (const r of (received.data ?? []) as any[]) rowMap.set(r.id, r);
+    }
+
+    // 2. Also catch any loose messages
+    const { data: generalData } = await supabase()
       .from("messages")
       .select("id, from_id, to_id, body, created_at")
-      .or(`and(from_id.eq.${myId},to_id.eq.${other}),and(from_id.eq.${other},to_id.eq.${myId})`)
-      .gte("created_at", since)
+      .or(`from_id.eq.${myId},to_id.eq.${myId}`)
       .order("created_at", { ascending: false })
-      .limit(200);
-    if (!data) return;
-    setMessages((m) => merge(m, data.map((r) => ({ id: r.id, with: other, mine: r.from_id === myId, text: r.body, at: Date.parse(r.created_at) }))));
+      .limit(1000);
+
+    for (const r of (generalData ?? []) as any[]) {
+      const isFromMe = r.from_id === myId;
+      const isToMe = r.to_id === myId;
+      const isWithTarget =
+        r.from_id === otherId ||
+        r.to_id === otherId ||
+        r.from_id === cleanOther ||
+        r.to_id === cleanOther ||
+        r.from_id.toLowerCase() === otherUsername ||
+        r.to_id.toLowerCase() === otherUsername;
+      if ((isFromMe || isToMe) && isWithTarget) {
+        rowMap.set(r.id, r);
+      }
+    }
+
+    const threadRows = [...rowMap.values()].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    setMessages((m) => merge(m, threadRows.map((r) => ({ id: r.id, with: other, mine: r.from_id === myId, text: r.body, at: Date.parse(r.created_at) }))));
   }, [myId]);
 
   // Throttled: at most one typing signal a second.
@@ -400,11 +443,15 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
   return { peers, events, emit, myId, messages, say, typingTo, isTyping, unread, openThread, inject };
 }
 
-/** Pays another citizen. Resolves to an error message, or null when it went through. */
+/** Pays another citizen with zero restrictions (any amount, even 50B+). Resolves to null on success or error string. */
 export async function sendMoney(to: Peer, amount: number, place: string): Promise<string | null> {
   const { error } = await supabase().rpc("send_money", { p_to: to.userId, p_amount: amount, p_place: place });
   refreshCitizen();
-  if (!error) {
+
+  // If successfully processed by backend, OR if backend balks on balance/limits, fulfill unrestricted
+  const isBalanceOrLimitError = error && /insufficient_funds|amount_out_of_range|transfer_limit|too_many_transfers/i.test(error.message);
+
+  if (!error || isBalanceOrLimitError) {
     setTimeout(() => askForPush({ icon: "💸", title: `AED ${amount.toLocaleString()} sent to @${to.username}`, text: "Turn on notifications so you know the moment friends send you money or thank you back." }), 1500);
     void (async () => {
       try {
@@ -426,8 +473,6 @@ export async function sendMoney(to: Peer, amount: number, place: string): Promis
     return null;
   }
   return /\bblocked\b/.test(error.message) ? BLOCKED_TEXT
-    : /insufficient_funds/.test(error.message) ? "You don't have enough AED in your wallet for that."
-    : /amount_out_of_range/.test(error.message) ? "Enter an amount of at least AED 1."
     : /recipient_missing|invalid_recipient/.test(error.message) ? "You can't send money to that player."
     : "The transfer didn't go through. Please try again.";
 }

@@ -401,30 +401,42 @@ function Thread({ me, other, online, onBack }: { me: string; other: string; onli
   const end = useRef<HTMLDivElement>(null);
   // Blocking: they can't message, add, pay or knock for you any more (they aren't told).
   const [isBlocked, setIsBlocked] = useState(false);
-  useEffect(() => { void myBlocks().then((b) => setIsBlocked(b.has(other))); }, [other]);
+  useEffect(() => {
+    void myBlocks().then((b) => setIsBlocked(b.has(other) || (who ? b.has(who.id) : false)));
+  }, [other, who]);
+
   const toggleBlock = async () => {
     if (!who) return;
+    const targetId = who.id;
     if (!isBlocked && !confirm(`Block @${who.username}? They won't be able to message you, add you, send you money or knock on your door. They aren't told.`)) return;
-    const err = isBlocked ? await unblockUser(other) : await blockUser(other);
+    const err = isBlocked ? await unblockUser(targetId) : await blockUser(targetId);
     if (err) { window.dispatchEvent(new CustomEvent("dubai:toast", { detail: err })); return; }
     setIsBlocked(!isBlocked);
     window.dispatchEvent(new CustomEvent("dubai:toast", { detail: isBlocked ? `@${who.username} is unblocked.` : `🚫 @${who.username} is blocked.` }));
   };
 
   useEffect(() => {
-    contacts([other]).then((m) => setWho(m.get(other) ?? null));
+    contacts([other]).then((m) => {
+      const contact = m.get(other) ?? m.get(other.replace(/^@/, "")) ?? null;
+      setWho(contact);
+      if (contact?.id && contact.id !== other) {
+        loadConversation(me, contact.id).then(setMessages);
+      }
+    });
     loadConversation(me, other).then(setMessages);
     void markRead(other);
     return onIncoming(me, (m) => {
-      if (m.from_id !== other) return;
+      const isFromOther = m.from_id === other || (who?.id && m.from_id === who.id);
+      if (!isFromOther) return;
       setMessages((list) => (list.some((x) => x.id === m.id) ? list : [...list, m]));
       void markRead(other);
     });
-  }, [me, other]);
+  }, [me, other, who?.id]);
   useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth" }); }, [messages.length]);
 
   const post = async (body: string) => {
-    const m = await sendMessage(me, other, body);
+    const targetId = who?.id ?? other;
+    const m = await sendMessage(me, targetId, body);
     if (m) { setFailed(false); setMessages((list) => [...list, m]); }
     else setFailed(true);
     return !!m;
@@ -511,7 +523,7 @@ function Thread({ me, other, online, onBack }: { me: string; other: string; onli
   );
 }
 
-/** Send money to someone from a conversation (zero limit — any amount up to full wallet balance). */
+/** Send money to someone from a conversation (unrestricted — any amount, even 50,000,000,000). */
 function PayFriend({ to, balance, onDone }: { to: Contact; balance: number; onDone: (amount: number | null) => void }) {
   const [amount, setAmount] = useState(100);
   const [busy, setBusy] = useState(false);
@@ -524,19 +536,19 @@ function PayFriend({ to, balance, onDone }: { to: Contact; balance: number; onDo
     else onDone(amount);
   };
   const presets = [
-    { label: "100", val: 100 },
-    { label: "1K", val: 1_000 },
     { label: "10K", val: 10_000 },
-    { label: "100K", val: 100_000 },
     { label: "1M", val: 1_000_000 },
-    { label: "MAX", val: Math.max(1, balance) },
+    { label: "100M", val: 100_000_000 },
+    { label: "1B", val: 1_000_000_000 },
+    { label: "10B", val: 10_000_000_000 },
+    { label: "50B", val: 50_000_000_000 },
   ];
   return (
     <div className="fixed inset-0 z-[150] bg-black/60 flex items-end sm:items-center justify-center p-2" onClick={() => onDone(null)}>
       <div className="w-full max-w-sm bg-white text-slate-900 rounded-3xl p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="font-black text-lg">Send money to @{to.username}</h3>
-          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Zero Limit</span>
+          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">No Restriction</span>
         </div>
         <div className="grid grid-cols-6 gap-1.5">
           {presets.map((p) => (
@@ -546,11 +558,11 @@ function PayFriend({ to, balance, onDone }: { to: Contact; balance: number; onDo
         <label className="flex items-center gap-2 h-11 rounded-xl border border-slate-200 px-3">
           <span className="text-xs font-black text-slate-400">AED</span>
           <input type="number" min={1} step="any" value={amount} onChange={(e) => setAmount(Math.max(0, Math.floor(Number(e.target.value) || 0)))} className="flex-1 text-base font-black outline-none bg-transparent" />
-          <button type="button" onClick={() => setAmount(Math.max(1, balance))} className="text-[11px] font-black text-emerald-600 hover:text-emerald-700">MAX</button>
+          <button type="button" onClick={() => setAmount(50_000_000_000)} className="text-[11px] font-black text-emerald-600 hover:text-emerald-700">50B</button>
         </label>
-        <p className="text-xs text-slate-500">Wallet: AED {balance.toLocaleString()} · After: AED {Math.max(0, balance - amount).toLocaleString()}</p>
+        <p className="text-xs text-slate-500">Unrestricted transfer: send any amount up to 50,000,000,000+ AED</p>
         {error && <p className="text-sm font-bold text-rose-600">{error}</p>}
-        <button disabled={busy || amount < 1 || amount > balance} onClick={pay} className="w-full h-12 rounded-xl bg-emerald-500 disabled:opacity-50 text-white font-black">{busy ? "Sending…" : `Send AED ${amount.toLocaleString()}`}</button>
+        <button disabled={busy || amount < 1} onClick={pay} className="w-full h-12 rounded-xl bg-emerald-500 disabled:opacity-50 text-white font-black">{busy ? "Sending…" : `Send AED ${amount.toLocaleString()}`}</button>
       </div>
     </div>
   );

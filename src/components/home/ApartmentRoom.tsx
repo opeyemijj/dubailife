@@ -1454,19 +1454,67 @@ function RoomScene({
           setTimeout(() => {
             setPose((prev) => ({ ...prev, yaw: faceYaw }));
             setAnimation("rock_female");
-            setTimeout(() => setAnimation("idle"), 9000);
+            setTimeout(() => setAnimation("idle"), 60000);
           }, 1200);
           return;
         }
         setAnimation("rock_female");
-        setTimeout(() => setAnimation("idle"), 9000);
+        setTimeout(() => setAnimation("idle"), 60000);
       } else if (t === "slap") {
+        const other = people[0];
+        if (other) {
+          const dx = poseRef.current.position[0] - other.position[0];
+          const dz = poseRef.current.position[2] - other.position[2];
+          const d = Math.hypot(dx, dz) || 1;
+          const spotX = other.position[0] + (dx / d) * 0.55;
+          const spotZ = other.position[2] + (dz / d) * 0.55;
+          handleLocomotionRef.current?.(new THREE.Vector3(spotX, 0, spotZ));
+          const faceYaw = Math.atan2(other.position[0] - spotX, other.position[2] - spotZ);
+          setTimeout(() => {
+            setPose((prev) => ({ ...prev, yaw: faceYaw }));
+            setAnimation("slap");
+            setTimeout(() => setAnimation("idle"), 2200);
+          }, 1200);
+          return;
+        }
         setAnimation("slap");
         setTimeout(() => setAnimation("idle"), 2200);
       } else if (t === "brawl" || t === "gang_beat") {
+        const other = people[0];
+        if (other) {
+          const dx = poseRef.current.position[0] - other.position[0];
+          const dz = poseRef.current.position[2] - other.position[2];
+          const d = Math.hypot(dx, dz) || 1;
+          const spotX = other.position[0] + (dx / d) * 0.65;
+          const spotZ = other.position[2] + (dz / d) * 0.65;
+          handleLocomotionRef.current?.(new THREE.Vector3(spotX, 0, spotZ));
+          const faceYaw = Math.atan2(other.position[0] - spotX, other.position[2] - spotZ);
+          setTimeout(() => {
+            setPose((prev) => ({ ...prev, yaw: faceYaw }));
+            setAnimation("fight");
+            setTimeout(() => setAnimation("idle"), 7500);
+          }, 1200);
+          return;
+        }
         setAnimation("fight");
         setTimeout(() => setAnimation("idle"), 7500);
       } else if (t === "spray_money") {
+        const other = people[0];
+        if (other) {
+          const dx = poseRef.current.position[0] - other.position[0];
+          const dz = poseRef.current.position[2] - other.position[2];
+          const d = Math.hypot(dx, dz) || 1;
+          const spotX = other.position[0] + (dx / d) * 0.70;
+          const spotZ = other.position[2] + (dz / d) * 0.70;
+          handleLocomotionRef.current?.(new THREE.Vector3(spotX, 0, spotZ));
+          const faceYaw = Math.atan2(other.position[0] - spotX, other.position[2] - spotZ);
+          setTimeout(() => {
+            setPose((prev) => ({ ...prev, yaw: faceYaw }));
+            setAnimation("spray_money");
+            setTimeout(() => setAnimation("idle"), 4500);
+          }, 1200);
+          return;
+        }
         setAnimation("spray_money");
         setTimeout(() => setAnimation("idle"), 4500);
       }

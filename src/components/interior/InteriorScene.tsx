@@ -744,7 +744,7 @@ function Player({
       if (!t) return;
       if (t === "rock") {
         setActionAnim("rock_female");
-        setTimeout(() => setActionAnim(null), 9000);
+        setTimeout(() => setActionAnim(null), 60000);
       } else if (t === "slap") {
         setActionAnim("slap");
         setTimeout(() => setActionAnim(null), 2200);

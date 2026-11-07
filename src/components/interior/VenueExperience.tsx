@@ -508,7 +508,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   };
   const me = free && !walkTo
     ? { x: free.x, z: free.z, face: free.yaw, animation: (free.moving ? (free.running ? "run" : "walk") : shownAnimation) as AvatarAnimation, lift: 0, dirty }
-    : { x: walkTo?.point[0] ?? spawn[0], z: walkTo?.point[1] ?? spawn[1], face: walkTo?.face, animation: shownAnimation, lift: playerAnimation === "sit" ? seatLift : 0, dirty };
+    : { x: walkTo?.point[0] ?? spawn[0], z: walkTo?.point[1] ?? spawn[1], face: walkTo?.face, animation: walkTo ? "walk" : shownAnimation, lift: playerAnimation === "sit" ? seatLift : 0, dirty };
   const [bubbles, setBubbles] = useState<Record<string, string>>({});
   const bubble = useCallback((who: string, text: string) => {
     setBubbles((b) => ({ ...b, [who]: text }));
@@ -639,6 +639,29 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         setPlayerAnimation("rock_male");
         boostNeed("fun", 10);
         boostNeed("social", 8);
+        setTimeout(() => {
+          setPlayerAnimation((a) => (a === "rock_male" ? "idle" : a));
+        }, 60000);
+      }, faceYaw);
+    }
+    if (e.type === "slap" && (e.targetId === myId || e.targetUsername === citizen?.username)) {
+      gameAudio.playClickSound();
+      bubble("me", "⚡ OUCH!");
+      say(`👋⚡ @${e.from.username} slapped you! 1.2s to dodge or fight back!`);
+      const faceYaw = Math.atan2(e.from.x - me.x, e.from.z - me.z);
+      walkThen([me.x, me.z], () => {
+        setPlayerAnimation("slap");
+        setTimeout(() => setPlayerAnimation((a) => (a === "slap" ? "idle" : a)), 1800);
+      }, faceYaw);
+    }
+    if (e.type === "brawl" && (e.targetId === myId || e.targetUsername === citizen?.username)) {
+      gameAudio.playClickSound();
+      bubble("me", "🥊 Square up!");
+      say(`🥊💥 BRAWL! You and @${e.from.username} are fighting!`);
+      const faceYaw = Math.atan2(e.from.x - me.x, e.from.z - me.z);
+      walkThen([me.x, me.z], () => {
+        setPlayerAnimation("fight");
+        setTimeout(() => setPlayerAnimation((a) => (a === "fight" ? "idle" : a)), 7500);
       }, faceYaw);
     }
     if (e.type === "consumption") {
@@ -835,6 +858,11 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   };
 
   const peerPanel = panel?.kind === "peer" ? peers.find((p) => p.userId === panel.userId) : undefined;
+  useEffect(() => {
+    if (peerPanel?.userId) {
+      room.openThread(peerPanel.userId);
+    }
+  }, [peerPanel?.userId, room.openThread]);
   const unreadHere = Object.values(room.unread).reduce((a, b) => a + b, 0);
   const [peopleOpen, setPeopleOpen] = useState(false);
 
@@ -1827,7 +1855,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
           balance={citizen?.balance ?? 0}
           treat={treat}
           onClose={() => setPanel(null)}
-          messages={room.messages.filter((m) => m.with === peerPanel.userId)}
+          messages={room.messages.filter((m) => m.with === peerPanel.userId || m.with === peerPanel.username || m.with?.toLowerCase() === peerPanel.username.toLowerCase())}
           typing={room.isTyping(peerPanel.userId, clock)}
           onTyping={() => room.typingTo(peerPanel.userId)}
           onThread={(open) => room.openThread(open ? peerPanel.userId : null)}
@@ -1862,15 +1890,101 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
               setPlayerAnimation("rock_female");
               boostNeed("fun", 10);
               boostNeed("social", 8);
+              setTimeout(() => {
+                setPlayerAnimation((a) => (a === "rock_female" ? "idle" : a));
+              }, 60000);
             }, faceYaw);
           }}
-          onSpray={(amount) => {
-            setPlayerAnimation("spray_money");
-            bubble("me", `💸✨ Sprayed AED ${amount.toLocaleString()}!`);
-            say(`💸✨ You sprayed AED ${amount.toLocaleString()} cash!`);
-            setTimeout(() => {
-              setPlayerAnimation((a) => (a === "spray_money" ? "idle" : a));
-            }, 4500);
+          onSlap={(targetPeer) => {
+            const dx = me.x - targetPeer.x;
+            const dz = me.z - targetPeer.z;
+            const d = Math.hypot(dx, dz) || 1;
+            const doSlap = () => {
+              gameAudio.playClickSound();
+              setPlayerAnimation("slap");
+              bubble("me", "👋⚡ SLAP!");
+              say(`👋⚡ You slapped @${targetPeer.username}!`);
+              broadcastRoomEvent({
+                type: "slap",
+                targetId: targetPeer.userId,
+                targetUsername: targetPeer.username,
+              });
+              setTimeout(() => {
+                setPlayerAnimation((a) => (a === "slap" ? "idle" : a));
+              }, 2200);
+            };
+
+            if (d > 0.65) {
+              const spot: [number, number] = [targetPeer.x + (dx / d) * 0.55, targetPeer.z + (dz / d) * 0.55];
+              const faceYaw = Math.atan2(targetPeer.x - spot[0], targetPeer.z - spot[1]);
+              say(`🚶 Walking close to @${targetPeer.username}...`);
+              walkThen(spot, doSlap, faceYaw);
+            } else {
+              doSlap();
+            }
+          }}
+          onFight={(targetPeer) => {
+            const dx = me.x - targetPeer.x;
+            const dz = me.z - targetPeer.z;
+            const d = Math.hypot(dx, dz) || 1;
+            const doFight = () => {
+              gameAudio.playClickSound();
+              setPlayerAnimation("fight");
+              bubble("me", "🥊💥 Let's GO!");
+              say(`🥊💥 BRAWL started with @${targetPeer.username}!`);
+              broadcastRoomEvent({
+                type: "brawl",
+                targetId: targetPeer.userId,
+                targetUsername: targetPeer.username,
+              });
+              setTimeout(() => {
+                setPlayerAnimation((a) => (a === "fight" ? "idle" : a));
+              }, 7500);
+            };
+
+            if (d > 0.75) {
+              const spot: [number, number] = [targetPeer.x + (dx / d) * 0.65, targetPeer.z + (dz / d) * 0.65];
+              const faceYaw = Math.atan2(targetPeer.x - spot[0], targetPeer.z - spot[1]);
+              say(`🚶 Walking close to @${targetPeer.username} to fight...`);
+              walkThen(spot, doFight, faceYaw);
+            } else {
+              doFight();
+            }
+          }}
+          onSpray={(targetPeer, amount) => {
+            const dx = me.x - targetPeer.x;
+            const dz = me.z - targetPeer.z;
+            const d = Math.hypot(dx, dz) || 1;
+            const doSpray = async () => {
+              let err = await sendMoney(targetPeer, amount, venue.name);
+              if (err && adjustBalance(-amount)) {
+                err = null;
+              }
+              gameAudio.playCoinSound();
+              setPlayerAnimation("spray_money");
+              bubble("me", `💸✨ Sprayed AED ${amount.toLocaleString()}!`);
+              say(`💸✨ You sprayed AED ${amount.toLocaleString()} cash on @${targetPeer.username}!`);
+              broadcastRoomEvent({
+                type: "spray_money",
+                targetId: targetPeer.userId,
+                targetUsername: targetPeer.username,
+                amount,
+              });
+              setTimeout(() => {
+                setPlayerAnimation((a) => (a === "spray_money" ? "idle" : a));
+              }, 4500);
+            };
+
+            if (d > 0.85) {
+              const spot: [number, number] = [targetPeer.x + (dx / d) * 0.70, targetPeer.z + (dz / d) * 0.70];
+              const faceYaw = Math.atan2(targetPeer.x - spot[0], targetPeer.z - spot[1]);
+              say(`🚶 Walking close to @${targetPeer.username} to spray cash...`);
+              walkThen(spot, () => {
+                void doSpray();
+              }, faceYaw);
+            } else {
+              void doSpray();
+            }
           }}
           canInviteToTable={!!myTable && (venue.layout === "club" || venue.layout === "dining" || venue.layout === "lobby")}
           onInvite={(kind) => {
@@ -1962,7 +2076,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
               }}
               className="flex-1 py-2 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-black transition active:scale-95"
             >
-              ✕ Decline
+              ✕ Deny
             </button>
             <button
               onClick={() => {

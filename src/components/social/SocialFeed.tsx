@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { broadcastRoomEvent, type Received } from "@/lib/room";
 import { adjustBalance, boostNeed, useCitizen } from "@/lib/citizenStore";
 import { CelebrityBoxingModal, type BoxingOpponent } from "@/components/games/CelebrityBoxingModal";
+import type { AvatarLookProps } from "@/components/avatar/roster";
 import { gameAudio } from "@/utils/gameAudio";
 
 const LIFE_MS = 9000;
@@ -152,6 +153,44 @@ export function SocialFeed({
     return () => clearInterval(t);
   }, []);
 
+  // Listen for boxing match acceptance when this user is the challenger
+  useEffect(() => {
+    const onRoomAction = (rawEv: Event) => {
+      const detail = (rawEv as CustomEvent<{
+        event?: {
+          type?: string;
+          challengerId?: string;
+          challengerUsername?: string;
+          opponentId?: string;
+          opponentUsername?: string;
+          opponentLook?: AvatarLookProps;
+          purse?: number;
+        };
+      }>).detail;
+      const roomEv = detail?.event;
+      if (!roomEv?.type) return;
+      if (roomEv.type === "boxing_accept") {
+        const isMyChallenge =
+          roomEv.challengerId === (citizen?.id ?? "me") ||
+          roomEv.challengerUsername === citizen?.username;
+        if (isMyChallenge && !boxingModalOpp) {
+          gameAudio.playConfirmSound();
+          setBoxingModalOpp({
+            opp: {
+              userId: roomEv.opponentId,
+              username: roomEv.opponentUsername ?? "Opponent",
+              name: roomEv.opponentUsername ?? "Opponent",
+              look: roomEv.opponentLook,
+            },
+            purse: roomEv.purse ?? 2500,
+          });
+        }
+      }
+    };
+    window.addEventListener("cometodubai:room-action", onRoomAction);
+    return () => window.removeEventListener("cometodubai:room-action", onRoomAction);
+  }, [citizen?.id, citizen?.username, boxingModalOpp]);
+
   const flashToast = (msg: string) => {
     setBannerToast(msg);
     setTimeout(() => setBannerToast(null), 3200);
@@ -172,7 +211,8 @@ export function SocialFeed({
           e.type === "friend" ||
           e.type === "brawl" ||
           e.type === "gang_beat" ||
-          e.type === "boxing"
+          e.type === "boxing" ||
+          e.type === "boxing_challenge"
             ? INVITE_MS
             : LIFE_MS)
     )
@@ -374,26 +414,67 @@ export function SocialFeed({
                 </div>
               )}
 
-              {/* #4 Celebrity Boxing Challenge */}
-              {e.type === "boxing" && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setBoxingModalOpp({
-                      opp: {
-                        userId: e.from.userId,
-                        username: e.from.username,
-                        name: e.from.name,
-                        look: e.from.look,
-                      },
-                      purse: e.purse,
-                    });
-                    dismiss(e.id);
-                  }}
-                  className="h-7 px-2.5 rounded-full bg-amber-400 text-slate-950 text-[11px] font-black"
-                >
-                  🥊 Enter Ring
-                </button>
+              {/* #4 Celebrity Boxing Challenge with Accept and Deny buttons */}
+              {(e.type === "boxing_challenge" || e.type === "boxing") && (
+                <div className="flex gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      gameAudio.playConfirmSound();
+                      const challengerId = ("challengerId" in e && e.challengerId) || e.from.userId;
+                      const challengerUsername = ("challengerUsername" in e && e.challengerUsername) || e.from.username;
+                      const challengerName = ("challengerName" in e && e.challengerName) || e.from.name;
+                      const challengerLook = ("challengerLook" in e && e.challengerLook) || e.from.look;
+                      const purse = e.purse ?? 2500;
+
+                      broadcastRoomEvent({
+                        type: "boxing_accept",
+                        challengerId,
+                        challengerUsername,
+                        opponentId: citizen?.id ?? citizen?.username ?? "opponent",
+                        opponentUsername: citizen?.username ?? "Opponent",
+                        purse,
+                        opponentLook: citizen?.look,
+                      });
+
+                      setBoxingModalOpp({
+                        opp: {
+                          userId: challengerId,
+                          username: challengerUsername,
+                          name: challengerName,
+                          look: challengerLook,
+                        },
+                        purse,
+                      });
+                      flashToast(`🥊 Accepted boxing match vs @${challengerUsername}! Entering the ring!`);
+                      dismiss(e.id);
+                    }}
+                    className="h-7 px-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[11px] font-black active:scale-95 transition"
+                  >
+                    🥊 Accept
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      gameAudio.playClickSound();
+                      const challengerId = ("challengerId" in e && e.challengerId) || e.from.userId;
+                      const challengerUsername = ("challengerUsername" in e && e.challengerUsername) || e.from.username;
+
+                      broadcastRoomEvent({
+                        type: "boxing_decline",
+                        challengerId,
+                        challengerUsername,
+                        opponentId: citizen?.id ?? citizen?.username ?? "opponent",
+                        opponentUsername: citizen?.username ?? "Opponent",
+                      });
+                      flashToast(`❌ Declined boxing challenge from @${challengerUsername}.`);
+                      dismiss(e.id);
+                    }}
+                    className="h-7 px-2 rounded-full bg-white/20 hover:bg-rose-600/80 text-white text-[11px] font-black active:scale-95 transition"
+                  >
+                    ✕ Deny
+                  </button>
+                </div>
               )}
 
               <button

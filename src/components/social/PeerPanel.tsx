@@ -3,9 +3,10 @@
 // What you can do with someone nearby: talk, pay, wave, invite, befriend — plus what fits the
 // place (buy them a drink at a club, treat them at a café).
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Ban, Flag, HandCoins, MessageCircle, Send, X } from "lucide-react";
 import { broadcastRoomEvent, type ChatMessage, type Peer } from "@/lib/room";
+import { loadConversation } from "@/lib/messages";
 import type { Product } from "@/lib/city/types";
 import { blockUser, REPORT_REASONS, reportUser, type ReportReason } from "@/lib/safety";
 import { adjustBalance, boostNeed, useCitizen } from "@/lib/citizenStore";
@@ -20,7 +21,7 @@ const AMOUNTS = [20, 50, 100, 500];
 const AWAY_NOTE = "💤 They're away: they'll see it when they're back (5 minutes)";
 
 export function PeerPanel({
-  peer, context, balance, treat, onClose, onChat, onSendMoney, onWave, onInvite, onTreat, onFriend, onRock, onSpray, canInviteToTable = false,
+  peer, context, balance, treat, onClose, onChat, onSendMoney, onWave, onInvite, onTreat, onFriend, onRock, onSlap, onFight, onSpray, canInviteToTable = false,
   messages, typing, onTyping, onThread, startIn = "menu", unread = 0,
 }: {
   /** This conversation, oldest first. */
@@ -44,8 +45,12 @@ export function PeerPanel({
   onInvite: (kind: "join" | "dance" | "table") => void;
   /** Auto-walk close to peer and rock in sync */
   onRock?: (peer: Peer) => void;
-  /** Trigger 3D money spraying animation & particles */
-  onSpray?: (amount: number) => void;
+  /** Auto-walk close to peer and deliver slap */
+  onSlap?: (peer: Peer) => void;
+  /** Auto-walk close to peer and brawl/fight */
+  onFight?: (peer: Peer) => void;
+  /** Auto-walk close to peer and spray banknotes */
+  onSpray?: (peer: Peer, amount: number) => void;
   /** I'm seated at a table or booth, so I can invite them to it. */
   canInviteToTable?: boolean;
   onTreat?: () => void;
@@ -57,21 +62,67 @@ export function PeerPanel({
   const [boxingPending, setBoxingPending] = useState(false);
   const [boxingTimer, setBoxingTimer] = useState(15);
   const [rockCombo, setRockCombo] = useState(0);
+  const [rockTimer, setRockTimer] = useState(60);
   const [sprayDenom, setSprayDenom] = useState(10000);
   const [sprayedTotal, setSprayedTotal] = useState(0);
   const [reason, setReason] = useState<ReportReason | null>(null);
   const [details, setDetails] = useState("");
   const [confirmBlock, setConfirmBlock] = useState(false);
   const thread = useRef<HTMLDivElement>(null);
+
+  // Load all conversation history directly from database
+  const [dbMessages, setDbMessages] = useState<ChatMessage[]>([]);
+  useEffect(() => {
+    if (citizen?.id && peer?.userId) {
+      loadConversation(citizen.id, peer.userId).then((list) => {
+        setDbMessages(
+          list.map((m) => ({
+            id: m.id,
+            with: peer.userId,
+            mine: m.from_id === citizen.id,
+            text: m.body,
+            at: Date.parse(m.created_at),
+          }))
+        );
+      });
+    }
+  }, [citizen?.id, peer?.userId, mode]);
+
+  // Combine database history with live room messages so no messages are ever missing
+  const allMessages = useMemo(() => {
+    const map = new Map<string, ChatMessage>();
+    for (const m of dbMessages) map.set(m.id, m);
+    for (const m of messages) map.set(m.id, m);
+    return [...map.values()].sort((a, b) => a.at - b.at);
+  }, [dbMessages, messages]);
+
   useEffect(() => {
     if (mode !== "chat") return;
     onThread(true);
     return () => onThread(false);
   }, [mode, onThread]);
+
+  // Rocking duration limit: exactly 1 minute (60s) max, then auto-stops
+  useEffect(() => {
+    if (mode !== "rock") return;
+    setRockTimer(60);
+    const interval = setInterval(() => {
+      setRockTimer((t) => {
+        if (t <= 1) {
+          clearInterval(interval);
+          setMode("menu");
+          setNote("✨ 1-Minute Rocking Session complete! What a vibe!");
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [mode]);
   // Keep the newest line in view.
   useEffect(() => {
     thread.current?.scrollTo({ top: thread.current.scrollHeight, behavior: "smooth" });
-  }, [messages.length, typing, mode]);
+  }, [allMessages.length, typing, mode]);
   // Countdown timer for pending boxing challenge
   useEffect(() => {
     if (!boxingPending) return;
@@ -178,7 +229,7 @@ export function PeerPanel({
         <div className="overflow-y-auto p-4 pt-1 space-y-2">
           {mode === "menu" && (
             <>
-              {action("💬", unread ? `Chat · ${unread} new` : "Chat", () => setMode("chat"), messages.length ? `“${messages[messages.length - 1].text}”` : `Say something to @${peer.username}`)}
+              {action("💬", unread ? `Chat · ${unread} new` : "Chat", () => setMode("chat"), allMessages.length ? `“${allMessages[allMessages.length - 1].text}”` : `Say something to @${peer.username}`)}
               {action("💸", "Send money", () => setMode("money"), "Straight from your wallet")}
               {context === "club" && treat && onTreat && action("🍸", `Buy them a ${treat.name.toLowerCase()}`, onTreat, `AED ${treat.price} · served at the bar`)}
               {context === "dining" && treat && onTreat && action(treat.icon, `Treat them to ${treat.name.toLowerCase()}`, onTreat, `AED ${treat.price}`)}
@@ -247,16 +298,39 @@ export function PeerPanel({
                 `Slap @${peer.username}`,
                 () => {
                   gameAudio.playClickSound();
-                  broadcastRoomEvent({ type: "slap", targetId: peer.userId, targetUsername: peer.username });
-                  setNote(`👋⚡ You slapped @${peer.username}! They have 1.2s to dodge or fight back!`);
+                  if (onSlap) {
+                    onSlap(peer);
+                    setNote(`🚶 Auto-walking close to slap @${peer.username}...`);
+                  } else {
+                    broadcastRoomEvent({ type: "slap", targetId: peer.userId, targetUsername: peer.username });
+                    setNote(`👋⚡ You slapped @${peer.username}! They have 1.2s to dodge or fight back!`);
+                  }
                 },
-                "Triggers 1.2s reflex dodge QTE or 1v1 brawl"
+                "Auto-walk close and deliver a direct slap (1.2s dodge QTE)"
+              )}
+              {action(
+                "🥊💥",
+                `Fight @${peer.username} (1v1 Brawl)`,
+                () => {
+                  gameAudio.playClickSound();
+                  if (onFight) {
+                    onFight(peer);
+                    setNote(`🚶 Auto-walking close to fight @${peer.username}...`);
+                  } else {
+                    broadcastRoomEvent({ type: "brawl", targetId: peer.userId, targetUsername: peer.username });
+                    setNote(`🥊💥 BRAWL! Fighting with @${peer.username}!`);
+                  }
+                },
+                "Auto-walk close and square up in a 1v1 street brawl"
               )}
               {action(
                 "👊🔥",
                 `Rally Gang Beat vs @${peer.username}`,
                 () => {
                   gameAudio.playClickSound();
+                  if (onFight) {
+                    onFight(peer);
+                  }
                   broadcastRoomEvent({
                     type: "gang_beat",
                     targetId: peer.userId,
@@ -265,7 +339,7 @@ export function PeerPanel({
                   });
                   setNote(`👊🔥 Rallied the room to gang-jump @${peer.username}! Waiting for 2+ allies...`);
                 },
-                "Call 2+ players in the room to jump them together"
+                "Auto-walk close and call players to jump them together"
               )}
               {context !== "home" && !canInviteToTable && action("🙌", "Come join me", () => onInvite("join"), peer.away ? AWAY_NOTE : "They'll walk over if they accept")}
               {action("👋", "Wave", onWave)}
@@ -312,8 +386,8 @@ export function PeerPanel({
 
           {mode === "chat" && (
             <div ref={thread} className="h-[34vh] sm:h-72 overflow-y-auto space-y-1.5 rounded-2xl bg-slate-50 p-2">
-              {messages.length === 0 && <p className="text-[11px] text-slate-400 text-center py-6">No messages yet. Say hi to @{peer.username} 👋</p>}
-              {messages.map((m) => (
+              {allMessages.length === 0 && <p className="text-[11px] text-slate-400 text-center py-6">No messages yet. Say hi to @{peer.username} 👋</p>}
+              {allMessages.map((m) => (
                 <div key={m.id} className={`flex ${m.mine ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[78%] px-3 py-1.5 rounded-2xl text-sm break-words ${m.mine ? "bg-sky-500 text-white rounded-br-md" : "bg-white border border-slate-200 text-slate-900 rounded-bl-md"}`}>
                     {m.text}
@@ -360,27 +434,27 @@ export function PeerPanel({
             <>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black text-slate-700">Quick Amount</span>
-                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Zero Limit</span>
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">No Restriction</span>
               </div>
               <div className="grid grid-cols-6 gap-1.5">
                 {[
-                  { label: "100", val: 100 },
-                  { label: "1K", val: 1_000 },
                   { label: "10K", val: 10_000 },
-                  { label: "100K", val: 100_000 },
                   { label: "1M", val: 1_000_000 },
-                  { label: "MAX", val: Math.max(1, balance) },
+                  { label: "100M", val: 100_000_000 },
+                  { label: "1B", val: 1_000_000_000 },
+                  { label: "10B", val: 10_000_000_000 },
+                  { label: "50B", val: 50_000_000_000 },
                 ].map((a) => (
-                  <button key={a.label} onClick={() => setAmount(a.val)} className={`h-9 rounded-xl text-xs font-black ${amount === a.val ? "bg-emerald-500 text-white" : "bg-slate-100"}`}>{a.label}</button>
+                  <button key={a.label} onClick={() => setAmount(a.val)} className={`h-9 rounded-xl text-xs font-black ${amount === a.val ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-800"}`}>{a.label}</button>
                 ))}
               </div>
               <label className="flex items-center gap-2 h-11 rounded-xl border border-slate-200 px-3">
                 <span className="text-xs font-black text-slate-400">AED</span>
                 <input type="number" min={1} step="any" value={amount} onChange={(e) => setAmount(Math.max(0, Math.floor(Number(e.target.value) || 0)))} className="flex-1 text-base font-black outline-none bg-transparent" />
-                <button type="button" onClick={() => setAmount(Math.max(1, balance))} className="text-[11px] font-black text-emerald-600 hover:text-emerald-700">MAX</button>
+                <button type="button" onClick={() => setAmount(50_000_000_000)} className="text-[11px] font-black text-emerald-600 hover:text-emerald-700">50B</button>
               </label>
-              <p className="text-[11px] text-slate-500">You have AED {balance.toLocaleString()} · after: AED {Math.max(0, balance - amount).toLocaleString()}</p>
-              <button disabled={busy || amount < 1 || amount > balance} onClick={pay} className="w-full h-12 rounded-xl bg-emerald-500 disabled:opacity-50 text-white font-black flex items-center justify-center gap-2">
+              <p className="text-[11px] text-slate-500">Unrestricted transfer: send any amount up to 50,000,000,000+ AED</p>
+              <button disabled={busy || amount < 1} onClick={pay} className="w-full h-12 rounded-xl bg-emerald-500 disabled:opacity-50 text-white font-black flex items-center justify-center gap-2">
                 <HandCoins className="w-4 h-4" /> {busy ? "Sending…" : `Send AED ${amount.toLocaleString()} to @${peer.username}`}
               </button>
               {note && <p className="text-xs font-bold text-rose-600 text-center">{note}</p>}
@@ -393,9 +467,24 @@ export function PeerPanel({
                 🍑 2-Player Party Rocking Beat-Sync
               </div>
               <p className="text-xs text-slate-600">
-                Bending forward & rocking on the beat with <span className="font-black text-slate-900">@{peer.username}</span>! Tap on the rhythm pulse to build your Hype Combo!
+                Bending forward & rocking on the beat with <span className="font-black text-slate-900">@{peer.username}</span>!
               </p>
-              <div className="py-3 flex flex-col items-center justify-center">
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-xs font-mono font-bold bg-fuchsia-100 text-fuchsia-800 px-3 py-1 rounded-full">
+                  ⏳ {rockTimer}s left (1 min max)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("menu");
+                    setNote("⏹ Rocking session ended.");
+                  }}
+                  className="text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-full transition"
+                >
+                  ⏹ Stop
+                </button>
+              </div>
+              <div className="py-2 flex flex-col items-center justify-center">
                 <button
                   type="button"
                   onClick={() => {
@@ -428,24 +517,29 @@ export function PeerPanel({
               <div className="text-xs font-black uppercase tracking-wider text-emerald-700">
                 💸 Lagos Owambe & VIP Money Spraying
               </div>
-              <div className="grid grid-cols-4 gap-1.5">
-                {[10000, 25000, 50000, 100000].map((d) => (
+              <div className="grid grid-cols-5 gap-1.5">
+                {[10000, 100000, 1000000, 1000000000, 50000000000].map((d) => (
                   <button
                     key={d}
                     type="button"
                     onClick={() => setSprayDenom(d)}
-                    className={`h-9 rounded-xl text-xs font-black ${
+                    className={`h-9 rounded-xl text-[11px] font-black ${
                       sprayDenom === d ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-800"
                     }`}
                   >
-                    AED {d >= 1000 ? `${d / 1000}k` : d}
+                    {d >= 1_000_000_000 ? `${d / 1_000_000_000}B` : d >= 1_000_000 ? `${d / 1_000_000}M` : d >= 1000 ? `${d / 1000}k` : d}
                   </button>
                 ))}
               </div>
               <button
                 type="button"
-                disabled={balance < sprayDenom}
                 onClick={async () => {
+                  if (onSpray) {
+                    onSpray(peer, sprayDenom);
+                    setSprayedTotal((s) => s + sprayDenom);
+                    setNote(`💸✨ Auto-walking close to spray AED ${sprayDenom.toLocaleString()} on @${peer.username}!`);
+                    return;
+                  }
                   let err = await onSendMoney(sprayDenom);
                   if (err && adjustBalance(-sprayDenom)) {
                     err = null;
@@ -453,7 +547,6 @@ export function PeerPanel({
                   if (!err) {
                     gameAudio.playCoinSound();
                     setSprayedTotal((s) => s + sprayDenom);
-                    onSpray?.(sprayDenom);
                     broadcastRoomEvent({
                       type: "spray_money",
                       targetId: peer.userId,
@@ -472,11 +565,6 @@ export function PeerPanel({
                   Total Sprayed on @{peer.username}: AED {sprayedTotal.toLocaleString()} · Min AED 10,000
                 </span>
               </button>
-              {balance < 10000 && (
-                <p className="text-[11px] font-bold text-amber-600">
-                  ⚠️ Minimum AED 10,000 required to spray money in the venue!
-                </p>
-              )}
               {note && <p className="text-xs font-bold text-rose-600">{note}</p>}
             </div>
           )}

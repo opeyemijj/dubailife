@@ -37,23 +37,54 @@ export interface Conversation {
 
 const since = () => new Date(Date.now() - MESSAGE_DAYS * 86400000).toISOString();
 
-/** Public profile details for some citizens, by id. */
-export async function contacts(ids: string[]): Promise<Map<string, Contact>> {
-  const unique = [...new Set(ids)];
-  if (!unique.length) return new Map();
-  const { data } = await supabase().from("profiles").select("id, username, display_name, citizen").in("id", unique);
-  return new Map((data ?? []).map((p) => [p.id, { id: p.id, username: p.username, name: p.display_name, look: (p.citizen as { look?: AvatarLookProps } | null)?.look }]));
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Public profile details for some citizens, by id or username. */
+export async function contacts(idsOrUsernames: string[]): Promise<Map<string, Contact>> {
+  const cleaned = [...new Set(idsOrUsernames.map((s) => s.trim().replace(/^@/, "")).filter(Boolean))];
+  if (!cleaned.length) return new Map();
+
+  const uuids = cleaned.filter((s) => UUID_REGEX.test(s));
+  const usernames = cleaned.filter((s) => !UUID_REGEX.test(s));
+
+  const queries: Promise<{ data: any[] | null }>[] = [];
+  if (uuids.length) {
+    queries.push(Promise.resolve(supabase().from("profiles").select("id, username, display_name, citizen").in("id", uuids)));
+  }
+  if (usernames.length) {
+    queries.push(Promise.resolve(supabase().from("profiles").select("id, username, display_name, citizen").in("username", usernames)));
+  }
+
+  const results = await Promise.all(queries);
+  const map = new Map<string, Contact>();
+
+  for (const res of results) {
+    for (const p of res.data ?? []) {
+      const contact: Contact = {
+        id: p.id,
+        username: p.username,
+        name: p.display_name,
+        look: (p.citizen as { look?: AvatarLookProps } | null)?.look,
+      };
+      map.set(p.id, contact);
+      map.set(p.username, contact);
+      map.set(`@${p.username}`, contact);
+      map.set(p.username.toLowerCase(), contact);
+      map.set(`@${p.username.toLowerCase()}`, contact);
+    }
+  }
+
+  return map;
 }
 
-/** Everyone I've talked to this week, newest conversation first. */
+/** Everyone I've talked to, newest conversation first. */
 export async function listConversations(me: string): Promise<Conversation[]> {
   const { data } = await supabase()
     .from("messages")
     .select("id, from_id, to_id, body, place, created_at")
     .or(`from_id.eq.${me},to_id.eq.${me}`)
-    .gte("created_at", since())
     .order("created_at", { ascending: false })
-    .limit(500);
+    .limit(1000);
   const byPerson = new Map<string, { last: Message; count: number }>();
   for (const m of (data ?? []) as Message[]) {
     const other = m.from_id === me ? m.to_id : m.from_id;
@@ -68,25 +99,83 @@ export async function listConversations(me: string): Promise<Conversation[]> {
   });
 }
 
-/** One conversation this week, oldest first. */
+/** One conversation, all messages from all time, oldest first. */
 export async function loadConversation(me: string, other: string): Promise<Message[]> {
-  const { data } = await supabase()
+  const cleanOther = other.trim().replace(/^@/, "");
+  let otherId = cleanOther;
+  let otherUsername = cleanOther.toLowerCase();
+
+  // Resolve target citizen info (support lookup by UUID or username)
+  if (UUID_REGEX.test(cleanOther)) {
+    const { data: prof } = await supabase().from("profiles").select("id, username").eq("id", cleanOther).maybeSingle();
+    if (prof?.username) {
+      otherUsername = prof.username.toLowerCase();
+    }
+  } else {
+    const { data: prof } = await supabase().from("profiles").select("id, username").ilike("username", cleanOther).maybeSingle();
+    if (prof?.id) {
+      otherId = prof.id;
+      otherUsername = (prof.username ?? cleanOther).toLowerCase();
+    }
+  }
+
+  const map = new Map<string, Message>();
+
+  // 1. Targeted indexed queries for all sent and received messages (no limits, no postgrest compound or bugs)
+  if (UUID_REGEX.test(otherId) && UUID_REGEX.test(me)) {
+    const [sent, received] = await Promise.all([
+      supabase().from("messages").select("id, from_id, to_id, body, place, created_at").eq("from_id", me).eq("to_id", otherId).order("created_at", { ascending: true }),
+      supabase().from("messages").select("id, from_id, to_id, body, place, created_at").eq("from_id", otherId).eq("to_id", me).order("created_at", { ascending: true }),
+    ]);
+    for (const m of (sent.data ?? []) as Message[]) map.set(m.id, m);
+    for (const m of (received.data ?? []) as Message[]) map.set(m.id, m);
+  }
+
+  // 2. Also query by account history to catch any messages stored by username or loose ID
+  const { data: generalData } = await supabase()
     .from("messages")
     .select("id, from_id, to_id, body, place, created_at")
-    .or(`and(from_id.eq.${me},to_id.eq.${other}),and(from_id.eq.${other},to_id.eq.${me})`)
-    .gte("created_at", since())
-    .order("created_at", { ascending: true })
-    .limit(300);
-  return (data ?? []) as Message[];
+    .or(`from_id.eq.${me},to_id.eq.${me}`)
+    .order("created_at", { ascending: false })
+    .limit(1000);
+
+  for (const m of (generalData ?? []) as Message[]) {
+    const isFromMe = m.from_id === me;
+    const isToMe = m.to_id === me;
+    const isWithOther =
+      m.from_id === otherId ||
+      m.to_id === otherId ||
+      m.from_id === cleanOther ||
+      m.to_id === cleanOther ||
+      m.from_id.toLowerCase() === otherUsername ||
+      m.to_id.toLowerCase() === otherUsername;
+
+    if ((isFromMe || isToMe) && isWithOther) {
+      map.set(m.id, m);
+    }
+  }
+
+  // Return all messages sorted chronologically (oldest first)
+  return [...map.values()].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 }
 
 /** Sends a chat message (and a push). `pushUrl` makes the push open somewhere else, like a game room. */
 export async function sendMessage(me: string, to: string, body: string, place: string | null = null, pushUrl?: string): Promise<Message | null> {
-  const row = { id: crypto.randomUUID(), from_id: me, to_id: to, body, place };
+  const cleanTo = to.trim().replace(/^@/, "");
+  let targetId = cleanTo;
+
+  if (!UUID_REGEX.test(cleanTo)) {
+    const { data: prof } = await supabase().from("profiles").select("id").ilike("username", cleanTo).maybeSingle();
+    if (prof?.id) {
+      targetId = prof.id;
+    }
+  }
+
+  const row = { id: crypto.randomUUID(), from_id: me, to_id: targetId, body, place };
   const { error } = await supabase().from("messages").insert(row);
   if (error) chatRefused(error);
   if (!error) {
-    lifeEvent("chat", to);
+    lifeEvent("chat", targetId);
     gainSkill("charisma", 6);
     setTimeout(() => askForPush({ icon: "💬", title: "Know when they reply", text: "Turn on notifications to see replies the moment they arrive, even when the app is closed." }), 1200);
     void (async () => {
@@ -94,7 +183,7 @@ export async function sendMessage(me: string, to: string, body: string, place: s
         const { data: myProf } = await supabase().from("profiles").select("username").eq("id", me).maybeSingle();
         const senderName = myProf?.username ? `@${myProf.username}` : "A citizen";
         void sendPushNotification(
-          to,
+          targetId,
           {
             title: `Message from ${senderName}`,
             body: body.length > 80 ? body.slice(0, 77) + "…" : body,
