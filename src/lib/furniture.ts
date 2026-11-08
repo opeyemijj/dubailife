@@ -93,18 +93,160 @@ export interface CatalogItem {
   tint?: string;
   /** Part of the building (the staircase): can't be moved or stored. */
   fixed?: boolean;
+  /** Star quality tier (1, 2, or 3 stars) */
+  stars?: 1 | 2 | 3;
+  /** Stat benefit pill (e.g. "+Fun", "+Energy", "+Food x1.1", "+Hygiene", "+Social", "+Toilet") */
+  statBadge?: string;
+  /** Number of customisable colour palettes (e.g. 4, 5, 8, 10, 13) */
+  paletteCount?: number;
+  /** Shows NEW badge on item card */
+  isNew?: boolean;
+  /** Custom badge tag for card top-left (e.g. "1x1", "2x1", "2x2", "1x2", "wall", "yard") */
+  placementTag?: string;
 }
 
-export type ShopCategory = "living" | "bedroom" | "dining" | "nursery" | "lighting" | "wall" | "decor";
+export type ShopCategory =
+  | "living"
+  | "bedroom"
+  | "dining"
+  | "nursery"
+  | "lighting"
+  | "wall"
+  | "decor"
+  | "sleep"
+  | "kitchen"
+  | "bath"
+  | "comfort"
+  | "fun"
+  | "skills"
+  | "pets"
+  | "luxury";
+
+export interface DecorCategoryTab {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+export const DECOR_CATEGORIES: DecorCategoryTab[] = [
+  { id: "new", label: "New", icon: "✨" },
+  { id: "storage", label: "Storage", icon: "📦" },
+  { id: "all", label: "All", icon: "⊞" },
+  { id: "design", label: "Design", icon: "📌" },
+  { id: "styles", label: "Styles", icon: "🪄" },
+  { id: "sleep", label: "Sleep", icon: "🛏️" },
+  { id: "kitchen", label: "Kitchen", icon: "🍳" },
+  { id: "bath", label: "Bath", icon: "🚿" },
+  { id: "comfort", label: "Comfort", icon: "🛋️" },
+  { id: "fun", label: "Fun", icon: "📺" },
+  { id: "skills", label: "Skills", icon: "🎸" },
+  { id: "lighting", label: "Light", icon: "💡" },
+  { id: "decor", label: "Deco", icon: "🌸" },
+  { id: "pets", label: "Pets", icon: "🐾" },
+  { id: "luxury", label: "Luxury", icon: "💎" },
+];
+
 export const SHOP_CATEGORIES: Array<{ id: ShopCategory; label: string; icon: string }> = [
+  { id: "comfort", label: "Comfort", icon: "🛋️" },
+  { id: "sleep", label: "Sleep", icon: "🛏️" },
+  { id: "kitchen", label: "Kitchen", icon: "🍳" },
+  { id: "bath", label: "Bath", icon: "🚿" },
+  { id: "fun", label: "Fun", icon: "📺" },
+  { id: "skills", label: "Skills", icon: "🎸" },
+  { id: "lighting", label: "Light", icon: "💡" },
+  { id: "decor", label: "Deco", icon: "🌸" },
+  { id: "pets", label: "Pets", icon: "🐾" },
+  { id: "luxury", label: "Luxury", icon: "💎" },
   { id: "living", label: "Living", icon: "🛋️" },
   { id: "bedroom", label: "Bedroom", icon: "🛏️" },
   { id: "dining", label: "Dining & kitchen", icon: "🍽️" },
   { id: "nursery", label: "Nursery & Baby", icon: "👶" },
-  { id: "lighting", label: "Lighting", icon: "💡" },
   { id: "wall", label: "Wall art & mirrors", icon: "🖼️" },
-  { id: "decor", label: "Decor", icon: "🏺" },
 ];
+
+export interface CuratedStyle {
+  id: string;
+  name: string;
+  desc: string;
+  price: number;
+  icon: string;
+  wallColor: string;
+  floorFinish: FloorFinish;
+  furnitureIds: string[];
+}
+
+export const CURATED_STYLES: CuratedStyle[] = [
+  {
+    id: "dubai-minimal",
+    name: "Dubai Minimal",
+    desc: "Clean lines, white wood and one good plant. Nothing extra.",
+    price: 402000,
+    icon: "🤍",
+    wallColor: "#faf8f3",
+    floorFinish: "white-oak",
+    furnitureIds: ["sofa", "coffee-table", "plant", "floor-lamp"],
+  },
+  {
+    id: "arabian-luxe",
+    name: "Afro-Luxe",
+    desc: "Mustard and emerald, Aso-Oke runners and art from the souk.",
+    price: 1400000,
+    icon: "🌍",
+    wallColor: "#d8cfc2",
+    floorFinish: "walnut",
+    furnitureIds: ["royal-gold-throne", "carpet", "majlis-emerald", "art-abstract"],
+  },
+  {
+    id: "downtown-penthouse",
+    name: "Downtown Penthouse",
+    desc: "Charcoal walls, white marble, a big L sofa and floor-to-ceiling glass.",
+    price: 8500000,
+    icon: "🏙️",
+    wallColor: "#33363b",
+    floorFinish: "white-marble",
+    furnitureIds: ["l-sofa", "chandelier-ring", "fireplace", "media-wall"],
+  },
+  {
+    id: "cosy-marina",
+    name: "Cosy Marina",
+    desc: "Soft chairs, a family sofa and a standing fan for sea breezes.",
+    price: 337000,
+    icon: "🏖️",
+    wallColor: "#c7dbea",
+    floorFinish: "oak",
+    furnitureIds: ["lounge-chair", "standing-fan", "dining-table-round", "plant"],
+  },
+  {
+    id: "boho-chic",
+    name: "Boho",
+    desc: "Plants everywhere, bean bags, fairy lights and a woven rug.",
+    price: 364000,
+    icon: "🪴",
+    wallColor: "#f4efe6",
+    floorFinish: "teak",
+    furnitureIds: ["bean-bag", "fairy-lights", "round-rug", "potted-plant", "succulent-pot"],
+  },
+  {
+    id: "royal-gold",
+    name: "Royal Gold",
+    desc: "Gold walls, a gold sofa, silk curtains and brass chandeliers.",
+    price: 16400000,
+    icon: "👑",
+    wallColor: "#d4af37",
+    floorFinish: "white-marble",
+    furnitureIds: ["royal-gold-majlis", "royal-gold-throne", "chandelier-crystal", "diamond-throne"],
+  },
+];
+
+export interface SavedLook {
+  id: string;
+  name: string;
+  date: string;
+  wall: string;
+  floor: FloorFinish;
+  bedding?: string;
+  panels?: boolean;
+}
 
 export const CATALOG: CatalogItem[] = [
   { id: "sofa", name: "Modern Velvet Sofa", desc: "Super comfortable for guests.", icon: "🛋️", price: 3500, kind: "floor", size: [4, 2], model: "/models/furniture/couch.glb", interaction: "chair", category: "living" },
@@ -189,6 +331,83 @@ export const CATALOG: CatalogItem[] = [
   { id: "nursery-playmat", name: "Soft Cloud Baby Playmat Rug", desc: "Cushioned sensory tummy-time mat for crawlers.", icon: "☁️", price: 1100, kind: "rug", size: [4, 4], visual: "rug-round", tint: "#bae6fd", category: "nursery" },
   { id: "nursery-toy-chest", name: "Montessori Storybook & Toy Shelf", desc: "Wall-mounted nursery books, plushies & blocks.", icon: "🧸", price: 1250, kind: "wall", size: [3, 2], visual: "shelves", tint: "#fde68a", category: "nursery" },
   { id: "nursery-nightlight", name: "Starlight Lullaby Nursery Lamp", desc: "Projects gentle stars across the nursery ceiling.", icon: "🌟", price: 850, kind: "floor", size: [1, 1], visual: "tripod-lamp", tint: "#c084fc", category: "nursery" },
+
+  // --- Screenshot Items: Luxury ---
+  { id: "plunge-pool", name: "Plunge Pool", desc: "Private refreshing plunge pool for your terrace or yard.", icon: "🏊", price: 28000000, kind: "floor", size: [4, 4], visual: "pool-plunge", category: "luxury", stars: 3, statBadge: "+Fun ×1.4", placementTag: "yard" },
+  { id: "family-pool", name: "Family Pool", desc: "Spacious pool with sun loungers and umbrellas.", icon: "🏖️", price: 75000000, kind: "floor", size: [6, 4], visual: "pool-family", category: "luxury", stars: 3, statBadge: "+Fun ×1.4", placementTag: "yard" },
+  { id: "infinity-lap-pool", name: "Infinity Lap Pool", desc: "Panoramic infinity edge lap pool for ultimate luxury.", icon: "🌊", price: 150000000, kind: "floor", size: [8, 3], visual: "pool-infinity", category: "luxury", stars: 3, statBadge: "+Fun ×1.6", placementTag: "yard" },
+  { id: "diamond-throne", name: "Diamond-Studded Throne", desc: "24K solid gold and velvet throne encrusted with diamonds.", icon: "👑", price: 250000000, kind: "floor", size: [1, 1], visual: "armchair", tint: "#b45309", category: "luxury", stars: 3, statBadge: "+Fun ×1.6", placementTag: "1×1", interaction: "chair" },
+  { id: "old-master-painting", name: "Old Master Painting", desc: "Historical Renaissance museum-grade oil painting.", icon: "🖼️", price: 400000000, kind: "wall", size: [2, 2], visual: "art-abstract", category: "luxury", stars: 3, statBadge: "+Fun ×1.6", placementTag: "wall" },
+  { id: "gold-bullion-vault", name: "Gold Bullion Vault", desc: "Heavy steel safe stacked with certified pure gold bars.", icon: "🏦", price: 500000000, kind: "floor", size: [1, 1], visual: "drinks-cabinet", category: "luxury", stars: 3, statBadge: "+Fun ×1.6", placementTag: "1×1" },
+
+  // --- Pets ---
+  { id: "pet-mimi-cat", name: "Mimi the Cat", desc: "A sleek playful domestic short-hair feline.", icon: "🐱", price: 15000, kind: "floor", size: [1, 1], category: "pets", stars: 1, statBadge: "+Fun ×1.1", placementTag: "1×1" },
+  { id: "pet-bingo-dog", name: "Bingo the Local Dog", desc: "Loyal, friendly companion dog.", icon: "🐕", price: 25000, kind: "floor", size: [1, 1], category: "pets", stars: 1, statBadge: "+Fun ×1.1", placementTag: "1×1" },
+  { id: "pet-grey-parrot", name: "African Grey Parrot", desc: "Smart talkative parrot on a polished mahogany perch.", icon: "🦜", price: 45000, kind: "floor", size: [1, 1], category: "pets", stars: 2, statBadge: "+Fun ×1.1", placementTag: "1×1" },
+
+  // --- Deco ---
+  { id: "wall-calendar", name: "Wall Calendar", desc: "Printed monthly wall planner.", icon: "📅", price: 300, kind: "wall", size: [1, 1], category: "decor", stars: 1, statBadge: "+Fun", placementTag: "wall" },
+  { id: "fela-poster", name: "Dubai Art Poster", desc: "Iconic commemorative visual poster.", icon: "🖼️", price: 600, kind: "wall", size: [1, 2], category: "decor", stars: 1, statBadge: "+Fun", placementTag: "wall" },
+  { id: "potted-plant-indoor", name: "Potted Plant", desc: "Lush green houseplant in a stone planter.", icon: "🪴", price: 700, kind: "floor", size: [1, 1], category: "decor", stars: 1, statBadge: "+Fun", placementTag: "1×1" },
+  { id: "small-potted-plant", name: "Small Potted Plant", desc: "Compact desk-friendly indoor plant.", icon: "🌱", price: 700, kind: "floor", size: [1, 1], category: "decor", stars: 1, statBadge: "+Fun", placementTag: "1×1" },
+  { id: "succulent-pot", name: "Succulent Pot", desc: "Hardy desert geometric succulent.", icon: "🌵", price: 700, kind: "floor", size: [1, 1], category: "decor", stars: 1, statBadge: "+Fun", placementTag: "1×1" },
+  { id: "bin-bags", name: "Bin Bags", desc: "Heavy-duty recycled disposal bags.", icon: "🗑️", price: 1000, kind: "floor", size: [1, 1], category: "decor", isNew: true, statBadge: "+Fun", placementTag: "1×1" },
+
+  // --- Light ---
+  { id: "rechargeable-lamp", name: "Rechargeable Lamp", desc: "Cordless portable modern floor lamp.", icon: "💡", price: 1100, kind: "floor", size: [1, 1], category: "lighting", stars: 1, paletteCount: 4, statBadge: "+Fun", placementTag: "1×1" },
+  { id: "fluorescent-tube", name: "Fluorescent Tube Light", desc: "Bright energy-efficient ceiling strip light.", icon: "🔦", price: 3500, kind: "ceiling", size: [2, 1], category: "lighting", isNew: true, paletteCount: 4, statBadge: "+Fun", placementTag: "1×1" },
+  { id: "fairy-lights", name: "Fairy Lights", desc: "Delicate warm glowing decorative fairy string lights.", icon: "✨", price: 4500, kind: "wall", size: [3, 1], category: "lighting", stars: 2, paletteCount: 4, statBadge: "+Fun", placementTag: "wall" },
+  { id: "fuse-box", name: "Fuse Box", desc: "Mounted electrical circuit board with switches.", icon: "⚡", price: 5000, kind: "wall", size: [1, 1], category: "lighting", isNew: true, statBadge: "+Fun", placementTag: "wall" },
+  { id: "bedside-lamp", name: "Bedside Lamp", desc: "Warm evening reading lamp on a mini stand.", icon: "🏮", price: 6500, kind: "floor", size: [1, 1], category: "lighting", stars: 1, paletteCount: 4, statBadge: "+Fun", placementTag: "1×1" },
+  { id: "rgb-led-strip", name: "RGB LED Strip", desc: "Multi-colour ambience lighting strip with remote.", icon: "🌈", price: 9000, kind: "wall", size: [2, 1], category: "lighting", stars: 2, paletteCount: 6, statBadge: "+Fun", placementTag: "wall" },
+
+  // --- Skills ---
+  { id: "standing-mirror", name: "Standing Mirror", desc: "Full-length grooming mirror on wooden pivot frame.", icon: "🪞", price: 1700, kind: "floor", size: [1, 1], category: "skills", stars: 1, statBadge: "+Fun", placementTag: "1×1" },
+  { id: "dumbbell-rack", name: "Dumbbell Rack", desc: "Steel rack of cast iron workout weights.", icon: "🏋️", price: 3400, kind: "floor", size: [1, 1], category: "skills", stars: 2, statBadge: "+Fun", placementTag: "1×1" },
+  { id: "study-bookshelf", name: "Bookshelf", desc: "Multi-tiered natural wood shelving unit.", icon: "📚", price: 3600, kind: "floor", size: [1, 1], category: "skills", stars: 1, paletteCount: 5, statBadge: "+Fun", placementTag: "1×1" },
+  { id: "acoustic-guitar", name: "Acoustic Guitar", desc: "Spruce-top acoustic guitar on a padded stand.", icon: "🎸", price: 4200, kind: "floor", size: [1, 1], category: "skills", stars: 2, statBadge: "+Fun", placementTag: "1×1" },
+  { id: "ring-light-stand", name: "Ring Light & Phone Stand", desc: "Vlogging selfie ring light for content creators.", icon: "📱", price: 9500, kind: "floor", size: [1, 1], category: "skills", stars: 2, statBadge: "+Fun", placementTag: "1×1" },
+  { id: "study-work-desk", name: "Study Work Desk", desc: "Comfortable desk setup with ergonomic task chair.", icon: "🖥️", price: 12500, kind: "floor", size: [2, 2], category: "skills", stars: 1, paletteCount: 5, statBadge: "+Fun ×1.1", placementTag: "2×2" },
+
+  // --- Fun ---
+  { id: "transistor-radio", name: "Transistor Radio", desc: "Vintage FM/AM portable radio.", icon: "📻", price: 1000, kind: "floor", size: [1, 1], category: "fun", stars: 1, statBadge: "+Fun", placementTag: "1×1" },
+  { id: "party-speakers", name: "Party Speakers", desc: "Dual hi-fi bass club towers.", icon: "🔊", price: 7200, kind: "floor", size: [1, 1], category: "fun", stars: 2, statBadge: "+Fun", placementTag: "1×1" },
+  { id: "toy-box", name: "Toy Box", desc: "Colourful storage chest filled with play blocks.", icon: "🧸", price: 7500, kind: "floor", size: [1, 1], category: "fun", stars: 1, paletteCount: 5, statBadge: "+Fun", placementTag: "1×1" },
+  { id: "building-blocks-dino", name: "Building Blocks & Dino", desc: "Creative playset with prehistoric dinos.", icon: "🦕", price: 9000, kind: "floor", size: [1, 1], category: "fun", isNew: true, statBadge: "+Fun", placementTag: "1×1" },
+  { id: "flat-tv-32", name: '32" Flat TV', desc: "Compact HD smart TV on wood cabinet.", icon: "📺", price: 10800, kind: "floor", size: [1, 1], category: "fun", stars: 3, statBadge: "+Fun ×1.1", placementTag: "1×1" },
+  { id: "toy-truck-cars", name: "Toy Truck & Cars", desc: "Diecast cars and remote-control trucks.", icon: "🚚", price: 12000, kind: "floor", size: [1, 1], category: "fun", isNew: true, statBadge: "+Fun ×1.1", placementTag: "1×1" },
+
+  // --- Comfort ---
+  { id: "plastic-chair", name: "Plastic Chair", desc: "Durable lightweight molded chair.", icon: "🪑", price: 500, kind: "floor", size: [1, 1], category: "comfort", stars: 1, paletteCount: 5, statBadge: "+Social", placementTag: "1×1", interaction: "chair" },
+  { id: "standing-fan", name: "Standing Fan", desc: "Oscillating floor cooling fan.", icon: "🌀", price: 2200, kind: "floor", size: [1, 1], category: "comfort", stars: 2, statBadge: "+Fun", placementTag: "1×1" },
+  { id: "dining-table-round", name: "Dining Table", desc: "Round dining table with two wooden chairs.", icon: "🍽️", price: 6600, kind: "floor", size: [2, 2], category: "comfort", stars: 2, statBadge: "+Food", placementTag: "2×2", interaction: "chair" },
+  { id: "lounge-armchair-comfy", name: "Lounge Armchair", desc: "Wingback armchair in tailored fabric.", icon: "🛋️", price: 8500, kind: "floor", size: [1, 1], category: "comfort", stars: 2, paletteCount: 8, statBadge: "+Fun", placementTag: "1×1", interaction: "chair" },
+  { id: "velvet-sofa-2x1", name: "Velvet Sofa", desc: "Emerald 2-seater compact velvet sofa.", icon: "🛋️", price: 10200, kind: "floor", size: [2, 1], category: "comfort", stars: 2, paletteCount: 8, statBadge: "+Fun ×1.1", placementTag: "2×1", interaction: "chair" },
+  { id: "bean-bag", name: "Bean Bag", desc: "Ergonomic oversized plush bean bag lounger.", icon: "🥔", price: 12000, kind: "floor", size: [1, 1], category: "comfort", stars: 1, paletteCount: 10, statBadge: "+Fun ×1.1", placementTag: "1×1", interaction: "chair" },
+
+  // --- Bath ---
+  { id: "bucket-bowl", name: "Bucket & Bowl", desc: "Traditional water bucket and washing bowl.", icon: "🪣", price: 400, kind: "floor", size: [1, 1], category: "bath", stars: 1, statBadge: "+Hygiene", placementTag: "1×1" },
+  { id: "water-drum-cans", name: "Water Drum & Jerrycans", desc: "Heavy storage reservoir drum.", icon: "🛢️", price: 800, kind: "floor", size: [1, 1], category: "bath", stars: 1, statBadge: "+Hygiene", placementTag: "1×1" },
+  { id: "wc-toilet", name: "WC Toilet", desc: "Ceramic flush toilet fixture.", icon: "🚽", price: 3000, kind: "floor", size: [1, 1], category: "bath", stars: 2, statBadge: "+Toilet", placementTag: "1×1", interaction: "chair" },
+  { id: "laundry-hamper", name: "Laundry Hamper", desc: "Slatted wooden hamper with canvas lid.", icon: "🧺", price: 6500, kind: "floor", size: [1, 1], category: "bath", isNew: true, statBadge: "+Fun", placementTag: "1×1" },
+  { id: "rain-shower", name: "Rain Shower", desc: "Glass-enclosed luxury waterfall rain shower.", icon: "🚿", price: 11400, kind: "floor", size: [1, 1], category: "bath", stars: 3, statBadge: "+Hygiene ×1.1", placementTag: "1×1" },
+  { id: "baby-bath", name: "Baby Bath", desc: "Raised ergonomic infant tub with stand.", icon: "🛁", price: 12000, kind: "floor", size: [1, 1], category: "bath", stars: 1, statBadge: "+Fun ×1.1", placementTag: "1×1" },
+
+  // --- Kitchen ---
+  { id: "cooler-box", name: "Cooler Box", desc: "Insulated picnic chest keeps drinks frosty.", icon: "🧊", price: 700, kind: "floor", size: [1, 1], category: "kitchen", stars: 1, statBadge: "+Food", placementTag: "1×1", interaction: "cooler" },
+  { id: "kerosene-stove", name: "Kerosene Stove", desc: "Portable high-heat single burner cooker.", icon: "🔥", price: 1100, kind: "floor", size: [1, 1], category: "kitchen", stars: 1, statBadge: "+Food", placementTag: "1×1" },
+  { id: "pedal-dustbin", name: "Pedal Dustbin", desc: "Hands-free stainless steel kitchen waste bin.", icon: "🗑️", price: 2500, kind: "floor", size: [1, 1], category: "kitchen", stars: 1, statBadge: "+Fun", placementTag: "1×1" },
+  { id: "kitchen-counter", name: "Kitchen Counter", desc: "Solid hardwood counter with storage drawers.", icon: "🗄️", price: 4200, kind: "floor", size: [1, 1], category: "kitchen", stars: 1, paletteCount: 5, statBadge: "+Food", placementTag: "1×1" },
+  { id: "kitchen-sink", name: "Kitchen Sink", desc: "Deep apron stainless sink with chrome faucet.", icon: "🚰", price: 4800, kind: "floor", size: [1, 1], category: "kitchen", stars: 2, statBadge: "+Hygiene", placementTag: "1×1" },
+  { id: "gas-cooker", name: "Gas Cooker", desc: "4-burner stainless oven and cooktop.", icon: "🍳", price: 8400, kind: "floor", size: [1, 1], category: "kitchen", stars: 2, statBadge: "+Food ×1.15", placementTag: "1×1" },
+
+  // --- Sleep ---
+  { id: "foam-mattress", name: "Foam Mattress", desc: "Simple firm sleeping mattress on floor.", icon: "🛏️", price: 1800, kind: "floor", size: [1, 2], category: "sleep", stars: 1, statBadge: "+Energy", placementTag: "1×2", interaction: "bed" },
+  { id: "spring-bed", name: "Spring Bed", desc: "Single spring mattress on timber slat base.", icon: "🛏️", price: 7800, kind: "floor", size: [1, 2], category: "sleep", paletteCount: 8, statBadge: "+Energy", placementTag: "1×2", interaction: "bed" },
+  { id: "bedside-nightstand", name: "Bedside Nightstand", desc: "2-drawer solid bedside cabinet with brass pulls.", icon: "🚪", price: 9500, kind: "floor", size: [1, 1], category: "sleep", paletteCount: 5, statBadge: "+Fun", placementTag: "1×1" },
+  { id: "bunk-bed", name: "Bunk Bed", desc: "Two-tier wooden bunk bed with ladder.", icon: "🪜", price: 24000, kind: "floor", size: [1, 2], category: "sleep", stars: 1, paletteCount: 8, statBadge: "+Energy ×1.1", placementTag: "1×2", interaction: "bed" },
+  { id: "dubai-king-bed", name: "Dubai King Bed", desc: "Spacious master king bed with upholstered headboard.", icon: "👑", price: 28800, kind: "floor", size: [2, 2], category: "sleep", stars: 3, paletteCount: 8, statBadge: "+Energy ×1.1", placementTag: "2×2", interaction: "bed" },
+  { id: "bedside-drawers-clock", name: "Bedside Drawers & Clock", desc: "Chest of 3 drawers with digital alarm clock & books.", icon: "⏰", price: 32000, kind: "floor", size: [1, 1], category: "sleep", isNew: true, paletteCount: 13, statBadge: "+Fun ×1.1", placementTag: "1×1" },
 ];
 
 export const getCatalogItem = (id: string) => CATALOG.find((c) => c.id === id) ?? HOME_ITEMS.find((c) => c.id === id);
@@ -322,6 +541,14 @@ export const FLOOR_FINISHES: Array<{ id: FloorFinish; label: string; price: numb
   { id: "slate", label: "Charcoal slate tiles", price: 5400 },
 ];
 export const WALL_PAINTS: Array<{ id: string; label: string; color: string; price: number }> = [
+  { id: "classic-cream", label: "Classic Cream", color: "#f4eedc", price: 3000 },
+  { id: "dubai-sky", label: "Dubai Sky", color: "#90c1e7", price: 3000 },
+  { id: "mint-fresh", label: "Mint Fresh", color: "#9bd7ba", price: 3000 },
+  { id: "peach-glow", label: "Peach Glow", color: "#f7ba97", price: 3000 },
+  { id: "soft-lilac", label: "Soft Lilac", color: "#c4b2e6", price: 3000 },
+  { id: "desert-green", label: "Desert Green", color: "#43a66b", price: 4000 },
+  { id: "charcoal-deep", label: "Charcoal", color: "#474f59", price: 5000 },
+  { id: "royal-ochre", label: "Royal Ochre", color: "#d49b28", price: 6000 },
   { id: "ivory", label: "Warm ivory", color: "#f4efe6", price: 0 },
   { id: "greige", label: "Desert greige", color: "#d8cfc2", price: 900 },
   { id: "sage", label: "Sage green", color: "#b7c4ad", price: 900 },

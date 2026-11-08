@@ -107,7 +107,9 @@ import {
   type HousingTier,
   type HomeActivityDef,
   type ShopCategory,
+  type OwnedFurniture,
 } from "@/lib/furniture";
+import { DecorationCatalogue } from "@/components/home/DecorationCatalogue";
 import {
   flatRoute,
   getFlat,
@@ -932,9 +934,27 @@ export default function HomePage() {
     }
   };
 
+  const undoHistory = useRef<Array<{ uid: string; prevPlacement: Placement | null }>>([]);
+
+  const handleUndo = () => {
+    const last = undoHistory.current.pop();
+    if (!last) {
+      showToast("Nothing to undo");
+      return;
+    }
+    if (sh) placeShared(last.uid, last.prevPlacement);
+    else setFurniturePlacement(last.uid, last.prevPlacement, housingTier);
+    showToast("↺ Move undone");
+  };
+
+  const handlePlaceStored = (f: OwnedFurniture) => {
+    startPlacing(f.uid, f.itemId);
+  };
+
   const handlePickUp = (uid: string) => {
     const f = withHomeItems(furniture, housingTier).find((x) => x.uid === uid);
     if (!f) return;
+    undoHistory.current.push({ uid, prevPlacement: f.placement });
     gameAudio.playClickSound();
     setPlacing({
       uid,
@@ -1260,6 +1280,67 @@ export default function HomePage() {
         >
           🚪 <span>Outside</span>
         </button>
+      )}
+
+      {/* Top HUD Bar during Decorate Mode (matching reference screenshots) */}
+      {decorating && !cleanScreen && (
+        <div className="fixed top-3 left-3 right-3 z-50 flex items-center justify-between pointer-events-none">
+          {/* Sofa / Catalogue Launcher */}
+          <button
+            onClick={() => {
+              gameAudio.playClickSound();
+              setBuyModalOpen(true);
+            }}
+            className="w-11 h-11 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-slate-200 text-slate-800 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform pointer-events-auto"
+            title="Open Catalogue"
+            aria-label="Open Catalogue"
+          >
+            <span className="text-xl">🛋️</span>
+          </button>
+
+          {/* Center Wallet Balance Pill */}
+          <div className="px-4 py-2 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-slate-200 text-xs sm:text-sm font-black font-mono text-slate-900 pointer-events-auto">
+            AED {walletBalance.toLocaleString()}
+          </div>
+
+          {/* Right Action Buttons: Undo, Rotate Camera, Close */}
+          <div className="flex items-center gap-1.5 pointer-events-auto">
+            <button
+              onClick={() => {
+                gameAudio.playClickSound();
+                handleUndo();
+              }}
+              className="w-10 h-10 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-slate-200 text-slate-700 flex items-center justify-center hover:bg-slate-100 active:scale-95 transition-transform"
+              title="Undo last move"
+              aria-label="Undo"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => {
+                gameAudio.playClickSound();
+                setView((v) => (v === "above" ? "inside" : v === "inside" ? "eye" : "above"));
+              }}
+              className="w-10 h-10 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-slate-200 text-slate-700 flex items-center justify-center hover:bg-slate-100 active:scale-95 transition-transform"
+              title="Rotate / switch view"
+              aria-label="Rotate View"
+            >
+              <RotateCw className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => {
+                gameAudio.playClickSound();
+                setDecorating(false);
+                setPlacing(null);
+              }}
+              className="w-10 h-10 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-slate-200 text-slate-700 flex items-center justify-center hover:bg-slate-100 active:scale-95 transition-transform"
+              title="Exit Decorating"
+              aria-label="Exit"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Decorate mode banner */}
@@ -2157,631 +2238,21 @@ export default function HomePage() {
           />
         )}
 
-      {/* 2. BUY FURNITURE MODAL */}
-      <Dialog open={buyModalOpen} onOpenChange={setBuyModalOpen}>
-        <DialogContent className="bg-white text-slate-900 border-none shadow-2xl w-[92vw] max-w-md max-h-[85dvh] overflow-y-auto z-50 rounded-3xl p-6">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h3 className="text-lg font-black text-slate-900">
-              Apartment Furniture Shop
-            </h3>
-            <span className="text-xs font-mono font-bold text-emerald-600">
-              AED {walletBalance.toLocaleString()}
-            </span>
-          </div>
-
-          <div className="flex gap-1 p-1 mt-3 bg-slate-100 rounded-xl text-xs font-black">
-            <button
-              onClick={() => setShopTab("shop")}
-              className={`flex-1 py-1.5 rounded-lg ${shopTab === "shop" ? "bg-white shadow text-slate-900" : "text-slate-500"}`}
-            >
-              Shop
-            </button>
-            <button
-              onClick={() => setShopTab("storage")}
-              className={`flex-1 py-1.5 rounded-lg ${shopTab === "storage" ? "bg-white shadow text-slate-900" : "text-slate-500"}`}
-            >
-              Storage{stored.length ? ` (${stored.length})` : ""}
-            </button>
-            <button
-              onClick={() => setShopTab("style")}
-              className={`flex-1 py-1.5 rounded-lg ${shopTab === "style" ? "bg-white shadow text-slate-900" : "text-slate-500"}`}
-            >
-              ✨ Style
-            </button>
-          </div>
-
-          {shopTab === "style" ? (
-            <div className="pt-3 space-y-4">
-              {decorJob ? (
-                <section className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-xs font-bold text-amber-800">
-                  🧑‍🎨 Your decorator has the key and is working on the look. You
-                  can change the style again once they&apos;re done.
-                </section>
-              ) : (
-                <button
-                  onClick={() => setDecoratorOpen(true)}
-                  className="w-full p-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-left flex items-center gap-3 active:scale-[0.99]"
-                >
-                  <span className="text-2xl">🧑‍🎨</span>
-                  <span className="flex-1">
-                    <span className="block font-black text-sm">
-                      Hire an interior decorator
-                    </span>
-                    <span className="block text-[11px] text-white/80">
-                      Set a budget, and a player does it all while you&apos;re
-                      out.
-                    </span>
-                  </span>
-                  <span className="text-lg">›</span>
-                </button>
-              )}
-              <section>
-                <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
-                  Flooring
-                </h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {FLOOR_FINISHES.map((f) => {
-                    const current = homeStyle.floor === f.id;
-                    return (
-                      <button
-                        key={f.id}
-                        disabled={current}
-                        onClick={() =>
-                          restyle(
-                            { floor: f.id },
-                            f.price,
-                            `New floor: ${f.label}`,
-                          )
-                        }
-                        className={`p-2.5 rounded-2xl border text-left transition-all ${current ? "border-emerald-500 bg-emerald-50" : "border-slate-200 hover:bg-slate-50 active:scale-95"}`}
-                      >
-                        <span
-                          className={`block h-8 rounded-lg mb-1.5`}
-                          style={{ background: FLOOR_SWATCH[f.id] }}
-                        />
-                        <span className="block text-[11px] font-black text-slate-900 leading-tight">
-                          {f.label}
-                        </span>
-                        <span className="text-[10px] font-mono font-bold text-emerald-600">
-                          {current
-                            ? "In your home"
-                            : f.price
-                              ? `AED ${f.price.toLocaleString()}`
-                              : "Free"}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-              <section>
-                <div className="flex items-center justify-between mb-1.5">
-                  <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-400">
-                    Wall paint
-                  </h4>
-                  <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 text-white text-[10px] font-black cursor-pointer active:scale-95">
-                    🎨 Custom RGB (AED 300)
-                    <input
-                      type="color"
-                      value={homeStyle.wall || "#f6f1e7"}
-                      onChange={(e) =>
-                        restyle(
-                          { wall: e.target.value },
-                          300,
-                          `Walls painted ${e.target.value.toUpperCase()}`,
-                        )
-                      }
-                      className="sr-only"
-                    />
-                  </label>
-                </div>
-                <div className="grid grid-cols-4 gap-2">
-                  {WALL_PAINTS.map((w) => {
-                    const current = homeStyle.wall.toLowerCase() === w.color;
-                    return (
-                      <button
-                        key={w.id}
-                        disabled={current}
-                        title={w.label}
-                        onClick={() =>
-                          restyle(
-                            { wall: w.color },
-                            w.price,
-                            `Walls painted ${w.label}`,
-                          )
-                        }
-                        className={`p-1.5 rounded-2xl border text-center transition-all ${current ? "border-emerald-500 bg-emerald-50" : "border-slate-200 hover:bg-slate-50 active:scale-95"}`}
-                      >
-                        <span
-                          className="block h-8 rounded-lg border border-black/5"
-                          style={{ background: w.color }}
-                        />
-                        <span className="block text-[10px] font-black text-slate-800 mt-1 leading-tight">
-                          {w.label}
-                        </span>
-                        <span className="text-[9px] font-mono font-bold text-emerald-600">
-                          {current
-                            ? "✓"
-                            : w.price
-                              ? `AED ${w.price.toLocaleString()}`
-                              : "Free"}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-              <section className="p-3 rounded-2xl border border-slate-200 flex items-center justify-between gap-3">
-                <div>
-                  <h4 className="text-xs font-black text-slate-900">
-                    🏛️ Panelled walls & cove lighting
-                  </h4>
-                  <p className="text-[11px] text-slate-500">
-                    Raised panels, a chair rail, crown moulding and a warm LED
-                    cove.
-                  </p>
-                </div>
-                <button
-                  onClick={() =>
-                    restyle(
-                      { panels: !homeStyle.panels },
-                      homeStyle.panels ? 0 : PANELS_PRICE,
-                      homeStyle.panels ? "Panelling removed" : "Walls panelled",
-                    )
-                  }
-                  className={`px-3 py-1.5 rounded-xl font-black text-xs whitespace-nowrap active:scale-95 ${homeStyle.panels ? "bg-slate-100 text-slate-700" : "bg-emerald-500 text-white"}`}
-                >
-                  {homeStyle.panels
-                    ? "Remove"
-                    : `AED ${PANELS_PRICE.toLocaleString()}`}
-                </button>
-              </section>
-              <section className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-black text-slate-900">
-                    🛏️ Bed sheets
-                  </h4>
-                  <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 text-white text-[10px] font-black cursor-pointer active:scale-95">
-                    🎨 Custom Sheets (AED 150)
-                    <input
-                      type="color"
-                      value={homeStyle.bedding ?? BEDDING[0].color}
-                      onChange={(e) =>
-                        restyle(
-                          { bedding: e.target.value },
-                          150,
-                          `Custom sheets: ${e.target.value.toUpperCase()}`,
-                        )
-                      }
-                      className="sr-only"
-                    />
-                  </label>
-                </div>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {BEDDING.map((b) => {
-                    const current =
-                      (homeStyle.bedding ?? BEDDING[0].color).toLowerCase() ===
-                      b.color.toLowerCase();
-                    return (
-                      <button
-                        key={b.id}
-                        disabled={current}
-                        onClick={() =>
-                          restyle(
-                            { bedding: b.color },
-                            b.price,
-                            `New sheets: ${b.label}`,
-                          )
-                        }
-                        className={`rounded-xl border p-1.5 text-left ${current ? "border-emerald-500 ring-2 ring-emerald-200" : "border-slate-200"}`}
-                      >
-                        <span
-                          className="block h-7 rounded-lg border border-black/5"
-                          style={{ background: b.color }}
-                        />
-                        <span className="block text-[10px] font-black mt-1 leading-tight">
-                          {b.label}
-                        </span>
-                        <span className="text-[9px] font-mono font-bold text-emerald-600">
-                          {current ? "✓" : b.price ? `AED ${b.price}` : "Free"}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            </div>
-          ) : shopTab === "shop" ? (
-            <div className="space-y-2.5 pt-3">
-              <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
-                {[
-                  { id: "all" as const, label: "All", icon: "🛍️" },
-                  ...SHOP_CATEGORIES,
-                ].map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => setShopCat(c.id)}
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-black whitespace-nowrap border ${shopCat === c.id ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200"}`}
-                  >
-                    {c.icon} {c.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* #19: Interactive Nursery Baby Care Mini-Game Banner */}
-              {shopCat === "nursery" && (
-                <div className="p-3 rounded-2xl bg-gradient-to-r from-pink-50 via-amber-50 to-sky-50 border border-pink-200 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <div className="text-xs font-black text-slate-900">
-                        👶 Nursery Baby Care Challenge
-                      </div>
-                      <div className="text-[11px] text-slate-600">
-                        Warm milk to 37°C, speed-swap diapers & hum a lullaby
-                        (+AED 120)!
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        gameAudio.playClickSound();
-                        setNurseryGame({
-                          step: "bottle",
-                          temp: 24,
-                          swipes: 0,
-                          notes: 0,
-                        });
-                      }}
-                      className="px-3 py-1.5 rounded-xl bg-pink-600 hover:bg-pink-500 text-white font-black text-xs shrink-0 active:scale-95"
-                    >
-                      🍼 Play Care
-                    </button>
-                  </div>
-                  {nurseryGame && (
-                    <div className="p-2.5 rounded-xl bg-white border border-pink-200 space-y-2">
-                      {nurseryGame.step === "bottle" && (
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between text-xs font-black text-slate-800">
-                            <span>Step 1/3: 🍼 Warm Formula to 36–38°C</span>
-                            <span
-                              className={
-                                nurseryGame.temp >= 36 && nurseryGame.temp <= 38
-                                  ? "text-emerald-600"
-                                  : "text-amber-600"
-                              }
-                            >
-                              {nurseryGame.temp}°C
-                            </span>
-                          </div>
-                          <input
-                            type="range"
-                            min={20}
-                            max={45}
-                            value={nurseryGame.temp}
-                            onChange={(e) =>
-                              setNurseryGame({
-                                ...nurseryGame,
-                                temp: Number(e.target.value),
-                              })
-                            }
-                            className="w-full accent-pink-500"
-                          />
-                          <button
-                            type="button"
-                            disabled={
-                              nurseryGame.temp < 36 || nurseryGame.temp > 38
-                            }
-                            onClick={() => {
-                              gameAudio.playClickSound();
-                              setNurseryGame({
-                                ...nurseryGame,
-                                step: "diaper",
-                              });
-                            }}
-                            className="w-full py-1.5 rounded-xl bg-emerald-600 disabled:bg-slate-200 disabled:text-slate-400 text-white font-black text-xs"
-                          >
-                            {nurseryGame.temp >= 36 && nurseryGame.temp <= 38
-                              ? "✅ Perfect 37°C — Next: Diaper Swap"
-                              : "Slide to 37°C Sweet Spot"}
-                          </button>
-                        </div>
-                      )}
-                      {nurseryGame.step === "diaper" && (
-                        <div className="space-y-1.5">
-                          <div className="text-xs font-black text-slate-800">
-                            Step 2/3: 🧷 Diaper Speed-Swap ({nurseryGame.swipes}
-                            /3 Fastener Taps)
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              gameAudio.playClickSound();
-                              const nextSwipes = nurseryGame.swipes + 1;
-                              if (nextSwipes >= 3) {
-                                setNurseryGame({
-                                  ...nurseryGame,
-                                  swipes: 3,
-                                  step: "lullaby",
-                                });
-                              } else {
-                                setNurseryGame({
-                                  ...nurseryGame,
-                                  swipes: nextSwipes,
-                                });
-                              }
-                            }}
-                            className="w-full py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-black text-xs active:scale-95"
-                          >
-                            🧷 Tap to Fasten Clean Diaper ({nurseryGame.swipes}
-                            /3)
-                          </button>
-                        </div>
-                      )}
-                      {nurseryGame.step === "lullaby" && (
-                        <div className="space-y-1.5">
-                          <div className="text-xs font-black text-slate-800">
-                            Step 3/3: 🎵 Rocking Chair Lullaby (
-                            {nurseryGame.notes}/3 Notes)
-                          </div>
-                          <div className="grid grid-cols-3 gap-1.5">
-                            {["🎵 Do-Re", "🎶 Mi-Fa", "✨ Sleep"].map(
-                              (lbl, idx) => (
-                                <button
-                                  key={lbl}
-                                  type="button"
-                                  onClick={() => {
-                                    gameAudio.playCoinSound();
-                                    const nextNotes = nurseryGame.notes + 1;
-                                    if (nextNotes >= 3) {
-                                      adjustBalance(120);
-                                      setNeeds((prev) => ({
-                                        ...prev,
-                                        fun: Math.min(100, prev.fun + 25),
-                                      }));
-                                      showToast(
-                                        "👶 Baby is fast asleep! +AED 120 Family Care Bonus & +25 FUN",
-                                      );
-                                      setNurseryGame(null);
-                                    } else {
-                                      setNurseryGame({
-                                        ...nurseryGame,
-                                        notes: nextNotes,
-                                      });
-                                    }
-                                  }}
-                                  className="py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs active:scale-95"
-                                >
-                                  {lbl} #{idx + 1}
-                                </button>
-                              ),
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* #5: Gift-to-Friend & 3-Tap Mystery Gift Unboxing Panel */}
-              {giftTargetItem && (
-                <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-amber-950">
-                      🎁 Send {giftTargetItem.icon} {giftTargetItem.name} (AED{" "}
-                      {giftTargetItem.price.toLocaleString()})
-                    </span>
-                    <button
-                      onClick={() => setGiftTargetItem(null)}
-                      className="text-xs font-black text-slate-400 hover:text-slate-700"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    value={giftRecipient}
-                    onChange={(e) => setGiftRecipient(e.target.value)}
-                    placeholder="Friend's @username (e.g. @layla)"
-                    className="w-full px-3 py-1.5 rounded-xl bg-white border border-amber-200 text-xs font-bold text-slate-900"
-                  />
-                  <input
-                    type="text"
-                    value={giftNote}
-                    onChange={(e) => setGiftNote(e.target.value)}
-                    placeholder="Add a luxury gift card note..."
-                    className="w-full px-3 py-1.5 rounded-xl bg-white border border-amber-200 text-xs text-slate-700"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const to =
-                          giftRecipient.trim().replace(/^@/, "") || "bestie";
-                        if (!adjustBalance(-giftTargetItem.price)) {
-                          showToast("⚠️ Not enough AED in your wallet!");
-                          return;
-                        }
-                        gameAudio.playCoinSound();
-                        const sent = giftTargetItem;
-                        setGiftTargetItem(null);
-                        setUnboxItem({
-                          item: sent,
-                          from: citizen?.username ?? "You",
-                          note: giftNote,
-                          taps: 0,
-                        });
-                        showToast(`🎁 Wrapped & sent ${sent.name} to @${to}!`);
-                      }}
-                      className="flex-1 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs active:scale-95"
-                    >
-                      🎀 Pay & Send Mystery Box
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {unboxItem && (
-                <div className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white border border-amber-400/40 text-center space-y-2 shadow-xl">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-amber-300">
-                    3-Tap Mystery Gift Unboxing · From @{unboxItem.from}
-                  </div>
-                  <div className="text-3xl py-1 animate-bounce">
-                    {unboxItem.taps === 0
-                      ? "🎁"
-                      : unboxItem.taps === 1
-                        ? "🎀"
-                        : unboxItem.taps === 2
-                          ? "✨📦✨"
-                          : unboxItem.item.icon}
-                  </div>
-                  <p className="text-xs text-white/80 italic">
-                    &ldquo;{unboxItem.note}&rdquo;
-                  </p>
-                  {unboxItem.taps < 3 ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        gameAudio.playClickSound();
-                        const next = unboxItem.taps + 1;
-                        if (next >= 3) {
-                          gameAudio.playCoinSound();
-                          const uid = newFurnitureUid(unboxItem.item.id);
-                          if (sh)
-                            void saveShared({
-                              ...sh,
-                              furniture: [
-                                ...sh.furniture,
-                                {
-                                  uid,
-                                  itemId: unboxItem.item.id,
-                                  placement: null,
-                                },
-                              ],
-                            });
-                          else
-                            updateCitizen((c) => ({
-                              ...c,
-                              furniture: [
-                                ...(c.furniture ?? []),
-                                {
-                                  uid,
-                                  itemId: unboxItem.item.id,
-                                  placement: null,
-                                },
-                              ],
-                            }));
-                        }
-                        setUnboxItem({ ...unboxItem, taps: next });
-                      }}
-                      className="w-full py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs active:scale-95"
-                    >
-                      {unboxItem.taps === 0
-                        ? "Tap 1/3: 📳 Shake Luxury Box"
-                        : unboxItem.taps === 1
-                          ? "Tap 2/3: 🎀 Untie Gold Ribbon"
-                          : "Tap 3/3: 🎉 Pop Confetti & Reveal!"}
-                    </button>
-                  ) : (
-                    <div className="space-y-1.5">
-                      <div className="text-xs font-black text-emerald-300">
-                        🎉 Unlocked {unboxItem.item.name}! Added to Storage.
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setUnboxItem(null)}
-                        className="px-4 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-black text-xs"
-                      >
-                        Done
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {CATALOG.filter(
-                (item) => shopCat === "all" || item.category === shopCat,
-              ).map((item) => {
-                const owned = furniture.filter(
-                  (f) => f.itemId === item.id,
-                ).length;
-                return (
-                  <div
-                    key={item.id}
-                    className="p-3 rounded-2xl border border-slate-100 bg-slate-50 flex items-center justify-between gap-3"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="text-2xl">{item.icon}</span>
-                      <div className="min-w-0">
-                        <h4 className="font-black text-xs sm:text-sm text-slate-900">
-                          {item.name}
-                        </h4>
-                        <p className="text-[11px] text-slate-500">
-                          {item.desc}
-                          {owned ? ` · ${owned} owned` : ""}
-                        </p>
-                        <span className="text-xs font-mono font-extrabold text-emerald-600 mt-0.5 block">
-                          AED {item.price.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        onClick={() => {
-                          gameAudio.playClickSound();
-                          setGiftTargetItem(item);
-                        }}
-                        title="Buy & Gift to a Friend"
-                        className="px-2.5 py-1.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 font-black text-xs transition-all active:scale-95"
-                      >
-                        🎁 Gift
-                      </button>
-                      <button
-                        onClick={() => handleBuy(item)}
-                        className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs transition-all active:scale-95"
-                      >
-                        Buy
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="space-y-2.5 pt-3">
-              {stored.length === 0 && (
-                <p className="text-xs text-slate-500 text-center py-6">
-                  Nothing in storage. Items you buy or store from the room
-                  appear here.
-                </p>
-              )}
-              {stored.map((f) => {
-                const item = getCatalogItem(f.itemId);
-                if (!item) return null;
-                return (
-                  <div
-                    key={f.uid}
-                    className="p-3 rounded-2xl border border-slate-100 bg-slate-50 flex items-center justify-between gap-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{item.icon}</span>
-                      <h4 className="font-black text-xs sm:text-sm text-slate-900">
-                        {item.name}
-                      </h4>
-                    </div>
-                    <button
-                      onClick={() => startPlacing(f.uid, f.itemId)}
-                      className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs transition-all active:scale-95"
-                    >
-                      Place
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* 2. MODERN DECORATION CATALOGUE */}
+      <DecorationCatalogue
+        open={buyModalOpen}
+        onClose={() => setBuyModalOpen(false)}
+        walletBalance={walletBalance}
+        storedItems={stored}
+        homeStyle={homeStyle}
+        onRestyle={restyle}
+        onSelectItem={handleBuy}
+        onPlaceMultiple={(items) => {
+          items.forEach((item) => handleBuy(item));
+        }}
+        onPlaceStored={handlePlaceStored}
+        initialCategory={shopCat === "all" ? "all" : shopCat}
+      />
 
       {/* 3. MY PROPERTIES (OWNED & RENTED) SWITCHER MODAL */}
       <Dialog open={tierModalOpen} onOpenChange={setTierModalOpen}>
