@@ -226,7 +226,7 @@ export default function TermsOfServicePage() {
           <div className="text-xs sm:text-sm text-slate-200 space-y-1 font-mono pt-1">
             <p><strong>Operator:</strong> Opeyemi Ishola (Brain)</p>
             <p><strong>App:</strong> Dubai Life ({SITE.domain})</p>
-            <p><strong>Support Email:</strong> support@cometodubai.com</p>
+            <p><strong>Support Email:</strong> support@mydubailife.app</p>
           </div>
         </section>
       </main>

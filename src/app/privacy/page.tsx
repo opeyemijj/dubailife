@@ -212,8 +212,8 @@ export default function PrivacyPolicyPage() {
               <li>
                 <strong>Request total account and data deletion:</strong> You can delete your account and all associated
                 profile data at any time by emailing us at{" "}
-                <a href="mailto:support@cometodubai.com" className="text-emerald-400 underline font-semibold">
-                  support@cometodubai.com
+                <a href="mailto:support@mydubailife.app" className="text-emerald-400 underline font-semibold">
+                  support@mydubailife.app
                 </a>{" "}
                 with your registered username or email address. We process deletion requests within 7 business days.
               </li>
@@ -232,7 +232,7 @@ export default function PrivacyPolicyPage() {
           <p className="text-sm text-slate-300 leading-relaxed">
             Dubai Life is designed for players aged 13 and above. We do not knowingly collect personal identifiable
             information from children under the age of 13. If you believe a child under 13 has provided personal data,
-            please contact us immediately at <a href="mailto:support@cometodubai.com" className="text-emerald-400 underline">support@cometodubai.com</a> and
+            please contact us immediately at <a href="mailto:support@mydubailife.app" className="text-emerald-400 underline">support@mydubailife.app</a> and
             we will promptly delete such records.
           </p>
         </section>
@@ -249,7 +249,7 @@ export default function PrivacyPolicyPage() {
           <div className="text-xs sm:text-sm text-slate-200 space-y-1 font-mono pt-1">
             <p><strong>Operator:</strong> Opeyemi Ishola (Brain)</p>
             <p><strong>App:</strong> Dubai Life ({SITE.domain})</p>
-            <p><strong>Email:</strong> support@cometodubai.com</p>
+            <p><strong>Email:</strong> support@mydubailife.app</p>
             <p><strong>Location:</strong> Dubai, United Arab Emirates</p>
           </div>
         </section>

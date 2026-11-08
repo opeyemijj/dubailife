@@ -20,6 +20,7 @@ import { GuideOverview } from "@/components/guide/HowItWorks";
 import { MoveInWalk } from "@/components/onboarding/MoveInWalk";
 import { clearSignupDraft, updateSignupDraft, useSignupDraft } from "@/lib/signupDraft";
 import { ONBOARDING_STEPS, type OnboardingStep } from "@/lib/onboardingSteps";
+import { clearPendingVenue } from "@/components/city/VenueDressCodeModal";
 
 
 const DEFAULT_LOOK: AvatarLookProps = { gender: "woman", preset: defaultPreset("woman"), bodyType: "Hourglass" };
@@ -124,6 +125,7 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
     // Play starts right away; the verification link arrives by email (needed for prizes and invite rewards).
     void sendVerification();
     clearSignupDraft();
+    clearPendingVenue();
     setFinishing(false);
     setMovedInto({ id: home.id, label: home.label });
   };

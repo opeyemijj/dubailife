@@ -5,7 +5,7 @@
 // on an iPhone the second step happens in the installed app. "Later" hides it until the next visit.
 
 import { useEffect, useState } from "react";
-import { Bell, Check, Plus, Share } from "lucide-react";
+import { Bell, Check, Plus, Share, X } from "lucide-react";
 import SETUP from "@/data/guide/app-setup.json";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { promptInstall, useInstallState } from "@/lib/install";
@@ -35,8 +35,24 @@ export function needsAppSetup(): boolean {
 }
 
 const Icon = ({ text }: { text: string }) => {
-  const parts = text.split(/(\{share\}|\{plus\})/);
-  return <>{parts.map((p, i) => p === "{share}" ? <Share key={i} className="inline w-4 h-4 mx-0.5 -mt-0.5 text-sky-600" /> : p === "{plus}" ? <Plus key={i} className="inline w-4 h-4 mx-0.5 -mt-0.5 text-sky-600" /> : <span key={i}>{p}</span>)}</>;
+  const parts = text.split(/(\{share\}|\{plus\}|\{menu\})/);
+  return (
+    <>
+      {parts.map((p, i) =>
+        p === "{share}" ? (
+          <Share key={i} className="inline w-4 h-4 mx-0.5 -mt-0.5 text-sky-600" />
+        ) : p === "{plus}" ? (
+          <Plus key={i} className="inline w-4 h-4 mx-0.5 -mt-0.5 text-sky-600" />
+        ) : p === "{menu}" ? (
+          <span key={i} className="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded bg-slate-100 border border-slate-300 font-bold text-slate-900 text-xs leading-none">
+            ≡
+          </span>
+        ) : (
+          <span key={i}>{p}</span>
+        )
+      )}
+    </>
+  );
 };
 
 export function AppSetup({ userId, onClose }: { userId: string; onClose: () => void }) {
@@ -73,11 +89,21 @@ export function AppSetup({ userId, onClose }: { userId: string; onClose: () => v
 
   return (
     <ModalPortal>
-      <div className="fixed inset-0 z-[195] bg-slate-950/70 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-label="Get the app">
-        <div className="w-full max-w-md max-h-[94dvh] overflow-y-auto bg-white text-slate-900 rounded-t-[28px] sm:rounded-[28px] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] space-y-4 shadow-2xl">
-          <div className="text-center space-y-1.5">
+      <div className="fixed inset-0 z-[195] bg-slate-950/70 flex items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true" aria-label="Get the app">
+        <div className="w-full max-w-md max-h-[94dvh] overflow-y-auto bg-white text-slate-900 rounded-t-[28px] sm:rounded-[28px] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] space-y-4 shadow-2xl relative">
+          {/* Top Right Close Button */}
+          <button
+            type="button"
+            onClick={later}
+            className="absolute right-4 top-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer z-10"
+            aria-label="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+
+          <div className="text-center space-y-1.5 pt-1">
             <p className="text-4xl">📲</p>
-            <h2 className="text-2xl font-black leading-tight">{SETUP.title}</h2>
+            <h2 className="text-2xl font-black leading-tight pr-6 pl-6">{SETUP.title}</h2>
             <p className="text-sm text-slate-600">{SETUP.why}</p>
           </div>
           <div className="grid grid-cols-2 gap-1.5">
@@ -92,11 +118,33 @@ export function AppSetup({ userId, onClose }: { userId: string; onClose: () => v
             {!installDone && (install === "prompt" ? (
               <button onClick={() => void promptInstall()} className="w-full h-12 rounded-2xl bg-emerald-600 text-white font-black">Install Dubai Life</button>
             ) : (
-              <ol className="space-y-1.5">
-                {steps.map((st, i) => (
-                  <li key={i} className="flex gap-2.5 text-sm"><span className="w-6 h-6 rounded-full bg-sky-100 text-sky-700 text-xs font-black flex items-center justify-center shrink-0">{i + 1}</span><span><Icon text={st} /></span></li>
-                ))}
-              </ol>
+              <div className="space-y-2.5">
+                {guide === "iosSafari" && (
+                  <div className="rounded-xl overflow-hidden border border-slate-200/90 bg-slate-50 shadow-sm">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/brand/safari-bar-guide.jpg"
+                      alt="Safari Address Bar with ≡ menu button"
+                      className="w-full h-auto object-contain block"
+                    />
+                    <p className="text-[10px] text-center text-slate-500 py-1 bg-slate-100 font-medium">
+                      Tap the <strong className="text-slate-900 font-bold">≡</strong> icon inside the bottom address bar
+                    </p>
+                  </div>
+                )}
+                <ol className="space-y-1.5">
+                  {steps.map((st, i) => (
+                    <li key={i} className="flex gap-2.5 text-sm">
+                      <span className="w-6 h-6 rounded-full bg-sky-100 text-sky-700 text-xs font-black flex items-center justify-center shrink-0">
+                        {i + 1}
+                      </span>
+                      <span>
+                        <Icon text={st} />
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
             ))}
             {!canInstall && <p className="text-xs text-slate-500">{SETUP.install.other[0]}. Notifications still work here.</p>}
           </section>

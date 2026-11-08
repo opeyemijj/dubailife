@@ -4,7 +4,13 @@
   "why": "Dubai Life is live with other players. Without the app and notifications you'll miss friends messaging you, knocks on your door, marathon starts, your decorator finishing and rent day. It takes 1–2 minutes.",
   "perks": ["💬 Messages and friend requests", "🚪 Knocks on your door", "🏃 Marathon and live Spaces starting", "💰 Payday and rent reminders"],
   "install": {
-    "iosSafari": ["Tap the Share button {share} at the bottom of Safari (on iPad it's at the top)", "Scroll down and tap “Add to Home Screen” {plus} (if you don't see it, tap “More” first)", "Tap “Add” at the top right", "Close Safari and open Dubai Life from your Home Screen. You'll finish here."],
+    "iosSafari": [
+      "Tap the menu button {menu} (three lines ≡) inside the address bar beside mydubailife.app",
+      "Tap “Share” {share} in the menu",
+      "Scroll down and tap “Add to Home Screen” {plus}",
+      "Tap “Add” at the top right",
+      "Close Safari and open Dubai Life from your Home Screen"
+    ],
     "iosChrome": ["Tap the Share button {share} at the top right, next to the address bar", "Tap “Add to Home Screen” {plus}", "Tap “Add”", "Open Dubai Life from your Home Screen. (No Share button? Open mydubailife.app in Safari instead.)"],
     "androidChrome": ["Tap the menu ⋮ at the top right of Chrome", "Tap “Install app” or “Add to Home screen”", "Tap “Install”", "Open Dubai Life from your Home Screen or app drawer"],
     "samsung": ["Tap the menu ☰ at the bottom right", "Tap “Add page to” then “Home screen”", "Open Dubai Life from your Home Screen"],

@@ -138,7 +138,7 @@ import { openPhone } from "@/components/layout/PhoneOverlay";
 import { useUnreadTotal } from "@/lib/unread";
 import { useLifeLoop } from "@/lib/lifeLoop";
 import { WardrobeModal } from "@/components/avatar/WardrobeModal";
-import { getPendingVenue } from "@/components/city/VenueDressCodeModal";
+import { getPendingVenue, clearPendingVenue } from "@/components/city/VenueDressCodeModal";
 import { gainSkill, lifeEvent } from "@/lib/life";
 import {
   FixtureProgress,
@@ -230,7 +230,9 @@ export default function HomePage() {
   const [wardrobeModalOpen, setWardrobeModalOpen] = useState(false);
 
   useEffect(() => {
-    if (searchParams?.get("wardrobe") === "open" || !!getPendingVenue()) {
+    // Only open the wardrobe if explicitly requested via query parameter.
+    // Avoid auto-opening from stale pending venues in localStorage.
+    if (searchParams?.get("wardrobe") === "open") {
       setWardrobeModalOpen(true);
     }
   }, [searchParams]);
@@ -2631,7 +2633,10 @@ export default function HomePage() {
       {/* Wardrobe & Outfit Changes */}
       <WardrobeModal
         open={wardrobeModalOpen}
-        onOpenChange={setWardrobeModalOpen}
+        onOpenChange={(open) => {
+          setWardrobeModalOpen(open);
+          if (!open) clearPendingVenue();
+        }}
       />
     </main>
   );

@@ -8,7 +8,7 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, Check, Lock } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Lock, X } from "lucide-react";
 import { isNewCitizen, useCitizen } from "@/lib/citizenStore";
 import { DEFAULT_ORDER, goalClaimed, goalDone, goalOf, GOALS, orderProblem, setGoals, useGoals, type GoalId } from "@/lib/goals";
 import { gameAudio } from "@/utils/gameAudio";
@@ -30,9 +30,10 @@ export function GoalSetup() {
   const [order, setOrder] = useState<GoalId[] | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    const open = () => { setEditing(true); setOrder(null); setNote(null); };
+    const open = () => { setEditing(true); setOrder(null); setNote(null); setDismissed(false); };
     window.addEventListener("dubai:goal-setup", open);
     return () => window.removeEventListener("dubai:goal-setup", open);
   }, []);
@@ -41,6 +42,7 @@ export function GoalSetup() {
   // A new player decorates first (src/components/home/MoveInGuide.tsx); the goals follow.
   if (citizen?.decorFirst && isNewCitizen(citizen) && firstTime && !editing) return null;
   if (!citizen?.id || !status || QUIET.test(path) || !(firstTime || editing)) return null;
+  if (dismissed && !editing) return null;
   const list = order ?? status.order ?? DEFAULT_ORDER;
   const pinned = (id: string) => (GOALS.pinned as string[]).includes(id);
 
@@ -59,22 +61,38 @@ export function GoalSetup() {
     setBusy(false);
     if (r.error) { setNote(r.error); return; }
     gameAudio.playCoinSound();
-    // A new plan heads straight out to the city; a changed one goes back to where you were.
-    const wasFirst = firstTime;
+    // Keep user in their home (do not kick them to /explore)
     close();
-    if (wasFirst) router.push("/explore");
   };
-  const close = () => { setEditing(false); setOrder(null); };
+  const close = () => {
+    setEditing(false);
+    setOrder(null);
+    setDismissed(true);
+  };
   return (
     <div className="fixed inset-0 z-[205] bg-slate-950 text-white" role="dialog" aria-modal="true" aria-label="Your Dubai plan">
       <PlanScene look={citizen.look} celebrating={false} />
       <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-transparent to-slate-950/90 pointer-events-none" />
       <div className="absolute inset-x-0 bottom-0 top-[max(1rem,env(safe-area-inset-top))] flex flex-col justify-end p-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="max-w-md w-full mx-auto">
-          <div className="rounded-[28px] bg-white text-slate-900 p-4 space-y-2 shadow-2xl max-h-[78vh] flex flex-col">
-            <div className="px-1">
-              <h2 className="text-xl font-black leading-tight">{firstTime ? "Let's get busy in Dubai! What are your goals?" : "Put your goals in order"}</h2>
-              <p className="text-xs text-slate-500">{firstTime ? "Put them in the order you want. " : ""}A home and a job come first. Move the rest with the arrows.</p>
+          <div className="rounded-[28px] bg-white text-slate-900 p-4 space-y-2 shadow-2xl max-h-[78vh] flex flex-col relative">
+            <div className="px-1 flex items-start justify-between gap-2">
+              <div>
+                <h2 className="text-xl font-black leading-tight">
+                  {firstTime ? "Let's get busy in Dubai! What are your goals?" : "Put your goals in order"}
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {firstTime ? "Put them in the order you want. " : ""}A home and a job come first. Move the rest with the arrows.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={close}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
             <ol className="space-y-1.5 overflow-y-auto pr-1">
               {list.map((id, i) => {
@@ -97,9 +115,21 @@ export function GoalSetup() {
               })}
             </ol>
             <p className="text-xs font-bold text-amber-700 min-h-4 px-1" aria-live="polite">{note}</p>
-            <div className="flex gap-2">
-              {editing && <button onClick={close} className="h-12 px-4 rounded-2xl bg-slate-100 font-black text-slate-700">Cancel</button>}
-              <button onClick={lock} disabled={busy} className="flex-1 h-12 rounded-2xl bg-teal-600 text-white font-black disabled:opacity-60">{busy ? "Saving…" : editing && status.order ? "Save my order" : "Lock in my plan"}</button>
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={close}
+                className="h-12 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 font-black text-slate-700 transition-colors cursor-pointer"
+              >
+                {editing ? "Cancel" : "Set later"}
+              </button>
+              <button
+                onClick={lock}
+                disabled={busy}
+                className="flex-1 h-12 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-black disabled:opacity-60 transition-colors cursor-pointer"
+              >
+                {busy ? "Saving…" : editing && status.order ? "Save my order" : "Lock in my plan"}
+              </button>
             </div>
           </div>
 

@@ -35,8 +35,16 @@ export function InstallApp({ variant = "link" }: { variant?: "link" | "row" | "l
                 <button onClick={() => setIosHelp(false)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center" aria-label="Close"><X className="w-4 h-4" /></button>
               </div>
               <ol className="space-y-3 text-sm">
-                <li className="flex items-center gap-3"><span className="w-8 h-8 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center"><Share className="w-4 h-4" /></span> Tap the <b>Share</b> button in your browser bar</li>
-                <li className="flex items-center gap-3"><span className="w-8 h-8 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center"><SquarePlus className="w-4 h-4" /></span> Choose <b>Add to Home Screen</b>, then <b>Add</b></li>
+                <li className="flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-full bg-sky-50 text-sky-700 font-black text-sm flex items-center justify-center">≡</span>
+                  <span>Tap the <b>≡ menu</b> beside <b>mydubailife.app</b>, then tap <b>Share</b></span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center">
+                    <SquarePlus className="w-4 h-4" />
+                  </span>
+                  <span>Choose <b>Add to Home Screen</b>, then tap <b>Add</b></span>
+                </li>
               </ol>
               <button onClick={() => setIosHelp(false)} className="w-full h-11 rounded-xl bg-slate-900 text-white font-black">Got it</button>
             </div>

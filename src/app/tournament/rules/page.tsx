@@ -70,7 +70,7 @@ export default function TournamentRules() {
           <p>ID documents are stored privately, used only to verify the winner, seen only by authorised staff, and deleted as soon as the prize is paid or the entry is disqualified. The winner&apos;s username may be shown in the game; their real name is never published without permission.</p>
         </Section>
         <Section n={10} title="Changes and contact">
-          <p>The Sponsor may change or cancel a tournament if required by law or if something outside its control affects fairness; any change is announced in the game before it applies. Questions: support@cometodubai.com.</p>
+          <p>The Sponsor may change or cancel a tournament if required by law or if something outside its control affects fairness; any change is announced in the game before it applies. Questions: support@mydubailife.app.</p>
         </Section>
 
         <div className="pt-6 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">

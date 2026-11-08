@@ -51,7 +51,7 @@ export function InviteFriends({ username }: { username: string }) {
   const rewardAed = mine?.reward ?? 2500;
 
   const buildSharePayload = () => {
-    const origin = typeof window !== "undefined" ? window.location.origin : "https://cometodubai.com";
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://mydubailife.app";
     const goParam = activeMode.go ? `&go=${encodeURIComponent(activeMode.go)}` : "";
     const url = `${origin}/?ref=${encodeURIComponent(username)}${goParam}`;
     const text = activeMode.desc(rewardAed);

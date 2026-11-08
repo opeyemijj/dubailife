@@ -4,7 +4,7 @@ import type { PushPayload, PushSubscriptionRecord } from "./types";
 
 const PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
-const SUBJECT = process.env.VAPID_SUBJECT || "mailto:support@cometodubai.com";
+const SUBJECT = process.env.VAPID_SUBJECT || "mailto:support@mydubailife.app";
 
 let vapidConfigured = false;
 function ensureVapid() {
