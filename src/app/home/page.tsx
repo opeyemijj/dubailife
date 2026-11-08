@@ -1106,6 +1106,16 @@ export default function HomePage() {
     <main className="fixed inset-0 w-screen h-[100dvh] bg-[#788e6e] overflow-hidden overscroll-none select-none font-sans touch-none">
       {/* 3D Isometric Apartment Interior */}
       <ApartmentRoom
+        paused={
+          wardrobeModalOpen ||
+          buyModalOpen ||
+          tierModalOpen ||
+          driveOpen ||
+          exteriorOpen ||
+          decoratorOpen ||
+          appSetupOpen ||
+          partyOpen
+        }
         people={[
           ...matesInRoom(bedspace, onlineNames, (m) =>
             router.push(`/phone?tab=chats&chat=${m.id}`),

@@ -444,6 +444,16 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   return (
     <main className="fixed inset-0 w-screen h-[100dvh] overflow-hidden overscroll-none bg-[#788e6e] text-slate-900 select-none">
       <ApartmentRoom
+        paused={
+          wardrobeOpen ||
+          shopOpen ||
+          lookOpen ||
+          propertiesOpen ||
+          manageOpen ||
+          Boolean(theftModal) ||
+          driveOpen ||
+          Boolean(stolenDrive)
+        }
         loadingLabel={`Opening ${flatTitle(flat)}`}
         look={look}
         homeStyle={homeLook}

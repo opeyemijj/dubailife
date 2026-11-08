@@ -3,7 +3,7 @@
 import { Ceiling } from "@/components/interior/Ceiling";
 import { Flies } from "@/components/avatar/Flies";
 import { PartyDecor } from "@/components/invite/PartyDecor";
-import { canvasQuality, isWebGLAvailable, resetWebGLCache } from "@/lib/device";
+import { canvasQuality, isWebGLAvailable, resetWebGLCache, useDocumentVisible } from "@/lib/device";
 import React, { createContext, Suspense, useContext, useEffect, useMemo, useRef, useState, Component } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
@@ -125,6 +125,8 @@ export interface ApartmentRoomProps {
   homeStyle?: HomeStyle;
   /** Other people in the room: the resident when visiting, and other citizens here right now. */
   people?: Person[];
+  /** Pause 3D frame rendering loop to conserve battery/GPU when covered by modals or backgrounded */
+  paused?: boolean;
 }
 
 export interface Person {
@@ -1165,6 +1167,22 @@ function LevelPartitions({ def, upView, activeRoomId, onSelectRoom, onFloorClick
 // ---------- camera ----------
 
 /** Swings the orbit camera a quarter turn whenever `turns` changes, and reports which walls face the camera. */
+// Pre-allocated scratch vectors to prevent GC pauses & memory thrashing inside useFrame
+const _scratchHead = new THREE.Vector3();
+const _scratchShift = new THREE.Vector3();
+const _scratchSide = new THREE.Vector3();
+const _scratchUp = new THREE.Vector3(0, 1, 0);
+const _scratchToAim = new THREE.Vector3();
+const _scratchDir = new THREE.Vector3();
+const _scratchRight = new THREE.Vector3();
+const _scratchAims = [
+  new THREE.Vector3(),
+  new THREE.Vector3(),
+  new THREE.Vector3(),
+  new THREE.Vector3(),
+  new THREE.Vector3(),
+];
+
 function CameraRig({
   turns,
   upView,
@@ -1250,6 +1268,8 @@ function CameraRig({
   const faded = useRef(new Set<THREE.Mesh>());
   const rayRef = useRef(new THREE.Raycaster());
   const scene = useThree((s) => s.scene);
+  const wallsRef = useRef<THREE.Mesh[]>([]);
+  const wallScanTimer = useRef(0);
 
   useEffect(() => {
     if (!controls || turns === lastTurns.current) return;
@@ -1263,35 +1283,54 @@ function CameraRig({
 
     if (eye && follow) {
       // Eyes move with you; where you look stays yours.
-      const head = new THREE.Vector3(follow[0], 1.62, follow[2]);
-      const shift = head.clone().sub(controls.target);
-      controls.target.add(shift);
-      camera.position.add(shift);
+      _scratchHead.set(follow[0], 1.62, follow[2]);
+      _scratchShift.copy(_scratchHead).sub(controls.target);
+      controls.target.add(_scratchShift);
+      camera.position.add(_scratchShift);
       controls.update();
       return;
     }
     if (inside && follow) {
       // Over the shoulder: aim at the citizen's head; camera translates with the citizen maintaining angle and distance.
-      const head = new THREE.Vector3(follow[0], 1.45, follow[2]);
-      const shift = head.clone().sub(controls.target);
-      controls.target.add(shift);
-      camera.position.add(shift);
+      _scratchHead.set(follow[0], 1.45, follow[2]);
+      _scratchShift.copy(_scratchHead).sub(controls.target);
+      controls.target.add(_scratchShift);
+      camera.position.add(_scratchShift);
       lastFollow.current = follow;
       controls.update();
-      // Any wall between the camera and the citizen turns see-through while it's in the way.
-      const walls: THREE.Mesh[] = [];
-      scene.traverse((o) => { if ((o as THREE.Mesh).isMesh && o.userData.wall) walls.push(o as THREE.Mesh); });
+
+      // Cache walls instead of traversing the whole scene on every frame
+      wallScanTimer.current -= dt;
+      if (wallScanTimer.current <= 0 || wallsRef.current.length === 0) {
+        wallScanTimer.current = 1.0;
+        const w: THREE.Mesh[] = [];
+        scene.traverse((o) => { if ((o as THREE.Mesh).isMesh && o.userData?.wall) w.push(o as THREE.Mesh); });
+        wallsRef.current = w;
+      }
+      const walls = wallsRef.current;
+
       // Lines from the camera to the head, both shoulders, the waist and the feet: a wall crossing any of them
       // hides part of the citizen or the room just beyond them.
       const ray = rayRef.current;
-      const side = new THREE.Vector3().subVectors(head, camera.position).setY(0).normalize().cross(new THREE.Vector3(0, 1, 0)).multiplyScalar(0.7);
-      const aims = [head, head.clone().add(side), head.clone().sub(side), new THREE.Vector3(follow[0], 0.9, follow[2]), new THREE.Vector3(follow[0], 0.1, follow[2])];
+      _scratchSide.copy(_scratchHead).sub(camera.position).setY(0).normalize().cross(_scratchUp).multiplyScalar(0.7);
+      _scratchAims[0].copy(_scratchHead);
+      _scratchAims[1].copy(_scratchHead).add(_scratchSide);
+      _scratchAims[2].copy(_scratchHead).sub(_scratchSide);
+      _scratchAims[3].set(follow[0], 0.9, follow[2]);
+      _scratchAims[4].set(follow[0], 0.1, follow[2]);
+
       const blocking = new Set<THREE.Mesh>();
-      for (const aim of aims) {
-        const toAim = aim.clone().sub(camera.position);
-        ray.set(camera.position, toAim.clone().normalize());
-        ray.far = toAim.length() - 0.3;
-        for (const h of ray.intersectObjects(walls, false)) blocking.add(h.object as THREE.Mesh);
+      for (let i = 0; i < 5; i++) {
+        const aim = _scratchAims[i];
+        _scratchToAim.copy(aim).sub(camera.position);
+        const len = _scratchToAim.length();
+        _scratchDir.copy(_scratchToAim).normalize();
+        ray.set(camera.position, _scratchDir);
+        ray.far = len - 0.3;
+        const hits = ray.intersectObjects(walls, false);
+        for (let j = 0; j < hits.length; j++) {
+          blocking.add(hits[j].object as THREE.Mesh);
+        }
       }
       for (const m of blocking) {
         const mat = (Array.isArray(m.material) ? m.material[0] : m.material) as THREE.MeshStandardMaterial | undefined;
@@ -1312,9 +1351,9 @@ function CameraRig({
       const stepZ = panNudgeRef.current.dz;
       panNudgeRef.current.dx = 0;
       panNudgeRef.current.dz = 0;
-      const right = new THREE.Vector3().subVectors(controls.target, camera.position).setY(0).normalize().cross(new THREE.Vector3(0, 1, 0));
-      const shiftX = THREE.MathUtils.clamp(controls.target.x + right.x * stepX + stepZ * 0.5, -16, 16) - controls.target.x;
-      const shiftZ = THREE.MathUtils.clamp(controls.target.z + right.z * stepX + stepZ * 0.5, -13, 16) - controls.target.z;
+      _scratchRight.copy(controls.target).sub(camera.position).setY(0).normalize().cross(_scratchUp);
+      const shiftX = THREE.MathUtils.clamp(controls.target.x + _scratchRight.x * stepX + stepZ * 0.5, -16, 16) - controls.target.x;
+      const shiftZ = THREE.MathUtils.clamp(controls.target.z + _scratchRight.z * stepX + stepZ * 0.5, -13, 16) - controls.target.z;
       controls.target.x += shiftX;
       controls.target.z += shiftZ;
       camera.position.x += shiftX;
@@ -2482,6 +2521,8 @@ class WebGLErrorBoundary extends Component<
 }
 
 export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: string; /** "transparent" shows the page behind the room. */ background?: string }) {
+  const docVisible = useDocumentVisible();
+  const isPaused = Boolean(props.paused || !docVisible);
   const labels = useRef(new Map<string, HTMLDivElement>());
   const [localToast, setLocalToast] = useState<string | null>(null);
   const [isDraggingItem, setIsDraggingItem] = useState(false);
@@ -2593,6 +2634,7 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
           }}
         >
           <Canvas
+            frameloop={isPaused ? "never" : "always"}
             shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false}
             camera={{ position: [11.5, 10.7, 11.5], fov: 35 }}
             dpr={quality.dpr}
@@ -2610,7 +2652,7 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
               position={[5, 9, 4]}
               intensity={props.lightsOut ? 0.15 : 2.2}
               castShadow
-              shadow-mapSize={[2048, 2048]}
+              shadow-mapSize={quality.shadowMapSize}
               shadow-camera-left={-6}
               shadow-camera-right={6}
               shadow-camera-top={6}

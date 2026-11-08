@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 // A rough "is this a phone or a modest device?" check, used to render 3D more lightly
 // (lower resolution, no shadows) so taps stay responsive.
 
@@ -79,6 +81,18 @@ export function toggleEcoMode(): boolean {
   return next;
 }
 
+/** Hook to track document visibility (screen off / app in background) */
+export function useDocumentVisible(): boolean {
+  const [visible, setVisible] = useState(() => (typeof document !== "undefined" ? document.visibilityState === "visible" : true));
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const handle = () => setVisible(document.visibilityState === "visible");
+    document.addEventListener("visibilitychange", handle);
+    return () => document.removeEventListener("visibilitychange", handle);
+  }, []);
+  return visible;
+}
+
 /** Canvas settings for the current device and energy mode. */
 export function canvasQuality() {
   const low = isLowPower();
@@ -91,6 +105,7 @@ export function canvasQuality() {
   return {
     dpr: [1, maxDpr] as [number, number],
     shadows: !low && !eco,
+    shadowMapSize: (eco ? [512, 512] : low ? [1024, 1024] : [1024, 1024]) as [number, number],
     powerPreference: (eco || low ? "low-power" : "default") as "low-power" | "default" | "high-performance",
     eco,
   };
