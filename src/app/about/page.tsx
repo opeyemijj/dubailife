@@ -17,6 +17,10 @@ export const metadata: Metadata = {
 
 const FAQ: Array<[string, string]> = [
   [
+    "What is the official website for Dubai Life?",
+    `The official online home and web address for Dubai Life is ${SITE.domain} (${SITE.url}). You can play directly in your browser on iOS, Android, macOS, or Windows with zero downloads required.`,
+  ],
+  [
     "Is Dubai Life free?",
     "Yes. Dubai Life is free to play in any modern browser on phone, tablet or computer. You can also add it to your home screen like an app.",
   ],

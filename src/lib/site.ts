@@ -7,12 +7,12 @@ export const SITE = {
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://mydubailife.app").replace(/\/$/, ""),
   tagline: "Official 3D Dubai Life Game & Virtual World",
   description:
-    "Play Dubai Life (mydubailife.app) — the official 3D multiplayer Dubai life simulation game. Customize your avatar, own Palm Jumeirah villas, host Lagos & Dubai weddings, ride the Metro & Yalla Taxi, shop at Dubai Mall, and build your fortune free online.",
+    "Play Dubai Life — the official 3D multiplayer Dubai life simulation game and virtual world. Create your 3D avatar, rent Marina apartments, own Palm Jumeirah villas, ride the Metro & Yalla Taxi, play multiplayer games, and build your fortune online free at mydubailife.app.",
   /** Every account is @dubailifeapp. */
   socials: [
     { label: "𝕏", href: "https://x.com/dubailifeapp" },
     { label: "TikTok", href: "https://www.tiktok.com/@dubailifeapp" },
-    { label: "Instagram", href: "https://www.instagram.com/dubailifeapp/" },
+    { label: "Instagram", href: "https://www.instagram.com/mydubailifeapp/" },
     { label: "LinkedIn", href: "https://www.linkedin.com/company/dubailifeapp" },
   ],
   themeColor: "#1e1b4b",
