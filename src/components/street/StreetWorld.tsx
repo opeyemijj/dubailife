@@ -407,6 +407,7 @@ function Me({ look, dirty, controls, run, auto, start, limits, onMove, onNear, d
 }) {
   const g = useRef<THREE.Group>(null);
   const pos = useRef({ x: start[0], z: start[1], yaw: Math.PI });
+  const vel = useRef({ x: 0, z: 0 });
   const [anim, setAnim] = useState<AvatarAnimation>("idle");
   const keys = useRef(new Set<string>());
   const near = useRef<string | null>(null);
@@ -426,43 +427,70 @@ function Me({ look, dirty, controls, run, auto, start, limits, onMove, onNear, d
     if (!o) return;
     // Input: the stick, or the keys, relative to where the camera looks.
     const k = keys.current;
-    let ix = controls.current.x + (k.has("d") || k.has("arrowright") ? 1 : 0) - (k.has("a") || k.has("arrowleft") ? 1 : 0);
-    let iy = controls.current.y + (k.has("w") || k.has("arrowup") ? 1 : 0) - (k.has("s") || k.has("arrowdown") ? 1 : 0);
-    const mag = Math.min(1, Math.hypot(ix, iy));
-    let vx = 0, vz = 0, running = run || k.has("shift") || !!controls.current.sprint;
-    if (mag > 0.04) {
+    const sx = controls.current.x, sy = controls.current.y;
+    const kx = (k.has("d") || k.has("arrowright") ? 1 : 0) - (k.has("a") || k.has("arrowleft") ? 1 : 0);
+    const ky = (k.has("w") || k.has("arrowup") ? 1 : 0) - (k.has("s") || k.has("arrowdown") ? 1 : 0);
+    const ix = sx + kx;
+    const iy = sy + ky;
+    const inputLen = Math.hypot(ix, iy);
+    let targetVx = 0, targetVz = 0;
+    const running = run || k.has("shift") || !!controls.current.sprint;
+
+    if (inputLen > 0.04) {
       auto.current = null;   // taking the stick takes over from "Where to?"
-      const fwd = new THREE.Vector3(P.x - camera.position.x, 0, P.z - camera.position.z).normalize();
-      const right = new THREE.Vector3(-fwd.z, 0, fwd.x);
-      const l = Math.hypot(ix, iy); ix /= l; iy /= l;
+      const mag = Math.min(1, inputLen);
+      const normX = ix / inputLen;
+      const normY = iy / inputLen;
+
+      // Camera forward and right vectors projected onto ground plane (XZ)
+      const fwd = new THREE.Vector3();
+      camera.getWorldDirection(fwd);
+      fwd.y = 0;
+      fwd.normalize();
+      const right = new THREE.Vector3(-fwd.z, 0, fwd.x).normalize();
+
       const speed = (running ? RUN : WALK) * mag;
-      vx = (fwd.x * iy + right.x * ix) * speed; vz = (fwd.z * iy + right.z * ix) * speed;
+      // Normalizing ensures diagonal movement is not faster than cardinal movement
+      targetVx = (right.x * normX + fwd.x * normY) * speed;
+      targetVz = (right.z * normX + fwd.z * normY) * speed;
     } else if (auto.current?.points.length) {
       const [tx, tz] = auto.current.points[0];
       const dx = tx - P.x, dz = tz - P.z, d = Math.hypot(dx, dz);
-      running = auto.current.run;
-      const speed = running ? RUN : WALK;
+      const autoRun = auto.current.run;
+      const speed = autoRun ? RUN : WALK;
       if (d < 0.25) {
         auto.current.points.shift();
         if (!auto.current.points.length) { const then = auto.current.then; auto.current = null; then?.(); }
-      } else { vx = (dx / d) * speed; vz = (dz / d) * speed; }
+      } else {
+        targetVx = (dx / d) * speed;
+        targetVz = (dz / d) * speed;
+      }
     }
-    const moving = Math.hypot(vx, vz) > 0.01;
+
+    // Smoothly interpolate velocity: responsive acceleration, smooth deceleration to stop
+    const accelRate = (targetVx !== 0 || targetVz !== 0) ? 14 : 12;
+    vel.current.x += (targetVx - vel.current.x) * Math.min(1, dt * accelRate);
+    vel.current.z += (targetVz - vel.current.z) * Math.min(1, dt * accelRate);
+    if (Math.hypot(vel.current.x, vel.current.z) < 0.005) {
+      vel.current.x = 0;
+      vel.current.z = 0;
+    }
+    const vx = vel.current.x, vz = vel.current.z;
+    const moving = Math.hypot(vx, vz) > 0.02;
+
     const ox = P.x, oz = P.z;
     P.x = THREE.MathUtils.clamp(P.x + vx * dt, -STREET_LIMIT_X, STREET_LIMIT_X);
     P.z = THREE.MathUtils.clamp(P.z + vz * dt, limits[1], limits[0]);
     if (moving) {
       const want = Math.atan2(vx, vz);
-      let diff = want - P.yaw;
-      while (diff < -Math.PI) diff += Math.PI * 2;
-      while (diff > Math.PI) diff -= Math.PI * 2;
-      P.yaw += diff * Math.min(1, dt * 10);
+      let diff = Math.atan2(Math.sin(want - P.yaw), Math.cos(want - P.yaw));
+      P.yaw += diff * Math.min(1, dt * 12);
     }
     // Up on the pavement, down on the road.
     const onPave = Math.abs(P.x) > KERB;
     o.position.set(P.x, onPave ? 0.17 : 0, P.z);
     o.rotation.y = P.yaw;
-    // The camera comes along.
+    // The camera comes along smoothly by translation (preserving orbit angle and distance)
     if (controlsObj) {
       const dx = P.x - ox, dz = P.z - oz;
       controlsObj.target.x += dx; controlsObj.target.z += dz;
@@ -530,79 +558,92 @@ export function StreetScene({ doors, look, dirty, controls, run, auto, peers, on
  * walks slowly with fine precision, further walks faster, and pushing it all the way to the rim runs that way.
  * Uses a dynamic touch anchor and exponential sensitivity curve so it never snaps or jerks out of control.
  */
-export const STICK_DEAD = 0.15;
-export const STICK_SPRINT = 0.88;
+export const STICK_DEAD = 0.08;
+export const STICK_SPRINT = 0.85;
 export function MoveStick({ controls, allowRun = true }: { controls: React.RefObject<Controls>; run?: boolean; onRun?: () => void; allowRun?: boolean }) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const knob = useRef<HTMLSpanElement>(null);
   const rim = useRef<HTMLSpanElement>(null);
-  const originRef = useRef<{ x: number; y: number } | null>(null);
+  const boundsRef = useRef<{ left: number; top: number; width: number; height: number } | null>(null);
   const R = 54;
 
-  const set = (rawX: number, rawY: number, springBack = false) => {
-    const m = Math.hypot(rawX, rawY);
-    // Exponential sensitivity curve with 15% dead zone:
-    // When m <= STICK_DEAD: 0 movement (no jitter or drift).
-    // Above dead zone: normalized range (0..1) raised to power of 1.7.
-    // Provides silky-smooth, calm precision for micro-adjustments,
-    // scaling gracefully to full speed at the rim.
-    if (m <= STICK_DEAD) {
+  const updateStick = (clientX: number, clientY: number, springBack = false) => {
+    const rect = boundsRef.current ?? containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const deltaX = clientX - centerX;
+    const deltaY = -(clientY - centerY); // Invert screen Y so up is positive
+    const dist = Math.hypot(deltaX, deltaY);
+
+    const visualDist = Math.min(dist, R);
+    const dirX = dist > 0.0001 ? deltaX / dist : 0;
+    const dirY = dist > 0.0001 ? deltaY / dist : 0;
+
+    // Visual knob translation (CSS Y is downwards, so negate dirY)
+    if (knob.current) {
+      const knobPxX = dirX * visualDist;
+      const knobPxY = -dirY * visualDist;
+      knob.current.style.transition = springBack ? "transform 0.15s cubic-bezier(0.2, 0.9, 0.3, 1)" : "none";
+      knob.current.style.transform = `translate(${knobPxX.toFixed(2)}px, ${knobPxY.toFixed(2)}px)`;
+    }
+
+    const rawMag = Math.min(1, dist / R);
+    if (rawMag <= STICK_DEAD) {
       controls.current.x = 0;
       controls.current.y = 0;
       controls.current.sprint = false;
     } else {
-      const norm = Math.min(1, (m - STICK_DEAD) / (1 - STICK_DEAD));
-      const speedFactor = Math.pow(norm, 1.7) / m;
-      controls.current.x = rawX * speedFactor;
-      controls.current.y = rawY * speedFactor;
-      controls.current.sprint = allowRun && m >= STICK_SPRINT;
+      const norm = (rawMag - STICK_DEAD) / (1 - STICK_DEAD);
+      const power = Math.pow(norm, 1.25);
+      controls.current.x = dirX * power;
+      controls.current.y = dirY * power;
+      controls.current.sprint = allowRun && rawMag >= STICK_SPRINT;
     }
 
-    if (knob.current) {
-      knob.current.style.transition = springBack ? "transform 0.14s cubic-bezier(0.2, 0.9, 0.3, 1)" : "none";
-      knob.current.style.transform = `translate(${rawX * R}px, ${-rawY * R}px)`;
+    if (rim.current) {
+      rim.current.dataset.sprint = controls.current.sprint ? "1" : "0";
     }
-    if (rim.current) rim.current.dataset.sprint = controls.current.sprint ? "1" : "0";
   };
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId);
-    // Anchor movement to where the thumb touched down so the stick never jerks on initial touch
-    originRef.current = { x: e.clientX, y: e.clientY };
-    set(0, 0, false);
+    const rect = e.currentTarget.getBoundingClientRect();
+    boundsRef.current = { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+    updateStick(e.clientX, e.clientY, false);
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
-    if (!originRef.current) {
-      originRef.current = { x: e.clientX, y: e.clientY };
-    }
-    const deltaX = e.clientX - originRef.current.x;
-    const deltaY = -(e.clientY - originRef.current.y);
-    const dist = Math.hypot(deltaX, deltaY);
-
-    if (dist > R) {
-      // Dynamic follow anchor: clamp knob to R and smoothly pull the anchor along
-      // so reversing thumb direction responds immediately without dead travel.
-      const angle = Math.atan2(e.clientY - originRef.current.y, e.clientX - originRef.current.x);
-      originRef.current.x = e.clientX - Math.cos(angle) * R;
-      originRef.current.y = e.clientY - Math.sin(angle) * R;
-      set(Math.cos(angle), -Math.sin(angle), false);
-    } else {
-      set(deltaX / R, deltaY / R, false);
-    }
+    updateStick(e.clientX, e.clientY, false);
   };
 
   const release = () => {
-    originRef.current = null;
-    set(0, 0, true);
+    boundsRef.current = null;
+    controls.current.x = 0;
+    controls.current.y = 0;
+    controls.current.sprint = false;
+    if (knob.current) {
+      knob.current.style.transition = "transform 0.15s cubic-bezier(0.2, 0.9, 0.3, 1)";
+      knob.current.style.transform = "translate(0px, 0px)";
+    }
+    if (rim.current) {
+      rim.current.dataset.sprint = "0";
+    }
   };
 
   return (
-    <div aria-label={allowRun ? "Move: push the stick the way you want to go, all the way to the edge to run" : "Move: push the stick the way you want to walk"}
-      className="relative w-40 h-40 rounded-full touch-none select-none flex items-center justify-center"
+    <div
+      ref={containerRef}
+      aria-label={allowRun ? "Move: push the stick the way you want to go, all the way to the edge to run" : "Move: push the stick the way you want to walk"}
+      className="relative w-40 h-40 rounded-full touch-none select-none flex items-center justify-center cursor-pointer"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      onPointerUp={release} onPointerCancel={release} onLostPointerCapture={release}>
+      onPointerUp={release}
+      onPointerCancel={release}
+      onLostPointerCapture={release}
+    >
       {/* the base, its rim (yellow while running outdoors) and the RUN/WALK hint round the top */}
       <span className="absolute inset-0 rounded-full bg-black/25 backdrop-blur-sm" />
       <span ref={rim} data-sprint="0" className="absolute inset-0 rounded-full ring-[3px] ring-white/60 transition-[box-shadow,background-color] data-[sprint='1']:ring-amber-400 data-[sprint='1']:bg-amber-400/25 data-[sprint='1']:shadow-[0_0_24px_rgba(251,191,36,0.8)]" />

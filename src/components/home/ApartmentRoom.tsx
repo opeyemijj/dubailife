@@ -1246,16 +1246,11 @@ function CameraRig({
       return;
     }
     if (inside && follow) {
-      // Over the shoulder: aim at the citizen's head; while they walk, settle in behind them.
+      // Over the shoulder: aim at the citizen's head; camera translates with the citizen maintaining angle and distance.
       const head = new THREE.Vector3(follow[0], 1.45, follow[2]);
-      const moved = lastFollow.current ? Math.hypot(follow[0] - lastFollow.current[0], follow[2] - lastFollow.current[2]) : 0;
       const shift = head.clone().sub(controls.target);
       controls.target.add(shift);
       camera.position.add(shift);
-      if (moved > 0.0005) {
-        const behind = new THREE.Vector3(follow[0] - Math.sin(followYaw) * 6, 3.6, follow[2] - Math.cos(followYaw) * 6);
-        camera.position.lerp(behind, Math.min(1, dt * 2.5));
-      }
       lastFollow.current = follow;
       controls.update();
       // Any wall between the camera and the citizen turns see-through while it's in the way.
@@ -1559,6 +1554,7 @@ function RoomScene({
   // Everyone else's screen walks you there in between.
   // Steering with the stick right now, and when the room was last told where I am.
   const steering = useRef(false);
+  const stickVel = useRef({ x: 0, z: 0 });
   const lastSteerReport = useRef(0);
   const poseRef = useRef(pose);
   useEffect(() => { poseRef.current = pose; }, [pose]);
@@ -1697,18 +1693,36 @@ function RoomScene({
   useFrame(({ camera }, dt) => {
     // The stick: steer the way it points (relative to the camera); blocked by furniture or a wall, slide along it.
     const sx = stick?.current.x ?? 0, sy = stick?.current.y ?? 0, mag = Math.min(1, Math.hypot(sx, sy));
+    let targetVx = 0, targetVz = 0;
     if (mag > 0.04 && !placing && !decorating && !climbRef.current) {
       if (walkTarget) { setWalkTarget(null); setClickBeacon(null); }
       routeRef.current = null;
       if (pendingAction) setPendingAction(null);
+      const l = Math.hypot(sx, sy);
+      const normX = sx / l;
+      const normY = sy / l;
       const fwd = new THREE.Vector3();
       camera.getWorldDirection(fwd);
       fwd.y = 0; fwd.normalize();
-      const right = new THREE.Vector3(-fwd.z, 0, fwd.x);
-      // Inside a home or venue: strictly walking speed (no running indoors).
-      const sprint = false;
-      const l = Math.hypot(sx, sy), speed = 1.7 * mag;
-      const vx = ((fwd.x * sy + right.x * sx) / l) * speed, vz = ((fwd.z * sy + right.z * sx) / l) * speed;
+      const right = new THREE.Vector3(-fwd.z, 0, fwd.x).normalize();
+      // Inside a home: strictly walking speed.
+      const speed = 1.7 * mag;
+      targetVx = (right.x * normX + fwd.x * normY) * speed;
+      targetVz = (right.z * normX + fwd.z * normY) * speed;
+    }
+
+    // Velocity smoothing: acceleration & smooth deceleration to stop
+    const accelRate = (targetVx !== 0 || targetVz !== 0) ? 14 : 12;
+    stickVel.current.x += (targetVx - stickVel.current.x) * Math.min(1, dt * accelRate);
+    stickVel.current.z += (targetVz - stickVel.current.z) * Math.min(1, dt * accelRate);
+    if (Math.hypot(stickVel.current.x, stickVel.current.z) < 0.005) {
+      stickVel.current.x = 0;
+      stickVel.current.z = 0;
+    }
+    const currentSpeed = Math.hypot(stickVel.current.x, stickVel.current.z);
+
+    if (currentSpeed > 0.01 && !placing && !decorating && !climbRef.current) {
+      const vx = stickVel.current.x, vz = stickVel.current.z;
       // Sitting or lying: up first.
       const [cx, , cz] = pose.stand ? [pose.stand[0], 0, pose.stand[1]] : pose.position;
       const nx = cx + vx * Math.min(dt, 0.05), nz = cz + vz * Math.min(dt, 0.05);
@@ -1717,19 +1731,20 @@ function RoomScene({
       else if (walkable(nav, nx, cz)) px = nx;
       else if (walkable(nav, cx, nz)) pz = nz;
       const want = Math.atan2(vx, vz);
-      let diff = want - pose.yaw;
-      while (diff < -Math.PI) diff += Math.PI * 2;
-      while (diff > Math.PI) diff -= Math.PI * 2;
+      const diff = Math.atan2(Math.sin(want - pose.yaw), Math.cos(want - pose.yaw));
       const yaw = pose.yaw + diff * Math.min(1, dt * 12);
       setPose({ position: [px, 0, pz], yaw });
-      const mode = sprint ? "run" : "walk";
-      if (animation !== mode) setAnimation(mode);
+      if (animation !== "walk") setAnimation("walk");
       steering.current = true;
       const now = performance.now();
       if (now - lastSteerReport.current > 800) { lastSteerReport.current = now; moveRef.current?.(px, pz, yaw, true); }
       return;
     }
-    if (steering.current) { steering.current = false; setAnimation("idle"); }
+    if (steering.current) {
+      steering.current = false;
+      setAnimation("idle");
+      moveRef.current?.(pose.position[0], pose.position[2], pose.yaw, false);
+    }
     const climb = climbRef.current;
     if (climb) {
       climb.t = Math.min(1, climb.t + dt / 1.8);

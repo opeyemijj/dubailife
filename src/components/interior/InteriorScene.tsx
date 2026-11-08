@@ -616,10 +616,6 @@ function FollowCamera({ follow, inside, eye = false, boat = false, hideMe = fals
       const shift = head.clone().sub(controls.target);
       controls.target.add(shift);
       camera.position.add(shift);
-      if (last.current && last.current.distanceTo(p) > 0.0005) {
-        const yaw = me.rotation.y;
-        camera.position.lerp(new THREE.Vector3(p.x - Math.sin(yaw) * INSIDE_BACK, INSIDE_UP, p.z - Math.cos(yaw) * INSIDE_BACK), Math.min(1, dt * 2.5));
-      }
     } else {
       // Glide part of the way: the room stays framed, with the citizen drifting nearer the middle.
       const k = Math.min(1, dt * 2.5);
@@ -737,6 +733,7 @@ function Player({
   const walking = !!walkTo && walkTo.key !== arrivedKey;
   const target = useRef<WalkTarget | null>(null);
   const facing = useRef<number | null>(null);
+  const vel = useRef({ x: 0, z: 0 });
   // Steering with the stick: walking or running, and when I last told the room where I am.
   const [steer, setSteer] = useState<"walk" | "run" | null>(null);
   const [actionAnim, setActionAnim] = useState<AvatarAnimation | null>(null);
@@ -779,16 +776,34 @@ function Player({
     if (!g) return;
     // The stick: steer the way it points (relative to the camera), sliding round anything in the way.
     const sx = stick?.current.x ?? 0, sy = stick?.current.y ?? 0, mag = Math.min(1, Math.hypot(sx, sy));
+    let targetVx = 0, targetVz = 0;
     if (mag > 0.04) {
       target.current = null;
+      const l = Math.hypot(sx, sy);
+      const normX = sx / l;
+      const normY = sy / l;
       const fwd = new THREE.Vector3();
       camera.getWorldDirection(fwd);
       fwd.y = 0; fwd.normalize();
-      const right = new THREE.Vector3(-fwd.z, 0, fwd.x);
+      const right = new THREE.Vector3(-fwd.z, 0, fwd.x).normalize();
       // Inside a venue: strictly walking speed (no running indoors).
-      const sprint = false;
       const speed = WALK_SPEED * mag;
-      const vx = (fwd.x * sy + right.x * sx) / Math.hypot(sx, sy) * speed, vz = (fwd.z * sy + right.z * sx) / Math.hypot(sx, sy) * speed;
+      targetVx = (right.x * normX + fwd.x * normY) * speed;
+      targetVz = (right.z * normX + fwd.z * normY) * speed;
+    }
+
+    // Velocity smoothing: acceleration & smooth deceleration to stop
+    const accelRate = (targetVx !== 0 || targetVz !== 0) ? 14 : 12;
+    vel.current.x += (targetVx - vel.current.x) * Math.min(1, dt * accelRate);
+    vel.current.z += (targetVz - vel.current.z) * Math.min(1, dt * accelRate);
+    if (Math.hypot(vel.current.x, vel.current.z) < 0.005) {
+      vel.current.x = 0;
+      vel.current.z = 0;
+    }
+    const currentSpeed = Math.hypot(vel.current.x, vel.current.z);
+
+    if (currentSpeed > 0.01) {
+      const vx = vel.current.x, vz = vel.current.z;
       const free = (x: number, z: number) => {
         if (bounds && (Math.abs(x) > bounds[0] / 2 - 0.35 || Math.abs(z) > bounds[1] / 2 - 0.35)) return false;
         return !obstacles.some(([ox, oz, r]) => Math.hypot(x - ox, z - oz) < r);
@@ -798,10 +813,12 @@ function Player({
       else if (free(nx, g.position.z)) g.position.x = nx;   // slide along it
       else if (free(g.position.x, nz)) g.position.z = nz;
       turnToward(g, Math.atan2(vx, vz), dt);
-      const mode = sprint ? "run" : "walk";
-      if (steer !== mode) setSteer(mode);
+      if (steer !== "walk") setSteer("walk");
       const now = performance.now();
-      if (!lastReport.current.moving || now - lastReport.current.t > 800) { lastReport.current = { t: now, moving: true }; onStickMove?.(g.position.x, g.position.z, g.rotation.y, true); }
+      if (!lastReport.current.moving || now - lastReport.current.t > 800) {
+        lastReport.current = { t: now, moving: true };
+        onStickMove?.(g.position.x, g.position.z, g.rotation.y, true);
+      }
       return;
     }
     if (steer) { setSteer(null); lastReport.current = { t: performance.now(), moving: false }; onStickMove?.(g.position.x, g.position.z, g.rotation.y, false); }
