@@ -80,22 +80,111 @@ export async function enablePush(userId?: string): Promise<{ ok: boolean; bonus:
 // ---------------------------------------------------------------- when to ask
 
 const LAST_ASK = "dl_push_ask_at";
-const ASK_GAP_MS = 20 * 3_600_000;
+const ASKS_TODAY_KEY = "dl_push_asks_today_json";
+const DISMISSALS_KEY = "dl_push_dismiss_stats";
+const MIN_GAP_MS = 2.5 * 3_600_000; // 2.5 hours minimum between contextual prompts
+const MAX_PER_DAY = 2; // Up to 2 high-intent social prompts per day
+const DISMISS_LIMIT = 3; // 3 dismissals pause non-forced prompts for 14 days
+const FATIGUE_PAUSE_MS = 14 * 86_400_000; // 14 days cooldown after 3 dismissals
 
-/** Whether a helpful-moment ask may be shown now: notifications not on, and not asked in the last 20 hours. */
-export function mayAsk(): boolean {
+interface DailyAsks {
+  date: string;
+  count: number;
+  lastAt: number;
+}
+
+interface DismissalStats {
+  count: number;
+  lastDismissedAt: number;
+}
+
+function getTodayString(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getDailyAsks(): DailyAsks {
+  try {
+    const raw = localStorage.getItem(ASKS_TODAY_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as DailyAsks;
+      if (parsed.date === getTodayString()) return parsed;
+    }
+  } catch {
+    /* ignore storage errors */
+  }
+  return { date: getTodayString(), count: 0, lastAt: 0 };
+}
+
+function getDismissalStats(): DismissalStats {
+  try {
+    const raw = localStorage.getItem(DISMISSALS_KEY);
+    if (raw) return JSON.parse(raw) as DismissalStats;
+  } catch {
+    /* ignore storage errors */
+  }
+  return { count: 0, lastDismissedAt: 0 };
+}
+
+export function recordSocialPromptDismissal() {
+  try {
+    const stats = getDismissalStats();
+    stats.count += 1;
+    stats.lastDismissedAt = Date.now();
+    localStorage.setItem(DISMISSALS_KEY, JSON.stringify(stats));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Whether a helpful-moment ask may be shown now: notifications not on, not fatigued, within daily cap. */
+export function mayAsk(isHighIntentSocial: boolean = false): boolean {
   const s = pushStatus();
   if (s === "on" || s === "unsupported") return false;
-  try { return Date.now() - Number(localStorage.getItem(LAST_ASK) ?? 0) > ASK_GAP_MS; } catch { return false; }
+
+  const dismissals = getDismissalStats();
+  if (dismissals.count >= DISMISS_LIMIT) {
+    if (Date.now() - dismissals.lastDismissedAt < FATIGUE_PAUSE_MS) {
+      return false; // Respect user preference after multiple dismissals
+    }
+  }
+
+  const today = getDailyAsks();
+  const maxAllowed = isHighIntentSocial ? MAX_PER_DAY : 1;
+  if (today.count >= maxAllowed) return false;
+
+  const gap = Date.now() - today.lastAt;
+  return gap > MIN_GAP_MS;
 }
-export function markAsked() { try { localStorage.setItem(LAST_ASK, String(Date.now())); } catch { /* storage blocked */ } }
 
-export interface AskReason { icon: string; title: string; text: string }
+export function markAsked() {
+  try {
+    const today = getDailyAsks();
+    today.count += 1;
+    today.lastAt = Date.now();
+    localStorage.setItem(ASKS_TODAY_KEY, JSON.stringify(today));
+    localStorage.setItem(LAST_ASK, String(Date.now()));
+  } catch {
+    /* ignore storage blocked */
+  }
+}
 
-/** Ask at a helpful moment, e.g. askForPush({ icon: "💬", title: "@sara messaged you", text: "…" }). */
+export interface AskReason {
+  icon: string;
+  title: string;
+  text: string;
+  actionLabel?: string;
+}
+
+/** Ask at a helpful moment (e.g. after receiving a message or door knock). */
 export function askForPush(reason: AskReason) {
-  if (typeof window === "undefined" || !mayAsk()) return;
+  if (typeof window === "undefined" || !mayAsk(false)) return;
   window.dispatchEvent(new CustomEvent("dubai:ask-push", { detail: reason }));
+}
+
+/** Ask during a high-intent social action (sending DM, friend request, party invite, mic stage). */
+export function askSocialPush(reason: AskReason) {
+  if (typeof window === "undefined" || !mayAsk(true)) return;
+  window.dispatchEvent(new CustomEvent("dubai:ask-push", { detail: { ...reason, highIntent: true } }));
 }
 
 /** Open the coach on purpose (from a settings button): ignores the rate limit. */

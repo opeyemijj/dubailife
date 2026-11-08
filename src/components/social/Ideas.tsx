@@ -4,12 +4,23 @@
 // team decides. Shown as a tab on the phone, beside chats.
 
 import { useCallback, useEffect, useState } from "react";
-import { ChevronUp, Lightbulb, Plus, X } from "lucide-react";
+import { ChevronUp, ChevronDown, Lightbulb, Plus, X, ExternalLink } from "lucide-react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
+import { voteOnIdea } from "@/lib/feedback";
 
-interface Idea { id: string; author_id: string; title: string; body: string | null; category: string; status: string; team_note: string | null; votes: number; created_at: string }
+interface Idea { id: string; author_id: string; title: string; body: string | null; category: string; status: string; team_note: string | null; votes: number; created_at: string; user_vote?: number }
 
-export const IDEA_CATEGORIES: Record<string, string> = { general: "General", places: "Places & venues", avatars: "Avatars & style", social: "Friends & chat", economy: "Shopping & money", bugs: "Something's broken" };
+export const IDEA_CATEGORIES: Record<string, string> = {
+  general: "General",
+  parties: "Parties & Yachts",
+  places: "Districts & Places",
+  avatars: "Avatars & Style",
+  social: "Social & Spaces",
+  economy: "Careers & Wealth",
+  minigames: "Mini-Games",
+  bugs: "Fixes & Bugs",
+};
 export const IDEA_STATUS: Record<string, { label: string; tone: string }> = {
   open: { label: "Open", tone: "bg-white/10 text-white/70" },
   under_review: { label: "Under review", tone: "bg-sky-500/20 text-sky-300" },
@@ -21,7 +32,7 @@ export const IDEA_STATUS: Record<string, { label: string; tone: string }> = {
 
 export function Ideas({ me }: { me: string }) {
   const [ideas, setIdeas] = useState<Idea[] | null>(null);
-  const [mine, setMine] = useState<Set<string>>(new Set());
+  const [userVotes, setUserVotes] = useState<Record<string, number>>({});
   const [names, setNames] = useState<Record<string, string>>({});
   const [sort, setSort] = useState<"top" | "new" | "shipped">("top");
   const [writing, setWriting] = useState(false);
@@ -30,27 +41,33 @@ export function Ideas({ me }: { me: string }) {
     const db = supabase();
     let q = db.from("ideas").select("id, author_id, title, body, category, status, team_note, votes, created_at").eq("hidden", false).limit(100);
     q = sort === "new" ? q.order("created_at", { ascending: false }) : sort === "shipped" ? q.eq("status", "shipped").order("updated_at", { ascending: false }) : q.order("votes", { ascending: false }).order("created_at", { ascending: false });
-    const [{ data }, { data: votes }] = await Promise.all([q, db.from("idea_votes").select("idea_id").eq("user_id", me)]);
+    const [{ data }, { data: votes }] = await Promise.all([q, db.from("idea_votes").select("idea_id, direction").eq("user_id", me)]);
     const list = (data as Idea[]) ?? [];
     setIdeas(list);
-    setMine(new Set((votes ?? []).map((v) => v.idea_id)));
+    const voteMap: Record<string, number> = {};
+    (votes ?? []).forEach((v) => { voteMap[v.idea_id] = v.direction ?? 1; });
+    setUserVotes(voteMap);
     const ids = [...new Set(list.map((i) => i.author_id))];
     if (ids.length) {
       const { data: people } = await db.from("profiles").select("id, username").in("id", ids);
       setNames(Object.fromEntries((people ?? []).map((p) => [p.id, p.username])));
     }
   }, [me, sort]);
-  // Loads on open and when the sort changes; state is set when the queries resolve.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
+
   useEffect(() => { void load(); }, [load]);
 
-  const vote = async (idea: Idea) => {
-    const had = mine.has(idea.id);
-    // Optimistic: flip it now, then take the server's count.
-    setMine((s) => { const n = new Set(s); if (had) n.delete(idea.id); else n.add(idea.id); return n; });
-    setIdeas((l) => l?.map((i) => (i.id === idea.id ? { ...i, votes: i.votes + (had ? -1 : 1) } : i)) ?? null);
-    const { data } = await supabase().rpc("toggle_idea_vote", { p_idea: idea.id });
-    if (typeof data === "number") setIdeas((l) => l?.map((i) => (i.id === idea.id ? { ...i, votes: data } : i)) ?? null);
+  const handleVote = async (idea: Idea, direction: 1 | -1) => {
+    const cur = userVotes[idea.id] ?? 0;
+    const isRemoving = cur === direction;
+    const nextVote = isRemoving ? 0 : direction;
+    const delta = isRemoving ? -direction : (direction - cur);
+
+    setUserVotes((v) => ({ ...v, [idea.id]: nextVote }));
+    setIdeas((l) => l?.map((i) => (i.id === idea.id ? { ...i, votes: i.votes + delta } : i)) ?? null);
+
+    const res = await voteOnIdea(idea.id, direction, cur);
+    setIdeas((l) => l?.map((i) => (i.id === idea.id ? { ...i, votes: res.votes } : i)) ?? null);
+    setUserVotes((v) => ({ ...v, [idea.id]: res.user_vote }));
   };
 
   return (
@@ -63,22 +80,43 @@ export function Ideas({ me }: { me: string }) {
         </div>
         <button onClick={() => setWriting(true)} className="h-10 px-3 rounded-xl bg-white text-zinc-950 text-xs font-black flex items-center gap-1 shrink-0"><Plus className="w-4 h-4" /> Idea</button>
       </div>
-      <div className="flex gap-1.5">
-        {([["top", "Top"], ["new", "New"], ["shipped", "Shipped"]] as const).map(([id, label]) => (
-          <button key={id} onClick={() => setSort(id)} className={`h-8 px-3 rounded-full text-xs font-bold ${sort === id ? "bg-white text-zinc-950" : "bg-white/5 text-white/70"}`}>{label}</button>
-        ))}
+      <div className="flex items-center justify-between gap-1.5">
+        <div className="flex gap-1.5">
+          {([["top", "Top"], ["new", "New"], ["shipped", "Shipped"]] as const).map(([id, label]) => (
+            <button key={id} onClick={() => setSort(id)} className={`h-8 px-3 rounded-full text-xs font-bold ${sort === id ? "bg-white text-zinc-950" : "bg-white/5 text-white/70"}`}>{label}</button>
+          ))}
+        </div>
+        <Link href="/feedback" className="text-xs text-amber-300 hover:text-amber-200 flex items-center gap-1 font-bold">
+          <span>Full Board</span>
+          <ExternalLink className="w-3.5 h-3.5" />
+        </Link>
       </div>
       {ideas === null && <p className="text-sm text-white/50 text-center py-8">Loading…</p>}
       {ideas?.length === 0 && <p className="text-sm text-white/50 text-center py-8">No ideas here yet — be the first.</p>}
       {ideas?.map((i) => {
-        const voted = mine.has(i.id);
+        const myVote = userVotes[i.id] ?? 0;
         const st = IDEA_STATUS[i.status] ?? IDEA_STATUS.open;
         return (
           <div key={i.id} className="flex gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
-            <button onClick={() => vote(i)} aria-pressed={voted} aria-label={voted ? "Remove your vote" : "Vote for this idea"}
-              className={`w-12 shrink-0 rounded-xl flex flex-col items-center justify-center py-1.5 transition-colors ${voted ? "bg-amber-400 text-zinc-950" : "bg-white/10 text-white"}`}>
-              <ChevronUp className="w-4 h-4" /><span className="text-sm font-black">{i.votes}</span>
-            </button>
+            <div className="w-10 shrink-0 flex flex-col items-center justify-center bg-black/40 rounded-xl py-1 border border-white/5">
+              <button
+                onClick={() => void handleVote(i, 1)}
+                aria-label="Upvote"
+                className={`w-8 h-6 rounded flex items-center justify-center transition-colors ${myVote === 1 ? "text-amber-400 bg-amber-400/20" : "text-white/40 hover:text-white"}`}
+              >
+                <ChevronUp className="w-4 h-4" />
+              </button>
+              <span className={`text-xs font-black my-0.5 ${i.votes > 0 ? "text-amber-300" : i.votes < 0 ? "text-rose-400" : "text-white/60"}`}>
+                {i.votes}
+              </span>
+              <button
+                onClick={() => void handleVote(i, -1)}
+                aria-label="Downvote"
+                className={`w-8 h-6 rounded flex items-center justify-center transition-colors ${myVote === -1 ? "text-rose-400 bg-rose-400/20" : "text-white/40 hover:text-white"}`}
+              >
+                <ChevronDown className="w-4 h-4" />
+              </button>
+            </div>
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${st.tone}`}>{st.label}</span>

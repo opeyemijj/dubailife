@@ -497,14 +497,30 @@ export default function HomePage() {
     const t = setTimeout(() => setTriedMoving(true), 0);
     return () => clearTimeout(t);
   }, [decorating]);
-  // Straight after moving in, getting the app comes first (installing, then notifications).
+  // After onboarding is completed, goals are set, and the user has seen their apartment, show app setup.
   const [appSetupOpen, setAppSetupOpen] = useState(false);
   useEffect(() => {
-    if (!decorFirst) return;
-    const t = setTimeout(() => {
-      if (needsAppSetup()) setAppSetupOpen(true);
-    }, 0);
-    return () => clearTimeout(t);
+    const onGoalDone = () => {
+      setTimeout(() => {
+        if (needsAppSetup()) setAppSetupOpen(true);
+      }, 700);
+    };
+    window.addEventListener("dubai:goal-setup-completed", onGoalDone);
+
+    // If goals are already set (not in decorFirst mode), prompt after the apartment has loaded and been seen
+    if (!decorFirst) {
+      const t = setTimeout(() => {
+        if (needsAppSetup()) setAppSetupOpen(true);
+      }, 1500);
+      return () => {
+        clearTimeout(t);
+        window.removeEventListener("dubai:goal-setup-completed", onGoalDone);
+      };
+    }
+
+    return () => {
+      window.removeEventListener("dubai:goal-setup-completed", onGoalDone);
+    };
   }, [decorFirst]);
   const decorated =
     triedMoving ||
@@ -2239,7 +2255,7 @@ export default function HomePage() {
         !cleanScreen &&
         !placing &&
         !decorating && <HomeActions onShop={openShop} />}
-      {decorFirst && appSetupOpen && citizen && (
+      {appSetupOpen && citizen && (
         <AppSetup userId={citizen.id} onClose={() => setAppSetupOpen(false)} />
       )}
       {decorFirst &&

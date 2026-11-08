@@ -89,8 +89,9 @@ export function AppSetup({ userId, onClose }: { userId: string; onClose: () => v
 
   return (
     <ModalPortal>
-      <div className="fixed inset-0 z-[195] bg-slate-950/70 flex items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true" aria-label="Get the app">
-        <div className="w-full max-w-md max-h-[94dvh] overflow-y-auto bg-white text-slate-900 rounded-t-[28px] sm:rounded-[28px] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] space-y-4 shadow-2xl relative">
+      <div className="fixed inset-0 z-[195] flex items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true" aria-label="Get the app">
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm cursor-pointer" onClick={later} aria-hidden />
+        <div className="w-full max-w-md max-h-[94dvh] overflow-y-auto bg-white text-slate-900 rounded-t-[28px] sm:rounded-[28px] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] space-y-4 shadow-2xl relative z-10">
           {/* Top Right Close Button */}
           <button
             type="button"

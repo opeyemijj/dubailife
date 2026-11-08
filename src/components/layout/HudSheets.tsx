@@ -110,8 +110,16 @@ function SuggestionBox({ onClose }: { onClose: () => void }) {
         <div className="text-center py-6 space-y-3">
           <div className="text-5xl">🙏</div>
           <p className="font-black text-xl">Thank you!</p>
-          <p className="text-slate-500">We read every suggestion. Others can vote for it on the Ideas board in your phone.</p>
-          <button onClick={onClose} className="w-full h-14 rounded-full bg-slate-900 text-white font-black text-lg">Done</button>
+          <p className="text-slate-500">We read every suggestion. Others can vote for it on the Ideas board.</p>
+          <div className="space-y-2">
+            <a
+              href="/feedback"
+              className="w-full h-12 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-base flex items-center justify-center gap-1.5"
+            >
+              <span>Explore All Community Ideas ›</span>
+            </a>
+            <button onClick={onClose} className="w-full h-12 rounded-full bg-slate-900 text-white font-black text-base">Done</button>
+          </div>
         </div>
       ) : (
         <>
@@ -128,7 +136,12 @@ function SuggestionBox({ onClose }: { onClose: () => void }) {
             <button onClick={onClose} className="h-14 rounded-full bg-slate-100 font-bold text-lg">Not now</button>
             <button onClick={send} disabled={busy || text.trim().length < 4} className="h-14 rounded-full bg-emerald-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-black text-lg">{busy ? "Sending…" : "Send"}</button>
           </div>
-          <p className="text-center text-sm text-slate-500">We&apos;ll ask again next week. You can also post and vote on ideas in Phone → Ideas.</p>
+          <div className="text-center space-y-1">
+            <p className="text-sm text-slate-500">We&apos;ll ask again next week.</p>
+            <a href="/feedback" className="text-xs font-bold text-amber-600 hover:underline inline-block">
+              View Community Roadmap &amp; Upvoted Features ›
+            </a>
+          </div>
         </>
       )}
     </Sheet>

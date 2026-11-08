@@ -5,7 +5,7 @@
 
 import { onUserEvent } from "@/lib/userChannel";
 import { chatRefused } from "@/lib/safety";
-import { askForPush } from "@/lib/push/engage";
+import { askForPush, askSocialPush } from "@/lib/push/engage";
 import { supabase } from "@/lib/supabase/client";
 import { gainSkill, lifeEvent } from "@/lib/life";
 import type { AvatarLookProps } from "@/components/avatar/roster";
@@ -177,7 +177,7 @@ export async function sendMessage(me: string, to: string, body: string, place: s
   if (!error) {
     lifeEvent("chat", targetId);
     gainSkill("charisma", 6);
-    setTimeout(() => askForPush({ icon: "💬", title: "Know when they reply", text: "Turn on notifications to see replies the moment they arrive, even when the app is closed." }), 1200);
+    setTimeout(() => askSocialPush({ icon: "💬", title: "Know when they reply", text: "Turn on notifications to see their reply the moment they message back, even when Dubai Life is closed." }), 1200);
     void (async () => {
       try {
         const { data: myProf } = await supabase().from("profiles").select("username").eq("id", me).maybeSingle();

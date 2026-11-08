@@ -33,8 +33,8 @@ export function NextStep() {
   const goal = currentGoal(status);
   const done = goal ? goal.steps.filter((s) => stepDone(status, s)).length : 0;
   const ready = !!goal && goalDone(status, goal);
-  // It sits under the map's Search button .
-  const place = `fixed z-[59] w-[min(320px,calc(100vw-1.5rem))] flex flex-col left-3 items-start top-[calc(env(safe-area-inset-top)+7.5rem)]`;
+  // It sits under the map's Search button.
+  const place = `fixed z-[59] w-[min(340px,calc(100vw-1.5rem))] flex flex-col left-3 items-start top-[calc(env(safe-area-inset-top)+7.5rem)]`;
 
   if (!goal) {
     return (
@@ -46,6 +46,13 @@ export function NextStep() {
 
   return (
     <div className={place}>
+      {open && (
+        <div
+          className="fixed inset-0 z-[-1]"
+          onClick={() => setOpen(false)}
+          aria-hidden
+        />
+      )}
       {!open ? (
         <button onClick={() => { gameAudio.playClickSound(); setOpen(true); }}
           className={`flex items-center gap-2 h-11 pl-3 pr-4 rounded-full shadow-xl font-black text-sm ${ready || collectable(missions) ? "bg-amber-400 text-slate-950 animate-bounce" : "bg-white text-slate-900"}`}>
@@ -55,30 +62,47 @@ export function NextStep() {
           {weekend && <span className="rounded-full bg-fuchsia-600 text-white text-[10px] px-1.5 py-0.5">🎉 {Math.min(weekend.weekend.done.length, 2)}/2</span>}
         </button>
       ) : (
-        <div className="rounded-3xl bg-white text-slate-900 shadow-2xl p-4 space-y-2.5 w-full">
-          <div className="flex items-start gap-2">
+        <div className="rounded-3xl bg-white text-slate-900 shadow-2xl p-4 space-y-2.5 w-full max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-9rem)] overflow-y-auto overscroll-contain">
+          <div className="sticky top-0 bg-white/95 backdrop-blur-md z-10 -mx-4 -mt-4 px-4 pt-4 pb-2 border-b border-slate-100 flex items-start gap-2 rounded-t-3xl shadow-sm">
             <span className="text-2xl">{goal.icon}</span>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-black uppercase tracking-widest text-teal-700">Your goal now</p>
-              <p className="font-black leading-tight">{goal.title}</p>
+              <p className="font-black leading-tight text-sm sm:text-base">{goal.title}</p>
             </div>
-            <button onClick={() => setOpen(false)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center" aria-label="Minimise"><ChevronDown className="w-4 h-4" /></button>
+            <button
+              onClick={() => setOpen(false)}
+              className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              aria-label="Minimise"
+            >
+              <ChevronDown className="w-4 h-4" />
+            </button>
           </div>
-          <p className="text-xs text-slate-500">{goal.why}</p>
-          <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden"><div className="h-full bg-teal-500 rounded-full transition-all" style={{ width: `${(done / goal.steps.length) * 100}%` }} /></div>
-          <GoalSteps goal={goal} status={status} onGo={() => setOpen(false)}
-            onClaimed={(r) => setWon({ ...r, next: currentGoal({ ...status, claimed: [...status.claimed, goal.id] })?.title })} />
+          <p className="text-xs text-slate-500 pt-1">{goal.why}</p>
+          <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+            <div className="h-full bg-teal-500 rounded-full transition-all" style={{ width: `${(done / goal.steps.length) * 100}%` }} />
+          </div>
+          <GoalSteps
+            goal={goal}
+            status={status}
+            onGo={() => setOpen(false)}
+            onClaimed={(r) => setWon({ ...r, next: currentGoal({ ...status, claimed: [...status.claimed, goal.id] })?.title })}
+          />
           {won && (
             <div className="rounded-2xl bg-amber-50 p-3 text-center">
               <p className="font-black text-amber-700">🎉 +AED {won.aed.toLocaleString()} · +{won.xp} XP</p>
               {won.next && <p className="text-xs text-slate-600">Next up: <b>{won.next}</b></p>}
             </div>
           )}
-          <div className="border-t border-slate-100 pt-2.5"><DailyMissions onGo={() => setOpen(false)} /></div>
+          <div className="border-t border-slate-100 pt-2.5">
+            <DailyMissions onGo={() => setOpen(false)} />
+          </div>
           {weekend && <WeekendCard status={weekend} />}
-          <Link href="/goals" className="flex items-center justify-between text-xs font-black text-teal-700">
-            <span>All my goals</span><span>Your Dubai story: {Math.round(lifeProgress(status) * 100)}%</span>
-          </Link>
+          <div className="border-t border-slate-100 pt-2 pb-1">
+            <Link href="/goals" className="flex items-center justify-between text-xs font-black text-teal-700 hover:text-teal-800">
+              <span>All my goals ›</span>
+              <span>Your Dubai story: {Math.round(lifeProgress(status) * 100)}%</span>
+            </Link>
+          </div>
         </div>
       )}
     </div>

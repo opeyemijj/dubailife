@@ -26,7 +26,7 @@ interface Line {
   created_at: string;
 }
 
-type FilterTab = "all" | "finished" | "unfinished" | "active7d" | "whales" | "admins";
+type FilterTab = "all" | "finished" | "unfinished" | "active7d" | "whales";
 type SortOption = "newest" | "oldest" | "balance_desc" | "recent_login";
 
 export function Citizens() {
@@ -44,26 +44,30 @@ export function Citizens() {
   const [openLedgerId, setOpenLedgerId] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
-  // Growth & Population Stats computed from current cohort
+  // Filter out admin users: only genuine players/citizens appear in this list
+  const citizenRows = useMemo(() => {
+    return (rows ?? []).filter((r) => !r.is_admin);
+  }, [rows]);
+
+  // Growth & Population Stats computed from genuine citizens (excluding admins)
   const stats = useMemo(() => {
-    if (!rows || rows.length === 0) {
+    if (!citizenRows || citizenRows.length === 0) {
       return { total: 0, finished: 0, rate: 0, totalCoins: 0, active7d: 0 };
     }
-    const total = rows.length;
-    const finished = rows.filter((r) => r.finished).length;
-    const rate = Math.round((finished / total) * 100);
-    const totalCoins = rows.reduce((acc, r) => acc + (Number(r.balance) || 0), 0);
+    const total = citizenRows.length;
+    const finished = citizenRows.filter((r) => r.finished).length;
+    const rate = total > 0 ? Math.round((finished / total) * 100) : 0;
+    const totalCoins = citizenRows.reduce((acc, r) => acc + (Number(r.balance) || 0), 0);
     const sevenDaysAgo = Date.now() - 7 * 24 * 3600 * 1000;
-    const active7d = rows.filter(
+    const active7d = citizenRows.filter(
       (r) => r.last_sign_in_at && new Date(r.last_sign_in_at).getTime() >= sevenDaysAgo
     ).length;
     return { total, finished, rate, totalCoins, active7d };
-  }, [rows]);
+  }, [citizenRows]);
 
   // Filter & Sort
   const filteredRows = useMemo(() => {
-    if (!rows) return [];
-    let list = [...rows];
+    let list = [...citizenRows];
     const sevenDaysAgo = Date.now() - 7 * 24 * 3600 * 1000;
 
     switch (tab) {
@@ -80,9 +84,6 @@ export function Citizens() {
         break;
       case "whales":
         list = list.filter((r) => (Number(r.balance) || 0) > 10000);
-        break;
-      case "admins":
-        list = list.filter((r) => r.is_admin);
         break;
       default:
         break;
@@ -107,7 +108,7 @@ export function Citizens() {
     });
 
     return list;
-  }, [rows, tab, sort]);
+  }, [citizenRows, tab, sort]);
 
   // Paginated slice
   const paginatedRows = useMemo(() => {
@@ -125,7 +126,6 @@ export function Citizens() {
       "Email",
       "Virtual AED Balance",
       "Onboarding Finished",
-      "Is Admin",
       "Joined Date",
       "Last Login Date",
     ];
@@ -138,7 +138,6 @@ export function Citizens() {
         `"${r.email}"`,
         r.balance || 0,
         r.finished ? "true" : "false",
-        r.is_admin ? "true" : "false",
         `"${r.created_at}"`,
         `"${r.last_sign_in_at ?? ""}"`,
       ];
@@ -302,19 +301,14 @@ export function Citizens() {
         {/* Filter Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5">
           {[
-            { id: "all", label: "All Players", count: rows?.length ?? 0 },
+            { id: "all", label: "All Citizens", count: citizenRows.length },
             { id: "finished", label: "Finished Onboarding", count: stats.finished },
             { id: "unfinished", label: "Dropped Off", count: stats.total - stats.finished },
             { id: "active7d", label: "Active 7 Days", count: stats.active7d },
             {
               id: "whales",
               label: "High Wealth (>10k)",
-              count: (rows ?? []).filter((r) => (Number(r.balance) || 0) > 10000).length,
-            },
-            {
-              id: "admins",
-              label: "Admins",
-              count: (rows ?? []).filter((r) => r.is_admin).length,
+              count: citizenRows.filter((r) => (Number(r.balance) || 0) > 10000).length,
             },
           ].map((f) => (
             <button
@@ -356,14 +350,9 @@ export function Citizens() {
               <td className="px-3 py-2.5">
                 <div className="font-bold text-slate-900">{c.display_name ?? "—"}</div>
                 {c.username ? <div className="text-xs text-sky-600 font-semibold">@{c.username}</div> : null}
-                {!c.finished && !c.is_admin && (
+                {!c.finished && (
                   <span className="inline-block mt-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 ring-1 ring-amber-200">
                     Dropped off (no avatar)
-                  </span>
-                )}
-                {c.is_admin && (
-                  <span className="inline-block mt-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 ring-1 ring-slate-300">
-                    Admin
                   </span>
                 )}
               </td>
@@ -387,11 +376,9 @@ export function Citizens() {
                   </Button>
                 )}
                 {c.finished && <Button onClick={() => adjust(c)}>Adjust</Button>}
-                {!c.is_admin && (
-                  <Button tone="danger" onClick={() => setConfirming(c)}>
-                    Delete
-                  </Button>
-                )}
+                <Button tone="danger" onClick={() => setConfirming(c)}>
+                  Delete
+                </Button>
               </td>
             </tr>
             {openLedgerId === c.id && (

@@ -14,6 +14,7 @@ import {
   cancelInvite, createEvent, inviteUrl, invitePlayer, kindOf, myParties, PARTIES, shareInvite, whatsappLink,
   type EventKind, type MyParty,
 } from "@/lib/invites";
+import { askSocialPush } from "@/lib/push/engage";
 import { gameAudio } from "@/utils/gameAudio";
 
 const WHEN = [
@@ -126,6 +127,7 @@ export function PartySheet({ flat, start, onClose, noRoom }: {
       broadcastCityPulse({ kind: "party", icon: k.icon, title: `@${citizen?.username ?? "someone"}: ${name}`, subtitle: `${where} · ${whenAt || mins ? `starts ${at(starts.toISOString())}` : "happening now"}`, href: `/i/${r.code}`, cta: "See invite ›", from: citizen?.username ?? "someone" });
     }
     setMade({ code: r.code, title: name });
+    setTimeout(() => askSocialPush({ icon: k.icon || "🎉", title: "Party invite created", text: "Turn on notifications so you know the moment guests RSVP and arrive!" }), 1800);
   };
   const share = async (code: string, t = text) => {
     const r = await shareInvite(code, t);

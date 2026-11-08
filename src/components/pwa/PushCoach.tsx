@@ -10,7 +10,7 @@ import { Bell, Check, Settings, Share, SquarePlus, X } from "lucide-react";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { dialogOpen, useCitizen } from "@/lib/citizenStore";
 import { isStandalonePwa } from "@/lib/push/client";
-import { bonusAmounts, claimBonus, enablePush, markAsked, pushStatus, unblockSteps, type AskReason, type PushStatus } from "@/lib/push/engage";
+import { bonusAmounts, claimBonus, enablePush, markAsked, pushStatus, recordSocialPromptDismissal, unblockSteps, type AskReason, type PushStatus } from "@/lib/push/engage";
 import { gameAudio } from "@/utils/gameAudio";
 
 type Ask = AskReason & { force?: boolean };
@@ -71,7 +71,12 @@ export function PushCoach() {
   }, []);
 
   if (!ask || !citizen) return null;
-  const close = () => setAsk(null);
+  const close = () => {
+    if (status !== "on") {
+      recordSocialPromptDismissal();
+    }
+    setAsk(null);
+  };
   const turnOn = async () => {
     setBusy(true); setFailed(false);
     const r = await Promise.race([enablePush(citizen.id), new Promise<{ ok: false; bonus: 0; blocked: false }>((res) => setTimeout(() => res({ ok: false, bonus: 0, blocked: false }), 15000))]);

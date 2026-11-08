@@ -47,6 +47,7 @@ interface CitizenCohort {
   balance: number;
   created_at: string;
   last_sign_in_at: string | null;
+  is_admin?: boolean;
 }
 
 export function Analytics() {
@@ -68,7 +69,7 @@ export function Analytics() {
           setReport(repRes.data as AdminReport);
         }
         if (citRes.data) {
-          setCohorts(citRes.data as CitizenCohort[]);
+          setCohorts((citRes.data as CitizenCohort[]).filter((c) => !c.is_admin));
         }
       })
       .catch((err: Error) => setError(err.message))

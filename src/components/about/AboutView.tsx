@@ -455,6 +455,9 @@ export function AboutView() {
             has no real-world cash value.
           </div>
           <div className="flex flex-wrap gap-4 font-bold">
+            <Link href="/feedback" className="text-amber-500 hover:text-amber-400 font-black">
+              Feedback &amp; Roadmap
+            </Link>
             <Link href="/privacy" className="hover:text-emerald-500">
               Privacy Policy
             </Link>

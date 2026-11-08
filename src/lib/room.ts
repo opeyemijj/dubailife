@@ -8,7 +8,7 @@
 // shares the saved message's id, so history and live lines never double up.
 
 import { BLOCKED_TEXT, chatRefused, isBlockedError } from "@/lib/safety";
-import { askForPush } from "@/lib/push/engage";
+import { askForPush, askSocialPush } from "@/lib/push/engage";
 import { markRead } from "@/lib/unread";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -503,7 +503,7 @@ export async function befriend(myId: string, other: Peer): Promise<"sent" | "fri
   }
   const { error } = await db.from("friendships").insert({ user_id: myId, friend_id: other.userId });
   if (!error) {
-    setTimeout(() => askForPush({ icon: "🤝", title: "Friend request sent", text: `Turn on notifications to know the moment @${other.username} accepts.` }), 1500);
+    setTimeout(() => askSocialPush({ icon: "🤝", title: "Friend request sent", text: `Turn on notifications to know the moment @${other.username} accepts your request.` }), 1500);
     void sendPushNotification(
       other.userId,
       {

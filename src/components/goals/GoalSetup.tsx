@@ -68,6 +68,10 @@ export function GoalSetup() {
     setEditing(false);
     setOrder(null);
     setDismissed(true);
+    if (typeof window !== "undefined") {
+      try { localStorage.setItem("dubai_goals_configured", "true"); } catch {}
+      window.dispatchEvent(new CustomEvent("dubai:goal-setup-completed"));
+    }
   };
   return (
     <div className="fixed inset-0 z-[205] bg-slate-950 text-white" role="dialog" aria-modal="true" aria-label="Your Dubai plan">

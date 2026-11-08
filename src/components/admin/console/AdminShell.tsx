@@ -4,13 +4,14 @@ import { askLogout } from "@/components/layout/LogoutConfirm";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { BarChart3, TrendingUp, CreditCard, Building2, Megaphone, Users, Settings, ScrollText, Map, LogOut, Menu, X, Lightbulb, Flag, Trophy, ShieldCheck, KeyRound } from "lucide-react";
+import { BarChart3, TrendingUp, CreditCard, Building2, Megaphone, Users, Settings, ScrollText, Map, LogOut, Menu, X, Lightbulb, Flag, Trophy, ShieldCheck, KeyRound, Mail } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 
 const NAV = [
   { href: "/admin", label: "Overview", icon: BarChart3 },
   { href: "/admin/analytics", label: "Analytics & Growth", icon: TrendingUp },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
+  { href: "/admin/emails", label: "Emails & Retention", icon: Mail },
   { href: "/admin/claims", label: "Venue claims", icon: Building2 },
   { href: "/admin/ads", label: "Advertising", icon: Megaphone },
   { href: "/admin/citizens", label: "Citizens", icon: Users },
