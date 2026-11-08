@@ -301,6 +301,7 @@ export default function HomePage() {
   const [shopTab, setShopTab] = useState<"shop" | "storage" | "style">("shop");
   const [shopCat, setShopCat] = useState<ShopCategory | "all">("all");
   const [placing, setPlacing] = useState<PlacingState | null>(null);
+  const [canopyPart, setCanopyPart] = useState<"drapes" | "posts">("drapes");
   const [candidatePlacement, setCandidatePlacement] = useState<CandidatePlacement | null>(null);
   const [decorating, setDecorating] = useState(false);
   // An interior decorator: choosing one, and whether one is at work here (then the style is theirs to set).
@@ -1003,6 +1004,7 @@ export default function HomePage() {
   const colorPlacing = (hex?: string) => {
     if (!placing) return;
     gameAudio.playClickSound();
+    setPlacing((p) => (p ? { ...p, customColor: hex } : p));
     if (sh) {
       const base = withHomeItems(sh.furniture, housingTier);
       const exists = base.some((f) => f.uid === placing.uid);
@@ -1334,7 +1336,7 @@ export default function HomePage() {
 
           {/* Center Wallet Balance Pill */}
           <div className="px-4 py-2 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-slate-200 text-xs sm:text-sm font-black font-mono text-slate-900 pointer-events-auto">
-            ₦{walletBalance.toLocaleString()}
+            AED {walletBalance.toLocaleString()}
           </div>
 
           {/* Right Action Buttons: Undo, Rotate Camera, Close */}
@@ -1406,58 +1408,121 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-            {/* #18 & #22: Per-item live color customizer */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 shrink-0">
-                🎨 Color:
-              </span>
-              {[
-                { hex: "#d4af37", label: "Royal Gold" },
-                { hex: "#f8fafc", label: "Pearl White" },
-                { hex: "#0f172a", label: "Obsidian" },
-                { hex: "#065f46", label: "Emerald" },
-                { hex: "#1e3a8a", label: "Sapphire" },
-                { hex: "#9f1239", label: "Ruby Velvet" },
-                { hex: "#f472b6", label: "Blush Rose" },
-                { hex: "#38bdf8", label: "Baby Blue" },
-                { hex: "#a855f7", label: "Cyber Violet" },
-                { hex: "#d97706", label: "Warm Teak" },
-              ].map((sw) => {
-                const active =
-                  (placingOwned?.customColor ?? "").toLowerCase() === sw.hex;
-                return (
-                  <button
-                    key={sw.hex}
-                    type="button"
-                    title={sw.label}
-                    onClick={() => colorPlacing(sw.hex)}
-                    className={`w-6 h-6 rounded-full border shrink-0 transition-transform active:scale-90 ${active ? "ring-2 ring-slate-900 scale-110 border-white" : "border-black/15"}`}
-                    style={{ background: sw.hex }}
-                  />
-                );
-              })}
-              <label
-                className="w-6 h-6 rounded-full border border-slate-300 bg-gradient-to-tr from-rose-400 via-amber-300 to-sky-400 flex items-center justify-center text-[10px] cursor-pointer shrink-0"
-                title="Custom RGB Color"
-              >
-                <input
-                  type="color"
-                  value={placingOwned?.customColor || "#d4af37"}
-                  onChange={(e) => colorPlacing(e.target.value)}
-                  className="sr-only"
-                />
-                +
-              </label>
-              {placingOwned?.customColor && (
-                <button
-                  type="button"
-                  onClick={() => colorPlacing(undefined)}
-                  className="px-2 py-0.5 rounded-full bg-slate-100 hover:bg-slate-200 text-[10px] font-black text-slate-600 shrink-0"
-                >
-                  Reset
-                </button>
-              )}
-            </div>
+            {/* #18 & #22: Per-item live color customizer (with dual-part support for Canopy Beds) */}
+            {(() => {
+              const isCanopy = placingItem.visual === "canopy-bed";
+              const rawColor = placingOwned?.customColor ?? placing?.customColor ?? "";
+              const [currDrapes, currPosts] = rawColor.includes("|")
+                ? rawColor.split("|")
+                : [rawColor || (placingItem.tint ?? "#ffffff"), "#d4af37"];
+              const activeHex = isCanopy
+                ? (canopyPart === "drapes" ? currDrapes : currPosts)
+                : (placingOwned?.customColor ?? placing?.customColor ?? "");
+
+              const handleApplyColor = (hex?: string) => {
+                if (!hex) {
+                  colorPlacing(undefined);
+                  return;
+                }
+                if (isCanopy) {
+                  const nextDrapes = canopyPart === "drapes" ? hex : (currDrapes || "#ffffff");
+                  const nextPosts = canopyPart === "posts" ? hex : (currPosts || "#d4af37");
+                  colorPlacing(`${nextDrapes}|${nextPosts}`);
+                } else {
+                  colorPlacing(hex);
+                }
+              };
+
+              return (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 shrink-0">
+                    🎨 Color:
+                  </span>
+
+                  {/* Dual-Part Selector for Canopy Beds (Baby & Master) */}
+                  {isCanopy && (
+                    <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-full border border-white/10 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setCanopyPart("drapes")}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-black transition flex items-center gap-1.5 ${
+                          canopyPart === "drapes"
+                            ? "bg-amber-400 text-slate-950 shadow"
+                            : "text-slate-300 hover:text-white"
+                        }`}
+                      >
+                        <span
+                          className="w-2.5 h-2.5 rounded-full border border-white/30"
+                          style={{ background: currDrapes || "#ffffff" }}
+                        />
+                        <span>🪟 Drapes</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCanopyPart("posts")}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-black transition flex items-center gap-1.5 ${
+                          canopyPart === "posts"
+                            ? "bg-amber-400 text-slate-950 shadow"
+                            : "text-slate-300 hover:text-white"
+                        }`}
+                      >
+                        <span
+                          className="w-2.5 h-2.5 rounded-full border border-white/30"
+                          style={{ background: currPosts || "#d4af37" }}
+                        />
+                        <span>🏛️ Posts</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {[
+                    { hex: "#d4af37", label: "Royal Gold" },
+                    { hex: "#f8fafc", label: "Pearl White" },
+                    { hex: "#0f172a", label: "Obsidian" },
+                    { hex: "#065f46", label: "Emerald" },
+                    { hex: "#1e3a8a", label: "Sapphire" },
+                    { hex: "#9f1239", label: "Ruby Velvet" },
+                    { hex: "#f472b6", label: "Blush Rose" },
+                    { hex: "#38bdf8", label: "Baby Blue" },
+                    { hex: "#a855f7", label: "Cyber Violet" },
+                    { hex: "#d97706", label: "Warm Teak" },
+                  ].map((sw) => {
+                    const active = (activeHex ?? "").toLowerCase() === sw.hex;
+                    return (
+                      <button
+                        key={sw.hex}
+                        type="button"
+                        title={sw.label}
+                        onClick={() => handleApplyColor(sw.hex)}
+                        className={`w-6 h-6 rounded-full border shrink-0 transition-transform active:scale-90 ${active ? "ring-2 ring-slate-900 scale-110 border-white" : "border-black/15"}`}
+                        style={{ background: sw.hex }}
+                      />
+                    );
+                  })}
+                  <label
+                    className="w-6 h-6 rounded-full border border-slate-300 bg-gradient-to-tr from-rose-400 via-amber-300 to-sky-400 flex items-center justify-center text-[10px] cursor-pointer shrink-0"
+                    title="Custom RGB Color"
+                  >
+                    <input
+                      type="color"
+                      value={activeHex || (isCanopy && canopyPart === "posts" ? "#d4af37" : "#ffffff")}
+                      onChange={(e) => handleApplyColor(e.target.value)}
+                      className="sr-only"
+                    />
+                    +
+                  </label>
+                  {(placingOwned?.customColor || placing?.customColor) && (
+                    <button
+                      type="button"
+                      onClick={() => handleApplyColor(undefined)}
+                      className="px-2 py-0.5 rounded-full bg-slate-100 hover:bg-slate-200 text-[10px] font-black text-slate-600 shrink-0"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
             <div className="flex gap-2">
               {placingItem.kind !== "wall" && (
                 <>
@@ -2290,7 +2355,7 @@ export default function HomePage() {
         }}
         onPlaceStored={handlePlaceStored}
         initialCategory={shopCat === "all" ? "all" : shopCat}
-        currencySymbol="₦"
+        currencySymbol="AED "
       />
 
       {/* 3. MY PROPERTIES (OWNED & RENTED) SWITCHER MODAL */}

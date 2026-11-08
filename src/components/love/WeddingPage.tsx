@@ -32,7 +32,7 @@ const CULTURAL_WEDDING_STYLES = [
     flag: "🇳🇬",
     name: "Lagos Owambe & Asoebi",
     subtitle:
-      "Gele, Agbada, Asoebi color code & live Naira/AED money spraying!",
+      "Gele, Agbada, Asoebi color code & live AED money spraying!",
     actionLabel: "💸 Spray AED 200 on the Couple!",
     rewardToast: "🇳🇬💸 Oshey! You sprayed crisp AED notes at the Lagos Owambe!",
   },

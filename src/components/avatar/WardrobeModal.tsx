@@ -13,6 +13,8 @@ import {
   FABRIC_PALETTE,
   OCCASIONS,
   computeClosetValue,
+  JEWELRY_CATALOG,
+  jewelryFor,
   nailsFor,
   outfitsFor,
   presetFor,
@@ -69,7 +71,7 @@ function saveOwnedCloset(ids: string[]) {
   }
 }
 
-type CameraFocusMode = "full" | "head" | "shoes" | "hands";
+type CameraFocusMode = "full" | "jewelry" | "head" | "shoes" | "hands";
 
 export type ShoppedCategory = "all" | "outfits" | "shoes" | "accessories" | "bags" | "beauty";
 
@@ -167,6 +169,7 @@ const CAMERA_PRESETS: Record<
   { pos: [number, number, number]; target: [number, number, number] }
 > = {
   full: { pos: [0, 0.08, 4.4], target: [0, 0.08, 0] },
+  jewelry: { pos: [0, 0.42, 1.45], target: [0, 0.35, 0] },
   head: { pos: [0, 0.62, 1.45], target: [0, 0.56, 0] },
   shoes: { pos: [0.18, -0.48, 1.55], target: [0, -0.72, 0.04] },
   hands: { pos: [0.18, 0.14, 1.45], target: [0, 0.06, 0.04] },
@@ -235,7 +238,8 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
   const [ownedCloset, setOwnedCloset] = useState<string[]>([]);
   const [ecoMode, setEcoModeState] = useState(() => isEcoMode());
   const quality = useMemo(() => canvasQuality(), [ecoMode]);
-  const [activeTab, setActiveTab] = useState<"outfits" | "shopped" | "colors" | "wigs" | "shoes" | "nails">("outfits");
+  const [activeTab, setActiveTab] = useState<"outfits" | "jewelry" | "shopped" | "colors" | "wigs" | "shoes" | "nails">("outfits");
+  const [jewelryFilter, setJewelryFilter] = useState<"all" | "necklace" | "watch" | "bracelet_ring">("all");
   const [cameraFocus, setCameraFocus] = useState<CameraFocusMode>("full");
   const [cultureFilter, setCultureFilter] = useState<"all" | CulturalHeritage>("all");
   const [previewAnim, setPreviewAnim] = useState<AvatarAnimation>("idle");
@@ -275,9 +279,12 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
   }, [open, citizen]);
 
   // Tab selection keeps the avatar comfortably framed in full body view
-  const handleSelectTab = (tab: "outfits" | "shopped" | "colors" | "wigs" | "shoes" | "nails") => {
+  const handleSelectTab = (tab: "outfits" | "jewelry" | "shopped" | "colors" | "wigs" | "shoes" | "nails") => {
     setActiveTab(tab);
-    if (tab === "nails" && selectedLook.gender === "woman") {
+    if (tab === "jewelry") {
+      setCameraFocus("jewelry");
+      setPreviewAnim("spray_money");
+    } else if (tab === "nails" && selectedLook.gender === "woman") {
       setPreviewAnim("wave");
     } else if (tab === "shopped") {
       setCameraFocus("full");
@@ -423,7 +430,7 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
   };
 
   const handleSelectSubItem = (
-    kind: "wigId" | "shoeId" | "nailId",
+    kind: "wigId" | "shoeId" | "nailId" | "jewelryId",
     item: WardrobeSubItem
   ) => {
     const currentId = selectedLook[kind] ?? (kind === "wigId" ? wearOutfit?.defaultWigId : undefined);
@@ -434,6 +441,8 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
           prev.filter((id) => !ownedAccessories.find((a) => a.uid === id && a.wearable === "cap"))
         );
         showToast(gender === "woman" ? "✨ Wig removed · Natural hair restored" : "✨ Cap removed · Natural hair restored");
+      } else if (kind === "jewelryId") {
+        showToast("✨ Luxury jewelry unequipped");
       }
       return;
     }
@@ -468,6 +477,7 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
         68 +
           Math.min(22, closetValue / 45) +
           (selectedLook.primaryColor ? 4 : 0) +
+          (selectedLook.jewelryId ? 4 : 0) +
           (selectedLook.wigId ? 3 : 0) +
           (selectedLook.shoeId ? 3 : 0) +
           (selectedLook.nailId ? 2 : 0)
@@ -657,14 +667,17 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
                 <span>{ecoMode ? "🔋 Eco ON" : "⚡ Eco Mode"}</span>
               </button>
             </div>
-            {/* Camera Framing Zoom Presets (Full Body / Head & Cap / Shoes / Nails) */}
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-1 z-10 bg-black/55 backdrop-blur-md p-1 rounded-full border border-white/10">
+            {/* Camera Framing Zoom Presets (Full Body / Jewelry / Head & Cap / Shoes / Nails / Watch) */}
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-1 z-10 bg-black/55 backdrop-blur-md p-1 rounded-full border border-white/10 max-w-[95%] overflow-x-auto">
               {(
                 [
                   { id: "full" as const, label: "🔍 Full" },
+                  { id: "jewelry" as const, label: "💎 Jewelry" },
                   { id: "head" as const, label: gender === "woman" ? "👑 Head" : "🧢 Cap" },
                   { id: "shoes" as const, label: gender === "woman" ? "👠 Heels" : "👞 Shoes" },
-                  ...(gender === "woman" ? [{ id: "hands" as const, label: "💅 Nails" }] : []),
+                  ...(gender === "woman"
+                    ? [{ id: "hands" as const, label: "💅 Nails" }]
+                    : [{ id: "hands" as const, label: "⌚ Watch" }]),
                 ] as const
               ).map((cam) => (
                 <button
@@ -673,6 +686,7 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
                   onClick={() => {
                     setCameraFocus(cam.id);
                     if (cam.id === "hands") setPreviewAnim("wave");
+                    if (cam.id === "jewelry") setPreviewAnim("spray_money");
                   }}
                   className={`px-2.5 py-0.5 rounded-full text-[10px] font-black whitespace-nowrap transition ${
                     cameraFocus === cam.id
@@ -703,6 +717,11 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
                   icon: gender === "woman" ? "👗" : "🤵",
                 },
                 {
+                  id: "jewelry" as const,
+                  label: "Luxury Jewelry",
+                  icon: "💎",
+                },
+                {
                   id: "shopped" as const,
                   label: `Shopped (${mallInventory.length})`,
                   icon: "🛍️",
@@ -719,9 +738,7 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
                   icon: gender === "woman" ? "👠" : "👞",
                 },
                 ...(gender === "woman"
-                  ? [{ id: "nails" as const, label: "Nails & Bling", icon: "💅" }]
-                  : ownedAccessories.length > 0
-                  ? [{ id: "nails" as const, label: "Watches & Bling", icon: "⌚" }]
+                  ? [{ id: "nails" as const, label: "Nails & Art", icon: "💅" }]
                   : []),
               ].map((t) => (
                 <button
@@ -933,6 +950,167 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
                     <span>Shop at Dubai Mall</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "jewelry" && (
+              <div className="space-y-4">
+                {/* Header Banner */}
+                <div className="bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-600/20 border border-amber-400/30 rounded-2xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-2.5">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl sm:text-2xl">💎</span>
+                      <h3 className="text-xs sm:text-sm font-black text-amber-300 uppercase tracking-wider">
+                        Haute Horlogerie &amp; Luxury Jewelry
+                      </h3>
+                      <span className="text-[10px] font-mono font-bold bg-amber-400/25 border border-amber-400/40 text-amber-200 px-2 py-0.5 rounded-full">
+                        City of Gold
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 mt-1">
+                      {gender === "woman"
+                        ? "Curated 18K/24K gold chokers, certified diamond pendants, Colombian emeralds & luxury Swiss timepieces."
+                        : "Curated 24K Miami Cuban chains, Swiss horology timepieces, diamond iced links & royal chieftaincy regalia."}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        gameAudio.playClickSound();
+                        setCameraFocus(cameraFocus === "jewelry" ? "full" : "jewelry");
+                      }}
+                      className="px-2.5 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs font-black hover:bg-amber-500/30 transition flex items-center gap-1"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>{cameraFocus === "jewelry" ? "Zoom Out" : "Zoom Jewelry"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Subcategory Filter Pills */}
+                <div className="flex flex-wrap gap-1.5 pb-1">
+                  {[
+                    { id: "all" as const, label: "All Luxury Pieces", icon: "✨" },
+                    {
+                      id: "necklace" as const,
+                      label: gender === "woman" ? "Necklaces & Chokers" : "Chains & Collars",
+                      icon: "📿",
+                    },
+                    { id: "watch" as const, label: "Swiss Timepieces", icon: "⌚" },
+                    { id: "bracelet_ring" as const, label: "Bracelets & Rings", icon: "💍" },
+                  ].map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => {
+                        gameAudio.playClickSound();
+                        setJewelryFilter(cat.id);
+                      }}
+                      className={`h-8 px-3 rounded-full text-[11px] font-black whitespace-nowrap transition-colors flex items-center gap-1 ${
+                        jewelryFilter === cat.id
+                          ? "bg-amber-400 text-slate-950 shadow"
+                          : "bg-white/10 text-slate-300 hover:bg-white/15"
+                      }`}
+                    >
+                      <span>{cat.icon}</span>
+                      <span>{cat.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Jewelry Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {/* Bare / No Jewelry option */}
+                  {(() => {
+                    const isBare = !selectedLook.jewelryId || selectedLook.jewelryId === "none";
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedLook((prev) => ({
+                            ...prev,
+                            jewelryId: undefined,
+                          }));
+                          gameAudio.playClickSound();
+                          showToast("✨ Bare look (No jewelry equipped)");
+                        }}
+                        className={`p-3 rounded-2xl border flex items-center gap-3 text-left transition ${
+                          isBare
+                            ? "bg-emerald-500/20 border-emerald-400 text-white"
+                            : "bg-slate-800/70 border-white/10 text-slate-300 hover:bg-slate-800"
+                        }`}
+                      >
+                        <span className="text-2xl">✨</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-black truncate">No Jewelry / Bare</div>
+                          <div className="text-[10px] text-emerald-400 font-bold">
+                            Minimal Clean Look
+                          </div>
+                        </div>
+                        {isBare && <Check className="w-4 h-4 text-emerald-400 shrink-0" />}
+                      </button>
+                    );
+                  })()}
+
+                  {/* Filtered jewelry items */}
+                  {jewelryFor(gender)
+                    .filter((j) => {
+                      if (jewelryFilter === "all") return true;
+                      if (jewelryFilter === "necklace") return j.category === "necklace";
+                      if (jewelryFilter === "watch") return j.category === "watch";
+                      if (jewelryFilter === "bracelet_ring")
+                        return j.category === "bracelet" || j.category === "ring";
+                      return true;
+                    })
+                    .map((j) => {
+                      const active = selectedLook.jewelryId === j.id;
+                      const isOwned = ownedCloset.includes(j.id) || active;
+                      return (
+                        <button
+                          key={j.id}
+                          type="button"
+                          onClick={() => {
+                            if (j.category === "watch") {
+                              setCameraFocus("hands");
+                              setPreviewAnim("wave");
+                            } else {
+                              setCameraFocus("jewelry");
+                              setPreviewAnim("spray_money");
+                            }
+                            handleSelectSubItem("jewelryId", j);
+                          }}
+                          className={`p-3 rounded-2xl border flex items-center gap-3 text-left transition-all ${
+                            active
+                              ? "bg-amber-400/20 border-amber-400 text-white shadow-lg shadow-amber-500/10 ring-1 ring-amber-400"
+                              : "bg-slate-800/70 border-white/10 text-slate-200 hover:bg-slate-800 hover:border-white/20"
+                          }`}
+                        >
+                          <span className="text-2xl shrink-0 p-1.5 rounded-xl bg-white/5 border border-white/10">
+                            {j.icon}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              {j.brand && (
+                                <span className="text-[9px] font-black uppercase tracking-wider text-amber-300/90 bg-amber-400/15 px-1.5 py-0.5 rounded">
+                                  {j.brand}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs font-black truncate text-white">{j.label}</div>
+                            <div className="text-[10px] text-amber-300 font-bold flex items-center gap-2 mt-0.5">
+                              <span>
+                                {isOwned
+                                  ? `Owned · +${j.closetValue} CV`
+                                  : `AED ${j.price.toLocaleString()} · +${j.closetValue} CV`}
+                              </span>
+                            </div>
+                          </div>
+                          {active && <Check className="w-4 h-4 text-amber-400 shrink-0 stroke-[3]" />}
+                        </button>
+                      );
+                    })}
                 </div>
               </div>
             )}

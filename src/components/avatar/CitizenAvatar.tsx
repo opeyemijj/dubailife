@@ -280,7 +280,7 @@ function useAccessories(model: { rig: ReturnType<typeof buildAccessoryRig>; mesh
     return attachAccessories(model.rig, key.split(",") as Accessory[]);
   }, [model, key]);
 
-  const extrasKey = `${look.wear ?? ""}|${look.wigId ?? ""}|${look.shoeId ?? ""}|${look.nailId ?? ""}|${look.nailColor ?? ""}|${look.primaryColor ?? ""}|${look.outfitColor ?? ""}|${look.secondaryColor ?? ""}|${look.pregnantWeeks ?? 0}|${look.gloves ?? ""}`;
+  const extrasKey = `${look.wear ?? ""}|${look.wigId ?? ""}|${look.shoeId ?? ""}|${look.nailId ?? ""}|${look.nailColor ?? ""}|${look.jewelryId ?? ""}|${look.primaryColor ?? ""}|${look.outfitColor ?? ""}|${look.secondaryColor ?? ""}|${look.pregnantWeeks ?? 0}|${look.gloves ?? ""}`;
   useEffect(() => {
     return attachLookExtras(model.rig, look, model.meshes);
     // eslint-disable-next-line react-hooks/exhaustive-deps

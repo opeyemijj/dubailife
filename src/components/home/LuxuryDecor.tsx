@@ -242,22 +242,214 @@ function MediaWall({ w, ghost }: { w: number; ghost: Ghost }) {
 
 // ---------------------------------------------------------------- bedroom
 
-function CanopyBed({ w, d, ghost }: { w: number; d: number; ghost: Ghost }) {
+function CanopyBed({ w, d, ghost, tint }: { w: number; d: number; ghost: Ghost; tint?: string }) {
+  // Parse replaceable colors: drapes/fabric and posts/frame
+  let drapesColor = "#ffffff";
+  let postsColor = BRASS; // "#d4af37"
+  let duvetColor = "#e7dccb";
+  let headboardColor = "#cbb79a";
+  let frameColor = WALNUT;
+
+  if (tint) {
+    if (tint.includes("|") || tint.includes(",")) {
+      const parts = tint.includes("|") ? tint.split("|") : tint.split(",");
+      if (parts[0]) {
+        drapesColor = parts[0];
+        duvetColor = parts[0];
+        headboardColor = parts[0];
+      }
+      if (parts[1]) {
+        postsColor = parts[1];
+        frameColor = parts[1];
+      }
+    } else {
+      const lower = tint.toLowerCase();
+      const isMetallicOrWood = [
+        "#d4af37",
+        "#f59e0b",
+        "#d97706",
+        "#451a03",
+        "#78350f",
+        "#0f172a",
+        "#171717",
+        "#e2e8f0",
+        "#94a3b8",
+        "#cbd5e1",
+      ].includes(lower);
+
+      if (isMetallicOrWood) {
+        postsColor = tint;
+        frameColor = tint;
+      } else {
+        drapesColor = tint;
+        duvetColor = tint;
+        headboardColor = tint;
+      }
+    }
+  }
+
+  // 1. Royal Canopy Baby Crib & Mobile (w < 1.6)
+  if (w < 1.6) {
+    const cribH = 1.7;
+    return (
+      <group>
+        {/* Crib Base Frame */}
+        <B s={[w * 0.9, 0.12, d * 0.88]} p={[0, 0.28, 0]} c={frameColor} ghost={ghost} />
+        {/* Soft Crib Mattress */}
+        <B s={[w * 0.84, 0.14, d * 0.82]} p={[0, 0.41, 0]} c="#fafaf9" ghost={ghost} rough={0.9} />
+        {/* Baby Lullaby Blanket */}
+        <B s={[w * 0.86, 0.05, d * 0.54]} p={[0, 0.5, 0.16]} c={duvetColor} ghost={ghost} rough={0.9} />
+        {/* Baby Pillow */}
+        <B s={[w * 0.5, 0.07, d * 0.24]} p={[0, 0.51, -d * 0.26]} c={drapesColor} ghost={ghost} rough={0.95} />
+
+        {/* 4 Corner Canopy Crib Posts */}
+        {[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([x, z], i) => (
+          <Cyl
+            key={i}
+            r={0.024}
+            h={cribH}
+            p={[x * w * 0.44, cribH / 2, z * d * 0.43]}
+            c={postsColor}
+            ghost={ghost}
+            metal={0.85}
+            rough={0.25}
+          />
+        ))}
+
+        {/* Top Canopy Perimeter Rails */}
+        {[-1, 1].map((k) => (
+          <B key={`cx${k}`} s={[w * 0.88, 0.03, 0.03]} p={[0, cribH, k * d * 0.43]} c={postsColor} ghost={ghost} metal={0.85} />
+        ))}
+        {[-1, 1].map((k) => (
+          <B key={`cz${k}`} s={[0.03, 0.03, d * 0.86]} p={[k * w * 0.44, cribH, 0]} c={postsColor} ghost={ghost} metal={0.85} />
+        ))}
+
+        {/* Crib Safety Railings (Slats) on Left & Right Sides */}
+        {[-1, 1].map((side) => (
+          <group key={`side${side}`} position={[side * w * 0.44, 0, 0]}>
+            <B s={[0.03, 0.04, d * 0.86]} p={[0, 0.78, 0]} c={postsColor} ghost={ghost} metal={0.8} />
+            {[-0.32, -0.2, -0.08, 0.04, 0.16, 0.28].map((zPos, sIdx) => (
+              <Cyl key={sIdx} r={0.012} h={0.42} p={[0, 0.55, zPos * d]} c={postsColor} ghost={ghost} metal={0.8} />
+            ))}
+          </group>
+        ))}
+
+        {/* Crib Safety Railings at Head & Foot */}
+        {[-1, 1].map((end) => (
+          <group key={`end${end}`} position={[0, 0, end * d * 0.43]}>
+            <B s={[w * 0.88, 0.04, 0.03]} p={[0, 0.78, 0]} c={postsColor} ghost={ghost} metal={0.8} />
+            {[-0.28, 0, 0.28].map((xPos, sIdx) => (
+              <Cyl key={sIdx} r={0.012} h={0.42} p={[xPos * w, 0.55, 0]} c={postsColor} ghost={ghost} metal={0.8} />
+            ))}
+          </group>
+        ))}
+
+        {/* Sheer Flowing Baby Canopy Drapes */}
+        {!ghost && (
+          <>
+            <mesh position={[0, cribH - 0.02, 0]}>
+              <boxGeometry args={[w * 0.86, 0.02, d * 0.84]} />
+              <meshStandardMaterial color={drapesColor} transparent opacity={0.42} side={THREE.DoubleSide} />
+            </mesh>
+            {[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([x, z], i) => (
+              <mesh
+                key={`cd${i}`}
+                position={[x * w * 0.44 - x * 0.08, cribH * 0.62, z * d * 0.43]}
+              >
+                <planeGeometry args={[0.24, cribH * 0.75]} />
+                <meshStandardMaterial
+                  color={drapesColor}
+                  transparent
+                  opacity={0.42}
+                  side={THREE.DoubleSide}
+                  depthWrite={false}
+                />
+              </mesh>
+            ))}
+            {/* Hanging Lullaby Mobile */}
+            <group position={[0, cribH - 0.1, 0]}>
+              <Cyl r={0.006} h={0.2} p={[0, -0.1, 0]} c={postsColor} ghost={ghost} metal={0.9} />
+              <B s={[0.26, 0.012, 0.012]} p={[0, -0.2, 0]} c={postsColor} ghost={ghost} metal={0.9} />
+              <B s={[0.012, 0.012, 0.26]} p={[0, -0.2, 0]} c={postsColor} ghost={ghost} metal={0.9} />
+              {[-0.11, 0.11].map((cx, sIdx) => (
+                <Cyl key={`sx${sIdx}`} r={0.025} h={0.015} p={[cx, -0.27, 0]} c={postsColor} ghost={ghost} metal={0.9} />
+              ))}
+              {[-0.11, 0.11].map((cz, sIdx) => (
+                <Cyl key={`sz${sIdx}`} r={0.025} h={0.015} p={[0, -0.27, cz]} c={postsColor} ghost={ghost} metal={0.9} />
+              ))}
+            </group>
+          </>
+        )}
+      </group>
+    );
+  }
+
+  // 2. Master Four-Poster Palatial Canopy Bed (w >= 1.6)
   return (
     <group>
       {/* frame, mattress, duvet, pillows and the upholstered headboard */}
-      <B s={[w * 0.9, 0.3, d * 0.86]} p={[0, 0.15, 0.05]} c={WALNUT} ghost={ghost} />
+      <B s={[w * 0.9, 0.3, d * 0.86]} p={[0, 0.15, 0.05]} c={frameColor} ghost={ghost} />
       <B s={[w * 0.86, 0.2, d * 0.82]} p={[0, 0.38, 0.06]} c="#fafaf9" ghost={ghost} rough={0.9} />
-      <B s={[w * 0.88, 0.06, d * 0.5]} p={[0, 0.5, 0.3]} c="#e7dccb" ghost={ghost} rough={0.95} />
-      {[-1, 1].map((k) => <B key={k} s={[w * 0.32, 0.12, 0.3]} p={[k * w * 0.2, 0.54, -d * 0.32]} c="#ffffff" ghost={ghost} rough={0.95} />)}
-      <B s={[w * 0.9, 1.1, 0.12]} p={[0, 0.85, -d * 0.43]} c="#cbb79a" ghost={ghost} rough={0.9} />
-      {/* brass posts, the top frame and sheer drapes at the corners */}
-      {[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([x, z], i) => <Cyl key={i} r={0.03} h={2.3} p={[x * w * 0.45, 1.15, z * d * 0.44 + 0.03]} c={BRASS} ghost={ghost} metal={0.9} rough={0.25} />)}
-      {[-1, 1].map((k) => <B key={`x${k}`} s={[w * 0.92, 0.04, 0.04]} p={[0, 2.3, k * d * 0.44 + 0.03]} c={BRASS} ghost={ghost} metal={0.9} />)}
-      {[-1, 1].map((k) => <B key={`z${k}`} s={[0.04, 0.04, d * 0.9]} p={[k * w * 0.45, 2.3, 0.03]} c={BRASS} ghost={ghost} metal={0.9} />)}
-      {!ghost && [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([x, z], i) => (
-        <mesh key={`d${i}`} position={[x * w * 0.45 - x * 0.12, 1.4, z * d * 0.44 + 0.03]}><planeGeometry args={[0.28, 1.8]} /><meshStandardMaterial color="#ffffff" transparent opacity={0.35} side={THREE.DoubleSide} depthWrite={false} /></mesh>
+      <B s={[w * 0.88, 0.08, d * 0.52]} p={[0, 0.49, 0.28]} c={duvetColor} ghost={ghost} rough={0.9} />
+      {[-1, 1].map((k) => (
+        <B
+          key={k}
+          s={[w * 0.32, 0.12, 0.3]}
+          p={[k * w * 0.2, 0.54, -d * 0.32]}
+          c={drapesColor === "#ffffff" ? "#f8fafc" : drapesColor}
+          ghost={ghost}
+          rough={0.95}
+        />
       ))}
+      <B s={[w * 0.9, 1.1, 0.12]} p={[0, 0.85, -d * 0.43]} c={headboardColor} ghost={ghost} rough={0.85} />
+
+      {/* Posts, the top frame and sheer drapes at the corners */}
+      {[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([x, z], i) => (
+        <Cyl
+          key={i}
+          r={0.032}
+          h={2.3}
+          p={[x * w * 0.45, 1.15, z * d * 0.44 + 0.03]}
+          c={postsColor}
+          ghost={ghost}
+          metal={0.85}
+          rough={0.25}
+        />
+      ))}
+      {[-1, 1].map((k) => (
+        <B key={`x${k}`} s={[w * 0.92, 0.04, 0.04]} p={[0, 2.3, k * d * 0.44 + 0.03]} c={postsColor} ghost={ghost} metal={0.85} />
+      ))}
+      {[-1, 1].map((k) => (
+        <B key={`z${k}`} s={[0.04, 0.04, d * 0.9]} p={[k * w * 0.45, 2.3, 0.03]} c={postsColor} ghost={ghost} metal={0.85} />
+      ))}
+
+      {/* Top sheer canopy roof fabric */}
+      {!ghost && (
+        <mesh position={[0, 2.28, 0.03]}>
+          <boxGeometry args={[w * 0.88, 0.015, d * 0.86]} />
+          <meshStandardMaterial color={drapesColor} transparent opacity={0.35} side={THREE.DoubleSide} />
+        </mesh>
+      )}
+
+      {/* Flowing sheer corner curtains */}
+      {!ghost &&
+        [[[-1, -1], [-0.14, 0]], [[1, -1], [0.14, 0]], [[-1, 1], [-0.14, 0]], [[1, 1], [0.14, 0]]].map(
+          ([pos, fold], i) => (
+            <mesh
+              key={`d${i}`}
+              position={[pos[0] * w * 0.45 + fold[0], 1.4, pos[1] * d * 0.44 + 0.03]}
+            >
+              <planeGeometry args={[0.34, 1.8]} />
+              <meshStandardMaterial
+                color={drapesColor}
+                transparent
+                opacity={0.42}
+                side={THREE.DoubleSide}
+                depthWrite={false}
+              />
+            </mesh>
+          )
+        )}
     </group>
   );
 }
@@ -759,7 +951,7 @@ export function LuxuryDecor({ visual, size, ghost, tint, activity }: { visual: s
     case "armchair": return <Armchair w={w} d={d} ghost={ghost} tint={tint} />;
     case "ottoman": return <Ottoman ghost={ghost} tint={tint} />;
     case "media-wall": return <MediaWall w={w} ghost={ghost} />;
-    case "canopy-bed": return <CanopyBed w={w} d={d} ghost={ghost} />;
+    case "canopy-bed": return <CanopyBed w={w} d={d} ghost={ghost} tint={tint} />;
     case "vanity": return <Vanity w={w} ghost={ghost} />;
     case "wardrobe": return <Wardrobe w={w} ghost={ghost} />;
     case "dining-set": return <DiningSet w={w} d={d} ghost={ghost} activity={activity} />;

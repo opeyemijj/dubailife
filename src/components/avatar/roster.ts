@@ -25,6 +25,8 @@ export interface AvatarLookProps {
   nailId?: string;
   /** Custom nail polish color (hex). */
   nailColor?: string;
+  /** Equipped 3D luxury jewelry, Swiss timepiece, or cultural regalia ID. */
+  jewelryId?: string;
   /** Pregnancy progression (weeks 1..3) for 3D belly morphing (#6). */
   pregnantWeeks?: number;
   /** Equipped 3D Boxing Gloves for bouts and fight animations. */
@@ -554,6 +556,8 @@ export interface WardrobeSubItem {
   closetValue: number;
   color: string;
   gender?: Gender;
+  category?: "necklace" | "watch" | "bracelet" | "ring" | "earrings";
+  brand?: string;
 }
 
 export const WIGS_CATALOG: WardrobeSubItem[] = [
@@ -617,12 +621,195 @@ export const NAILS_CATALOG: WardrobeSubItem[] = [
   { id: "obsidian_matte", gender: "woman", label: "Black Onyx & Gold Studs", icon: "🖤", price: 360, closetValue: 65, color: "#171717" },
 ];
 
+export const JEWELRY_CATALOG: WardrobeSubItem[] = [
+  // Ladies' Haute Horlogerie & High Jewelry (Necklaces, Chokers, Watches, Bangles & Rings)
+  {
+    id: "vca_alhambra_necklace",
+    gender: "woman",
+    category: "necklace",
+    brand: "Van Cleef & Arpels",
+    label: "Van Cleef 18K Alhambra Malachite Pendant",
+    icon: "🍀",
+    price: 18500,
+    closetValue: 450,
+    color: "#059669",
+  },
+  {
+    id: "cartier_panthere_collar",
+    gender: "woman",
+    category: "necklace",
+    brand: "Cartier",
+    label: "Cartier Panthère 18K Rose Gold Diamond Collar",
+    icon: "🐆",
+    price: 45000,
+    closetValue: 850,
+    color: "#fbcfe8",
+  },
+  {
+    id: "bulgari_serpenti_choker",
+    gender: "woman",
+    category: "necklace",
+    brand: "Bulgari",
+    label: "Bulgari Serpenti Viper White Gold Diamond Choker",
+    icon: "🐍",
+    price: 38000,
+    closetValue: 720,
+    color: "#e2e8f0",
+  },
+  {
+    id: "gold_souk_royal_choker",
+    gender: "woman",
+    category: "necklace",
+    brand: "Dubai Gold Souk",
+    label: "24K Dubai Gold Souk Royal Bridal Choker",
+    icon: "👑",
+    price: 26000,
+    closetValue: 560,
+    color: "#d4af37",
+  },
+  {
+    id: "rolex_lady_pearlmaster",
+    gender: "woman",
+    category: "watch",
+    brand: "Rolex",
+    label: "Rolex Lady-Datejust 28 Everose Diamond Pavé",
+    icon: "⌚",
+    price: 68000,
+    closetValue: 1100,
+    color: "#fb7185",
+  },
+  {
+    id: "graff_emerald_drop",
+    gender: "woman",
+    category: "necklace",
+    brand: "Graff",
+    label: "Graff Colombian Emerald & Diamond Drop",
+    icon: "💎",
+    price: 52000,
+    closetValue: 950,
+    color: "#10b981",
+  },
+  {
+    id: "tiffany_diamond_stack",
+    gender: "woman",
+    category: "bracelet",
+    brand: "Tiffany & Co.",
+    label: "Tiffany Platinum Diamond Tennis Stack & Ring",
+    icon: "💍",
+    price: 22000,
+    closetValue: 480,
+    color: "#f8fafc",
+  },
+  {
+    id: "edo_royal_coral_necklace_f",
+    gender: "woman",
+    category: "necklace",
+    brand: "Edo Heritage",
+    label: "🇳🇬 Edo Royal Queen Coral Bead Choker & Bangles",
+    icon: "🔴",
+    price: 14000,
+    closetValue: 380,
+    color: "#dc2626",
+  },
+
+  // Gentlemen's Luxury Horology Watches, Heavy Chains & Cultural Regalia
+  {
+    id: "rolex_daytona_rainbow",
+    gender: "man",
+    category: "watch",
+    brand: "Rolex",
+    label: "Rolex Daytona Rainbow 18K Everose Chronograph",
+    icon: "🌈",
+    price: 95000,
+    closetValue: 1450,
+    color: "#f59e0b",
+  },
+  {
+    id: "ap_royal_oak_skeleton",
+    gender: "man",
+    category: "watch",
+    brand: "Audemars Piguet",
+    label: "AP Royal Oak Double Balance Skeleton Gold",
+    icon: "⌚",
+    price: 82000,
+    closetValue: 1280,
+    color: "#d4af37",
+  },
+  {
+    id: "patek_nautilus_diamond",
+    gender: "man",
+    category: "watch",
+    brand: "Patek Philippe",
+    label: "Patek Philippe Nautilus 5711 Platinum Bezel",
+    icon: "⌚",
+    price: 115000,
+    closetValue: 1650,
+    color: "#cbd5e1",
+  },
+  {
+    id: "richard_mille_rm65",
+    gender: "man",
+    category: "watch",
+    brand: "Richard Mille",
+    label: "Richard Mille RM 65-01 Split-Seconds Chrono",
+    icon: "⏱️",
+    price: 130000,
+    closetValue: 1800,
+    color: "#334155",
+  },
+  {
+    id: "gold_souk_miami_cuban",
+    gender: "man",
+    category: "necklace",
+    brand: "Dubai Gold Souk",
+    label: "24K Solid Gold Souk Heavy Miami Cuban Link",
+    icon: "⛓️",
+    price: 34000,
+    closetValue: 680,
+    color: "#d4af37",
+  },
+  {
+    id: "cartier_iced_cuban",
+    gender: "man",
+    category: "necklace",
+    brand: "Cartier",
+    label: "Cartier Santos Iced-Out Diamond Baguette Chain",
+    icon: "💎",
+    price: 58000,
+    closetValue: 1050,
+    color: "#f1f5f9",
+  },
+  {
+    id: "chieftaincy_coral_beads_m",
+    gender: "man",
+    category: "necklace",
+    brand: "Royal Chieftaincy",
+    label: "🇳🇬 Heavy Chieftaincy Royal Coral Crown Neckpiece",
+    icon: "🔴",
+    price: 16500,
+    closetValue: 420,
+    color: "#dc2626",
+  },
+  {
+    id: "emirati_falcon_signet",
+    gender: "man",
+    category: "ring",
+    brand: "Emirati Heritage",
+    label: "🇦🇪 UAE Royal Falcon 18K Gold Signet Ring & Cufflinks",
+    icon: "🦅",
+    price: 19500,
+    closetValue: 460,
+    color: "#eab308",
+  },
+];
+
 export const outfitById = (id: string | undefined) => (id ? OUTFITS.find((o) => o.id === id) : undefined);
 export const resolveModelId = (id: string) => outfitById(id)?.baseModel ?? id;
 export const outfitsFor = (gender: Gender) => OUTFITS.filter((o) => o.gender === gender);
 export const wigsFor = (gender: Gender) => WIGS_CATALOG.filter((w) => !w.gender || w.gender === gender);
 export const shoesFor = (gender: Gender) => SHOES_CATALOG.filter((s) => !s.gender || s.gender === gender);
 export const nailsFor = (gender: Gender) => NAILS_CATALOG.filter((n) => (n.gender ?? "woman") === gender);
+export const jewelryFor = (gender: Gender) => JEWELRY_CATALOG.filter((j) => !j.gender || j.gender === gender);
 export const isOutfit = (id: string | undefined, gender: Gender) => !!id && OUTFITS.some((o) => o.id === id && o.gender === gender);
 export const defaultPreset = (gender: Gender) => rosterFor(gender)[0].id;
 export const rosterModel = (id: string) => `/models/rocketbox/${resolveModelId(id)}.glb`;
@@ -641,6 +828,8 @@ export function computeClosetValue(look: AvatarLookProps | undefined, ownedIds: 
   if (shoe) cv += shoe.closetValue;
   const nail = NAILS_CATALOG.find((n) => n.id === look?.nailId);
   if (nail) cv += nail.closetValue;
+  const jewel = JEWELRY_CATALOG.find((j) => j.id === look?.jewelryId);
+  if (jewel) cv += jewel.closetValue;
   for (const id of ownedIds) {
     const o = outfitById(id);
     if (o?.closetValue && id !== look?.wear) cv += Math.round(o.closetValue * 0.35);
@@ -650,6 +839,8 @@ export function computeClosetValue(look: AvatarLookProps | undefined, ownedIds: 
     if (s && id !== look?.shoeId) cv += Math.round(s.closetValue * 0.35);
     const n = NAILS_CATALOG.find((x) => x.id === id);
     if (n && id !== look?.nailId) cv += Math.round(n.closetValue * 0.35);
+    const j = JEWELRY_CATALOG.find((x) => x.id === id);
+    if (j && id !== look?.jewelryId) cv += Math.round(j.closetValue * 0.35);
   }
   return cv;
 }

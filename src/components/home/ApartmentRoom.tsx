@@ -48,6 +48,7 @@ export interface PlacingState {
   rot: Rotation;
   /** Which shows on top where it overlaps something (Bring forward / Send back). */
   layer?: number;
+  customColor?: string;
 }
 
 export interface CandidatePlacement {
@@ -2413,7 +2414,17 @@ function RoomScene({
                 setIsDraggingItem?.(false);
               }}
             >
-              <ItemVisual item={placingItem} ghost={ghostValid ? "valid" : "invalid"} />
+              {(() => {
+                const placingFurn = placing ? furniture.find((f) => f.uid === placing.uid) : null;
+                const placingCustomColor = placing?.customColor ?? placingFurn?.customColor;
+                return (
+                  <ItemVisual
+                    item={placingItem}
+                    ghost={ghostValid ? "valid" : "invalid"}
+                    customColor={placingCustomColor}
+                  />
+                );
+              })()}
             </group>
           </Suspense>
           {ghost.kind === "floor" && (

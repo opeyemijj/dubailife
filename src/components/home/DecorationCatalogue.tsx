@@ -49,7 +49,7 @@ export function DecorationCatalogue({
   onPlaceMultiple,
   onPlaceStored,
   initialCategory = "all",
-  currencySymbol = "₦",
+  currencySymbol = "AED ",
 }: DecorationCatalogueProps) {
   const [activeTab, setActiveTab] = useState<string>(initialCategory);
   const [searchQuery, setSearchQuery] = useState("");
@@ -196,7 +196,7 @@ export function DecorationCatalogue({
 
   // Format currency
   const formatPrice = (p: number) => {
-    const symbol = currencySymbol || "₦";
+    const symbol = currencySymbol || "AED ";
     if (p >= 1_000_000) {
       const m = p / 1_000_000;
       return `${symbol}${m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)}m`;
@@ -205,7 +205,7 @@ export function DecorationCatalogue({
   };
 
   const formatStylePrice = (p: number) => {
-    const symbol = currencySymbol || "₦";
+    const symbol = currencySymbol || "AED ";
     if (p >= 1_000_000) {
       const m = p / 1_000_000;
       return `about ${symbol}${m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)}m`;

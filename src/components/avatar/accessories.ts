@@ -6,6 +6,7 @@
 import * as THREE from "three";
 import type { Accessory } from "@/lib/city/types";
 import {
+  JEWELRY_CATALOG,
   NAILS_CATALOG,
   SHOES_CATALOG,
   WIGS_CATALOG,
@@ -1337,9 +1338,519 @@ export function attachLookExtras(rig: AccessoryRig, look: AvatarLookProps, model
     }
   }
 
+  // 6. 3D Haute Horlogerie & High Luxury Jewelry (#21)
+  if (look.jewelryId && look.jewelryId !== "none") {
+    attachLuxuryJewelryItem(rig, look.jewelryId, H, attached);
+  }
+
   return () =>
     attached.forEach((m) => {
       m.removeFromParent();
       m.traverse((o) => (o as THREE.Mesh).geometry?.dispose());
     });
+}
+
+/** Mounts procedural 3D luxury jewelry (necklaces, watches, bracelets, rings) onto avatar skeleton anchors. */
+function attachLuxuryJewelryItem(
+  rig: AccessoryRig,
+  jewelryId: string,
+  H: number,
+  attached: THREE.Object3D[]
+) {
+  // PBR Precious Materials
+  const goldMat = new THREE.MeshStandardMaterial({
+    color: "#d4af37",
+    roughness: 0.16,
+    metalness: 0.98,
+  });
+  const roseGoldMat = new THREE.MeshStandardMaterial({
+    color: "#e29578",
+    roughness: 0.2,
+    metalness: 0.92,
+  });
+  const platinumMat = new THREE.MeshStandardMaterial({
+    color: "#e2e8f0",
+    roughness: 0.12,
+    metalness: 0.98,
+  });
+  const diamondMat = new THREE.MeshStandardMaterial({
+    color: "#ffffff",
+    roughness: 0.04,
+    metalness: 0.25,
+    opacity: 0.92,
+    transparent: true,
+  });
+  const emeraldMat = new THREE.MeshStandardMaterial({
+    color: "#059669",
+    roughness: 0.1,
+    metalness: 0.35,
+    opacity: 0.88,
+    transparent: true,
+  });
+  const malachiteMat = new THREE.MeshStandardMaterial({
+    color: "#065f46",
+    roughness: 0.35,
+    metalness: 0.15,
+  });
+  const coralMat = new THREE.MeshStandardMaterial({
+    color: "#dc2626",
+    roughness: 0.24,
+    metalness: 0.25,
+  });
+  const blackOnyxMat = new THREE.MeshStandardMaterial({
+    color: "#09090b",
+    roughness: 0.08,
+    metalness: 0.8,
+  });
+  const sapphireMat = new THREE.MeshStandardMaterial({
+    color: "#1d4ed8",
+    roughness: 0.08,
+    metalness: 0.3,
+    opacity: 0.9,
+    transparent: true,
+  });
+
+  const neckOffset = new THREE.Vector3(0, -H * 0.012, H * 0.012);
+  const wristOffset = new THREE.Vector3(0, H * 0.02, 0);
+
+  // A. Necklaces, Chokers & Chains
+  if (
+    jewelryId === "vca_alhambra_necklace" ||
+    jewelryId === "cartier_panthere_collar" ||
+    jewelryId === "bulgari_serpenti_choker" ||
+    jewelryId === "gold_souk_royal_choker" ||
+    jewelryId === "graff_emerald_drop" ||
+    jewelryId === "gold_souk_miami_cuban" ||
+    jewelryId === "cartier_iced_cuban" ||
+    jewelryId === "edo_royal_coral_necklace_f" ||
+    jewelryId === "chieftaincy_coral_beads_m"
+  ) {
+    if (!rig.neck) return;
+    const gNeck = new THREE.Group();
+
+    switch (jewelryId) {
+      case "vca_alhambra_necklace": {
+        // Delicate 18K yellow gold chain
+        const chain = new THREE.Mesh(
+          new THREE.TorusGeometry(H * 0.046, H * 0.002, 8, 36, Math.PI * 1.15),
+          goldMat
+        );
+        chain.rotation.set(Math.PI / 2 - 0.35, 0, 0);
+        gNeck.add(chain);
+
+        // 4-leaf clover malachite pendant
+        const cloverGroup = new THREE.Group();
+        cloverGroup.position.set(0, -H * 0.019, H * 0.044);
+        const cloverPetalGeo = new THREE.CylinderGeometry(H * 0.0035, H * 0.0035, H * 0.002, 10);
+        const offsets = [
+          [-H * 0.003, H * 0.003],
+          [H * 0.003, H * 0.003],
+          [-H * 0.003, -H * 0.003],
+          [H * 0.003, -H * 0.003],
+        ];
+        offsets.forEach(([ox, oy]) => {
+          const petal = new THREE.Mesh(cloverPetalGeo, malachiteMat);
+          petal.position.set(ox, oy, 0);
+          petal.rotation.set(Math.PI / 2, 0, 0);
+          cloverGroup.add(petal);
+        });
+        const centerBead = new THREE.Mesh(new THREE.SphereGeometry(H * 0.002, 8, 8), goldMat);
+        centerBead.position.set(0, 0, H * 0.001);
+        cloverGroup.add(centerBead);
+        gNeck.add(cloverGroup);
+        break;
+      }
+
+      case "cartier_panthere_collar": {
+        // Polished 18K rose gold curved collar choker
+        const collar = new THREE.Mesh(
+          new THREE.TorusGeometry(H * 0.048, H * 0.004, 10, 36, Math.PI * 1.12),
+          roseGoldMat
+        );
+        collar.rotation.set(Math.PI / 2 - 0.32, 0, 0);
+        gNeck.add(collar);
+
+        // Twin panther head finials meeting at front
+        for (const s of [-1, 1]) {
+          const panther = new THREE.Mesh(new THREE.ConeGeometry(H * 0.005, H * 0.008, 6), roseGoldMat);
+          panther.position.set(s * H * 0.007, -H * 0.016, H * 0.046);
+          panther.rotation.set(Math.PI / 2, 0, s * (Math.PI / 2));
+          gNeck.add(panther);
+
+          // Emerald panther eye
+          const eye = new THREE.Mesh(new THREE.SphereGeometry(H * 0.0012, 6, 6), emeraldMat);
+          eye.position.set(s * H * 0.007, -H * 0.014, H * 0.049);
+          gNeck.add(eye);
+        }
+        break;
+      }
+
+      case "bulgari_serpenti_choker": {
+        // White gold / platinum coiled serpent scale collar
+        const choker = new THREE.Mesh(
+          new THREE.TorusGeometry(H * 0.047, H * 0.0038, 12, 40, Math.PI * 1.15),
+          platinumMat
+        );
+        choker.rotation.set(Math.PI / 2 - 0.34, 0, 0);
+        gNeck.add(choker);
+
+        // Serpent diamond head finial with sapphire eye
+        const snakeHead = new THREE.Mesh(
+          new THREE.ConeGeometry(H * 0.006, H * 0.012, 5),
+          diamondMat
+        );
+        snakeHead.position.set(0, -H * 0.017, H * 0.046);
+        snakeHead.rotation.set(Math.PI / 2 - 0.3, 0, 0);
+        gNeck.add(snakeHead);
+
+        const snakeEye = new THREE.Mesh(new THREE.SphereGeometry(H * 0.0014, 6, 6), sapphireMat);
+        snakeEye.position.set(0, -H * 0.014, H * 0.049);
+        gNeck.add(snakeEye);
+        break;
+      }
+
+      case "gold_souk_royal_choker": {
+        // Multi-tier 24K gold collar
+        const tier1 = new THREE.Mesh(
+          new THREE.TorusGeometry(H * 0.046, H * 0.0035, 10, 32, Math.PI * 1.15),
+          goldMat
+        );
+        tier1.rotation.set(Math.PI / 2 - 0.33, 0, 0);
+        gNeck.add(tier1);
+
+        const tier2 = new THREE.Mesh(
+          new THREE.TorusGeometry(H * 0.05, H * 0.004, 10, 32, Math.PI * 1.18),
+          goldMat
+        );
+        tier2.rotation.set(Math.PI / 2 - 0.36, 0, 0);
+        tier2.position.set(0, -H * 0.006, 0);
+        gNeck.add(tier2);
+
+        // 5 gold drop charms
+        for (let i = -2; i <= 2; i++) {
+          const drop = new THREE.Mesh(new THREE.ConeGeometry(H * 0.0025, H * 0.009, 6), goldMat);
+          drop.position.set(i * H * 0.008, -H * 0.024, H * 0.046);
+          drop.rotation.set(Math.PI, 0, 0);
+          gNeck.add(drop);
+        }
+        break;
+      }
+
+      case "graff_emerald_drop": {
+        // Platinum diamond tennis chain
+        const chain = new THREE.Mesh(
+          new THREE.TorusGeometry(H * 0.046, H * 0.0022, 8, 36, Math.PI * 1.15),
+          platinumMat
+        );
+        chain.rotation.set(Math.PI / 2 - 0.35, 0, 0);
+        gNeck.add(chain);
+
+        // Octagonal Colombian emerald pendant
+        const emerald = new THREE.Mesh(
+          new THREE.CylinderGeometry(H * 0.007, H * 0.007, H * 0.003, 8),
+          emeraldMat
+        );
+        emerald.position.set(0, -H * 0.02, H * 0.045);
+        emerald.rotation.set(Math.PI / 2, 0, 0);
+        gNeck.add(emerald);
+
+        // Diamond halo ring around emerald
+        const halo = new THREE.Mesh(
+          new THREE.TorusGeometry(H * 0.008, H * 0.0015, 6, 16),
+          diamondMat
+        );
+        halo.position.set(0, -H * 0.02, H * 0.045);
+        gNeck.add(halo);
+        break;
+      }
+
+      case "gold_souk_miami_cuban": {
+        // Heavy 24K solid gold Miami Cuban chain
+        const cuban = new THREE.Mesh(
+          new THREE.TorusGeometry(H * 0.051, H * 0.0055, 12, 36, Math.PI * 1.25),
+          goldMat
+        );
+        cuban.rotation.set(Math.PI / 2 - 0.4, 0, 0);
+        gNeck.add(cuban);
+        break;
+      }
+
+      case "cartier_iced_cuban": {
+        // Heavy iced-out diamond baguette Cuban link chain
+        const icedChain = new THREE.Mesh(
+          new THREE.TorusGeometry(H * 0.051, H * 0.0055, 12, 36, Math.PI * 1.25),
+          diamondMat
+        );
+        icedChain.rotation.set(Math.PI / 2 - 0.4, 0, 0);
+        gNeck.add(icedChain);
+        break;
+      }
+
+      case "edo_royal_coral_necklace_f":
+      case "chieftaincy_coral_beads_m": {
+        // Chunky Nigerian royal coral beads necklace
+        const coralTier1 = new THREE.Mesh(
+          new THREE.TorusGeometry(H * 0.052, H * 0.007, 12, 28, Math.PI * 1.2),
+          coralMat
+        );
+        coralTier1.rotation.set(Math.PI / 2 - 0.35, 0, 0);
+        gNeck.add(coralTier1);
+
+        const coralTier2 = new THREE.Mesh(
+          new THREE.TorusGeometry(H * 0.058, H * 0.0075, 12, 28, Math.PI * 1.22),
+          coralMat
+        );
+        coralTier2.position.set(0, -H * 0.008, 0);
+        coralTier2.rotation.set(Math.PI / 2 - 0.38, 0, 0);
+        gNeck.add(coralTier2);
+
+        // Center cylindrical coral pendant
+        const centerCoral = new THREE.Mesh(
+          new THREE.CylinderGeometry(H * 0.006, H * 0.006, H * 0.016, 12),
+          coralMat
+        );
+        centerCoral.position.set(0, -H * 0.024, H * 0.052);
+        centerCoral.rotation.set(Math.PI / 2, 0, Math.PI / 2);
+        gNeck.add(centerCoral);
+
+        // Also add coral wrist beads to hands
+        for (const hand of ["leftHand", "rightHand"] as const) {
+          if (rig[hand]) {
+            const gCoralWrist = new THREE.Group();
+            const coralWristBangle = new THREE.Mesh(
+              new THREE.TorusGeometry(H * 0.024, H * 0.006, 8, 20),
+              coralMat
+            );
+            coralWristBangle.rotation.set(Math.PI / 2, 0, 0);
+            gCoralWrist.add(coralWristBangle);
+            mountToAnchor(rig, hand, gCoralWrist, wristOffset, attached);
+          }
+        }
+        break;
+      }
+    }
+
+    mountToAnchor(rig, "neck", gNeck, neckOffset, attached);
+  }
+
+  // B. Luxury Swiss Horology Watches & Wrist Stacks
+  if (
+    jewelryId === "rolex_daytona_rainbow" ||
+    jewelryId === "ap_royal_oak_skeleton" ||
+    jewelryId === "patek_nautilus_diamond" ||
+    jewelryId === "richard_mille_rm65" ||
+    jewelryId === "rolex_lady_pearlmaster" ||
+    jewelryId === "tiffany_diamond_stack"
+  ) {
+    if (!rig.leftHand) return;
+    const gWatch = new THREE.Group();
+
+    switch (jewelryId) {
+      case "rolex_daytona_rainbow": {
+        // Everose gold oyster bracelet
+        const bracelet = new THREE.Mesh(
+          new THREE.TorusGeometry(H * 0.023, H * 0.0055, 8, 20),
+          roseGoldMat
+        );
+        bracelet.rotation.set(0, Math.PI / 2, 0);
+        gWatch.add(bracelet);
+
+        // Watch case
+        const caseMesh = new THREE.Mesh(
+          new THREE.CylinderGeometry(H * 0.014, H * 0.014, H * 0.006, 16),
+          roseGoldMat
+        );
+        caseMesh.position.set(H * 0.023, 0, 0);
+        caseMesh.rotation.set(0, 0, Math.PI / 2);
+        gWatch.add(caseMesh);
+
+        // Rainbow sapphire baguette bezel: 6 colorful gems around bezel perimeter
+        const rainbowColors = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#a855f7"];
+        rainbowColors.forEach((colorHex, idx) => {
+          const angle = (idx / rainbowColors.length) * Math.PI * 2;
+          const gemMat = new THREE.MeshStandardMaterial({
+            color: colorHex,
+            metalness: 0.2,
+            roughness: 0.1,
+          });
+          const gem = new THREE.Mesh(new THREE.BoxGeometry(H * 0.002, H * 0.0035, H * 0.003), gemMat);
+          gem.position.set(
+            H * 0.026,
+            Math.cos(angle) * (H * 0.012),
+            Math.sin(angle) * (H * 0.012)
+          );
+          gWatch.add(gem);
+        });
+        break;
+      }
+
+      case "ap_royal_oak_skeleton": {
+        // Yellow gold integrated bracelet
+        const bracelet = new THREE.Mesh(
+          new THREE.TorusGeometry(H * 0.023, H * 0.0055, 8, 20),
+          goldMat
+        );
+        bracelet.rotation.set(0, Math.PI / 2, 0);
+        gWatch.add(bracelet);
+
+        // Iconic 8-sided octagonal gold bezel
+        const octagonalCase = new THREE.Mesh(
+          new THREE.CylinderGeometry(H * 0.015, H * 0.015, H * 0.006, 8),
+          goldMat
+        );
+        octagonalCase.position.set(H * 0.023, 0, 0);
+        octagonalCase.rotation.set(0, 0, Math.PI / 2);
+        gWatch.add(octagonalCase);
+
+        // Openworked skeleton dial inside
+        const skeletonDial = new THREE.Mesh(
+          new THREE.CylinderGeometry(H * 0.011, H * 0.011, H * 0.0065, 8),
+          blackOnyxMat
+        );
+        skeletonDial.position.set(H * 0.0232, 0, 0);
+        skeletonDial.rotation.set(0, 0, Math.PI / 2);
+        gWatch.add(skeletonDial);
+        break;
+      }
+
+      case "patek_nautilus_diamond": {
+        // Platinum case and bracelet
+        const bracelet = new THREE.Mesh(
+          new THREE.TorusGeometry(H * 0.023, H * 0.0055, 8, 20),
+          platinumMat
+        );
+        bracelet.rotation.set(0, Math.PI / 2, 0);
+        gWatch.add(bracelet);
+
+        const nautilusCase = new THREE.Mesh(
+          new THREE.BoxGeometry(H * 0.006, H * 0.024, H * 0.024),
+          platinumMat
+        );
+        nautilusCase.position.set(H * 0.023, 0, 0);
+        gWatch.add(nautilusCase);
+
+        // Diamond set bezel ring
+        const diamondBezel = new THREE.Mesh(
+          new THREE.TorusGeometry(H * 0.011, H * 0.002, 6, 16),
+          diamondMat
+        );
+        diamondBezel.position.set(H * 0.026, 0, 0);
+        diamondBezel.rotation.set(0, Math.PI / 2, 0);
+        gWatch.add(diamondBezel);
+        break;
+      }
+
+      case "richard_mille_rm65": {
+        // Matte black carbon TPT tonneau curved case
+        const tonneauCase = new THREE.Mesh(
+          new THREE.BoxGeometry(H * 0.008, H * 0.026, H * 0.022),
+          blackOnyxMat
+        );
+        tonneauCase.position.set(H * 0.023, 0, 0);
+        gWatch.add(tonneauCase);
+
+        // Red and yellow chronograph pushers
+        const redPusher = new THREE.Mesh(
+          new THREE.CylinderGeometry(H * 0.002, H * 0.002, H * 0.003, 6),
+          new THREE.MeshStandardMaterial({ color: "#dc2626" })
+        );
+        redPusher.position.set(H * 0.023, H * 0.012, H * 0.012);
+        gWatch.add(redPusher);
+
+        const yellowPusher = new THREE.Mesh(
+          new THREE.CylinderGeometry(H * 0.002, H * 0.002, H * 0.003, 6),
+          new THREE.MeshStandardMaterial({ color: "#eab308" })
+        );
+        yellowPusher.position.set(H * 0.023, -H * 0.012, H * 0.012);
+        gWatch.add(yellowPusher);
+        break;
+      }
+
+      case "rolex_lady_pearlmaster": {
+        // Everose gold fluted jubilee bracelet
+        const bracelet = new THREE.Mesh(
+          new THREE.TorusGeometry(H * 0.021, H * 0.004, 8, 20),
+          roseGoldMat
+        );
+        bracelet.rotation.set(0, Math.PI / 2, 0);
+        gWatch.add(bracelet);
+
+        // Diamond pavé dial
+        const dial = new THREE.Mesh(
+          new THREE.CylinderGeometry(H * 0.011, H * 0.011, H * 0.005, 16),
+          diamondMat
+        );
+        dial.position.set(H * 0.021, 0, 0);
+        dial.rotation.set(0, 0, Math.PI / 2);
+        gWatch.add(dial);
+        break;
+      }
+
+      case "tiffany_diamond_stack": {
+        // Platinum diamond tennis bracelet on left wrist
+        const tennisBracelet = new THREE.Mesh(
+          new THREE.TorusGeometry(H * 0.022, H * 0.0035, 8, 24),
+          diamondMat
+        );
+        tennisBracelet.rotation.set(0, Math.PI / 2, 0);
+        gWatch.add(tennisBracelet);
+
+        // Solitaire diamond ring on right hand
+        if (rig.rightHand) {
+          const gRing = new THREE.Group();
+          const ringBand = new THREE.Mesh(
+            new THREE.TorusGeometry(H * 0.012, H * 0.002, 8, 16),
+            platinumMat
+          );
+          ringBand.rotation.set(0, Math.PI / 2, 0);
+          gRing.add(ringBand);
+
+          const diamondSolitaire = new THREE.Mesh(
+            new THREE.ConeGeometry(H * 0.0035, H * 0.005, 8),
+            diamondMat
+          );
+          diamondSolitaire.position.set(H * 0.013, 0, 0);
+          diamondSolitaire.rotation.set(0, 0, Math.PI / 2);
+          gRing.add(diamondSolitaire);
+          mountToAnchor(rig, "rightHand", gRing, wristOffset, attached);
+        }
+        break;
+      }
+    }
+
+    mountToAnchor(rig, "leftHand", gWatch, wristOffset, attached);
+  }
+
+  // C. Signet Rings & Cufflinks
+  if (jewelryId === "emirati_falcon_signet") {
+    if (rig.rightHand) {
+      const gRing = new THREE.Group();
+      // 18K solid gold signet ring
+      const ringBand = new THREE.Mesh(
+        new THREE.TorusGeometry(H * 0.014, H * 0.003, 8, 16),
+        goldMat
+      );
+      ringBand.rotation.set(0, Math.PI / 2, 0);
+      gRing.add(ringBand);
+
+      // Black onyx falcon crest signet face
+      const signetPlate = new THREE.Mesh(
+        new THREE.CylinderGeometry(H * 0.005, H * 0.005, H * 0.002, 12),
+        blackOnyxMat
+      );
+      signetPlate.position.set(H * 0.015, 0, 0);
+      signetPlate.rotation.set(0, 0, Math.PI / 2);
+      gRing.add(signetPlate);
+
+      // Gold falcon emblem on top
+      const falconEmblem = new THREE.Mesh(
+        new THREE.ConeGeometry(H * 0.0025, H * 0.003, 4),
+        goldMat
+      );
+      falconEmblem.position.set(H * 0.016, 0, 0);
+      falconEmblem.rotation.set(0, 0, Math.PI / 2);
+      gRing.add(falconEmblem);
+      mountToAnchor(rig, "rightHand", gRing, wristOffset, attached);
+    }
+  }
 }
