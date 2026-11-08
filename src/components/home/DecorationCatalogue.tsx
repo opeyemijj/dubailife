@@ -49,7 +49,7 @@ export function DecorationCatalogue({
   onPlaceMultiple,
   onPlaceStored,
   initialCategory = "all",
-  currencySymbol = "AED ",
+  currencySymbol = "₦",
 }: DecorationCatalogueProps) {
   const [activeTab, setActiveTab] = useState<string>(initialCategory);
   const [searchQuery, setSearchQuery] = useState("");
@@ -120,11 +120,13 @@ export function DecorationCatalogue({
         if (activeTab === "comfort" && (i.category === "living" || i.category === "comfort")) return true;
         if (activeTab === "sleep" && (i.category === "bedroom" || i.category === "sleep")) return true;
         if (activeTab === "kitchen" && (i.category === "dining" || i.category === "kitchen")) return true;
-        if (activeTab === "fun" && (i.category === "fun" || i.id === "tv" || i.id === "media-wall" || i.id === "grand-piano" || i.id === "aquarium" || i.id === "audio-speaker")) return true;
+        if (activeTab === "bath" && i.category === "bath") return true;
+        if (activeTab === "pets" && i.category === "pets") return true;
+        if (activeTab === "fun" && (i.category === "fun" || i.id === "tv" || i.id === "media-wall" || i.id === "grand-piano" || i.id === "aquarium" || i.id === "audio-speaker" || i.id === "tv-32" || i.id === "party-speakers")) return true;
         if (activeTab === "skills" && (i.category === "skills" || i.id === "desk" || i.id === "desk-chair" || i.id === "bookcase" || i.id === "shelf-tall")) return true;
         if (activeTab === "lighting" && i.category === "lighting") return true;
         if (activeTab === "decor" && (i.category === "decor" || i.category === "wall")) return true;
-        if (activeTab === "luxury" && (i.category === "luxury" || i.price >= 8000 || i.id.startsWith("royal-") || i.id.startsWith("diamond-") || i.id.startsWith("gold-") || i.id === "grand-piano" || i.id === "fireplace" || i.id === "aquarium")) return true;
+        if (activeTab === "luxury" && (i.category === "luxury" || i.price >= 8000 || i.id.startsWith("royal-") || i.id.startsWith("diamond-") || i.id.startsWith("gold-") || i.id.startsWith("pool-") || i.id === "grand-piano" || i.id === "fireplace" || i.id === "aquarium")) return true;
         if (activeTab === "nursery" && i.category === "nursery") return true;
         return false;
       });
@@ -150,7 +152,8 @@ export function DecorationCatalogue({
       list = list.filter((i) => i.price > 50000);
     }
 
-    return list;
+    // Sort by price ascending
+    return [...list].sort((a, b) => a.price - b.price);
   }, [activeTab, searchQuery, priceFilter]);
 
   const toggleSelectItem = (item: CatalogItem) => {
@@ -318,10 +321,10 @@ export function DecorationCatalogue({
                 className="appearance-none bg-white border border-slate-200 text-slate-700 font-bold text-xs pl-3 pr-8 py-1.5 rounded-xl shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
               >
                 <option value="any">Any price</option>
-                <option value="under2k">Under AED 2,000</option>
-                <option value="2k-10k">AED 2,000 – 10,000</option>
-                <option value="10k-50k">AED 10,000 – 50,000</option>
-                <option value="50k+">AED 50,000+</option>
+                <option value="under2k">Under {currencySymbol}2,000</option>
+                <option value="2k-10k">{currencySymbol}2,000 – 10,000</option>
+                <option value="10k-50k">{currencySymbol}10,000 – 50,000</option>
+                <option value="50k+">{currencySymbol}50,000+</option>
               </select>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>

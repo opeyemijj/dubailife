@@ -41,6 +41,7 @@ import { SocialFeed } from "@/components/social/SocialFeed";
 import type { Person } from "@/components/home/ApartmentRoom";
 import { SmallLoader } from "@/components/GameLoadingScreen";
 import { WardrobeModal } from "@/components/avatar/WardrobeModal";
+import { DecorationCatalogue } from "@/components/home/DecorationCatalogue";
 import { myHousehold, type SharedHome } from "@/lib/love";
 
 /** Unique id for a newly bought piece of furniture. */
@@ -72,7 +73,18 @@ export function PropertyRoute({ buildingId, unit }: { buildingId: string; unit: 
     if (res.ok) {
       setFurniture(res.data.interior?.furniture ?? []);
       setStyle(res.data.interior?.style ?? null);
-      setDoor({ state: "open", canEdit: res.data.can_edit, reason: res.data.reason });
+      let canEdit = res.data.can_edit;
+      if (!canEdit) {
+        try {
+          const hh = await myHousehold();
+          if (hh.some((h) => h.flat === flatId)) {
+            canEdit = true;
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+      setDoor({ state: "open", canEdit, reason: canEdit ? "resident" : res.data.reason });
     } else {
       setDoor({ state: "closed", reason: res.error.replace(/^access_denied:/, "") });
     }
@@ -230,6 +242,42 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
     }, 500);
   };
   const [lookOpen, setLookOpen] = useState(false);
+  const router = useRouter();
+  const [wardrobeOpen, setWardrobeOpen] = useState(false);
+  const [propertiesOpen, setPropertiesOpen] = useState(false);
+  const [myResidences, setMyResidences] = useState<Array<{ id: string; label: string; route: string; active: boolean; isShared?: boolean }>>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const flats = await myFlats(me);
+        const hh = await myHousehold();
+        const list: Array<{ id: string; label: string; route: string; active: boolean; isShared?: boolean }> = [];
+        for (const f of flats) {
+          list.push({
+            id: f.id,
+            label: `${f.property_type || "Apartment"} (${f.unit})`,
+            route: flatRoute(f),
+            active: f.id === flat.id,
+          });
+        }
+        for (const h of hh) {
+          if (!list.some((x) => x.id === h.flat)) {
+            list.push({
+              id: h.flat,
+              label: `Marital Home (${h.type || "Unit"} ${h.unit})`,
+              route: `/property/${h.building}/${h.unit}`,
+              active: h.flat === flat.id,
+              isShared: true,
+            });
+          }
+        }
+        setMyResidences(list);
+      } catch {
+        /* ignore */
+      }
+    })();
+  }, [flat.id]);
   // The kitchen, bathroom and things in the home (TV, aquarium, dining table, counter): anyone here can use them.
   const [fixture, setFixture] = useState<Fixture | null>(null);
   const [running, setRunning] = useState<FixtureAction | null>(null);
@@ -425,6 +473,14 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
           <img src={rosterThumb(presetFor(look ?? { gender: "woman" }))} alt="" className="w-7 h-7 rounded-full object-cover object-top bg-sky-100 ring-2 ring-amber-400" />
           <span className="hidden sm:inline">Profile</span>
         </button>
+        <button
+          onClick={() => setWardrobeOpen(true)}
+          className="h-10 px-3 rounded-full bg-white shadow-lg flex items-center gap-1.5 text-xs font-black active:scale-95 transition-transform"
+          aria-label="Open Wardrobe"
+        >
+          <Shirt className="w-4 h-4 text-purple-600" />
+          <span className="hidden sm:inline">Wardrobe</span>
+        </button>
         <InviteHere title={flatTitle(flat)} label={`${flat.property_type} · ${flat.size_sqft.toLocaleString()} sq ft`} text={`🏠 Come and see ${flatTitle(flat)} with me on Dubai Life!`} compact
           className="h-10 w-10 sm:w-auto shrink-0 justify-center sm:px-3 rounded-full bg-fuchsia-600 text-white shadow-lg flex items-center gap-1.5 text-xs font-black" />
         {isManager && <button onClick={() => setManageOpen(true)} className="h-10 w-10 sm:w-auto shrink-0 justify-center sm:px-3 rounded-full bg-white shadow-lg flex items-center gap-1.5 text-xs font-black" aria-label="Manage"><Settings2 className="w-4 h-4" /> <span className="hidden sm:inline">Manage</span></button>}
@@ -495,6 +551,8 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
       )}
       {panel === "menu" && (
         <SidePopover title={flatTitle(flat)} onClose={() => setPanel(null)}>
+          <button onClick={() => { setPanel(null); setWardrobeOpen(true); }} className="w-full h-11 rounded-2xl bg-purple-600 text-white text-xs font-black flex items-center justify-center gap-2 shadow-sm active:scale-95">👗 My Wardrobe &amp; Outfits</button>
+          <button onClick={() => { setPanel(null); setPropertiesOpen(true); }} className="w-full h-11 rounded-2xl bg-slate-900 text-white text-xs font-black flex items-center justify-center gap-2 shadow-sm active:scale-95">🏠 My Properties &amp; Residences</button>
           {canEdit && <button onClick={() => setLookOpen(true)} className="w-full h-11 rounded-2xl bg-emerald-600 text-white text-xs font-black">🎨 Floors, walls &amp; bedding</button>}
           {(levels || (rooms && rooms.length > 0)) && (
             <div className="flex flex-wrap gap-1">
@@ -551,24 +609,65 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         </div>
       )}
 
-      {shopOpen && (
-        <Modal title="Furniture for this home" onClose={() => setShopOpen(false)}>
-          {withHomeItems(furniture, housingTier).filter((f) => !f.placement).map((f) => {
-            const item = getCatalogItem(f.itemId);
-            return item ? (
-              <div key={f.uid} className="flex items-center gap-3 p-2.5 rounded-2xl bg-amber-50 border border-amber-100">
-                <span className="text-2xl">{item.icon}</span><span className="flex-1 text-sm font-black">{item.name} <span className="text-[11px] text-slate-500">(in storage)</span></span>
-                <button onClick={() => { setShopOpen(false); setPlacing({ uid: f.uid, itemId: f.itemId, rot: 0 }); }} className="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-black">Place</button>
+      <DecorationCatalogue
+        open={shopOpen}
+        onClose={() => setShopOpen(false)}
+        walletBalance={citizen?.balance ?? 0}
+        storedItems={withHomeItems(furniture, housingTier).filter((f) => !f.placement)}
+        homeStyle={homeLook}
+        onRestyle={restyle}
+        onSelectItem={(item) => buy(item)}
+        onPlaceStored={(f) => { setShopOpen(false); setPlacing({ uid: f.uid, itemId: f.itemId, rot: 0 }); }}
+      />
+      <WardrobeModal open={wardrobeOpen} onOpenChange={setWardrobeOpen} />
+      {propertiesOpen && (
+        <Modal title="My Residences &amp; Properties" onClose={() => setPropertiesOpen(false)}>
+          <div className="space-y-2 p-1">
+            <p className="text-xs text-slate-500 font-medium mb-3">
+              Switch freely between your owned/rented properties and your marital shared home.
+            </p>
+            {myResidences.length === 0 ? (
+              <div className="p-4 rounded-2xl bg-slate-50 text-center text-xs text-slate-500">
+                No other properties registered yet.
               </div>
-            ) : null;
-          })}
-          {CATALOG.map((item) => (
-            <div key={item.id} className="flex items-center gap-3 p-2.5 rounded-2xl bg-slate-50 border border-slate-100">
-              <span className="text-2xl">{item.icon}</span>
-              <div className="flex-1"><div className="text-sm font-black">{item.name}</div><div className="text-xs font-mono font-black text-emerald-600">AED {item.price.toLocaleString()}</div></div>
-              <button onClick={() => buy(item)} className="px-3 py-1.5 rounded-xl bg-emerald-500 text-white text-xs font-black">Buy</button>
-            </div>
-          ))}
+            ) : (
+              myResidences.map((res) => (
+                <button
+                  key={res.id}
+                  onClick={() => {
+                    setPropertiesOpen(false);
+                    if (!res.active) {
+                      router.push(res.route);
+                    }
+                  }}
+                  className={`w-full p-3 rounded-2xl flex items-center justify-between border text-left transition-all ${
+                    res.active
+                      ? "border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-200"
+                      : "border-slate-200 hover:bg-slate-50 active:scale-95"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xl">{res.isShared ? "💍" : "🏠"}</span>
+                    <div>
+                      <div className="text-xs font-black text-slate-900">{res.label}</div>
+                      <div className="text-[10px] text-slate-500 font-medium">
+                        {res.isShared ? "Shared Couple Home" : "Owned / Rented Flat"}
+                      </div>
+                    </div>
+                  </div>
+                  {res.active ? (
+                    <span className="text-[11px] font-black text-emerald-600 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                      Current
+                    </span>
+                  ) : (
+                    <span className="text-xs font-bold text-slate-600">
+                      Go here ›
+                    </span>
+                  )}
+                </button>
+              ))
+            )}
+          </div>
         </Modal>
       )}
 

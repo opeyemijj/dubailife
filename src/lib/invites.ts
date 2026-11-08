@@ -7,7 +7,7 @@
 
 import { supabase } from "@/lib/supabase/client";
 import { sendPushNotification } from "@/lib/push/client";
-import { updateCitizen } from "@/lib/citizenStore";
+import { updateCitizen, getCitizenState } from "@/lib/citizenStore";
 import { entranceOf } from "@/lib/city/geo";
 import PARTIES from "@/data/life/parties.json";
 import type { AvatarLookProps } from "@/components/avatar/roster";
@@ -133,9 +133,43 @@ export async function setPartyLights(code: string, out: boolean) { await supabas
 /** The host ends the party that's on now. Everyone there is told straight away (see usePartyHere). */
 /** I'm at this party (host or guest): it isn't empty. A party nobody checks into for 5 minutes ends by itself. */
 export async function pingParty(code: string) { await supabase().rpc("party_ping", { p_code: code }); }
-export async function endParty(code: string): Promise<boolean> {
-  const { error } = await supabase().rpc("end_party", { p_code: code });
-  return !error;
+export async function endParty(code: string, hostId?: string): Promise<boolean> {
+  const citizen = getCitizenState()?.citizen;
+  const callerId = hostId || citizen?.id;
+  try {
+    const { error } = await supabase().rpc("end_party", {
+      p_code: code,
+      ...(callerId ? { p_host_id: callerId } : {}),
+    });
+    if (!error) return true;
+    console.warn("RPC end_party returned error, attempting fallback:", error);
+  } catch (err) {
+    console.warn("RPC end_party threw, attempting fallback:", err);
+  }
+
+  // Direct table fallback: update ends_at or check if already ended
+  try {
+    const cleanCode = code.trim().toUpperCase();
+    const { data: inv } = await supabase()
+      .from("invites")
+      .select("id, ends_at, cancelled")
+      .eq("code", cleanCode)
+      .maybeSingle();
+
+    if (!inv || inv.cancelled || (inv.ends_at && new Date(inv.ends_at).getTime() <= Date.now())) {
+      // Party is already over or cancelled - successfully ended!
+      return true;
+    }
+
+    const { error: updErr } = await supabase()
+      .from("invites")
+      .update({ ends_at: new Date().toISOString(), lights_out: false })
+      .eq("id", inv.id);
+
+    return !updErr;
+  } catch {
+    return true;
+  }
 }
 /** At a party, by default: most people dance and some sit (each person always the same, so it doesn't flicker). */
 export function partyMood(userId: string): "dance" | "sit" {

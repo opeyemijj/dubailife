@@ -71,6 +71,97 @@ function saveOwnedCloset(ids: string[]) {
 
 type CameraFocusMode = "full" | "head" | "shoes" | "hands";
 
+export type ShoppedCategory = "all" | "outfits" | "shoes" | "accessories" | "bags" | "beauty";
+
+export const SHOPPED_CATEGORIES: Array<{ id: ShoppedCategory; label: string; icon: string }> = [
+  { id: "all", label: "All Items", icon: "✨" },
+  { id: "outfits", label: "Clothes", icon: "👗" },
+  { id: "shoes", label: "Shoes", icon: "👠" },
+  { id: "accessories", label: "Accessories", icon: "🕶️" },
+  { id: "bags", label: "Bags & Luxury", icon: "👜" },
+  { id: "beauty", label: "Beauty & Scent", icon: "💄" },
+];
+
+/** Differentiates items bought at malls and retail stores from nightlife/club purchases. */
+export function isMallStoreItem(item: InventoryItem): boolean {
+  if (item.service) return false;
+
+  const store = (item.storeId || "").toLowerCase();
+  const name = (item.name || "").toLowerCase();
+  const id = (item.productId || "").toLowerCase();
+
+  // Exclude club-specific store venues unless explicitly a wearable fashion accessory
+  if (
+    store.includes("club") ||
+    store.includes("nightclub") ||
+    store.includes("lounge") ||
+    store.includes("pub") ||
+    store.includes("disco") ||
+    store.includes("beach-club") ||
+    store.includes("bar")
+  ) {
+    if (!item.wearable && !FASHION_CATALOG.some((f) => f.id === item.productId)) {
+      return false;
+    }
+  }
+
+  // Exclude club drinks, cocktails, bottle service, champagne, tickets
+  if (
+    name.includes("bottle service") ||
+    name.includes("champagne") ||
+    name.includes("cocktail") ||
+    name.includes("mocktail") ||
+    name.includes("martini") ||
+    name.includes("vodka") ||
+    name.includes("whiskey") ||
+    name.includes("tequila") ||
+    name.includes("beer") ||
+    name.includes("wine") ||
+    name.includes("entry ticket") ||
+    name.includes("vip table") ||
+    name.includes("dj gift") ||
+    name.includes("shot") ||
+    id.includes("cocktail") ||
+    id.includes("bottle") ||
+    id.includes("entry") ||
+    id.includes("vip-table") ||
+    id.includes("dj-gift")
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+/** Determines the subcategory of a mall/store item for user filtering. */
+export function getShoppedCategory(item: InventoryItem): "outfits" | "shoes" | "accessories" | "bags" | "beauty" {
+  const matchingFashion = FASHION_CATALOG.find((f) => f.id === item.productId);
+  const name = item.name.toLowerCase();
+  const w = item.wearable;
+
+  if (matchingFashion?.category === "shoes" || /shoe|heel|boot|sneaker|loafer|sandal|slide/i.test(name)) {
+    return "shoes";
+  }
+  if (w === "handbag" || /bag|tote|clutch|handbag|wallet|purse|backpack|luggage/i.test(name)) {
+    return "bags";
+  }
+  if (
+    w === "sunglasses" ||
+    w === "watch" ||
+    w === "necklace" ||
+    w === "cap" ||
+    w === "headphones" ||
+    matchingFashion?.category === "accessories" ||
+    /glass|shade|watch|necklace|bracelet|earring|ring|hat|cap|scarf|belt|jewel|gold|silver|diamond/i.test(name)
+  ) {
+    return "accessories";
+  }
+  if (/perfume|oud|fragrance|scent|lipstick|cosmetic|skincare|serum|mist|cream|palette/i.test(name)) {
+    return "beauty";
+  }
+  return "outfits";
+}
+
 const CAMERA_PRESETS: Record<
   CameraFocusMode,
   { pos: [number, number, number]; target: [number, number, number] }
@@ -224,11 +315,37 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
   const wearOutfit = outfitById(selectedLook.wear);
   const closetValue = computeClosetValue(selectedLook, ownedCloset);
 
-  // All shopped items from malls and shopping centers
-  const inventory: InventoryItem[] = citizen?.inventory ?? [];
+  // Filter out club drinks, bottle service & tickets; keep only mall & retail store items
+  const mallInventory: InventoryItem[] = useMemo(() => {
+    const raw = citizen?.inventory ?? [];
+    return raw.filter(isMallStoreItem);
+  }, [citizen?.inventory]);
 
-  // Owned accessories from inventory
-  const ownedAccessories = inventory.filter((item) => item.wearable);
+  const [shoppedCategory, setShoppedCategory] = useState<ShoppedCategory>("all");
+
+  const filteredShoppedItems = useMemo(() => {
+    if (shoppedCategory === "all") return mallInventory;
+    return mallInventory.filter((item) => getShoppedCategory(item) === shoppedCategory);
+  }, [mallInventory, shoppedCategory]);
+
+  const shoppedCategoryCounts = useMemo(() => {
+    const counts: Record<ShoppedCategory, number> = {
+      all: mallInventory.length,
+      outfits: 0,
+      shoes: 0,
+      accessories: 0,
+      bags: 0,
+      beauty: 0,
+    };
+    for (const item of mallInventory) {
+      const cat = getShoppedCategory(item);
+      counts[cat]++;
+    }
+    return counts;
+  }, [mallInventory]);
+
+  // Owned accessories from mall inventory
+  const ownedAccessories = mallInventory.filter((item) => item.wearable);
 
   const activeAccessories: Accessory[] = ownedAccessories
     .filter((item) => selectedWorn.includes(item.uid) && item.wearable)
@@ -587,7 +704,7 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
                 },
                 {
                   id: "shopped" as const,
-                  label: `Shopped (${inventory.length})`,
+                  label: `Shopped (${mallInventory.length})`,
                   icon: "🛍️",
                 },
                 { id: "colors" as const, label: "Color Studio", icon: "🎨" },
@@ -821,51 +938,70 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
             )}
 
             {activeTab === "shopped" && (
-              <div className="space-y-4">
-                {/* Mall Wardrobe Announcement & Shopping Guide */}
-                <div className="rounded-2xl p-4 bg-gradient-to-r from-amber-950/60 via-purple-950/50 to-slate-900 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl p-2 bg-amber-500/20 rounded-xl border border-amber-500/30 shrink-0">🛍️</span>
-                    <div>
-                      <h3 className="text-sm font-black text-amber-200 flex items-center gap-2 flex-wrap">
-                        <span>Mall & Shopping Center Purchases</span>
-                        <span className="text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full font-bold">
-                          The Dubai Mall & City Boutiques
-                        </span>
+              <div className="space-y-3.5">
+                {/* Mobile-Friendly Mall Wardrobe Banner */}
+                <div className="rounded-2xl p-3 sm:p-4 bg-gradient-to-r from-amber-950/70 via-purple-950/60 to-slate-900 border border-amber-500/30 flex items-center justify-between gap-3 shadow-md">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-xl sm:text-2xl p-2 bg-amber-500/20 rounded-xl border border-amber-500/30 shrink-0">🛍️</span>
+                    <div className="min-w-0">
+                      <h3 className="text-xs sm:text-sm font-black text-amber-200 truncate flex items-center gap-1.5">
+                        <span>Mall &amp; Retail Store Purchases</span>
                       </h3>
-                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                        All clothing, accessories, sunglasses, watches, and luxury items you buy from malls and shopping centers across Dubai appear here! You can shop for more items at <strong className="text-white">The Dubai Mall</strong> to expand your personal wardrobe.
+                      <p className="text-[11px] text-slate-300 truncate">
+                        Clothing, footwear, watches &amp; luxury accessories from Dubai malls
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <button
                       type="button"
                       onClick={() => {
                         onOpenChange(false);
                         router.push("/place/dubai-mall");
                       }}
-                      className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition"
+                      className="px-3 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 text-xs font-black flex items-center gap-1 shadow-sm active:scale-95 transition"
                     >
                       <ShoppingBag className="w-3.5 h-3.5" />
-                      <span>Shop at Dubai Mall</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onOpenChange(false);
-                        router.push("/explore?open=dubai-mall");
-                      }}
-                      className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold border border-white/10 active:scale-95 transition"
-                      title="View malls on Dubai map"
-                    >
-                      <span>Malls on Map 🗺️</span>
+                      <span>Dubai Mall</span>
                     </button>
                   </div>
                 </div>
 
+                {/* Subcategory Filter Pills Bar */}
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 shrink-0 -mx-1 px-1">
+                  {SHOPPED_CATEGORIES.map((cat) => {
+                    const count = shoppedCategoryCounts[cat.id];
+                    const isActive = shoppedCategory === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => {
+                          gameAudio.playClickSound();
+                          setShoppedCategory(cat.id);
+                        }}
+                        className={`h-9 px-3 rounded-full text-xs font-black whitespace-nowrap flex items-center gap-1.5 transition-all shrink-0 active:scale-95 ${
+                          isActive
+                            ? "bg-amber-400 text-slate-950 shadow-md ring-2 ring-amber-400/30 font-black"
+                            : "bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-white/10"
+                        }`}
+                      >
+                        <span>{cat.icon}</span>
+                        <span>{cat.label}</span>
+                        <span
+                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                            isActive ? "bg-slate-950 text-amber-300" : "bg-white/10 text-slate-400"
+                          }`}
+                        >
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
                 {/* Content: Shopped Items Grid OR Empty State */}
-                {inventory.length === 0 ? (
+                {mallInventory.length === 0 ? (
                   <div className="py-12 px-6 rounded-3xl border border-dashed border-white/15 bg-slate-950/40 text-center flex flex-col items-center justify-center space-y-3">
                     <div className="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-3xl">
                       🛍️
@@ -873,7 +1009,7 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
                     <div className="max-w-md space-y-1">
                       <h4 className="text-base font-black text-white">Your Shopping Bag is Empty</h4>
                       <p className="text-xs text-slate-400 leading-relaxed">
-                        You haven&apos;t bought any clothes, jewelry, or accessories from malls yet. Visit <span className="text-amber-300 font-bold">The Dubai Mall</span>, Zara, Chanel, or city shopping centers to purchase new items for your wardrobe!
+                        You haven&apos;t bought any clothes, jewelry, or accessories from retail stores yet. Visit <span className="text-amber-300 font-bold">The Dubai Mall</span>, Zara, Chanel, or city shopping centers to purchase new items for your wardrobe!
                       </p>
                     </div>
                     <button
@@ -888,21 +1024,38 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
+                ) : filteredShoppedItems.length === 0 ? (
+                  <div className="py-10 px-4 rounded-2xl border border-dashed border-white/10 text-center space-y-2.5 bg-slate-950/30">
+                    <span className="text-3xl">🛍️</span>
+                    <h4 className="text-sm font-black text-white">No items in this category</h4>
+                    <p className="text-xs text-slate-400 max-w-xs mx-auto">
+                      You haven&apos;t bought any {SHOPPED_CATEGORIES.find((c) => c.id === shoppedCategory)?.label.toLowerCase()} from malls yet.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShoppedCategory("all")}
+                      className="mt-1 px-4 py-1.5 rounded-xl bg-white/10 text-xs font-bold text-white hover:bg-white/20 transition active:scale-95"
+                    >
+                      Show All Shopped Items ({mallInventory.length})
+                    </button>
+                  </div>
                 ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-xs text-slate-400">
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between text-xs text-slate-400 px-0.5">
                       <span className="font-bold text-slate-300">
-                        {inventory.length} item{inventory.length === 1 ? "" : "s"} in your wardrobe
+                        {filteredShoppedItems.length} {filteredShoppedItems.length === 1 ? "item" : "items"}
+                        {shoppedCategory !== "all" && ` in ${SHOPPED_CATEGORIES.find((c) => c.id === shoppedCategory)?.label}`}
                       </span>
-                      <span className="text-[11px]">Tap any item to wear or equip</span>
+                      <span className="text-[11px] text-slate-400 hidden sm:inline">Tap any item to wear or equip</span>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {inventory.map((item) => {
+                      {filteredShoppedItems.map((item) => {
                         const isAccessoryWorn = item.wearable && selectedWorn.includes(item.uid);
                         const matchingFashion = FASHION_CATALOG.find((f) => f.id === item.productId);
                         const isOutfitWorn = matchingFashion?.lookWear && selectedLook.wear === matchingFashion.lookWear;
                         const isEquipped = isAccessoryWorn || isOutfitWorn;
+                        const cat = getShoppedCategory(item);
 
                         return (
                           <div
@@ -910,48 +1063,48 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
                             className={`p-3 rounded-2xl border transition-all flex flex-col justify-between gap-2.5 ${
                               isEquipped
                                 ? "bg-emerald-500/15 border-emerald-500/50 shadow-sm shadow-emerald-500/10"
-                                : "bg-slate-800/60 border-white/5 hover:border-white/20"
+                                : "bg-slate-800/70 border-white/10 hover:border-white/20"
                             }`}
                           >
-                            <div className="flex items-start gap-3">
-                              <span className="text-3xl p-2 rounded-xl bg-white/5 border border-white/5 shrink-0">
-                                {item.icon ?? "🛍️"}
+                            <div className="flex items-center gap-3">
+                              <span className="w-12 h-12 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-2xl shrink-0">
+                                {item.icon ?? (cat === "shoes" ? "👠" : cat === "bags" ? "👜" : cat === "accessories" ? "🕶️" : cat === "beauty" ? "💄" : "👗")}
                               </span>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center justify-between gap-1">
-                                  <span className="text-xs font-black text-white truncate">{item.name}</span>
+                                  <h4 className="text-xs sm:text-sm font-black text-white truncate leading-tight">{item.name}</h4>
                                   {isEquipped && (
-                                    <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-black shrink-0 flex items-center gap-1">
+                                    <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-black shrink-0 flex items-center gap-0.5">
                                       <Check className="w-2.5 h-2.5 stroke-[3]" />
                                       <span>Wearing</span>
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                                  <span className="text-amber-300 font-bold">AED {item.price.toLocaleString()}</span>
+                                <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-amber-300 font-bold font-mono">AED {item.price.toLocaleString()}</span>
                                   <span>·</span>
-                                  <span className="text-slate-400">{item.storeId ? item.storeId.replace(/-/g, " ") : "Mall Store"}</span>
+                                  <span className="text-slate-400 truncate max-w-[120px]">{item.storeId ? item.storeId.replace(/-/g, " ") : "Mall Store"}</span>
                                   {item.wearable && (
                                     <>
                                       <span>·</span>
-                                      <span className="text-emerald-400 capitalize">{item.wearable}</span>
+                                      <span className="text-emerald-400 font-bold capitalize">{item.wearable}</span>
                                     </>
                                   )}
                                 </div>
                               </div>
                             </div>
 
-                            <div className="flex items-center justify-between pt-1 border-t border-white/5 text-[11px]">
+                            <div className="flex items-center justify-between pt-2 border-t border-white/5 text-[11px]">
                               <span className="text-[10px] text-slate-500">
-                                {item.boughtAt ? `Bought ${new Date(item.boughtAt).toLocaleDateString()}` : "Mall Collection"}
+                                {item.boughtAt ? new Date(item.boughtAt).toLocaleDateString() : "Mall Collection"}
                               </span>
                               <button
                                 type="button"
                                 onClick={() => handleToggleShoppedItem(item)}
-                                className={`px-3 py-1 rounded-xl font-black text-xs transition active:scale-95 ${
+                                className={`min-h-[38px] px-4 py-1.5 rounded-xl font-black text-xs transition active:scale-95 flex items-center justify-center gap-1.5 ${
                                   isEquipped
                                     ? "bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30"
-                                    : "bg-emerald-500 text-slate-950 hover:bg-emerald-400"
+                                    : "bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-sm"
                                 }`}
                               >
                                 {isEquipped ? "Remove" : "Wear / Equip"}

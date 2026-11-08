@@ -610,12 +610,143 @@ function Stairwell({ w, d, ghost }: { w: number; d: number; ghost: Ghost }) {
   );
 }
 
+// ---------------------------------------------------------------- pets, pools & bath
+
+function SwimmingPool({ w, d, ghost, kind }: { w: number; d: number; ghost: Ghost; kind: "plunge" | "family" | "lap" }) {
+  return (
+    <group>
+      {/* Pool Coping Outer Rim */}
+      <B s={[w, 0.25, d]} p={[0, 0.125, 0]} c="#f8fafc" ghost={ghost} rough={0.2} />
+      {/* Water Surface Basin */}
+      <mesh position={[0, 0.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[Math.max(0.2, w - 0.25), Math.max(0.2, d - 0.25)]} />
+        <M color="#06b6d4" ghost={ghost} metal={0.2} rough={0.05} opacity={0.88} />
+      </mesh>
+      {/* Water Floor with Mosaic Grid Pattern */}
+      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[Math.max(0.2, w - 0.3), Math.max(0.2, d - 0.3)]} />
+        <M color="#0284c7" ghost={ghost} rough={0.4} />
+      </mesh>
+      {/* Chrome Ladder */}
+      <group position={[w / 2 - 0.2, 0.25, 0]}>
+        <Cyl r={0.015} h={0.35} p={[0, 0.15, -0.1]} c="#e2e8f0" ghost={ghost} metal={0.9} rough={0.1} />
+        <Cyl r={0.015} h={0.35} p={[0, 0.15, 0.1]} c="#e2e8f0" ghost={ghost} metal={0.9} rough={0.1} />
+        <B s={[0.02, 0.02, 0.2]} p={[0, 0.12, 0]} c="#e2e8f0" ghost={ghost} metal={0.9} rough={0.1} />
+        <B s={[0.02, 0.02, 0.2]} p={[0, 0.24, 0]} c="#e2e8f0" ghost={ghost} metal={0.9} rough={0.1} />
+      </group>
+      {/* Poolside Lounge Chair for Plunge/Family Pool */}
+      {kind !== "lap" && (
+        <group position={[-w / 2 + 0.35, 0.26, 0]} rotation={[0, Math.PI / 2, 0]}>
+          <B s={[0.3, 0.08, 0.65]} p={[0, 0.04, 0]} c="#ffffff" ghost={ghost} />
+          <B s={[0.26, 0.02, 0.35]} p={[0, 0.09, 0.1]} c="#f97316" ghost={ghost} />
+          <B s={[0.28, 0.12, 0.2]} p={[0, 0.1, -0.22]} c="#ffffff" ghost={ghost} />
+        </group>
+      )}
+      {/* Sun Umbrella for Family Pool */}
+      {kind === "family" && (
+        <group position={[-w / 2 + 0.35, 0.26, d / 2 - 0.35]}>
+          <Cyl r={0.02} h={0.9} p={[0, 0.45, 0]} c="#e2e8f0" ghost={ghost} metal={0.8} />
+          <Cyl r={0.4} top={0.02} h={0.2} p={[0, 0.85, 0]} c="#f8fafc" ghost={ghost} rough={0.7} />
+        </group>
+      )}
+    </group>
+  );
+}
+
+function PetCat({ ghost }: { ghost: Ghost }) {
+  return (
+    <group position={[0, 0, 0]}>
+      <B s={[0.22, 0.16, 0.36]} p={[0, 0.16, 0]} c="#374151" ghost={ghost} />
+      <B s={[0.18, 0.16, 0.16]} p={[0, 0.26, 0.2]} c="#374151" ghost={ghost} />
+      <B s={[0.05, 0.06, 0.04]} p={[-0.06, 0.36, 0.2]} c="#1f2937" ghost={ghost} />
+      <B s={[0.05, 0.06, 0.04]} p={[0.06, 0.36, 0.2]} c="#1f2937" ghost={ghost} />
+      <B s={[0.03, 0.03, 0.01]} p={[-0.04, 0.27, 0.285]} c="#eab308" ghost={ghost} />
+      <B s={[0.03, 0.03, 0.01]} p={[0.04, 0.27, 0.285]} c="#eab308" ghost={ghost} />
+      <B s={[0.06, 0.1, 0.06]} p={[-0.07, 0.05, 0.12]} c="#1f2937" ghost={ghost} />
+      <B s={[0.06, 0.1, 0.06]} p={[0.07, 0.05, 0.12]} c="#1f2937" ghost={ghost} />
+      <B s={[0.06, 0.1, 0.06]} p={[-0.07, 0.05, -0.12]} c="#1f2937" ghost={ghost} />
+      <B s={[0.06, 0.1, 0.06]} p={[0.07, 0.05, -0.12]} c="#1f2937" ghost={ghost} />
+      <B s={[0.04, 0.2, 0.04]} p={[0, 0.25, -0.2]} r={[0.4, 0, 0]} c="#1f2937" ghost={ghost} />
+    </group>
+  );
+}
+
+function PetDog({ ghost }: { ghost: Ghost }) {
+  return (
+    <group position={[0, 0, 0]}>
+      <B s={[0.26, 0.2, 0.42]} p={[0, 0.22, 0]} c="#d97706" ghost={ghost} />
+      <B s={[0.2, 0.18, 0.2]} p={[0, 0.33, 0.24]} c="#d97706" ghost={ghost} />
+      <B s={[0.12, 0.1, 0.1]} p={[0, 0.28, 0.35]} c="#fef3c7" ghost={ghost} />
+      <B s={[0.04, 0.04, 0.02]} p={[0, 0.31, 0.405]} c="#18181b" ghost={ghost} />
+      <B s={[0.06, 0.14, 0.08]} p={[-0.12, 0.34, 0.22]} c="#92400e" ghost={ghost} />
+      <B s={[0.06, 0.14, 0.08]} p={[0.12, 0.34, 0.22]} c="#92400e" ghost={ghost} />
+      <B s={[0.07, 0.14, 0.07]} p={[-0.09, 0.07, 0.14]} c="#b45309" ghost={ghost} />
+      <B s={[0.07, 0.14, 0.07]} p={[0.09, 0.07, 0.14]} c="#b45309" ghost={ghost} />
+      <B s={[0.07, 0.14, 0.07]} p={[-0.09, 0.07, -0.14]} c="#b45309" ghost={ghost} />
+      <B s={[0.07, 0.14, 0.07]} p={[0.09, 0.07, -0.14]} c="#b45309" ghost={ghost} />
+      <B s={[0.04, 0.2, 0.04]} p={[0, 0.32, -0.24]} r={[0.6, 0, 0]} c="#92400e" ghost={ghost} />
+    </group>
+  );
+}
+
+function PetParrot({ ghost }: { ghost: Ghost }) {
+  return (
+    <group position={[0, 0, 0]}>
+      <Cyl r={0.22} h={0.04} p={[0, 0.02, 0]} c="#78350f" ghost={ghost} rough={0.6} />
+      <Cyl r={0.02} h={0.85} p={[0, 0.45, 0]} c="#78350f" ghost={ghost} rough={0.6} />
+      <B s={[0.3, 0.03, 0.04]} p={[0, 0.88, 0]} c="#92400e" ghost={ghost} />
+      <B s={[0.1, 0.2, 0.12]} p={[0, 1.0, 0]} c="#9ca3af" ghost={ghost} />
+      <B s={[0.06, 0.16, 0.03]} p={[0, 0.9, -0.07]} r={[-0.3, 0, 0]} c="#dc2626" ghost={ghost} />
+      <B s={[0.09, 0.09, 0.09]} p={[0, 1.12, 0.02]} c="#e5e7eb" ghost={ghost} />
+      <B s={[0.04, 0.06, 0.05]} p={[0, 1.1, 0.08]} c="#1f2937" ghost={ghost} />
+    </group>
+  );
+}
+
+function Toilet({ ghost }: { ghost: Ghost }) {
+  return (
+    <group position={[0, 0, 0]}>
+      <B s={[0.34, 0.38, 0.48]} p={[0, 0.19, 0.05]} c="#ffffff" ghost={ghost} rough={0.1} />
+      <B s={[0.36, 0.04, 0.42]} p={[0, 0.4, 0.08]} c="#f8fafc" ghost={ghost} rough={0.1} />
+      <B s={[0.38, 0.42, 0.22]} p={[0, 0.55, -0.14]} c="#ffffff" ghost={ghost} rough={0.1} />
+      <Cyl r={0.025} h={0.02} p={[0, 0.77, -0.14]} c="#94a3b8" ghost={ghost} metal={0.8} />
+    </group>
+  );
+}
+
+function RainShower({ ghost }: { ghost: Ghost }) {
+  return (
+    <group position={[0, 0, 0]}>
+      <B s={[0.85, 0.06, 0.85]} p={[0, 0.03, 0]} c="#ffffff" ghost={ghost} rough={0.2} />
+      <mesh position={[-0.4, 1.0, 0]}>
+        <boxGeometry args={[0.02, 1.9, 0.8]} />
+        <M color="#bae6fd" ghost={ghost} rough={0.05} opacity={0.35} />
+      </mesh>
+      <mesh position={[0, 1.0, -0.4]}>
+        <boxGeometry args={[0.8, 1.9, 0.02]} />
+        <M color="#bae6fd" ghost={ghost} rough={0.05} opacity={0.35} />
+      </mesh>
+      <Cyl r={0.015} h={1.9} p={[0.4, 0.98, 0.4]} c="#cbd5e1" ghost={ghost} metal={0.9} rough={0.1} />
+      <Cyl r={0.015} h={1.8} p={[0, 0.95, -0.35]} c="#cbd5e1" ghost={ghost} metal={0.9} rough={0.1} />
+      <Cyl r={0.12} h={0.02} p={[0, 1.9, -0.15]} c="#cbd5e1" ghost={ghost} metal={0.9} rough={0.1} />
+    </group>
+  );
+}
+
 // ---------------------------------------------------------------- dispatcher
 
 /** The code-drawn look for a decor `visual`, fitted to `size` (grid cells). */
 export function LuxuryDecor({ visual, size, ghost, tint, activity }: { visual: string; size: [number, number]; ghost?: Ghost; tint?: string; /** In use: what it shows (a meal, flakes…). */ activity?: string }) {
   const w = size[0] * CELL, d = size[1] * CELL;
   switch (visual) {
+    case "pool-plunge": return <SwimmingPool w={w} d={d} ghost={ghost} kind="plunge" />;
+    case "pool-family": return <SwimmingPool w={w} d={d} ghost={ghost} kind="family" />;
+    case "pool-lap": return <SwimmingPool w={w} d={d} ghost={ghost} kind="lap" />;
+    case "pet-cat": return <PetCat ghost={ghost} />;
+    case "pet-dog": return <PetDog ghost={ghost} />;
+    case "pet-parrot": return <PetParrot ghost={ghost} />;
+    case "bath-toilet": case "wc-toilet": return <Toilet ghost={ghost} />;
+    case "bath-shower": case "rain-shower": return <RainShower ghost={ghost} />;
     case "chandelier-crystal": return <ChandelierCrystal ghost={ghost} />;
     case "chandelier-ring": return <ChandelierRing ghost={ghost} />;
     case "pendant-trio": return <PendantTrio w={w} ghost={ghost} />;

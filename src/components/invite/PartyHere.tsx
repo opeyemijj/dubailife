@@ -19,11 +19,11 @@ const endChannels = new Map<string, ReturnType<ReturnType<typeof supabase>["chan
 const leavePartySpace = (code: string) => { lockSpace(null); if (activeSpaceId() === partySpaceId(code)) leaveSpace(); };
 
 /** The host ends the party: it ends in the database, everyone there is told, and the host's Space closes. */
-export async function endPartyNow(code: string): Promise<boolean> {
-  if (!(await endParty(code))) return false;
+export async function endPartyNow(code: string, hostId?: string): Promise<boolean> {
+  const ok = await endParty(code, hostId);
   void endChannels.get(code)?.send({ type: "broadcast", event: "ended", payload: {} });
   enders.get(code)?.();
-  return true;
+  return ok;
 }
 
 export function usePartyHere(route: string | null, arrive: boolean): PartyHere | null {
