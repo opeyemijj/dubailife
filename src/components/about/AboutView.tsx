@@ -455,6 +455,12 @@ export function AboutView() {
             has no real-world cash value.
           </div>
           <div className="flex flex-wrap gap-4 font-bold">
+            <Link href="/privacy" className="hover:text-emerald-500">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="hover:text-emerald-500">
+              Terms of Service
+            </Link>
             <Link href="/wiki" className="hover:text-emerald-500">
               Citizen Codex (Wiki)
             </Link>

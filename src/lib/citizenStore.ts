@@ -288,13 +288,41 @@ export async function logIn(identifier: string, password: string): Promise<AuthR
   return { ok: true };
 }
 
+export type OAuthProvider = "google";
+
+/** Signs in or signs up using Google OAuth. */
+export async function signInWithOAuthProvider(provider: OAuthProvider = "google", redirectTo?: string) {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const target = redirectTo ?? `${origin}/auth/callback`;
+  const options: { redirectTo: string; queryParams?: Record<string, string>; scopes?: string } = {
+    redirectTo: target,
+  };
+  if (provider === "google") {
+    options.queryParams = { access_type: "offline", prompt: "select_account" };
+  }
+  const { data, error } = await supabase().auth.signInWithOAuth({
+    provider,
+    options,
+  });
+  return { data, error };
+}
+
+/** Signs in or signs up using Google OAuth. */
+export const signInWithGoogle = (redirectTo?: string) => signInWithOAuthProvider("google", redirectTo);
+
 /** Finishes onboarding: creates the profile row for the signed-in account. */
 export async function createProfile(input: { username: string; name: string; balance: number; game: GameState }): Promise<AuthResult> {
   const userId = state.session?.userId;
   if (!userId) return { ok: false, error: "Your session expired. Please log in again." };
+  let chosenUsername = input.username.replace(/^@/, "").trim().toLowerCase();
+  // If the username is already taken by someone else (e.g. from an automated handle), append a random suffix
+  const { data: existing } = await supabase().from("profiles").select("id").eq("username", chosenUsername).maybeSingle();
+  if (existing && existing.id !== userId) {
+    chosenUsername = `${chosenUsername.slice(0, 18)}_${Math.floor(1000 + Math.random() * 9000)}`;
+  }
   const { error } = await supabase().from("profiles").insert({
     id: userId,
-    username: input.username,
+    username: chosenUsername,
     display_name: input.name,
     balance: input.balance,
     citizen: input.game,

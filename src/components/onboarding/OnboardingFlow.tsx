@@ -52,11 +52,13 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
   const [movedInto, setMovedInto] = useState<{ id: string; label: string } | null>(null);
   const currentStep = ONBOARDING_STEPS.indexOf(step) + 1; // 1: Look, 2: Personality, 3: Dream, 4: Your Dubai, 5: Home
   const setCurrentStep = (n: number) => router.push(`/onboarding/${ONBOARDING_STEPS[n - 1]}`);
-  // From the draft, or — if the confirmation link opened elsewhere — from the account itself.
-  const meta = session?.meta as { username?: string; display_name?: string } | undefined;
+  // From the draft, or — if the confirmation link opened elsewhere or user used Google OAuth — from the account itself.
+  const meta = session?.meta as { username?: string; display_name?: string; full_name?: string; name?: string; preferred_username?: string; custom_claims?: { global_name?: string } } | undefined;
   // The draft only counts if it belongs to the account that's actually signed in.
   const draftMatches = !!draft?.account?.email && draft.account.email.toLowerCase() === session?.email?.toLowerCase();
-  const account = (draftMatches ? draft?.account : undefined) ?? (meta?.username ? { name: meta.display_name ?? meta.username, username: meta.username, email: session?.email } : undefined);
+  const fallbackName = meta?.display_name || meta?.full_name || meta?.name || meta?.custom_claims?.global_name || meta?.preferred_username || (session?.email ? session.email.split("@")[0] : "Citizen");
+  const fallbackUsername = meta?.username || meta?.preferred_username || (session?.email ? session.email.split("@")[0].replace(/[^a-z0-9_]/gi, "").toLowerCase() : `citizen_${session?.userId.slice(0, 6)}`);
+  const account = (draftMatches ? draft?.account : undefined) ?? (meta?.username ? { name: meta.display_name ?? meta.username, username: meta.username, email: session?.email } : (session ? { name: fallbackName, username: fallbackUsername, email: session?.email } : undefined));
   const username = account?.username || "citizen";
 
   // Every choice is saved to the sign-up draft, so a refresh on any step keeps it.
@@ -73,10 +75,10 @@ export function OnboardingFlow({ step }: { step: OnboardingStep }) {
   // Onboarding needs a signed-in account without a profile yet. Finished citizens go home;
   // unconfirmed sign-ups wait for their email; skipping past an unfinished personality step goes back.
   useEffect(() => {
-    if (!draft || !hydrated || finishing) return;
+    if (!hydrated || finishing) return;
     if (isLoggedIn) router.replace("/home");
-    else if (!session) router.replace(draft.account ? "/?signup=true&confirm=email" : "/?signup=true");
-    else if (currentStep > 2 && (draft.traits ?? DEFAULT_TRAITS).length !== 2) router.replace("/onboarding/personality");
+    else if (!session) router.replace(draft?.account ? "/?signup=true&confirm=email" : "/?signup=true");
+    else if (currentStep > 2 && (draft?.traits ?? DEFAULT_TRAITS).length !== 2) router.replace("/onboarding/personality");
   }, [draft, hydrated, session, isLoggedIn, finishing, currentStep, router]);
 
   const chooseGender = (gender: "woman" | "man") =>

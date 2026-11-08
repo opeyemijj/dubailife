@@ -14,6 +14,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE.url}/wiki/places`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
     { url: `${SITE.url}/guide`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE.url}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${SITE.url}/privacy`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${SITE.url}/terms`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${SITE.url}/marathon`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
     { url: `${SITE.url}/business`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE.url}/academics`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
