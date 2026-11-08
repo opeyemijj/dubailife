@@ -51,8 +51,47 @@ export function resetWebGLCache(): void {
   webglCached = null;
 }
 
-/** Canvas settings for the current device. */
+const ECO_MODE_KEY = "dl_eco_battery_saver_v1";
+
+/** Check if Battery Saver / Eco Mode is active */
+export function isEcoMode(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(ECO_MODE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/** Set Battery Saver / Eco Mode */
+export function setEcoMode(enabled: boolean): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(ECO_MODE_KEY, enabled ? "1" : "0");
+    window.dispatchEvent(new CustomEvent("dl:eco-mode-changed", { detail: { enabled } }));
+  } catch {}
+}
+
+/** Toggle Battery Saver / Eco Mode */
+export function toggleEcoMode(): boolean {
+  const next = !isEcoMode();
+  setEcoMode(next);
+  return next;
+}
+
+/** Canvas settings for the current device and energy mode. */
 export function canvasQuality() {
   const low = isLowPower();
-  return { dpr: (low ? [1, 1.5] : [1, 2]) as [number, number], shadows: !low };
+  const eco = isEcoMode();
+  // On high-density Retina/OLED displays (300-460 PPI), rendering above 1.5x gives zero noticeable
+  // sharpness benefit to human eyes, but increases fragment shader calculations by up to 77%.
+  // Clamping DPR to 1.5 (or 1.25 in Eco/Low-power mode) preserves razor-sharp 3D models while
+  // dramatically reducing GPU heating, battery drain, and thermal throttling.
+  const maxDpr = eco ? 1.25 : (low ? 1.35 : 1.5);
+  return {
+    dpr: [1, maxDpr] as [number, number],
+    shadows: !low && !eco,
+    powerPreference: (eco || low ? "low-power" : "default") as "low-power" | "default" | "high-performance",
+    eco,
+  };
 }

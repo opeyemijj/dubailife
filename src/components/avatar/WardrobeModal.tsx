@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense, useRef } from "react";
+import React, { useState, useEffect, useMemo, Suspense, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Check, ArrowRight, Shirt, Sparkles, Palette, Crown, Trophy } from "lucide-react";
 import { Canvas, useFrame } from "@react-three/fiber";
@@ -32,6 +32,7 @@ import { getPendingVenue, clearPendingVenue, type PendingVenue } from "@/compone
 import { useRouter } from "next/navigation";
 import { gameAudio } from "@/utils/gameAudio";
 import type { Accessory } from "@/lib/city/types";
+import { canvasQuality, isEcoMode, toggleEcoMode } from "@/lib/device";
 
 /** Which occasions suit each venue dress code. */
 const SUITS: Record<DressCodeType, Occasion[]> = {
@@ -138,6 +139,8 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
   const [selectedLook, setSelectedLook] = useState<AvatarLookProps>(initialLook);
   const [selectedWorn, setSelectedWorn] = useState<string[]>(citizen?.worn ?? []);
   const [ownedCloset, setOwnedCloset] = useState<string[]>([]);
+  const [ecoMode, setEcoModeState] = useState(() => isEcoMode());
+  const quality = useMemo(() => canvasQuality(), [ecoMode]);
   const [activeTab, setActiveTab] = useState<"outfits" | "colors" | "wigs" | "shoes" | "nails">("outfits");
   const [cameraFocus, setCameraFocus] = useState<CameraFocusMode>("full");
   const [cultureFilter, setCultureFilter] = useState<"all" | CulturalHeritage>("all");
@@ -245,12 +248,13 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
     } else {
       gameAudio.playClickSound();
     }
+    // Reset custom tint when switching outfits: each clothing has its own state and colors do not spill over
     setSelectedLook((prev) => ({
       ...prev,
       custom: undefined,
       wear: r.id === face ? undefined : r.id,
-      primaryColor: r.defaultPrimaryColor ?? prev.primaryColor,
-      secondaryColor: r.defaultSecondaryColor ?? prev.secondaryColor,
+      primaryColor: r.defaultPrimaryColor,
+      secondaryColor: r.defaultSecondaryColor,
       wigId: r.defaultWigId ?? prev.wigId,
     }));
   };
@@ -416,7 +420,12 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
             <div className="absolute inset-0">
               <Canvas
                 camera={{ position: [0, 0.08, 4.4], fov: 38 }}
-                gl={{ antialias: true, alpha: true }}
+                dpr={quality.dpr}
+                gl={{
+                  antialias: true,
+                  alpha: true,
+                  powerPreference: quality.powerPreference,
+                }}
               >
                 <ambientLight intensity={1.25} />
                 <directionalLight position={[2, 4, 3]} intensity={1.9} />
@@ -448,6 +457,25 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
                   {anim === "spray_money" ? "💸 Spray" : anim}
                 </button>
               ))}
+            </div>
+            {/* Battery Saver / Eco Mode toggle pill */}
+            <div className="absolute top-3 right-3 z-10">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = toggleEcoMode();
+                  setEcoModeState(next);
+                  showToast(next ? "🔋 Eco Mode ON: Lightweight 3D saves battery" : "⚡ Full Quality 3D Mode active");
+                }}
+                className={`px-2.5 py-1 rounded-full text-[10px] font-black flex items-center gap-1 transition ${
+                  ecoMode
+                    ? "bg-emerald-500 text-white shadow ring-2 ring-emerald-400/40"
+                    : "bg-black/50 text-slate-300 hover:text-white border border-white/10"
+                }`}
+                title="Toggle Battery Saver / Eco Mode (lighter 3D to save battery and network)"
+              >
+                <span>{ecoMode ? "🔋 Eco ON" : "⚡ Eco Mode"}</span>
+              </button>
             </div>
             {/* Camera Framing Zoom Presets (Full Body / Head & Cap / Shoes / Nails) */}
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-1 z-10 bg-black/55 backdrop-blur-md p-1 rounded-full border border-white/10">
@@ -613,8 +641,8 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
                             gameAudio.playClickSound();
                             setSelectedLook((prev) => ({
                               ...prev,
-                              primaryColor: undefined,
-                              secondaryColor: undefined,
+                              primaryColor: wornNow?.defaultPrimaryColor,
+                              secondaryColor: wornNow?.defaultSecondaryColor,
                             }));
                           }}
                           className="text-[10px] font-bold text-slate-400 hover:text-white underline"
@@ -864,8 +892,8 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
                         onClick={() =>
                           setSelectedLook((prev) => ({
                             ...prev,
-                            primaryColor: undefined,
-                            secondaryColor: undefined,
+                            primaryColor: wornNow?.defaultPrimaryColor,
+                            secondaryColor: wornNow?.defaultSecondaryColor,
                           }))
                         }
                         className="text-[11px] font-bold text-slate-400 hover:text-white underline"

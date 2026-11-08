@@ -901,20 +901,111 @@ export function wallTransform(size: [number, number], p: WallPlacement) {
 export function wallOffsetAt(wall: Wall, point: { x: number; z: number }, width: number) {
   const half = ROOM_SIZE / 2;
   const along = wall === "north" ? point.x : wall === "south" ? -point.x : wall === "west" ? -point.z : point.z;
-  const offset = Math.round((along + half) / CELL - width / 2);
+  // Sub-grid quarter-step (12.5 cm) allows fine wall positioning without big jumps
+  const offset = Math.round(((along + half) / CELL - width / 2) * 4) / 4;
   return Math.max(0, Math.min(GRID - width, offset));
 }
 
-/** Converts a hit point on the floor into the placement of an item centred there (on floor `level`). */
-export function floorPlacementAt(size: [number, number], rot: Rotation, point: { x: number; z: number }, level = 0): FloorPlacement {
+/** Converts a hit point on the floor into the placement of an item centred there, aligning to fine grid and snapping to nearby items. */
+export function floorPlacementAt(
+  size: [number, number],
+  rot: Rotation,
+  point: { x: number; z: number },
+  level = 0,
+  others?: OwnedFurniture[],
+  ignoreUid?: string
+): FloorPlacement {
   const [w, d] = rotatedSize(size, rot);
-  const col = Math.round((point.x + ROOM_SIZE / 2) / CELL - w / 2);
-  const row = Math.round((point.z + ROOM_SIZE / 2) / CELL - d / 2);
+  const rawCol = (point.x + ROOM_SIZE / 2) / CELL - w / 2;
+  const rawRow = (point.z + ROOM_SIZE / 2) / CELL - d / 2;
+
+  // Fine sub-grid resolution (0.25 CELL = 12.5 cm) enables small, delicate movements without giant leaps
+  const GRID_STEP = 0.25;
+  let col = Math.round(rawCol / GRID_STEP) * GRID_STEP;
+  let row = Math.round(rawRow / GRID_STEP) * GRID_STEP;
+
+  // Magnetic snapping to neighboring furniture items
+  if (others && others.length > 0) {
+    const SNAP_DIST = 0.45; // snap threshold in cells (~22.5 cm)
+    let bestDistX = SNAP_DIST;
+    let snappedCol = col;
+    let bestDistZ = SNAP_DIST;
+    let snappedRow = row;
+
+    for (const o of others) {
+      if (o.uid === ignoreUid || !o.placement || o.placement.kind !== "floor" || levelOf(o.placement) !== level) continue;
+      const otherItem = getCatalogItem(o.itemId);
+      if (!otherItem) continue;
+      const [ow, od] = rotatedSize(otherItem.size, o.placement.rot);
+      const ocol = o.placement.col;
+      const orow = o.placement.row;
+
+      // Only snap if within nearby range along the orthogonal axis
+      const overlapZ = spansOverlap(rawRow - 0.4, d + 0.8, orow, od);
+      const overlapX = spansOverlap(rawCol - 0.4, w + 0.8, ocol, ow);
+
+      if (overlapZ) {
+        // Snap targets along X axis:
+        // 1. Flush left (directly to the left of other piece)
+        // 2. Flush right (directly to the right of other piece)
+        // 3. Aligned left edges
+        // 4. Aligned right edges
+        // 5. Aligned centers
+        const xTargets = [
+          ocol - w,
+          ocol + ow,
+          ocol,
+          ocol + ow - w,
+          ocol + (ow - w) / 2,
+        ];
+
+        for (const target of xTargets) {
+          const dist = Math.abs(rawCol - target);
+          if (dist < bestDistX) {
+            bestDistX = dist;
+            snappedCol = target;
+          }
+        }
+      }
+
+      if (overlapX) {
+        // Snap targets along Z axis:
+        // 1. Flush front
+        // 2. Flush back
+        // 3. Aligned front edges
+        // 4. Aligned back edges
+        // 5. Aligned centers
+        const zTargets = [
+          orow - d,
+          orow + od,
+          orow,
+          orow + od - d,
+          orow + (od - d) / 2,
+        ];
+
+        for (const target of zTargets) {
+          const dist = Math.abs(rawRow - target);
+          if (dist < bestDistZ) {
+            bestDistZ = dist;
+            snappedRow = target;
+          }
+        }
+      }
+    }
+
+    col = snappedCol;
+    row = snappedRow;
+  }
+
+  // Clamp within bounds and round to 2 decimal places
+  const finalCol = Math.round(Math.max(0, Math.min(GRID - w, col)) * 100) / 100;
+  const finalRow = Math.round(Math.max(0, Math.min(GRID - d, row)) * 100) / 100;
+
   return {
     kind: "floor",
     rot,
-    col: Math.max(0, Math.min(GRID - w, col)),
-    row: Math.max(0, Math.min(GRID - d, row)),
+    col: finalCol,
+    row: finalRow,
     ...(level ? { level } : {}),
     g: GRID,
   };
@@ -926,7 +1017,11 @@ const layerOf = (kind: CatalogItem["kind"]) => (kind === "rug" ? "rug" : kind ==
 function floorCells(size: [number, number], p: FloorPlacement): string[] {
   const [w, d] = rotatedSize(size, p.rot);
   const cells: string[] = [];
-  for (let c = p.col; c < p.col + w; c++) for (let r = p.row; r < p.row + d; r++) cells.push(`${c},${r}`);
+  for (let c = Math.floor(p.col); c < Math.ceil(p.col + w); c++) {
+    for (let r = Math.floor(p.row); r < Math.ceil(p.row + d); r++) {
+      cells.push(`${c},${r}`);
+    }
+  }
   return cells;
 }
 

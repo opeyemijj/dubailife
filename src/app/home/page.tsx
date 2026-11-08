@@ -906,6 +906,7 @@ export default function HomePage() {
     if (sh) placeShared(uid, placement);
     else setFurniturePlacement(uid, placement, housingTier);
     setPlacing(null);
+    setDecorating(false);
     gameAudio.playClickSound();
   };
 
@@ -917,14 +918,17 @@ export default function HomePage() {
         return;
       }
       handlePlace(placing.uid, candidatePlacement.placement);
+      setDecorating(false);
       showToast(`✨ Placed ${placingItem?.name ?? "item"}!`);
       return;
     }
     const current = withHomeItems(furniture, housingTier).find((f) => f.uid === placing.uid)?.placement;
     if (current) {
       handlePlace(placing.uid, current);
+      setDecorating(false);
     } else {
       setPlacing(null);
+      setDecorating(false);
     }
   };
 
@@ -1260,18 +1264,9 @@ export default function HomePage() {
 
       {/* Decorate mode banner */}
       {decorating && !placing && (
-        <div className="absolute top-16 sm:top-20 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 bg-slate-950/90 backdrop-blur-md text-white text-xs sm:text-sm font-bold pl-4 pr-1.5 py-1.5 rounded-full shadow-2xl">
-          <Move className="w-4 h-4 text-emerald-400" />
-          <span>
-            Tap any item in your home (bed, chair, sofa, table, fridge) to move
-            or rotate it
-          </span>
-          <button
-            onClick={() => setDecorating(false)}
-            className="px-3 py-1 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-black"
-          >
-            Done
-          </button>
+        <div className="absolute top-16 sm:top-20 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2.5 bg-slate-950/90 backdrop-blur-md text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-full shadow-2xl pointer-events-none">
+          <Move className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>Tap any item in your home to move it</span>
         </div>
       )}
 

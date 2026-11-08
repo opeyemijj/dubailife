@@ -1868,7 +1868,7 @@ function RoomScene({
       // Item should ONLY be moved to point dragged to or tapped, NOT on mouse hover!
       if (!isPointerDownRef.current && (e.buttons ?? 0) === 0) return;
       setIsDraggingItem?.(true);
-      const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl);
+      const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl, furniture, placing.uid);
       setMoved({ uid: placing.uid, placement: next });
     }
   };
@@ -1883,7 +1883,7 @@ function RoomScene({
       e.stopPropagation();
       // Tap lands on the floor: only move the item to this tapped point!
       // No immediate placement on tap; user clicks Done button to complete move.
-      const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl);
+      const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl, furniture, placing.uid);
       setMoved({ uid: placing.uid, placement: next });
       return;
     }
@@ -2323,7 +2323,7 @@ function RoomScene({
                 if (!isPointerDownRef.current && (e.buttons ?? 0) === 0) return;
                 e.stopPropagation();
                 if (placing && placingItem.kind !== "wall") {
-                  const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl);
+                  const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl, furniture, placing.uid);
                   setMoved({ uid: placing.uid, placement: next });
                 }
               }}
@@ -2349,7 +2349,7 @@ function RoomScene({
                 if (!isPointerDownRef.current && (e.buttons ?? 0) === 0) return;
                 e.stopPropagation();
                 if (placing) {
-                  const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl);
+                  const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl, furniture, placing.uid);
                   setMoved({ uid: placing.uid, placement: next });
                 }
               }}
@@ -2556,7 +2556,7 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
             camera={{ position: [11.5, 10.7, 11.5], fov: 35 }}
             dpr={quality.dpr}
             gl={{
-              powerPreference: "default",
+              powerPreference: quality.powerPreference,
               failIfMajorPerformanceCaveat: false,
               preserveDrawingBuffer: false,
               antialias: true,
