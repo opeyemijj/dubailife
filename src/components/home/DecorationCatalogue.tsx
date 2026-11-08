@@ -49,7 +49,7 @@ export function DecorationCatalogue({
   onPlaceMultiple,
   onPlaceStored,
   initialCategory = "all",
-  currencySymbol = "₦",
+  currencySymbol = "AED ",
 }: DecorationCatalogueProps) {
   const [activeTab, setActiveTab] = useState<string>(initialCategory);
   const [searchQuery, setSearchQuery] = useState("");
@@ -117,12 +117,15 @@ export function DecorationCatalogue({
     } else {
       list = list.filter((i) => {
         if (i.category === activeTab) return true;
-        // Map alias categories if needed
-        if (activeTab === "comfort" && i.category === "living") return true;
-        if (activeTab === "sleep" && i.category === "bedroom") return true;
-        if (activeTab === "kitchen" && i.category === "dining") return true;
+        if (activeTab === "comfort" && (i.category === "living" || i.category === "comfort")) return true;
+        if (activeTab === "sleep" && (i.category === "bedroom" || i.category === "sleep")) return true;
+        if (activeTab === "kitchen" && (i.category === "dining" || i.category === "kitchen")) return true;
+        if (activeTab === "fun" && (i.category === "fun" || i.id === "tv" || i.id === "media-wall" || i.id === "grand-piano" || i.id === "aquarium" || i.id === "audio-speaker")) return true;
+        if (activeTab === "skills" && (i.category === "skills" || i.id === "desk" || i.id === "desk-chair" || i.id === "bookcase" || i.id === "shelf-tall")) return true;
         if (activeTab === "lighting" && i.category === "lighting") return true;
         if (activeTab === "decor" && (i.category === "decor" || i.category === "wall")) return true;
+        if (activeTab === "luxury" && (i.category === "luxury" || i.price >= 8000 || i.id.startsWith("royal-") || i.id.startsWith("diamond-") || i.id.startsWith("gold-") || i.id === "grand-piano" || i.id === "fireplace" || i.id === "aquarium")) return true;
+        if (activeTab === "nursery" && i.category === "nursery") return true;
         return false;
       });
     }

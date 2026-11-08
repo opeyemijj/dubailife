@@ -115,6 +115,8 @@ function CameraFocusRig({ focus }: { focus: CameraFocusMode }) {
         transitioning.current = false;
       }}
       enablePan={false}
+      enableZoom={false}
+      touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN }}
       minDistance={0.75}
       maxDistance={6.0}
       minPolarAngle={Math.PI / 6}
@@ -230,6 +232,18 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
     setSelectedWorn((prev) =>
       prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid]
     );
+  };
+
+  const contentScrollRef = useRef<HTMLDivElement>(null);
+  const outfitsSectionRef = useRef<HTMLDivElement>(null);
+  const [scrolledToOutfits, setScrolledToOutfits] = useState(false);
+
+  const scrollToOutfits = () => {
+    outfitsSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const scrollToAvatar = () => {
+    contentScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSelectOutfit = (r: OutfitEntry) => {
@@ -414,10 +428,17 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
         )}
 
         {/* Main Content: Avatar 3D Preview (Left/Top) + Wardrobe Items (Right/Bottom) */}
-        <div className="flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-12">
+        <div
+          ref={contentScrollRef}
+          onScroll={(e) => {
+            const top = e.currentTarget.scrollTop;
+            setScrolledToOutfits(top > 140);
+          }}
+          className="flex-1 overflow-y-auto scroll-smooth overscroll-contain grid grid-cols-1 md:grid-cols-12 relative"
+        >
           {/* 3D Turntable Preview */}
-          <div className="md:col-span-5 relative h-80 sm:h-96 md:h-auto md:min-h-[500px] bg-gradient-to-b from-slate-950/80 to-slate-900 border-b md:border-b-0 md:border-r border-white/10 flex flex-col items-center justify-center">
-            <div className="absolute inset-0">
+          <div className="md:col-span-5 relative h-72 sm:h-80 md:h-auto md:min-h-[500px] shrink-0 bg-gradient-to-b from-slate-950/80 to-slate-900 border-b md:border-b-0 md:border-r border-white/10 flex flex-col items-center justify-center">
+            <div className="absolute inset-0" style={{ touchAction: "pan-y" }}>
               <Canvas
                 camera={{ position: [0, 0.08, 4.4], fov: 38 }}
                 dpr={quality.dpr}
@@ -442,6 +463,16 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
                 <CameraFocusRig focus={cameraFocus} />
               </Canvas>
             </div>
+
+            {/* Quick jump to outfits button for mobile */}
+            <button
+              type="button"
+              onClick={scrollToOutfits}
+              className="md:hidden absolute bottom-3 right-3 z-20 px-3 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-black text-xs flex items-center gap-1.5 shadow-xl active:scale-95 transition-all"
+            >
+              <span>👗 See Outfits</span>
+              <span>↓</span>
+            </button>
             <div className="absolute top-3 left-3 flex flex-wrap gap-1 z-10">
               {(["idle", "dance", "wave", "spray_money"] as AvatarAnimation[]).map((anim) => (
                 <button
@@ -505,12 +536,15 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
               ))}
             </div>
             <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-400 bg-black/40 backdrop-blur-md px-2.5 py-0.5 rounded-full pointer-events-none">
-              Drag to inspect 360° · Pinch/scroll to zoom
+              Drag horizontally to inspect 360° · Swipe vertically to scroll
             </span>
           </div>
 
           {/* Wardrobe Selector */}
-          <div className="md:col-span-7 p-4 sm:p-5 space-y-4 overflow-y-auto max-h-[52vh] md:max-h-[560px]">
+          <div
+            ref={outfitsSectionRef}
+            className="md:col-span-7 p-4 sm:p-5 space-y-4 md:overflow-y-auto md:max-h-[620px]"
+          >
             {/* Category Tabs — strictly separated by gender */}
             <div className="flex gap-1.5 overflow-x-auto pb-1">
               {[
@@ -1500,6 +1534,18 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
             )}
           </div>
         </div>
+
+        {/* Floating Quick Jump Back to Avatar Pill (Mobile) */}
+        {scrolledToOutfits && (
+          <button
+            type="button"
+            onClick={scrollToAvatar}
+            className="md:hidden fixed sm:absolute bottom-20 right-4 z-40 px-3.5 py-2 rounded-full bg-slate-900/95 hover:bg-black text-white border border-white/20 font-black text-xs flex items-center gap-1.5 shadow-2xl backdrop-blur-md active:scale-95 transition-all"
+          >
+            <span>🧍 View Avatar</span>
+            <span className="text-emerald-400 font-black">↑</span>
+          </button>
+        )}
 
         {/* Footer Confirmation Bar */}
         <div className="p-4 sm:p-5 border-t border-white/10 bg-slate-950/80 flex items-center justify-between gap-3">

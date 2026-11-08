@@ -15,7 +15,7 @@ import { askForPush } from "@/lib/push/engage";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, DoorClosed, KeyRound, Loader2, LogOut, Menu, Settings2, ShoppingBag, Smartphone, UserPlus, X } from "lucide-react";
+import { ArrowLeft, DoorClosed, KeyRound, Loader2, LogOut, Menu, Settings2, ShoppingBag, Smartphone, UserPlus, X, Shirt } from "lucide-react";
 import { FloatMenu, SideBar, SideButton, SidePopover, ViewCycle } from "@/components/layout/SideBar";
 import { openPhone } from "@/components/layout/PhoneOverlay";
 import { useUnreadTotal } from "@/lib/unread";
@@ -30,7 +30,7 @@ import { FixtureProgress, FixtureSheet, completeFixtureAction } from "@/componen
 import type { Fixture, FixtureAction } from "@/lib/homeFixtures";
 import {
   ACCESS_LABEL, addGuest, flatRoute, flatTitle, getFlat, getInterior, listFlat, listGuests, removeGuest, requestEntry, saveInteriorFull, setAccess, watchRequest,
-  type Access, type FlatView, type Listing,
+  type Access, type FlatView, type Listing, myFlats,
 } from "@/lib/city/flats";
 import { ROSTER, presetFor, rosterThumb } from "@/components/avatar/roster";
 import { openLife } from "@/components/life/LifeHub";
@@ -40,6 +40,8 @@ import { PeerPanel } from "@/components/social/PeerPanel";
 import { SocialFeed } from "@/components/social/SocialFeed";
 import type { Person } from "@/components/home/ApartmentRoom";
 import { SmallLoader } from "@/components/GameLoadingScreen";
+import { WardrobeModal } from "@/components/avatar/WardrobeModal";
+import { myHousehold, type SharedHome } from "@/lib/love";
 
 /** Unique id for a newly bought piece of furniture. */
 const newUid = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;

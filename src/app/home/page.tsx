@@ -328,6 +328,33 @@ export default function HomePage() {
     };
   }, [citizen?.id]);
 
+  // Living together (Family): the homes I share with a partner.
+  const [shared, setShared] = useState<SharedHome[]>([]);
+  useEffect(() => {
+    if (!citizen?.id) return;
+    const load = () => void myHousehold().then(setShared);
+    const first = setTimeout(load, 0);
+    const off = onUserEvent(citizen.id, "love", load);
+    return () => {
+      clearTimeout(first);
+      off();
+    };
+  }, [citizen?.id]);
+
+  const guestShare = shared.find((h) => !h.host) ?? null;
+  const hostShare = shared.find((h) => h.host) ?? null;
+  const maritalShare = guestShare ?? hostShare;
+
+  const [maritalFlat, setMaritalFlat] = useState<FlatView | null>(null);
+  useEffect(() => {
+    const flatId = maritalShare?.flat;
+    if (flatId) {
+      void getFlat(flatId).then(setMaritalFlat);
+    } else {
+      setMaritalFlat(null);
+    }
+  }, [maritalShare?.flat]);
+
   // Rank properties so owned mansions/villas/penthouses lead by default unless the player picked another.
   const TIER_RANK: Record<HousingTier, number> = {
     bed_space: 1,
@@ -353,14 +380,18 @@ export default function HomePage() {
   }, [flats, citizen?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeFlat = React.useMemo(() => {
-    if (!sortedFlats.length) return null;
+    // If explicitly switched to marital home (or by default when living together as moved-in partner)
+    if (maritalFlat && (citizen?.activeFlatId === maritalFlat.id || (!citizen?.activeFlatId && guestShare))) {
+      return maritalFlat;
+    }
+    if (!sortedFlats.length) return maritalFlat ?? null;
     if (citizen?.activeFlatId === "starter") return null;
     if (citizen?.activeFlatId) {
       const match = sortedFlats.find((f) => f.id === citizen.activeFlatId);
       if (match) return match;
     }
-    return sortedFlats[0];
-  }, [sortedFlats, citizen?.activeFlatId]);
+    return maritalFlat ?? sortedFlats[0];
+  }, [sortedFlats, citizen?.activeFlatId, maritalFlat, guestShare]);
 
   const rawTier = (
     citizen?.home ||
@@ -509,43 +540,18 @@ export default function HomePage() {
       ? starterHome
       : null;
   const partyFlat = activeFlat ?? homeOff;
-  // Living together (Family): the homes I share with a partner. Mine (I'm the host): we're both in its live room
-  // whenever we're home. Theirs: a way there (and straight there if I've no home of my own on the map).
-  const [shared, setShared] = useState<SharedHome[]>([]);
-  useEffect(() => {
-    if (!citizen?.id) return;
-    const load = () => void myHousehold().then(setShared);
-    const first = setTimeout(load, 0);
-    const off = onUserEvent(citizen.id, "love", load);
-    return () => {
-      clearTimeout(first);
-      off();
-    };
-  }, [citizen?.id]);
-  const hostShare =
-    shared.find(
-      (h) =>
-        h.host &&
-        (h.flat === activeFlat?.id ||
-          h.flat === homeOff?.id ||
-          (!activeFlat && isGenericHome(h.building))),
-    ) ?? null;
-  const guestShare = shared.find((h) => !h.host) ?? null;
+
   const guestRoute = guestShare
     ? `/property/${guestShare.building}/${encodeURIComponent(guestShare.unit)}`
     : null;
   const goToShared = () => {
     if (guestRoute) router.push(partyDoor(guestRoute));
   };
-  // No home of my own on the map: home is where we live together.
-  useEffect(() => {
-    if (guestRoute && flats && flats.length === 0 && !hostShare)
-      router.replace(partyDoor(guestRoute));
-  }, [guestRoute, flats, hostShare, router]);
+
   // One home, one design: the home's furniture and look are saved with the home, and everyone (me, my partner, a
   // decorator, visitors) sees and changes that one. Every home with a room has one (a home off the map gets its
   // address for this). Only a shared bed space keeps each sleeper's own corner.
-  const homeFlatId = hostShare?.flat ?? activeFlat?.id ?? homeOff?.id ?? null;
+  const homeFlatId = activeFlat?.id ?? hostShare?.flat ?? guestShare?.flat ?? homeOff?.id ?? null;
   const sharedHome = useSharedInterior(homeFlatId);
   const sh = homeFlatId ? sharedHome.data : null;
   const furniture = sh ? sh.furniture : ownFurniture;
@@ -2301,9 +2307,65 @@ export default function HomePage() {
               <span className="text-lg font-black">›</span>
             </button>
 
+            {/* Marital Home (Shared with Spouse) */}
+            {maritalFlat && (
+              <div
+                className={`w-full p-3.5 rounded-2xl border text-left transition-all ${
+                  activeFlat?.id === maritalFlat.id
+                    ? "border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20 shadow-sm"
+                    : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                }`}
+              >
+                <button
+                  onClick={() => {
+                    updateCitizen((c) => ({
+                      ...c,
+                      activeFlatId: maritalFlat.id,
+                      home: `Marital Home with @${maritalShare?.partnerName ?? "partner"}`,
+                    }));
+                    const mTier = housingTierFor(maritalFlat.property_type, maritalFlat.bedrooms);
+                    const cfg = HOUSING_CONFIGS[mTier] ?? HOUSING_CONFIGS.studio;
+                    if (cfg.rooms?.length || cfg.levels) {
+                      setUpView(true);
+                      setActiveRoomId(mTier === "one_bedroom" ? "bedroom" : "living");
+                    } else {
+                      setUpView(false);
+                    }
+                    setTierModalOpen(false);
+                    showToast(`Switched to Marital Home with @${maritalShare?.partnerName ?? "partner"}!`);
+                    gameAudio.playConfirmSound();
+                  }}
+                  className="w-full flex items-center justify-between gap-3 text-left cursor-pointer"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="text-2xl shrink-0">💍</span>
+                    <div className="min-w-0">
+                      <div className="text-xs sm:text-sm font-black text-slate-900 flex flex-wrap items-center gap-1.5">
+                        <span className="truncate">Marital Home ({maritalFlat.property_type})</span>
+                        <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-800">
+                          Shared with @{maritalShare?.partnerName ?? "partner"}
+                        </span>
+                        {activeFlat?.id === maritalFlat.id && (
+                          <span className="text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-200/70 px-1.5 py-0.5 rounded-full">
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-slate-500 truncate">
+                        Unit {maritalFlat.unit} · {maritalFlat.size_sqft?.toLocaleString() ?? ""} sq ft · Both have full decorating &amp; wardrobe access
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-[11px] font-black text-rose-600">Co-Resident</div>
+                  </div>
+                </button>
+              </div>
+            )}
+
             {/* Owned & Rented Properties from `flats` */}
-            {sortedFlats.length > 0
-              ? sortedFlats.map((f) => {
+            {sortedFlats.filter((f) => f.id !== maritalFlat?.id).length > 0
+              ? sortedFlats.filter((f) => f.id !== maritalFlat?.id).map((f) => {
                   const isOwned = f.owner_id === citizen?.id;
                   const fTier = housingTierFor(f.property_type, f.bedrooms);
                   const cfg = HOUSING_CONFIGS[fTier] ?? HOUSING_CONFIGS.studio;

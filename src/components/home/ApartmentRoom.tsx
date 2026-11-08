@@ -305,7 +305,30 @@ function useFittedModel(url: string, size: [number, number], yaw = 0, ghost?: "v
   }, [scene, size, yaw, ghost, bedding, customColor]);
 }
 
-function FurnitureModel({ url, size, yaw, ghost, customColor }: { url: string; size: [number, number]; yaw?: number; ghost?: "valid" | "invalid"; customColor?: string }) {
+class SafeFurnitureBoundary extends React.Component<{ fallback?: React.ReactNode; children: React.ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(err: unknown) {
+    console.warn("Furniture 3D model failed to load:", err);
+  }
+  render() {
+    if (this.state.hasError) return this.props.fallback ?? null;
+    return this.props.children;
+  }
+}
+
+function FurnitureModel({ url, size, yaw, ghost, customColor }: { url?: string; size: [number, number]; yaw?: number; ghost?: "valid" | "invalid"; customColor?: string }) {
+  if (!url) return null;
+  return (
+    <SafeFurnitureBoundary>
+      <FurnitureModelInner url={url} size={size} yaw={yaw} ghost={ghost} customColor={customColor} />
+    </SafeFurnitureBoundary>
+  );
+}
+
+function FurnitureModelInner({ url, size, yaw, ghost, customColor }: { url: string; size: [number, number]; yaw?: number; ghost?: "valid" | "invalid"; customColor?: string }) {
   const bedding = useContext(BeddingContext);
   const object = useFittedModel(url, size, yaw, ghost, url === BED_MODEL ? bedding : undefined, customColor);
   return <primitive object={object} />;
@@ -713,11 +736,13 @@ function FlatScreenTVOnStand({ size, ghost, activity }: { size: [number, number]
 }
 
 
-function ItemVisual({ item, ghost, activity, customColor }: { item: CatalogItem; ghost?: "valid" | "invalid"; activity?: string; customColor?: string }) {
+function ItemVisual({ item, ghost, activity, customColor }: { item?: CatalogItem | null; ghost?: "valid" | "invalid"; activity?: string; customColor?: string }) {
+  if (!item) return null;
   if (item.visual) return <LuxuryDecor visual={item.visual} size={item.size} ghost={ghost} tint={customColor ?? item.tint} activity={activity} />;
   if (item.id === "tv" || item.id.includes("tv")) return <FlatScreenTVOnStand size={item.size} ghost={ghost} activity={activity} />;
   if (item.kind === "wall") return <SunsetPainting size={item.size} ghost={ghost} />;
-  return <FurnitureModel url={item.model!} size={item.size} yaw={item.yaw} ghost={ghost} customColor={customColor} />;
+  if (!item.model) return null;
+  return <FurnitureModel url={item.model} size={item.size} yaw={item.yaw} ghost={ghost} customColor={customColor} />;
 }
 
 
@@ -2278,6 +2303,7 @@ function RoomScene({
       {furniture.map((f) => {
         const item = getCatalogItem(f.itemId);
         if (!item || !f.placement || f.uid === placing?.uid || levelOf(f.placement) !== lvl) return null;
+        if (!item.model && !item.visual && item.kind !== "wall" && !item.id.includes("tv")) return null;
         // Wall art disappears with its wall when that wall is cut away.
         if (f.placement.kind === "wall" && hiddenWalls.has(f.placement.wall)) return null;
         return (
