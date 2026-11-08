@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { arriveAt, endParty, partyHere, pingParty, PARTIES, kindOf, type PartyHere } from "@/lib/invites";
+import { arriveAt, endParty, isPartyEnded, markPartyEnded, partyHere, pingParty, PARTIES, kindOf, type PartyHere } from "@/lib/invites";
 import { InviteSheet } from "./InviteSheet";
 import { activeSpaceId, hostNewSpace, joinSpace, leaveSpace, lockSpace, spaceExists } from "@/lib/spaces";
 import { supabase } from "@/lib/supabase/client";
@@ -20,9 +20,13 @@ const leavePartySpace = (code: string) => { lockSpace(null); if (activeSpaceId()
 
 /** The host ends the party: it ends in the database, everyone there is told, and the host's Space closes. */
 export async function endPartyNow(code: string, hostId?: string): Promise<boolean> {
-  const ok = await endParty(code, hostId);
+  const cleanCode = code.trim().toUpperCase();
+  markPartyEnded(cleanCode);
+  const ok = await endParty(cleanCode, hostId);
   void endChannels.get(code)?.send({ type: "broadcast", event: "ended", payload: {} });
+  void endChannels.get(cleanCode)?.send({ type: "broadcast", event: "ended", payload: {} });
   enders.get(code)?.();
+  enders.get(cleanCode)?.();
   return ok;
 }
 
@@ -34,6 +38,7 @@ export function usePartyHere(route: string | null, arrive: boolean): PartyHere |
   useEffect(() => {
     if (!code) return;
     const end = () => {
+      markPartyEnded(code);
       setParty(null);
       leavePartySpace(code);
       window.dispatchEvent(new CustomEvent("dubai:toast", { detail: isHost ? "🎉 Party ended. Thanks for hosting!" : `🎉 @${host} ended the party. Thanks for coming!` }));
@@ -46,9 +51,9 @@ export function usePartyHere(route: string | null, arrive: boolean): PartyHere |
   }, [code, host, isHost]);
   // While I'm here, the party isn't empty: a check-in now and every minute (an empty party ends after 5 minutes).
   useEffect(() => {
-    if (!code) return;
+    if (!code || isPartyEnded(code)) return;
     void pingParty(code);
-    const t = setInterval(() => { if (document.visibilityState === "visible") void pingParty(code); }, 60_000);
+    const t = setInterval(() => { if (document.visibilityState === "visible" && !isPartyEnded(code)) void pingParty(code); }, 60_000);
     return () => clearInterval(t);
   }, [code]);
   useEffect(() => {
@@ -61,6 +66,13 @@ export function usePartyHere(route: string | null, arrive: boolean): PartyHere |
       // Couldn't check (offline): keep things as they are. A party only ends when the host ends it or its time is up;
       // the host leaving doesn't end it (a guest keeps its Space going until they're back).
       if (!live || p === undefined) return;
+      // Check if this party was marked ended by host: never resurrect it
+      if (p && isPartyEnded(p.code)) {
+        if (had) leavePartySpace(had);
+        had = null;
+        setParty(null);
+        return;
+      }
       // It was on and now isn't (ended, or its time ran out): out of its Space too.
       if (had && !p) leavePartySpace(had);
       had = p?.code ?? null;
@@ -76,7 +88,13 @@ export function usePartyHere(route: string | null, arrive: boolean): PartyHere |
           gameAudio.playCoinSound();
           window.dispatchEvent(new CustomEvent("dubai:toast", { detail: `🎉 You're at @${r.host}'s ${r.title}!${r.points ? ` +${r.points} points` : ""}` }));
           const again = await partyHere(route);
-          if (again !== undefined && live) setParty(again);
+          if (again !== undefined && live) {
+            if (again && isPartyEnded(again.code)) {
+              setParty(null);
+            } else {
+              setParty(again);
+            }
+          }
         }
       }
     };
@@ -86,9 +104,10 @@ export function usePartyHere(route: string | null, arrive: boolean): PartyHere |
     return () => { live = false; clearTimeout(first); clearInterval(every); };
   }, [route, arrive]);
   // A seminar is a talk: no party music.
-  usePartyMusic(!!party && party.kind !== "seminar");
-  usePartySpace(party, route);
-  return party;
+  const activeParty = party && !isPartyEnded(party.code) ? party : null;
+  usePartyMusic(!!activeParty && activeParty.kind !== "seminar");
+  usePartySpace(activeParty, route);
+  return activeParty;
 }
 
 /** Every party has its own voice Space, and everyone at the party is in it: the host hosts it, guests listen (and raise

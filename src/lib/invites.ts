@@ -130,26 +130,86 @@ export async function arriveAt(route: string): Promise<{ code: string; title: st
 }
 /** The host turns the lights out (or back on) for everyone at the party. */
 export async function setPartyLights(code: string, out: boolean) { await supabase().rpc("party_lights", { p_code: code, p_out: out }); }
+const ENDED_STORAGE_KEY = "dl_ended_parties";
+const readEndedParties = (): Set<string> => {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = sessionStorage.getItem(ENDED_STORAGE_KEY) || localStorage.getItem(ENDED_STORAGE_KEY);
+    if (!raw) return new Set();
+    return new Set(JSON.parse(raw));
+  } catch {
+    return new Set();
+  }
+};
+
+const endedParties = readEndedParties();
+
+/** Checks if a party code was ended by host in this session or browser. */
+export function isPartyEnded(code?: string | null): boolean {
+  if (!code) return false;
+  return endedParties.has(code.trim().toUpperCase());
+}
+
+/** Remembers that a party code has ended so it can never resume or resurrect itself. */
+export function markPartyEnded(code?: string | null) {
+  if (!code) return;
+  const c = code.trim().toUpperCase();
+  endedParties.add(c);
+  if (typeof window !== "undefined") {
+    try {
+      const arr = Array.from(endedParties).slice(-100);
+      sessionStorage.setItem(ENDED_STORAGE_KEY, JSON.stringify(arr));
+      localStorage.setItem(ENDED_STORAGE_KEY, JSON.stringify(arr));
+    } catch {}
+  }
+}
+
 /** The host ends the party that's on now. Everyone there is told straight away (see usePartyHere). */
 /** I'm at this party (host or guest): it isn't empty. A party nobody checks into for 5 minutes ends by itself. */
 export async function pingParty(code: string) { await supabase().rpc("party_ping", { p_code: code }); }
 export async function endParty(code: string, hostId?: string): Promise<boolean> {
+  const cleanCode = code.trim().toUpperCase();
+  markPartyEnded(cleanCode);
+
   const citizen = getCitizenState()?.citizen;
   const callerId = hostId || citizen?.id;
+
+  // 1. First attempt: call server API endpoint with service-role privileges (bypasses RLS)
   try {
-    const { error } = await supabase().rpc("end_party", {
-      p_code: code,
-      ...(callerId ? { p_host_id: callerId } : {}),
+    const res = await fetch("/api/party/end", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: cleanCode, hostId: callerId }),
     });
-    if (!error) return true;
-    console.warn("RPC end_party returned error, attempting fallback:", error);
-  } catch (err) {
-    console.warn("RPC end_party threw, attempting fallback:", err);
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.ok) return true;
+    }
+  } catch (apiErr) {
+    console.warn("Failed to call /api/party/end, falling back to direct RPC:", apiErr);
   }
 
-  // Direct table fallback: update ends_at or check if already ended
+  // 2. Client-side RPC fallback with p_host_id
+  if (callerId) {
+    try {
+      const { error: rpcErr1 } = await supabase().rpc("end_party", {
+        p_code: cleanCode,
+        p_host_id: callerId,
+      });
+      if (!rpcErr1) return true;
+    } catch {}
+  }
+
+  // 3. Client-side RPC fallback with only p_code
   try {
-    const cleanCode = code.trim().toUpperCase();
+    const { error: rpcErr2 } = await supabase().rpc("end_party", {
+      p_code: cleanCode,
+    });
+    if (!rpcErr2) return true;
+  } catch {}
+
+  // 4. Direct table fallback: update ends_at and cancelled
+  try {
     const { data: inv } = await supabase()
       .from("invites")
       .select("id, ends_at, cancelled")
@@ -157,13 +217,17 @@ export async function endParty(code: string, hostId?: string): Promise<boolean> 
       .maybeSingle();
 
     if (!inv || inv.cancelled || (inv.ends_at && new Date(inv.ends_at).getTime() <= Date.now())) {
-      // Party is already over or cancelled - successfully ended!
+      // Party is already over or cancelled
       return true;
     }
 
     const { error: updErr } = await supabase()
       .from("invites")
-      .update({ ends_at: new Date().toISOString(), lights_out: false })
+      .update({
+        ends_at: new Date().toISOString(),
+        cancelled: true,
+        lights_out: false,
+      })
       .eq("id", inv.id);
 
     return !updErr;

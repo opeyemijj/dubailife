@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { useCitizen } from "@/lib/citizenStore";
-import { kindOf, myInvites, partyDoor, type InviteRow } from "@/lib/invites";
+import { kindOf, myInvites, partyDoor, isPartyEnded, type InviteRow } from "@/lib/invites";
 import { gameAudio } from "@/utils/gameAudio";
 import { endPartyNow, primePartyAudio } from "./PartyHere";
 
@@ -31,7 +31,7 @@ export function BackToParty() {
       const r = await myInvites();
       const now = Date.now();
       const on = (x: InviteRow) => !!x.route && Date.parse(x.startsAt) <= now && Date.parse(x.endsAt) > now;
-      const shown = (x: InviteRow) => on(x) && !readHidden().includes(x.code);
+      const shown = (x: InviteRow) => on(x) && !readHidden().includes(x.code) && !isPartyEnded(x.code);
       const mine = r.hosting.find(shown);
       const going = r.invited.find((x) => x.status === "going" && shown(x));
       if (alive) setLive(going ? { row: going, hosting: false } : mine ? { row: mine, hosting: true } : null);
