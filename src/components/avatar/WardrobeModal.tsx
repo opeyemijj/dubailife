@@ -169,7 +169,7 @@ const CAMERA_PRESETS: Record<
   { pos: [number, number, number]; target: [number, number, number] }
 > = {
   full: { pos: [0, 0.08, 4.4], target: [0, 0.08, 0] },
-  jewelry: { pos: [0, 0.54, 1.35], target: [0, 0.52, 0] },
+  jewelry: { pos: [0, 0.44, 1.45], target: [0, 0.42, 0] },
   head: { pos: [0, 0.70, 1.35], target: [0, 0.68, 0] },
   shoes: { pos: [0.18, -0.48, 1.55], target: [0, -0.72, 0.04] },
   hands: { pos: [0.28, 0.22, 1.15], target: [0.22, 0.18, 0.02] },

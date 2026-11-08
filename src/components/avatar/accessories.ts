@@ -252,32 +252,42 @@ function buildDesignerCapGroup(
 }
 
 /**
- * Generates an anatomical 3D necklace curve that wraps around the back and sides of the neck,
- * drapes forward over the collarbones, and sits completely FLAT against the chest (like a tie or pendant chain).
+ * Generates an anatomical 3D necklace curve that wraps around the neck,
+ * drapes down through the chest area, and sits completely FLAT on the front torso just above the belly.
+ * Sits forward at z ≈ 0.092 to 0.104 so it is clearly visible and never clips into clothes.
  * Coordinates are relative to upperChest (Bip01_Spine2).
  */
 function createNecklaceCurve(s: number, drop = 0, spread = 1): THREE.CatmullRomCurve3 {
+  // Base apex sits in the lower chest / epigastric area just above the belly (Spine1 level: y ≈ -0.14)
+  const apexY = -0.140 * s - drop;
+  const midChestY = 0.5 * (0.068 * s + apexY);
+  const upperChestY = 0.75 * 0.068 * s + 0.25 * apexY;
+
   const pts = [
     // 0: Nape of neck (back, behind C7 vertebra)
-    new THREE.Vector3(0, 0.142 * s, -0.034 * s),
+    new THREE.Vector3(0, 0.145 * s, -0.034 * s),
     // 1: Back-left neck
-    new THREE.Vector3(-0.040 * s * spread, 0.132 * s, -0.022 * s),
+    new THREE.Vector3(-0.040 * s * spread, 0.134 * s, -0.020 * s),
     // 2: Left side of neck (hugging the neck column)
-    new THREE.Vector3(-0.058 * s * spread, 0.110 * s, 0.006 * s),
+    new THREE.Vector3(-0.058 * s * spread, 0.108 * s, 0.010 * s),
     // 3: Left collarbone / clavicle (coming forward over the shoulder)
-    new THREE.Vector3(-0.046 * s * spread, 0.075 * s - drop * 0.25, 0.058 * s),
-    // 4: Left upper chest (descending flat onto the chest surface)
-    new THREE.Vector3(-0.024 * s * spread, 0.040 * s - drop * 0.65, 0.082 * s),
-    // 5: Front center on chest (like a tie / pendant apex, sitting flush on sternum)
-    new THREE.Vector3(0, 0.012 * s - drop, 0.088 * s),
-    // 6: Right upper chest (descending flat onto the chest surface)
-    new THREE.Vector3(0.024 * s * spread, 0.040 * s - drop * 0.65, 0.082 * s),
-    // 7: Right collarbone / clavicle (coming forward over the shoulder)
-    new THREE.Vector3(0.046 * s * spread, 0.075 * s - drop * 0.25, 0.058 * s),
-    // 8: Right side of neck (hugging the neck column)
-    new THREE.Vector3(0.058 * s * spread, 0.110 * s, 0.006 * s),
-    // 9: Back-right neck
-    new THREE.Vector3(0.040 * s * spread, 0.132 * s, -0.022 * s),
+    new THREE.Vector3(-0.046 * s * spread, 0.068 * s, 0.065 * s),
+    // 4: Left upper chest
+    new THREE.Vector3(-0.034 * s * spread, upperChestY, 0.092 * s),
+    // 5: Left mid-chest (draping down the front over bust/pectoral)
+    new THREE.Vector3(-0.020 * s * spread, midChestY, 0.104 * s),
+    // 6: Front center apex just above the belly (sitting flat on chest/abdomen)
+    new THREE.Vector3(0, apexY, 0.098 * s),
+    // 7: Right mid-chest (draping down the front over bust/pectoral)
+    new THREE.Vector3(0.020 * s * spread, midChestY, 0.104 * s),
+    // 8: Right upper chest
+    new THREE.Vector3(0.034 * s * spread, upperChestY, 0.092 * s),
+    // 9: Right collarbone / clavicle (coming forward over the shoulder)
+    new THREE.Vector3(0.046 * s * spread, 0.068 * s, 0.065 * s),
+    // 10: Right side of neck (hugging the neck column)
+    new THREE.Vector3(0.058 * s * spread, 0.108 * s, 0.010 * s),
+    // 11: Back-right neck
+    new THREE.Vector3(0.040 * s * spread, 0.134 * s, -0.020 * s),
   ];
   return new THREE.CatmullRomCurve3(pts, true, "centripetal");
 }
@@ -286,9 +296,9 @@ function createNecklaceGeometry(
   s: number,
   drop = 0,
   spread = 1,
-  radius = 0.003 * s,
-  tubularSegments = 48,
-  radialSegments = 10,
+  radius = 0.0035 * s,
+  tubularSegments = 64,
+  radialSegments = 12,
 ): THREE.BufferGeometry {
   const curve = createNecklaceCurve(s, drop, spread);
   return new THREE.TubeGeometry(curve, tubularSegments, radius, radialSegments, true);
@@ -428,18 +438,18 @@ function build(
     case "necklace": {
       const s = H / 1.74;
       const chainMesh = new THREE.Mesh(
-        createNecklaceGeometry(s, 0.012 * s, 1.02, 0.0028 * s),
+        createNecklaceGeometry(s, 0, 1.02, 0.0035 * s),
         gold(),
       );
       g.add(chainMesh);
 
-      // Gold medallion pendant hanging at front flat on chest
+      // Gold medallion pendant hanging flat just above the belly
       const medallion = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.009 * s, 0.009 * s, 0.002 * s, 20),
+        new THREE.CylinderGeometry(0.012 * s, 0.012 * s, 0.0025 * s, 24),
         gold(),
       );
-      medallion.position.set(0, 0.000 * s, 0.089 * s);
-      medallion.rotation.set(Math.PI / 2, 0, 0); // Flat against chest wall
+      medallion.position.set(0, -0.155 * s, 0.102 * s);
+      medallion.rotation.set(Math.PI / 2, 0, 0); // Flat on chest/abdomen
       g.add(medallion);
 
       return {
@@ -1482,23 +1492,23 @@ function attachLuxuryJewelryItem(
 
     switch (jewelryId) {
       case "vca_alhambra_necklace": {
-        // Delicate 18K yellow gold chain - wraps neck and drapes flat on chest
+        // Delicate 18K yellow gold chain - wraps neck and drapes down chest just above belly
         const chain = new THREE.Mesh(
-          createNecklaceGeometry(s, 0.014 * s, 1.0, 0.0020 * s),
+          createNecklaceGeometry(s, 0.005 * s, 1.0, 0.0028 * s),
           goldMat
         );
         gNeck.add(chain);
 
-        // 4-leaf clover malachite pendant resting flat on upper chest
+        // 4-leaf clover malachite pendant resting flat just above belly
         const cloverGroup = new THREE.Group();
-        cloverGroup.position.set(0, -0.004 * s, 0.089 * s);
+        cloverGroup.position.set(0, -0.160 * s, 0.102 * s);
         cloverGroup.rotation.set(-0.06, 0, 0);
-        const cloverPetalGeo = new THREE.CylinderGeometry(0.0035 * s, 0.0035 * s, 0.002 * s, 10);
+        const cloverPetalGeo = new THREE.CylinderGeometry(0.0045 * s, 0.0045 * s, 0.0025 * s, 12);
         const offsets = [
-          [-0.0032 * s, 0.0032 * s],
-          [0.0032 * s, 0.0032 * s],
-          [-0.0032 * s, -0.0032 * s],
-          [0.0032 * s, -0.0032 * s],
+          [-0.0042 * s, 0.0042 * s],
+          [0.0042 * s, 0.0042 * s],
+          [-0.0042 * s, -0.0042 * s],
+          [0.0042 * s, -0.0042 * s],
         ];
         offsets.forEach(([ox, oy]) => {
           const petal = new THREE.Mesh(cloverPetalGeo, malachiteMat);
@@ -1506,77 +1516,77 @@ function attachLuxuryJewelryItem(
           petal.rotation.set(Math.PI / 2, 0, 0);
           cloverGroup.add(petal);
         });
-        const centerBead = new THREE.Mesh(new THREE.SphereGeometry(0.002 * s, 8, 8), goldMat);
-        centerBead.position.set(0, 0, 0.001 * s);
+        const centerBead = new THREE.Mesh(new THREE.SphereGeometry(0.0026 * s, 8, 8), goldMat);
+        centerBead.position.set(0, 0, 0.0015 * s);
         cloverGroup.add(centerBead);
         gNeck.add(cloverGroup);
         break;
       }
 
       case "cartier_panthere_collar": {
-        // Polished 18K rose gold curved collar choker - wraps neck and sits flat on upper chest
+        // Polished 18K rose gold collar statement chain - wraps neck and drapes down chest just above belly
         const collar = new THREE.Mesh(
-          createNecklaceGeometry(s, -0.010 * s, 1.02, 0.0038 * s),
+          createNecklaceGeometry(s, -0.015 * s, 1.02, 0.0045 * s),
           roseGoldMat
         );
         gNeck.add(collar);
 
-        // Twin panther head finials meeting at front, resting flat on chest
+        // Twin panther head finials meeting flat just above belly
         for (const dir of [-1, 1]) {
-          const panther = new THREE.Mesh(new THREE.ConeGeometry(0.0055 * s, 0.010 * s, 8), roseGoldMat);
-          panther.position.set(dir * 0.008 * s, 0.022 * s, 0.086 * s);
+          const panther = new THREE.Mesh(new THREE.ConeGeometry(0.0065 * s, 0.013 * s, 8), roseGoldMat);
+          panther.position.set(dir * 0.009 * s, -0.125 * s, 0.102 * s);
           panther.rotation.set(0, 0, dir * (Math.PI / 2));
           gNeck.add(panther);
 
           // Emerald panther eye
-          const eye = new THREE.Mesh(new THREE.SphereGeometry(0.0014 * s, 8, 8), emeraldMat);
-          eye.position.set(dir * 0.008 * s, 0.024 * s, 0.089 * s);
+          const eye = new THREE.Mesh(new THREE.SphereGeometry(0.0016 * s, 8, 8), emeraldMat);
+          eye.position.set(dir * 0.009 * s, -0.122 * s, 0.106 * s);
           gNeck.add(eye);
         }
         break;
       }
 
       case "bulgari_serpenti_choker": {
-        // White gold / platinum coiled serpent scale collar flat on chest
+        // White gold / platinum coiled serpent scale necklace down chest just above belly
         const choker = new THREE.Mesh(
-          createNecklaceGeometry(s, -0.008 * s, 1.02, 0.0038 * s),
+          createNecklaceGeometry(s, -0.015 * s, 1.02, 0.0045 * s),
           platinumMat
         );
         gNeck.add(choker);
 
-        // Serpent diamond head finial with sapphire eye flat on upper chest
+        // Serpent diamond head finial with sapphire eye flat just above belly
         const snakeHead = new THREE.Mesh(
-          new THREE.ConeGeometry(0.0065 * s, 0.014 * s, 6),
+          new THREE.ConeGeometry(0.0075 * s, 0.016 * s, 6),
           diamondMat
         );
-        snakeHead.position.set(0, 0.020 * s, 0.087 * s);
+        snakeHead.position.set(0, -0.130 * s, 0.102 * s);
         snakeHead.rotation.set(-0.06, 0, 0);
         gNeck.add(snakeHead);
 
-        const snakeEye = new THREE.Mesh(new THREE.SphereGeometry(0.0016 * s, 8, 8), sapphireMat);
-        snakeEye.position.set(0, 0.023 * s, 0.090 * s);
+        const snakeEye = new THREE.Mesh(new THREE.SphereGeometry(0.0018 * s, 8, 8), sapphireMat);
+        snakeEye.position.set(0, -0.126 * s, 0.106 * s);
         gNeck.add(snakeEye);
         break;
       }
 
       case "gold_souk_royal_choker": {
-        // Multi-tier 24K gold collar wrapping neck and sitting flat on chest
+        // Multi-tier 24K gold collar cascading down to chest area just above belly
         const tier1 = new THREE.Mesh(
-          createNecklaceGeometry(s, -0.012 * s, 1.0, 0.0032 * s),
+          createNecklaceGeometry(s, -0.040 * s, 1.0, 0.0035 * s),
           goldMat
         );
         gNeck.add(tier1);
 
         const tier2 = new THREE.Mesh(
-          createNecklaceGeometry(s, 0.006 * s, 1.04, 0.0036 * s),
+          createNecklaceGeometry(s, 0.005 * s, 1.04, 0.0042 * s),
           goldMat
         );
         gNeck.add(tier2);
 
-        // 5 gold drop charms hanging down flat against chest
+        // 5 gold drop charms cascading flat against lower chest just above belly
         for (let i = -2; i <= 2; i++) {
-          const drop = new THREE.Mesh(new THREE.ConeGeometry(0.003 * s, 0.011 * s, 6), goldMat);
-          drop.position.set(i * 0.0085 * s, 0.000 * s - Math.abs(i) * 0.003 * s, 0.089 * s);
+          const drop = new THREE.Mesh(new THREE.ConeGeometry(0.0038 * s, 0.014 * s, 6), goldMat);
+          drop.position.set(i * 0.010 * s, -0.150 * s - Math.abs(i) * 0.004 * s, 0.102 * s);
           drop.rotation.set(0, 0, 0);
           gNeck.add(drop);
         }
@@ -1584,37 +1594,37 @@ function attachLuxuryJewelryItem(
       }
 
       case "graff_emerald_drop": {
-        // Platinum diamond tennis chain wrapping neck and draping flat on chest
+        // Platinum diamond tennis chain wrapping neck and draping flat to just above belly
         const chain = new THREE.Mesh(
-          createNecklaceGeometry(s, 0.016 * s, 1.0, 0.0024 * s),
+          createNecklaceGeometry(s, 0.005 * s, 1.0, 0.0028 * s),
           platinumMat
         );
         gNeck.add(chain);
 
-        // Octagonal Colombian emerald pendant resting flat against chest
+        // Octagonal Colombian emerald pendant resting flat just above belly
         const emerald = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.008 * s, 0.008 * s, 0.0035 * s, 8),
+          new THREE.CylinderGeometry(0.010 * s, 0.010 * s, 0.004 * s, 8),
           emeraldMat
         );
-        emerald.position.set(0, -0.006 * s, 0.089 * s);
-        emerald.rotation.set(Math.PI / 2, 0, 0); // Flat against chest
+        emerald.position.set(0, -0.155 * s, 0.102 * s);
+        emerald.rotation.set(Math.PI / 2, 0, 0); // Flat on chest/abdomen
         gNeck.add(emerald);
 
         // Diamond halo ring around emerald
         const halo = new THREE.Mesh(
-          new THREE.TorusGeometry(0.009 * s, 0.0018 * s, 8, 20),
+          new THREE.TorusGeometry(0.011 * s, 0.0022 * s, 8, 20),
           diamondMat
         );
-        halo.position.set(0, -0.006 * s, 0.089 * s);
+        halo.position.set(0, -0.155 * s, 0.102 * s);
         halo.rotation.set(0, 0, 0);
         gNeck.add(halo);
         break;
       }
 
       case "gold_souk_miami_cuban": {
-        // Heavy 24K solid gold Miami Cuban chain coming from both sides of neck and resting flat on chest
+        // Heavy 24K solid gold Miami Cuban chain coming from both sides of neck and resting flat on chest just above belly
         const cuban = new THREE.Mesh(
-          createNecklaceGeometry(s, 0.018 * s, 1.04, 0.0050 * s),
+          createNecklaceGeometry(s, 0.005 * s, 1.04, 0.0058 * s),
           goldMat
         );
         gNeck.add(cuban);
@@ -1622,9 +1632,9 @@ function attachLuxuryJewelryItem(
       }
 
       case "cartier_iced_cuban": {
-        // Heavy iced-out diamond baguette Cuban link chain coming from both sides of neck and resting flat on chest
+        // Heavy iced-out diamond baguette Cuban link chain coming from neck to just above belly
         const icedChain = new THREE.Mesh(
-          createNecklaceGeometry(s, 0.018 * s, 1.04, 0.0050 * s),
+          createNecklaceGeometry(s, 0.005 * s, 1.04, 0.0058 * s),
           diamondMat
         );
         gNeck.add(icedChain);
@@ -1632,25 +1642,25 @@ function attachLuxuryJewelryItem(
       }
 
       case "edo_royal_coral_necklace_f": {
-        // Chunky Nigerian royal coral beads coming from both sides of neck, draping flat on chest
+        // Chunky Nigerian royal coral beads coming from neck, cascading flat down to just above belly
         const coralTier1 = new THREE.Mesh(
-          createNecklaceGeometry(s, 0.006 * s, 1.02, 0.0055 * s),
+          createNecklaceGeometry(s, -0.030 * s, 1.02, 0.0060 * s),
           coralMat
         );
         gNeck.add(coralTier1);
 
         const coralTier2 = new THREE.Mesh(
-          createNecklaceGeometry(s, 0.026 * s, 1.06, 0.0060 * s),
+          createNecklaceGeometry(s, 0.015 * s, 1.06, 0.0068 * s),
           coralMat
         );
         gNeck.add(coralTier2);
 
-        // Center cylindrical coral pendant resting flat on chest
+        // Center cylindrical coral pendant resting flat just above belly
         const centerCoral = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.007 * s, 0.007 * s, 0.018 * s, 16),
+          new THREE.CylinderGeometry(0.0085 * s, 0.0085 * s, 0.022 * s, 16),
           coralMat
         );
-        centerCoral.position.set(0, -0.018 * s, 0.090 * s);
+        centerCoral.position.set(0, -0.165 * s, 0.103 * s);
         centerCoral.rotation.set(0, 0, Math.PI / 2); // Horizontal barrel flat on chest
         gNeck.add(centerCoral);
 
@@ -1674,25 +1684,25 @@ function attachLuxuryJewelryItem(
       }
 
       case "chieftaincy_coral_beads_m": {
-        // Heavy chieftaincy Nigerian royal coral beads draping low like a ceremonial sash / tie flat on chest
+        // Heavy chieftaincy Nigerian royal coral beads draping low like a ceremonial sash to just above belly
         const coralTier1 = new THREE.Mesh(
-          createNecklaceGeometry(s, 0.012 * s, 1.02, 0.0065 * s),
+          createNecklaceGeometry(s, -0.020 * s, 1.02, 0.0070 * s),
           coralMat
         );
         gNeck.add(coralTier1);
 
         const coralTier2 = new THREE.Mesh(
-          createNecklaceGeometry(s, 0.045 * s, 1.08, 0.0070 * s),
+          createNecklaceGeometry(s, 0.030 * s, 1.08, 0.0078 * s),
           coralMat
         );
         gNeck.add(coralTier2);
 
-        // Center cylindrical coral pendant resting flat on chest
+        // Center cylindrical coral pendant resting flat just above belly
         const centerCoral = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.0075 * s, 0.0075 * s, 0.020 * s, 16),
+          new THREE.CylinderGeometry(0.009 * s, 0.009 * s, 0.024 * s, 16),
           coralMat
         );
-        centerCoral.position.set(0, -0.038 * s, 0.092 * s);
+        centerCoral.position.set(0, -0.180 * s, 0.105 * s);
         centerCoral.rotation.set(0, 0, Math.PI / 2); // Horizontal barrel flat on chest
         gNeck.add(centerCoral);
 
