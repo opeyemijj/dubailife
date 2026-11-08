@@ -10,23 +10,27 @@ if (!file) {
   process.exit(1);
 }
 
-const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
-if (!connectionString) {
-  console.error("No DIRECT_URL or DATABASE_URL found in .env");
-  process.exit(1);
-}
+const rawEnv = dotenv.parse(readFileSync(".env"));
+const url = new URL(rawEnv.DATABASE_URL);
+const password = decodeURIComponent(url.password);
+const projectRef = "ybrsakmnmeyvrqhustrs";
 
-const sql = readFileSync(file, "utf8");
-console.log(`Running migration from: ${file}`);
-
+// Supabase pooler host for ap-southeast-2 (session mode on 5432, transaction on 6543)
 const client = new pg.Client({
-  connectionString,
+  host: "aws-0-ap-southeast-2.pooler.supabase.com",
+  port: 6543,
+  user: `postgres.${projectRef}`,
+  password,
+  database: "postgres",
   ssl: { rejectUnauthorized: false },
 });
 
+const sql = readFileSync(file, "utf8");
+console.log(`Executing migration ${file} on Supabase (ap-southeast-2)...`);
+
 try {
   await client.connect();
-  console.log("Connected to database.");
+  console.log("Connected to Supabase PostgreSQL.");
   await client.query(sql);
   console.log("✅ Migration applied successfully!");
 } catch (err) {

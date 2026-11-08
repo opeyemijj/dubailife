@@ -16,7 +16,37 @@ export interface Garage {
   /** Accidents on your current licence (the third revokes it), and when it was revoked if it was. */
   accidents?: number;
   revokedAt?: string | null;
-  owned: Array<{ id: number; car: string; dealer: string; plate: string; price: number; registeredUntil: string; insuredUntil: string; boughtAt: string; fuel: number; impoundedUntil: string | null }>;
+  owned: Array<{
+    id: number;
+    car: string;
+    dealer: string;
+    plate: string;
+    price: number;
+    registeredUntil: string;
+    insuredUntil: string;
+    boughtAt: string;
+    fuel: number;
+    impoundedUntil: string | null;
+    isStolen?: boolean;
+    stolenAt?: string | null;
+    reportedStolenAt?: string | null;
+    recoveredAt?: string | null;
+    stolenBy?: string | null;
+    stolenByUsername?: string | null;
+  }>;
+  stolen?: Array<{
+    id: number;
+    car: string;
+    dealer: string;
+    plate: string;
+    price: number;
+    fuel: number;
+    ownerId: string;
+    ownerUsername: string;
+    isStolen: boolean;
+    isReportedStolen: boolean;
+    stolenAt?: string | null;
+  }>;
   rental: { id: number; car: string; company: string; days: number; endsAt: string; deposit: number; fuel: number } | null;
 }
 
@@ -69,19 +99,71 @@ export const rentCarFake = (company: string, car: string, days: number) => call<
 export const buyCar = (dealer: string, car: string) => call<{ plate: string; total: number; insurance: number }>("buy_car", { p_dealer: dealer, p_car: car });
 export const aed = (n: number) => `AED ${Math.round(n).toLocaleString()}`;
 
-/** A car you can drive: one of yours (not impounded) or your rental. */
-export interface Drivable { kind: "owned" | "rental"; id: number; car: Car; plate: string; fuel: number }
+/** A car you can drive: one of yours (not impounded or stolen), your rental, or a car you hotwired. */
+export interface Drivable {
+  kind: "owned" | "rental" | "stolen";
+  id: number;
+  car: Car;
+  plate: string;
+  fuel: number;
+  isStolen?: boolean;
+  isReportedStolen?: boolean;
+  stolenFromUser?: string;
+}
+
 export function drivables(g: Garage | null, now: number): Drivable[] {
   if (!g) return [];
   const out: Drivable[] = [];
   for (const o of g.owned) {
     const car = carOf(o.car);
-    if (car && !(o.impoundedUntil && Date.parse(o.impoundedUntil) > now)) out.push({ kind: "owned", id: o.id, car, plate: o.plate, fuel: Number(o.fuel) });
+    if (car && !o.isStolen && !(o.impoundedUntil && Date.parse(o.impoundedUntil) > now)) {
+      out.push({ kind: "owned", id: o.id, car, plate: o.plate, fuel: Number(o.fuel) });
+    }
   }
   const r = g.rental, rc = r && carOf(r.car);
-  if (r && rc && Date.parse(r.endsAt) > now) out.push({ kind: "rental", id: r.id, car: rc, plate: "RENTAL", fuel: Number(r.fuel) });
+  if (r && rc && Date.parse(r.endsAt) > now) {
+    out.push({ kind: "rental", id: r.id, car: rc, plate: "RENTAL", fuel: Number(r.fuel) });
+  }
+  for (const s of g.stolen ?? []) {
+    const car = carOf(s.car);
+    if (car) {
+      out.push({
+        kind: "stolen",
+        id: s.id,
+        car,
+        plate: s.plate,
+        fuel: Number(s.fuel),
+        isStolen: true,
+        isReportedStolen: s.isReportedStolen,
+        stolenFromUser: s.ownerUsername,
+      });
+    }
+  }
   return out;
 }
+
+export interface ParkedCarView {
+  id: number;
+  car: string;
+  plate: string;
+  dealer: string;
+  price: number;
+  fuel: number;
+  ownerId: string;
+  ownerUsername: string;
+  isStolen: boolean;
+  stolenBy?: string | null;
+  stolenByUsername?: string | null;
+  isReportedStolen: boolean;
+  canDrive: boolean;
+  canSteal: boolean;
+}
+
+export const getFlatParkedCar = (flatId: string) => call<ParkedCarView | null>("get_flat_parked_car", { p_flat_id: flatId });
+export const attemptStealCar = (flatId: string, carId: number) => call<{ success: boolean; carId: number; car: string; plate: string; fuel: number; ownerId: string; ownerUsername: string }>("attempt_steal_car", { p_flat_id: flatId, p_car_id: carId });
+export const reportStolenCar = (carId: number) => call<{ success: boolean; reportedAt: string; caseId?: number }>("report_stolen_car", { p_car_id: carId });
+export const arrestStolenCarDriver = (carId: number) => call<{ arrested: boolean; caseId: number; carId: number; ownerId: string; plate: string; car: string }>("arrest_stolen_car_driver", { p_car_id: carId });
+export const arrestUnlicensedDriver = (carId: number, kind: string) => call<{ arrested?: boolean; hasLicence?: boolean; caseId?: number; impounded?: boolean }>("arrest_unlicensed_driver", { p_car_id: carId, p_kind: kind });
 /** Fuel (% of the tank) a trip of this many metres uses (it stands for more driving than the map distance). */
 export const fuelFor = (car: Car, metres: number) => ((Math.min(metres, 60000) / 1000) * CARS.driving.fuelGameFactor * (car.per100 / 100) / car.tank) * 100;
 /** What filling up from this level costs (AED). */

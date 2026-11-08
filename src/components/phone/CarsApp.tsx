@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCitizen } from "@/lib/citizenStore";
 import { useNow } from "@/lib/dubaiClock";
-import { aed, carOf, CARS, myFines, releaseCar, shopOf, useGarage, type Fine } from "@/lib/cars";
+import { aed, carOf, CARS, myFines, releaseCar, reportStolenCar, shopOf, useGarage, type Fine } from "@/lib/cars";
 import { AppScreen, Card } from "./AppScreen";
 
 const date = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
@@ -70,6 +70,51 @@ export function CarsApp({ onBack, onClose }: { onBack: () => void; onClose: () =
                 </div>
                 <FuelBar fuel={Number(o.fuel)} electric={!!c?.electric} />
                 <p className="text-xs text-slate-500">Insured and registered until {date(o.insuredUntil)}</p>
+
+                {o.isStolen ? (
+                  <div className="p-3 rounded-2xl bg-rose-50 border border-rose-300 space-y-2 mt-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-ping shrink-0" />
+                      <span className="text-xs font-black text-rose-900">
+                        {o.reportedStolenAt ? "🚨 Reported Stolen · Dubai Police APB Active" : "⚠️ VEHICLE STOLEN · Hotwired from Driveway!"}
+                      </span>
+                    </div>
+                    <p className="text-[11px] font-bold text-rose-800">
+                      {o.stolenByUsername ? `Taken by @${o.stolenByUsername}` : "Taken by an unknown suspect"}
+                      {o.reportedStolenAt ? " · Live GPS tracked via RTA Salik gates" : " · Not yet reported to police"}
+                    </p>
+                    {!o.reportedStolenAt ? (
+                      <button
+                        onClick={async () => {
+                          setBusy(o.id);
+                          const r = await reportStolenCar(o.id);
+                          setBusy(null);
+                          if (!r.error) {
+                            window.dispatchEvent(new CustomEvent("dubai:toast", {
+                              detail: "🚨 Report Filed! Dubai Police APB issued across all highway patrols."
+                            }));
+                            void reload();
+                          }
+                        }}
+                        disabled={busy === o.id}
+                        className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs shadow-md active:scale-95 disabled:opacity-60 transition-all"
+                      >
+                        {busy === o.id ? "Filing Police Report…" : "🚨 File Stolen Vehicle Report (Issue Police APB)"}
+                      </button>
+                    ) : (
+                      <div className="flex items-center justify-between text-[11px] font-bold text-sky-900 bg-sky-50 px-2.5 py-1.5 rounded-xl border border-sky-200">
+                        <span>📡 Live GPS: Active on Sheikh Zayed Road</span>
+                        <span className="text-sky-600 animate-pulse font-mono">Scanning…</span>
+                      </div>
+                    )}
+                  </div>
+                ) : o.recoveredAt ? (
+                  <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold mt-2 flex items-center justify-between">
+                    <span>✅ Recovered by Dubai Police · Safely back in driveway</span>
+                    <span className="text-[10px] text-emerald-700">Tank refilled</span>
+                  </div>
+                ) : null}
+
                 {impounded && (
                   <>
                     <p className="text-sm font-bold text-rose-700">🚔 In the police impound until {date(o.impoundedUntil!)}, after an accident.</p>
@@ -92,6 +137,40 @@ export function CarsApp({ onBack, onClose }: { onBack: () => void; onClose: () =
               </Card>
             );
           })()}
+
+          {(garage.stolen ?? []).length > 0 && (
+            <>
+              <h3 className="font-semibold text-rose-600 px-1 pt-2">🔥 Hotwired Vehicles (Stolen)</h3>
+              {garage.stolen!.map((s) => {
+                const c = carOf(s.car);
+                return (
+                  <Card key={s.id} className="bg-gradient-to-br from-rose-50 to-amber-50 border border-rose-300">
+                    <div className="flex items-center gap-3">
+                      <span className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl bg-rose-200">🏎️</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-black text-slate-900 truncate">{c?.make} {c?.model}</p>
+                        <p className="text-xs font-bold text-rose-700">Stolen from @{s.ownerUsername} · Plate {s.plate}</p>
+                      </div>
+                    </div>
+                    {s.isReportedStolen && (
+                      <div className="p-2 rounded-xl bg-rose-600 text-white text-[11px] font-black flex items-center gap-1.5 animate-pulse">
+                        <span>🚨 WANTED: Police APB Active! Patrols &amp; Salik cameras will chase you if seen!</span>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => {
+                        onClose();
+                        router.push(`/explore?to=marina`);
+                      }}
+                      className="w-full h-11 rounded-full bg-slate-900 text-white font-black text-xs flex items-center justify-center gap-2 active:scale-95 shadow-md"
+                    >
+                      <span>🚗 Drive Stolen Vehicle</span>
+                    </button>
+                  </Card>
+                );
+              })}
+            </>
+          )}
 
           {fines.length > 0 && (
             <>

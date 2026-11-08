@@ -69,6 +69,32 @@ export const accidentArrest = (car: Car, plate: string, accidents = 1, revoked =
     revoked ? "That's your third accident. Your driving license is revoked, and your car goes to the impound." : "Your car goes to the impound. A lawyer or the court decides the rest."],
 });
 
+/** Driving on public roads without a valid driving licence. */
+export const noLicenceArrest = (car: Car, plate: string): ArrestStory => ({
+  title: "Arrested · Driving Without a Licence",
+  reason: "Operating a motor vehicle on public roads without a valid driving licence",
+  car, plate,
+  lines: [
+    "🚨 Dubai Police interceptor… Pull over immediately!",
+    "Dubai Police. Turn off the engine and step out.",
+    "You have no valid driving licence on record. You are under arrest.",
+    "Your vehicle has been impounded. You are headed to Dubai Police custody."
+  ],
+});
+
+/** Caught operating a reported stolen vehicle. */
+export const stolenVehicleArrest = (car: Car, plate: string, ownerName: string): ArrestStory => ({
+  title: "Arrested · Grand Theft Auto",
+  reason: `Apprehended operating a reported stolen vehicle belonging to @${ownerName}`,
+  car, plate,
+  lines: [
+    "🚨 Dubai Police pursuit! ALPR alert: Stolen vehicle intercepted!",
+    "Dubai Police. Step out of the stolen vehicle with your hands up!",
+    `This vehicle was reported stolen by @${ownerName}. You are under arrest for vehicle theft.`,
+    "The vehicle has been secured for return. You are facing grand theft charges in court."
+  ],
+});
+
 function Scene({ look, story, onSay, onDone }: { look?: AvatarLookProps; story: ArrestStory; onSay: (s: string | null) => void; onDone: () => void }) {
   const camera = useThree((s) => s.camera);
   const carRef = useRef<THREE.Group>(null);

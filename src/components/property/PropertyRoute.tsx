@@ -43,6 +43,11 @@ import { SmallLoader } from "@/components/GameLoadingScreen";
 import { WardrobeModal } from "@/components/avatar/WardrobeModal";
 import { DecorationCatalogue } from "@/components/home/DecorationCatalogue";
 import { myHousehold, type SharedHome } from "@/lib/love";
+import { getFlatParkedCar, carOf, type ParkedCarView, type Drivable, useGarage } from "@/lib/cars";
+import { VehicleTheftModal } from "@/components/cars/VehicleTheftModal";
+import { DriveSheet } from "@/components/home/DriveSheet";
+import { DriveJourney } from "@/components/cars/DriveJourney";
+import { ModalPortal } from "@/components/ui/modal-portal";
 
 /** Unique id for a newly bought piece of furniture. */
 const newUid = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
@@ -246,6 +251,25 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   const [wardrobeOpen, setWardrobeOpen] = useState(false);
   const [propertiesOpen, setPropertiesOpen] = useState(false);
   const [myResidences, setMyResidences] = useState<Array<{ id: string; label: string; route: string; active: boolean; isShared?: boolean }>>([]);
+  const [parkedCar, setParkedCar] = useState<ParkedCarView | null>(null);
+  const [theftModal, setTheftModal] = useState<ParkedCarView | null>(null);
+  const [driveOpen, setDriveOpen] = useState(false);
+  const [stolenDrive, setStolenDrive] = useState<Drivable | null>(null);
+  const { garage } = useGarage(me);
+
+  const refreshParkedCar = useCallback(async () => {
+    try {
+      const res = await getFlatParkedCar(flat.id);
+      if (res.data) setParkedCar(res.data);
+      else setParkedCar(null);
+    } catch {
+      /* ignore */
+    }
+  }, [flat.id]);
+
+  useEffect(() => {
+    void refreshParkedCar();
+  }, [refreshParkedCar]);
 
   useEffect(() => {
     (async () => {
@@ -342,6 +366,10 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   const room = useRoom(`flat:${flat.id}`, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : where.rest ?? myMood, lift: where.lift, level, hold: drink ?? undefined, dirty: isDirty(citizen?.needs?.hygiene) }, (e: Received) => {
     if (e.type === "chat") bubble(e.from.userId, e.text);
     if (e.type === "wave") bubble(e.from.userId, "👋");
+    if ((e as unknown as { type: string; thief?: string }).type === "car_stolen") {
+      say(`🚨 VEHICLE ALARM TRIGGERED! @${(e as unknown as { thief?: string }).thief || "Someone"} hotwired the car!`);
+      void refreshParkedCar();
+    }
     // Someone changed the home: the one version, reloaded for everyone here.
     if (e.type === "home") onChanged();
     if (e.type === "party") {
@@ -419,7 +447,24 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         loadingLabel={`Opening ${flatTitle(flat)}`}
         look={look}
         homeStyle={homeLook}
-        onUseFixture={(f) => setFixture(f)}
+        ownCar={parkedCar && !parkedCar.isStolen ? { car: carOf(parkedCar.car)!, plate: parkedCar.plate } : null}
+        onUseFixture={(f) => {
+          if (f.kind === "car") {
+            if (!parkedCar || parkedCar.isStolen) {
+              say("🚗 Driveway is empty (vehicle is in use or was stolen).");
+              return;
+            }
+            if (parkedCar.canDrive) {
+              setDriveOpen(true);
+            } else if (parkedCar.canSteal) {
+              setTheftModal(parkedCar);
+            } else {
+              say(`🔒 Locked · Registered to @${parkedCar.ownerUsername}`);
+            }
+            return;
+          }
+          setFixture(f);
+        }}
         using={usingFixture}
         activity={running?.serve}
         furniture={furniture}
@@ -712,6 +757,63 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         <div className="absolute left-3 bottom-20 z-30 bg-sky-500/90 text-white rounded-full px-3 py-1 text-[11px] font-black shadow-lg pointer-events-none">
           👥 {room.peers.length} {room.peers.length === 1 ? "person" : "people"} here · tap them to say hi
         </div>
+      )}
+
+      {theftModal && (
+        <VehicleTheftModal
+          parkedCar={theftModal}
+          flatId={flat.id}
+          onClose={() => setTheftModal(null)}
+          onSuccess={(stolen) => {
+            room.emit({ type: "car_stolen", thief: citizen?.username });
+            void refreshParkedCar();
+            const carDef = carOf(stolen.car);
+            if (carDef) {
+              setStolenDrive({
+                kind: "stolen",
+                id: stolen.carId,
+                car: carDef,
+                plate: stolen.plate,
+                fuel: Number(stolen.fuel),
+                isStolen: true,
+                isReportedStolen: false,
+                stolenFromUser: stolen.ownerUsername,
+              });
+            }
+          }}
+          say={say}
+        />
+      )}
+
+      {driveOpen && (
+        <DriveSheet
+          car={parkedCar?.car ? carOf(parkedCar.car) ?? null : null}
+          onClose={() => setDriveOpen(false)}
+        />
+      )}
+
+      {stolenDrive && (
+        <ModalPortal>
+          <DriveJourney
+            drivables={[stolenDrive]}
+            metres={3200}
+            destination="Sheikh Zayed Road Getaway"
+            look={look}
+            balance={citizen?.balance ?? 0}
+            hasLicence={!!garage?.licence}
+            onArrive={() => {
+              setStolenDrive(null);
+              say("💨 You sped away into city traffic!");
+              router.push("/explore");
+            }}
+            onArrested={() => {
+              setStolenDrive(null);
+              say("🚨 Intercepted by Dubai Police!");
+              openPhone("court");
+            }}
+            onCancel={() => setStolenDrive(null)}
+          />
+        </ModalPortal>
       )}
 
       {toast && <div className="absolute top-28 left-1/2 -translate-x-1/2 z-50 bg-slate-950/90 text-white text-sm font-bold px-4 py-2 rounded-full shadow-2xl">{toast}</div>}

@@ -10,6 +10,7 @@ import { useOnlineUsernames } from "@/lib/presence";
 import { goToCourt, hireLawyer, prepareDefence, professionals, SERVICES, setServiceFee, useServices, type CaseView, type Professional } from "@/lib/cityServices";
 import { gameAudio } from "@/utils/gameAudio";
 import { useNow } from "@/lib/dubaiClock";
+import { useGarage, reportStolenCar, carOf } from "@/lib/cars";
 import { AppScreen, aed, Big, Card, Note, Quiz } from "./AppScreen";
 
 const LAWYER_NAME = { aid: "Legal Aid (Local)", senior: "Senior Counsel (Local)" } as const;
@@ -22,9 +23,11 @@ const until = (iso: string, now: number) => {
 
 export function PoliceApp({ onBack }: { onBack: () => void }) {
   const { citizen } = useCitizen();
+  const { garage, reload: reloadGarage } = useGarage(citizen?.id);
   const s = useServices(citizen?.id);
   const open = s?.cases.filter((c) => c.status === "open") ?? [];
   const past = s?.cases.filter((c) => c.status !== "open") ?? [];
+  const stolenVehicles = (garage?.owned ?? []).filter((o) => o.isStolen || o.recoveredAt);
   // #10: Interactive Courthouse (OBJECTION! Evidence QTE, Citizen Jury Tug-of-War & Pre-Nup/Asset Split Slider)
   const [courtTab, setCourtTab] = useState<"objection" | "jury" | "prenup">("objection");
   const [objectionSolved, setObjectionSolved] = useState(false);
@@ -35,6 +38,91 @@ export function PoliceApp({ onBack }: { onBack: () => void }) {
 
   return (
     <AppScreen title="Dubai Police" onBack={onBack} accent="text-blue-700">
+      {/* 🚨 Dubai Police Stolen Vehicle Dispatch & GPS Recovery Tracker */}
+      <Card className="bg-gradient-to-br from-blue-900 to-indigo-950 text-white shadow-xl border border-blue-400/30">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="p-2 rounded-xl bg-blue-500/20 text-blue-300 text-lg">🚔</span>
+            <div>
+              <p className="font-black text-sm text-white">Stolen Vehicle Dispatch &amp; Tracking</p>
+              <p className="text-[11px] text-blue-200">Dubai Police Automated Highway APB System</p>
+            </div>
+          </div>
+          <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-blue-500/30 text-blue-300 border border-blue-400/30">
+            RTA Connected
+          </span>
+        </div>
+
+        {stolenVehicles.length === 0 ? (
+          <div className="p-3 rounded-xl bg-blue-950/60 border border-blue-800/60 text-xs text-blue-200 flex items-center gap-2">
+            <span className="text-base">🛡️</span>
+            <span>All your registered vehicles are secure in your home driveway/garage.</span>
+          </div>
+        ) : (
+          <div className="space-y-2.5 pt-1">
+            {stolenVehicles.map((v) => {
+              const c = carOf(v.car);
+              return (
+                <div key={v.id} className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-black text-white text-sm block">{c?.make} {c?.model}</span>
+                      <span className="text-[10px] text-slate-300 font-mono">Plate: {v.plate}</span>
+                    </div>
+                    {v.isStolen ? (
+                      <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black animate-pulse">
+                        STOLEN
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-black">
+                        RECOVERED
+                      </span>
+                    )}
+                  </div>
+
+                  {v.isStolen ? (
+                    <>
+                      <p className="text-[11px] text-rose-300 font-bold">
+                        {v.reportedStolenAt
+                          ? "🚨 Official Police APB Active: Highway patrol interceptors are scanning traffic."
+                          : "⚠️ Vehicle hotwired! File an official report now to dispatch police interceptors."}
+                      </p>
+                      {!v.reportedStolenAt ? (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const res = await reportStolenCar(v.id);
+                            if (!res.error) {
+                              gameAudio.playCoinSound();
+                              window.dispatchEvent(new CustomEvent("dubai:toast", {
+                                detail: "🚨 Dubai Police APB dispatched! Patrols scanning traffic."
+                              }));
+                              void reloadGarage();
+                            }
+                          }}
+                          className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs shadow-lg active:scale-95 transition-all"
+                        >
+                          🚨 Dispatch Dubai Police APB (Report Stolen)
+                        </button>
+                      ) : (
+                        <div className="p-2 rounded-xl bg-blue-950/80 border border-blue-500/40 text-[11px] flex items-center justify-between text-blue-200 font-mono">
+                          <span>📡 Salik GPS: Sheikh Zayed Rd</span>
+                          <span className="text-emerald-400 font-bold animate-pulse">LIVE TRACKING</span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="p-2 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-[11px] text-emerald-200 font-bold">
+                      🎉 Suspect apprehended! Car safely returned to your driveway with full fuel.
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
+
       {s?.service === "lawyer" && <LawyerDesk />}
       {s?.service === "police" && (
         <Card className="bg-blue-50">

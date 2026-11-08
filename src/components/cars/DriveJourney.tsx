@@ -22,9 +22,9 @@ import { BurjKhalifa, CityBlocks, dubaiSky, laneX, ROAD, Road, SkyAndLight, type
 import { announce, crash, doorThud, horn, indicatorTick, sensorBeep, setLoopSpeed, startLoop, stopLoops, stopSpeech } from "@/components/transit/transitAudio";
 import { canvasQuality } from "@/lib/device";
 import { LOCALS } from "@/lib/locals";
-import { CARS, aed, carAccident, finishDrive, fuelFor, parkCar, refuel, refuelCost, type Car, type Drivable } from "@/lib/cars";
+import { CARS, aed, carAccident, finishDrive, fuelFor, parkCar, refuel, refuelCost, type Car, type Drivable, arrestStolenCarDriver, arrestUnlicensedDriver } from "@/lib/cars";
 import { CarModel, carLength } from "./CarModel";
-import { ArrestScene, accidentArrest } from "./ArrestScene";
+import { ArrestScene, accidentArrest, noLicenceArrest, stolenVehicleArrest, type ArrestStory } from "./ArrestScene";
 import { SteeringWheel } from "./SteeringWheel";
 
 const DR = CARS.driving;
@@ -681,8 +681,8 @@ function Hold({ simRef, control, label, className, children }: {
   );
 }
 
-export function DriveJourney({ drivables, metres, destination, look, balance, onArrive, onArrested, onCancel }: {
-  drivables: Drivable[]; metres: number; destination: string; look?: AvatarLookProps; balance: number;
+export function DriveJourney({ drivables, metres, destination, look, balance, hasLicence = true, onArrive, onArrested, onCancel }: {
+  drivables: Drivable[]; metres: number; destination: string; look?: AvatarLookProps; balance: number; hasLicence?: boolean;
   onArrive: (d: Drivable) => void; onArrested: () => void; onCancel: () => void;
 }) {
   const quality = useMemo(() => canvasQuality(), []);
@@ -710,8 +710,41 @@ export function DriveJourney({ drivables, metres, destination, look, balance, on
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<{ fuel: number; fine: number; hours: number; cost: number; good: boolean } | null>(null);
-  const [arrest, setArrest] = useState<{ accidents: number; revoked: boolean } | null>(null);
+  const [arrestStory, setArrestStory] = useState<ArrestStory | null>(null);
   const filled = phase === "leave" || (stationAt !== null && hud.s > STATION_P + 5);
+
+  // 3D Police Interception: Unlicensed Driving & Stolen Vehicle Patrol
+  useEffect(() => {
+    if (phase !== "drive") return;
+
+    // Check 1: Operating a reported stolen car triggers high-speed Dubai Police pursuit
+    if (d.isStolen && d.isReportedStolen) {
+      const t = setTimeout(async () => {
+        setMsg({ text: "🚨 DUBAI POLICE APB HIT: STOLEN VEHICLE INTERCEPTED!", tone: "bad" });
+        stopLoops();
+        await arrestStolenCarDriver(d.id);
+        window.dispatchEvent(new CustomEvent("dubai:toast", {
+          detail: `🚨 APB HIT: Caught driving stolen ${d.car.make} ${d.car.model}! Dubai Police apprehended you.`
+        }));
+        setArrestStory(stolenVehicleArrest(d.car, d.plate, d.stolenFromUser ?? "Resident"));
+      }, 7000);
+      return () => clearTimeout(t);
+    }
+
+    // Check 2: Driving without a valid driving licence triggers RTA checkpoint arrest
+    if (!hasLicence) {
+      const t = setTimeout(async () => {
+        setMsg({ text: "🚨 RTA CHECKPOINT: UNLICENSED DRIVER DETECTED!", tone: "bad" });
+        stopLoops();
+        await arrestUnlicensedDriver(d.id, d.kind);
+        window.dispatchEvent(new CustomEvent("dubai:toast", {
+          detail: "🚨 Caught driving without a valid driving licence! Dubai Police placed you under arrest."
+        }));
+        setArrestStory(noLicenceArrest(d.car, d.plate));
+      }, 9000);
+      return () => clearTimeout(t);
+    }
+  }, [phase, d, hasLicence]);
 
   // No city blocks over the fuel station or the destination's car park (it has its own building behind).
   useEffect(() => {
@@ -784,7 +817,7 @@ export function DriveJourney({ drivables, metres, destination, look, balance, on
         const r = await carAccident(d);
         if (r.error) { setError(r.error); onCancel(); return; }
         stopLoops();
-        setArrest({ accidents: r.data?.accidents ?? 1, revoked: !!r.data?.revoked });
+        setArrestStory(accidentArrest(d.car, d.plate, r.data?.accidents ?? 1, !!r.data?.revoked));
       }, 2400);
     },
     onPark: () => {
@@ -816,7 +849,7 @@ export function DriveJourney({ drivables, metres, destination, look, balance, on
     setTimeout(() => onArrive(d), 3200);
   };
 
-  if (arrest) return <ArrestScene look={look} story={accidentArrest(d.car, d.plate, arrest.accidents, arrest.revoked)} onDone={onArrested} />;
+  if (arrestStory) return <ArrestScene look={look} story={arrestStory} onDone={onArrested} />;
 
   const kmh = hud.kmh;
   const fuelNow = Math.max(0, (filled ? 100 : d.fuel) - need * Math.min(1, hud.s / length));

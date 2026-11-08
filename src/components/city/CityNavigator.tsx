@@ -77,7 +77,7 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
   const now = useNow();
   // Only with a driving license (a car rented on a fake one stays parked here).
   const licensed = garage ? !!garage.licence : null;
-  const myCars = useMemo(() => (garage?.licence ? drivables(garage, now) : []), [garage, now]);
+  const myCars = useMemo(() => drivables(garage, now), [garage, now]);
   const [drive, setDrive] = useState<{ to: { x: number; y: number }; metres: number } | null>(null);
 
   const go = async (mode: TravelMode) => {
@@ -145,6 +145,7 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
           destination={destination.label === place.name ? place.name : `${destination.label}, ${place.name}`}
           look={citizen?.look}
           balance={citizen?.balance ?? 0}
+          hasLicence={!!garage?.licence}
           onArrive={arriveByCar}
           onArrested={() => { setDrive(null); void reloadGarage(); void reloadServices(); onClose(); openPhone("court"); }}
           onCancel={() => { setDrive(null); void reloadGarage(); }}

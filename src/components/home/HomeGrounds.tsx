@@ -55,7 +55,8 @@ export function HomeGrounds({ items, car, onUse, onGroundClick, activity }: {
     e.stopPropagation();
     onGroundClick(e.point);
   } : undefined;
-  const parked = car && (has("carpark") || has("garage")) ? car : null;
+  const parked = car;
+  const isGaragePos = has("garage") && !has("carpark");
   return (
     <group>
       {/* the plot: sand by default, a lawn with the garden — tappable to walk outside */}
@@ -71,9 +72,27 @@ export function HomeGrounds({ items, car, onUse, onGroundClick, activity }: {
       {/* No stand-in cars: only the car you own or have rented is ever parked here. */}
       {has("garage") && <Garage />}
       {has("carpark") && <CarPark onGroundClick={onGroundClick} />}
-      {/* Your car: on the driveway (in the garage if there's no driveway); tap it to drive somewhere. */}
+      {/* Paved driveway parking bay if carpark exterior item is not yet purchased */}
+      {!has("carpark") && !has("garage") && (
+        <group position={[GROUNDS.driveway.x, 0.01, GROUNDS.driveway.z]} onClick={onGroundClick ? (e) => { e.stopPropagation(); onGroundClick(e.point); } : undefined}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+            <planeGeometry args={[6.4, 7.2]} />
+            <meshStandardMaterial color="#334155" roughness={0.9} />
+          </mesh>
+          {/* Driveway boundary lines */}
+          <mesh position={[-2.8, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[0.15, 6.8]} />
+            <meshBasicMaterial color="#f8fafc" />
+          </mesh>
+          <mesh position={[2.8, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[0.15, 6.8]} />
+            <meshBasicMaterial color="#f8fafc" />
+          </mesh>
+        </group>
+      )}
+      {/* Your car: on the driveway (or in the garage); tap it to drive or interact. */}
       {parked && (
-        <group position={has("carpark") ? [GROUNDS.driveway.x, 0, GROUNDS.driveway.z] : [-11.7, 0, -1.4]} onClick={tap("car")}
+        <group position={isGaragePos ? [-11.7, 0, -1.4] : [GROUNDS.driveway.x, 0, GROUNDS.driveway.z]} onClick={tap("car")}
           onPointerOver={onUse ? () => (document.body.style.cursor = "pointer") : undefined} onPointerOut={() => (document.body.style.cursor = "")}>
           <Suspense fallback={null}><CarModel car={parked.car} plate={parked.plate} /></Suspense>
           {activity === "wash" && <Foam />}

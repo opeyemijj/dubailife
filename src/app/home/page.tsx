@@ -2183,6 +2183,10 @@ export default function HomePage() {
             // Getting into the car: where to? (the trip itself is on the map, by car).
             if (a.serve === "drive") {
               setFixture(null);
+              if (!myCar) {
+                setToastMsg("🚨 Driveway is empty (your vehicle is in use or was stolen).");
+                return;
+              }
               setDriveOpen(true);
               return;
             }
