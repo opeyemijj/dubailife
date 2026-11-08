@@ -278,7 +278,7 @@ export function EmailsAdmin() {
               onChange={(e) => setConfig({ ...config, fromEmail: e.target.value })}
               className="w-full h-10 rounded-xl bg-slate-950 border border-slate-800 px-3 text-sm text-white"
             />
-            <p className="text-[10px] text-slate-500">e.g. welcome@mydubailife.app</p>
+            <p className="text-[10px] text-slate-500">Must be verified in Postmark (e.g. noreply@mydubailife.app)</p>
           </div>
 
           <div className="space-y-1.5">

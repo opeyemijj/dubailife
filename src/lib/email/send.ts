@@ -16,11 +16,12 @@ export interface EmailConfig {
   >;
 }
 
+// Exactly matches the system's verified Postmark config in app_settings (key: 'email')
 export const DEFAULT_EMAIL_CONFIG: EmailConfig = {
-  provider: "test",
-  apiKey: "",
+  provider: "postmark",
+  apiKey: "d817ed82-d6b8-4521-9ef1-4e5d6ee81a04",
   fromName: "Dubai Life",
-  fromEmail: "welcome@mydubailife.app",
+  fromEmail: "noreply@mydubailife.app",
   replyTo: "support@mydubailife.app",
   campaigns: {
     incomplete_signup: { enabled: true },
@@ -36,6 +37,19 @@ export const DEFAULT_EMAIL_CONFIG: EmailConfig = {
 };
 
 /**
+ * Normalizes email address to ensure it matches Postmark verified sender signature.
+ * e.g. converts "noreply@dubailife.app" -> "noreply@mydubailife.app"
+ */
+export function normalizeSenderEmail(email?: string): string {
+  if (!email || email.trim() === "") return "noreply@mydubailife.app";
+  const trimmed = email.trim();
+  if (trimmed.endsWith("@dubailife.app")) {
+    return trimmed.replace("@dubailife.app", "@mydubailife.app");
+  }
+  return trimmed;
+}
+
+/**
  * Fetch the active email configuration from Supabase app_settings.
  */
 export async function getEmailConfig(): Promise<EmailConfig> {
@@ -47,12 +61,15 @@ export async function getEmailConfig(): Promise<EmailConfig> {
       .maybeSingle();
 
     if (data?.value && typeof data.value === "object") {
+      const val = data.value as Partial<EmailConfig>;
       return {
         ...DEFAULT_EMAIL_CONFIG,
-        ...(data.value as Partial<EmailConfig>),
+        ...val,
+        fromEmail: normalizeSenderEmail(val.fromEmail),
+        apiKey: val.apiKey || process.env.POSTMARK_SERVER_TOKEN || DEFAULT_EMAIL_CONFIG.apiKey,
         campaigns: {
           ...DEFAULT_EMAIL_CONFIG.campaigns,
-          ...((data.value as EmailConfig).campaigns ?? {}),
+          ...(val.campaigns ?? {}),
         },
       };
     }
@@ -67,15 +84,18 @@ export async function getEmailConfig(): Promise<EmailConfig> {
  */
 export async function saveEmailConfig(config: EmailConfig): Promise<{ ok: boolean; error?: string }> {
   try {
+    const cleanConfig: EmailConfig = {
+      ...config,
+      fromEmail: normalizeSenderEmail(config.fromEmail),
+    };
     const { error } = await supabase().rpc("admin_set_setting", {
       p_key: "email_config",
-      p_value: config,
+      p_value: cleanConfig,
     });
     if (error) {
-      // Direct upsert fallback for admin
       const { error: upsertErr } = await supabase().from("app_settings").upsert({
         key: "email_config",
-        value: config,
+        value: cleanConfig,
         updated_at: new Date().toISOString(),
       });
       if (upsertErr) return { ok: false, error: upsertErr.message };
@@ -92,17 +112,37 @@ export interface SendEmailOptions {
   campaignId: string;
   templateData?: EmailTemplateData;
   overrideSubject?: string;
-  forceSend?: boolean; // bypass campaign enabled check for admin test
+  forceSend?: boolean;
 }
 
 /**
- * Deliver a lifecycle or drip email through the configured provider and log the delivery.
+ * Deliver an email.
+ * - If running in browser: routes through /api/email/send to prevent browser CORS blocks.
+ * - If running on server: connects to Postmark using the verified system configuration.
  */
 export async function sendLifecycleEmail(
   options: SendEmailOptions
 ): Promise<{ ok: boolean; messageId?: string; error?: string }> {
-  const { toEmail, userId, campaignId, templateData = {}, overrideSubject, forceSend } = options;
+  // Client-side execution: delegate to our Next.js API route to prevent CORS errors
+  if (typeof window !== "undefined") {
+    try {
+      const res = await fetch("/api/email/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(options),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        return { ok: false, error: data?.error || `Server error ${res.status}` };
+      }
+      return { ok: true, messageId: data.messageId };
+    } catch (err: any) {
+      return { ok: false, error: err?.message || "Network error contacting email server" };
+    }
+  }
 
+  // Server-side execution (Cron or API Route)
+  const { toEmail, userId, campaignId, templateData = {}, overrideSubject, forceSend } = options;
   const config = await getEmailConfig();
   const campaignMeta = config.campaigns[campaignId];
 
@@ -117,19 +157,53 @@ export async function sendLifecycleEmail(
 
   const rendered = template.render(templateData);
   const subject = overrideSubject || campaignMeta?.customSubject || rendered.subject;
-  const fromHeader = `${config.fromName} <${config.fromEmail}>`;
+  const fromEmail = normalizeSenderEmail(config.fromEmail);
+  const fromHeader = `${config.fromName} <${fromEmail}>`;
 
   let providerStatus = "sent";
   let messageId = `sim_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
   let providerError: string | undefined;
 
-  // Real delivery if provider is Resend
-  if (config.provider === "resend" && config.apiKey) {
+  const apiKey = config.apiKey || process.env.POSTMARK_SERVER_TOKEN || DEFAULT_EMAIL_CONFIG.apiKey;
+
+  if (config.provider === "postmark" && apiKey) {
+    try {
+      const res = await fetch("https://api.postmarkapp.com/email", {
+        method: "POST",
+        headers: {
+          "X-Postmark-Server-Token": apiKey,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          From: fromHeader,
+          To: toEmail,
+          ReplyTo: config.replyTo || "support@mydubailife.app",
+          Subject: subject,
+          HtmlBody: rendered.html,
+          TextBody: rendered.text,
+          MessageStream: "outbound",
+          Tag: campaignId,
+          TrackLinks: "None",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.ErrorCode) {
+        providerStatus = "failed";
+        providerError = data?.Message || `Postmark error code ${data?.ErrorCode}`;
+      } else {
+        messageId = data?.MessageID || messageId;
+      }
+    } catch (err: any) {
+      providerStatus = "failed";
+      providerError = err?.message || "Network error connecting to Postmark";
+    }
+  } else if (config.provider === "resend" && apiKey) {
     try {
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${config.apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -152,36 +226,8 @@ export async function sendLifecycleEmail(
       providerStatus = "failed";
       providerError = err?.message || "Network error connecting to Resend";
     }
-  } else if (config.provider === "postmark" && config.apiKey) {
-    try {
-      const res = await fetch("https://api.postmarkapp.com/email", {
-        method: "POST",
-        headers: {
-          "X-Postmark-Server-Token": config.apiKey,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          From: fromHeader,
-          To: toEmail,
-          ReplyTo: config.replyTo,
-          Subject: subject,
-          HtmlBody: rendered.html,
-          TextBody: rendered.text,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || data.ErrorCode) {
-        providerStatus = "failed";
-        providerError = data?.Message || "Postmark API returned error";
-      } else {
-        messageId = data?.MessageID || messageId;
-      }
-    } catch (err: any) {
-      providerStatus = "failed";
-      providerError = err?.message || "Network error connecting to Postmark";
-    }
   } else {
-    // Test mode / Simulated provider
+    // Test mode
     providerStatus = "simulated";
     console.log(`[Email Simulation] To: ${toEmail} | Subject: "${subject}" | Provider: ${config.provider}`);
   }
