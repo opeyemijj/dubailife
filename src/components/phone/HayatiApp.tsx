@@ -14,7 +14,7 @@ import { adjustBalance, updateCitizen, useCitizen } from "@/lib/citizenStore";
 import {
   addRelative, askForBaby, askMoveIn, respondMoveIn, myMoveInRequests, moveOut, myHousehold, type SharedHome, type MoveInRequest, askOut, cancelRequest, careForChild, datePlaceOf, endRelationship, FAMILY, happinessOf, hireNanny, logDate, LOVE,
   nameChild, planWedding, propose, relationLabel, removeRelative, resolveDiscovery, respond, respondRelative, ringOf, showLove, stageOf,
-  useFamily, useLove, venueOf, weddingCost, weddingLink, type Child, type Person, type Relation, type Relationship, type Relative,
+  useFamily, useLove, venueOf, weddingCost, weddingLink, calculatePregnancyStage, type Child, type Person, type Relation, type Relationship, type Relative,
 } from "@/lib/love";
 import { contacts, type Contact } from "@/lib/messages";
 import { supabase } from "@/lib/supabase/client";
@@ -356,13 +356,36 @@ const HOMEWORK_QUIZZES = [
 
 function Kids({ rels, kids, busy, run, me }: { rels: Relationship[]; kids: Child[] | null; busy: boolean; run: Run; me: string }) {
   const now = useNow();
+  const { citizen } = useCitizen();
   const expecting = (p: Person) => kids?.some((k) => !k.born && Date.parse(k.dueAt) > now && (k.mother.id === p.id || k.father.id === p.id));
+  const expectingChild = kids?.find((k) => !k.born && Date.parse(k.dueAt) > now);
+  const pregnancyInfo = expectingChild ? calculatePregnancyStage(expectingChild, now) : null;
+
   const [bumpPreview, setBumpPreview] = useState<number>(0);
   const [deliveryRole, setDeliveryRole] = useState<"mother" | "father" | "doctor">("mother");
   const [deliveryProgress, setDeliveryProgress] = useState<number>(0);
   const [schoolId, setSchoolId] = useState<string>("gems_royal");
   const [quizStep, setQuizStep] = useState<number | null>(null);
   const [quizCorrect, setQuizCorrect] = useState<number>(0);
+
+  // Automatically define and sync trimester into avatar's 3D look
+  useEffect(() => {
+    if (pregnancyInfo && expectingChild) {
+      const isMother = expectingChild.mother.id === me || expectingChild.mother.username === me;
+      if (isMother || citizen?.look?.gender === "woman") {
+        setBumpPreview(pregnancyInfo.trimester);
+        if (citizen?.look?.pregnantWeeks !== pregnancyInfo.trimester) {
+          updateCitizen((c) => ({
+            ...c,
+            look: {
+              ...(c.look ?? { gender: "woman" }),
+              pregnantWeeks: pregnancyInfo.trimester,
+            },
+          }));
+        }
+      }
+    }
+  }, [pregnancyInfo?.trimester, expectingChild?.id, me, citizen?.look?.gender, citizen?.look?.pregnantWeeks]);
 
   return (
     <>
@@ -380,45 +403,83 @@ function Kids({ rels, kids, busy, run, me }: { rels: Relationship[]; kids: Child
       ))}
 
       {/* #6: 3D Pregnancy Bump Customizer & 3-Role Hospital Delivery Room Mini-Game */}
-      <Card className="bg-gradient-to-br from-pink-50 via-rose-50 to-amber-50 border border-pink-200">
+      <Card className="bg-gradient-to-br from-pink-50 via-rose-50 to-amber-50 border border-pink-200 space-y-3">
         <div className="flex items-center justify-between">
           <div>
             <p className="font-black text-base text-rose-950">🤰 3D Pregnancy Bump &amp; Delivery Suite</p>
-            <p className="text-xs text-slate-600">Sync your 3D trimester bump &amp; play the 3-Role Hospital Delivery Mini-Game!</p>
+            <p className="text-xs text-slate-600">Trimester bump auto-syncs with pregnancy duration &amp; days left!</p>
           </div>
           <span className="text-2xl">🏥</span>
         </div>
 
+        {/* Dynamic Timeline Notification */}
+        {pregnancyInfo ? (
+          <div className="p-2.5 rounded-xl bg-white/90 border border-rose-300 shadow-sm flex items-center justify-between">
+            <div>
+              <div className="text-xs font-black text-rose-900 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Auto-Synced: {pregnancyInfo.trimesterLabel}</span>
+              </div>
+              <div className="text-[11px] text-slate-600 font-medium">
+                {pregnancyInfo.daysLeft} day{pregnancyInfo.daysLeft === 1 ? "" : "s"} left until birth (Day {pregnancyInfo.elapsedDays} of {pregnancyInfo.totalDays})
+              </div>
+            </div>
+            <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white font-black text-[10px] tracking-wide uppercase shadow-sm">
+              Trimester {pregnancyInfo.trimester}
+            </span>
+          </div>
+        ) : (
+          <div className="p-2 rounded-xl bg-white/60 border border-slate-200 text-[11px] text-slate-600">
+            💡 When expecting, your avatar bump automatically advances through Trimesters 1, 2, and 3 based on duration and days left.
+          </div>
+        )}
+
         {/* 3D Baby Bump Trimester Switcher */}
         <div className="space-y-1.5">
-          <p className="text-xs font-black text-slate-700">🤰 3D Avatar Baby Bump Stage:</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-black text-slate-700">🤰 3D Avatar Baby Bump Stage:</p>
+            {pregnancyInfo && (
+              <span className="text-[10px] font-bold text-rose-600">
+                Matches current clothing tint
+              </span>
+            )}
+          </div>
           <div className="grid grid-cols-4 gap-1.5">
             {[
               { w: 0, label: "None" },
               { w: 1, label: "Tri 1" },
               { w: 2, label: "Tri 2" },
               { w: 3, label: "Tri 3 (Full)" },
-            ].map((b) => (
-              <button
-                key={b.w}
-                type="button"
-                onClick={() => {
-                  gameAudio.playClickSound();
-                  setBumpPreview(b.w);
-                  updateCitizen((c) => ({
-                    ...c,
-                    look: { ...(c.look ?? { gender: "woman" }), pregnantWeeks: b.w || undefined },
-                  }));
-                }}
-                className={`py-2 rounded-xl text-xs font-black border transition-all ${
-                  bumpPreview === b.w
-                    ? "bg-rose-600 text-white border-rose-600"
-                    : "bg-white text-slate-700 border-rose-200"
-                }`}
-              >
-                {b.label}
-              </button>
-            ))}
+            ].map((b) => {
+              const isAuto = pregnancyInfo?.trimester === b.w;
+              const isSelected = bumpPreview === b.w;
+              return (
+                <button
+                  key={b.w}
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playClickSound();
+                    setBumpPreview(b.w);
+                    updateCitizen((c) => ({
+                      ...c,
+                      look: { ...(c.look ?? { gender: "woman" }), pregnantWeeks: b.w || undefined },
+                    }));
+                  }}
+                  className={`py-2 rounded-xl text-xs font-black border transition-all relative ${
+                    isSelected
+                      ? "bg-rose-600 text-white border-rose-600 shadow-sm"
+                      : "bg-white text-slate-700 border-rose-200 hover:bg-rose-50"
+                  }`}
+                >
+                  {b.label}
+                  {isAuto && (
+                    <span className="absolute -top-1.5 -right-1 px-1 rounded-full bg-emerald-500 text-white text-[8px] font-black shadow">
+                      AUTO
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -593,14 +654,27 @@ function ChildCard({ child: k, busy, run, me, now }: { child: Child; busy: boole
   const suggestions = FAMILY.babyNames[k.gender];
 
   if (!born) {
-    const total = Date.parse(k.dueAt) - Date.parse(k.conceivedAt);
-    const done = Math.min(1, Math.max(0, (now - Date.parse(k.conceivedAt)) / total));
-    const daysLeft = Math.ceil((Date.parse(k.dueAt) - now) / 86_400_000);
+    const stage = calculatePregnancyStage(k, now);
     return (
-      <Card className="bg-gradient-to-br from-sky-50 to-pink-50">
-        <p className="font-black text-lg">🤰 Expecting {k.name ? k.name : `a ${k.gender}`} with @{other.username}</p>
-        <div className="h-3 rounded-full bg-white overflow-hidden"><div className="h-full bg-pink-400" style={{ width: `${Math.round(done * 100)}%` }} /></div>
-        <p className="text-slate-600">Arrives in {daysLeft} day{daysLeft === 1 ? "" : "s"}. Choose a name together:</p>
+      <Card className="bg-gradient-to-br from-sky-50 to-pink-50 border border-pink-200 space-y-2.5">
+        <div className="flex items-center justify-between">
+          <p className="font-black text-lg">🤰 Expecting {k.name ? k.name : `a ${k.gender}`} with @{other.username}</p>
+          <span className="px-2.5 py-1 rounded-full bg-rose-600 text-white font-black text-xs shadow-sm">
+            {stage.trimesterLabel}
+          </span>
+        </div>
+        <div className="space-y-1">
+          <div className="flex justify-between text-xs font-bold text-slate-700">
+            <span>Stage: {stage.trimesterLabel} (Day {stage.elapsedDays} of {stage.totalDays})</span>
+            <span className="text-rose-600 font-black">{stage.daysLeft} day{stage.daysLeft === 1 ? "" : "s"} left ({stage.progressPct}%)</span>
+          </div>
+          <div className="h-3 rounded-full bg-white overflow-hidden border border-pink-200">
+            <div className="h-full bg-gradient-to-r from-pink-400 to-rose-600 transition-all duration-500" style={{ width: `${stage.progressPct}%` }} />
+          </div>
+        </div>
+        <p className="text-xs text-slate-600">
+          Due on {stage.dueAtFormatted}. Your 3D avatar baby bump is automatically set to {stage.trimesterLabel} and styled to match your clothing. Choose a baby name together:
+        </p>
         <NameRow name={name} setName={setName} suggestions={suggestions} busy={busy} onSave={(n) => run(() => nameChild(k.id, n), `💕 ${n} it is.`)} />
       </Card>
     );

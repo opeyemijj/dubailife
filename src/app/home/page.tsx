@@ -1300,7 +1300,7 @@ export default function HomePage() {
 
           {/* Center Wallet Balance Pill */}
           <div className="px-4 py-2 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-slate-200 text-xs sm:text-sm font-black font-mono text-slate-900 pointer-events-auto">
-            AED {walletBalance.toLocaleString()}
+            ₦{walletBalance.toLocaleString()}
           </div>
 
           {/* Right Action Buttons: Undo, Rotate Camera, Close */}
@@ -2252,6 +2252,7 @@ export default function HomePage() {
         }}
         onPlaceStored={handlePlaceStored}
         initialCategory={shopCat === "all" ? "all" : shopCat}
+        currencySymbol="₦"
       />
 
       {/* 3. MY PROPERTIES (OWNED & RENTED) SWITCHER MODAL */}

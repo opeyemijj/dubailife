@@ -179,6 +179,55 @@ export function happinessOf(child: Pick<Child, "careRecent" | "nannyUntil">, now
   return Math.min(100, Math.round((child.careRecent / (FAMILY.care.length * FAMILY.careWindowDays)) * 100));
 }
 
+export interface PregnancyProgress {
+  trimester: 1 | 2 | 3;
+  trimesterLabel: string;
+  daysLeft: number;
+  totalDays: number;
+  elapsedDays: number;
+  progressPct: number;
+  dueAtFormatted: string;
+}
+
+/** Automatically defines pregnancy trimester based on total duration and remaining days */
+export function calculatePregnancyStage(child: Pick<Child, "conceivedAt" | "dueAt">, now: number): PregnancyProgress {
+  const due = Date.parse(child.dueAt);
+  const conceived = child.conceivedAt ? Date.parse(child.conceivedAt) : due - (FAMILY.pregnancyDays || 7) * 86_400_000;
+  const totalMs = Math.max(86_400_000, due - conceived);
+  const totalDays = Math.max(1, Math.round(totalMs / 86_400_000));
+  const elapsedMs = Math.max(0, Math.min(totalMs, now - conceived));
+  const remainingMs = Math.max(0, due - now);
+  const daysLeft = Math.max(0, Math.ceil(remainingMs / 86_400_000));
+  const elapsedDays = Math.min(totalDays, Math.floor(elapsedMs / 86_400_000));
+  const progressRatio = Math.min(1, Math.max(0, elapsedMs / totalMs));
+  const progressPct = Math.min(100, Math.round(progressRatio * 100));
+
+  let trimester: 1 | 2 | 3 = 1;
+  if (progressRatio >= 2 / 3 || daysLeft <= Math.ceil(totalDays / 3)) {
+    trimester = 3;
+  } else if (progressRatio >= 1 / 3 || daysLeft <= Math.ceil((2 * totalDays) / 3)) {
+    trimester = 2;
+  }
+
+  const trimesterLabel =
+    trimester === 1 ? "1st Trimester" : trimester === 2 ? "2nd Trimester" : "3rd Trimester";
+
+  const dueAtFormatted = new Date(due).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+  });
+
+  return {
+    trimester,
+    trimesterLabel,
+    daysLeft,
+    totalDays,
+    elapsedDays,
+    progressPct,
+    dueAtFormatted,
+  };
+}
+
 let family: MyFamily | null = null;
 const familyListeners = new Set<() => void>();
 // Without the family tables yet (or offline), show an empty family rather than loading forever.

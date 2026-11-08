@@ -177,9 +177,9 @@ export interface CuratedStyle {
 
 export const CURATED_STYLES: CuratedStyle[] = [
   {
-    id: "dubai-minimal",
-    name: "Dubai Minimal",
-    desc: "Clean lines, white wood and one good plant. Nothing extra.",
+    id: "lagos-minimal",
+    name: "Lagos Minimal",
+    desc: "Clean lines, white wood and one good plant. Nothing...",
     price: 402000,
     icon: "🤍",
     wallColor: "#faf8f3",
@@ -187,9 +187,9 @@ export const CURATED_STYLES: CuratedStyle[] = [
     furnitureIds: ["sofa", "coffee-table", "plant", "floor-lamp"],
   },
   {
-    id: "arabian-luxe",
+    id: "afro-luxe",
     name: "Afro-Luxe",
-    desc: "Mustard and emerald, Aso-Oke runners and art from the souk.",
+    desc: "Mustard and emerald, Aso-Oke runners and art from...",
     price: 1400000,
     icon: "🌍",
     wallColor: "#d8cfc2",
@@ -197,9 +197,9 @@ export const CURATED_STYLES: CuratedStyle[] = [
     furnitureIds: ["royal-gold-throne", "carpet", "majlis-emerald", "art-abstract"],
   },
   {
-    id: "downtown-penthouse",
-    name: "Downtown Penthouse",
-    desc: "Charcoal walls, white marble, a big L sofa and floor-to-ceiling glass.",
+    id: "lekki-penthouse",
+    name: "Lekki Penthouse",
+    desc: "Charcoal walls, white marble, a big L sofa and a...",
     price: 8500000,
     icon: "🏙️",
     wallColor: "#33363b",
@@ -207,19 +207,19 @@ export const CURATED_STYLES: CuratedStyle[] = [
     furnitureIds: ["l-sofa", "chandelier-ring", "fireplace", "media-wall"],
   },
   {
-    id: "cosy-marina",
-    name: "Cosy Marina",
-    desc: "Soft chairs, a family sofa and a standing fan for sea breezes.",
+    id: "cosy-mainland",
+    name: "Cosy Mainland",
+    desc: "Soft chairs, a family sofa and a standing fan for whe...",
     price: 337000,
-    icon: "🏖️",
+    icon: "🏡",
     wallColor: "#c7dbea",
     floorFinish: "oak",
     furnitureIds: ["lounge-chair", "standing-fan", "dining-table-round", "plant"],
   },
   {
-    id: "boho-chic",
+    id: "boho",
     name: "Boho",
-    desc: "Plants everywhere, bean bags, fairy lights and a woven rug.",
+    desc: "Plants everywhere, bean bags, fairy lights and a...",
     price: 364000,
     icon: "🪴",
     wallColor: "#f4efe6",
@@ -229,8 +229,8 @@ export const CURATED_STYLES: CuratedStyle[] = [
   {
     id: "royal-gold",
     name: "Royal Gold",
-    desc: "Gold walls, a gold sofa, silk curtains and brass chandeliers.",
-    price: 16400000,
+    desc: "Gold walls, a gold sofa, silk curtains and a brass...",
+    price: 6400000,
     icon: "👑",
     wallColor: "#d4af37",
     floorFinish: "white-marble",
@@ -347,7 +347,7 @@ export const CATALOG: CatalogItem[] = [
 
   // --- Deco ---
   { id: "wall-calendar", name: "Wall Calendar", desc: "Printed monthly wall planner.", icon: "📅", price: 300, kind: "wall", size: [1, 1], category: "decor", stars: 1, statBadge: "+Fun", placementTag: "wall" },
-  { id: "fela-poster", name: "Dubai Art Poster", desc: "Iconic commemorative visual poster.", icon: "🖼️", price: 600, kind: "wall", size: [1, 2], category: "decor", stars: 1, statBadge: "+Fun", placementTag: "wall" },
+  { id: "fela-poster", name: "Fela Poster", desc: "Iconic commemorative visual poster.", icon: "🖼️", price: 600, kind: "wall", size: [1, 2], category: "decor", stars: 1, statBadge: "+Fun", placementTag: "wall" },
   { id: "potted-plant-indoor", name: "Potted Plant", desc: "Lush green houseplant in a stone planter.", icon: "🪴", price: 700, kind: "floor", size: [1, 1], category: "decor", stars: 1, statBadge: "+Fun", placementTag: "1×1" },
   { id: "small-potted-plant", name: "Small Potted Plant", desc: "Compact desk-friendly indoor plant.", icon: "🌱", price: 700, kind: "floor", size: [1, 1], category: "decor", stars: 1, statBadge: "+Fun", placementTag: "1×1" },
   { id: "succulent-pot", name: "Succulent Pot", desc: "Hardy desert geometric succulent.", icon: "🌵", price: 700, kind: "floor", size: [1, 1], category: "decor", stars: 1, statBadge: "+Fun", placementTag: "1×1" },
@@ -540,15 +540,37 @@ export const FLOOR_FINISHES: Array<{ id: FloorFinish; label: string; price: numb
   { id: "terrazzo", label: "Venetian terrazzo", price: 6800 },
   { id: "slate", label: "Charcoal slate tiles", price: 5400 },
 ];
+
+export const FLOOR_SWATCH: Record<string, string> = {
+  oak: "repeating-linear-gradient(0deg,#c8935f 0 10px,#b98250 10px 11px)",
+  walnut: "repeating-linear-gradient(0deg,#5b3a24 0 10px,#3f2818 10px 11px)",
+  herringbone:
+    "repeating-linear-gradient(45deg,#b98a57 0 8px,#a97a49 8px 16px),#b98a57",
+  "white-oak":
+    "repeating-linear-gradient(0deg,#e6d6bb 0 10px,#d8c4a5 10px 11px)",
+  "grey-oak":
+    "repeating-linear-gradient(0deg,#a8a198 0 10px,#8f887e 10px 11px)",
+  teak: "repeating-linear-gradient(0deg,#a86b35 0 10px,#8f5729 10px 11px)",
+  "herringbone-white":
+    "repeating-linear-gradient(45deg,#e8dcc6 0 8px,#d9caae 8px 16px),#e8dcc6",
+  "green-marble": "linear-gradient(135deg,#1f4d3a 40%,#e1f0e6 45%,#1f4d3a 50%)",
+  "rose-marble": "linear-gradient(135deg,#e8c8c0 40%,#a8786f 45%,#e8c8c0 50%)",
+  terrazzo:
+    "radial-gradient(circle at 20% 30%,#c97b63 2px,transparent 3px),radial-gradient(circle at 70% 60%,#7a8b99 2px,transparent 3px),radial-gradient(circle at 45% 80%,#d9b44a 2px,transparent 3px),#ece6dc",
+  slate: "linear-gradient(90deg,#3b3f45 49%,#2c2f34 50%,#3b3f45 51%)",
+  travertine: "repeating-linear-gradient(0deg,#dfcfb3 0 6px,#d3c09f 6px 8px)",
+  "white-marble": "linear-gradient(135deg,#f5f3ef 40%,#c9c9cf 45%,#f5f3ef 50%)",
+  "black-marble": "linear-gradient(135deg,#17171a 40%,#d9d9d9 44%,#17171a 48%)",
+};
 export const WALL_PAINTS: Array<{ id: string; label: string; color: string; price: number }> = [
   { id: "classic-cream", label: "Classic Cream", color: "#f4eedc", price: 3000 },
-  { id: "dubai-sky", label: "Dubai Sky", color: "#90c1e7", price: 3000 },
+  { id: "dubai-sky", label: "Lagos Sky", color: "#90c1e7", price: 3000 },
   { id: "mint-fresh", label: "Mint Fresh", color: "#9bd7ba", price: 3000 },
   { id: "peach-glow", label: "Peach Glow", color: "#f7ba97", price: 3000 },
   { id: "soft-lilac", label: "Soft Lilac", color: "#c4b2e6", price: 3000 },
-  { id: "desert-green", label: "Desert Green", color: "#43a66b", price: 4000 },
-  { id: "charcoal-deep", label: "Charcoal", color: "#474f59", price: 5000 },
-  { id: "royal-ochre", label: "Royal Ochre", color: "#d49b28", price: 6000 },
+  { id: "desert-green", label: "Naija Green", color: "#43a66b", price: 4000 },
+  { id: "charcoal-deep", label: "Lekki Charcoal", color: "#474f59", price: 5000 },
+  { id: "royal-ochre", label: "Owambe Gold", color: "#d49b28", price: 6000 },
   { id: "ivory", label: "Warm ivory", color: "#f4efe6", price: 0 },
   { id: "greige", label: "Desert greige", color: "#d8cfc2", price: 900 },
   { id: "sage", label: "Sage green", color: "#b7c4ad", price: 900 },

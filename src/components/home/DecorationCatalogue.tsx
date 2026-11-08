@@ -35,6 +35,7 @@ export interface DecorationCatalogueProps {
   onPlaceMultiple?: (items: CatalogItem[]) => void;
   onPlaceStored?: (owned: OwnedFurniture) => void;
   initialCategory?: string;
+  currencySymbol?: string;
 }
 
 export function DecorationCatalogue({
@@ -48,6 +49,7 @@ export function DecorationCatalogue({
   onPlaceMultiple,
   onPlaceStored,
   initialCategory = "all",
+  currencySymbol = "₦",
 }: DecorationCatalogueProps) {
   const [activeTab, setActiveTab] = useState<string>(initialCategory);
   const [searchQuery, setSearchQuery] = useState("");
@@ -188,11 +190,25 @@ export function DecorationCatalogue({
 
   // Format currency
   const formatPrice = (p: number) => {
+    const symbol = currencySymbol || "₦";
     if (p >= 1_000_000) {
       const m = p / 1_000_000;
-      return `AED ${m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)}m`;
+      return `${symbol}${m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)}m`;
     }
-    return `AED ${p.toLocaleString()}`;
+    return `${symbol}${p.toLocaleString()}`;
+  };
+
+  const formatStylePrice = (p: number) => {
+    const symbol = currencySymbol || "₦";
+    if (p >= 1_000_000) {
+      const m = p / 1_000_000;
+      return `about ${symbol}${m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)}m`;
+    }
+    if (p >= 1_000) {
+      const k = Math.round(p / 1_000);
+      return `about ${symbol}${k}k`;
+    }
+    return `about ${symbol}${p.toLocaleString()}`;
   };
 
   return (
@@ -394,30 +410,40 @@ export function DecorationCatalogue({
               </div>
 
               {/* WALL PAINT SWATCHES */}
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="text-xs font-black text-slate-800">Wall paint</div>
-                <div className="grid grid-cols-4 sm:grid-cols-4 gap-2">
+                <div className="grid grid-cols-4 gap-2.5 sm:gap-3">
                   {WALL_PAINTS.slice(0, 8).map((wp) => {
                     const current = homeStyle.wall?.toLowerCase() === wp.color.toLowerCase();
                     return (
                       <button
                         key={wp.id}
+                        type="button"
                         onClick={() => onRestyle({ wall: wp.color }, wp.price, `Walls painted ${wp.label}`)}
-                        className={`p-2 rounded-2xl border text-center transition-all ${
+                        className={`p-1.5 rounded-2xl text-center transition-all flex flex-col items-center ${
                           current
-                            ? "border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-200"
-                            : "border-slate-200 hover:bg-slate-50 active:scale-95"
+                            ? "bg-slate-100 ring-2 ring-emerald-500 scale-[1.02]"
+                            : "hover:bg-slate-50 active:scale-95"
                         }`}
                       >
-                        <span
-                          className="block h-9 rounded-xl border border-black/5 shadow-inner mb-1.5"
-                          style={{ background: wp.color }}
-                        />
-                        <span className="block text-[11px] font-black text-slate-800 truncate leading-tight">
+                        {/* Two-tone split pill capsule */}
+                        <div
+                          className="w-14 h-10 sm:w-16 sm:h-12 rounded-2xl shadow-sm mb-1.5 overflow-hidden flex border border-black/5"
+                        >
+                          <div
+                            className="w-1/2 h-full"
+                            style={{ background: wp.color, filter: "brightness(1.08)" }}
+                          />
+                          <div
+                            className="w-1/2 h-full"
+                            style={{ background: wp.color, filter: "brightness(0.92)" }}
+                          />
+                        </div>
+                        <span className="block text-[11px] font-black text-slate-800 truncate w-full text-center leading-tight">
                           {wp.label}
                         </span>
-                        <span className="text-[10px] font-mono font-bold text-slate-500">
-                          {current ? "In room" : formatPrice(wp.price)}
+                        <span className="text-[10px] font-bold text-slate-900 mt-0.5">
+                          {formatPrice(wp.price)}
                         </span>
                       </button>
                     );
@@ -426,27 +452,35 @@ export function DecorationCatalogue({
               </div>
 
               {/* MIX YOUR OWN COLOUR */}
-              <div className="p-3.5 rounded-2xl border border-slate-200 space-y-2">
+              <div className="space-y-2.5 pt-2">
                 <div className="flex items-center justify-between text-xs font-black text-slate-800">
                   <span>Mix your own colour</span>
-                  <span className="text-emerald-600 font-mono font-bold">AED 6,000 a colour</span>
+                  <span className="text-slate-900 font-bold">{formatPrice(6000)} a colour</span>
                 </div>
-                <label className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer active:scale-[0.99] transition-transform">
+                <label className="flex items-center gap-4 cursor-pointer active:scale-[0.99] transition-transform">
+                  {/* Conic Rainbow Spectrum Color Wheel */}
                   <div
-                    className="w-10 h-10 rounded-full border border-black/10 shadow-sm shrink-0"
-                    style={{ background: homeStyle.wall || "#f4eedc" }}
+                    className="w-14 h-14 rounded-full shadow-md shrink-0 border-2 border-white ring-1 ring-slate-200"
+                    style={{
+                      background:
+                        "conic-gradient(from 180deg, #ff0055, #ff5500, #ffcc00, #00cc66, #0099ff, #6600ff, #ff00cc, #ff0055)",
+                    }}
                   />
-                  <div className="flex-1">
-                    <span className="block text-xs font-black text-slate-800">Pick any custom hex tint</span>
-                    <span className="block text-[10px] font-mono font-bold text-slate-500 uppercase">
-                      Current: {homeStyle.wall || "#f4eedc"}
-                    </span>
+                  {/* Two-tone capsule preview of chosen mixed color */}
+                  <div className="flex-1 h-14 rounded-2xl border border-black/5 shadow-sm overflow-hidden flex">
+                    <div
+                      className="w-1/2 h-full"
+                      style={{ background: homeStyle.wall || "#e6b08a", filter: "brightness(1.08)" }}
+                    />
+                    <div
+                      className="w-1/2 h-full"
+                      style={{ background: homeStyle.wall || "#e6b08a", filter: "brightness(0.92)" }}
+                    />
                   </div>
-                  <span className="px-3 py-1.5 rounded-xl bg-slate-900 text-white font-black text-xs">Pick RGB</span>
                   <input
                     type="color"
-                    value={homeStyle.wall || "#f4eedc"}
-                    onChange={(e) => onRestyle({ wall: e.target.value }, 6000, `Walls painted ${e.target.value.toUpperCase()}`)}
+                    value={homeStyle.wall || "#e6b08a"}
+                    onChange={(e) => onRestyle({ wall: e.target.value }, 6000, `Walls painted custom ${e.target.value.toUpperCase()}`)}
                     className="sr-only"
                   />
                 </label>
@@ -522,7 +556,7 @@ export function DecorationCatalogue({
 
                       <div className="flex items-center justify-between pt-1 border-t border-slate-100">
                         <span className="text-xs font-mono font-black text-slate-900">
-                          about {formatPrice(st.price)}
+                          {formatStylePrice(st.price)}
                         </span>
                         <button
                           onClick={() => {

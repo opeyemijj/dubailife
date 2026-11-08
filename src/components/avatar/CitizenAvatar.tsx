@@ -273,16 +273,16 @@ interface Placement {
 }
 
 /** Keeps the worn accessories, wigs, nails, shoes, and pregnancy bump attached to the model's skeleton. */
-function useAccessories(model: { rig: ReturnType<typeof buildAccessoryRig> }, accessories: Accessory[] | undefined, look: AvatarLookProps) {
+function useAccessories(model: { rig: ReturnType<typeof buildAccessoryRig>; meshes?: THREE.Mesh[] }, accessories: Accessory[] | undefined, look: AvatarLookProps) {
   const key = (accessories ?? []).slice().sort().join(",");
   useEffect(() => {
     if (!key) return;
     return attachAccessories(model.rig, key.split(",") as Accessory[]);
   }, [model, key]);
 
-  const extrasKey = `${look.wear ?? ""}|${look.wigId ?? ""}|${look.shoeId ?? ""}|${look.nailId ?? ""}|${look.nailColor ?? ""}|${look.primaryColor ?? ""}|${look.secondaryColor ?? ""}|${look.pregnantWeeks ?? 0}|${look.gloves ?? ""}`;
+  const extrasKey = `${look.wear ?? ""}|${look.wigId ?? ""}|${look.shoeId ?? ""}|${look.nailId ?? ""}|${look.nailColor ?? ""}|${look.primaryColor ?? ""}|${look.outfitColor ?? ""}|${look.secondaryColor ?? ""}|${look.pregnantWeeks ?? 0}|${look.gloves ?? ""}`;
   useEffect(() => {
-    return attachLookExtras(model.rig, look);
+    return attachLookExtras(model.rig, look, model.meshes);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [model, extrasKey]);
 }
@@ -409,6 +409,17 @@ function useClothingTint(model: { scene: THREE.Object3D; meshes: THREE.Mesh[] },
         }
       }
     }
+
+    // Also tint pregnancy bump to perfectly match clothing in real time
+    model.scene.traverse((child) => {
+      if (child.name === "pregnancy_bump" && child instanceof THREE.Mesh) {
+        const bMat = child.material as THREE.MeshStandardMaterial;
+        if (bMat && bMat.color) {
+          bMat.color.copy(targetColor);
+          bMat.needsUpdate = true;
+        }
+      }
+    });
   }, [model, tintHex]);
 }
 
