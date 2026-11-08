@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     let messageId = `sim_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     let providerError: string | undefined;
 
-    const apiKey = config.apiKey || process.env.POSTMARK_SERVER_TOKEN || DEFAULT_EMAIL_CONFIG.apiKey;
+    const apiKey = config.apiKey || process.env.POSTMARK_SERVER_TOKEN || "";
 
     if (config.provider === "postmark" && apiKey) {
       const pmRes = await fetch("https://api.postmarkapp.com/email", {

@@ -19,7 +19,7 @@ export interface EmailConfig {
 // Exactly matches the system's verified Postmark config in app_settings (key: 'email')
 export const DEFAULT_EMAIL_CONFIG: EmailConfig = {
   provider: "postmark",
-  apiKey: "d817ed82-d6b8-4521-9ef1-4e5d6ee81a04",
+  apiKey: "",
   fromName: "Dubai Life",
   fromEmail: "noreply@mydubailife.app",
   replyTo: "support@mydubailife.app",
@@ -66,7 +66,7 @@ export async function getEmailConfig(): Promise<EmailConfig> {
         ...DEFAULT_EMAIL_CONFIG,
         ...val,
         fromEmail: normalizeSenderEmail(val.fromEmail),
-        apiKey: val.apiKey || process.env.POSTMARK_SERVER_TOKEN || DEFAULT_EMAIL_CONFIG.apiKey,
+        apiKey: val.apiKey || process.env.POSTMARK_SERVER_TOKEN || "",
         campaigns: {
           ...DEFAULT_EMAIL_CONFIG.campaigns,
           ...(val.campaigns ?? {}),
@@ -164,7 +164,7 @@ export async function sendLifecycleEmail(
   let messageId = `sim_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
   let providerError: string | undefined;
 
-  const apiKey = config.apiKey || process.env.POSTMARK_SERVER_TOKEN || DEFAULT_EMAIL_CONFIG.apiKey;
+  const apiKey = config.apiKey || process.env.POSTMARK_SERVER_TOKEN || "";
 
   if (config.provider === "postmark" && apiKey) {
     try {
