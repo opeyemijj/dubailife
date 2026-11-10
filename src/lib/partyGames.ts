@@ -125,12 +125,18 @@ export function usePartyGames({ me, isHost, present }: { me: { id: string; usern
       if (snapRef.current?.id === e.gameId) addCheer({ emoji: e.emoji, who: e.from.username, seat: e.seat });
       return true;
     }
+    if (e.type === "party_sync") {
+      // A new arrival: the players send the board now (or the host, when no player is here).
+      const cur = snapRef.current;
+      if (cur && me && (cur.players.some((p) => p && !p.ai && p.id === me.id) || isHost)) emitRef.current?.({ type: "party_game", snap: cur });
+      return true;
+    }
     if (e.type === "party_predict") {
       if (snapRef.current?.id === e.gameId) setPredictions((p) => ({ ...p, [e.from.userId]: e.seat }));
       return true;
     }
     return false;
-  }, [addCheer]);
+  }, [addCheer, me, isHost]);
 
   /** Mine to set: apply it here and send it to everyone. */
   const publish = useCallback((next: PartyGameSnap | null, clearedId?: string) => {
@@ -218,6 +224,13 @@ export function usePartyGames({ me, isHost, present }: { me: { id: string; usern
     if (!cur || !me) return;
     setPredictions((p) => ({ ...p, [me.id]: seat }));
     emitRef.current?.({ type: "party_predict", gameId: cur.id, seat });
+  }, [me]);
+
+  // Just arrived at the party: ask for the board, so a game already on shows up at once.
+  useEffect(() => {
+    if (!me) return;
+    const t = setTimeout(() => emitRef.current?.({ type: "party_sync" }), 2500);
+    return () => clearTimeout(t);
   }, [me]);
 
   // The computer's moves, made by the human who started the game.

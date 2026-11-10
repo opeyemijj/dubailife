@@ -5,6 +5,7 @@
 // the winner, Watch (the camera glides to the board) and clearing it.
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { PARTY_GAMES, SIDES, TURN_LIMIT_MS, resultText, turnOf, turnText, type PartyGameId, type PartyGames } from "@/lib/partyGames";
 import { gameAudio } from "@/utils/gameAudio";
 import type { PoolState } from "@/components/games/Pool";
@@ -26,7 +27,7 @@ export function PartyGamePicker({ pg, onClose, onStarted }: { pg: PartyGames; on
     onClose();
   };
   return (
-    <div className="fixed inset-0 z-[220] bg-black/55 backdrop-blur-sm flex items-end sm:items-center justify-center p-3" onClick={onClose}>
+    <div className="fixed inset-0 z-[10060] bg-black/55 backdrop-blur-sm flex items-end sm:items-center justify-center p-3" onClick={onClose}>
       <div className="w-full max-w-md bg-white text-slate-900 rounded-3xl p-4 space-y-3 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -59,7 +60,9 @@ export function PartyGamePicker({ pg, onClose, onStarted }: { pg: PartyGames; on
   );
 }
 
-export function PartyGameCard({ pg, me, isHost, present, onWatch }: {
+export function PartyGameCard({ pg, me, isHost, present, onWatch, compact = false }: {
+  /** Clear screen: just a pill (whose turn), tap it for the full card. */
+  compact?: boolean;
   pg: PartyGames;
   me: string | null;
   isHost: boolean;
@@ -68,7 +71,11 @@ export function PartyGameCard({ pg, me, isHost, present, onWatch }: {
   onWatch: () => void;
 }) {
   const [clock, setClock] = useState(0);
-  const [small, setSmall] = useState(false);
+  // Shrunk by hand, or by the clear screen (until tapped open).
+  const [smallSet, setSmall] = useState<boolean | null>(null);
+  const [compactWas, setCompactWas] = useState(compact);
+  if (compactWas !== compact) { setCompactWas(compact); setSmall(null); }
+  const small = smallSet ?? compact;
   const s = pg.snap;
   useEffect(() => {
     if (!s || s.over) return;
@@ -102,7 +109,7 @@ export function PartyGameCard({ pg, me, isHost, present, onWatch }: {
   if (small) {
     return (
       <button onClick={() => setSmall(false)} className="fixed left-3 top-[calc(env(safe-area-inset-top)+10.5rem)] z-30 h-10 pl-3 pr-4 rounded-full bg-slate-950/90 text-white shadow-xl text-xs font-black flex items-center gap-1.5">
-        {info.icon} {turn === pg.mySeat && !s.over ? "Your turn!" : info.name}
+        {info.icon} {s.over ? info.name : turnText(s, pg.mySeat) || info.name}
       </button>
     );
   }
@@ -197,8 +204,9 @@ export function PartyGameResult({ pg, isHost, onPickAnother }: { pg: PartyGames;
     if (playing || isHost) pg.clear();
     else setDismissed(s.id);
   };
-  return (
-    <div className="fixed inset-x-0 top-[calc(env(safe-area-inset-top)+5rem)] z-40 flex justify-center px-4 pointer-events-none">
+  // Straight into the page body, above everything else on screen (sheets, the feed, the side bar).
+  return createPortal(
+    <div className="fixed inset-x-0 top-[calc(env(safe-area-inset-top)+5rem)] z-[10050] flex justify-center px-4 pointer-events-none">
       <div className="pointer-events-auto relative w-full max-w-sm overflow-hidden rounded-3xl bg-slate-950/95 text-white shadow-2xl ring-2 ring-amber-300/70 p-5 text-center animate-in zoom-in-90 duration-300">
         {res.won && (
           <div className="pointer-events-none absolute inset-0">
@@ -218,6 +226,7 @@ export function PartyGameResult({ pg, isHost, onPickAnother }: { pg: PartyGames;
           <button onClick={close} className="h-11 rounded-2xl bg-white/10 text-xs font-black text-white/80 active:scale-95">✕ Close</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

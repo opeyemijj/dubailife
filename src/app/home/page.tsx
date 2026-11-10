@@ -799,6 +799,12 @@ export default function HomePage() {
     exterior: homeStyle.exterior ?? [],
     lightsOut: !!party && lightsOut,
     level,
+    clean: cleanScreen,
+    onGameStart: () => {
+      setPartyPanel(false);
+      setHomeMenuOpen(false);
+      setCleanScreen(true);
+    },
     onWatch: () => {
       if (level !== 0) changeLevel(0);
       setView("above");
@@ -1220,8 +1226,10 @@ export default function HomePage() {
         extraZones={partyBoard.zones}
         focus={partyBoard.focus}
         poolCovered={partyBoard.poolCovered}
+        clean={cleanScreen}
       />
-      {!cleanScreen && partyBoard.ui}
+      {/* The game's own card and result stay on a clear screen (the card as a pill). */}
+      {partyBoard.ui}
 
       {view !== "above" && !placing && !decorating && !cleanScreen && (
         <div className="absolute left-4 bottom-[max(6.5rem,calc(env(safe-area-inset-bottom)+6rem))] z-30">
@@ -1283,7 +1291,7 @@ export default function HomePage() {
               <EyeOff className="w-4 h-4" />
             )
           }
-          label={cleanScreen ? "Show everything" : "Clean screen"}
+          label={cleanScreen ? "Unclear screen: show everything" : "Clear screen"}
           onClick={() => {
             setHomeMenuOpen(false);
             setPartyPanel(false);

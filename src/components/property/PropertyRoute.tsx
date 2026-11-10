@@ -16,7 +16,8 @@ import { askForPush } from "@/lib/push/engage";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, DoorClosed, KeyRound, Loader2, LogOut, Menu, Settings2, ShoppingBag, Smartphone, UserPlus, X, Shirt } from "lucide-react";
+import { ArrowLeft, DoorClosed, Eye, EyeOff, KeyRound, Loader2, LogOut, Menu, Settings2, ShoppingBag, Smartphone, UserPlus, X, Shirt } from "lucide-react";
+import { useCleanScreen } from "@/lib/cleanScreen";
 import { FloatMenu, SideBar, SideButton, SidePopover, ViewCycle } from "@/components/layout/SideBar";
 import { openPhone } from "@/components/layout/PhoneOverlay";
 import { useUnreadTotal } from "@/lib/unread";
@@ -209,6 +210,9 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   const party = usePartyHere(flatRoute(flat), true);
   // The side bar's open panel.
   const [panel, setPanel] = useState<"menu" | "party" | null>(null);
+  // Clear screen: only the room (and the party game's own card) on screen; on a phone it comes on as a game starts.
+  const [cleanScreen, setCleanScreen] = useState(false);
+  useCleanScreen(cleanScreen);
   const unreadAll = useUnreadTotal(me);
   const [dancing, setDancing] = useState(false);
   const [pose, setPose] = useState<"sit" | "sleep" | null>(null);
@@ -445,6 +449,8 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
     exterior: homeLook.exterior ?? [],
     lightsOut,
     level,
+    clean: cleanScreen,
+    onGameStart: () => { setPanel(null); setCleanScreen(true); },
     onWatch: () => { if (level !== 0) changeLevel(0); setView("above"); setUpView(false); },
   });
   useEffect(() => {
@@ -527,11 +533,12 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         extraZones={partyBoard.zones}
         focus={partyBoard.focus}
         poolCovered={partyBoard.poolCovered}
+        clean={cleanScreen}
       />
       {partyBoard.ui}
-      {party && <PartyBanner party={party} hostAway={!room.peers.some((p) => p.username === party.host)} className={BELOW_SPACE_TOP} />}
+      {party && !cleanScreen && <PartyBanner party={party} hostAway={!room.peers.some((p) => p.username === party.host)} className={BELOW_SPACE_TOP} />}
 
-      <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2">
+      {!cleanScreen && <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2">
         <button onClick={onExit} className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center" aria-label="Leave"><ArrowLeft className="w-4 h-4" /></button>
         <div className="bg-white rounded-2xl shadow-lg px-3 py-1.5 min-w-0 flex-1 sm:flex-none">
           <div className="font-black text-sm truncate">{flatTitle(flat)}</div>
@@ -565,10 +572,10 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
           className="h-10 w-10 sm:w-auto shrink-0 justify-center sm:px-3 rounded-full bg-fuchsia-600 text-white shadow-lg flex items-center gap-1.5 text-xs font-black" />
         {isManager && <button onClick={() => setManageOpen(true)} className="h-10 w-10 sm:w-auto shrink-0 justify-center sm:px-3 rounded-full bg-white shadow-lg flex items-center gap-1.5 text-xs font-black" aria-label="Manage"><Settings2 className="w-4 h-4" /> <span className="hidden sm:inline">Manage</span></button>}
         <button onClick={onExit} className="h-10 w-10 sm:w-auto shrink-0 justify-center sm:px-3 rounded-full bg-slate-900 text-white shadow-lg flex items-center gap-1.5 text-xs font-black" aria-label="Exit"><LogOut className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Exit</span></button>
-      </header>
+      </header>}
 
       {/* Multi-Room Navigation & Cutaway View Pills */}
-      {rooms && rooms.length > 0 && !party && (
+      {rooms && rooms.length > 0 && !party && !cleanScreen && (
         <div className="absolute top-[4.65rem] left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-full shadow-lg border border-slate-200 overflow-x-auto max-w-[94vw]">
           <button
             onClick={() => setUpView(!upView)}
@@ -611,18 +618,21 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         </div>
       )}
 
-      {view !== "above" && !placing && !decorating && (
+      {view !== "above" && !placing && !decorating && !cleanScreen && (
         <div className="absolute left-4 bottom-[max(6.5rem,calc(env(safe-area-inset-bottom)+6rem))] z-30"><MoveStick controls={stick} allowRun={false} /></div>
       )}
-      {banner && <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 bg-slate-950/85 text-white text-xs font-bold px-4 py-2 rounded-full shadow-xl max-w-[92vw] text-center">{banner}</div>}
+      {banner && !cleanScreen && <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 bg-slate-950/85 text-white text-xs font-bold px-4 py-2 rounded-full shadow-xl max-w-[92vw] text-center">{banner}</div>}
 
       {/* Middle right: ☰ Menu (rooms, turning the room), 🎉 Party, the three views and the phone; Outside at the
           bottom right (user, 2026-11-04). */}
       <SideBar>
-        <SideButton icon={<Menu className="w-5 h-5" />} label="Menu" tone="dark" active={panel === "menu"} onClick={() => setPanel((x) => (x === "menu" ? null : "menu"))} />
-        {party && <SideButton icon="🎉" label="Party" tone="party" active={panel === "party"} onClick={() => setPanel((x) => (x === "party" ? null : "party"))} />}
-        <ViewCycle view={view} onChange={(v) => { setView(v as "above" | "inside" | "eye"); setUpView(false); }} />
-        <SideButton icon={<Smartphone className="w-5 h-5" />} label={unreadAll ? `Phone: ${unreadAll} unread` : "Phone"} badge={unreadAll} onClick={() => openPhone()} />
+        {!cleanScreen && <SideButton icon={<Menu className="w-5 h-5" />} label="Menu" tone="dark" active={panel === "menu"} onClick={() => setPanel((x) => (x === "menu" ? null : "menu"))} />}
+        {party && !cleanScreen && <SideButton icon="🎉" label="Party" tone="party" active={panel === "party"} onClick={() => setPanel((x) => (x === "party" ? null : "party"))} />}
+        {!cleanScreen && <ViewCycle view={view} onChange={(v) => { setView(v as "above" | "inside" | "eye"); setUpView(false); }} />}
+        {!cleanScreen && <SideButton icon={<Smartphone className="w-5 h-5" />} label={unreadAll ? `Phone: ${unreadAll} unread` : "Phone"} badge={unreadAll} onClick={() => openPhone()} />}
+        {/* Clear screen / unclear screen */}
+        <SideButton icon={cleanScreen ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />} label={cleanScreen ? "Unclear screen: show everything" : "Clear screen"}
+          onClick={() => { setPanel(null); setCleanScreen((c) => !c); }} />
       </SideBar>
       {panel === "party" && party && (
         <FloatMenu label="Party" onClose={() => setPanel(null)}>

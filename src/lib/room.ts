@@ -89,7 +89,9 @@ export type RoomEvent =
   // for a player, and a guest's prediction of who'll win.
   | { type: "party_game"; snap: PartyGameSnap | null; clearedId?: string }
   | { type: "party_cheer"; gameId: string; seat: number; emoji: string }
-  | { type: "party_predict"; gameId: string; seat: number };
+  | { type: "party_predict"; gameId: string; seat: number }
+  // Someone just arrived: whoever's playing sends the board straight away.
+  | { type: "party_sync" };
 
 export type Received = RoomEvent & { id: string; from: Peer; to?: string; at: number };
 
@@ -243,6 +245,12 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
         const from = e.from.userId;
         if (e.type === "typing") {
           setTyping((t) => ({ ...t, [from]: e.at }));
+          return;
+        }
+        // The party board's traffic (snapshots re-sent every few seconds, cheers, predictions) goes straight to the
+        // page: it isn't room news, so it never fills the events list or the social feed.
+        if (e.type === "party_game" || e.type === "party_cheer" || e.type === "party_predict" || e.type === "party_sync") {
+          handler.current?.(e);
           return;
         }
         // A chat sent to me is a message. One said to the whole room (a party announcement: "grabbed a drink",

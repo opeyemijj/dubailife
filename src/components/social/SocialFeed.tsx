@@ -14,7 +14,8 @@ import { openPhone } from "@/components/layout/PhoneOverlay";
 const LIFE_MS = 9000;
 const INVITE_MS = 16000;
 
-function describe(e: Received): { icon: string; text: string } {
+/** What a room event says in the feed; null for events that aren't news (they show nothing). */
+function describe(e: Received): { icon: string; text: string } | null {
   const who = `@${e.from.username}`;
   switch (e.type) {
     case "chat":
@@ -134,7 +135,8 @@ function describe(e: Received): { icon: string; text: string } {
         text: `@${e.fromUsername ?? who} declined the Private Space invite.`,
       };
     default:
-      return { icon: "✨", text: `${who} shared an update` };
+      // Background traffic (party games, home changes, hall moments…): nothing to announce.
+      return null;
   }
 }
 
@@ -212,6 +214,7 @@ export function SocialFeed({
     .filter(
       (e) =>
         !done.has(e.id) &&
+        describe(e) !== null &&
         !(e.type === "chat" && e.from.userId === readingWith) &&
         e.type !== "money" &&
         e.type !== "bottle" &&
@@ -283,7 +286,7 @@ export function SocialFeed({
         )}
 
         {visible.map((e) => {
-          const { icon, text } = describe(e);
+          const { icon, text } = describe(e) ?? { icon: "", text: "" };
           return (
             <div
               key={e.id}

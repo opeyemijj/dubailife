@@ -8,10 +8,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { hasPlot, type HousingTier } from "@/lib/furniture";
 import { PARTY_GAMES, usePartyGames } from "@/lib/partyGames";
 import type { PlotZone } from "@/components/home/ApartmentRoom";
+import { isCoarsePointer } from "@/components/home/TwoFingerHint";
 import { PARTY_BOARD_AT, PartyGameBoard } from "./PartyGameBoard";
 import { PartyGameCard, PartyGamePicker, PartyGameResult } from "./PartyGamesUI";
 
-export function usePartyBoard({ active, meId, meName, isHost, present, tier, exterior, lightsOut, level, onWatch }: {
+export function usePartyBoard({ active, meId, meName, isHost, present, tier, exterior, lightsOut, level, onWatch, clean = false, onGameStart }: {
+  /** The page's clear screen is on: the game card shrinks to a pill. */
+  clean?: boolean;
+  /** A game has just started (anyone's), on a phone: the page clears the screen for it. */
+  onGameStart?: () => void;
   /** A party on here (and I'm in its room). */
   active: boolean;
   meId?: string;
@@ -44,14 +49,20 @@ export function usePartyBoard({ active, meId, meName, isHost, present, tier, ext
   // Everyone at the party sees the game: the camera glides to the board when one starts, and again when it ends
   // (so the winning board is in view behind the result).
   const watchRef = useRef(watch);
-  useEffect(() => { watchRef.current = watch; });
+  const startRef = useRef(onGameStart);
+  useEffect(() => { watchRef.current = watch; startRef.current = onGameStart; });
   const startedKey = active && pg.snap ? `${pg.snap.id}:${pg.snap.over ? "over" : "on"}` : "";
   const startedBy = pg.snap?.players[0].id;
   useEffect(() => {
     if (!startedKey) return;
-    // My own new game already glided there (the picker's onStarted).
-    if (startedKey.endsWith(":on") && startedBy === meId) return;
-    const t = setTimeout(() => watchRef.current(), 0);
+    // On a phone, a game starting clears the screen (the page's clear / unclear screen button brings it back).
+    const starting = startedKey.endsWith(":on");
+    const t = setTimeout(() => {
+      // On a phone, a game starting clears the screen (the page's clear / unclear button brings it back).
+      if (starting && isCoarsePointer()) startRef.current?.();
+      // My own new game already glided there (the picker's onStarted).
+      if (!(starting && startedBy === meId)) watchRef.current();
+    }, 0);
     return () => clearTimeout(t);
   }, [startedKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -71,7 +82,7 @@ export function usePartyBoard({ active, meId, meName, isHost, present, tier, ext
   const ui = active ? (
     <>
       {picker && <PartyGamePicker pg={pg} onClose={() => setPicker(false)} onStarted={watch} />}
-      <PartyGameCard pg={pg} me={meId ?? null} isHost={isHost} present={present} onWatch={watch} />
+      <PartyGameCard pg={pg} me={meId ?? null} isHost={isHost} present={present} onWatch={watch} compact={clean} />
       <PartyGameResult pg={pg} isHost={isHost} onPickAnother={() => setPicker(true)} />
     </>
   ) : null;

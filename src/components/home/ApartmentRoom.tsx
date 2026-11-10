@@ -77,6 +77,8 @@ export interface ApartmentRoomProps {
   /** More stops on the zone bar (a party game outside), shown for any home: where the camera goes, and where
    *  you walk (left out where you can't walk there, e.g. a flat's terrace). */
   extraZones?: PlotZone[];
+  /** Clear screen: the zone bar and its hint are hidden too. */
+  clean?: boolean;
   /** A party game laid over the pool (the umbrella folds away). */
   poolCovered?: boolean;
   /** Glide the camera here (x, z), once for each new n (from above). */
@@ -2614,7 +2616,7 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
   const extraZones = (props.level ?? 0) === 0 ? props.extraZones ?? [] : [];
   // The page's own stops (the game) come straight after Inside, so they're in sight on a phone.
   const zones = [INSIDE_ZONE, ...extraZones, ...(showPlotScroll ? PLOT_ZONES.slice(1) : [])];
-  const showZoneBar = showPlotScroll || extraZones.length > 0;
+  const showZoneBar = (showPlotScroll || extraZones.length > 0) && !props.clean;
   const coarse = useSyncExternalStore(noSubscribe, isCoarsePointer, () => false);
   const goZone = (z: PlotZone) => {
     setActivePlotZone(z.id);
