@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { hasPlot, type HousingTier } from "@/lib/furniture";
 import { PARTY_GAMES, usePartyGames } from "@/lib/partyGames";
 import type { PlotZone } from "@/components/home/ApartmentRoom";
-import { isCoarsePointer } from "@/components/home/TwoFingerHint";
+import { isPhone } from "@/components/home/TwoFingerHint";
 import { PARTY_BOARD_AT, PartyGameBoard } from "./PartyGameBoard";
 import { PartyGameCard, PartyGamePicker, PartyGameResult } from "./PartyGamesUI";
 
@@ -59,7 +59,7 @@ export function usePartyBoard({ active, meId, meName, isHost, present, tier, ext
     const starting = startedKey.endsWith(":on");
     const t = setTimeout(() => {
       // On a phone, a game starting clears the screen (the page's clear / unclear button brings it back).
-      if (starting && isCoarsePointer()) startRef.current?.();
+      if (starting && isPhone()) startRef.current?.();
       // My own new game already glided there (the picker's onStarted).
       if (!(starting && startedBy === meId)) watchRef.current();
     }, 0);

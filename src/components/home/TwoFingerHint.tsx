@@ -14,6 +14,8 @@ function read(key: string) { try { return window.localStorage.getItem(key); } ca
 function write(key: string) { try { window.localStorage.setItem(key, "1"); } catch { /* private mode */ } }
 
 export const isCoarsePointer = () => typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches;
+/** A phone (or a phone-sized window): touch, or narrow. */
+export const isPhone = () => typeof window !== "undefined" && (isCoarsePointer() || window.innerWidth < 768);
 
 export function TwoFingerHint({ active }: { active: boolean }) {
   const [show, setShow] = useState<"first" | "nudge" | null>(null);

@@ -4,9 +4,11 @@
 
 import { notFound } from "next/navigation";
 import { PartyBoardPreview } from "./PartyBoardPreview";
+import { CleanPreview } from "./CleanPreview";
 
 export default async function Page({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   if (process.env.NODE_ENV === "production") notFound();
   const q = await searchParams;
+  if (q.clean) return <CleanPreview />;
   return <PartyBoardPreview tier={q.tier ?? "villa"} game={q.game ?? "connect4"} pool={q.pool !== "0"} moves={Number(q.moves ?? 6)} />;
 }

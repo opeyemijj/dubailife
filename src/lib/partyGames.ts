@@ -37,7 +37,7 @@ export interface PartyGameSnap {
   /** When the current turn began (for the turn clock). */
   turnAt: number;
   /** Set once it's over: the winning seats (empty = a draw), and whether it was claimed (the other player left). */
-  over?: { winners: number[]; claimed?: boolean } | null;
+  over?: { winners: number[]; claimed?: boolean; ended?: boolean } | null;
 }
 
 /** How long a turn can sit before the other player can claim the game. */
@@ -81,6 +81,10 @@ export function resultText(s: PartyGameSnap, mySeat: number): { icon: string; ti
   if (!s.over) return null;
   const w = s.over.winners;
   const name = PARTY_GAMES[s.game].name;
+  if (s.over.ended) {
+    const by = s.by === s.players[mySeat]?.id ? "you" : s.players.some((p) => p?.id === s.by) ? (mySeat >= 0 ? "them" : `${SIDES[s.game][s.players.findIndex((p) => p?.id === s.by)]}`) : "the host";
+    return { icon: "⏹️", title: "Game ended", sub: `${name} · ended by ${by}`, won: false };
+  }
   if (!w.length) return { icon: "🤝", title: "It's a draw", sub: name, won: false };
   const winner = s.players[w[0]];
   const how = s.over.claimed ? " (the other player left)" : "";
@@ -207,6 +211,13 @@ export function usePartyGames({ me, isHost, present }: { me: { id: string; usern
     publish(next);
   }, [mySeat, bump, publish]);
 
+  /** Either player (or the host) stops the game: no winner, and everyone gets the result card to play again. */
+  const end = useCallback(() => {
+    const cur = snapRef.current;
+    if (!cur || cur.over || !me) return;
+    publish(bump(cur, { over: { winners: [], ended: true } }));
+  }, [me, publish, bump]);
+
   const clear = useCallback(() => {
     const cur = snapRef.current;
     if (cur) publish(null, cur.id);
@@ -263,7 +274,7 @@ export function usePartyGames({ me, isHost, present }: { me: { id: string; usern
     // eslint-disable-next-line react-hooks/exhaustive-deps -- presentKey stands for present
   }, [snap?.id, me?.id, isHost, presentKey]);
 
-  return { snap, mySeat, cheers, predictions, receive, bindEmit, start, join, playComputer, move, claim, clear, cheer, predict, rematch };
+  return { snap, mySeat, cheers, predictions, receive, bindEmit, start, join, playComputer, move, claim, clear, cheer, predict, rematch, end };
 }
 
 export type PartyGames = ReturnType<typeof usePartyGames>;

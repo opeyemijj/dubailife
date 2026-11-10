@@ -152,7 +152,11 @@ export function PartyGameCard({ pg, me, isHost, present, onWatch, compact = fals
         {canClaim && (
           <button onClick={() => { gameAudio.playClickSound(); pg.claim(); }} className="h-8 px-3 rounded-full bg-emerald-600 text-[11px] font-black active:scale-95">🏳️ {otherGone ? "They left: claim win" : "Out of time: claim win"}</button>
         )}
-        {(isHost || (playing && !b)) && !s.over && (
+        {/* Either player (or the host) can end it; waiting alone, the starter just takes it down. */}
+        {!s.over && b && (playing || isHost) && (
+          <button onClick={() => { gameAudio.playClickSound(); pg.end(); }} className="h-8 px-3 rounded-full bg-rose-600/90 text-[11px] font-black active:scale-95">⏹️ End game</button>
+        )}
+        {!s.over && !b && (playing || isHost) && (
           <button onClick={() => { gameAudio.playClickSound(); pg.clear(); }} className="h-8 px-3 rounded-full bg-white/10 text-[11px] font-black text-white/80 active:scale-95">🧹 Clear board</button>
         )}
       </div>
@@ -192,7 +196,8 @@ export function PartyGameResult({ pg, isHost, onPickAnother }: { pg: PartyGames;
   const sound = s?.over ? `${s.id}:${pg.mySeat}` : "";
   useEffect(() => {
     if (!sound || !res) return;
-    if (res.won || pg.mySeat < 0) gameAudio.sfx(res.title === "It's a draw" ? "draw" : "win");
+    if (s?.over?.ended) gameAudio.sfx("notice");
+    else if (res.won || pg.mySeat < 0) gameAudio.sfx(res.title === "It's a draw" ? "draw" : "win");
     else gameAudio.sfx("lose");
   }, [sound]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!s || !res || dismissed === s.id) return null;

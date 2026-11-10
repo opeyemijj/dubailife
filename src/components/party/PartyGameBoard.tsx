@@ -72,6 +72,8 @@ export function PartyGameBoard({ snap, mySeat, onMove, pool, grounds, lightsOut,
   );
 }
 
+const stopDom = (e: React.PointerEvent) => e.stopPropagation();
+
 /** A racked table: the invitation looks ready to break. */
 const IDLE_POOL = poolGame.init(2, 0) as PoolState;
 
@@ -92,7 +94,9 @@ function IdleBoard({ pool, grounds, lightsOut, onTap }: { pool: boolean; grounds
         <PoolTable3D state={IDLE_POOL} canMove={false} onMove={() => {}} crosswise={pool} />
       </group>
       <Html position={[0, 2.9, pool ? -4.1 : 0]} center distanceFactor={14} zIndexRange={[10, 0]}>
-        <button onClick={onTap} className="whitespace-nowrap rounded-full bg-fuchsia-600 px-4 py-1.5 text-[15px] font-black text-white shadow-2xl ring-2 ring-white/70 animate-bounce">
+        {/* Its taps stop here: without this they'd also reach the 3D scene underneath and walk you to that spot. */}
+        <button onClick={(e) => { e.stopPropagation(); onTap(); }} onPointerDown={stopDom} onPointerUp={stopDom}
+          className="whitespace-nowrap rounded-full bg-fuchsia-600 px-4 py-1.5 text-[15px] font-black text-white shadow-2xl ring-2 ring-white/70 animate-bounce">
           🎲 Let&apos;s play a game
         </button>
       </Html>
