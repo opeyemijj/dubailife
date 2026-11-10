@@ -44,6 +44,7 @@ import { DXBAirportBlock } from './DXBAirport';
 import { CocaColaArena, SZRCarShowroom, SZRLounge, SZRTower } from './SZRLandmarks';
 import { BluewatersSprite, JBRSprite, MarinaMallSprite, Pier7Sprite } from './JBRBluewaters';
 import { MirrorX } from './mirror';
+import { AbraStationSprite, ClocktowerSprite, DubaiCourtsSprite, GoldSoukSprite, HeritageSprite, HospitalSprite, MeenaBazaarSprite, SpiceSoukSprite } from './OldDubaiSprites';
 export { DXBAirportBlock };
 export {
   DIFCMosque,
@@ -4328,6 +4329,15 @@ export const getBuildingSprite = (id: string, type: string, seed?: number, title
   if (type === 'the-pointe') return <PointeSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
   if (type === 'park-palm') return <PalmParkSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
   if (type === 'palm-beach') return <PalmBeachSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  // Bur Dubai and Deira (lib/city/oldDubai.ts)
+  if (type === 'od-courts') return <DubaiCourtsSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'od-hospital') return <HospitalSprite width={loc?.width} height={loc?.height} name={title || loc?.name} accent={loc?.accent} />;
+  if (type === 'od-heritage') return <HeritageSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'od-bazaar') return <MeenaBazaarSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'od-abra') return <AbraStationSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'od-gold-souk') return <GoldSoukSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'od-spice-souk') return <SpiceSoukSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'od-clocktower') return <ClocktowerSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
   if (type === 'academic-tile') return <AcademicCampusTile loc={loc} width={loc?.width} height={loc?.height} />;
   if (type === 'game-tile') return <GameTile game={loc?.game} width={loc?.width} height={loc?.height} />;
   if (type === 'floor-mosaic') return <FloorMosaic section={loc?.section} ads={loc?.ads} />;

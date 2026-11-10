@@ -22,11 +22,17 @@ async function handleCron(req: Request) {
   const authHeader = req.headers.get("authorization") || req.headers.get("x-cron-secret");
   const cronSecret = process.env.CRON_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  // If secret is configured in env, require it (or bypass if called from localhost in dev)
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}` && authHeader !== cronSecret) {
-    const host = req.headers.get("host") || "";
-    if (!host.includes("localhost") && !host.includes("127.0.0.1")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // In production, strictly require authorization secret matching CRON_SECRET or SUPABASE_SERVICE_ROLE_KEY
+  if (!cronSecret) {
+    if (process.env.NODE_ENV !== "development") {
+      return NextResponse.json({ error: "CRON_SECRET is not configured on the server." }, { status: 500 });
+    }
+  } else {
+    const isSecretValid = authHeader === `Bearer ${cronSecret}` || authHeader === cronSecret;
+    if (!isSecretValid) {
+      if (process.env.NODE_ENV !== "development") {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
     }
   }
 

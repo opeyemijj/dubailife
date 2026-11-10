@@ -85,6 +85,8 @@ export interface Citizen {
   academic?: CitizenAcademic;
   /** Skills, wishes, ✨ points and perks (see lib/life). */
   life?: Partial<LifeState>;
+  /** Body stats built at the gym: strength, stamina, flexibility (see lib/body). */
+  body?: { strength: number; stamina: number; flexibility: number; lastTrained?: string };
   /** Last place on the city map (world units), so travel continues across pages. */
   location?: { x: number; y: number; placeId?: string };
   createdAt: string;

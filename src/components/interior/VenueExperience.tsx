@@ -25,6 +25,10 @@ import { PartyHostesses, drinkInHand, usePartyDrink, type HostessRun } from "@/c
 import { partyMood } from "@/lib/invites";
 import { askForPush } from "@/lib/push/engage";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { openArcade } from "@/components/arcade/launcher";
+import { HALL_EVENT } from "@/lib/halls";
+import type { ArcadeGameId } from "@/lib/arcade";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Briefcase, Eye, EyeOff, Check, HelpCircle, LogOut, Megaphone, MessageCircle, MessagesSquare, Search, Share2, Shirt, ShoppingBag, Sparkles, Users, X } from "lucide-react";
 import { broadcastCityPulse } from "@/lib/presence";
@@ -57,9 +61,11 @@ import type { Activity3DFX } from "./InteriorScene";
 import { rideFor, type RideDef } from "@/lib/city/rides";
 import { trackFor } from "./rides/tracks";
 import { resetRideIO, type RideResult } from "./rides/rideIO";
-import { RideHUD } from "./rides/RideHUD";
 import { SandCastle } from "./scenery";
 import type { ActiveRide } from "./rides/RideRig";
+
+// The ride controls load with the ride, not with every venue.
+const RideHUD = dynamic(() => import("./rides/RideHUD").then((m) => m.RideHUD), { ssr: false });
 
 const SHIFT_COOLDOWN_MS = 10 * 60 * 1000;
 const aed = (n: number) => (n === 0 ? "Free" : `AED ${n.toLocaleString()}`);
@@ -574,6 +580,11 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
 
   // React to what others send me, as it arrives.
   const onRoomEvent = (e: Received) => {
+    // An event in this hall: the host's moments and guests catching the bouquet go to the event screens.
+    if (e.type === "hall_moment" || e.type === "bouquet_catch") {
+      window.dispatchEvent(new CustomEvent(HALL_EVENT, { detail: e }));
+      if (e.type === "hall_moment" && e.moment === "dance") { setPlayerAnimation("dance"); setTimeout(() => setPlayerAnimation((a) => (a === "dance" ? "idle" : a)), 20_000); }
+    }
     // The party host's lights switch and "everyone dance", live.
     if (e.type === "party") {
       if (e.action === "lights") setLightsSet(!!e.on);
@@ -1072,6 +1083,8 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     }
     // On a yacht: take the wheel and sail it yourself.
     if (a.id === "sail" && venue.layout === "yacht") { setSailing(true); return; }
+    // The 3D attraction games (boxing, the courts, the souk…) open full screen; their result is said here.
+    if (a.arcade) { openArcade({ game: a.arcade as ArcadeGameId, params: a.arcadeParams, onShare: (text) => say(text) }); return; }
     // Rides and water activities are acted out in 3D (hire paid above).
     const def = rideFor(a);
     if (def && !ride && beginRide(def, a, at)) return;

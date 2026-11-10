@@ -298,5 +298,35 @@ if (poolFile) {
 const penFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_penalties.sql")).sort().pop();
 const penSql = readFileSync(`supabase/migrations/${penFile}`, "utf8");
 if (!penSql.includes(`if n >= ${cars.driving.revokeAfterAccidents} and public.has_licence(me) then`)) { bad++; console.error("penalties: accident limit differs from SQL"); }
-console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving, parking, goals, missions, fun, decorator and penalty config match the database.");
+// 3D attraction games (src/data/arcade/games.json vs public.arcade_rule()).
+const arcade = JSON.parse(readFileSync("src/data/arcade/games.json", "utf8"));
+const arcadeSql = latestDef("arcade_rule");
+const arcadeIds = [...arcadeSql.matchAll(/when '(\w+)'\s+then '/g)].map((m) => m[1]);
+if (arcadeIds.length !== arcade.games.length) { bad++; console.error(`arcade: ${arcade.games.length} games in JSON vs ${arcadeIds.length} in SQL`); }
+for (const gm of arcade.games) {
+  const rule = JSON.parse(arcadeSql.match(new RegExp(`when '${gm.id}'\\s+then '([^']+)'`))?.[1] ?? "null");
+  if (!rule || ["perStar", "dailyCap", "maxScore", "maxLevel"].some((k) => rule[k] !== gm[k])) { bad++; console.error(`arcade ${gm.id}: JSON vs SQL ${JSON.stringify(rule)}`); }
+}
+// Hospital scans and births (family.json "maternity" vs *_maternity.sql).
+const mat = JSON.parse(readFileSync("src/data/life/family.json", "utf8")).maternity;
+const matFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_maternity.sql")).sort().pop();
+const matSql = matFile ? readFileSync(`supabase/migrations/${matFile}`, "utf8") : "";
+for (const text of [`(array[${mat.scanFromDay.join(", ")}])[p_stage]`, `interval '${mat.deliverHoursBefore} hours'`, `p_id in (${mat.hospitals.map((h) => `'${h}'`).join(", ")})`]) {
+  if (!matSql.includes(text)) { bad++; console.error(`maternity: differs from SQL (${text})`); }
+}
+// Event halls (src/data/venues/halls.json vs *_halls.sql).
+const halls = JSON.parse(readFileSync("src/data/venues/halls.json", "utf8"));
+const hallSql = latestDef("hall_rule") + latestDef("hall_vendor_price") + latestDef("book_hall");
+for (const h of halls.halls) {
+  const rule = JSON.parse((hallSql.match(new RegExp(`when '${h.id}'\\s+then '((?:[^']|'')+)'`))?.[1] ?? "null").replace(/''/g, "'"));
+  if (!rule || rule.place !== h.place || rule.base !== h.base || rule.perGuest !== h.perGuest || rule.capacity !== h.capacity || rule.name !== h.name) { bad++; console.error(`hall ${h.id}: JSON vs SQL ${JSON.stringify(rule)}`); }
+}
+for (const v of halls.vendors) {
+  const text = v.perGuest ? `when '${v.id}' then ${v.perGuest} * p_guests` : `when '${v.id}' then ${v.price}`;
+  if (!hallSql.includes(text)) { bad++; console.error(`hall vendor ${v.id}: differs from SQL`); }
+}
+if (!hallSql.includes(`interval '${halls.slotHours} hours'`)) { bad++; console.error("halls: slotHours differs from SQL"); }
+if (!hallSql.includes(`p_guests not in (${halls.guestOptions.join(", ")})`)) { bad++; console.error("halls: guestOptions differ from SQL"); }
+if (!hallSql.includes(`p_type not in (${halls.types.map((t) => `'${t.id}'`).join(", ")})`)) { bad++; console.error("halls: event types differ from SQL"); }
+console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving, parking, goals, missions, fun, decorator, penalty, arcade, maternity and hall config match the database.");
 process.exit(bad ? 1 : 0);

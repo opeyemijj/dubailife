@@ -8,6 +8,7 @@
 import { onUserEvent } from "@/lib/userChannel";
 import { useEffect, useSyncExternalStore } from "react";
 import { supabase } from "@/lib/supabase/client";
+import type { AvatarLookProps } from "@/components/avatar/roster";
 import { refreshCitizen } from "@/lib/citizenStore";
 import LOVE from "@/data/life/love.json";
 import FAMILY from "@/data/life/family.json";
@@ -80,6 +81,12 @@ const ERRORS: Record<string, string> = {
   too_late: "The ceremony window has passed.",
   role_full: "That role is already taken.",
   account_frozen: "Your account is frozen while your court case is open.",
+  scan_too_early: "It's too early in the pregnancy for that scan. Come back in a day or two.",
+  labour_too_early: "Not yet: labour can start from a day before the due date.",
+  not_the_mother: "The mother delivers the baby. Be there with her.",
+  already_born: "The baby's already born.",
+  not_a_hospital: "Scans and births happen at Latifa Hospital or Dubai Hospital.",
+  not_your_child: "That isn't your baby.",
 };
 const friendly = (m: string) => ERRORS[Object.keys(ERRORS).find((k) => m.includes(k)) ?? ""] ?? "Something went wrong. Try again.";
 async function call<T>(fn: string, args: Record<string, unknown> = {}): Promise<{ data?: T; error?: string }> {
@@ -156,7 +163,9 @@ export type Relation = "sibling" | "cousin" | "parent" | "child";
 export interface Relative { id: number; status: "pending" | "accepted"; mine: boolean; relation: Relation; person: Person }
 export interface Child {
   id: number; name: string | null; gender: "boy" | "girl"; conceivedAt: string; dueAt: string; born: boolean; nannyUntil: string | null;
-  mother: { id: string; username: string }; father: { id: string; username: string };
+  mother: { id: string; username: string; look?: AvatarLookProps }; father: { id: string; username: string; look?: AvatarLookProps };
+  /** Hospital scans done (1 first, 2 anatomy, 3 growth), and the birth at the hospital, if it happened there. */
+  scans?: number[]; deliveredAt?: string | null; bornAt?: string | null; birthScore?: number | null;
   careToday: Array<"feed" | "play" | "bath">; careRecent: number;
 }
 export interface MyFamily { relatives: Relative[]; children: Child[] }
@@ -174,9 +183,11 @@ export function stageOf(child: Pick<Child, "dueAt">, now: number) {
   return { weeks, stage, next };
 }
 /** How happy a child is (0 to 100): the care they've had over the last 3 days, or full with a nanny. */
-export function happinessOf(child: Pick<Child, "careRecent" | "nannyUntil">, now: number) {
+export function happinessOf(child: Pick<Child, "careRecent" | "nannyUntil" | "deliveredAt">, now: number) {
   if (child.nannyUntil && Date.parse(child.nannyUntil) > now) return 100;
-  return Math.min(100, Math.round((child.careRecent / (FAMILY.care.length * FAMILY.careWindowDays)) * 100));
+  // Born at the hospital: a healthy start, happier for the first days.
+  const healthy = child.deliveredAt && now - Date.parse(child.deliveredAt) < FAMILY.maternity.healthyStartDays * 86_400_000 ? FAMILY.maternity.healthyStartBonus : 0;
+  return Math.min(100, Math.round((child.careRecent / (FAMILY.care.length * FAMILY.careWindowDays)) * 100) + healthy);
 }
 
 export interface PregnancyProgress {
@@ -240,6 +251,8 @@ const afterFamily = async <T,>(p: Promise<{ data?: T; error?: string }>) => { co
 export const askForBaby = (partner?: string) => afterFamily(call<number>("ask_for_baby", who(partner)));
 export const nameChild = (child: number, name: string) => afterFamily(call<null>("name_child", { p_child: child, p_name: name }));
 export const careForChild = (child: number, action: string) => afterFamily(call<null>("care_for_child", { p_child: child, p_action: action }));
+export const recordScan = (child: number, stage: number, hospital: string) => afterFamily(call<number[]>("record_scan", { p_child: child, p_stage: stage, p_hospital: hospital }));
+export const deliverBaby = (child: number, hospital: string, score: number) => afterFamily(call<{ id: number; bornAt: string; dueAt: string }>("deliver_baby", { p_child: child, p_hospital: hospital, p_score: score }));
 export const hireNanny = (child: number, plan: string) => afterFamily(call<string>("hire_nanny", { p_child: child, p_plan: plan }));
 export const addRelative = (to: string, relation: Relation) => afterFamily(call<null>("add_relative", { p_to: to, p_relation: relation }));
 export const respondRelative = (id: number, accept: boolean) => afterFamily(call<null>("respond_relative", { p_link: id, p_accept: accept }));

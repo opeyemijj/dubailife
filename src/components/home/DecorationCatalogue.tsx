@@ -22,6 +22,7 @@ import {
   type SavedLook,
   type ShopCategory,
 } from "@/lib/furniture";
+import { CeilingPicker } from "./CeilingPicker";
 import { Search, X, Check, Sparkles, Box, LayoutGrid, Palette, Wand2, ChevronDown, Save, Trash2 } from "lucide-react";
 
 export interface DecorationCatalogueProps {
@@ -81,6 +82,8 @@ export function DecorationCatalogue({
       floor: homeStyle.floor || "oak",
       bedding: homeStyle.bedding,
       panels: homeStyle.panels,
+      ceiling: homeStyle.ceiling,
+      ceilingColor: homeStyle.ceilingColor,
     };
     const updated = [newLook, ...savedLooks.slice(0, 9)];
     setSavedLooks(updated);
@@ -389,7 +392,7 @@ export function DecorationCatalogue({
                         <button
                           onClick={() => {
                             onRestyle(
-                              { wall: look.wall, floor: look.floor, bedding: look.bedding, panels: look.panels },
+                              { wall: look.wall, floor: look.floor, bedding: look.bedding, panels: look.panels, ...(look.ceiling ? { ceiling: look.ceiling } : {}), ...(look.ceilingColor ? { ceilingColor: look.ceilingColor } : {}) },
                               0,
                               `Applied "${look.name}"`
                             );
@@ -523,6 +526,9 @@ export function DecorationCatalogue({
                   })}
                 </div>
               </div>
+
+              {/* CEILING (the roof seen from inside) */}
+              <CeilingPicker style={homeStyle} onChange={onRestyle} formatPrice={formatPrice} />
             </div>
           )}
 

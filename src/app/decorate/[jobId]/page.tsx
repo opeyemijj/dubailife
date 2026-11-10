@@ -84,7 +84,8 @@ export default function DecoratePage() {
   }
   if (!home || !style || !citizen) return <main className="fixed inset-0 bg-slate-950 flex items-center justify-center text-white font-bold">Heading over…</main>;
 
-  if (!inside) {
+  // A hall: straight in (there's no front door to walk up to).
+  if (!inside && !home.hall) {
     return <MoveInWalk look={citizen.look ?? { gender: "woman" }} homeId={home.tier} homeLabel="" caption={`You have @${home.client}'s key. Budget ${aed(home.budget - spent)}.`} onDone={() => setInside(true)} />;
   }
 
@@ -188,7 +189,7 @@ export default function DecoratePage() {
       <div className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 flex justify-center pointer-events-none">
         <div className="w-full max-w-md rounded-2xl bg-white/95 text-slate-900 shadow-xl px-4 py-2.5 flex items-center gap-3 pointer-events-auto">
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-black truncate">@{home.client}&apos;s home{brief ? ` · ${brief.icon} ${brief.title}` : ""}</p>
+            <p className="text-sm font-black truncate">{home.hall ? `@${home.client}'s event: ${home.hall.title}` : `@${home.client}'s home`}{brief ? ` · ${brief.icon} ${brief.title}` : ""}</p>
             <p className="text-[11px] text-slate-500">Budget left <b className="text-emerald-700">{aed(left)}</b> of {aed(home.budget)} · your fee {aed(home.fee)}</p>
           </div>
           <Link href="/explore" className="text-xs font-bold text-slate-500 shrink-0">Leave</Link>
@@ -294,7 +295,7 @@ export default function DecoratePage() {
             <p className="text-4xl">✨</p>
             <p className="font-black text-xl">Job done!</p>
             <p className="text-3xl font-black text-emerald-600">+{aed(finished.fee)}</p>
-            <p className="text-sm text-slate-600">@{home.client} will see their new home next time they&apos;re there{finished.back > 0 ? `, and ${aed(finished.back)} of the budget went back to them` : ""}.</p>
+            <p className="text-sm text-slate-600">@{home.client} will see {home.hall ? "their decorated hall" : "their new home"} next time they&apos;re there{finished.back > 0 ? `, and ${aed(finished.back)} of the budget went back to them` : ""}.</p>
             <Link href="/explore" className="block h-12 leading-[3rem] rounded-2xl bg-emerald-600 text-white font-black">Back to the city</Link>
           </div>
         </div>

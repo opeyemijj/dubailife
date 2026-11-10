@@ -7,7 +7,7 @@ import { Ceiling } from "@/components/interior/Ceiling";
 import { Flies } from "@/components/avatar/Flies";
 import { VenueLuxury } from "./VenueLuxury";
 import { canvasQuality } from "@/lib/device";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
@@ -22,8 +22,11 @@ import { ChampagneBottle, HandHeldProp, ServedItem, type ServeKind, type ServedD
 import type { Peer } from "@/lib/room";
 import { ActivityStageFX } from "./ActivityStageFX";
 import type { ActivityCategory } from "./ActivityExperienceOverlay";
-import { RideRig, type ActiveRide } from "./rides/RideRig";
+import type { ActiveRide } from "./rides/RideRig";
 import type { RideResult } from "./rides/rideIO";
+
+// The rides engine (about 160 KB) loads only when a ride starts, not with every venue.
+const RideRig = lazy(() => import("./rides/RideRig").then((m) => ({ default: m.RideRig })));
 
 export interface Activity3DFX {
   active: boolean;
@@ -1068,7 +1071,7 @@ export function InteriorScene({
           placeAt={placeAt}
         />
       </Suspense>
-      {ride && onRideEnd && <RideRig key={ride.key} active={ride} look={look} worn={worn} onEnd={onRideEnd} />}
+      {ride && onRideEnd && <Suspense fallback={null}><RideRig key={ride.key} active={ride} look={look} worn={worn} onEnd={onRideEnd} /></Suspense>}
       <ActivityFXLayer activityFX={activityFX} follow={followNodes} />
       <LabelTracker labels={labels} nodes={labelNodes} follow={followNodes} />
       {!inside && !eye && !boat && <FitCamera width={w} depth={d} />}

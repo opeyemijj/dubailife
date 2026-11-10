@@ -1,0 +1,96 @@
+{
+  "_note": "The gym (src/components/arcade/games/gym): six stations, each a short skill game that builds one body stat. stars = the score needed for 1, 2 and 3 stars. gain = body-stat points per star (stats run 0 to 100 and fade by fadePerDay for each day after idleDays without training). Body stats feed boxing: stamina raises your stamina pool and recovery, strength your punch power (see games/boxing).",
+  "idleDays": 7,
+  "fadePerDay": 2,
+  "stations": [
+    {
+      "id": "treadmill",
+      "name": "Treadmill · Sandstorm Sprint",
+      "icon": "🏃",
+      "stat": "stamina",
+      "seconds": 45,
+      "stars": [
+        110,
+        140,
+        165
+      ],
+      "gain": 2,
+      "how": "Tap in rhythm to hold the pace. When the sandstorm rolls up Sheikh Zayed Road on the screen, sprint to stay ahead of it."
+    },
+    {
+      "id": "squat",
+      "name": "Squat rack · Power Lift",
+      "icon": "🏋️",
+      "stat": "strength",
+      "seconds": 60,
+      "stars": [
+        900,
+        1800,
+        3000
+      ],
+      "gain": 2,
+      "how": "Tap as the bar marker crosses the green zone to drive each rep up, and drag to keep the bar level. The zone shrinks as you tire."
+    },
+    {
+      "id": "bag",
+      "name": "Heavy bag · Combo Rush",
+      "icon": "🥊",
+      "stat": "strength",
+      "seconds": 40,
+      "stars": [
+        2500,
+        5500,
+        9000
+      ],
+      "gain": 2,
+      "how": "Hit the punch shown on the beat: jab, cross, left hook, right hook. Perfect timing chains the combo and swings the bag."
+    },
+    {
+      "id": "rower",
+      "name": "Rower · Creek Regatta",
+      "icon": "🚣",
+      "stat": "stamina",
+      "seconds": 50,
+      "stars": [
+        320,
+        410,
+        490
+      ],
+      "gain": 2,
+      "how": "Hold to drive, let go to recover. Long smooth strokes in rhythm move the boat fastest. Beat your ghost to the finish."
+    },
+    {
+      "id": "spin",
+      "name": "Spin class · Beat Ride",
+      "icon": "🚴",
+      "stat": "stamina",
+      "seconds": 45,
+      "stars": [
+        3000,
+        6500,
+        10000
+      ],
+      "gain": 2,
+      "how": "Tap the beats as they reach the line, in three lanes. Hold through the long climbs. Keep the combo going."
+    },
+    {
+      "id": "yoga",
+      "name": "Yoga · Balance Flow",
+      "icon": "🧘",
+      "stat": "flexibility",
+      "seconds": 40,
+      "stars": [
+        55,
+        72,
+        86
+      ],
+      "gain": 3,
+      "how": "Drag to keep the dot inside the circle as you hold each pose. The wobble grows with every pose."
+    }
+  ],
+  "gyms": {
+    "fitness-first-burjuman": "Fitness First BurJuman",
+    "fitness-first-marina": "Fitness First Dubai Marina Mall",
+    "ufc-gym-jbr": "UFC Gym JBR"
+  }
+}

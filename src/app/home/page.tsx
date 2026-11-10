@@ -369,6 +369,7 @@ export default function HomePage() {
     townhouse: 7,
     penthouse: 8,
     villa: 9,
+    ballroom: 0,
   };
   const sortedFlats = React.useMemo(() => {
     if (!flats) return [];

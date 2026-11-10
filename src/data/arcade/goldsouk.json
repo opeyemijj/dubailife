@@ -1,0 +1,35 @@
+{
+  "_note": "The Gold Souk in Al Ras, Deira (src/components/arcade/games/goldsouk). Gold is sold by weight at the day's rate for its carat, plus a making charge per gram, and bargaining is expected. The day's 24K rate moves within `swing` of `base24` (AED per gram), the same for everyone on a given day; other carats are fractions of it. Some pieces are gold-plated fakes (more at higher levels): the hallmark reads GP and the magnet test catches them. Merchants are Locals: patience is how many lowball offers they'll take, margin their lowest mark-up over the true value. Levels are the haggler ladder (buyer) or the stall's customers (trader job).",
+  "base24": 380,
+  "swing": 0.04,
+  "carats": { "24": 1, "22": 0.916, "21": 0.875, "18": 0.75 },
+  "pieces": [
+    { "id": "chain", "name": "Gold rope chain", "icon": "📿", "kind": "chain", "carat": "22", "weight": [12, 28], "making": [18, 35], "wearable": "necklace" },
+    { "id": "bangle", "name": "Engraved bangle", "icon": "⭕", "kind": "bangle", "carat": "22", "weight": [15, 40], "making": [15, 30] },
+    { "id": "ring", "name": "Signet ring", "icon": "💍", "kind": "ring", "carat": "21", "weight": [4, 9], "making": [25, 45] },
+    { "id": "set", "name": "Bridal necklace set", "icon": "👑", "kind": "set", "carat": "22", "weight": [45, 110], "making": [30, 60], "wearable": "necklace" },
+    { "id": "earrings", "name": "Jhumka earrings", "icon": "✨", "kind": "earrings", "carat": "18", "weight": [6, 14], "making": [30, 50] },
+    { "id": "coin", "name": "24K gold coin (10 g)", "icon": "🪙", "kind": "coin", "carat": "24", "weight": [10, 10], "making": [5, 8] }
+  ],
+  "merchants": [
+    { "name": "Haji Rashid", "preset": "Male_Adult_21", "patience": 5, "margin": 0.04, "markup": [0.25, 0.35] },
+    { "name": "Mr Joseph", "preset": "Male_Adult_08", "patience": 4, "margin": 0.06, "markup": [0.3, 0.45] },
+    { "name": "Mr Anand", "preset": "Male_Adult_12", "patience": 4, "margin": 0.08, "markup": [0.35, 0.5] },
+    { "name": "Ustadh Kareem", "preset": "Male_Adult_04", "patience": 3, "margin": 0.1, "markup": [0.4, 0.6] }
+  ],
+  "levels": [
+    { "n": 1, "label": "Tourist", "fakeChance": 0.1, "weightCheat": 0, "merchant": 0 },
+    { "n": 2, "label": "Shopper", "fakeChance": 0.15, "weightCheat": 0.03, "merchant": 1 },
+    { "n": 3, "label": "Regular", "fakeChance": 0.2, "weightCheat": 0.05, "merchant": 2 },
+    { "n": 4, "label": "Haggler", "fakeChance": 0.25, "weightCheat": 0.07, "merchant": 2 },
+    { "n": 5, "label": "Souk insider", "fakeChance": 0.3, "weightCheat": 0.08, "merchant": 3 },
+    { "n": 6, "label": "Gold trader", "fakeChance": 0.35, "weightCheat": 0.1, "merchant": 3 }
+  ],
+  "customers": [
+    { "name": "A tourist couple", "preset": "Female_Adult_05", "willing": [0.25, 0.45], "patience": 4 },
+    { "name": "A bride's mother", "preset": "Female_Adult_06", "willing": [0.15, 0.3], "patience": 3 },
+    { "name": "A collector", "preset": "Male_Adult_04", "willing": [0.08, 0.18], "patience": 3 },
+    { "name": "A groom on a budget", "preset": "Male_Adult_12", "willing": [0.05, 0.12], "patience": 2 }
+  ],
+  "piecesPerVisit": 3
+}

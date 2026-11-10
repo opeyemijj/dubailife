@@ -7,12 +7,12 @@ export async function POST(req: Request) {
     const supabase = await supabaseServer();
     const { data: { user } } = await supabase.auth.getUser();
 
-    const body = await req.json();
-    const userId = user?.id || body.userId;
-
-    if (!userId) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = user.id;
+
+    const body = await req.json();
 
     const subscription = body.subscription;
     if (!subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) {
@@ -69,11 +69,15 @@ export async function DELETE(req: Request) {
     const supabase = await supabaseServer();
     const { data: { user } } = await supabase.auth.getUser();
 
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = user.id;
+
     const body = await req.json();
-    const userId = user?.id || body.userId;
     const endpoint = body.endpoint;
 
-    if (!userId || !endpoint) {
+    if (!endpoint) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 

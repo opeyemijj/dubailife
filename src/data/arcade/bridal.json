@@ -1,0 +1,42 @@
+{
+  "_note": "Bridal shops (src/components/arcade/games/bridal), played at Meena Bazaar in Bur Dubai. The racks are roster outfits (components/avatar/roster.ts OUTFITS) tagged here by style and colour; prices are the outfits' own. A brief scores a look: style 50, colour 30, within budget 20. The entourage are Locals. Clients are the bridal consultant job's Local brides and grooms, one level each.",
+  "racks": {
+    "woman": [
+      { "id": "bridal_mermaid", "style": "modern", "colour": "white", "silhouette": "Mermaid" },
+      { "id": "bridal_ballgown", "style": "classic", "colour": "white", "silhouette": "Ballgown" },
+      { "id": "bridal_asoebi_queen", "style": "nigerian", "colour": "gold", "silhouette": "Gele gown" },
+      { "id": "bridal_lehenga_queen", "style": "indian", "colour": "crimson", "silhouette": "Lehenga" },
+      { "id": "bridal_reception_mini", "style": "party", "colour": "white", "silhouette": "Reception mini" },
+      { "id": "in_lehenga", "style": "indian", "colour": "gold", "silhouette": "Lehenga choli" },
+      { "id": "ng_lace_asoebi", "style": "nigerian", "colour": "lace", "silhouette": "Asoebi corset gown" },
+      { "id": "cm_toghu_queen", "style": "cameroonian", "colour": "black", "silhouette": "Toghu gown" },
+      { "id": "Female_Adult_10", "style": "emirati", "colour": "black", "silhouette": "Luxury abaya" }
+    ],
+    "man": [
+      { "id": "bridal_groom_tux", "style": "modern", "colour": "white", "silhouette": "Ivory tuxedo" },
+      { "id": "Business_Male_01", "style": "classic", "colour": "black", "silhouette": "Black suit" },
+      { "id": "bridal_groom_agbada", "style": "nigerian", "colour": "gold", "silhouette": "Groom's agbada" },
+      { "id": "bridal_groom_sherwani", "style": "indian", "colour": "gold", "silhouette": "Brocade sherwani" },
+      { "id": "in_bandhgala", "style": "indian", "colour": "black", "silhouette": "Bandhgala" },
+      { "id": "Male_Adult_21", "style": "emirati", "colour": "white", "silhouette": "Kandura & ghutra" },
+      { "id": "cm_toghu_king", "style": "cameroonian", "colour": "black", "silhouette": "Royal toghu" }
+    ]
+  },
+  "styles": { "modern": "Modern", "classic": "Classic", "nigerian": "Nigerian", "indian": "Indian", "emirati": "Emirati", "cameroonian": "Cameroonian", "party": "Party" },
+  "colours": { "white": "White", "gold": "Gold", "crimson": "Crimson", "black": "Black", "lace": "Lace" },
+  "tries": 5,
+  "pins": 5,
+  "entourage": [
+    { "name": "Aunty Farida", "preset": "Female_Adult_06", "loves": ["classic", "emirati"] },
+    { "name": "Best friend Jade", "preset": "Female_Party_02", "loves": ["modern", "party"] },
+    { "name": "Cousin Rana", "preset": "Female_Adult_11", "loves": ["indian", "nigerian", "cameroonian"] }
+  ],
+  "clients": [
+    { "n": 1, "name": "Leila", "gender": "woman", "preset": "Female_Adult_05", "style": "classic", "colour": "white", "budget": 20000, "says": "Something timeless. My grandmother wore white satin." },
+    { "n": 2, "name": "Omar", "gender": "man", "preset": "Male_Adult_08", "style": "emirati", "colour": "white", "budget": 5000, "says": "Traditional, crisp and white. It's a family wedding in Al Barsha." },
+    { "n": 3, "name": "Priya", "gender": "woman", "preset": "Female_Adult_11", "style": "indian", "colour": "crimson", "budget": 18000, "says": "Red and gold, heavy embroidery. Mum will cry." },
+    { "n": 4, "name": "Tunde", "gender": "man", "preset": "Male_Adult_04", "style": "nigerian", "colour": "gold", "budget": 15000, "says": "Gold agbada. The whole of Lagos is flying in." },
+    { "n": 5, "name": "Chioma", "gender": "woman", "preset": "Female_Party_02", "style": "nigerian", "colour": "gold", "budget": 16000, "says": "White and gold, with a gele that touches the sky." },
+    { "n": 6, "name": "Sofia", "gender": "woman", "preset": "Female_Adult_06", "style": "modern", "colour": "white", "budget": 13000, "says": "Sleek and modern for a beach reception at Kite Beach." }
+  ]
+}

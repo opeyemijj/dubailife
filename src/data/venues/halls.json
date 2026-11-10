@@ -1,0 +1,94 @@
+{
+  "_note": "Event halls in the hotels (src/components/arcade/games/events). A booking is for one event slot of `slotHours`; base + perGuest x guests + vendors is paid when booking, and creates a party invite at the hall so guests come as they do to parties. Prices match the wedding venues in life/love.json for the same hotel. Capacities are game values, except the Grand Hyatt's Baniyas Ballroom (2,500 for weddings, per Grand Hyatt). base, perGuest, capacity, vendor prices, slotHours and guestOptions are mirrored in supabase/migrations/*_halls.sql (scripts/check-life-config.mjs).",
+  "slotHours": 4,
+  "guestOptions": [20, 50, 100, 200],
+  "halls": [
+    { "id": "baniyas-ballroom", "place": "grand-hyatt-dubai", "name": "Baniyas Ballroom", "capacity": 2500, "base": 18000, "perGuest": 300 },
+    { "id": "hyatt-regency-ballroom", "place": "hyatt-regency-dubai", "name": "Hyatt Regency Ballroom", "capacity": 800, "base": 12000, "perGuest": 250 },
+    { "id": "atlantis-grand-ballroom", "place": "atlantis-the-palm", "name": "Atlantis Grand Ballroom", "capacity": 1500, "base": 20000, "perGuest": 400 },
+    { "id": "palace-fountain-terrace", "place": "palace-downtown", "name": "Palace Fountain Terrace", "capacity": 300, "base": 25000, "perGuest": 450 },
+    { "id": "madinat-waterside", "place": "madinat-jumeirah", "name": "Madinat Waterside Hall", "capacity": 600, "base": 30000, "perGuest": 500 },
+    { "id": "one-zaabeel-sky-ballroom", "place": "one-zaabeel", "name": "One Za'abeel Sky Ballroom", "capacity": 500, "base": 40000, "perGuest": 600 },
+    { "id": "samaya-ballroom", "place": "ritz-carlton-difc", "name": "Samaya Ballroom", "capacity": 1000, "base": 30000, "perGuest": 500 },
+    { "id": "burj-al-arab-royal-terrace", "place": "burj-al-arab", "name": "Burj Al Arab Royal Terrace", "capacity": 200, "base": 50000, "perGuest": 900 }
+  ],
+  "types": [
+    { "id": "wedding", "label": "Wedding", "icon": "💍", "moments": ["zaffa", "dance", "cake", "bouquet"] },
+    { "id": "engagement", "label": "Engagement", "icon": "💞", "moments": ["zaffa", "dance", "cake"] },
+    { "id": "mehndi", "label": "Mehndi night", "icon": "🌿", "moments": ["zaffa", "dance"] },
+    { "id": "birthday", "label": "Birthday", "icon": "🎂", "moments": ["dance", "cake"] },
+    { "id": "baby-shower", "label": "Baby shower", "icon": "🍼", "moments": ["cake", "bouquet"] },
+    { "id": "gender-reveal", "label": "Gender reveal", "icon": "🎈", "moments": ["cake", "bouquet"] },
+    { "id": "graduation", "label": "Graduation", "icon": "🎓", "moments": ["zaffa", "cake"] },
+    { "id": "anniversary", "label": "Anniversary", "icon": "🥂", "moments": ["dance", "cake"] },
+    { "id": "gala", "label": "Corporate gala", "icon": "🏢", "moments": ["zaffa", "dance"] },
+    { "id": "eid", "label": "Eid gathering", "icon": "🌙", "moments": ["zaffa", "cake"] }
+  ],
+  "themes": [
+    { "id": "royal-gold", "label": "Royal Gold", "colors": ["#d4a017", "#7f1d1d", "#fef3c7"] },
+    { "id": "garden-white", "label": "Garden White", "colors": ["#f8fafc", "#86efac", "#fde68a"] },
+    { "id": "arabian-nights", "label": "Arabian Nights", "colors": ["#1e1b4b", "#d4a017", "#7c3aed"] },
+    { "id": "modern-blush", "label": "Modern Blush", "colors": ["#fbcfe8", "#f8fafc", "#a3a3a3"] },
+    { "id": "ocean-blue", "label": "Ocean Blue", "colors": ["#0ea5e9", "#f8fafc", "#14b8a6"] }
+  ],
+  "slots": [
+    { "id": "stage", "label": "Stage" },
+    { "id": "aisle", "label": "Aisle" },
+    { "id": "tables", "label": "Tables" },
+    { "id": "ceiling", "label": "Ceiling" },
+    { "id": "entrance", "label": "Entrance" }
+  ],
+  "props": [
+    { "id": "kosha-gold", "slot": "stage", "label": "Gold kosha stage", "price": 18000, "themes": ["royal-gold", "arabian-nights"] },
+    { "id": "floral-arch", "slot": "stage", "label": "White floral arch", "price": 12000, "themes": ["garden-white", "modern-blush"] },
+    { "id": "led-wall", "slot": "stage", "label": "LED wall stage", "price": 15000, "themes": ["ocean-blue", "modern-blush"] },
+    { "id": "tent-majlis", "slot": "stage", "label": "Majlis tent stage", "price": 14000, "themes": ["arabian-nights"] },
+    { "id": "petal-aisle", "slot": "aisle", "label": "Rose petal aisle", "price": 4000, "themes": ["modern-blush", "garden-white"] },
+    { "id": "lantern-aisle", "slot": "aisle", "label": "Lantern-lined aisle", "price": 5000, "themes": ["arabian-nights", "royal-gold"] },
+    { "id": "mirror-aisle", "slot": "aisle", "label": "Mirror runway", "price": 6000, "themes": ["royal-gold", "ocean-blue"] },
+    { "id": "gold-chargers", "slot": "tables", "label": "Gold chargers and red roses", "price": 9000, "themes": ["royal-gold"] },
+    { "id": "white-peonies", "slot": "tables", "label": "White peonies and candles", "price": 8000, "themes": ["garden-white", "modern-blush"] },
+    { "id": "brass-lamps", "slot": "tables", "label": "Brass lamps and dates", "price": 7000, "themes": ["arabian-nights"] },
+    { "id": "glass-shells", "slot": "tables", "label": "Glass and seashells", "price": 7500, "themes": ["ocean-blue"] },
+    { "id": "crystal-chandeliers", "slot": "ceiling", "label": "Crystal chandeliers", "price": 16000, "themes": ["royal-gold", "garden-white"] },
+    { "id": "fairy-canopy", "slot": "ceiling", "label": "Fairy-light canopy", "price": 9000, "themes": ["garden-white", "modern-blush", "ocean-blue"] },
+    { "id": "star-ceiling", "slot": "ceiling", "label": "Starlit drapes", "price": 11000, "themes": ["arabian-nights", "ocean-blue"] },
+    { "id": "rose-wall", "slot": "entrance", "label": "Rose wall photo spot", "price": 6000, "themes": ["modern-blush", "garden-white"] },
+    { "id": "gold-gate", "slot": "entrance", "label": "Gilded entrance gate", "price": 7000, "themes": ["royal-gold", "arabian-nights"] },
+    { "id": "wave-tunnel", "slot": "entrance", "label": "Light wave tunnel", "price": 8000, "themes": ["ocean-blue"] }
+  ],
+  "vendors": [
+    { "id": "catering", "label": "Hotel catering (per guest)", "icon": "🍽️", "perGuest": 180 },
+    { "id": "dj", "label": "DJ and sound", "icon": "🎧", "price": 6000 },
+    { "id": "band", "label": "Zaffa drummers", "icon": "🥁", "price": 8000 },
+    { "id": "photographer", "label": "Photographer", "icon": "📸", "price": 7000 },
+    { "id": "cake", "label": "Five-tier cake", "icon": "🎂", "price": 4500 },
+    { "id": "florist", "label": "Florist", "icon": "💐", "price": 5000 }
+  ],
+  "guests": [
+    { "name": "Aunty Farida", "likes": ["Uncle Sami"], "feud": "Cousin Rana" },
+    { "name": "Uncle Sami", "likes": ["Aunty Farida"], "feud": "Mr Kapoor" },
+    { "name": "Cousin Rana", "likes": ["Leila"], "feud": "Aunty Farida" },
+    { "name": "Leila", "likes": ["Cousin Rana", "Jade"], "feud": null },
+    { "name": "Jade", "likes": ["Leila"], "feud": "Tariq" },
+    { "name": "Tariq", "likes": ["Omar"], "feud": "Jade" },
+    { "name": "Omar", "likes": ["Tariq"], "feud": null },
+    { "name": "Mr Kapoor", "likes": ["Mrs Kapoor"], "feud": "Uncle Sami" },
+    { "name": "Mrs Kapoor", "likes": ["Mr Kapoor"], "feud": null },
+    { "name": "Grandma Huda", "likes": ["Aunty Farida"], "feud": null },
+    { "name": "Nadia", "likes": ["Sofia"], "feud": "Karim" },
+    { "name": "Sofia", "likes": ["Nadia"], "feud": null },
+    { "name": "Karim", "likes": ["Omar"], "feud": "Nadia" },
+    { "name": "Mira", "likes": ["Jade"], "feud": null },
+    { "name": "Dev", "likes": ["Mira"], "feud": null },
+    { "name": "Zara", "likes": ["Sofia"], "feud": "Mira" }
+  ],
+  "clients": [
+    { "n": 1, "client": "The Haddad family", "type": "birthday", "theme": "garden-white", "budget": 30000 },
+    { "n": 2, "client": "Jade and Tariq", "type": "engagement", "theme": "modern-blush", "budget": 45000 },
+    { "n": 3, "client": "The Kapoors", "type": "anniversary", "theme": "royal-gold", "budget": 50000 },
+    { "n": 4, "client": "Nadia and Karim", "type": "mehndi", "theme": "arabian-nights", "budget": 45000 },
+    { "n": 5, "client": "Emirates tech summit", "type": "gala", "theme": "ocean-blue", "budget": 55000 },
+    { "n": 6, "client": "Leila and Omar", "type": "wedding", "theme": "royal-gold", "budget": 70000 }
+  ]
+}

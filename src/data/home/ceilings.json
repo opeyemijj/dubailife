@@ -1,0 +1,25 @@
+{
+  "_comment": "Ceilings (the roof seen from inside, in the Inside and Eye views). `finishes` are the ceiling designs, `paints` its colours. Prices in AED, paid once by whoever changes it. The first of each is what every home comes with.",
+  "finishes": [
+    { "id": "flat", "label": "Flat plaster & downlights", "icon": "⬜", "desc": "Smooth white plaster with recessed spotlights.", "price": 0 },
+    { "id": "tray", "label": "Tray ceiling & cove light", "icon": "🔲", "desc": "A dropped border round a raised centre, lit by a warm hidden LED strip.", "price": 4800 },
+    { "id": "coffered", "label": "Coffered grid", "icon": "▦", "desc": "Deep square panels framed by moulded beams, like a grand hotel.", "price": 7500 },
+    { "id": "beams", "label": "Exposed timber beams", "icon": "🪵", "desc": "Dark walnut beams across the room for a warm, rustic feel.", "price": 6200 },
+    { "id": "arabesque", "label": "Arabesque gold medallions", "icon": "✴️", "desc": "Gilded eight-point star medallions in hand-cast plaster.", "price": 9800 },
+    { "id": "stars", "label": "Starlight sky ceiling", "icon": "✨", "desc": "Hundreds of fibre-optic stars twinkling overhead. Best in a dark colour.", "price": 12500 }
+  ],
+  "paints": [
+    { "id": "white", "label": "Ceiling white", "color": "#f5f5f4", "price": 0 },
+    { "id": "ivory", "label": "Warm ivory", "color": "#f4efe6", "price": 600 },
+    { "id": "greige", "label": "Desert greige", "color": "#d8cfc2", "price": 900 },
+    { "id": "sky", "label": "Sky blue", "color": "#c7dbea", "price": 900 },
+    { "id": "blush", "label": "Rose blush", "color": "#e9cfc8", "price": 900 },
+    { "id": "sage", "label": "Sage green", "color": "#b7c4ad", "price": 900 },
+    { "id": "gold", "label": "Gold leaf", "color": "#d4b26a", "price": 2400 },
+    { "id": "teal", "label": "Deep teal", "color": "#1f5560", "price": 1200 },
+    { "id": "navy", "label": "Midnight navy", "color": "#1b2338", "price": 1200 },
+    { "id": "plum", "label": "Plum", "color": "#4e2a45", "price": 1200 },
+    { "id": "charcoal", "label": "Charcoal", "color": "#33363b", "price": 1200 },
+    { "id": "black", "label": "Night black", "color": "#121318", "price": 1400 }
+  ]
+}

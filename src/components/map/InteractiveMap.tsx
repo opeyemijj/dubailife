@@ -105,6 +105,13 @@ export const getEntityCategoryInfo = (entity: any) => {
   const type = (entity?.type || '').toLowerCase();
   if (type === 'academic-tile') return { icon: '🎓', category: 'Academic City', key: 'academics', color: 'from-amber-500 to-purple-600', badgeBg: 'bg-purple-900/60 border-purple-500/40 text-purple-200' };
   if (type === 'game-tile') return { icon: '🎮', category: 'Game City', key: 'games', color: 'from-fuchsia-500 to-indigo-600', badgeBg: 'bg-indigo-900/60 border-indigo-500/40 text-indigo-200' };
+  // Bur Dubai and Deira (lib/city/oldDubai.ts): by type, before the name checks below ("Heritage House" is not a home).
+  if (type === 'od-courts') return { icon: '⚖️', category: 'Courts & Government', key: 'courts', color: 'from-amber-600 to-stone-700', badgeBg: 'bg-stone-900/60 border-amber-500/40 text-amber-200' };
+  if (type === 'od-hospital') return { icon: '🏥', category: 'Healthcare', key: 'healthcare', color: 'from-red-500 to-rose-600', badgeBg: 'bg-rose-900/60 border-rose-500/40 text-rose-200' };
+  if (type === 'od-heritage' || type === 'od-clocktower') return { icon: '🏛️', category: 'Attractions & Mosques', key: 'attractions', color: 'from-blue-500 to-indigo-600', badgeBg: 'bg-blue-900/60 border-blue-500/40 text-blue-200' };
+  if (type === 'od-bazaar' || type === 'od-gold-souk' || type === 'od-spice-souk') return { icon: type === 'od-gold-souk' ? '🪙' : '🛍️', category: 'Shopping Malls', key: 'malls', color: 'from-purple-500 to-pink-600', badgeBg: 'bg-purple-900/60 border-purple-500/40 text-purple-200' };
+  if (type === 'od-abra') return { icon: '🛶', category: 'Transit & Infrastructure', key: 'infrastructure', color: 'from-blue-600 to-indigo-700', badgeBg: 'bg-blue-900/60 border-blue-500/40 text-blue-200' };
+  if (entity?.id === 'grand-hyatt-dubai' || entity?.id === 'hyatt-regency-dubai') return { icon: '🏨', category: 'Hotels & Resorts', key: 'hotels', color: 'from-amber-400 to-yellow-600', badgeBg: 'bg-yellow-900/60 border-yellow-500/40 text-yellow-200' };
   const id = (entity?.id || '').toLowerCase();
   const name = (entity?.name || '').toLowerCase();
 
@@ -187,7 +194,9 @@ export const isSpecialPlaceVenue = (loc: any, catInfo: any) => {
     catInfo.key === 'malls' ||
     catInfo.key === 'hotels' ||
     catInfo.key === 'parks' ||
-    catInfo.key === 'beaches'
+    catInfo.key === 'beaches' ||
+    catInfo.key === 'healthcare' ||
+    catInfo.key === 'courts'
   );
 
   return isCategoryMatch &&

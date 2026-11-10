@@ -57,6 +57,9 @@ export interface VenueActivity {
   price?: number;
   /** Acted out in 3D as a ride or water activity (src/data/venues/rides.json). */
   ride?: string;
+  /** Opens a 3D attraction game (src/components/arcade): its id, and what it starts with. */
+  arcade?: string;
+  arcadeParams?: Record<string, unknown>;
 }
 
 export interface Venue {

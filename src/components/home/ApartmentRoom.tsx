@@ -1,6 +1,6 @@
 "use client";
 
-import { Ceiling } from "@/components/interior/Ceiling";
+import { Ceiling, type CeilingHole } from "@/components/interior/Ceiling";
 import { Flies } from "@/components/avatar/Flies";
 import { PartyDecor } from "@/components/invite/PartyDecor";
 import { canvasQuality, isWebGLAvailable, resetWebGLCache, useDocumentVisible } from "@/lib/device";
@@ -23,7 +23,7 @@ import { adjustBalance, DEFAULT_NEEDS, updateCitizen } from "@/lib/citizenStore"
 import { gainSkill } from "@/lib/life";
 import { gameAudio } from "@/utils/gameAudio";
 import {
-  AVATAR_SPOT, BUILT_INS, CELL, DOOR, GRID, LAYOUT_SCALE, ROOM_SIZE, WALL_HEIGHT, WINDOW,
+  AVATAR_SPOT, BUILT_INS, CELL, DEFAULT_CEILING_COLOR, DOOR, GRID, LAYOUT_SCALE, ROOM_SIZE, WALL_HEIGHT, WINDOW,
   findFreePlacement, floorCenter, floorPlacementAt, getCatalogItem, isPlacementValid, levelOf, rotatedSize, wallOffsetAt, wallTransform, withHomeItems,
   HOUSING_CONFIGS, hasPlot, homeObjectOf, type HomeObject, type HomeActivityDef, type FloorFinish, type HomeStyle, type HousingTier, type LevelDef, type RoomZone,
   type CatalogItem, type FloorPlacement, type Interaction, type OwnedFurniture, type Placement, type Rotation, type Wall,
@@ -242,6 +242,12 @@ function PeopleLabels({ people, nodes }: { people: Person[]; nodes: LabelNodes }
 /** Eyes view: a wide lens and the camera a little behind the head, so it isn't too zoomed in (user, 2026-11-04). */
 export const EYE_FOV = 74;
 export const EYE_BACK = 0.45;
+/** Inside view: over the shoulder but under the ceiling, so the roof shows overhead (user, 2026-11-10). */
+const INSIDE_FOV = 50;
+const INSIDE_BACK = 4.2;
+const INSIDE_HEIGHT = 2.5;
+/** The highest the Inside camera goes while the citizen is indoors: just under the ceiling and its mouldings. */
+const INSIDE_MAX_Y = WALL_HEIGHT - 0.35;
 const BED_MODEL = "/models/furniture/bed.glb";
 /** Every bed's mattress top stands this high (m), whatever its width: restPose.ts lies people on it. */
 export const BED_MATTRESS = 0.6;
@@ -1102,9 +1108,11 @@ function useFloorTexture(finish: FloorFinish = "oak") {
 }
 
 /** One floor of a two-storey home: its dividing walls (with doorways) and a tappable badge per room. */
-function LevelPartitions({ def, upView, activeRoomId, onSelectRoom, onFloorClick, placingItem, wallColor, skirtingColor }: {
+function LevelPartitions({ def, upView, activeRoomId, onSelectRoom, onFloorClick, placingItem, wallColor, skirtingColor, fullHeight }: {
   def: LevelDef;
   upView?: boolean;
+  /** Up to the ceiling (when the roof shows), rather than the lower walls of the dollhouse views. */
+  fullHeight?: boolean;
   activeRoomId?: string;
   onSelectRoom?: (id: string) => void;
   onFloorClick?: (point: THREE.Vector3) => void;
@@ -1112,7 +1120,7 @@ function LevelPartitions({ def, upView, activeRoomId, onSelectRoom, onFloorClick
   wallColor: string;
   skirtingColor: string;
 }) {
-  const wallH = upView ? 1.15 : 2.6;
+  const wallH = upView ? 1.15 : fullHeight ? WALL_HEIGHT : 2.6;
   const pieces = def.walls.flatMap((w) => {
     const len = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]);
     const ux = (w.b[0] - w.a[0]) / len, uz = (w.b[1] - w.a[1]) / len;
@@ -1224,7 +1232,7 @@ function CameraRig({
   useEffect(() => {
     if (!controls) return;
     const cam = camera as THREE.PerspectiveCamera;
-    const fov = eye && follow ? EYE_FOV : 35;
+    const fov = eye && follow ? EYE_FOV : inside && follow ? INSIDE_FOV : 35;
     // eslint-disable-next-line react-hooks/immutability -- the three.js camera is changed in place
     if (cam.fov !== fov) {
       cam.fov = fov;
@@ -1242,7 +1250,7 @@ function CameraRig({
     if (inside && follow) {
       // Inside: over-the-shoulder view of the citizen in the room
       controls.target.set(follow[0], 1.45, follow[2]);
-      camera.position.set(follow[0] - Math.sin(followYaw) * 6.0, 3.6, follow[2] - Math.cos(followYaw) * 6.0);
+      camera.position.set(follow[0] - Math.sin(followYaw) * INSIDE_BACK, INSIDE_HEIGHT, follow[2] - Math.cos(followYaw) * INSIDE_BACK);
       controls.update();
       return;
     }
@@ -1299,6 +1307,16 @@ function CameraRig({
       camera.position.add(_scratchShift);
       lastFollow.current = follow;
       controls.update();
+      // Indoors the camera stays under the roof and within the outer walls, however far it's dragged or zoomed.
+      if (Math.abs(follow[0]) < HALF && Math.abs(follow[2]) < HALF) {
+        const lim = HALF - 0.25;
+        const cx = THREE.MathUtils.clamp(camera.position.x, -lim, lim), cz = THREE.MathUtils.clamp(camera.position.z, -lim, lim);
+        const cy = Math.min(camera.position.y, INSIDE_MAX_Y);
+        if (cx !== camera.position.x || cy !== camera.position.y || cz !== camera.position.z) {
+          camera.position.set(cx, cy, cz);
+          controls.update();
+        }
+      }
 
       // Cache walls instead of traversing the whole scene on every frame
       wallScanTimer.current -= dt;
@@ -1468,6 +1486,7 @@ function RoomScene({
   onChangeLevel,
   homeStyle,
   partyDecor,
+  lightsOut,
   people = [],
   labels,
   panTarget,
@@ -1501,6 +1520,18 @@ function RoomScene({
     const d = rotatedSize(item.size, f.placement.rot)[1] * CELL;
     return { x: c.x, foot: c.z + d / 2 + 0.35, bottom: c.z + d / 2, top: c.z - d / 2, landing: c.z - d / 2 - 0.4 };
   }, [furniture]);
+  // Inside and Eye views are under the roof: the (decoratable) ceiling shows, and inner walls reach up to it.
+  const roofed = (view === "inside" || view === "eye") && !upView;
+  // Downstairs in a two-storey home, the ceiling is open over the staircase.
+  const ceilingHoles = useMemo<CeilingHole[]>(() => {
+    if (!levelDef || lvl !== 0) return [];
+    const f = furniture.find((x) => getCatalogItem(x.itemId)?.visual === "staircase" && x.placement?.kind === "floor" && levelOf(x.placement) === 0);
+    if (!f || f.placement?.kind !== "floor") return [];
+    const item = getCatalogItem(f.itemId)!;
+    const c = floorCenter(item.size, f.placement);
+    const [w, d] = rotatedSize(item.size, f.placement.rot);
+    return [{ minX: c.x - (w * CELL) / 2, maxX: c.x + (w * CELL) / 2, minZ: c.z - (d * CELL) / 2, maxZ: c.z + (d * CELL) / 2 }];
+  }, [furniture, levelDef, lvl]);
   const [hiddenWalls, setHiddenWalls] = useState<Set<Wall>>(new Set(["south", "east"]));
   // Where the user last pointed the item being placed (cleared by switching items).
   const [moved, setMoved] = useState<{ uid: string; placement: Placement } | null>(null);
@@ -2209,8 +2240,20 @@ function RoomScene({
         onHiddenWallsChange={setHiddenWalls}
       />
 
-      {/* Eye view: the ceiling overhead (looking up shows a roof, not sky). */}
-      {view === "eye" && <Ceiling w={ROOM_SIZE} d={ROOM_SIZE} h={WALL_HEIGHT} />}
+      {/* Inside and Eye views: the ceiling overhead (looking up shows a roof, not sky), as the owner decorated it. */}
+      {roofed && (
+        <Ceiling
+          w={ROOM_SIZE}
+          d={ROOM_SIZE}
+          h={WALL_HEIGHT}
+          color={style.ceilingColor ?? DEFAULT_CEILING_COLOR}
+          finish={style.ceiling ?? "flat"}
+          holes={ceilingHoles}
+          roof
+          overhang={WALL_THICKNESS}
+          dim={lightsOut}
+        />
+      )}
 
       {/* Floor */}
       <mesh
@@ -2262,7 +2305,7 @@ function RoomScene({
         walls={fixtureWalls}
         wallColor={style.wall}
         skirtingColor={config.skirtingColor}
-        wallH={upView ? 1.15 : 2.6}
+        wallH={upView ? 1.15 : roofed ? WALL_HEIGHT : 2.6}
         onUse={busy ? undefined : goUseFixture}
       />
 
@@ -2277,6 +2320,7 @@ function RoomScene({
           placingItem={!!placing}
           wallColor={style.wall}
           skirtingColor={config.skirtingColor}
+          fullHeight={roofed}
         />
       )}
 
@@ -2291,6 +2335,7 @@ function RoomScene({
           placingItem={!!placing}
           wallColor={style.wall}
           skirtingColor={config.skirtingColor}
+          fullHeight={roofed}
         />
       )}
       {rooms?.some((r) => r.id === "balcony") && <Balcony room={rooms.find((r) => r.id === "balcony")!} onFloorClick={handleFloorLocomotion} />}
@@ -2693,10 +2738,10 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
               screenSpacePanning={true}
               enableDamping
               enabled={!isDraggingItem}
-              minPolarAngle={props.upView ? 0.2 : props.view === "eye" ? 0.35 : props.view === "inside" ? 0.6 : 0.35}
-              maxPolarAngle={props.upView ? 1.15 : props.view === "eye" ? 2.4 : props.view === "inside" ? 1.5 : 1.25}
-              minDistance={props.upView ? 6 : props.view === "eye" ? 0.05 : props.view === "inside" ? 3 : 6}
-              maxDistance={props.upView ? 38 : props.view === "eye" ? EYE_BACK + 0.15 : props.view === "inside" ? 14 : showPlotScroll ? 38 : 30}
+              minPolarAngle={props.upView ? 0.2 : props.view === "eye" ? 0.35 : props.view === "inside" ? 0.95 : 0.35}
+              maxPolarAngle={props.upView ? 1.15 : props.view === "eye" ? 2.4 : props.view === "inside" ? 1.75 : 1.25}
+              minDistance={props.upView ? 6 : props.view === "eye" ? 0.05 : props.view === "inside" ? 1.8 : 6}
+              maxDistance={props.upView ? 38 : props.view === "eye" ? EYE_BACK + 0.15 : props.view === "inside" ? 7 : showPlotScroll ? 38 : 30}
             />
           </Canvas>
         </WebGLErrorBoundary>

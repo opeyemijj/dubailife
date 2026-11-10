@@ -1,0 +1,26 @@
+{
+  "_note": "Nail bars (src/components/arcade/games/nails): NStyle Beauty Lounge (City Centre Deira, The Dubai Mall), N.Bar and The Nail Spa. A manicure: shape every nail, paint each one (coverage and spills on the skin are scored), add the design, then the UV lamp (hold for `uvSeconds`; letting go early smudges). Self mode does one of the wardrobe's nail sets (roster NAILS_CATALOG, by id) and puts it on your look; the technician job serves Local customers' orders, one level each, for tips.",
+  "uvSeconds": 3,
+  "coverageGood": 0.9,
+  "shapes": { "square": "Square", "round": "Round", "almond": "Almond", "coffin": "Coffin", "stiletto": "Stiletto" },
+  "designs": { "plain": "Plain", "french": "French tip", "glitter": "Glitter", "gems": "Gems" },
+  "sets": [
+    { "id": "xxl_french_coffin", "shape": "coffin", "colour": "#fdf2f8", "design": "french" },
+    { "id": "gold_chrome_stiletto", "shape": "stiletto", "colour": "#d4af37", "design": "glitter" },
+    { "id": "ruby_almond", "shape": "almond", "colour": "#dc2626", "design": "plain" },
+    { "id": "bridal_pearl_ombre", "shape": "almond", "colour": "#fffbeb", "design": "gems" },
+    { "id": "neon_pink_bling", "shape": "coffin", "colour": "#ec4899", "design": "gems" },
+    { "id": "emerald_cateye", "shape": "almond", "colour": "#059669", "design": "glitter" },
+    { "id": "sapphire_french", "shape": "square", "colour": "#2563eb", "design": "french" },
+    { "id": "obsidian_matte", "shape": "square", "colour": "#171717", "design": "gems" }
+  ],
+  "customers": [
+    { "n": 1, "name": "Mira", "says": "Something simple and red for work.", "shape": "round", "colour": "#dc2626", "design": "plain", "seconds": 120 },
+    { "n": 2, "name": "Zara", "says": "French tips, square, please. Classic.", "shape": "square", "colour": "#fdf2f8", "design": "french", "seconds": 110 },
+    { "n": 3, "name": "Amira", "says": "Gold and sparkly for my sister's wedding!", "shape": "almond", "colour": "#d4af37", "design": "glitter", "seconds": 100 },
+    { "n": 4, "name": "Jade", "says": "Hot pink coffins with gems. Go big.", "shape": "coffin", "colour": "#ec4899", "design": "gems", "seconds": 95 },
+    { "n": 5, "name": "Nadia", "says": "Something for a beach wedding at Kite Beach.", "shape": "almond", "colour": "#0ea5e9", "design": "glitter", "seconds": 90 },
+    { "n": 6, "name": "Layla", "says": "Bridal: pearly white almonds with gems.", "shape": "almond", "colour": "#fffbeb", "design": "gems", "seconds": 85 }
+  ],
+  "palette": ["#dc2626", "#fdf2f8", "#d4af37", "#ec4899", "#0ea5e9", "#059669", "#2563eb", "#171717", "#fffbeb", "#7c3aed"]
+}

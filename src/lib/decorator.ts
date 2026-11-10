@@ -31,12 +31,17 @@ export interface DecorJob {
   budget: number; spent: number; plan: DecorPlan | null; acceptedAt: string | null;
 }
 export interface DecoratorPro { id: string; username: string; look?: AvatarLookProps; fee: number }
-export interface DecorHome { id: number; client: string; tier: HousingTier; brief: string | null; budget: number; spent: number; fee: number; plan: DecorPlan | null; furniture: OwnedFurniture[]; style: HomeStyle | null }
-export interface DecorRequest { id: number; client: string; clientLook?: AvatarLookProps; studio: string | null; tier: string; fee: number; budget: number; spent: number; status: "requested" | "working"; createdAt: string }
+export interface DecorHome { id: number; client: string; tier: HousingTier; brief: string | null; budget: number; spent: number; fee: number; plan: DecorPlan | null; furniture: OwnedFurniture[]; style: HomeStyle | null;
+  /** An event hall job: the booking's title and hall (its design is what's decorated). */
+  hall?: { title: string; hall: string } }
+export interface DecorRequest { id: number; client: string; clientLook?: AvatarLookProps; studio: string | null; tier: string; fee: number; budget: number; spent: number; status: "requested" | "working"; createdAt: string;
+  hall?: { title: string; hall: string; startsAt: string } | null }
 
 const ERRORS: Record<string, string> = {
   insufficient: "You don't have enough AED for that.",
-  already_decorating: "A decorator is already working on your home.",
+  already_decorating: "A decorator is already working on it.",
+  event_over: "That event is over.",
+  not_your_booking: "That isn't your booking.",
   not_a_decorator: "That player isn't a decorator any more. Choose someone else.",
   not_available: "The client cancelled that request.",
   not_cancellable: "Your decorator has your key. You can cancel if they haven't finished after 24 hours.",
@@ -54,6 +59,9 @@ async function call<T>(fn: string, args: Record<string, unknown> = {}): Promise<
 export const decorators = () => call<DecoratorPro[]>("professionals", { p_service: "decorator" });
 export const requestDecorator = (decorator: string, tier: HousingTier, budget: number, brief: string | null) =>
   call<{ id: number; fee: number }>("request_decorator", { p_decorator: decorator, p_tier: tier, p_budget: budget, p_brief: brief });
+/** Hire a decorator for an event hall booking (lib/halls): the same budget and fee, held until they finish. */
+export const requestHallDecorator = (decorator: string, booking: number, budget: number, brief: string | null) =>
+  call<{ id: number; fee: number }>("request_hall_decorator", { p_decorator: decorator, p_booking: booking, p_budget: budget, p_brief: brief });
 export const cancelDecor = (job: number) => call<null>("cancel_decor", { p_job: job });
 export const decorJobsForMe = () => call<DecorRequest[]>("decor_jobs_for_me");
 export const acceptDecor = (job: number) => call<null>("decor_accept", { p_job: job });

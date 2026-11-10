@@ -1,0 +1,14 @@
+{
+  "_note": "The 3D attraction games (src/components/arcade). Each game's reward rules: AED paid per star on a finished round, the most AED it can pay one player in a Dubai day, the highest score the server accepts and the highest level. perStar, dailyCap, maxScore and maxLevel are mirrored in public.arcade_rule() (supabase/migrations/*_arcade.sql) and checked by scripts/check-life-config.mjs. skill and need are paid on the device, as other activities do.",
+  "games": [
+    { "id": "boxing", "name": "Celebrity Boxing", "icon": "🥊", "perStar": 150, "dailyCap": 1500, "maxScore": 100000, "maxLevel": 30, "skill": "fitness", "need": { "kind": "fun", "amount": 30 } },
+    { "id": "gym", "name": "Gym", "icon": "🏋️", "perStar": 40, "dailyCap": 400, "maxScore": 100000, "maxLevel": 30, "skill": "fitness", "need": { "kind": "energy", "amount": -15 } },
+    { "id": "scan", "name": "Pregnancy scan", "icon": "🩺", "perStar": 50, "dailyCap": 300, "maxScore": 100000, "maxLevel": 3, "need": { "kind": "social", "amount": 15 } },
+    { "id": "labour", "name": "Birth", "icon": "👶", "perStar": 300, "dailyCap": 900, "maxScore": 100000, "maxLevel": 1, "need": { "kind": "social", "amount": 40 } },
+    { "id": "court", "name": "Dubai Courts", "icon": "⚖️", "perStar": 200, "dailyCap": 1200, "maxScore": 100000, "maxLevel": 30, "skill": "charisma", "need": { "kind": "fun", "amount": 20 } },
+    { "id": "hall", "name": "Event halls", "icon": "🎊", "perStar": 150, "dailyCap": 600, "maxScore": 100000, "maxLevel": 30, "skill": "charisma", "need": { "kind": "social", "amount": 30 } },
+    { "id": "bridal", "name": "Bridal shops", "icon": "👰", "perStar": 100, "dailyCap": 600, "maxScore": 100000, "maxLevel": 30, "skill": "culture", "need": { "kind": "fun", "amount": 20 } },
+    { "id": "nails", "name": "Nail bar", "icon": "💅", "perStar": 60, "dailyCap": 600, "maxScore": 100000, "maxLevel": 30, "need": { "kind": "fun", "amount": 20 } },
+    { "id": "goldsouk", "name": "Gold Souk", "icon": "🪙", "perStar": 80, "dailyCap": 640, "maxScore": 100000, "maxLevel": 30, "skill": "hustle", "need": { "kind": "fun", "amount": 20 } }
+  ]
+}

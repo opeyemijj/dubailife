@@ -1,0 +1,455 @@
+{
+  "_note": "Celebrity Boxing at Coca-Cola Arena (src/components/arcade/games/boxing). Times in seconds, damage in health points out of 100. The opponent's moves each have a tell (the wind-up you read), then the strike; dodging a strike opens a counter window where your punches do double damage. Levels are the career ladder: each scales the opponent's tells (shorter = harder), damage and habits. Career opponents are Locals and are always labelled as such. Opponents block most punches thrown at them in neutral; after `punish.after` blocked punches in a row they answer at once with a fast jab, so mashing loses.",
+  "rounds": 3,
+  "roundSeconds": 90,
+  "restSeconds": 4,
+  "hp": 100,
+  "stamina": {
+    "max": 100,
+    "regenPerSecond": 16,
+    "blockCost": 6,
+    "tiredBelow": 15
+  },
+  "counter": {
+    "window": 0.85,
+    "multiplier": 1.6
+  },
+  "star": {
+    "damage": 20,
+    "fillPerCounter": 0.34,
+    "fillPerDodge": 0.08
+  },
+  "knockdown": {
+    "countStep": 1.05,
+    "tapsBase": 10,
+    "tapsPerKnockdown": 7,
+    "getUpHp": [
+      70,
+      55,
+      40
+    ],
+    "tkoAt": 3
+  },
+  "player": {
+    "jab": {
+      "time": 0.26,
+      "cost": 6,
+      "damage": 2,
+      "hand": "L"
+    },
+    "straight": {
+      "time": 0.34,
+      "cost": 9,
+      "damage": 4,
+      "hand": "R"
+    },
+    "hookL": {
+      "time": 0.42,
+      "cost": 11,
+      "damage": 5.5,
+      "hand": "L"
+    },
+    "hookR": {
+      "time": 0.42,
+      "cost": 11,
+      "damage": 5.5,
+      "hand": "R"
+    },
+    "upper": {
+      "time": 0.48,
+      "cost": 14,
+      "damage": 7.5,
+      "hand": "R"
+    }
+  },
+  "dodge": {
+    "active": 0.36,
+    "recover": 0.24
+  },
+  "opponent": {
+    "jab": {
+      "tell": 0.55,
+      "strike": 0.16,
+      "damage": 4,
+      "beatenBy": [
+        "slipL",
+        "slipR",
+        "duck"
+      ],
+      "blockKeeps": 0
+    },
+    "hookL": {
+      "tell": 0.75,
+      "strike": 0.2,
+      "damage": 8,
+      "beatenBy": [
+        "slipL",
+        "duck"
+      ],
+      "blockKeeps": 0.5
+    },
+    "hookR": {
+      "tell": 0.75,
+      "strike": 0.2,
+      "damage": 8,
+      "beatenBy": [
+        "slipR",
+        "duck"
+      ],
+      "blockKeeps": 0.5
+    },
+    "upper": {
+      "tell": 0.95,
+      "strike": 0.22,
+      "damage": 11,
+      "beatenBy": [
+        "slipL",
+        "slipR"
+      ],
+      "blockKeeps": 0.5,
+      "duckTakes": 1.6
+    },
+    "combo": {
+      "tell": 0.45,
+      "strike": 0.14,
+      "damage": 3,
+      "beatenBy": [
+        "slipL",
+        "slipR",
+        "duck"
+      ],
+      "blockKeeps": 0,
+      "hits": 3,
+      "gap": 0.24
+    }
+  },
+  "levels": [
+    {
+      "n": 1,
+      "label": "Amateur",
+      "tellScale": 1.35,
+      "damageScale": 0.9,
+      "gap": [
+        1.6,
+        2.6
+      ],
+      "blockChance": 0.55,
+      "interruptChance": 0.9,
+      "feint": 0,
+      "weights": {
+        "jab": 6,
+        "hookL": 2,
+        "hookR": 2,
+        "upper": 1,
+        "combo": 0
+      },
+      "hpScale": 0.9
+    },
+    {
+      "n": 2,
+      "label": "Club fighter",
+      "tellScale": 1.2,
+      "damageScale": 1.0,
+      "gap": [
+        1.4,
+        2.3
+      ],
+      "blockChance": 0.6,
+      "interruptChance": 0.8,
+      "feint": 0,
+      "weights": {
+        "jab": 5,
+        "hookL": 2,
+        "hookR": 2,
+        "upper": 1,
+        "combo": 1
+      },
+      "hpScale": 1.0
+    },
+    {
+      "n": 3,
+      "label": "Prospect",
+      "tellScale": 1.1,
+      "damageScale": 1.1,
+      "gap": [
+        1.2,
+        2.1
+      ],
+      "blockChance": 0.65,
+      "interruptChance": 0.7,
+      "feint": 0.08,
+      "weights": {
+        "jab": 4,
+        "hookL": 3,
+        "hookR": 3,
+        "upper": 2,
+        "combo": 1
+      },
+      "hpScale": 1.15
+    },
+    {
+      "n": 4,
+      "label": "Contender",
+      "tellScale": 1.0,
+      "damageScale": 1.2,
+      "gap": [
+        1.1,
+        1.9
+      ],
+      "blockChance": 0.7,
+      "interruptChance": 0.6,
+      "feint": 0.12,
+      "weights": {
+        "jab": 4,
+        "hookL": 3,
+        "hookR": 3,
+        "upper": 2,
+        "combo": 2
+      },
+      "hpScale": 1.3
+    },
+    {
+      "n": 5,
+      "label": "Pro",
+      "tellScale": 0.92,
+      "damageScale": 1.3,
+      "gap": [
+        1.0,
+        1.7
+      ],
+      "blockChance": 0.74,
+      "interruptChance": 0.5,
+      "feint": 0.15,
+      "weights": {
+        "jab": 3,
+        "hookL": 3,
+        "hookR": 3,
+        "upper": 3,
+        "combo": 2
+      },
+      "hpScale": 1.45
+    },
+    {
+      "n": 6,
+      "label": "Headliner",
+      "tellScale": 0.85,
+      "damageScale": 1.4,
+      "gap": [
+        0.9,
+        1.6
+      ],
+      "blockChance": 0.77,
+      "interruptChance": 0.42,
+      "feint": 0.2,
+      "weights": {
+        "jab": 3,
+        "hookL": 3,
+        "hookR": 3,
+        "upper": 3,
+        "combo": 3
+      },
+      "hpScale": 1.6
+    },
+    {
+      "n": 7,
+      "label": "Celebrity",
+      "tellScale": 0.78,
+      "damageScale": 1.5,
+      "gap": [
+        0.8,
+        1.5
+      ],
+      "blockChance": 0.8,
+      "interruptChance": 0.35,
+      "feint": 0.24,
+      "weights": {
+        "jab": 3,
+        "hookL": 3,
+        "hookR": 3,
+        "upper": 3,
+        "combo": 3
+      },
+      "hpScale": 1.75
+    },
+    {
+      "n": 8,
+      "label": "Title challenger",
+      "tellScale": 0.72,
+      "damageScale": 1.6,
+      "gap": [
+        0.75,
+        1.4
+      ],
+      "blockChance": 0.83,
+      "interruptChance": 0.3,
+      "feint": 0.28,
+      "weights": {
+        "jab": 2,
+        "hookL": 3,
+        "hookR": 3,
+        "upper": 3,
+        "combo": 4
+      },
+      "hpScale": 1.9
+    },
+    {
+      "n": 9,
+      "label": "Champion",
+      "tellScale": 0.66,
+      "damageScale": 1.75,
+      "gap": [
+        0.7,
+        1.3
+      ],
+      "blockChance": 0.86,
+      "interruptChance": 0.25,
+      "feint": 0.32,
+      "weights": {
+        "jab": 2,
+        "hookL": 3,
+        "hookR": 3,
+        "upper": 4,
+        "combo": 4
+      },
+      "hpScale": 2.1
+    }
+  ],
+  "career": [
+    {
+      "n": 1,
+      "man": {
+        "name": "Karim 'Kid' Saleh",
+        "preset": "Male_Adult_04"
+      },
+      "woman": {
+        "name": "Nadia 'Sparks' Farouk",
+        "preset": "Female_Adult_05"
+      }
+    },
+    {
+      "n": 2,
+      "man": {
+        "name": "Dev 'Marina' Kapoor",
+        "preset": "Male_Adult_08"
+      },
+      "woman": {
+        "name": "Jade 'JBR' Okafor",
+        "preset": "Female_Adult_06"
+      }
+    },
+    {
+      "n": 3,
+      "man": {
+        "name": "Tariq 'Two-Step' Nasser",
+        "preset": "Male_Adult_12"
+      },
+      "woman": {
+        "name": "Mira 'The Wall' Santos",
+        "preset": "Female_Adult_11"
+      }
+    },
+    {
+      "n": 4,
+      "man": {
+        "name": "Omar 'Sandstorm' Rahim",
+        "preset": "Male_Adult_21"
+      },
+      "woman": {
+        "name": "Lina 'Lightning' Haddad",
+        "preset": "Female_Party_02"
+      }
+    },
+    {
+      "n": 5,
+      "man": {
+        "name": "Ade 'Lagos' Bello",
+        "preset": "Male_Adult_04"
+      },
+      "woman": {
+        "name": "Chioma 'Queen' Eze",
+        "preset": "Female_Adult_05"
+      }
+    },
+    {
+      "n": 6,
+      "man": {
+        "name": "Viktor 'Iron' Petrov",
+        "preset": "Male_Adult_08"
+      },
+      "woman": {
+        "name": "Sofia 'Hurricane' Reyes",
+        "preset": "Female_Adult_06"
+      }
+    },
+    {
+      "n": 7,
+      "man": {
+        "name": "Jay 'Downtown' Malik",
+        "preset": "Male_Adult_12"
+      },
+      "woman": {
+        "name": "Amira 'Falcon' Khalil",
+        "preset": "Female_Adult_11"
+      }
+    },
+    {
+      "n": 8,
+      "man": {
+        "name": "Rashid 'The Falcon' Al Amiri",
+        "preset": "Male_Adult_21"
+      },
+      "woman": {
+        "name": "Zara 'Gold' Mansour",
+        "preset": "Female_Party_02"
+      }
+    },
+    {
+      "n": 9,
+      "man": {
+        "name": "Big Mo 'The Mountain' Darwish",
+        "preset": "Male_Adult_04"
+      },
+      "woman": {
+        "name": "Layla 'The Champ' Qasim",
+        "preset": "Female_Adult_05"
+      }
+    }
+  ],
+  "gloves": [
+    {
+      "level": 0,
+      "id": "red",
+      "label": "Arena red",
+      "color": "#dc2626"
+    },
+    {
+      "level": 2,
+      "id": "royal",
+      "label": "Royal blue",
+      "color": "#1d4ed8"
+    },
+    {
+      "level": 4,
+      "id": "black",
+      "label": "Night black",
+      "color": "#111827"
+    },
+    {
+      "level": 6,
+      "id": "emerald",
+      "label": "Emerald",
+      "color": "#047857"
+    },
+    {
+      "level": 8,
+      "id": "gold",
+      "label": "Champion gold",
+      "color": "#d4a017"
+    }
+  ],
+  "punish": {
+    "after": 2,
+    "tell": 0.3,
+    "damageScale": 1.3
+  }
+}

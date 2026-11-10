@@ -1,0 +1,175 @@
+{
+  "_note": "Dubai Courts cases (src/components/arcade/games/court). Every other party is a Local. A case plays: study the evidence; cross-examine (statements loop; Press one for more, Present the evidence that disproves the lie); read the witness's face; object to the other side's misleading claim; put the closing argument in order. patience = mistakes the judge allows. Cases unlock one by one (the level is the cases won). The registry is the civil marriage document check. Real player cases stay with the Court app and lawyers (lib/cityServices).",
+  "patience": 5,
+  "cases": [
+    {
+      "id": "deposit",
+      "title": "The withheld deposit",
+      "court": "Small claims",
+      "you": "the tenant",
+      "claim": "Your landlord kept your AED 8,000 deposit, saying you damaged the flat.",
+      "win": "The deposit is returned in full.",
+      "witness": { "name": "Mr Haddad, the landlord", "gender": "man", "preset": "Male_Adult_12" },
+      "evidence": [
+        { "id": "lease", "icon": "📄", "name": "Tenancy contract", "detail": "Ejari-registered. Deposit AED 8,000, returned at move-out less any damage beyond normal wear." },
+        { "id": "checkin", "icon": "📸", "name": "Move-in photos", "detail": "Dated 2 March last year. The living room wall already has the long scratch by the window." },
+        { "id": "invoice", "icon": "🧾", "name": "Repair invoice", "detail": "Repainting the living room: AED 7,800. Dated 14 January, two months BEFORE you moved out." },
+        { "id": "chat", "icon": "💬", "name": "WhatsApp messages", "detail": "Landlord, at move-out: 'All fine, I will send the deposit next week.'" },
+        { "id": "keys", "icon": "🔑", "name": "Key handover form", "detail": "Signed by both on 20 March. Condition box: 'Good'." }
+      ],
+      "testimony": [
+        { "text": "When the tenant left, the living room wall was badly damaged." },
+        { "text": "There was a deep scratch along the wall that wasn't there before.", "lie": "checkin" },
+        { "text": "I had it repainted straight after they moved out.", "press": "The invoice is dated from my painter. Ask him if you like.", "lie": "invoice" },
+        { "text": "I never told them the flat was fine." , "lie": "chat" },
+        { "text": "The deposit covers the repair, as the contract says." }
+      ],
+      "face": { "prompt": "\"I've always returned deposits to good tenants.\"", "answer": "doubt", "tell": "He glances at his phone and won't meet your eye." },
+      "objection": { "speaker": "The landlord's lawyer", "lines": ["The tenant lived there for a full year.", "Walls don't scratch themselves.", "So the tenant obviously caused the damage.", "My client acted in good faith."], "misleading": 2 },
+      "closing": ["checkin", "invoice", "keys"]
+    },
+    {
+      "id": "fine",
+      "title": "The speed camera fine",
+      "court": "Traffic appeal",
+      "you": "the driver",
+      "claim": "You were fined AED 3,000 for doing 180 km/h on Sheikh Zayed Road, but you were at work.",
+      "win": "The fine is cancelled and the black points removed.",
+      "witness": { "name": "Officer Rashed", "gender": "man", "preset": "Male_Adult_21" },
+      "evidence": [
+        { "id": "notice", "icon": "📸", "name": "Fine notice", "detail": "Plate D 48213. Sheikh Zayed Road, 02:14 on 9 June. 180 km/h in a 100 zone." },
+        { "id": "rental", "icon": "🚗", "name": "Car rental record", "detail": "Your car was with the dealer for service 8 to 10 June. Courtesy car issued to you: plate K 11902." },
+        { "id": "shift", "icon": "🏥", "name": "Work rota", "detail": "Night shift at Rashid Hospital, 9 June, 20:00 to 08:00. Badge scans at 01:50 and 02:30." },
+        { "id": "photo", "icon": "🖼️", "name": "Camera photo", "detail": "A white saloon. The plate reads D 48213, but your car is a dark grey SUV." },
+        { "id": "salik", "icon": "🚧", "name": "Salik record", "detail": "No Salik gate passes for plate D 48213 on 9 June." }
+      ],
+      "testimony": [
+        { "text": "The camera recorded plate D 48213 at 02:14." },
+        { "text": "That plate is registered to the appellant's vehicle." },
+        { "text": "The vehicle was a dark SUV, like the appellant's.", "lie": "photo" },
+        { "text": "The appellant was driving that night.", "press": "Who else would be driving their car at two in the morning?", "lie": "shift" },
+        { "text": "The car was on the road all evening.", "lie": "rental" }
+      ],
+      "face": { "prompt": "\"Our cameras are never wrong about a plate.\"", "answer": "believe", "tell": "He answers calmly and checks his notes." },
+      "objection": { "speaker": "The prosecutor", "lines": ["The plate matches the registration.", "The appellant owns that registration.", "Therefore the appellant was behind the wheel.", "The fine stands."], "misleading": 2 },
+      "closing": ["photo", "rental", "shift"]
+    },
+    {
+      "id": "scam",
+      "title": "The phone-call scam",
+      "court": "Civil claim",
+      "you": "the victim",
+      "claim": "A caller posing as your bank took AED 12,000. The shop that cashed it out says it did nothing wrong.",
+      "win": "The money is returned with costs.",
+      "witness": { "name": "Ms Pereira, the exchange shop manager", "gender": "woman", "preset": "Female_Adult_11" },
+      "evidence": [
+        { "id": "call", "icon": "📞", "name": "Call log", "detail": "A call from +971 4 XXX 0000, 11:02, 14 minutes. Your bank's real number ends 4444." },
+        { "id": "sms", "icon": "💬", "name": "Fake bank SMS", "detail": "'Your account is blocked. Share the OTP to unlock.' Sent from 'DUBAI-BNK'." },
+        { "id": "cctv", "icon": "📹", "name": "Shop CCTV still", "detail": "11:31: a man in a cap collects the cash. No ID is shown at the counter." },
+        { "id": "policy", "icon": "📋", "name": "Shop's own rules", "detail": "'Payouts over AED 3,500 need Emirates ID scanned and copied.'" },
+        { "id": "receipt", "icon": "🧾", "name": "Payout receipt", "detail": "AED 12,000 paid in cash. ID field: blank." }
+      ],
+      "testimony": [
+        { "text": "We follow every rule for large payouts." , "lie": "policy" },
+        { "text": "The customer showed his Emirates ID at the counter.", "lie": "cctv" },
+        { "text": "We keep a copy of every ID.", "press": "It's all in our system. Every payout.", "lie": "receipt" },
+        { "text": "The transfer came from the claimant's own account." },
+        { "text": "We had no reason to suspect anything." }
+      ],
+      "face": { "prompt": "\"Nobody at my branch would ever skip the ID check.\"", "answer": "accuse", "evidence": "receipt", "tell": "Her voice rises and she grips the stand." },
+      "objection": { "speaker": "The shop's lawyer", "lines": ["The claimant shared the code with the caller.", "Sharing a code is careless.", "So the claimant is entirely to blame.", "My client is a licensed business."], "misleading": 2 },
+      "closing": ["sms", "policy", "receipt"]
+    },
+    {
+      "id": "wages",
+      "title": "Three months unpaid",
+      "court": "Labour claim",
+      "you": "the employee",
+      "claim": "Your café employer stopped paying you for three months, then said you had resigned.",
+      "win": "AED 13,500 back pay and your end-of-service money.",
+      "witness": { "name": "Mr Kapoor, the café owner", "gender": "man", "preset": "Male_Adult_08" },
+      "evidence": [
+        { "id": "contract", "icon": "📄", "name": "Employment contract", "detail": "Barista, AED 4,500 a month, paid by the 5th through the wage system." },
+        { "id": "wps", "icon": "🏦", "name": "Bank statements", "detail": "No salary since July. The last payment was 5 June." },
+        { "id": "rota", "icon": "🗓️", "name": "Shift rota", "detail": "You are on the rota for every week from July to September." },
+        { "id": "letter", "icon": "✉️", "name": "'Resignation' letter", "detail": "Typed, unsigned, dated 1 July. Your name is misspelled." },
+        { "id": "voice", "icon": "🎙️", "name": "Voice note", "detail": "Owner, 20 August: 'Business is slow, I'll pay you all of it next month.'" }
+      ],
+      "testimony": [
+        { "text": "The claimant resigned at the start of July.", "lie": "letter" },
+        { "text": "After that, they never came back to work.", "lie": "rota" },
+        { "text": "We paid everything we owed.", "press": "Up to the day they left. Check the bank.", "lie": "wps" },
+        { "text": "I never promised any more money.", "lie": "voice" },
+        { "text": "The café is a small business doing its best." }
+      ],
+      "face": { "prompt": "\"They wrote that letter themselves.\"", "answer": "doubt", "tell": "He shifts his weight and repeats the question back." },
+      "objection": { "speaker": "The café's lawyer", "lines": ["Many staff leave without notice.", "The café is struggling, like many.", "So the claimant must have walked out too.", "My client wishes them well."], "misleading": 2 },
+      "closing": ["letter", "rota", "voice"]
+    },
+    {
+      "id": "noise",
+      "title": "The noise complaint",
+      "court": "Community dispute",
+      "you": "the neighbour accused of the noise",
+      "claim": "Your neighbour wants AED 5,000, saying your parties keep the building awake every weekend.",
+      "win": "The claim is dismissed.",
+      "witness": { "name": "Ms Okafor, the neighbour", "gender": "woman", "preset": "Female_Adult_05" },
+      "evidence": [
+        { "id": "log", "icon": "📒", "name": "Her noise diary", "detail": "Loud music every Friday, 11pm to 3am, through September." },
+        { "id": "flight", "icon": "✈️", "name": "Your boarding passes", "detail": "You were in Lagos from 6 to 28 September." },
+        { "id": "security", "icon": "🛡️", "name": "Building security log", "detail": "Two noise calls in September, both from flat 1203. You live in 1204." },
+        { "id": "meter", "icon": "⚡", "name": "DEWA usage", "detail": "Your flat's power use was almost nothing from 6 to 28 September." },
+        { "id": "notes", "icon": "📝", "name": "Lift notice", "detail": "Flat 1203 is renovating at night, with permission until October." }
+      ],
+      "testimony": [
+        { "text": "The music comes from flat 1204 every Friday.", "lie": "security" },
+        { "text": "It went on all through September.", "lie": "flight" },
+        { "text": "I could hear them having guests over.", "press": "Lots of footsteps, voices, the lights on all night.", "lie": "meter" },
+        { "text": "I complained to security every time." },
+        { "text": "Nobody else on the floor makes noise at night.", "lie": "notes" }
+      ],
+      "face": { "prompt": "\"I know exactly where the noise comes from.\"", "answer": "believe", "tell": "She looks straight at the judge, sure of herself, and genuinely tired." },
+      "objection": { "speaker": "Her lawyer", "lines": ["My client hasn't slept properly in weeks.", "The noise is real and it's next door.", "So it can only be the defendant.", "We ask for compensation."], "misleading": 2 },
+      "closing": ["flight", "meter", "security"]
+    },
+    {
+      "id": "contract",
+      "title": "The sign that never came",
+      "court": "Commercial claim",
+      "you": "the business owner",
+      "claim": "You paid AED 40,000 for a shop sign that was never installed. The company says it was delivered.",
+      "win": "AED 40,000 refunded plus damages for the lost opening week.",
+      "witness": { "name": "Mr Darwish, the sign company owner", "gender": "man", "preset": "Male_Adult_04" },
+      "evidence": [
+        { "id": "quote", "icon": "📄", "name": "Signed quote", "detail": "Supply AND install of a lit sign by 1 November. AED 40,000 paid in full up front." },
+        { "id": "photos", "icon": "📸", "name": "Shopfront photos", "detail": "Dated 1 to 10 November: a bare wall where the sign should be." },
+        { "id": "delivery", "icon": "📦", "name": "Delivery note", "detail": "'Delivered to: Warehouse 7, Al Quoz.' Not your shop in Deira." },
+        { "id": "permit", "icon": "🏛️", "name": "Municipality permit", "detail": "Sign permit applied for by the company on 12 November, after the deadline." },
+        { "id": "emails", "icon": "📧", "name": "Emails", "detail": "Company, 30 October: 'Install delayed, our crew is on another job.'" }
+      ],
+      "testimony": [
+        { "text": "We delivered the sign on time, on 31 October.", "lie": "delivery" },
+        { "text": "It was at the client's shop, ready to fix.", "lie": "photos" },
+        { "text": "The permit was all in order before the date.", "press": "We always do the permits first. It's standard.", "lie": "permit" },
+        { "text": "There was never any delay on our side.", "lie": "emails" },
+        { "text": "Installation wasn't part of the deal anyway.", "lie": "quote" }
+      ],
+      "face": { "prompt": "\"My crew went to the shop that morning.\"", "answer": "accuse", "evidence": "delivery", "tell": "A quick smile, too quick, and he looks to his lawyer." },
+      "objection": { "speaker": "The company's lawyer", "lines": ["Signs are delivered every day in Dubai.", "My client is a well-known company.", "So the sign must have reached the shop.", "We regret the misunderstanding."], "misleading": 2 },
+      "closing": ["quote", "delivery", "permit"]
+    }
+  ],
+  "registry": {
+    "title": "Marriage registry",
+    "how": "Check each couple's papers before they sign. Approve them, or reject them and say why.",
+    "couples": [
+      { "a": { "name": "Omar Saleh", "id": "784-1990-1234567-1", "expires": "2028-04-01", "born": "1990-05-12" }, "b": { "name": "Leila Haddad", "id": "784-1993-7654321-2", "expires": "2027-11-20", "born": "1993-02-08" }, "certificate": { "groom": "Omar Saleh", "bride": "Leila Haddad", "single": true }, "problem": null },
+      { "a": { "name": "Dev Kapoor", "id": "784-1988-2223334-1", "expires": "2025-06-30", "born": "1988-09-01" }, "b": { "name": "Mira Santos", "id": "784-1991-5556667-2", "expires": "2029-01-15", "born": "1991-12-19" }, "certificate": { "groom": "Dev Kapoor", "bride": "Mira Santos", "single": true }, "problem": "expired" },
+      { "a": { "name": "Tariq Nasser", "id": "784-1995-8889990-1", "expires": "2027-03-03", "born": "1995-07-30" }, "b": { "name": "Jade Okafor", "id": "784-1996-1112223-2", "expires": "2028-08-08", "born": "1996-10-02" }, "certificate": { "groom": "Tariq Nasser", "bride": "Jade Okafur", "single": true }, "problem": "name" },
+      { "a": { "name": "Karim Farouk", "id": "784-1992-3334445-1", "expires": "2029-02-02", "born": "1992-01-25" }, "b": { "name": "Sofia Reyes", "id": "784-2006-6667778-2", "expires": "2030-05-05", "born": "2006-03-14" }, "certificate": { "groom": "Karim Farouk", "bride": "Sofia Reyes", "single": true }, "problem": "age" },
+      { "a": { "name": "Viktor Petrov", "id": "784-1987-4445556-1", "expires": "2028-12-12", "born": "1987-06-06" }, "b": { "name": "Amira Khalil", "id": "784-1994-7778889-2", "expires": "2027-09-09", "born": "1994-11-11" }, "certificate": { "groom": "Viktor Petrov", "bride": "Amira Khalil", "single": false }, "problem": "single" },
+      { "a": { "name": "Jay Malik", "id": "784-1993-9990001-1", "expires": "2029-07-07", "born": "1993-08-18" }, "b": { "name": "Zara Mansour", "id": "784-1997-2221110-2", "expires": "2028-02-28", "born": "1997-04-04" }, "certificate": { "groom": "Jay Malik", "bride": "Zara Mansour", "single": true }, "problem": null }
+    ],
+    "reasons": { "expired": "An Emirates ID has expired", "name": "A name doesn't match the ID", "age": "Under 21 (the game's minimum age to marry)", "single": "No single-status certificate" }
+  }
+}

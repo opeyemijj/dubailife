@@ -1,6 +1,24 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { WORLD_WIDTH, WORLD_HEIGHT } from './Icons';
 import { PALM_CAUSEWAY } from '@/lib/city/palm';
+import { CREEK } from '@/lib/city/oldDubai';
+
+/** Dubai Creek as a smooth path through its centre-line points (a Catmull-Rom curve drawn as cubic Béziers). */
+const creekPath = (() => {
+  const p = CREEK.path;
+  let d = `M ${p[0][0]},${p[0][1]}`;
+  for (let i = 0; i < p.length - 1; i++) {
+    const a = p[Math.max(0, i - 1)], b = p[i], c = p[i + 1], e = p[Math.min(p.length - 1, i + 2)];
+    d += ` C ${b[0] + (c[0] - a[0]) / 6},${b[1] + (c[1] - a[1]) / 6} ${c[0] - (e[0] - b[0]) / 6},${c[1] - (e[1] - b[1]) / 6} ${c[0]},${c[1]}`;
+  }
+  return d;
+})();
+/** Al Maktoum Bridge: a deck across the Creek, square to the water where it crosses. */
+const bridge = (() => {
+  const [x, y] = CREEK.bridge, [ax, ay] = CREEK.path[2], [bx, by] = CREEK.path[3];
+  const len = Math.hypot(bx - ax, by - ay), nx = -(by - ay) / len, ny = (bx - ax) / len, half = CREEK.width / 2 + 34;
+  return { x1: x - nx * half, y1: y - ny * half, x2: x + nx * half, y2: y + ny * half };
+})();
 
 export interface TrafficInfo {
   hour: number;
@@ -330,6 +348,9 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
               <g transform={`translate(0, 2600) scale(1, -1)`}>
                 
                 
+                {/* Desert east of the main map, under Bur Dubai and Deira (the world box ends at x 4000). */}
+                <rect x="3990" y="-400" width="3000" height="4200" fill="#d6bc8a" />
+
                 {/* Original Ocean Color (with graceful curved wings closing slowly to the top) */}
                 <path d="M -1500,2600 C -1100,1950 -600,1481 -200,1485 Q 2000,1505 4200,1412 C 4600,1395 5100,1950 5500,2600 L 5500,3800 L -1500,3800 Z" fill="#60BAEB" />
 
@@ -338,6 +359,24 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
                                 
                 {/* Ocean Edge Glow */}
                 <path d="M -1480,2600 C -1085,1965 -590,1501 -200,1505 Q 2000,1525 4200,1432 C 4590,1415 5085,1965 5480,2600" fill="none" stroke="#87CEEB" strokeWidth="15" opacity="0.5" strokeLinecap="round" strokeLinejoin="round" />
+
+                {/* Dubai Creek between Bur Dubai and Deira: sandy banks, the water, Al Maktoum Bridge and the abras crossing. */}
+                <path d={creekPath} fill="none" stroke="#e9d8a6" strokeWidth={CREEK.width + 22} strokeLinecap="round" strokeLinejoin="round" />
+                <path d={creekPath} fill="none" stroke="#3b9fd6" strokeWidth={CREEK.width} strokeLinecap="round" strokeLinejoin="round" />
+                <path d={creekPath} fill="none" stroke="#7cc6ee" strokeWidth={CREEK.width * 0.35} opacity="0.45" strokeLinecap="round" strokeDasharray="40 60" />
+                <line x1={bridge.x1} y1={bridge.y1} x2={bridge.x2} y2={bridge.y2} stroke="#64748b" strokeWidth="26" strokeLinecap="butt" />
+                <line x1={bridge.x1} y1={bridge.y1} x2={bridge.x2} y2={bridge.y2} stroke="#334155" strokeWidth="20" />
+                <line x1={bridge.x1} y1={bridge.y1} x2={bridge.x2} y2={bridge.y2} stroke="#facc15" strokeWidth="1.2" strokeDasharray="8 8" />
+                {[0, 1].map((i) => (
+                  <g key={`abra-${i}`}>
+                    <g>
+                      <path d="M -11,-3 Q 0,-6 11,-3 L 9,3 L -9,3 Z" fill="#7c2d12" />
+                      <rect x="-6" y="-2" width="12" height="4" fill="#fef3c7" />
+                      <animateMotion dur="14s" begin={`${i * -7}s`} repeatCount="indefinite" rotate="auto"
+                        path={`M ${CREEK.abra[0][0]},${CREEK.abra[0][1]} L ${CREEK.abra[1][0]},${CREEK.abra[1][1]} L ${CREEK.abra[0][0]},${CREEK.abra[0][1]}`} />
+                    </g>
+                  </g>
+                ))}
                 
                 
                 

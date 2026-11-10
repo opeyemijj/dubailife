@@ -1,9 +1,10 @@
 "use client";
 
-// The look of a home: floor, wall paint, panelling and bed sheets. Used where the home is shared (living together,
+// The look of a home: floor, wall paint, panelling, ceiling and bed sheets. Used where the home is shared (living together,
 // or a guest allowed to decorate), so whoever changes it changes it for everyone.
 
 import { X } from "lucide-react";
+import { CeilingPicker } from "./CeilingPicker";
 import { BEDDING, FLOOR_FINISHES, PANELS_PRICE, WALL_PAINTS, type HomeStyle } from "@/lib/furniture";
 
 export function HomeLookSheet({ style, onChange, onClose }: {
@@ -14,10 +15,10 @@ export function HomeLookSheet({ style, onChange, onClose }: {
 }) {
   const bedding = style.bedding ?? BEDDING[0].color;
   return (
-    <div className="fixed inset-0 z-[210] bg-black/40 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-label="Floors, walls and bedding" onClick={onClose}>
+    <div className="fixed inset-0 z-[210] bg-black/40 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-label="Floors, walls, ceiling and bedding" onClick={onClose}>
       <div className="w-full max-w-md max-h-[85dvh] overflow-y-auto bg-white text-slate-900 rounded-t-[28px] sm:rounded-[28px] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
-          <p className="text-lg font-black">🎨 Floors, walls &amp; bedding</p>
+          <p className="text-lg font-black">🎨 Floors, walls, ceiling &amp; bedding</p>
           <button onClick={onClose} aria-label="Close" className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"><X className="w-4 h-4" /></button>
         </div>
         <section className="space-y-1.5">
@@ -68,6 +69,7 @@ export function HomeLookSheet({ style, onChange, onClose }: {
           <span className="block text-xs font-black">🏛️ {style.panels ? "Remove the panelled walls" : "Panelled walls & cove lighting"}</span>
           <span className="text-[11px] font-mono text-emerald-600">{style.panels ? "Free" : `AED ${PANELS_PRICE.toLocaleString()}`}</span>
         </button>
+        <CeilingPicker style={style} onChange={onChange} />
       </div>
     </div>
   );

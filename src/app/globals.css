@@ -236,3 +236,26 @@ html, body { overscroll-behavior: none; }
 
 /* Clean screen (see lib/cleanScreen.ts): app-wide floating controls step aside too. */
 html[data-clean] .dl-hide-clean { display: none !important; }
+
+/* Attraction games (src/components/arcade): callouts and the countdown pop in, hold, then lift and fade. */
+@keyframes arcade-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  18% { transform: scale(1.15); opacity: 1; }
+  30% { transform: scale(1); }
+  75% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-24px); opacity: 0; }
+}
+
+/* The birth: the screen goes white, then fades back to the baby. */
+@keyframes arcade-fade {
+  0% { opacity: 0; }
+  25% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Dubai Courts: the bar under a witness's statement, running down until the next one. */
+@keyframes court-line {
+  from { width: 100%; }
+  to { width: 0%; }
+}

@@ -84,8 +84,10 @@ export async function getEmailConfig(): Promise<EmailConfig> {
  */
 export async function saveEmailConfig(config: EmailConfig): Promise<{ ok: boolean; error?: string }> {
   try {
+    // API keys must NEVER be stored into public app_settings; rely strictly on server environment variables
     const cleanConfig: EmailConfig = {
       ...config,
+      apiKey: "",
       fromEmail: normalizeSenderEmail(config.fromEmail),
     };
     const { error } = await supabase().rpc("admin_set_setting", {
@@ -117,7 +119,7 @@ export interface SendEmailOptions {
 
 /**
  * Deliver an email.
- * - If running in browser: routes through /api/email/send to prevent browser CORS blocks.
+ * - If running in browser: routes through /api/email/send with session auth to prevent browser CORS blocks.
  * - If running on server: connects to Postmark using the verified system configuration.
  */
 export async function sendLifecycleEmail(
@@ -126,9 +128,14 @@ export async function sendLifecycleEmail(
   // Client-side execution: delegate to our Next.js API route to prevent CORS errors
   if (typeof window !== "undefined") {
     try {
+      const { data: sessionData } = await supabase().auth.getSession();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (sessionData?.session?.access_token) {
+        headers["Authorization"] = `Bearer ${sessionData.session.access_token}`;
+      }
       const res = await fetch("/api/email/send", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(options),
       });
       const data = await res.json();

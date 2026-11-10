@@ -42,7 +42,7 @@ export function DecorJobAlert() {
       <div className="w-full max-w-md rounded-[24px] bg-white text-slate-900 shadow-2xl overflow-hidden">
         <div className="bg-emerald-600 text-white px-4 py-2 text-sm font-black">🧑‍🎨 New decorating job</div>
         <div className="p-4 space-y-1">
-          <p className="font-black leading-tight">@{job.client} wants you to decorate their home{s ? `: ${s.icon} ${s.title}` : ""}</p>
+          <p className="font-black leading-tight">@{job.client} wants you to decorate {job.hall ? `their event: ${job.hall.title}` : "their home"}{s ? `: ${s.icon} ${s.title}` : ""}</p>
           <p className="text-sm text-slate-600">Budget AED {job.budget.toLocaleString()} · your fee AED {job.fee.toLocaleString()}. Accept it in the Decor app.</p>
         </div>
         <div className="px-4 pb-4 flex gap-2">

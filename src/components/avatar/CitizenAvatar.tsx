@@ -5,7 +5,7 @@
 //  - custom: an avatar the citizen made from selfies or photos in Avaturn, animated by
 //    retargeting the same clips from an invisible Rocketbox skeleton.
 
-import { Suspense, useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef, type RefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useAnimations, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
@@ -83,6 +83,15 @@ const SPEED_FOR: Partial<Record<AvatarAnimation, number>> = {
  * and the bowling swing.
  */
 export type BodyPose = "armsCrossed" | "armsUp" | "swim" | "balance" | "grip" | "tuck" | "mic" | "throw";
+
+/** A direction in the body's own frame: [up, forward, right]. Normalised when used; "right" is mirrored for the left arm. */
+export type BodyDir = [number, number, number];
+/**
+ * Arms driven live by a game (boxing punches, lifting a bar, a nail brush): each frame the game writes where each
+ * arm's upper arm and forearm point, in the body's frame, and how strongly (0 to 1) to lay it over the clip. It wins
+ * over `pose`. Directions for the left arm are given as for the right and mirrored, so one table serves both.
+ */
+export interface ArmRig { weight: number; R: { upper: BodyDir; fore: BodyDir }; L: { upper: BodyDir; fore: BodyDir } }
 
 export const DEFAULT_LOOK: AvatarLookProps = { gender: "woman", bodyType: "Hourglass" };
 
@@ -821,7 +830,7 @@ function useCarry(model: { scene: THREE.Object3D }, mode: CarryMode | false, hel
 }
 
 /** Lays a BodyPose over the playing clip. Works on both skeletons (Rocketbox and custom avatars). */
-function useBodyPose(model: { scene: THREE.Object3D }, pose: BodyPose | undefined) {
+function useBodyPose(model: { scene: THREE.Object3D }, pose: BodyPose | undefined, rig?: RefObject<ArmRig | null>) {
   const bones = useMemo(() => {
     const named = (...names: string[]) => names.map((n) => model.scene.getObjectByName(n)).find(Boolean);
     const side = (s: "L" | "R", full: "Left" | "Right") => ({
@@ -836,11 +845,12 @@ function useBodyPose(model: { scene: THREE.Object3D }, pose: BodyPose | undefine
   const last = useRef<BodyPose | undefined>(undefined);
 
   useFrame(({ clock }, dt) => {
+    const live = rig?.current;
     if (pose) last.current = pose;
-    weight.current = THREE.MathUtils.damp(weight.current, pose ? 1 : 0, 6, dt);
+    weight.current = THREE.MathUtils.damp(weight.current, pose || live ? 1 : 0, 6, dt);
     const p = last.current;
     const { L, R, pelvis, neck } = bones;
-    if (!p || weight.current < 0.01 || !L.upper || !R.upper || !L.fore || !R.fore || !L.hand || !R.hand || !pelvis || !neck) return;
+    if ((!p && !live) || weight.current < 0.01 || !L.upper || !R.upper || !L.fore || !R.fore || !L.hand || !R.hand || !pelvis || !neck) return;
     model.scene.updateWorldMatrix(true, true);
     // The body's own frame, from the skeleton: up the spine, across the shoulders, and the way it faces.
     const up = neck.getWorldPosition(t.up).sub(pelvis.getWorldPosition(t.a)).normalize();
@@ -853,6 +863,15 @@ function useBodyPose(model: { scene: THREE.Object3D }, pose: BodyPose | undefine
     for (const [arm, k] of [[R, 1], [L, -1]] as const) {
       // k: +1 right arm, -1 left arm (mirrors the sideways parts)
       let upper: THREE.Vector3, fore: THREE.Vector3;
+      if (live) {
+        // A game drives the arms: its directions, mirrored across the body for the left arm.
+        const a = k === 1 ? live.R : live.L;
+        upper = dir(a.upper[0], a.upper[1], k * a.upper[2]).clone();
+        fore = dir(a.fore[0], a.fore[1], k * a.fore[2]).clone();
+        aimBone(arm.upper!, arm.fore!, upper, w * live.weight, t);
+        aimBone(arm.fore!, arm.hand!, fore, w * live.weight, t);
+        continue;
+      }
       if (p === "armsCrossed") {
         upper = dir(-0.75, 0.55, k * 0.15).clone();
         fore = dir(0.3, 0.35, -k * 0.9).clone();
@@ -999,6 +1018,7 @@ function RosterAvatar({
   carryMode,
   raiseHand = false,
   pose,
+  rig,
 }: {
   look: AvatarLookProps;
   animation: AvatarAnimation;
@@ -1008,6 +1028,8 @@ function RosterAvatar({
   carryMode?: CarryMode;
   raiseHand?: boolean;
   pose?: BodyPose;
+  /** Arms driven live by a game (see ArmRig); wins over `pose`. */
+  rig?: RefObject<ArmRig | null>;
 }) {
   const gltf = useGLTF(rosterModel(presetFor(look)));
   // The chosen outfit: this face on another roster citizen's clothes.
@@ -1027,7 +1049,7 @@ function RosterAvatar({
   const held = useRef<THREE.Group>(null);
   const effectiveMode: CarryMode | false = carryMode ?? (raiseHand ? "raise" : !!holding ? "hold" : false);
   // The pose first, so anything held follows the posed hand.
-  useBodyPose(model, pose);
+  useBodyPose(model, pose, rig);
   useCarry(model, effectiveMode, held);
 
   const bodyType = look.bodyType ?? defaultBodyType(look.gender);
@@ -1060,6 +1082,7 @@ function CustomAvatar({
   carryMode,
   raiseHand = false,
   pose,
+  rig,
 }: {
   look: AvatarLookProps;
   url: string;
@@ -1070,6 +1093,8 @@ function CustomAvatar({
   carryMode?: CarryMode;
   raiseHand?: boolean;
   pose?: BodyPose;
+  /** Arms driven live by a game (see ArmRig); wins over `pose`. */
+  rig?: RefObject<ArmRig | null>;
 }) {
   const gltf = useGLTF(url);
   const model = usePreparedModel(gltf.scene, false);
@@ -1096,7 +1121,7 @@ function CustomAvatar({
   // Registered after useAnimations, so it runs once the source has been posed for this frame.
   useFrame(() => retargeter?.update());
   useRunArms(model, animation === "run");
-  useBodyPose(model, pose);
+  useBodyPose(model, pose, rig);
 
   return (
     <>
@@ -1124,6 +1149,8 @@ interface CitizenAvatarProps {
   carryMode?: CarryMode;
   /** Arm pose for rides and water (laid over the clip). */
   pose?: BodyPose;
+  /** Arms driven live by a game (see ArmRig); wins over `pose`. */
+  rig?: RefObject<ArmRig | null>;
 }
 
 export function CitizenAvatar({
@@ -1136,6 +1163,7 @@ export function CitizenAvatar({
   raiseHand,
   carryMode,
   pose,
+  rig,
 }: CitizenAvatarProps) {
   const customUrl = useAvatarUrl(look.custom?.url);
   const placement = { position, rotation };
@@ -1151,6 +1179,7 @@ export function CitizenAvatar({
       raiseHand={raiseHand}
       carryMode={carryMode}
       pose={pose}
+      rig={rig}
     />
   );
   if (!look.custom || !customUrl) return roster;
@@ -1167,6 +1196,7 @@ export function CitizenAvatar({
         raiseHand={raiseHand}
         carryMode={carryMode}
         pose={pose}
+        rig={rig}
       />
     </Suspense>
   );

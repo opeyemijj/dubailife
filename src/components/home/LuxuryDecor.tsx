@@ -6,6 +6,7 @@
 // centred where the wall puts them (about 1.7 m up); ceiling pieces hang from the ceiling.
 
 import { CounterWork, TableMeal, TankActivity } from "./HomeActivityProps";
+import { eventDecor } from "./EventDecor";
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
@@ -973,5 +974,6 @@ export function LuxuryDecor({ visual, size, ghost, tint, activity }: { visual: s
     case "staircase": return <Staircase w={w} d={d} ghost={ghost} />;
     case "stairwell": return <Stairwell w={w} d={d} ghost={ghost} />;
   }
-  return null;
+  // Event pieces (ballrooms and parties): EventDecor.
+  return eventDecor(visual, w, d, ghost, tint);
 }

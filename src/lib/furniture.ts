@@ -4,6 +4,7 @@
 
 import FLOORPLANS from "@/data/home/floorplans.json";
 import EXTERIOR_DATA from "@/data/home/exterior.json";
+import CEILING_DATA from "@/data/home/ceilings.json";
 
 export const ROOM_SIZE = 10; // metres
 export const CELL = 0.5; // metres per grid cell
@@ -120,7 +121,8 @@ export type ShopCategory =
   | "fun"
   | "skills"
   | "pets"
-  | "luxury";
+  | "luxury"
+  | "events";
 
 export interface DecorCategoryTab {
   id: string;
@@ -161,6 +163,7 @@ export const SHOP_CATEGORIES: Array<{ id: ShopCategory; label: string; icon: str
   { id: "bedroom", label: "Bedroom", icon: "🛏️" },
   { id: "dining", label: "Dining & kitchen", icon: "🍽️" },
   { id: "nursery", label: "Nursery & Baby", icon: "👶" },
+  { id: "events", label: "Events & weddings", icon: "🎊" },
   { id: "wall", label: "Wall art & mirrors", icon: "🖼️" },
 ];
 
@@ -246,9 +249,27 @@ export interface SavedLook {
   floor: FloorFinish;
   bedding?: string;
   panels?: boolean;
+  ceiling?: CeilingFinish;
+  ceilingColor?: string;
 }
 
 export const CATALOG: CatalogItem[] = [
+  // Events and weddings (drawn in components/home/EventDecor): for the hotel ballrooms, and parties at home.
+  { id: "ev-banquet-table", name: "Banquet Table for Eight", desc: "Round table dressed to the floor, gold-sashed chairs, flowers and candles.", icon: "🍽️", price: 2500, kind: "floor", size: [6, 6], visual: "banquet-table", category: "events", interaction: "chair" },
+  { id: "ev-banquet-table-blush", name: "Blush Banquet Table", desc: "The same table in blush linen.", icon: "🌸", price: 2600, kind: "floor", size: [6, 6], visual: "banquet-table", tint: "#fbcfe8", category: "events", interaction: "chair" },
+  { id: "ev-banquet-table-gold", name: "Gold Banquet Table", desc: "Gold linen for a royal theme.", icon: "✨", price: 2800, kind: "floor", size: [6, 6], visual: "banquet-table", tint: "#e9cf8a", category: "events", interaction: "chair" },
+  { id: "ev-kosha", name: "Kosha Stage", desc: "A raised stage with a gilded arch and a sofa for the couple.", icon: "👑", price: 18000, kind: "floor", size: [8, 4], visual: "kosha", category: "events", interaction: "chair" },
+  { id: "ev-kosha-emerald", name: "Emerald Kosha Stage", desc: "The kosha in emerald velvet.", icon: "💚", price: 18500, kind: "floor", size: [8, 4], visual: "kosha", tint: "#1f5a45", category: "events", interaction: "chair" },
+  { id: "ev-floral-arch", name: "White Floral Arch", desc: "An arch of white and blush flowers.", icon: "💐", price: 12000, kind: "floor", size: [5, 1], visual: "floral-arch", category: "events" },
+  { id: "ev-led-wall", name: "LED Wall", desc: "A wall-sized screen washing the room in colour.", icon: "🟪", price: 15000, kind: "wall", size: [8, 3], visual: "led-wall", category: "events" },
+  { id: "ev-dance-floor", name: "Lit Dance Floor", desc: "Chequered tiles that pulse with the music.", icon: "🪩", price: 9000, kind: "rug", size: [8, 8], visual: "dance-floor", category: "events" },
+  { id: "ev-aisle-runner", name: "Petal Aisle Runner", desc: "A long runner scattered with rose petals.", icon: "🌹", price: 3000, kind: "rug", size: [2, 10], visual: "aisle-runner", category: "events" },
+  { id: "ev-lantern", name: "Brass Lantern", desc: "A glowing lantern to line the aisle.", icon: "🏮", price: 800, kind: "floor", size: [1, 1], visual: "lantern", category: "events" },
+  { id: "ev-rose-wall", name: "Rose Photo Wall", desc: "A wall of roses for the photos.", icon: "📸", price: 6000, kind: "wall", size: [5, 3], visual: "rose-wall", category: "events" },
+  { id: "ev-cake-table", name: "Five-Tier Cake", desc: "A white five-tier cake on a gold stand.", icon: "🎂", price: 4500, kind: "floor", size: [2, 2], visual: "cake-table", category: "events" },
+  { id: "ev-dj-booth", name: "DJ Booth", desc: "Decks and a lit front for the DJ.", icon: "🎧", price: 6000, kind: "floor", size: [3, 2], visual: "dj-booth", category: "events" },
+  { id: "ev-gold-gate", name: "Gilded Entrance Gate", desc: "A gold arch to walk in under.", icon: "⛩️", price: 7000, kind: "floor", size: [4, 1], visual: "gold-gate", category: "events" },
+  { id: "ev-fairy-canopy", name: "Fairy-Light Canopy", desc: "Hundreds of warm lights under the ceiling.", icon: "✨", price: 9000, kind: "ceiling", size: [8, 8], visual: "fairy-canopy", category: "events" },
   { id: "sofa", name: "Modern Velvet Sofa", desc: "Super comfortable for guests.", icon: "🛋️", price: 3500, kind: "floor", size: [4, 2], model: "/models/furniture/couch.glb", interaction: "chair", category: "living" },
   { id: "l-sofa", name: "L-Shaped Lounge Sofa", desc: "Room for the whole crew.", icon: "🛋️", price: 6800, kind: "floor", size: [4, 4], model: "/models/furniture/l-couch.glb", interaction: "chair", category: "living" },
   { id: "lounge-chair", name: "Designer Lounge Chair", desc: "Mid-century comfort.", icon: "💺", price: 1800, kind: "floor", size: [2, 2], model: "/models/furniture/lounge-chair.glb", interaction: "chair", category: "living" },
@@ -429,7 +450,8 @@ export interface BuiltIn {
   fixed?: boolean;
 }
 
-export type HousingTier = "bed_space" | "studio" | "one_bedroom" | "two_bedroom" | "three_bedroom" | "duplex" | "townhouse" | "penthouse" | "villa";
+/** A home layout, or (ballroom) a hotel event hall: an open room decorated with the same tools (lib/halls). */
+export type HousingTier = "bed_space" | "studio" | "one_bedroom" | "two_bedroom" | "three_bedroom" | "duplex" | "townhouse" | "penthouse" | "villa" | "ballroom";
 
 /** The home layout for a listing: its property type decides first (townhouses, villas and penthouses are
     two-storey whatever their bedrooms), then the number of bedrooms. */
@@ -587,7 +609,13 @@ export const WALL_PAINTS: Array<{ id: string; label: string; color: string; pric
   { id: "black", label: "Soft black", color: "#1f2023", price: 1400 },
 ];
 /** How a home is finished: floor, wall colour, and whether the walls are panelled with mouldings. */
-export interface HomeStyle { floor: FloorFinish; wall: string; panels: boolean; /** Pieces outside the house (pool, garage, garden…: src/data/home/exterior.json). */ exterior?: string[]; /** Bed sheets: the colour of the duvet on every bed (pillows a paler shade). */ bedding?: string }
+export interface HomeStyle { floor: FloorFinish; wall: string; panels: boolean; /** Pieces outside the house (pool, garage, garden…: src/data/home/exterior.json). */ exterior?: string[]; /** Bed sheets: the colour of the duvet on every bed (pillows a paler shade). */ bedding?: string; /** The ceiling's design (src/data/home/ceilings.json finishes; absent means "flat"). */ ceiling?: CeilingFinish; /** The ceiling's paint colour (absent means ceiling white). */ ceilingColor?: string }
+
+/** Ceiling designs and paints (the roof seen from inside): src/data/home/ceilings.json. */
+export type CeilingFinish = "flat" | "tray" | "coffered" | "beams" | "arabesque" | "stars";
+export const CEILING_FINISHES = CEILING_DATA.finishes as Array<{ id: CeilingFinish; label: string; icon: string; desc: string; price: number }>;
+export const CEILING_PAINTS = CEILING_DATA.paints as Array<{ id: string; label: string; color: string; price: number }>;
+export const DEFAULT_CEILING_COLOR = CEILING_PAINTS[0].color;
 
 /** Bed sheets to choose from. */
 export const BEDDING: Array<{ id: string; label: string; color: string; price: number }> = [
@@ -639,6 +667,22 @@ const twoStorey = (kitchen: string, living: string, upper: Pick<LevelDef, "rooms
 ];
 
 const RAW_HOUSING_CONFIGS: Record<HousingTier, HousingConfig> = {
+  // A hotel event hall (src/data/venues/halls.json): one open room, no kitchen or bathroom, for parties.
+  ballroom: {
+    id: "ballroom",
+    finish: { floor: "white-marble", wall: "#f5efe3", panels: true, ceiling: "coffered", ceilingColor: "#f4efe6" },
+    luxury: true,
+    label: "Event hall",
+    area: "Hotel ballroom",
+    monthly: 0,
+    icon: "🎊",
+    wallColor: "#f5efe3",
+    skirtingColor: "#c9a24a",
+    activities: [
+      { id: "hall_dance", label: "Dance", icon: "💃", desc: "Hit the dance floor with the guests.", animation: "wave", need: { kind: "fun", amount: 25 } },
+      { id: "hall_mingle", label: "Mingle", icon: "🥂", desc: "Say hello round the tables.", animation: "talk", need: { kind: "social", amount: 25 } },
+    ],
+  },
   bed_space: {
     id: "bed_space",
     finish: { floor: "white-marble", wall: "#efe9df", panels: true },
@@ -841,6 +885,16 @@ const RAW_BUILT_INS: BuiltIn[] = [
 ];
 
 const RAW_BUILT_INS_BY_TIER: Record<HousingTier, BuiltIn[]> = {
+  // The hall as it comes: tables round a dance floor under chandeliers (all movable). On the 20-cell grid.
+  ballroom: [
+    { id: "hall_dance_floor", visual: "dance-floor", size: [8, 8], placement: { kind: "floor", col: 6, row: 6, rot: 0, g: GRID } },
+    { id: "hall_table_1", visual: "banquet-table", size: [6, 6], placement: { kind: "floor", col: 0, row: 0, rot: 0, g: GRID }, interaction: "chair" },
+    { id: "hall_table_2", visual: "banquet-table", size: [6, 6], placement: { kind: "floor", col: 14, row: 0, rot: 0, g: GRID }, interaction: "chair" },
+    { id: "hall_table_3", visual: "banquet-table", size: [6, 6], placement: { kind: "floor", col: 0, row: 14, rot: 0, g: GRID }, interaction: "chair" },
+    { id: "hall_table_4", visual: "banquet-table", size: [6, 6], placement: { kind: "floor", col: 14, row: 14, rot: 0, g: GRID }, interaction: "chair" },
+    { id: "hall_chandelier_1", visual: "chandelier-crystal", size: [2, 2], placement: { kind: "floor", col: 9, row: 4, rot: 0, g: GRID } },
+    { id: "hall_chandelier_2", visual: "chandelier-crystal", size: [2, 2], placement: { kind: "floor", col: 9, row: 14, rot: 0, g: GRID } },
+  ],
   bed_space: [
     { id: "bunk_bed", model: "/models/furniture/bed.glb", size: [4, 5], placement: { kind: "floor", col: 1, row: 0, rot: 0 }, interaction: "bed" },
     { id: "locker", model: "/models/furniture/side-table.glb", size: [1, 1], placement: { kind: "floor", col: 5, row: 0, rot: 0 } },
@@ -981,6 +1035,7 @@ const RAW_BUILT_INS_BY_TIER: Record<HousingTier, BuiltIn[]> = {
 };
 
 const HOME_NAMES: Record<string, [string, string]> = {
+  hall_dance_floor: ["Lit Dance Floor", "🪩"], hall_table_1: ["Banquet Table for Eight", "🍽️"], hall_table_2: ["Banquet Table for Eight", "🍽️"], hall_table_3: ["Banquet Table for Eight", "🍽️"], hall_table_4: ["Banquet Table for Eight", "🍽️"], hall_chandelier_1: ["Crystal Chandelier", "💎"], hall_chandelier_2: ["Crystal Chandelier", "💎"],
   lx_bs_chandelier: ["Gold Ring Chandelier", "⭕"], lx_bs_palm: ["Indoor Date Palm", "🌴"], lx_bs_orchids: ["White Orchids", "🌸"], lx_st_chandelier: ["Crystal Chandelier", "💎"], lx_st_rug: ["Hand-Knotted Silk Rug", "🟡"], lx_st_palm: ["Indoor Date Palm", "🌴"], lx_st_vase: ["Pampas Floor Vase", "🌾"], lx_ob_chandelier: ["Crystal Chandelier", "💎"], lx_ob_bed_light: ["Gold Ring Chandelier", "⭕"], lx_ob_rug: ["Hand-Knotted Silk Rug", "🟡"], lx_ob_palm: ["Indoor Date Palm", "🌴"], lx_ob_orchids: ["White Orchids", "🌸"], lx_ob_falcon: ["Bronze Falcon Sculpture", "🦅"], lx_tb_chandelier: ["Crystal Chandelier", "💎"], lx_tb_bed_light: ["Gold Ring Chandelier", "⭕"], lx_tb_rug: ["Hand-Knotted Silk Rug", "🟡"], lx_tb_palm: ["Indoor Date Palm", "🌴"], lx_tb_falcon: ["Bronze Falcon Sculpture", "🦅"], lx_hb_chandelier: ["Crystal Chandelier", "💎"], lx_hb_bed_light: ["Gold Ring Chandelier", "⭕"], lx_hb_rug: ["Hand-Knotted Silk Rug", "🟡"], lx_hb_palm: ["Indoor Date Palm", "🌴"], lx_hb_vase: ["Pampas Floor Vase", "🌾"], lx_dx_chandelier: ["Crystal Chandelier", "💎"], lx_dx_rug: ["Hand-Knotted Silk Rug", "🟡"], lx_th_chandelier: ["Crystal Chandelier", "💎"], lx_th_rug: ["Hand-Knotted Silk Rug", "🟡"], lx_ph_chandelier: ["Crystal Chandelier", "💎"], lx_vl_chandelier: ["Crystal Chandelier", "💎"],
   bed: ["Bed", "🛏️"], bedside: ["Bedside table", "🟫"], fridge: ["Fridge", "🧊"], chair: ["Armchair", "🪑"],
   bunk_bed: ["Bunk Bed", "🛏️"], locker: ["Suitcase Stand", "🧳"], mini_kettle: ["Kettle & Mini-Fridge", "☕"], stool: ["Stool", "🪑"],

@@ -559,6 +559,27 @@ function mountToAnchor(
  * Attaches 3D Wigs/Cultural Headgear (#21, #28, #16), Acrylic Nails (#21), Designer Footwear (#21),
  * and Progressive 3D Pregnancy Baby Bump (#6) directly onto the avatar's skeleton bones.
  */
+/** Gowns that get a full skirt, by outfit id, and their silhouette. */
+const GOWN_SKIRTS: Record<string, "ballgown" | "mermaid" | "lehenga" | "aline"> = {
+  bridal_ballgown: "ballgown", bridal_mermaid: "mermaid", bridal_asoebi_queen: "aline", bridal_lehenga_queen: "lehenga",
+  in_lehenga: "lehenga", ng_lace_asoebi: "mermaid", cm_toghu_queen: "aline", ke_kitenge: "mermaid",
+};
+
+/** A skirt's radius (metres, for a 1.74 m figure) at t (0 waist, 1 floor). */
+function skirtRadius(kind: "ballgown" | "mermaid" | "lehenga" | "aline", t: number) {
+  switch (kind) {
+    case "ballgown": return 0.15 + 0.48 * Math.pow(t, 0.65);
+    case "lehenga": return 0.15 + 0.36 * Math.pow(t, 0.8);
+    case "aline": return 0.15 + 0.26 * t;
+    case "mermaid": {
+      // Close over the hips and knees, then the flare.
+      if (t < 0.25) return 0.15 + 0.08 * (t / 0.25);
+      if (t < 0.7) return 0.23 - 0.05 * ((t - 0.25) / 0.45);
+      return 0.18 + 0.28 * Math.pow((t - 0.7) / 0.3, 1.6);
+    }
+  }
+}
+
 export function attachLookExtras(rig: AccessoryRig, look: AvatarLookProps, modelMeshes?: THREE.Mesh[]): () => void {
   const attached: THREE.Object3D[] = [];
   const H = rig.height;
@@ -1242,6 +1263,33 @@ export function attachLookExtras(rig: AccessoryRig, look: AvatarLookProps, model
   // avoiding floating detached cones off animated hands.
 
   // 3. Footwear styling is modeled authentically into each Rocketbox outfit mesh.
+
+  // 3b. Gown skirts: the roster's gowns are re-coloured clothes (often trousers or shorts underneath), so a gown
+  // gets a full skirt turned from its silhouette, hung from the spine to the floor in the outfit's colour with a
+  // trim at the hem. Worn everywhere the outfit is (the bridal shops, weddings, the wardrobe).
+  const skirt = wearOutfit ? GOWN_SKIRTS[wearOutfit.id] : undefined;
+  if (skirt && rig.spine) {
+    const length = Math.max(0.4, rig.spine.rest.y - rig.minY + 0.02);
+    const pts: THREE.Vector2[] = [];
+    for (let i = 0; i <= 16; i++) {
+      const t = i / 16;
+      pts.push(new THREE.Vector2(skirtRadius(skirt, t) * s, -t * length));
+    }
+    const g = new THREE.Group();
+    g.name = "gown_skirt";
+    const body = new THREE.Mesh(new THREE.LatheGeometry(pts, 40), new THREE.MeshStandardMaterial({ color: primaryHex, roughness: 0.42, metalness: 0.04, side: THREE.DoubleSide }));
+    body.castShadow = true;
+    g.add(body);
+    const hem = new THREE.Mesh(new THREE.TorusGeometry(skirtRadius(skirt, 1) * s, 0.012 * s, 6, 48), new THREE.MeshStandardMaterial({ color: accentHex, metalness: 0.6, roughness: 0.3 }));
+    hem.rotation.x = Math.PI / 2;
+    hem.position.y = -length + 0.02;
+    g.add(hem);
+    // A sash at the waist in the accent colour.
+    const sash = new THREE.Mesh(new THREE.CylinderGeometry(skirtRadius(skirt, 0) * s + 0.004, skirtRadius(skirt, 0.04) * s + 0.004, 0.05 * s, 32, 1, true), new THREE.MeshStandardMaterial({ color: accentHex, metalness: 0.5, roughness: 0.35, side: THREE.DoubleSide }));
+    sash.position.y = -0.02 * s;
+    g.add(sash);
+    mountToAnchor(rig, "spine", g, new THREE.Vector3(0, 0.02 * s, 0), attached);
+  }
 
   // 4. Progressive 3D Pregnancy Bump (#6 — Trimesters 1..3, Ladies Only)
   // Bump material and color seamlessly match the cloth fabric covering the belly area

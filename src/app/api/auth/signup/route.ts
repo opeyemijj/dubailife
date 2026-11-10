@@ -7,7 +7,27 @@ import { ageFrom, MIN_AGE } from "@/lib/age";
 
 const USERNAME = /^[a-z0-9_]{3,24}$/;
 
+// Rate limiting: max 5 signups per 10 minutes per client IP to stop account creation floods
+const signupRateLimit = new Map<string, { count: number; expiresAt: number }>();
+
+function isSignupRateLimited(ip: string): boolean {
+  if (!ip || ip === "unknown") return false;
+  const now = Date.now();
+  const entry = signupRateLimit.get(ip);
+  if (!entry || entry.expiresAt < now) {
+    signupRateLimit.set(ip, { count: 1, expiresAt: now + 10 * 60 * 1000 });
+    return false;
+  }
+  entry.count += 1;
+  return entry.count > 5;
+}
+
 export async function POST(request: Request) {
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("cf-connecting-ip") || "unknown";
+  if (isSignupRateLimited(ip)) {
+    return Response.json({ error: "Too many sign-up attempts from this connection. Please try again later." }, { status: 429 });
+  }
+
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!serviceKey || !url) return Response.json({ error: "not_configured" }, { status: 501 });

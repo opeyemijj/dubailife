@@ -1,37 +1,178 @@
 {
   "_note": "The Family app (was Hayati): partners, relatives, babies and nannies. Numbers are mirrored in supabase/migrations/*_family.sql and checked by scripts/check-life-config.mjs.",
   "maxWives": 4,
-  "discovery": { "chancePercent": 10, "heartsLost": 10, "_how": "Each day, for every other partner your partner has that you don't know about, there's this chance you find out." },
+  "discovery": {
+    "chancePercent": 10,
+    "heartsLost": 10,
+    "_how": "Each day, for every other partner your partner has that you don't know about, there's this chance you find out."
+  },
   "pregnancyDays": 7,
   "care": [
-    { "id": "feed", "label": "Feed", "icon": "🍼" },
-    { "id": "play", "label": "Play", "icon": "🧸" },
-    { "id": "bath", "label": "Bath time", "icon": "🛁" }
+    {
+      "id": "feed",
+      "label": "Feed",
+      "icon": "🍼"
+    },
+    {
+      "id": "play",
+      "label": "Play",
+      "icon": "🧸"
+    },
+    {
+      "id": "bath",
+      "label": "Bath time",
+      "icon": "🛁"
+    }
   ],
   "careWindowDays": 3,
   "nanny": [
-    { "id": "week", "label": "A week", "days": 7, "price": 1500 },
-    { "id": "month", "label": "A month", "days": 30, "price": 5000 }
+    {
+      "id": "week",
+      "label": "A week",
+      "days": 7,
+      "price": 1500
+    },
+    {
+      "id": "month",
+      "label": "A month",
+      "days": 30,
+      "price": 5000
+    }
   ],
   "relations": [
-    { "id": "sibling", "inverse": "sibling", "man": "Brother", "woman": "Sister", "icon": "👫" },
-    { "id": "cousin", "inverse": "cousin", "man": "Cousin", "woman": "Cousin", "icon": "🧑‍🤝‍🧑" },
-    { "id": "parent", "inverse": "child", "man": "Father", "woman": "Mother", "icon": "👨‍👩‍👧" },
-    { "id": "child", "inverse": "parent", "man": "Son", "woman": "Daughter", "icon": "🧒" }
+    {
+      "id": "sibling",
+      "inverse": "sibling",
+      "man": "Brother",
+      "woman": "Sister",
+      "icon": "👫"
+    },
+    {
+      "id": "cousin",
+      "inverse": "cousin",
+      "man": "Cousin",
+      "woman": "Cousin",
+      "icon": "🧑‍🤝‍🧑"
+    },
+    {
+      "id": "parent",
+      "inverse": "child",
+      "man": "Father",
+      "woman": "Mother",
+      "icon": "👨‍👩‍👧"
+    },
+    {
+      "id": "child",
+      "inverse": "parent",
+      "man": "Son",
+      "woman": "Daughter",
+      "icon": "🧒"
+    }
   ],
   "stages": [
-    { "week": 0, "id": "newborn", "label": "Newborn", "icon": "👶", "text": "Tiny, sleepy and always hungry. Lots of cuddles." },
-    { "week": 1, "id": "crawling", "label": "Crawling", "icon": "🍼", "text": "On the move! Crawling everywhere and grabbing everything." },
-    { "week": 2, "id": "first-steps", "label": "First steps", "icon": "🚶", "text": "Took their first wobbly steps today. Have the camera ready!" },
-    { "week": 3, "id": "toddler", "label": "Running around", "icon": "🏃", "text": "Running around the house, laughing and exploring." },
-    { "week": 4, "id": "talking", "label": "First words", "icon": "🗣️", "text": "Said their first words, and now they won't stop talking." },
-    { "week": 5, "id": "nursery", "label": "Nursery", "icon": "🎨", "text": "Off to nursery: painting, songs and new friends." },
-    { "week": 7, "id": "school", "label": "Big school", "icon": "🎒", "text": "First day at school with a brand-new bag." },
-    { "week": 10, "id": "kid", "label": "Growing up", "icon": "⚽", "text": "Football after school, homework, and big questions." },
-    { "week": 14, "id": "teen", "label": "Teenager", "icon": "🎧", "text": "A teenager now: headphones on, and taller than you think." }
+    {
+      "week": 0,
+      "id": "newborn",
+      "label": "Newborn",
+      "icon": "👶",
+      "text": "Tiny, sleepy and always hungry. Lots of cuddles."
+    },
+    {
+      "week": 1,
+      "id": "crawling",
+      "label": "Crawling",
+      "icon": "🍼",
+      "text": "On the move! Crawling everywhere and grabbing everything."
+    },
+    {
+      "week": 2,
+      "id": "first-steps",
+      "label": "First steps",
+      "icon": "🚶",
+      "text": "Took their first wobbly steps today. Have the camera ready!"
+    },
+    {
+      "week": 3,
+      "id": "toddler",
+      "label": "Running around",
+      "icon": "🏃",
+      "text": "Running around the house, laughing and exploring."
+    },
+    {
+      "week": 4,
+      "id": "talking",
+      "label": "First words",
+      "icon": "🗣️",
+      "text": "Said their first words, and now they won't stop talking."
+    },
+    {
+      "week": 5,
+      "id": "nursery",
+      "label": "Nursery",
+      "icon": "🎨",
+      "text": "Off to nursery: painting, songs and new friends."
+    },
+    {
+      "week": 7,
+      "id": "school",
+      "label": "Big school",
+      "icon": "🎒",
+      "text": "First day at school with a brand-new bag."
+    },
+    {
+      "week": 10,
+      "id": "kid",
+      "label": "Growing up",
+      "icon": "⚽",
+      "text": "Football after school, homework, and big questions."
+    },
+    {
+      "week": 14,
+      "id": "teen",
+      "label": "Teenager",
+      "icon": "🎧",
+      "text": "A teenager now: headphones on, and taller than you think."
+    }
   ],
   "babyNames": {
-    "boy": ["Adam", "Omar", "Zayed", "Hamdan", "Yusuf", "Rashid", "Leo", "Noah", "Ethan", "Kofi"],
-    "girl": ["Mariam", "Fatima", "Layla", "Noor", "Aisha", "Hessa", "Sara", "Mia", "Amara", "Zara"]
+    "boy": [
+      "Adam",
+      "Omar",
+      "Zayed",
+      "Hamdan",
+      "Yusuf",
+      "Rashid",
+      "Leo",
+      "Noah",
+      "Ethan",
+      "Kofi"
+    ],
+    "girl": [
+      "Mariam",
+      "Fatima",
+      "Layla",
+      "Noor",
+      "Aisha",
+      "Hessa",
+      "Sara",
+      "Mia",
+      "Amara",
+      "Zara"
+    ]
+  },
+  "maternity": {
+    "_note": "Hospital scans and births (src/components/arcade/games/maternity). scanFromDay: the day of the pregnancy each scan opens (first, anatomy, growth). deliverHoursBefore: how early the mother can deliver at the hospital. healthyStartDays/healthyStartBonus: extra happiness for a baby born at the hospital, for its first days. Mirrored in supabase/migrations/*_maternity.sql.",
+    "hospitals": [
+      "latifa-hospital",
+      "dubai-hospital"
+    ],
+    "scanFromDay": [
+      0,
+      2,
+      4
+    ],
+    "deliverHoursBefore": 24,
+    "healthyStartDays": 7,
+    "healthyStartBonus": 25
   }
 }

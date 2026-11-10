@@ -25,6 +25,7 @@ import { PhoneOverlay } from "@/components/layout/PhoneOverlay";
 import { HudSheets } from "@/components/layout/HudSheets";
 import { LoveListener, MoveInListener } from "@/components/love/LoveListener";
 import { GameInviteListener } from "@/components/games/GameInviteListener";
+import { ArcadeHost } from "@/components/arcade/ArcadeHost";
 import { MarathonBanner } from "@/components/marathon/MarathonBanner";
 import { Custody } from "@/components/cars/Custody";
 import { FineNotice } from "@/components/cars/FineNotice";
@@ -34,6 +35,7 @@ import { BackToParty } from "@/components/invite/BackToParty";
 import { LiveSpaceBanner } from "@/components/social/LiveSpaceBanner";
 import { GoalSetup } from "@/components/goals/GoalSetup";
 import { DecorJobAlert } from "@/components/home/DecorJobAlert";
+import { LabourAlert } from "@/components/love/LabourAlert";
 import { NextStep } from "@/components/goals/NextStep";
 import { MorningScene } from "@/components/goals/MorningScene";
 import { Payday } from "@/components/goals/Payday";
@@ -260,6 +262,8 @@ export default function RootLayout({
         <LogoutConfirm />
         {children}
         <LifeHub />
+        {/* The 3D attraction games (boxing, gym, courts…), loaded only when one is opened. */}
+        <ArcadeHost />
         <OutsidePhone>
           <KeyboardShortcuts />
           <FloatingSpaceOverlay />
@@ -280,6 +284,7 @@ export default function RootLayout({
           <GoalSetup />
           <DecorFirstNudge />
           <DecorJobAlert />
+          <LabourAlert />
           <MorningScene />
           <Payday />
         </OutsidePhone>

@@ -1,5 +1,6 @@
 "use client";
 
+import { loadOwnedCloset, saveOwnedCloset } from "@/lib/closet";
 import React, { useState, useEffect, useMemo, Suspense, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Check, ArrowRight, Shirt, Sparkles, Palette, Crown, Trophy, ShoppingBag } from "lucide-react";
@@ -50,26 +51,6 @@ const suitsFor = (title?: string): Occasion[] => {
   return code ? SUITS[code.type] : [];
 };
 
-const OWNED_CLOSET_KEY = "dl_owned_closet_v1";
-
-function loadOwnedCloset(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(OWNED_CLOSET_KEY);
-    return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveOwnedCloset(ids: string[]) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(OWNED_CLOSET_KEY, JSON.stringify(Array.from(new Set(ids))));
-  } catch {
-    // ignore storage errors
-  }
-}
 
 type CameraFocusMode = "full" | "jewelry" | "head" | "shoes" | "hands";
 

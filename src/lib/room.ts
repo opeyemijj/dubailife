@@ -75,7 +75,11 @@ export type RoomEvent =
   | { type: "boxing_challenge"; targetId: string; targetUsername: string; challengerId: string; challengerUsername: string; challengerName: string; purse: number; challengerLook?: AvatarLookProps }
   | { type: "boxing_accept"; challengerId: string; challengerUsername?: string; opponentId: string; opponentUsername?: string; purse?: number; opponentLook?: AvatarLookProps }
   | { type: "boxing_decline"; challengerId: string; challengerUsername?: string; opponentId: string; opponentUsername?: string }
-  | { type: "spray_money"; targetId?: string; targetUsername?: string; amount: number };
+  | { type: "spray_money"; targetId?: string; targetUsername?: string; amount: number }
+  // An event in a hotel hall, live (src/components/arcade/games/events): the host's moments, the bouquet's
+  // flight (the same throw on every screen), and a guest catching it (the first catch the host gets wins).
+  | { type: "hall_moment"; hall: string; moment: "start" | "zaffa" | "dance" | "cake" | "bouquet" | "end"; bouquet?: { dir: number; power: number; at: number }; caught?: string }
+  | { type: "bouquet_catch"; hall: string };
 
 export type Received = RoomEvent & { id: string; from: Peer; to?: string; at: number };
 
