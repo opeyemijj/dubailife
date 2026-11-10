@@ -15,10 +15,11 @@ import type { Received, RoomEvent } from "@/lib/room";
 export type PartyGameId = "connect4" | "chess" | "ludo" | "pool";
 
 export const PARTY_GAMES: Record<PartyGameId, { name: string; icon: string; blurb: string }> = {
+  // Pool first: it's the table standing outside at every party.
+  pool: { name: "Pool", icon: "🎱", blurb: "8-ball on a full-size table outside" },
   connect4: { name: "Connect Four", icon: "🔴", blurb: "Giant frame: four in a row wins" },
   chess: { name: "Garden chess", icon: "♟️", blurb: "Life-size pieces on the deck" },
   ludo: { name: "Ludo", icon: "🎲", blurb: "Roll the giant die, race home" },
-  pool: { name: "Pool", icon: "🎱", blurb: "8-ball on a full-size table outside" },
 };
 
 export interface PartyPlayer { id: string; username: string; ai?: boolean }

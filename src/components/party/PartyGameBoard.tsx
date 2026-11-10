@@ -14,7 +14,7 @@ import { Chess, type Square } from "chess.js";
 import { c4Rules, type C4State } from "@/components/games/ConnectFour";
 import { ludoRules, type LudoState } from "@/components/games/Ludo";
 import type { ChessState } from "@/components/games/ChessGame";
-import type { PoolState } from "@/components/games/Pool";
+import { pool as poolGame, type PoolState } from "@/components/games/Pool";
 import { PoolTable3D } from "./PoolTable3D";
 import { resultText, turnOf, turnText, type PartyGameId, type PartyGameSnap } from "@/lib/partyGames";
 
@@ -29,7 +29,7 @@ type Tap = (e: ThreeEvent<MouseEvent>) => boolean;
 /** A tap, not the end of a drag; stops it reaching the floor (which would walk you there). */
 const tapped: Tap = (e) => { if (e.delta > 6) return false; e.stopPropagation(); return true; };
 
-export function PartyGameBoard({ snap, mySeat, onMove, pool, grounds, lightsOut }: {
+export function PartyGameBoard({ snap, mySeat, onMove, pool, grounds, lightsOut, onIdleTap }: {
   snap: PartyGameSnap | null;
   mySeat: number;
   onMove: (state: unknown) => void;
@@ -38,8 +38,10 @@ export function PartyGameBoard({ snap, mySeat, onMove, pool, grounds, lightsOut 
   /** A villa or townhouse plot (there's already ground outside); otherwise a terrace is built for the game. */
   grounds: boolean;
   lightsOut?: boolean;
+  /** No game on: an empty Connect Four frame stands outside as an invitation; tapping it opens the picker. */
+  onIdleTap?: () => void;
 }) {
-  if (!snap) return null;
+  if (!snap) return onIdleTap ? <IdleBoard pool={pool} grounds={grounds} lightsOut={lightsOut} onTap={onIdleTap} /> : null;
   const turn = turnOf(snap);
   const canMove = mySeat >= 0 && turn === mySeat && !!snap.players[1];
   const result = resultText(snap, mySeat);
@@ -65,6 +67,34 @@ export function PartyGameBoard({ snap, mySeat, onMove, pool, grounds, lightsOut 
             {turnText(snap, mySeat)}
           </div>
         )}
+      </Html>
+    </group>
+  );
+}
+
+/** A racked table: the invitation looks ready to break. */
+const IDLE_POOL = poolGame.init(2, 0) as PoolState;
+
+/**
+ * The invitation: a pool table outside, racked, with "Let's play" (any game can be picked). On a swimming pool
+ * it stands crosswise on the far-end coping (the water stays free to swim in); otherwise on the lawn or terrace.
+ */
+function IdleBoard({ pool, grounds, lightsOut, onTap }: { pool: boolean; grounds: boolean; lightsOut?: boolean; onTap: () => void }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <group position={[PARTY_BOARD_AT[0], 0, PARTY_BOARD_AT[1]]}>
+      {!pool && <Deck pool={false} grounds={grounds} />}
+      {lightsOut && <pointLight position={[0, 4, pool ? -4.1 : 0]} intensity={10} distance={8} color="#fde68a" />}
+      <group position={[0, 0.05, pool ? -4.1 : 0]} scale={hover ? 1.04 : 1}
+        onClick={(e) => { if (!tapped(e)) return; gameAudio.playClickSound(); onTap(); }}
+        onPointerOver={(e) => { e.stopPropagation(); setHover(true); document.body.style.cursor = "pointer"; }}
+        onPointerOut={() => { setHover(false); document.body.style.cursor = ""; }}>
+        <PoolTable3D state={IDLE_POOL} canMove={false} onMove={() => {}} crosswise={pool} />
+      </group>
+      <Html position={[0, 2.9, pool ? -4.1 : 0]} center distanceFactor={14} zIndexRange={[10, 0]}>
+        <button onClick={onTap} className="whitespace-nowrap rounded-full bg-fuchsia-600 px-4 py-1.5 text-[15px] font-black text-white shadow-2xl ring-2 ring-white/70 animate-bounce">
+          🎲 Let&apos;s play a game
+        </button>
       </Html>
     </group>
   );

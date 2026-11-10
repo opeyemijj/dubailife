@@ -26,8 +26,10 @@ const DECK = { w: 4.5, l: 8.5 };
 const TABLE = { l: W * S + 0.16, w: H * S + 0.16 };
 const COVER = Math.min(DECK.l / TABLE.l, DECK.w / TABLE.w);
 
-export function PoolTable3D({ state, canMove, onMove, cover = false }: {
+export function PoolTable3D({ state, canMove, onMove, cover = false, crosswise = false }: {
   state: PoolState; canMove: boolean; onMove: (s: PoolState) => void;
+  /** Long side across (along x) instead of along the deck: the idle table on the pool's far-end coping. */
+  crosswise?: boolean;
   /** Over a swimming pool: a giant table laid flat across the whole pool (no legs), balls and all scaled up. */
   cover?: boolean;
 }) {
@@ -118,7 +120,7 @@ export function PoolTable3D({ state, canMove, onMove, cover = false }: {
 
   return (
     // The long side along the deck. Covering the pool, the felt sits just above the deck.
-    <group ref={table} rotation={[0, Math.PI / 2, 0]} scale={cover ? COVER : 1} position={[0, cover ? -(TOP - 0.02) * COVER : 0, 0]}>
+    <group ref={table} rotation={[0, crosswise ? 0 : Math.PI / 2, 0]} scale={cover ? COVER : 1} position={[0, cover ? -(TOP - 0.02) * COVER : 0, 0]}>
       {!cover && [[-1.3, -0.6], [1.3, -0.6], [-1.3, 0.6], [1.3, 0.6]].map(([x, z], i) => (
         <mesh key={i} position={[x, TOP / 2, z]} castShadow><cylinderGeometry args={[0.09, 0.07, TOP, 14]} /><meshStandardMaterial color="#3b2412" roughness={0.5} /></mesh>
       ))}

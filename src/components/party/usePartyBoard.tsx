@@ -56,12 +56,16 @@ export function usePartyBoard({ active, meId, meName, isHost, present, tier, ext
   }, [startedKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const on = active && !!pg.snap;
+  // The board's stop on the zone bar: the game when one's on, or "Let's play" (the idle board) when not.
+  const idleAt: [number, number] = pool ? [PARTY_BOARD_AT[0], PARTY_BOARD_AT[1] - 4.1] : PARTY_BOARD_AT;
   const zones: PlotZone[] = on
     ? [{ id: "party-game", label: PARTY_GAMES[pg.snap!.game].name, icon: "🎲", cam: PARTY_BOARD_AT, walk: plot ? [PARTY_BOARD_AT[0] - (pool ? 2.7 : 1.6), PARTY_BOARD_AT[1] + 2.2] : undefined }]
+    : active ? [{ id: "party-game", label: "Let's play", icon: "🎲", cam: idleAt, walk: plot ? [idleAt[0] - 2.2, idleAt[1]] : undefined }]
     : [];
 
-  const board = on && level === 0 ? (
-    <PartyGameBoard snap={pg.snap} mySeat={pg.mySeat} onMove={pg.move} pool={pool} grounds={grounds} lightsOut={lightsOut} />
+  // Always something outside during a party: the game, or the idle board inviting a game (tap it: the picker).
+  const board = active && level === 0 ? (
+    <PartyGameBoard snap={pg.snap} mySeat={pg.mySeat} onMove={pg.move} pool={pool} grounds={grounds} lightsOut={lightsOut} onIdleTap={() => setPicker(true)} />
   ) : null;
 
   const ui = active ? (
@@ -72,5 +76,5 @@ export function usePartyBoard({ active, meId, meName, isHost, present, tier, ext
     </>
   ) : null;
 
-  return { pg, board, zones, focus, ui, poolCovered: !!board && pool, openPicker: () => setPicker(true) };
+  return { pg, board, zones, focus, ui, poolCovered: on && level === 0 && pool, openPicker: () => setPicker(true) };
 }
