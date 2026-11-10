@@ -21,6 +21,7 @@ import { resultText, turnOf, turnText, type PartyGameId, type PartyGameSnap } fr
 /** Each side's colour on the board (the dot beside "Their turn"). */
 const SIDE_COLOR: Record<PartyGameId, [string, string]> = { connect4: ["#dc2626", "#facc15"], chess: ["#f8f4ea", "#1c1917"], ludo: ["#dc2626", "#eab308"], pool: ["#16a34a", "#2563eb"] };
 import { gameAudio } from "@/utils/gameAudio";
+import { isPhone } from "@/components/home/TwoFingerHint";
 
 /** Where the board stands: the pool's spot, east of the house (HomeGrounds GROUNDS.pool). */
 export const PARTY_BOARD_AT: [number, number] = [10.5, 1];
@@ -61,7 +62,7 @@ export function PartyGameBoard({ snap, mySeat, onMove, pool, grounds, lightsOut,
           <div className={`whitespace-nowrap rounded-2xl px-4 py-2 text-[22px] font-black shadow-2xl ring-2 ${result.won ? "bg-amber-400 text-slate-950 ring-amber-200 animate-pulse" : "bg-slate-950/90 text-white ring-white/30"}`}>
             {result.icon} {result.title}
           </div>
-        ) : (
+        ) : isPhone() ? null : (
           <div className={`whitespace-nowrap rounded-full px-3 py-1 text-[14px] font-black shadow-lg ${canMove ? "bg-emerald-500 text-emerald-950 animate-pulse" : "bg-slate-950/80 text-white"}`}>
             {turn !== null && <span className="mr-1.5 inline-block h-3 w-3 rounded-full align-middle ring-1 ring-white/60" style={{ background: SIDE_COLOR[snap.game][turn] }} />}
             {turnText(snap, mySeat)}

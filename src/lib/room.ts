@@ -74,7 +74,7 @@ export type RoomEvent =
   | { type: "gang_beat"; targetId: string; targetUsername: string; allies: string[] }
   | { type: "boxing"; targetId: string; targetUsername: string; purse: number }
   | { type: "boxing_challenge"; targetId: string; targetUsername: string; challengerId: string; challengerUsername: string; challengerName: string; purse: number; challengerLook?: AvatarLookProps }
-  | { type: "boxing_accept"; challengerId: string; challengerUsername?: string; opponentId: string; opponentUsername?: string; purse?: number; opponentLook?: AvatarLookProps }
+  | { type: "boxing_accept"; challengerId: string; challengerUsername?: string; opponentId: string; opponentUsername?: string; purse?: number; opponentLook?: AvatarLookProps; /** The live bout both phones join (src/components/arcade/games/boxing/live.ts). */ boutId?: string }
   | { type: "boxing_decline"; challengerId: string; challengerUsername?: string; opponentId: string; opponentUsername?: string }
   | { type: "spray_money"; targetId?: string; targetUsername?: string; amount: number }
   // 1-on-1 Private Live Audio Space Events

@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { broadcastRoomEvent, type Received } from "@/lib/room";
+import { createPortal } from "react-dom";
 import { adjustBalance, boostNeed, useCitizen } from "@/lib/citizenStore";
 import { CelebrityBoxingModal, type BoxingOpponent } from "@/components/games/CelebrityBoxingModal";
 import type { AvatarLookProps } from "@/components/avatar/roster";
@@ -159,7 +160,7 @@ export function SocialFeed({
   const [now, setNow] = useState(() => Date.now());
   const [done, setDone] = useState<Set<string>>(new Set());
   const [peacemakerTarget, setPeacemakerTarget] = useState<{ a: string; b: string; progress: number } | null>(null);
-  const [boxingModalOpp, setBoxingModalOpp] = useState<{ opp: BoxingOpponent; purse: number } | null>(null);
+  const [boxingModalOpp, setBoxingModalOpp] = useState<{ opp: BoxingOpponent; purse: number; live?: { boutId: string; host: boolean } } | null>(null);
   const [bannerToast, setBannerToast] = useState<string | null>(null);
 
   useEffect(() => {
@@ -173,6 +174,7 @@ export function SocialFeed({
       const detail = (rawEv as CustomEvent<{
         event?: {
           type?: string;
+          boutId?: string;
           challengerId?: string;
           challengerUsername?: string;
           opponentId?: string;
@@ -197,6 +199,8 @@ export function SocialFeed({
               look: roomEv.opponentLook,
             },
             purse: roomEv.purse ?? 2500,
+            // They accepted: the live bout, which my phone runs (I challenged).
+            live: roomEv.boutId ? { boutId: roomEv.boutId, host: true } : undefined,
           });
         }
       }
@@ -235,57 +239,11 @@ export function SocialFeed({
 
   const dismiss = (id: string) => setDone((d) => new Set(d).add(id));
 
-  if (visible.length === 0 && !peacemakerTarget && !boxingModalOpp && !bannerToast) return null;
-
-  return (
-    <>
-      <div className="absolute left-1/2 -translate-x-1/2 top-28 z-40 w-[min(390px,calc(100vw-24px))] space-y-2 pointer-events-none">
-        {bannerToast && (
-          <div className="pointer-events-auto bg-emerald-600/95 text-white text-xs font-black px-3.5 py-2 rounded-2xl shadow-xl text-center">
-            {bannerToast}
-          </div>
-        )}
-
-        {peacemakerTarget && (
-          <div className="pointer-events-auto bg-slate-950/95 border border-emerald-400/50 rounded-2xl p-3 text-white shadow-2xl space-y-2">
-            <div className="flex items-center justify-between text-xs font-black">
-              <span>🕊️ Peacemaker Tug-of-War: Pull @{peacemakerTarget.a} & @{peacemakerTarget.b} Apart!</span>
-              <span className="text-emerald-400">{peacemakerTarget.progress}%</span>
-            </div>
-            <div className="h-2.5 rounded-full bg-slate-800 overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-emerald-500 to-teal-300 transition-all"
-                style={{ width: `${peacemakerTarget.progress}%` }}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                gameAudio.playClickSound();
-                const next = Math.min(100, peacemakerTarget.progress + 34);
-                if (next >= 100) {
-                  adjustBalance(150);
-                  boostNeed("social", 20);
-                  gameAudio.playCoinSound();
-                  broadcastRoomEvent({
-                    type: "separate",
-                    fighterA: peacemakerTarget.a,
-                    fighterB: peacemakerTarget.b,
-                  });
-                  setPeacemakerTarget(null);
-                  flashToast("🕊️ Peace Restored! You earned +AED 150 Peacemaker Bonus!");
-                } else {
-                  setPeacemakerTarget({ ...peacemakerTarget, progress: next });
-                }
-              }}
-              className="w-full py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs active:scale-95 transition"
-            >
-              🕊️ TAP TO PULL BRAWLERS APART (+AED 150)
-            </button>
-          </div>
-        )}
-
-        {visible.map((e) => {
+  // A 1-on-1 voice request for me goes above every other window (sheets, panels, the phone), so it can't be missed.
+  const toMe = (e: Received) => e.type === "space_invite" && (e.toId === (citizen?.id ?? "me") || e.toUsername === citizen?.username);
+  const voice = visible.filter(toMe);
+  const rest = visible.filter((e) => !toMe(e));
+  const renderCard = (e: Received) => {
           const { icon, text } = describe(e) ?? { icon: "", text: "" };
           return (
             <div
@@ -441,9 +399,12 @@ export function SocialFeed({
                       const challengerName = ("challengerName" in e && e.challengerName) || e.from.name;
                       const challengerLook = ("challengerLook" in e && e.challengerLook) || e.from.look;
                       const purse = e.purse ?? 2500;
+                      // One bout both phones join: the challenger's runs it, mine sends my moves.
+                      const boutId = `${String(challengerId).slice(0, 8)}-${String(citizen?.id ?? "me").slice(0, 8)}-${Date.now().toString(36)}`;
 
                       broadcastRoomEvent({
                         type: "boxing_accept",
+                        boutId,
                         challengerId,
                         challengerUsername,
                         opponentId: citizen?.id ?? citizen?.username ?? "opponent",
@@ -460,6 +421,7 @@ export function SocialFeed({
                           look: challengerLook,
                         },
                         purse,
+                        live: { boutId, host: false },
                       });
                       flashToast(`🥊 Accepted boxing match vs @${challengerUsername}! Entering the ring!`);
                       dismiss(e.id);
@@ -547,7 +509,65 @@ export function SocialFeed({
               </button>
             </div>
           );
-        })}
+  };
+
+  if (visible.length === 0 && !peacemakerTarget && !boxingModalOpp && !bannerToast) return null;
+
+  return (
+    <>
+      {voice.length > 0 && createPortal(
+        <div className="fixed left-1/2 -translate-x-1/2 top-[calc(env(safe-area-inset-top)+4.5rem)] z-[10080] w-[min(390px,calc(100vw-24px))] space-y-2 pointer-events-none">
+          {voice.map(renderCard)}
+        </div>,
+        document.body,
+      )}
+      <div className="absolute left-1/2 -translate-x-1/2 top-28 z-40 w-[min(390px,calc(100vw-24px))] space-y-2 pointer-events-none">
+        {bannerToast && (
+          <div className="pointer-events-auto bg-emerald-600/95 text-white text-xs font-black px-3.5 py-2 rounded-2xl shadow-xl text-center">
+            {bannerToast}
+          </div>
+        )}
+
+        {peacemakerTarget && (
+          <div className="pointer-events-auto bg-slate-950/95 border border-emerald-400/50 rounded-2xl p-3 text-white shadow-2xl space-y-2">
+            <div className="flex items-center justify-between text-xs font-black">
+              <span>🕊️ Peacemaker Tug-of-War: Pull @{peacemakerTarget.a} & @{peacemakerTarget.b} Apart!</span>
+              <span className="text-emerald-400">{peacemakerTarget.progress}%</span>
+            </div>
+            <div className="h-2.5 rounded-full bg-slate-800 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-emerald-500 to-teal-300 transition-all"
+                style={{ width: `${peacemakerTarget.progress}%` }}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                gameAudio.playClickSound();
+                const next = Math.min(100, peacemakerTarget.progress + 34);
+                if (next >= 100) {
+                  adjustBalance(150);
+                  boostNeed("social", 20);
+                  gameAudio.playCoinSound();
+                  broadcastRoomEvent({
+                    type: "separate",
+                    fighterA: peacemakerTarget.a,
+                    fighterB: peacemakerTarget.b,
+                  });
+                  setPeacemakerTarget(null);
+                  flashToast("🕊️ Peace Restored! You earned +AED 150 Peacemaker Bonus!");
+                } else {
+                  setPeacemakerTarget({ ...peacemakerTarget, progress: next });
+                }
+              }}
+              className="w-full py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs active:scale-95 transition"
+            >
+              🕊️ TAP TO PULL BRAWLERS APART (+AED 150)
+            </button>
+          </div>
+        )}
+
+        {rest.map(renderCard)}
       </div>
 
       {boxingModalOpp && (
@@ -558,6 +578,7 @@ export function SocialFeed({
           }}
           opponent={boxingModalOpp.opp}
           initialPurse={boxingModalOpp.purse}
+          live={boxingModalOpp.live ?? null}
         />
       )}
     </>

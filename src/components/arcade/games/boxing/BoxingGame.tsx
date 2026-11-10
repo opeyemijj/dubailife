@@ -23,6 +23,8 @@ import { applyShake, shake, slowMo, useGameFrame } from "../../stage";
 import { Arena } from "./Arena";
 import { Boxer } from "./Boxer";
 import { MoveStick } from "@/components/street/StreetWorld";
+import { newDuel, viewFor } from "./duel";
+import { useLiveBout, type LiveBoutConfig } from "./live";
 import { FIGHT_RULES, facing, levelFor, newFight, scoreFight, step, type Dodge, type FightEvent, type FightInput, type FightState, type Punch } from "./fight";
 
 interface Opponent { name: string; username?: string; look?: AvatarLookProps; local: boolean }
@@ -50,6 +52,8 @@ export default function BoxingGame({ params, onClose, onShare }: ArcadeGameProps
   const { citizen } = useCitizen();
   const progress = useGameProgress("boxing");
   const challenge = params?.opponent as { username?: string; name?: string; look?: AvatarLookProps } | undefined;
+  // A live bout with that player (both accepted): the same fight on both phones, in real time.
+  const live = (params?.live as LiveBoutConfig | undefined) ?? null;
   const [standIn, setStandIn] = useState<number | null>(null);
   const [rung, setRung] = useState<number | null>(null);
   const [gloveId, setGloveId] = useState<string>(() => readGlove() ?? "red");
@@ -57,15 +61,15 @@ export default function BoxingGame({ params, onClose, onShare }: ArcadeGameProps
 
   // The challenged player's skills, for their stand-in's level.
   useEffect(() => {
-    if (!challenge?.username) return;
-    let live = true;
+    if (!challenge?.username || live) return;
+    let mounted = true;
     void supabase().from("profiles").select("citizen").eq("username", challenge.username).maybeSingle().then(({ data }) => {
       const skills = (data?.citizen as { life?: { skills?: Record<string, { xp: number; lastUsed: string }> } } | null)?.life?.skills ?? {};
       const lv = (id: string) => skillLevel(skillXp(skills[id])).level;
-      if (live) setStandIn(levelFromSkills(lv("fitness"), lv("gaming")));
+      if (mounted) setStandIn(levelFromSkills(lv("fitness"), lv("gaming")));
     });
-    return () => { live = false; };
-  }, [challenge?.username]);
+    return () => { mounted = false; };
+  }, [challenge?.username, live]);
 
   const unlocked = Math.min(FIGHT_RULES.levels.length, progress.level + 1);
   const careerLevel = rung ?? unlocked;
@@ -81,7 +85,7 @@ export default function BoxingGame({ params, onClose, onShare }: ArcadeGameProps
   return (
     <GameShell
       game="boxing"
-      title={challenge ? `You vs ${opponent.name}` : "Celebrity Boxing"}
+      title={live ? `LIVE: You vs ${opponent.name}` : challenge ? `You vs ${opponent.name}` : "Celebrity Boxing"}
       venue="Coca-Cola Arena"
       howTo={[
         { icon: "👀", text: "Watch for the tell: a glowing glove and a dipped shoulder mean a punch is coming. A crouch means an uppercut." },
@@ -121,7 +125,7 @@ export default function BoxingGame({ params, onClose, onShare }: ArcadeGameProps
         </div>
       }
     >
-      {(api) => <Bout key={`${level}:${opponent.name}`} api={api} level={level} me={citizen?.look} myName={citizen?.username ? `@${citizen.username}` : "You"} opponent={opponent} glove={glove} career={!challenge} body={boxingBonus(bodyOf(citizen))} />}
+      {(api) => <Bout key={`${level}:${opponent.name}:${live?.boutId ?? ""}`} api={api} level={level} me={citizen?.look} myName={citizen?.username ? `@${citizen.username}` : "You"} opponent={opponent} glove={glove} career={!challenge} body={boxingBonus(bodyOf(citizen))} live={live} />}
     </GameShell>
   );
 }
@@ -131,12 +135,17 @@ export default function BoxingGame({ params, onClose, onShare }: ArcadeGameProps
 interface Hud {
   me: number; myStamina: number; staminaMax: number; op: number; opMax: number; star: number; round: number; clock: number;
   phase: FightState["phase"]; getUp: FightState["getUp"]; combo: number; open: boolean;
+  /** A live bout's link: waiting for the other player, fighting, or they left. */
+  live?: "waiting" | "fighting" | "left" | null;
 }
 
-function Bout({ api, level, me, myName, opponent, glove, career, body }: { api: ShellApi; level: number; me?: AvatarLookProps; myName: string; opponent: Opponent; glove: string; career: boolean; body: { stamina: number; power: number } }) {
+function Bout({ api, level, me, myName, opponent, glove, career, body, live }: { api: ShellApi; level: number; me?: AvatarLookProps; myName: string; opponent: Opponent; glove: string; career: boolean; body: { stamina: number; power: number }; live?: LiveBoutConfig | null }) {
   const lv = levelFor(level);
-  const [initial] = useState(() => newFight(lv, body));
+  // A live bout starts from both fighters in their corners, seen from my side; against the computer, a fresh fight.
+  const [initial] = useState(() => (live ? viewFor(newDuel([body, body]), live.host ? 0 : 1) : newFight(lv, body)));
   const opMax = initial.op.hp;
+  const link = useLiveBout(live ?? null, api.phase === "play", body);
+  const drive = live ? (dt: number, input: FightInput) => link.current?.drive(dt, input, fightRef.current) : undefined;
   const fightRef = useRef<FightState>(initial);
   const inputRef = useRef<Queued>({ blocking: false, taps: 0 });
   // The analog stick: footwork round the ring (MoveStick writes x, y in -1..1; up = in towards them).
@@ -152,7 +161,7 @@ function Bout({ api, level, me, myName, opponent, glove, career, body }: { api: 
   // Read the fight for the HUD a few times a second, and turn its events into callouts.
   useEffect(() => {
     const id = setInterval(() => {
-      setHud(snapshot(fightRef.current, opMax));
+      setHud({ ...snapshot(fightRef.current, opMax), live: link.current?.status ?? null });
       for (const e of eventsRef.current.splice(0)) {
         const text = calloutFor(e, fightRef.current);
         if (text) callouts.push(text.text, text.tone);
@@ -165,9 +174,10 @@ function Bout({ api, level, me, myName, opponent, glove, career, body }: { api: 
           const { score, stars } = scoreFight(s);
           const r = s.result!;
           const how = r.method === "Decision" ? "on points" : `by ${r.method} in round ${r.round}`;
+          const left = link.current?.status === "left";
           apiRef.current.finish({
             score, stars, level: career && r.win ? level : 0,
-            headline: r.win ? (r.method === "Decision" ? "You win on points!" : `${r.method}! You win in round ${r.round}`) : `${opponent.name} wins ${how}`,
+            headline: left ? `${opponent.name} left the ring. You win!` : r.win ? (r.method === "Decision" ? "You win on points!" : `${r.method}! You win in round ${r.round}`) : `${opponent.name} wins ${how}`,
             stats: [
               { label: "Landed", value: `${s.stats.landed}/${s.stats.thrown}` },
               { label: "Counters", value: String(s.stats.counters) },
@@ -249,8 +259,17 @@ function Bout({ api, level, me, myName, opponent, glove, career, body }: { api: 
           <Boxer side="me" look={me} fightRef={fightRef} glove={glove} />
           <Boxer side="op" look={opponent.look} fightRef={fightRef} glove={opponent.local ? "#111827" : "#7c3aed"} />
         </group>
-        <Director fightRef={fightRef} inputRef={inputRef} eventsRef={eventsRef} hypeRef={hypeRef} level={lv} playing={playing} stickRef={stickRef} />
+        <Director fightRef={fightRef} inputRef={inputRef} eventsRef={eventsRef} hypeRef={hypeRef} level={lv} playing={playing} stickRef={stickRef} drive={drive} />
       </GameStage>
+
+      {/* Live: in the ring, waiting for the other player to step in */}
+      {playing && s.live === "waiting" && (
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 bg-black/55 text-center px-6 pointer-events-none">
+          <p className="text-[11px] font-black uppercase tracking-widest text-rose-400 animate-pulse">● Live</p>
+          <p className="text-2xl font-black">Waiting for {opponent.name}…</p>
+          <p className="text-sm text-white/70">The bell goes as soon as they step into the ring on their phone.</p>
+        </div>
+      )}
 
       {/* Gestures over the ring */}
       <div className="absolute inset-0 z-10 touch-none" onPointerDown={onDown} onPointerUp={onUp} onPointerCancel={onUp} />
@@ -367,8 +386,10 @@ function calloutFor(e: FightEvent, s: FightState): { text: string; tone: "good" 
 
 // ---------------------------------------------------------------- inside the canvas: the fight clock, effects and camera
 
-function Director({ fightRef, inputRef, eventsRef, hypeRef, level, playing, stickRef }: {
+function Director({ fightRef, inputRef, eventsRef, hypeRef, level, playing, stickRef, drive }: {
   stickRef: RefObject<{ x: number; y: number }>;
+  /** A live bout: the link runs it (and writes the view into fightRef) instead of the fight against the computer. */
+  drive?: (dt: number, input: FightInput) => void;
   fightRef: RefObject<FightState>;
   inputRef: RefObject<Queued>;
   eventsRef: RefObject<FightEvent[]>;
@@ -389,7 +410,8 @@ function Director({ fightRef, inputRef, eventsRef, hypeRef, level, playing, stic
       const move = kx || ky ? { x: kx, y: ky } : { x: stickRef.current?.x ?? 0, y: stickRef.current?.y ?? 0 };
       const step_in: FightInput = { punch: inp.punchQ, dodge: inp.dodgeQ, star: inp.starQ, blocking: inp.blocking, taps: inp.taps, move };
       inp.punchQ = undefined; inp.dodgeQ = undefined; inp.starQ = undefined; inp.taps = 0;
-      step(s, dt, step_in, level);
+      if (drive) drive(dt, step_in);
+      else step(s, dt, step_in, level);
       for (const e of s.events) {
         eventsRef.current.push(e);
         switch (e.kind) {

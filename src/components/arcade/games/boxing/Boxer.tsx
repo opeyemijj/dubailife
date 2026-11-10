@@ -125,6 +125,11 @@ export function Boxer({ look, side, fightRef, glove = "#dc2626" }: {
       } else if (s.opBlocking && s.punch && !s.punch.landed) {
         R = POSE.block; L = POSE.block;
       }
+      // A live opponent dodges too: the same slips and ducks as yours.
+      if (s.opDodge && s.opDodge.at < FIGHT_RULES.dodge.active + FIGHT_RULES.dodge.recover * 0.5) {
+        if (s.opDodge.move === "duck") { target.rx = 0.62; target.y = -0.04; }
+        else { const left = s.opDodge.move === "slipL"; target.rz = left ? -0.34 : 0.34; target.x = left ? 0.2 : -0.2; }
+      }
       if (s.t < s.openUntil) { target.rx = -0.12; target.rz = 0.08 * Math.sin(t * 9); }
       if (s.opRecoil > 0) target.rx = -0.32 * (s.opRecoil / 0.25);
     }

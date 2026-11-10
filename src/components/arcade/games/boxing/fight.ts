@@ -49,6 +49,8 @@ export interface FightState {
   dodge: { move: Dodge; at: number } | null;
   /** Holding block. */
   blocking: boolean;
+  /** A live bout: the other player's dodge (the single-player opponent never dodges). */
+  opDodge?: { move: Dodge; at: number } | null;
   /** The opponent's attack: which, its phase and how far through it, the hand it comes from (screen side). */
   opAttack: { move: OppMove; phase: "tell" | "strike"; at: number; tell: number; hit: number; feint: boolean; punish?: boolean; aim?: Spot } | null;
   /** Seconds until the opponent's next attack starts. */

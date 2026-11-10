@@ -501,5 +501,63 @@
       "combo": 1.3
     },
     "hitRadius": 0.38
+  },
+  "duel": {
+    "_note": "Live player-against-player bouts (fight's duel.ts): the challenger's phone runs the fight and streams it; the other phone sends its inputs. Each punch has a wind-up (`windUp`, seconds, the glowing glove) before it moves, so a human can read it and dodge across the network. `beatenBy`: the dodges that make each punch miss; `blockKeeps`: the share of damage a held guard lets through.",
+    "windUp": {
+      "jab": 0.2,
+      "straight": 0.26,
+      "hookL": 0.34,
+      "hookR": 0.34,
+      "upper": 0.42,
+      "onetwo": 0.22,
+      "body": 0.3
+    },
+    "beatenBy": {
+      "jab": [
+        "slipL",
+        "slipR",
+        "duck"
+      ],
+      "straight": [
+        "slipL",
+        "slipR",
+        "duck"
+      ],
+      "onetwo": [
+        "slipL",
+        "slipR",
+        "duck"
+      ],
+      "hookL": [
+        "slipR",
+        "duck"
+      ],
+      "hookR": [
+        "slipL",
+        "duck"
+      ],
+      "upper": [
+        "slipL",
+        "slipR"
+      ],
+      "body": [
+        "slipL",
+        "slipR"
+      ]
+    },
+    "blockKeeps": {
+      "jab": 0.15,
+      "straight": 0.15,
+      "onetwo": 0.2,
+      "hookL": 0.3,
+      "hookR": 0.3,
+      "upper": 0.4,
+      "body": 0.6
+    },
+    "duckTakesUpper": 1.6,
+    "bodyDrain": 14,
+    "snapshotHz": 12,
+    "forfeitSeconds": 8
   }
 }

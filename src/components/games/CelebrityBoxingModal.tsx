@@ -27,19 +27,21 @@ interface CelebrityBoxingModalProps {
   initialPurse?: number;
   /** Told the fight's result line, to announce it where the challenge came from. */
   onBroadcastResult?: (summary: string) => void;
+  /** Both players accepted: a live bout, the same fight on both phones (host = the challenger). */
+  live?: { boutId: string; host: boolean } | null;
 }
 
-export function CelebrityBoxingModal({ open, onOpenChange, opponent, onBroadcastResult }: CelebrityBoxingModalProps) {
+export function CelebrityBoxingModal({ open, onOpenChange, opponent, onBroadcastResult, live }: CelebrityBoxingModalProps) {
   const latest = useRef({ onOpenChange, onBroadcastResult });
   useEffect(() => { latest.current = { onOpenChange, onBroadcastResult }; });
   useEffect(() => {
     if (!open) return;
     openArcade({
       game: "boxing",
-      params: { opponent: { username: opponent.username, name: `@${opponent.username}`, look: opponent.look } },
+      params: { opponent: { username: opponent.username, name: `@${opponent.username}`, look: opponent.look }, live: live ?? undefined },
       onShare: (text) => latest.current.onBroadcastResult?.(text),
       onClose: () => latest.current.onOpenChange(false),
     });
-  }, [open, opponent.username, opponent.name, opponent.look]);
+  }, [open, opponent.username, opponent.name, opponent.look, live?.boutId]); // eslint-disable-line react-hooks/exhaustive-deps
   return null;
 }
