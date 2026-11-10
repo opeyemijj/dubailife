@@ -110,3 +110,5 @@ function Board({ state, me, onMove, canMove }: BoardProps<C4State>) {
 }
 
 export const connect4: GameModule<C4State> = { init, turnOf, ai, result, Board };
+/** The rules, for other boards (the party games in 3D): drop a disc in a column, and where it would land. */
+export const c4Rules = { drop, dropRow, ROWS, COLS };

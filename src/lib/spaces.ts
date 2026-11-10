@@ -976,6 +976,9 @@ export function hostNewSpace(opts: {
   id?: string;
   partyRoute?: string;
   partyHost?: string;
+  /** Pre-authorized speaker for 1-on-1 private voice calls */
+  invitedSpeakerId?: string;
+  stageSeats?: Record<string, SpaceSeatSnapshot>;
   /** When it ends, if not after the usual hour (a party's Space lasts the whole party). */
   endsAt?: number;
 }): SpaceRoom {
@@ -1036,6 +1039,8 @@ export function hostNewSpace(opts: {
     activity: { ...activity, hypePoints: 10, hypeGoal: 100 },
     stageSeats: {
       [me.id]: { role: "host", muted: false, handRaised: false },
+      ...(opts.invitedSpeakerId ? { [opts.invitedSpeakerId]: { role: "speaker" as const, muted: false, handRaised: false } } : {}),
+      ...(opts.stageSeats ?? {}),
     },
     participants: [
       {
@@ -1093,11 +1098,14 @@ export function hostNewSpace(opts: {
 }
 
 /** Join an existing Space as a Listener (or automatically reclaim Host, Co-Host, or Speaker role if you were on stage) */
-export function joinSpace(spaceId: string): { ok: boolean; reason?: string } {
+export function joinSpace(spaceId: string, initialRoomSnapshot?: SpaceRoom): { ok: boolean; reason?: string } {
   connectLobby();
   let room = state.rooms.find((r) => r.id === spaceId);
   const savedSession = loadSavedSpaceSession(spaceId);
-  if (!room && savedSession) {
+  if (!room && initialRoomSnapshot) {
+    room = initialRoomSnapshot;
+    state = { ...state, rooms: [room, ...state.rooms.filter((r) => r.id !== spaceId)] };
+  } else if (!room && savedSession) {
     room = savedSession.roomSnapshot;
     state = { ...state, rooms: [room, ...state.rooms] };
   }

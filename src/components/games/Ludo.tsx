@@ -172,3 +172,5 @@ function Board({ state, me, seats, onMove, canMove }: BoardProps<LudoState>) {
 }
 
 export const ludo: GameModule<LudoState> = { init: (n) => init(n), turnOf, ai, result, Board };
+/** The rules and board geometry, for other boards (the party games in 3D). */
+export const ludoRules = { roll, move, movable, cellOf, COLORS, LIGHT, SAFE, TRACK, HOME_COLUMN, YARD, HOME };

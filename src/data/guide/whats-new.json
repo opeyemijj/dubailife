@@ -1,6 +1,124 @@
 {
   "items": [
     {
+      "id": "2026-11-10-party-games",
+      "date": "2026-11-10",
+      "icon": "🎲",
+      "title": "Play a game at a house party",
+      "text": "Start Connect Four, garden chess, Ludo or pool at any house party. The board goes up outside: on a glass deck over the pool, on the lawn, or on a terrace beside a flat. Any guest can join, and everyone else watches, cheers and predicts the winner.",
+      "how": "At a party: 🎉 Party → 🎲 Let's play. Tap the board itself to play. 👀 Watch takes you to it.",
+      "cta": "Go home",
+      "href": "/home"
+    },
+    {
+      "id": "2026-11-10-two-finger",
+      "date": "2026-11-10",
+      "icon": "✌️",
+      "title": "Slide round your house with two fingers",
+      "text": "On a phone, one finger turns the view and two fingers slide it, so you can see the pool, the garden or a party game round the side of the house.",
+      "how": "In your home, put two fingers on the screen and slide. Or tap a stop on the bar at the bottom (Pool, Garden, Game)."
+    },
+    {
+      "id": "2026-11-10-old-dubai",
+      "date": "2026-11-10",
+      "icon": "🕌",
+      "title": "Bur Dubai and Deira are on the map",
+      "text": "Old Dubai is open, behind Dubai Frame: Al Fahidi, Meena Bazaar, BurJuman and Dubai Courts in Bur Dubai, and across the creek by abra, the Gold Souk, the Spice Souk and City Centre Deira.",
+      "how": "Scroll the map past Dubai Frame. Take the abra across the creek.",
+      "cta": "See the Gold Souk",
+      "href": "/place/gold-souk"
+    },
+    {
+      "id": "2026-11-10-gold-souk",
+      "date": "2026-11-10",
+      "icon": "🪙",
+      "title": "Haggle at the Gold Souk",
+      "text": "Gold is sold by weight at the day's rate. Check the hallmark, use the magnet on fakes and talk the merchant down, or run a stall yourself and sell to tourists.",
+      "how": "Map → Deira → Dubai Gold Souk → Damas, Joyalukkas or Malabar.",
+      "cta": "Go to the Gold Souk",
+      "href": "/place/gold-souk"
+    },
+    {
+      "id": "2026-11-10-court",
+      "date": "2026-11-10",
+      "icon": "⚖️",
+      "title": "Take a case to Dubai Courts",
+      "text": "Cross-examine witnesses, present your evidence and win the judgment over deposits, fines, scams and wages. You can also work the marriage registry.",
+      "how": "Map → Bur Dubai → Dubai Courts.",
+      "cta": "Go to court",
+      "href": "/place/dubai-courts"
+    },
+    {
+      "id": "2026-11-10-hospital",
+      "date": "2026-11-10",
+      "icon": "🤰",
+      "title": "Pregnancy scans and giving birth",
+      "text": "Expecting? Book your scans at Latifa Women and Children Hospital or Dubai Hospital, then go into labour in the delivery suite. Coach the breathing and push at the peaks for a healthy start.",
+      "how": "Map → Bur Dubai → Latifa Hospital, or Deira → Dubai Hospital.",
+      "cta": "Go to Latifa Hospital",
+      "href": "/place/latifa-hospital"
+    },
+    {
+      "id": "2026-11-10-gym",
+      "date": "2026-11-10",
+      "icon": "🏋️",
+      "title": "Train at the gym",
+      "text": "Run on the treadmill, row and hit the heavy bag. Training builds your strength and stamina, and they count in the boxing ring.",
+      "how": "Fitness First (BurJuman or Dubai Marina Mall), or UFC Gym on JBR's The Walk.",
+      "cta": "Go to BurJuman",
+      "href": "/place/burjuman"
+    },
+    {
+      "id": "2026-11-10-boxing",
+      "date": "2026-11-10",
+      "icon": "🥊",
+      "title": "Celebrity boxing",
+      "text": "Challenge someone to a celebrity boxing match: jab, hook, block and counter in a 3D ring. The fitter you are from the gym, the harder you hit.",
+      "how": "At a party: 🎉 Party → 🥊 Boxing. Or train at UFC Gym JBR.",
+      "cta": "Go to JBR",
+      "href": "/place/jbr"
+    },
+    {
+      "id": "2026-11-10-halls",
+      "date": "2026-11-10",
+      "icon": "💒",
+      "title": "Book an event hall for your wedding",
+      "text": "Hotels have ballrooms for weddings, birthdays and more. Book the hall, hire a player decorator or dress it yourself, and your guests walk in live from the invite for the zaffa, the first dance, the cake and the bouquet.",
+      "how": "Map → Bur Dubai → Grand Hyatt Dubai → Baniyas Ballroom, or any hotel with an event hall.",
+      "cta": "See the Grand Hyatt",
+      "href": "/place/grand-hyatt-dubai"
+    },
+    {
+      "id": "2026-11-10-bridal",
+      "date": "2026-11-10",
+      "icon": "👰",
+      "title": "Find your wedding outfit",
+      "text": "Try gowns, lehengas and sherwanis on the podium, say yes to the one, then pin the alterations. You can also work as a bridal consultant.",
+      "how": "Map → Bur Dubai → Meena Bazaar → Manyavar & Mohey.",
+      "cta": "Go to Meena Bazaar",
+      "href": "/place/meena-bazaar"
+    },
+    {
+      "id": "2026-11-10-nails",
+      "date": "2026-11-10",
+      "icon": "💅",
+      "title": "Paint your nails",
+      "text": "Shape every nail, paint inside the lines, add French tips, glitter or gems and cure them under the UV lamp. The set goes on your look, or you can work as a nail technician for tips.",
+      "how": "NStyle at The Dubai Mall or City Centre Deira, or The Nail Spa at Dubai Marina Mall.",
+      "cta": "Go to The Dubai Mall",
+      "href": "/place/dubai-mall"
+    },
+    {
+      "id": "2026-11-10-ceilings",
+      "date": "2026-11-10",
+      "icon": "🏠",
+      "title": "Decorate your ceiling",
+      "text": "The roof now shows in the Inside and Eye views. Pick a finish (tray, coffered, beams, arabesque or a starry sky) and a paint colour.",
+      "how": "Home → Menu → Decorate, then pick a ceiling beside the floors and walls.",
+      "cta": "Go home",
+      "href": "/home"
+    },
+    {
       "id": "2026-10-28-marathon",
       "date": "2026-10-28",
       "icon": "🏅",

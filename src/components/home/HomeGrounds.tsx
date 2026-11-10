@@ -20,8 +20,10 @@ export const GROUNDS = {
 
 const noRay = () => null;
 
-export function HomeGrounds({ items, car, onUse, onGroundClick, activity }: {
+export function HomeGrounds({ items, car, onUse, onGroundClick, activity, poolCovered }: {
   items: string[];
+  /** A party game laid over the pool: the umbrella is folded away so it doesn't hide the game. */
+  poolCovered?: boolean;
   /** Your own car (its model, colour and plate), parked in the driveway or the garage. */
   car?: { car: Car; plate: string } | null;
   /** Tapping the pool or the car: go and use it. */
@@ -68,7 +70,7 @@ export function HomeGrounds({ items, car, onUse, onGroundClick, activity }: {
         <mesh key={i} position={[x, 0.9, z]} raycast={noRay}><boxGeometry args={[w, 1.8, d]} /><meshStandardMaterial color="#efe6d4" roughness={0.9} /></mesh>
       ))}
       {has("garden") && <Garden />}
-      {pool && <group onClick={tap("pool")} onPointerOver={onUse ? () => (document.body.style.cursor = "pointer") : undefined} onPointerOut={() => (document.body.style.cursor = "")}><Pool /></group>}
+      {pool && <group onClick={tap("pool")} onPointerOver={onUse ? () => (document.body.style.cursor = "pointer") : undefined} onPointerOut={() => (document.body.style.cursor = "")}><Pool covered={poolCovered} /></group>}
       {/* No stand-in cars: only the car you own or have rented is ever parked here. */}
       {has("garage") && <Garage />}
       {has("carpark") && <CarPark onGroundClick={onGroundClick} />}
@@ -135,7 +137,7 @@ function Garden() {
   );
 }
 
-function Pool() {
+function Pool({ covered }: { covered?: boolean }) {
   const water = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
     const m = water.current?.material as THREE.MeshStandardMaterial | undefined;
@@ -169,8 +171,8 @@ function Pool() {
           <mesh position={[0, 0.55, -0.75]} rotation={[0.6, 0, 0]}><boxGeometry args={[0.7, 0.1, 0.6]} /><meshStandardMaterial color="#fafafa" /></mesh>
         </group>
       ))}
-      <mesh position={[3.1, 1.3, 0]}><cylinderGeometry args={[0.04, 0.04, 2.6, 8]} /><meshStandardMaterial color="#78716c" /></mesh>
-      <mesh position={[3.1, 2.55, 0]}><coneGeometry args={[1.5, 0.6, 12]} /><meshStandardMaterial color="#0e7490" /></mesh>
+      {!covered && <mesh position={[3.1, 1.3, 0]}><cylinderGeometry args={[0.04, 0.04, 2.6, 8]} /><meshStandardMaterial color="#78716c" /></mesh>}
+      {!covered && <mesh position={[3.1, 2.55, 0]}><coneGeometry args={[1.5, 0.6, 12]} /><meshStandardMaterial color="#0e7490" /></mesh>}
     </group>
   );
 }

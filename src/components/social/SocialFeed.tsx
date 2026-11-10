@@ -8,6 +8,8 @@ import { adjustBalance, boostNeed, useCitizen } from "@/lib/citizenStore";
 import { CelebrityBoxingModal, type BoxingOpponent } from "@/components/games/CelebrityBoxingModal";
 import type { AvatarLookProps } from "@/components/avatar/roster";
 import { gameAudio } from "@/utils/gameAudio";
+import { joinSpace } from "@/lib/spaces";
+import { openPhone } from "@/components/layout/PhoneOverlay";
 
 const LIFE_MS = 9000;
 const INVITE_MS = 16000;
@@ -115,6 +117,21 @@ function describe(e: Received): { icon: string; text: string } {
       return {
         icon: "🥊❌",
         text: `@${e.opponentUsername ?? who} declined the boxing challenge.`,
+      };
+    case "space_invite":
+      return {
+        icon: "🎙️",
+        text: `${who} invited you to a 1-on-1 Private Voice Space!`,
+      };
+    case "space_accept":
+      return {
+        icon: "🎙️✅",
+        text: `@${e.fromUsername ?? who} accepted your Private Space! Connected on mic.`,
+      };
+    case "space_decline":
+      return {
+        icon: "🎙️❌",
+        text: `@${e.fromUsername ?? who} declined the Private Space invite.`,
       };
     default:
       return { icon: "✨", text: `${who} shared an update` };
@@ -468,6 +485,52 @@ export function SocialFeed({
                     className="h-7 px-2 rounded-full bg-white/20 hover:bg-rose-600/80 text-white text-[11px] font-black active:scale-95 transition"
                   >
                     ✕ Deny
+                  </button>
+                </div>
+              )}
+
+              {/* #5 1-on-1 Private Live Audio Space Invite */}
+              {e.type === "space_invite" && (e.toId === (citizen?.id ?? "me") || e.toUsername === citizen?.username) && (
+                <div className="flex gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      gameAudio.playConfirmSound();
+                      joinSpace(e.spaceId, e.roomSnapshot as any);
+                      openPhone("spaces");
+                      broadcastRoomEvent({
+                        type: "space_accept",
+                        spaceId: e.spaceId,
+                        fromId: citizen?.id ?? "me",
+                        fromUsername: citizen?.username ?? "Guest",
+                        toId: e.fromId,
+                        toUsername: e.fromUsername,
+                      });
+                      flashToast(`🎙️ Joined Private Space with @${e.fromUsername}! Mic is live.`);
+                      dismiss(e.id);
+                    }}
+                    className="h-7 px-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[11px] font-black active:scale-95 transition flex items-center gap-1"
+                  >
+                    🎙️ Join Voice
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      gameAudio.playClickSound();
+                      broadcastRoomEvent({
+                        type: "space_decline",
+                        spaceId: e.spaceId,
+                        fromId: citizen?.id ?? "me",
+                        fromUsername: citizen?.username ?? "Guest",
+                        toId: e.fromId,
+                        toUsername: e.fromUsername,
+                      });
+                      flashToast(`❌ Declined Private Space invite.`);
+                      dismiss(e.id);
+                    }}
+                    className="h-7 px-2 rounded-full bg-white/20 hover:bg-rose-600/80 text-white text-[11px] font-black active:scale-95 transition"
+                  >
+                    ✕
                   </button>
                 </div>
               )}

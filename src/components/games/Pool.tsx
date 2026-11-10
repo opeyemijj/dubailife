@@ -532,3 +532,5 @@ function Board({ state, me, seats, onMove, canMove }: BoardProps<PoolState>) {
 }
 
 export const pool: GameModule<PoolState> = { init, turnOf, ai, result, Board, delay: poolDelay };
+/** The rules, physics and table geometry, for other tables (the party game in 3D). */
+export const poolRules = { simulate, shoot, cleared, groupOf, colorOf, W, H, R, RAIL, POCKET, POCKETS };

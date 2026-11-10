@@ -796,6 +796,94 @@
       "done": "seen",
       "go": "Open the guide",
       "href": "/guide"
+    },
+    {
+      "id": "party-game",
+      "cat": "Games",
+      "icon": "🎲",
+      "title": "Play a game at a house party",
+      "where": "Any house party: 🎉 Party → 🎲 Let's play",
+      "why": "Connect Four, garden chess, Ludo or pool outside the house, with the whole party watching.",
+      "done": "seen",
+      "go": "Go home",
+      "href": "/home"
+    },
+    {
+      "id": "gold-souk",
+      "cat": "Going out",
+      "icon": "🪙",
+      "title": "Haggle for gold in Deira",
+      "where": "Dubai Gold Souk, Deira",
+      "why": "Spot the fakes, check the hallmark and talk the price down.",
+      "done": "seen",
+      "go": "Go to the Gold Souk",
+      "href": "/place/gold-souk"
+    },
+    {
+      "id": "court",
+      "cat": "Safety",
+      "icon": "⚖️",
+      "title": "Win a case at Dubai Courts",
+      "where": "Dubai Courts, Bur Dubai",
+      "why": "Cross-examine, present your evidence and get the judgment.",
+      "done": "seen",
+      "go": "Go to court",
+      "href": "/place/dubai-courts"
+    },
+    {
+      "id": "gym",
+      "cat": "Going out",
+      "icon": "🏋️",
+      "title": "Work out at the gym",
+      "where": "Fitness First BurJuman or Dubai Marina Mall, or UFC Gym JBR",
+      "why": "Builds strength and stamina, which count in the boxing ring.",
+      "done": "seen",
+      "go": "Go to the gym",
+      "href": "/place/burjuman"
+    },
+    {
+      "id": "boxing",
+      "cat": "Games",
+      "icon": "🥊",
+      "title": "Win a celebrity boxing match",
+      "where": "A party (🎉 Party → 🥊 Boxing) or UFC Gym JBR",
+      "why": "A 3D fight: jab, hook, block and counter.",
+      "done": "seen",
+      "go": "Go to JBR",
+      "href": "/place/jbr"
+    },
+    {
+      "id": "nails",
+      "cat": "Going out",
+      "icon": "💅",
+      "title": "Get your nails done",
+      "where": "NStyle at The Dubai Mall or City Centre Deira",
+      "why": "Design your own set and wear it on your look.",
+      "done": "seen",
+      "go": "Go to The Dubai Mall",
+      "href": "/place/dubai-mall"
+    },
+    {
+      "id": "wedding-hall",
+      "cat": "Friends",
+      "icon": "💒",
+      "title": "Book an event hall",
+      "where": "Grand Hyatt Dubai, Bur Dubai, or any hotel with an event hall",
+      "why": "Hold your wedding or party in a ballroom your guests walk into live.",
+      "done": "seen",
+      "go": "See the Grand Hyatt",
+      "href": "/place/grand-hyatt-dubai"
+    },
+    {
+      "id": "bridal",
+      "cat": "Friends",
+      "icon": "👰",
+      "title": "Find your wedding outfit",
+      "where": "Manyavar & Mohey, Meena Bazaar, Bur Dubai",
+      "why": "Try gowns, lehengas and sherwanis and say yes to the one.",
+      "done": "seen",
+      "go": "Go to Meena Bazaar",
+      "href": "/place/meena-bazaar"
     }
   ]
 }

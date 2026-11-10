@@ -15,6 +15,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
 import { refreshCitizen, useCitizen } from "@/lib/citizenStore";
 import type { AvatarLookProps } from "@/components/avatar/roster";
+import type { PartyGameSnap } from "@/lib/partyGames";
 import type { AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 import { sendPushNotification } from "@/lib/push/client";
 import { AWAY_EVENT, isIdle } from "@/lib/idle";
@@ -76,10 +77,19 @@ export type RoomEvent =
   | { type: "boxing_accept"; challengerId: string; challengerUsername?: string; opponentId: string; opponentUsername?: string; purse?: number; opponentLook?: AvatarLookProps }
   | { type: "boxing_decline"; challengerId: string; challengerUsername?: string; opponentId: string; opponentUsername?: string }
   | { type: "spray_money"; targetId?: string; targetUsername?: string; amount: number }
+  // 1-on-1 Private Live Audio Space Events
+  | { type: "space_invite"; spaceId: string; spaceTitle: string; fromId: string; fromUsername: string; fromName?: string; toId: string; toUsername: string; roomSnapshot?: unknown }
+  | { type: "space_accept"; spaceId: string; fromId: string; fromUsername: string; toId: string; toUsername?: string }
+  | { type: "space_decline"; spaceId: string; fromId: string; fromUsername: string; toId: string; toUsername?: string }
   // An event in a hotel hall, live (src/components/arcade/games/events): the host's moments, the bouquet's
   // flight (the same throw on every screen), and a guest catching it (the first catch the host gets wins).
   | { type: "hall_moment"; hall: string; moment: "start" | "zaffa" | "dance" | "cake" | "bouquet" | "end"; bouquet?: { dir: number; power: number; at: number }; caught?: string }
-  | { type: "bouquet_catch"; hall: string };
+  | { type: "bouquet_catch"; hall: string }
+  // A party game outside the house (src/lib/partyGames.ts): the board's full snapshot (null = cleared), a cheer
+  // for a player, and a guest's prediction of who'll win.
+  | { type: "party_game"; snap: PartyGameSnap | null; clearedId?: string }
+  | { type: "party_cheer"; gameId: string; seat: number; emoji: string }
+  | { type: "party_predict"; gameId: string; seat: number };
 
 export type Received = RoomEvent & { id: string; from: Peer; to?: string; at: number };
 

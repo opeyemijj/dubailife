@@ -22,6 +22,7 @@ import { drivables, useGarage } from "@/lib/cars";
 import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyPeople } from "@/components/invite/PartyPeople";
 import { PartyActions } from "@/components/invite/PartyActions";
+import { usePartyBoard } from "@/components/party/usePartyBoard";
 import {
   drinkInHand,
   PartyHostesses,
@@ -30,7 +31,7 @@ import {
 } from "@/components/invite/PartyHostess";
 import { faceNearest, partyDoor, partyMood } from "@/lib/invites";
 import { spotsFor } from "@/components/property/PropertyRoute";
-import { useRoom } from "@/lib/room";
+import { useRoom, type Received } from "@/lib/room";
 import { AppSetup, needsAppSetup } from "@/components/pwa/AppSetup";
 import { inviteFriends } from "@/lib/invite";
 import { useMyDecor } from "@/lib/decorator";
@@ -745,6 +746,7 @@ export default function HomePage() {
       rest,
     });
   };
+  const partyGameReceive = useRef<((e: Received) => boolean) | null>(null);
   const partyRoom = useRoom(
     party && partyFlat
       ? `flat:${partyFlat.id}`
@@ -762,6 +764,8 @@ export default function HomePage() {
       dirty: isDirty(citizen?.needs?.hygiene),
     },
     (e) => {
+      // The party game outside (its own store).
+      if (partyGameReceive.current?.(e)) return;
       // My partner (or a guest decorating) changed the home: everyone sees the one version.
       if (e.type === "home") {
         void sharedHome.reload();
@@ -784,6 +788,26 @@ export default function HomePage() {
       );
     },
   );
+  // A two-player game outside the house, on demand: any guest starts one and everyone at the party watches.
+  const partyBoard = usePartyBoard({
+    active: !!party,
+    meId: citizen?.id,
+    meName: citizen?.username,
+    isHost: !!party?.isHost,
+    present: partyRoom.peers.map((p) => p.userId),
+    tier: housingTier,
+    exterior: homeStyle.exterior ?? [],
+    lightsOut: !!party && lightsOut,
+    level,
+    onWatch: () => {
+      setView("above");
+      setUpView(false);
+    },
+  });
+  useEffect(() => {
+    partyGameReceive.current = partyBoard.pg.receive;
+    partyBoard.pg.bindEmit(partyRoom.emit);
+  });
   // At a party in a home off the map, guests see the host's furniture: moving things round updates their copy.
   const furnitureKey = JSON.stringify(furniture.filter((f) => f.placement));
   useEffect(() => {
@@ -1181,15 +1205,22 @@ export default function HomePage() {
         stick={view !== "above" ? stick : undefined}
         stickRun={stickRun}
         extras={
-          <PartyHostesses
-            runs={runs}
-            onArrive={(r) => {
-              if (r.who === citizen?.id) handDrink();
-            }}
-            onDone={(id) => setRuns((r) => r.filter((x) => x.id !== id))}
-          />
+          <>
+            <PartyHostesses
+              runs={runs}
+              onArrive={(r) => {
+                if (r.who === citizen?.id) handDrink();
+              }}
+              onDone={(id) => setRuns((r) => r.filter((x) => x.id !== id))}
+            />
+            {partyBoard.board}
+          </>
         }
+        extraZones={partyBoard.zones}
+        focus={partyBoard.focus}
+        poolCovered={partyBoard.poolCovered}
       />
+      {!cleanScreen && partyBoard.ui}
 
       {view !== "above" && !placing && !decorating && !cleanScreen && (
         <div className="absolute left-4 bottom-[max(6.5rem,calc(env(safe-area-inset-bottom)+6rem))] z-30">
@@ -1264,6 +1295,10 @@ export default function HomePage() {
           <PartyActions
             list
             party={party}
+            onPlayBoard={() => {
+              setPartyPanel(false);
+              partyBoard.openPicker();
+            }}
             lightsOut={lightsOut}
             onLights={setLightsSet}
             onDance={(sec) => {

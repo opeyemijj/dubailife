@@ -259,3 +259,16 @@ html[data-clean] .dl-hide-clean { display: none !important; }
   from { width: 100%; }
   to { width: 0%; }
 }
+
+/* A cheer at a party game floating up (src/components/party/PartyGamesUI.tsx). */
+@keyframes party-cheer {
+  0% { transform: translateY(0) scale(0.6); opacity: 0; }
+  15% { transform: translateY(-8px) scale(1.2); opacity: 1; }
+  100% { transform: translateY(-70px) scale(1); opacity: 0; }
+}
+
+/* The two-finger slide hint over the home (src/components/home/TwoFingerHint.tsx). */
+@keyframes two-finger {
+  0%, 100% { transform: translateX(-26px); }
+  50% { transform: translateX(26px); }
+}

@@ -9,6 +9,7 @@ import { InviteHere } from "@/components/invite/InviteHere";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { BELOW_SPACE_TOP, PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyActions } from "@/components/invite/PartyActions";
+import { usePartyBoard } from "@/components/party/usePartyBoard";
 import { drinkInHand, PartyHostesses, usePartyDrink, type HostessRun } from "@/components/invite/PartyHostess";
 import { faceNearest, PARTIES, partyMood } from "@/lib/invites";
 import { askForPush } from "@/lib/push/engage";
@@ -363,7 +364,10 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   const onMove = (x: number, z: number, yaw: number, walking: boolean, lift?: number, rest?: "sit" | "sleep") => {
     setWhere({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw: Math.round(yaw * 100) / 100, walking, lift: lift ? Math.round(lift * 100) / 100 : undefined, rest });
   };
+  const partyGameReceive = useRef<((e: Received) => boolean) | null>(null);
   const room = useRoom(`flat:${flat.id}`, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : where.rest ?? myMood, lift: where.lift, level, hold: drink ?? undefined, dirty: isDirty(citizen?.needs?.hygiene) }, (e: Received) => {
+    // The party game outside (its own store).
+    if (partyGameReceive.current?.(e)) return;
     if (e.type === "chat") bubble(e.from.userId, e.text);
     if (e.type === "wave") bubble(e.from.userId, "👋");
     if ((e as unknown as { type: string; thief?: string }).type === "car_stolen") {
@@ -430,6 +434,23 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   const [upView, setUpView] = useState(isMultiRoom);
   // Looking down on the home, or over the shoulder in the room.
   const [view, setView] = useState<"above" | "inside" | "eye">("above");
+  // A two-player game outside the house, on demand: any guest starts one and everyone at the party watches.
+  const partyBoard = usePartyBoard({
+    active: !!party,
+    meId: me,
+    meName: citizen?.username,
+    isHost: !!party?.isHost,
+    present: room.peers.map((p) => p.userId),
+    tier: housingTier,
+    exterior: homeLook.exterior ?? [],
+    lightsOut,
+    level,
+    onWatch: () => { setView("above"); setUpView(false); },
+  });
+  useEffect(() => {
+    partyGameReceive.current = partyBoard.pg.receive;
+    partyBoard.pg.bindEmit(room.emit);
+  });
   const stick = useRef<{ x: number; y: number; sprint?: boolean }>({ x: 0, y: 0 });
   const [stickRun, setStickRun] = useState(false);
   const [activeRoomId, setActiveRoomId] = useState<string>("living");
@@ -502,8 +523,12 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         dirty={isDirty(citizen?.needs?.hygiene)}
         stick={view !== "above" ? stick : undefined}
         stickRun={stickRun}
-        extras={<PartyHostesses runs={runs} onArrive={(r) => { if (r.who === me) handDrink(); }} onDone={(id) => setRuns((r) => r.filter((x) => x.id !== id))} />}
+        extras={<><PartyHostesses runs={runs} onArrive={(r) => { if (r.who === me) handDrink(); }} onDone={(id) => setRuns((r) => r.filter((x) => x.id !== id))} />{partyBoard.board}</>}
+        extraZones={partyBoard.zones}
+        focus={partyBoard.focus}
+        poolCovered={partyBoard.poolCovered}
       />
+      {partyBoard.ui}
       {party && <PartyBanner party={party} hostAway={!room.peers.some((p) => p.username === party.host)} className={BELOW_SPACE_TOP} />}
 
       <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2">
@@ -601,7 +626,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
       </SideBar>
       {panel === "party" && party && (
         <FloatMenu label="Party" onClose={() => setPanel(null)}>
-          <PartyActions list party={party} lightsOut={lightsOut} onLights={setLightsSet} onDance={(sec) => { if (where.rest) askSeat(false); dance(sec); }} pose={dancing ? "dance" : pose} onPose={(x) => { setDancing(false); setPose(x === "dance" ? null : x); if (x === "sit" || pose === "sit") askSeat(x === "sit"); }} announce={(text) => room.emit({ type: "chat", text })} broadcast={(action, on) => { room.emit({ type: "party", action, on }); if (action === "drinks") serve(me, citizen?.username ?? "you", [where.x, where.z]); }} />
+          <PartyActions list party={party} onPlayBoard={() => { setPanel(null); partyBoard.openPicker(); }} lightsOut={lightsOut} onLights={setLightsSet} onDance={(sec) => { if (where.rest) askSeat(false); dance(sec); }} pose={dancing ? "dance" : pose} onPose={(x) => { setDancing(false); setPose(x === "dance" ? null : x); if (x === "sit" || pose === "sit") askSeat(x === "sit"); }} announce={(text) => room.emit({ type: "chat", text })} broadcast={(action, on) => { room.emit({ type: "party", action, on }); if (action === "drinks") serve(me, citizen?.username ?? "you", [where.x, where.z]); }} />
         </FloatMenu>
       )}
       {panel === "menu" && (

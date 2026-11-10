@@ -12,6 +12,8 @@ import { blockUser, REPORT_REASONS, reportUser, type ReportReason } from "@/lib/
 import { adjustBalance, boostNeed, useCitizen } from "@/lib/citizenStore";
 import { CelebrityBoxingModal } from "@/components/games/CelebrityBoxingModal";
 import { gameAudio } from "@/utils/gameAudio";
+import { hostNewSpace } from "@/lib/spaces";
+import { openPhone } from "@/components/layout/PhoneOverlay";
 
 export type SocialContext = "club" | "dining" | "home" | "venue";
 
@@ -59,6 +61,8 @@ export function PeerPanel({
   const [boxingOpen, setBoxingOpen] = useState(false);
   const [boxingPending, setBoxingPending] = useState(false);
   const [boxingTimer, setBoxingTimer] = useState(15);
+  const [spacePending, setSpacePending] = useState(false);
+  const [spaceTimer, setSpaceTimer] = useState(20);
   const [sprayDenom, setSprayDenom] = useState(10000);
   const [sprayedTotal, setSprayedTotal] = useState(0);
   const [reason, setReason] = useState<ReportReason | null>(null);
@@ -119,7 +123,24 @@ export function PeerPanel({
     return () => clearInterval(interval);
   }, [boxingPending, peer.username]);
 
-  // Listen for boxing challenge response (acceptance or decline)
+  // Countdown timer for pending Private Space invite
+  useEffect(() => {
+    if (!spacePending) return;
+    const interval = setInterval(() => {
+      setSpaceTimer((t) => {
+        if (t <= 1) {
+          clearInterval(interval);
+          setSpacePending(false);
+          setNote(`⏱️ Private Space invite to @${peer.username} timed out.`);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [spacePending, peer.username]);
+
+  // Listen for boxing challenge or private space responses
   useEffect(() => {
     const onRoomAction = (ev: Event) => {
       const detail = (ev as CustomEvent<{
@@ -129,6 +150,10 @@ export function PeerPanel({
           challengerUsername?: string;
           opponentId?: string;
           opponentUsername?: string;
+          toId?: string;
+          toUsername?: string;
+          fromId?: string;
+          fromUsername?: string;
         };
       }>).detail;
       const t = detail?.event?.type;
@@ -137,17 +162,34 @@ export function PeerPanel({
         detail?.event?.challengerId === (citizen?.id ?? "me") ||
         detail?.event?.challengerUsername === citizen?.username;
 
-      if (!isMyChallenge) return;
+      if (isMyChallenge) {
+        if (t === "boxing_accept") {
+          gameAudio.playConfirmSound();
+          setBoxingPending(false);
+          setNote(`🔔 Bout accepted by @${peer.username}! Entering the 3D Boxing Ring!`);
+          setBoxingOpen(true);
+        } else if (t === "boxing_decline") {
+          gameAudio.playClickSound();
+          setBoxingPending(false);
+          setNote(`❌ @${peer.username} declined the boxing challenge. No fight.`);
+        }
+      }
 
-      if (t === "boxing_accept") {
-        gameAudio.playConfirmSound();
-        setBoxingPending(false);
-        setNote(`🔔 Bout accepted by @${peer.username}! Entering the 3D Boxing Ring!`);
-        setBoxingOpen(true);
-      } else if (t === "boxing_decline") {
-        gameAudio.playClickSound();
-        setBoxingPending(false);
-        setNote(`❌ @${peer.username} declined the boxing challenge. No fight.`);
+      const isMySpaceInvite =
+        detail?.event?.toId === (citizen?.id ?? "me") ||
+        detail?.event?.toUsername === citizen?.username;
+
+      if (isMySpaceInvite) {
+        if (t === "space_accept") {
+          gameAudio.playConfirmSound();
+          setSpacePending(false);
+          setNote(`🎙️ @${peer.username} joined your Private Space! Connected on voice.`);
+          openPhone("spaces");
+        } else if (t === "space_decline") {
+          gameAudio.playClickSound();
+          setSpacePending(false);
+          setNote(`❌ @${peer.username} declined the Private Space invite.`);
+        }
       }
     };
     window.addEventListener("cometodubai:room-action", onRoomAction);
@@ -215,6 +257,45 @@ export function PeerPanel({
           {mode === "menu" && (
             <>
               {action("💬", unread ? `Chat · ${unread} new` : "Chat", () => setMode("chat"), allMessages.length ? `“${allMessages[allMessages.length - 1].text}”` : `Say something to @${peer.username}`)}
+              {action(
+                "🎙️",
+                spacePending ? `⏳ Waiting for @${peer.username}... (${spaceTimer}s)` : "Private Space (1-on-1 Voice)",
+                () => {
+                  if (spacePending) {
+                    setSpacePending(false);
+                    setNote("✕ Private Space invite cancelled.");
+                    return;
+                  }
+                  if (peer.away) {
+                    setNote(AWAY_NOTE);
+                    return;
+                  }
+                  gameAudio.playClickSound();
+                  const privateSpaceId = `priv-${citizen?.id ?? "u"}-${peer.userId}-${Date.now().toString(36)}`;
+                  const createdRoom = hostNewSpace({
+                    id: privateSpaceId,
+                    title: `🔒 Private: @${citizen?.username ?? "you"} & @${peer.username}`,
+                    activityKind: "talent",
+                    invitedSpeakerId: peer.userId,
+                  });
+                  broadcastRoomEvent({
+                    type: "space_invite",
+                    spaceId: privateSpaceId,
+                    spaceTitle: `🔒 Private Space with @${citizen?.username ?? "Host"}`,
+                    fromId: citizen?.id ?? "me",
+                    fromUsername: citizen?.username ?? "Host",
+                    fromName: citizen?.name ?? "Host",
+                    toId: peer.userId,
+                    toUsername: peer.username,
+                    roomSnapshot: createdRoom,
+                  });
+                  setSpacePending(true);
+                  setSpaceTimer(20);
+                  setNote(`🎙️ Private Space invite sent to @${peer.username}! Connecting...`);
+                  openPhone("spaces");
+                },
+                spacePending ? "Tap to cancel invite" : "Open a private live audio conversation with mic"
+              )}
               {action("💸", "Send money", () => setMode("money"), "Straight from your wallet")}
               {context === "club" && treat && onTreat && action("🍸", `Buy them a ${treat.name.toLowerCase()}`, onTreat, `AED ${treat.price} · served at the bar`)}
               {context === "dining" && treat && onTreat && action(treat.icon, `Treat them to ${treat.name.toLowerCase()}`, onTreat, `AED ${treat.price}`)}

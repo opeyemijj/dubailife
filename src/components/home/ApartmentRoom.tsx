@@ -4,7 +4,7 @@ import { Ceiling, type CeilingHole } from "@/components/interior/Ceiling";
 import { Flies } from "@/components/avatar/Flies";
 import { PartyDecor } from "@/components/invite/PartyDecor";
 import { canvasQuality, isWebGLAvailable, resetWebGLCache, useDocumentVisible } from "@/lib/device";
-import React, { createContext, Suspense, useContext, useEffect, useMemo, useRef, useState, Component } from "react";
+import React, { createContext, Suspense, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, Component } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
@@ -12,6 +12,7 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import type { AvatarLookProps } from "../onboarding/AvatarCanvas";
 import { restPose, type RestPose } from "./restPose";
 import { GROUNDS, HomeGrounds } from "./HomeGrounds";
+import { TwoFingerHint, isCoarsePointer } from "./TwoFingerHint";
 import type { Car } from "@/lib/cars";
 import { LuxuryDecor } from "./LuxuryDecor";
 import { buildNav, findPath, walkable, type Rect, type Seg } from "./homeNav";
@@ -73,6 +74,13 @@ export interface ApartmentRoomProps {
   partyDecor?: string[];
   /** More to show in the room (a hostess bringing drinks). */
   extras?: React.ReactNode;
+  /** More stops on the zone bar (a party game outside), shown for any home: where the camera goes, and where
+   *  you walk (left out where you can't walk there, e.g. a flat's terrace). */
+  extraZones?: PlotZone[];
+  /** A party game laid over the pool (the umbrella folds away). */
+  poolCovered?: boolean;
+  /** Glide the camera here (x, z), once for each new n (from above). */
+  focus?: { n: number; at: [number, number] };
   /** Party lights out: the room goes dark and the decorations glow. */
   lightsOut?: boolean;
   /** What you're doing, when the page decides (dancing at a party). */
@@ -1453,6 +1461,7 @@ function CameraRig({
 
 function RoomScene({
   look,
+  poolCovered,
   myAnimation,
   startAt,
   onMove,
@@ -2345,6 +2354,7 @@ function RoomScene({
           items={style.exterior ?? []}
           car={ownCar}
           activity={objectInUse?.kind === "car" ? activity : undefined}
+          poolCovered={poolCovered}
           onUse={busy ? undefined : (what) => startGroundsUse(what)}
           onGroundClick={busy ? undefined : handleFloorLocomotion}
         />
@@ -2518,12 +2528,17 @@ function RoomScene({
   );
 }
 
-const PLOT_ZONES: { id: string; label: string; icon: string; cam: [number, number]; walk: [number, number] }[] = [
-  { id: "inside", label: "Inside", icon: "🏠", cam: [0, 0], walk: [0, 1.5] },
-  { id: "pool", label: "Pool", icon: "🏊", cam: [1.5, 10.6], walk: [1.5, 7.6] },
-  { id: "garden", label: "Garden & BBQ", icon: "🌳", cam: [10.0, 4.5], walk: [10.0, 6.2] },
-  { id: "majlis", label: "Majlis", icon: "⛺", cam: [-8.5, 11.2], walk: [-8.5, 11.2] },
-  { id: "carpark", label: "Car Park", icon: "🚗", cam: [-10.2, 2.0], walk: [-7.2, 2.0] },
+export interface PlotZone { id: string; label: string; icon: string; cam: [number, number]; walk?: [number, number] }
+// Where each part of the plot really is (HomeGrounds: the pool east of the house, the BBQ north-east, the majlis
+// north, the driveway north-west).
+const INSIDE_ZONE: PlotZone = { id: "inside", label: "Inside", icon: "🏠", cam: [0, 0], walk: [0, 1.5] };
+const noSubscribe = () => () => {};
+const PLOT_ZONES: PlotZone[] = [
+  INSIDE_ZONE,
+  { id: "pool", label: "Pool", icon: "🏊", cam: [10.5, 1], walk: [7.8, 1] },
+  { id: "garden", label: "Garden & BBQ", icon: "🌳", cam: [8.5, 10], walk: [8.5, 8.8] },
+  { id: "majlis", label: "Majlis", icon: "⛺", cam: [0, 12.5], walk: [0, 11.5] },
+  { id: "carpark", label: "Car Park", icon: "🚗", cam: [-10.5, 7], walk: [-8.5, 7] },
 ];
 
 interface WebGLErrorBoundaryState {
@@ -2590,6 +2605,28 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
   const panNudgeRef = useRef<{ dx: number; dz: number } | null>(null);
   const walkRequestRef = useRef<((x: number, z: number) => void) | null>(null);
   const showPlotScroll = hasPlot(props.housingTier ?? "studio") && (props.level ?? 0) === 0;
+  // The zone bar: the plot's parts, plus anything outside the page adds (a party game), for any home.
+  const extraZones = (props.level ?? 0) === 0 ? props.extraZones ?? [] : [];
+  // The page's own stops (the game) come straight after Inside, so they're in sight on a phone.
+  const zones = [INSIDE_ZONE, ...extraZones, ...(showPlotScroll ? PLOT_ZONES.slice(1) : [])];
+  const showZoneBar = showPlotScroll || extraZones.length > 0;
+  const coarse = useSyncExternalStore(noSubscribe, isCoarsePointer, () => false);
+  const goZone = (z: PlotZone) => {
+    setActivePlotZone(z.id);
+    setPanTarget(z.cam);
+    setTimeout(() => setPanTarget(null), 1400);
+    if (z.walk) walkRequestRef.current?.(z.walk[0], z.walk[1]);
+  };
+
+  // The page asks the camera to go somewhere (Watch the party game).
+  const focusN = props.focus?.n;
+  useEffect(() => {
+    if (!focusN || !props.focus) return;
+    const at = props.focus.at;
+    const go = setTimeout(() => setPanTarget(at), 0);
+    const stop = setTimeout(() => setPanTarget(null), 1600);
+    return () => { clearTimeout(go); clearTimeout(stop); };
+  }, [focusN]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setWebglSupported(isWebGLAvailable());
@@ -2741,7 +2778,7 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
               minPolarAngle={props.upView ? 0.2 : props.view === "eye" ? 0.35 : props.view === "inside" ? 0.95 : 0.35}
               maxPolarAngle={props.upView ? 1.15 : props.view === "eye" ? 2.4 : props.view === "inside" ? 1.75 : 1.25}
               minDistance={props.upView ? 6 : props.view === "eye" ? 0.05 : props.view === "inside" ? 1.8 : 6}
-              maxDistance={props.upView ? 38 : props.view === "eye" ? EYE_BACK + 0.15 : props.view === "inside" ? 7 : showPlotScroll ? 38 : 30}
+              maxDistance={props.upView ? 38 : props.view === "eye" ? EYE_BACK + 0.15 : props.view === "inside" ? 7 : showZoneBar ? 38 : 30}
             />
           </Canvas>
         </WebGLErrorBoundary>
@@ -2754,8 +2791,16 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
         </div>
       )}
 
-      {/* Outdoor Villa Plot Scroll & Walk-Through-Doorway Bar */}
-      {showPlotScroll && !props.decorating && (
+      <TwoFingerHint active={showZoneBar && !props.decorating && !props.placing} />
+
+      {/* Outdoor Villa Plot Scroll & Walk-Through-Doorway Bar (and a party game outside, for any home) */}
+      {showZoneBar && !props.decorating && (
+        // How to slide the view yourself (one finger only turns it), just above the bar.
+        <p className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-[7.6rem] z-20 whitespace-nowrap rounded-full bg-black/45 px-2.5 py-0.5 text-[10px] font-semibold text-white/85">
+          {coarse ? "✌️ Slide with two fingers to look round the house" : "Right-click and drag to slide round the house"}
+        </p>
+      )}
+      {showZoneBar && !props.decorating && (
         <div
           className="pointer-events-auto absolute left-1/2 -translate-x-1/2 bottom-20 z-20 flex items-center gap-1 rounded-full border border-white/15 bg-black/75 px-2 py-1 text-[11px] font-semibold text-white shadow-xl backdrop-blur-md max-w-[95vw] overflow-x-auto"
           title="Scroll the camera across your villa grounds or tap a zone to walk outside through the patio doorway"
@@ -2771,17 +2816,16 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
           >
             ◀
           </button>
-          {PLOT_ZONES.map((z) => {
+          {zones.map((z) => {
             const active = activePlotZone === z.id;
             return (
               <button
                 key={z.id}
                 type="button"
-                onClick={() => {
-                  setActivePlotZone(z.id);
-                  setPanTarget(z.cam);
-                  setTimeout(() => setPanTarget(null), 1200);
-                  walkRequestRef.current?.(z.walk[0], z.walk[1]);
+                data-zone={z.id}
+                onClick={(e) => {
+                  const pick = zones.find((x) => x.id === e.currentTarget.dataset.zone);
+                  if (pick) goZone(pick);
                 }}
                 className={`flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 transition active:scale-95 ${
                   active

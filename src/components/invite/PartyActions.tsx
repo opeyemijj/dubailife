@@ -37,6 +37,7 @@ export function PartyActions({
   broadcast,
   className = "",
   list = false,
+  onPlayBoard,
 }: {
   party: PartyHere;
   lightsOut: boolean;
@@ -54,6 +55,8 @@ export function PartyActions({
   className?: string;
   /** As a vertical list inside a popover (the side bar's 🎉 Party), without Messages (the bar has the phone). */
   list?: boolean;
+  /** A two-player game outside the house (Connect Four, chess, Ludo): opens the picker. Homes only. */
+  onPlayBoard?: () => void;
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [boxingOpen, setBoxingOpen] = useState(false);
@@ -152,6 +155,17 @@ export function PartyActions({
         >
           <span className="text-lg leading-none">💸</span>Spray AED 10,000
         </button>
+        {onPlayBoard && (
+          <button
+            onClick={() => {
+              gameAudio.playClickSound();
+              onPlayBoard();
+            }}
+            className={`${btn} !bg-fuchsia-600 !text-white`}
+          >
+            <span className="text-lg leading-none">🎲</span>Let&apos;s play
+          </button>
+        )}
         <button
           onClick={() => {
             gameAudio.playClickSound();
