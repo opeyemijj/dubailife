@@ -445,7 +445,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
     exterior: homeLook.exterior ?? [],
     lightsOut,
     level,
-    onWatch: () => { setView("above"); setUpView(false); },
+    onWatch: () => { if (level !== 0) changeLevel(0); setView("above"); setUpView(false); },
   });
   useEffect(() => {
     partyGameReceive.current = partyBoard.pg.receive;

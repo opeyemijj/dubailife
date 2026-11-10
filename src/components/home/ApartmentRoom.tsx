@@ -2075,6 +2075,11 @@ function RoomScene({
   // Out in the garden: the pool and the car (out of the front door, then there).
   const startGroundsUse = (what: "pool" | "car") => {
     if (climbRef.current) return;
+    // A party game is laid over the pool: no swimming until it's cleared.
+    if (what === "pool" && poolCovered) {
+      window.dispatchEvent(new CustomEvent("dubai:toast", { detail: "🎲 The pool's covered by the party game. Swim once it's cleared." }));
+      return;
+    }
     getUp();
     const f: Fixture = { id: `grounds-${what}`, kind: what as Fixture["kind"], size: [1, 1], placement: { kind: "floor", col: 0, row: 0, rot: 0 } };
     setObjectFx(f);

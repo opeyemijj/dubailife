@@ -22,13 +22,24 @@ import { Meter, Pill, useCallouts } from "../../hud";
 import { applyShake, shake, slowMo, useGameFrame } from "../../stage";
 import { Arena } from "./Arena";
 import { Boxer } from "./Boxer";
-import { FIGHT_RULES, levelFor, newFight, scoreFight, step, type Dodge, type FightEvent, type FightInput, type FightState, type Punch } from "./fight";
+import { MoveStick } from "@/components/street/StreetWorld";
+import { FIGHT_RULES, facing, levelFor, newFight, scoreFight, step, type Dodge, type FightEvent, type FightInput, type FightState, type Punch } from "./fight";
 
 interface Opponent { name: string; username?: string; look?: AvatarLookProps; local: boolean }
 /** Input waiting for the next fight step: one-shot punches and dodges, and the held block. */
 type Queued = FightInput & { punchQ?: Punch; dodgeQ?: Dodge; starQ?: boolean };
 
 const GLOVES_KEY = "dubailife:boxing-gloves";
+/** The punch buttons, bottom right. */
+const PUNCH_PAD: Array<{ punch: Punch; icon: string; label: string }> = [
+  { punch: "straight", icon: "👊", label: "Punch" },
+  { punch: "onetwo", icon: "👊👊", label: "One-two" },
+  { punch: "upper", icon: "⬆️", label: "Uppercut" },
+  { punch: "body", icon: "🎯", label: "Body shot" },
+];
+/** Footwork keys held down (WASD), read by the fight clock each frame. */
+const MOVE_KEYS = new Set(["KeyW", "KeyA", "KeyS", "KeyD"]);
+const keysHeld = new Set<string>();
 const readGlove = () => { try { return localStorage.getItem(GLOVES_KEY); } catch { return null; } };
 const saveGlove = (id: string) => { try { localStorage.setItem(GLOVES_KEY, id); } catch { /* private window */ } };
 
@@ -76,7 +87,10 @@ export default function BoxingGame({ params, onClose, onShare }: ArcadeGameProps
         { icon: "👀", text: "Watch for the tell: a glowing glove and a dipped shoulder mean a punch is coming. A crouch means an uppercut." },
         { icon: "↔️", text: "Swipe to a screen edge to slip away from it (or ◀ ▶). Swipe down to duck. Ducking an uppercut hurts." },
         { icon: "💥", text: "Dodge just in time and the opponent is open: punch now for double damage and charge your star punch." },
-        { icon: "👊", text: "Tap left for a jab, right for a straight. Swipe sideways for a hook, up for an uppercut. Hold two fingers to block." },
+        { icon: "👊", text: "Punch pad: Punch, One-two (left then right, two hits), Uppercut and Body shot. Or tap the ring: left for a jab, right for a straight, swipe sideways for a hook, up for an uppercut. Hold two fingers to block." },
+        { icon: "🎯", text: "Body shots are hard to block and wind them: their next wind-ups come slower. A one-two's second punch often gets through a guard." },
+        { icon: "🕹️", text: "Move with the stick (WASD on a keyboard): push up to step in, sideways to circle. Punches only land in range, and moving off a punch's line makes it miss. Hooks follow you, so slip those." },
+        { icon: "🪢", text: "Don't get pinned on the ropes: every punch hurts more there. Moving costs a little stamina." },
         { icon: "😮‍💨", text: "Punching into a guard gets punished, and a tired boxer hits soft. Pick your moments." },
       ]}
       levels={challenge ? undefined : FIGHT_RULES.career.map((c) => ({ n: c.n, label: FIGHT_RULES.levels[c.n - 1].label }))}
@@ -125,6 +139,8 @@ function Bout({ api, level, me, myName, opponent, glove, career, body }: { api: 
   const opMax = initial.op.hp;
   const fightRef = useRef<FightState>(initial);
   const inputRef = useRef<Queued>({ blocking: false, taps: 0 });
+  // The analog stick: footwork round the ring (MoveStick writes x, y in -1..1; up = in towards them).
+  const stickRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const eventsRef = useRef<FightEvent[]>([]);
   const hypeRef = useRef(0);
   const [hud, setHud] = useState<Hud>(() => snapshot(initial, opMax));
@@ -166,27 +182,29 @@ function Bout({ api, level, me, myName, opponent, glove, career, body }: { api: 
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one ticker for the bout; it reads refs
   }, []);
 
-  // Keyboard: J jab, K straight, U/I hooks, O uppercut, Space star, Shift block, ←/A ↓/S →/D dodges.
+  // Keyboard: WASD footwork, J jab, K straight, L one-two, B body shot, U/I hooks, O uppercut, Space star, Shift block, ←/Q ↓/C →/E dodges.
   useEffect(() => {
     const keys: Record<string, () => void> = {
       KeyJ: () => { inputRef.current.punchQ = "jab"; }, KeyK: () => { inputRef.current.punchQ = "straight"; },
+      KeyL: () => { inputRef.current.punchQ = "onetwo"; }, KeyB: () => { inputRef.current.punchQ = "body"; },
       KeyU: () => { inputRef.current.punchQ = "hookL"; }, KeyI: () => { inputRef.current.punchQ = "hookR"; }, KeyO: () => { inputRef.current.punchQ = "upper"; },
       Space: () => { inputRef.current.starQ = true; },
-      ArrowLeft: () => { inputRef.current.dodgeQ = "slipL"; }, KeyA: () => { inputRef.current.dodgeQ = "slipL"; },
-      ArrowRight: () => { inputRef.current.dodgeQ = "slipR"; }, KeyD: () => { inputRef.current.dodgeQ = "slipR"; },
-      ArrowDown: () => { inputRef.current.dodgeQ = "duck"; }, KeyS: () => { inputRef.current.dodgeQ = "duck"; },
+      ArrowLeft: () => { inputRef.current.dodgeQ = "slipL"; }, KeyQ: () => { inputRef.current.dodgeQ = "slipL"; },
+      ArrowRight: () => { inputRef.current.dodgeQ = "slipR"; }, KeyE: () => { inputRef.current.dodgeQ = "slipR"; },
+      ArrowDown: () => { inputRef.current.dodgeQ = "duck"; }, KeyC: () => { inputRef.current.dodgeQ = "duck"; },
     };
     const down = (e: KeyboardEvent) => {
+      if (MOVE_KEYS.has(e.code)) { keysHeld.add(e.code); e.preventDefault(); return; }
       if (e.code === "ShiftLeft" || e.code === "ShiftRight") { inputRef.current.blocking = true; return; }
       if (fightRef.current.phase === "meDown") { inputRef.current.taps++; return; }
       if (e.repeat) return;
       const f = keys[e.code];
       if (f) { e.preventDefault(); f(); }
     };
-    const up = (e: KeyboardEvent) => { if (e.code === "ShiftLeft" || e.code === "ShiftRight") inputRef.current.blocking = false; };
+    const up = (e: KeyboardEvent) => { keysHeld.delete(e.code); if (e.code === "ShiftLeft" || e.code === "ShiftRight") inputRef.current.blocking = false; };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
-    return () => { window.removeEventListener("keydown", down); window.removeEventListener("keyup", up); };
+    return () => { keysHeld.clear(); window.removeEventListener("keydown", down); window.removeEventListener("keyup", up); };
   }, []);
 
   // Touch: taps, swipes and two-finger block over the whole ring.
@@ -213,8 +231,11 @@ function Bout({ api, level, me, myName, opponent, glove, career, body }: { api: 
   const onDuck = (e: ReactPointerEvent) => { e.stopPropagation(); inputRef.current.dodgeQ = "duck"; haptic(5); };
   const onSlipR = (e: ReactPointerEvent) => { e.stopPropagation(); inputRef.current.dodgeQ = "slipR"; haptic(5); };
   const onStar = (e: ReactPointerEvent) => { e.stopPropagation(); inputRef.current.starQ = true; haptic(5); };
+  // The punch pad: one punch, the one-two, the uppercut and the body shot.
+  const onPunch = (e: ReactPointerEvent<HTMLButtonElement>) => { e.stopPropagation(); inputRef.current.punchQ = e.currentTarget.dataset.punch as Punch; haptic(5); };
   const onBlockDown = (e: ReactPointerEvent) => { e.stopPropagation(); inputRef.current.blocking = true; };
   const onBlockUp = (e: ReactPointerEvent) => { e.stopPropagation(); inputRef.current.blocking = false; };
+  const stopHere = (e: ReactPointerEvent) => e.stopPropagation();
 
   const playing = api.phase === "play";
   const s = hud;
@@ -225,10 +246,10 @@ function Bout({ api, level, me, myName, opponent, glove, career, body }: { api: 
       <GameStage camera={{ position: [1.05, 2.25, 4.1], fov: 48 }} background="#05070d" environment={0.2}>
         <Arena hypeRef={hypeRef} />
         <group position={[0, 0.205, 0]}>
-          <Boxer side="me" look={me} fightRef={fightRef} glove={glove} z={0.62} />
-          <Boxer side="op" look={opponent.look} fightRef={fightRef} glove={opponent.local ? "#111827" : "#7c3aed"} z={-0.62} />
+          <Boxer side="me" look={me} fightRef={fightRef} glove={glove} />
+          <Boxer side="op" look={opponent.look} fightRef={fightRef} glove={opponent.local ? "#111827" : "#7c3aed"} />
         </group>
-        <Director fightRef={fightRef} inputRef={inputRef} eventsRef={eventsRef} hypeRef={hypeRef} level={lv} playing={playing} />
+        <Director fightRef={fightRef} inputRef={inputRef} eventsRef={eventsRef} hypeRef={hypeRef} level={lv} playing={playing} stickRef={stickRef} />
       </GameStage>
 
       {/* Gestures over the ring */}
@@ -254,25 +275,42 @@ function Bout({ api, level, me, myName, opponent, glove, career, body }: { api: 
 
       {callouts.node}
 
-      {/* Bottom: dodge and block buttons on the left, the star punch on the right */}
+      {/* Bottom: the dodges over the footwork stick on the left; the punches, block and star punch on the right */}
       {playing && (s.phase === "fight") && (
         <div className="absolute inset-x-0 bottom-0 z-20 p-3 pb-[max(0.9rem,env(safe-area-inset-bottom))] flex items-end justify-between pointer-events-none">
-          <div className="flex gap-1.5 pointer-events-auto">
-            <button onPointerDown={onSlipL} className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur font-black text-lg" aria-label="Slip left">◀</button>
-            <button onPointerDown={onDuck} className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur font-black text-lg" aria-label="Duck">▼</button>
-            <button onPointerDown={onSlipR} className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur font-black text-lg" aria-label="Slip right">▶</button>
+          <div className="flex flex-col items-center gap-1.5 pointer-events-auto">
+            <div className="flex gap-1">
+              <button onPointerDown={onSlipL} className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur font-black text-base" aria-label="Slip left">◀</button>
+              <button onPointerDown={onDuck} className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur font-black text-base" aria-label="Duck">▼</button>
+              <button onPointerDown={onSlipR} className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur font-black text-base" aria-label="Slip right">▶</button>
+            </div>
+            <div onPointerDown={stopHere} onPointerUp={stopHere}>
+              <MoveStick controls={stickRef} allowRun={false} scale={0.75} label={false} />
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-1.5 pointer-events-auto">
+          <div className="grid grid-cols-2 gap-1.5">
+            {PUNCH_PAD.map((b) => (
+              <button key={b.punch} data-punch={b.punch} onPointerDown={onPunch} aria-label={b.label}
+                className="h-12 w-[5.25rem] rounded-2xl bg-rose-600/85 backdrop-blur font-black text-[11px] leading-tight flex flex-col items-center justify-center active:scale-95">
+                <span className="text-base leading-none">{b.icon}</span>{b.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1.5 items-end">
             <button
               onPointerDown={onBlockDown}
               onPointerUp={onBlockUp}
               onPointerLeave={onBlockUp}
               className="h-12 px-3 rounded-2xl bg-sky-500/80 font-black text-xs" aria-label="Block (hold)">🛡️ BLOCK</button>
-          </div>
           <button
             onPointerDown={onStar}
             disabled={s.star < 1}
             className={`pointer-events-auto w-16 h-16 rounded-full font-black text-2xl border-4 transition ${s.star >= 1 ? "bg-amber-400 border-amber-200 animate-pulse shadow-[0_0_30px_rgba(251,191,36,0.8)]" : "bg-black/50 border-white/15"}`}
             style={s.star < 1 ? { background: `conic-gradient(#fbbf24 ${s.star * 360}deg, rgba(0,0,0,0.5) 0deg)` } : undefined}
             aria-label="Star punch">⭐</button>
+          </div>
+          </div>
         </div>
       )}
 
@@ -297,7 +335,7 @@ function Bout({ api, level, me, myName, opponent, glove, career, body }: { api: 
         </div>
       )}
       {playing && s.round === 1 && s.clock < 6 && s.phase === "fight" && (
-        <p className="absolute inset-x-0 bottom-24 z-20 text-center text-xs text-white/75 pointer-events-none">Tap left: jab · tap right: straight · swipe sideways: hook · swipe up: uppercut · edges: slip</p>
+        <p className="absolute inset-x-0 bottom-[14rem] z-20 text-center text-xs text-white/75 pointer-events-none px-4">Stick: move and circle · pad: punch, one-two, uppercut, body shot · swipe sideways: hook</p>
       )}
     </div>
   );
@@ -310,7 +348,7 @@ function snapshot(s: FightState, opMax: number): Hud {
 function calloutFor(e: FightEvent, s: FightState): { text: string; tone: "good" | "great" | "bad" | "info" } | null {
   switch (e.kind) {
     case "counter": return { text: `COUNTER! -${e.amount}`, tone: "great" };
-    case "dodged": return { text: e.text === "duck" ? "DUCKED!" : "SLIPPED!", tone: "good" };
+    case "dodged": return { text: e.text === "duck" ? "DUCKED!" : e.text === "range" ? "MISSED YOU!" : "SLIPPED!", tone: "good" };
     case "interrupt": return { text: "INTERRUPTED!", tone: "great" };
     case "star": return { text: `⭐ STAR PUNCH -${e.amount}`, tone: "great" };
     case "knockdown": return e.who === "op" ? { text: "KNOCKDOWN!", tone: "great" } : { text: "YOU'RE DOWN!", tone: "bad" };
@@ -318,7 +356,10 @@ function calloutFor(e: FightEvent, s: FightState): { text: string; tone: "good" 
     case "decision": return { text: s.result?.win ? "YOU WIN ON POINTS" : "LOST ON POINTS", tone: s.result?.win ? "great" : "bad" };
     case "tired": return { text: "Tired… breathe", tone: "info" };
     case "feint": return { text: "Feint!", tone: "info" };
+    case "whiff": return { text: "Out of range: step in", tone: "info" };
+    case "ropes": return { text: "On the ropes! Move!", tone: "bad" };
     case "bell": return e.text?.startsWith("Round") ? { text: `🔔 ${e.text.toUpperCase()}`, tone: "info" } : null;
+    case "body": return { text: `BODY SHOT! -${e.amount} · winded`, tone: "good" };
     case "hit": return s.combo >= 4 && s.combo % 2 === 0 ? { text: `x${s.combo} COMBO`, tone: "good" } : null;
     default: return null;
   }
@@ -326,7 +367,8 @@ function calloutFor(e: FightEvent, s: FightState): { text: string; tone: "good" 
 
 // ---------------------------------------------------------------- inside the canvas: the fight clock, effects and camera
 
-function Director({ fightRef, inputRef, eventsRef, hypeRef, level, playing }: {
+function Director({ fightRef, inputRef, eventsRef, hypeRef, level, playing, stickRef }: {
+  stickRef: RefObject<{ x: number; y: number }>;
   fightRef: RefObject<FightState>;
   inputRef: RefObject<Queued>;
   eventsRef: RefObject<FightEvent[]>;
@@ -342,12 +384,16 @@ function Director({ fightRef, inputRef, eventsRef, hypeRef, level, playing }: {
   useGameFrame((dt, t) => {
     const s = fightRef.current, inp = inputRef.current;
     if (playing && s.phase !== "over") {
-      const step_in: FightInput = { punch: inp.punchQ, dodge: inp.dodgeQ, star: inp.starQ, blocking: inp.blocking, taps: inp.taps };
+      // The stick, or WASD on a keyboard.
+      const k = keysHeld, kx = (k.has("KeyD") ? 1 : 0) - (k.has("KeyA") ? 1 : 0), ky = (k.has("KeyW") ? 1 : 0) - (k.has("KeyS") ? 1 : 0);
+      const move = kx || ky ? { x: kx, y: ky } : { x: stickRef.current?.x ?? 0, y: stickRef.current?.y ?? 0 };
+      const step_in: FightInput = { punch: inp.punchQ, dodge: inp.dodgeQ, star: inp.starQ, blocking: inp.blocking, taps: inp.taps, move };
       inp.punchQ = undefined; inp.dodgeQ = undefined; inp.starQ = undefined; inp.taps = 0;
       step(s, dt, step_in, level);
       for (const e of s.events) {
         eventsRef.current.push(e);
         switch (e.kind) {
+          case "body": sfx("mgKick"); shake(0.05); hypeRef.current = Math.min(1, hypeRef.current + 0.08); break;
           case "hit": sfx("mgThud"); if (s.combo >= 2) sfx(`mgHit${Math.min(7, s.combo)}`); shake(0.03); hypeRef.current = Math.min(1, hypeRef.current + 0.05); break;
           case "counter": sfx("mgPerfect"); shake(0.08); hypeRef.current = Math.min(1, hypeRef.current + 0.2); haptic(15); break;
           case "star": sfx("mgStar"); slowMo(0.2, 0.9); shake(0.22); hypeRef.current = 1; haptic(40); break;
@@ -359,7 +405,8 @@ function Director({ fightRef, inputRef, eventsRef, hypeRef, level, playing }: {
           case "ko": sfx("airhorn"); sfx("applause"); slowMo(0.3, 1.6); hypeRef.current = 1; break;
           case "decision": sfx("applause"); hypeRef.current = 0.8; break;
           case "bell": sfx("chime"); break;
-          case "feint": case "tired": sfx("warn"); break;
+          case "feint": case "tired": case "ropes": sfx("warn"); break;
+          case "whiff": sfx("rustle"); break;
           default: break;
         }
       }
@@ -374,9 +421,20 @@ function Director({ fightRef, inputRef, eventsRef, hypeRef, level, playing }: {
       const slip = s.dodge && s.dodge.move !== "duck" ? (s.dodge.move === "slipL" ? -0.25 : 0.25) : 0;
       const duck = s.dodge?.move === "duck" ? -0.2 : 0;
       const down = s.phase === "meDown" ? 0.5 : 0;
-      // Back and to the right of your shoulder, so the opponent (and their tells) stay in clear view.
-      target.set(1.05 + slip, 2.25 + duck + down + Math.sin(t * 1.3) * 0.02, 4.1 + down);
-      look.set(-0.2, 1.25, -0.62);
+      // Back and to the right of your shoulder, so the opponent (and their tells) stay in clear view, turning
+      // with you as you circle.
+      const { fx, fz } = facing(s);
+      const rx = -fz, rz = fx;
+      const [mx, mz] = s.pos.me, [ox, oz] = s.pos.op;
+      const back = 3.48 + down, right = 1.05 + slip;
+      // Kept out of the crowd (within 4.4 m of the middle), and lifted over a corner post when it swings near one.
+      let cx = mx - fx * back + rx * right, cz = mz - fz * back + rz * right;
+      const r = Math.hypot(cx, cz);
+      if (r > 4.4) { cx *= 4.4 / r; cz *= 4.4 / r; }
+      const post = Math.hypot(Math.abs(cx) - 2.6, Math.abs(cz) - 2.6);
+      const lift = Math.max(0, 1.3 - post) * 1.4;
+      target.set(cx, 2.25 + duck + down + lift + Math.sin(t * 1.3) * 0.02, cz);
+      look.set(ox - rx * 0.2, 1.25, oz - rz * 0.2);
     }
     camera.position.lerp(target, Math.min(1, dt * (s.phase === "over" ? 1.5 : 8)));
     camera.lookAt(look);

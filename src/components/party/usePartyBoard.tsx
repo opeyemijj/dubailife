@@ -4,12 +4,12 @@
 // the live store, the 3D board (for ApartmentRoom's `extras`), a "Games" stop on the zone bar, the camera
 // glide to the board, and the picker and card on screen.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { hasPlot, type HousingTier } from "@/lib/furniture";
 import { PARTY_GAMES, usePartyGames } from "@/lib/partyGames";
 import type { PlotZone } from "@/components/home/ApartmentRoom";
 import { PARTY_BOARD_AT, PartyGameBoard } from "./PartyGameBoard";
-import { PartyGameCard, PartyGamePicker } from "./PartyGamesUI";
+import { PartyGameCard, PartyGamePicker, PartyGameResult } from "./PartyGamesUI";
 
 export function usePartyBoard({ active, meId, meName, isHost, present, tier, exterior, lightsOut, level, onWatch }: {
   /** A party on here (and I'm in its room). */
@@ -41,6 +41,20 @@ export function usePartyBoard({ active, meId, meName, isHost, present, tier, ext
     setFocus((f) => ({ n: (f?.n ?? 0) + 1, at: PARTY_BOARD_AT }));
   };
 
+  // Everyone at the party sees the game: the camera glides to the board when one starts, and again when it ends
+  // (so the winning board is in view behind the result).
+  const watchRef = useRef(watch);
+  useEffect(() => { watchRef.current = watch; });
+  const startedKey = active && pg.snap ? `${pg.snap.id}:${pg.snap.over ? "over" : "on"}` : "";
+  const startedBy = pg.snap?.players[0].id;
+  useEffect(() => {
+    if (!startedKey) return;
+    // My own new game already glided there (the picker's onStarted).
+    if (startedKey.endsWith(":on") && startedBy === meId) return;
+    const t = setTimeout(() => watchRef.current(), 0);
+    return () => clearTimeout(t);
+  }, [startedKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const on = active && !!pg.snap;
   const zones: PlotZone[] = on
     ? [{ id: "party-game", label: PARTY_GAMES[pg.snap!.game].name, icon: "🎲", cam: PARTY_BOARD_AT, walk: plot ? [PARTY_BOARD_AT[0] - (pool ? 2.7 : 1.6), PARTY_BOARD_AT[1] + 2.2] : undefined }]
@@ -54,6 +68,7 @@ export function usePartyBoard({ active, meId, meName, isHost, present, tier, ext
     <>
       {picker && <PartyGamePicker pg={pg} onClose={() => setPicker(false)} onStarted={watch} />}
       <PartyGameCard pg={pg} me={meId ?? null} isHost={isHost} present={present} onWatch={watch} />
+      <PartyGameResult pg={pg} isHost={isHost} onPickAnother={() => setPicker(true)} />
     </>
   ) : null;
 

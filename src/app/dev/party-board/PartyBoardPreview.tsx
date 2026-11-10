@@ -5,7 +5,7 @@ import { ApartmentRoom } from "@/components/home/ApartmentRoom";
 import { HOUSING_CONFIGS, type HousingTier } from "@/lib/furniture";
 import { MODULES } from "@/components/games";
 import { PARTY_BOARD_AT, PartyGameBoard } from "@/components/party/PartyGameBoard";
-import { PartyGameCard } from "@/components/party/PartyGamesUI";
+import { PartyGameCard, PartyGameResult } from "@/components/party/PartyGamesUI";
 import { usePartyGames, type PartyGameId } from "@/lib/partyGames";
 
 export function PartyBoardPreview({ tier, game, pool, moves }: { tier: string; game: string; pool: boolean; moves: number }) {
@@ -29,7 +29,7 @@ export function PartyBoardPreview({ tier, game, pool, moves }: { tier: string; g
       const seat = MODULES[s.game].turnOf?.(s.state) ?? 0;
       if (seat === 0) pg.move(await MODULES[s.game].ai(s.state, 0));
       setPlayed((n) => n + 1);
-    }, 1300);
+    }, 500);
     return () => clearTimeout(t);
   }, [pg.snap?.seq, played]); // eslint-disable-line react-hooks/exhaustive-deps
   const exterior = pool ? ["pool", "garden"] : ["garden"];
@@ -38,6 +38,7 @@ export function PartyBoardPreview({ tier, game, pool, moves }: { tier: string; g
       <ApartmentRoom housingTier={housingTier} view="above" homeStyle={{ ...HOUSING_CONFIGS[housingTier].finish, exterior }} focus={focus} poolCovered={!!pg.snap && pool && housingTier === "villa"}
         extraZones={pg.snap ? [{ id: "party-game", label: "Game", icon: "🎲", cam: PARTY_BOARD_AT }] : []}
         extras={<PartyGameBoard snap={pg.snap} mySeat={pg.mySeat} onMove={pg.move} pool={pool && housingTier === "villa"} grounds={housingTier === "villa" || housingTier === "townhouse"} />} />
+      <PartyGameResult pg={pg} isHost onPickAnother={() => {}} />
       <PartyGameCard pg={pg} me={me.id} isHost present={[]} onWatch={() => setFocus((f) => ({ n: (f?.n ?? 0) + 1, at: PARTY_BOARD_AT }))} />
     </main>
   );

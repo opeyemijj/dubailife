@@ -176,21 +176,31 @@ export function FloatingSpaceOverlay() {
           {soundOff ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
         </button>
 
-        {/* Leave Space button (not at a party: its Space is part of it) */}
-        {lockedSpaceId !== activeRoom.id && <button
-          type="button"
-          onClick={() => setConfirmLeave(true)}
-          aria-label="Leave Space"
-          className="w-8 h-8 rounded-full bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 flex items-center justify-center shrink-0 active:scale-90"
-        >
-          <X className="w-4 h-4" />
-        </button>}
+        {/* Leave Space button (or End Call for 1-on-1 private calls) */}
+        {(activeRoom.isPrivate || lockedSpaceId !== activeRoom.id) && (
+          <button
+            type="button"
+            onClick={() => setConfirmLeave(true)}
+            aria-label={activeRoom.isPrivate ? "End 1-on-1 Private Call" : "Leave Space"}
+            className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 active:scale-90 ${
+              activeRoom.isPrivate
+                ? "bg-rose-600 hover:bg-rose-700 text-white shadow-sm"
+                : "bg-rose-500/20 hover:bg-rose-500/40 text-rose-300"
+            }`}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
       {/* Asked first, so a stray tap doesn't drop you out of the conversation. */}
       {confirmLeave && (
-        <div role="alertdialog" aria-label="Leave this Space?" className="mt-2 mx-auto w-fit rounded-2xl bg-[#1d2433]/95 backdrop-blur-xl border border-white/15 text-white shadow-2xl px-3 py-2.5 flex items-center gap-2">
-          <span className="text-sm font-bold">Leave this Space?</span>
-          <button type="button" onClick={() => { setConfirmLeave(false); leaveSpace(); }} className="h-8 px-3 rounded-full bg-rose-500 text-white text-xs font-black active:scale-95">Leave</button>
+        <div role="alertdialog" aria-label={activeRoom.isPrivate ? "End 1-on-1 Call?" : "Leave this Space?"} className="mt-2 mx-auto w-fit rounded-2xl bg-[#1d2433]/95 backdrop-blur-xl border border-white/15 text-white shadow-2xl px-3 py-2.5 flex items-center gap-2">
+          <span className="text-sm font-bold">
+            {activeRoom.isPrivate ? "End private call & resume party space?" : "Leave this Space?"}
+          </span>
+          <button type="button" onClick={() => { setConfirmLeave(false); leaveSpace(); }} className="h-8 px-3 rounded-full bg-rose-500 text-white text-xs font-black active:scale-95">
+            {activeRoom.isPrivate ? "End Call" : "Leave"}
+          </button>
           <button type="button" onClick={() => setConfirmLeave(false)} className="h-8 px-3 rounded-full bg-white/15 text-white text-xs font-black active:scale-95">Stay</button>
         </div>
       )}

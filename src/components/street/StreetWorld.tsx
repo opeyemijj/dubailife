@@ -560,12 +560,18 @@ export function StreetScene({ doors, look, dirty, controls, run, auto, peers, on
  */
 export const STICK_DEAD = 0.08;
 export const STICK_SPRINT = 0.85;
-export function MoveStick({ controls, allowRun = true }: { controls: React.RefObject<Controls>; run?: boolean; onRun?: () => void; allowRun?: boolean }) {
+export function MoveStick({ controls, allowRun = true, scale = 1, label = true }: {
+  controls: React.RefObject<Controls>; run?: boolean; onRun?: () => void; allowRun?: boolean;
+  /** Smaller (or bigger) than the usual 10rem stick, e.g. 0.75 in the boxing ring. */
+  scale?: number;
+  /** The RUN / WALK hint round the top. */
+  label?: boolean;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const knob = useRef<HTMLSpanElement>(null);
   const rim = useRef<HTMLSpanElement>(null);
   const boundsRef = useRef<{ left: number; top: number; width: number; height: number } | null>(null);
-  const R = 54;
+  const R = 54 * scale;
 
   const updateStick = (clientX: number, clientY: number, springBack = false) => {
     const rect = boundsRef.current ?? containerRef.current?.getBoundingClientRect();
@@ -637,7 +643,8 @@ export function MoveStick({ controls, allowRun = true }: { controls: React.RefOb
     <div
       ref={containerRef}
       aria-label={allowRun ? "Move: push the stick the way you want to go, all the way to the edge to run" : "Move: push the stick the way you want to walk"}
-      className="relative w-40 h-40 rounded-full touch-none select-none flex items-center justify-center cursor-pointer"
+      className="relative rounded-full touch-none select-none flex items-center justify-center cursor-pointer"
+      style={{ width: `${10 * scale}rem`, height: `${10 * scale}rem` }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={release}
@@ -647,13 +654,13 @@ export function MoveStick({ controls, allowRun = true }: { controls: React.RefOb
       {/* the base, its rim (yellow while running outdoors) and the RUN/WALK hint round the top */}
       <span className="absolute inset-0 rounded-full bg-black/25 backdrop-blur-sm" />
       <span ref={rim} data-sprint="0" className="absolute inset-0 rounded-full ring-[3px] ring-white/60 transition-[box-shadow,background-color] data-[sprint='1']:ring-amber-400 data-[sprint='1']:bg-amber-400/25 data-[sprint='1']:shadow-[0_0_24px_rgba(251,191,36,0.8)]" />
-      {allowRun ? (
+      {!label ? null : allowRun ? (
         <span className="absolute top-1.5 text-[9px] font-black tracking-widest text-white/80 pointer-events-none">RUN</span>
       ) : (
         <span className="absolute top-1.5 text-[9px] font-black tracking-widest text-white/65 pointer-events-none">WALK</span>
       )}
-      <span className="absolute w-[4.5rem] h-[4.5rem] rounded-full ring-1 ring-white/25 pointer-events-none" />
-      <span ref={knob} className="relative w-16 h-16 rounded-full bg-gradient-to-b from-white to-slate-200 shadow-[0_6px_16px_rgba(0,0,0,0.35)] ring-2 ring-white pointer-events-none" />
+      <span className="absolute rounded-full ring-1 ring-white/25 pointer-events-none" style={{ width: `${4.5 * scale}rem`, height: `${4.5 * scale}rem` }} />
+      <span ref={knob} style={{ width: `${4 * scale}rem`, height: `${4 * scale}rem` }} className="relative rounded-full bg-gradient-to-b from-white to-slate-200 shadow-[0_6px_16px_rgba(0,0,0,0.35)] ring-2 ring-white pointer-events-none" />
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { arriveAt, endParty, isPartyEnded, markPartyEnded, partyHere, pingParty, PARTIES, kindOf, type PartyHere } from "@/lib/invites";
 import { InviteSheet } from "./InviteSheet";
-import { activeSpaceId, hostNewSpace, joinSpace, leaveSpace, lockSpace, spaceExists } from "@/lib/spaces";
+import { activeSpaceId, activeSpaceRoom, hostNewSpace, joinSpace, leaveSpace, lockSpace, spaceExists } from "@/lib/spaces";
 import { supabase } from "@/lib/supabase/client";
 import { gameAudio } from "@/utils/gameAudio";
 
@@ -127,6 +127,12 @@ function usePartySpace(party: PartyHere | null, route: string | null) {
     const open = () => hostNewSpace({ id, title: `🎉 ${title}`, activityKind: "talent", partyRoute: route ?? undefined, partyHost: host, endsAt: endsAt || undefined });
     let waitingSince = 0;
     const keepIn = () => {
+      // While in a private 1-on-1 space, do not interrupt the private call
+      const activeRoom = activeSpaceRoom();
+      if (activeRoom?.isPrivate) {
+        waitingSince = 0;
+        return;
+      }
       if (activeSpaceId() === id) { waitingSince = 0; return; }
       if (isHost) { open(); return; }
       // Join it; joins the moment it's announced if it isn't yet.
@@ -140,8 +146,15 @@ function usePartySpace(party: PartyHere | null, route: string | null) {
     lockSpace(id);
     const t = setInterval(keepIn, 3000);
     const back = () => { if (document.visibilityState === "visible") keepIn(); };
+    const onReinit = () => { keepIn(); };
     document.addEventListener("visibilitychange", back);
-    return () => { clearInterval(t); document.removeEventListener("visibilitychange", back); lockSpace(null); };
+    window.addEventListener("dubai:reinit-party-space", onReinit);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", back);
+      window.removeEventListener("dubai:reinit-party-space", onReinit);
+      lockSpace(null);
+    };
   }, [code, isHost, title, host, route, endsAt]);
 }
 

@@ -800,6 +800,7 @@ export default function HomePage() {
     lightsOut: !!party && lightsOut,
     level,
     onWatch: () => {
+      if (level !== 0) changeLevel(0);
       setView("above");
       setUpView(false);
     },

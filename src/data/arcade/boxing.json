@@ -1,5 +1,5 @@
 {
-  "_note": "Celebrity Boxing at Coca-Cola Arena (src/components/arcade/games/boxing). Times in seconds, damage in health points out of 100. The opponent's moves each have a tell (the wind-up you read), then the strike; dodging a strike opens a counter window where your punches do double damage. Levels are the career ladder: each scales the opponent's tells (shorter = harder), damage and habits. Career opponents are Locals and are always labelled as such. Opponents block most punches thrown at them in neutral; after `punish.after` blocked punches in a row they answer at once with a fast jab, so mashing loses.",
+  "_note": "Celebrity Boxing at Coca-Cola Arena (src/components/arcade/games/boxing). Times in seconds, damage in health points out of 100. The opponent's moves each have a tell (the wind-up you read), then the strike; dodging a strike opens a counter window where your punches do double damage. Levels are the career ladder: each scales the opponent's tells (shorter = harder), damage and habits. Career opponents are Locals and are always labelled as such. Opponents block most punches thrown at them in neutral; after `punish.after` blocked punches in a row they answer at once with a fast jab, so mashing loses. Footwork (`footwork`): both fighters move round the ring (the analog stick moves you, forward is towards the opponent, sideways circles them). A punch only lands within `reach` (m, centre to centre) times its move's `reachScale`; out of range it whiffs. The opponent stalks you to `preferred` distance and steps in on its wind-ups; each strike is aimed where you were and its aim follows you at `track` m/s per move (hooks follow best, uppercuts worst): get more than `hitRadius` off the aim, or out of range, and it misses and opens a counter window like a dodge. Backed onto the ropes (within `ropes` of the edge) you take `ropesDamage` times the damage. Punches: the one-two is a jab then a straight (two hits; if the first is blocked the second gets through `secondBlock` of the time); the body shot is low, so the opponent blocks it only `blockScale` as often, and it winds them for `winds` seconds (their wind-ups are 25% slower, easier to read).",
   "rounds": 3,
   "roundSeconds": 90,
   "restSeconds": 4,
@@ -60,6 +60,22 @@
       "cost": 14,
       "damage": 7.5,
       "hand": "R"
+    },
+    "onetwo": {
+      "time": 0.56,
+      "cost": 16,
+      "damage": 3,
+      "hand": "L",
+      "hits": 2,
+      "secondBlock": 0.75
+    },
+    "body": {
+      "time": 0.4,
+      "cost": 13,
+      "damage": 3.5,
+      "hand": "R",
+      "blockScale": 0.7,
+      "winds": 3
     }
   },
   "dodge": {
@@ -451,5 +467,39 @@
     "after": 2,
     "tell": 0.3,
     "damageScale": 1.3
+  },
+  "footwork": {
+    "speed": 1.8,
+    "backScale": 0.7,
+    "punchingScale": 0.35,
+    "staminaPerSecond": 6,
+    "ringHalf": 2.25,
+    "close": 0.8,
+    "reach": 1.45,
+    "reachScale": {
+      "jab": 1,
+      "straight": 1,
+      "hookL": 0.88,
+      "hookR": 0.88,
+      "upper": 0.8,
+      "combo": 1,
+      "onetwo": 1,
+      "body": 0.9
+    },
+    "opSpeed": 1.1,
+    "opStepIn": 2.1,
+    "opSpeedPerLevel": 0.05,
+    "preferred": 1.1,
+    "circle": 0.45,
+    "ropes": 0.4,
+    "ropesDamage": 1.2,
+    "track": {
+      "jab": 1.2,
+      "hookL": 1.75,
+      "hookR": 1.75,
+      "upper": 0.8,
+      "combo": 1.3
+    },
+    "hitRadius": 0.38
   }
 }

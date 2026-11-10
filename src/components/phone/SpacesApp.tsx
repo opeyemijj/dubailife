@@ -91,8 +91,13 @@ export function SpacesApp({
 
   const filteredRooms = useMemo(() => {
     return rooms.filter((r) => {
+      // Hide private 1-on-1 rooms from anyone except the host and invited co-host
+      if (r.isPrivate) {
+        const isParticipant = r.hostId === myId || (r.allowedUserIds && r.allowedUserIds.includes(myId));
+        if (!isParticipant) return false;
+      }
       if (tab === "upcoming") return Boolean(r.scheduledFor && r.scheduledFor > now);
-      if (tab === "mine") return r.hostId === myId || r.hostUsername === myUsername;
+      if (tab === "mine") return r.hostId === myId || r.hostUsername === myUsername || (r.allowedUserIds && r.allowedUserIds.includes(myId));
       if (tab === "here") return Boolean(myPlaceId && r.placeId === myPlaceId);
       return !r.scheduledFor || r.scheduledFor <= now;
     });
@@ -312,18 +317,30 @@ export function SpacesApp({
             >
               Float ↗
             </button>
-{lockedSpaceId !== activeRoom.id && (
-            <button
-              type="button"
-              onClick={() => {
-                leaveSpace();
-                setView("list");
-              }}
-              className="px-3 py-1 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-extrabold"
-            >
-              {activeRoom.hostId === myId ? "End" : "Leave"}
-            </button>
-            )}
+            {activeRoom.isPrivate ? (
+              <button
+                type="button"
+                onClick={() => {
+                  leaveSpace();
+                  setView("list");
+                  setToast("📞 1-on-1 Private Call ended. Initializing Party Space...");
+                }}
+                className="px-3.5 py-1.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-black shadow-sm flex items-center gap-1 active:scale-95 transition"
+              >
+                <span>📞</span> End Call
+              </button>
+            ) : lockedSpaceId !== activeRoom.id ? (
+              <button
+                type="button"
+                onClick={() => {
+                  leaveSpace();
+                  setView("list");
+                }}
+                className="px-3 py-1 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-extrabold"
+              >
+                {activeRoom.hostId === myId ? "End" : "Leave"}
+              </button>
+            ) : null}
           </div>
         </div>
 
@@ -336,14 +353,16 @@ export function SpacesApp({
                 {activeRoom.title}
               </h2>
               <div className="flex items-center gap-3 text-slate-500 shrink-0 pt-0.5">
-                <button
-                  type="button"
-                  onClick={handleShare}
-                  aria-label="Share Space"
-                  className="hover:text-slate-900"
-                >
-                  <Share2 className="w-4 h-4" />
-                </button>
+                {!activeRoom.isPrivate && (
+                  <button
+                    type="button"
+                    onClick={handleShare}
+                    aria-label="Share Space"
+                    className="hover:text-slate-900"
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() =>
@@ -361,9 +380,15 @@ export function SpacesApp({
             <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-slate-500 font-semibold">
               <span>@{activeRoom.hostUsername}</span>
               <span>·</span>
-              <span>
-                🎙️ {speakers.length} · 🎧 {listeners.length}
-              </span>
+              {activeRoom.isPrivate ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 text-purple-900 border border-purple-200 px-2.5 py-0.5 text-[11px] font-extrabold">
+                  🔒 Private 1-on-1 · Host & Co-host
+                </span>
+              ) : (
+                <span>
+                  🎙️ {speakers.length} · 🎧 {listeners.length}
+                </span>
+              )}
               {activeRoom.aiSafetyCheck && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600">
                   <ShieldCheck className="w-3.5 h-3.5 text-slate-500" /> AI safety check
@@ -514,7 +539,7 @@ export function SpacesApp({
                     key={p.id}
                     type="button"
                     onClick={() => {
-                      if (isHostOrCohost && p.id !== myId) {
+                      if (isHostOrCohost && p.id !== myId && !activeRoom.isPrivate) {
                         setSelectedUser(p);
                       }
                     }}

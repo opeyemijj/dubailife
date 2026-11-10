@@ -30,13 +30,11 @@ function Glove({ color, glowRef }: { color: string; glowRef: RefObject<THREE.Mes
   );
 }
 
-export function Boxer({ look, side, fightRef, glove = "#dc2626", z }: {
+export function Boxer({ look, side, fightRef, glove = "#dc2626" }: {
   look?: AvatarLookProps;
   side: "me" | "op";
   fightRef: RefObject<FightState>;
   glove?: string;
-  /** Where it stands on the ring's centre line (the player faces -z, the opponent +z). */
-  z: number;
 }) {
   const rig = useRef<ArmRig | null>(newRig());
   const body = useRef<THREE.Group>(null);
@@ -48,6 +46,8 @@ export function Boxer({ look, side, fightRef, glove = "#dc2626", z }: {
   const bones = useRef<{ R?: THREE.Object3D; L?: THREE.Object3D }>({});
   const tmp = useMemo(() => new THREE.Vector3(), []);
   const pose = useRef({ rx: 0, rz: 0, x: 0, y: 0, z: 0, ry: 0 });
+  const yaw = useRef(side === "me" ? Math.PI : 0);
+  const hop = useRef(0);
 
   useGameFrame((dt, t) => {
     const s = fightRef.current;
@@ -71,12 +71,19 @@ export function Boxer({ look, side, fightRef, glove = "#dc2626", z }: {
       // The player: punches, block, slips and ducks, recoil when hit.
       if (s.punch) {
         const def = FIGHT_RULES.player[s.punch.move];
-        const k = punchCurve(Math.min(1, s.punch.at / (def.time * (s.me.stamina < FIGHT_RULES.stamina.tiredBelow ? 1.35 : 1))));
-        const peak = s.punch.move === "hookL" || s.punch.move === "hookR" ? POSE.hook : s.punch.move === "upper" ? POSE.upper : POSE.extend;
+        const prog = Math.min(1, s.punch.at / (def.time * (s.me.stamina < FIGHT_RULES.stamina.tiredBelow ? 1.35 : 1)));
+        const move = s.punch.move;
+        // The one-two: the left jab out and back in the first half, the right straight in the second.
+        const two = move === "onetwo";
+        const hand = two ? (prog < 0.5 ? "L" : "R") : def.hand;
+        const k = punchCurve(two ? (prog < 0.5 ? prog * 2 : (prog - 0.5) * 2) : prog);
+        const peak = move === "hookL" || move === "hookR" ? POSE.hook : move === "upper" ? POSE.upper : move === "body" ? POSE.body : POSE.extend;
         const arm = blend(POSE.guard, peak, k);
-        if (def.hand === "R") R = arm; else L = arm;
-        target.ry = (def.hand === "R" ? 1 : -1) * 0.22 * k;
-        target.rx = 0.12 * k;
+        if (hand === "R") R = arm; else L = arm;
+        target.ry = (hand === "R" ? 1 : -1) * 0.22 * k;
+        // Dropping the level for a body shot; stepping into an uppercut.
+        target.rx = (move === "body" ? 0.42 : 0.12) * k;
+        if (move === "body") target.y = -0.1 * k;
       } else if (s.blocking) {
         R = POSE.block; L = POSE.block;
         target.rx = 0.12;
@@ -127,7 +134,18 @@ export function Boxer({ look, side, fightRef, glove = "#dc2626", z }: {
     p.rx = damp(p.rx, target.rx, speed, dt); p.rz = damp(p.rz, target.rz, speed, dt); p.ry = damp(p.ry, target.ry, speed, dt);
     p.x = damp(p.x, target.x, speed, dt); p.y = damp(p.y, target.y, speed, dt); p.z = damp(p.z, target.z, down ? 3 : 12, dt);
     lean.current.rotation.set(p.rx, p.ry, p.rz);
-    lean.current.position.set(p.x, p.y, p.z);
+    // Footwork: where they stand in the ring, always squared up to the other fighter, bouncing as they move.
+    const at = me ? s.pos.me : s.pos.op, other = me ? s.pos.op : s.pos.me;
+    const moving = Math.min(1, (me ? s.speed.me : s.speed.op) / 1.2);
+    hop.current += dt * (6 + moving * 8);
+    if (body.current) {
+      body.current.position.set(at[0], 0, at[1]);
+      const want = Math.atan2(other[0] - at[0], other[1] - at[1]);
+      const diff = Math.atan2(Math.sin(want - yaw.current), Math.cos(want - yaw.current));
+      yaw.current += diff * Math.min(1, dt * 12);
+      body.current.rotation.y = yaw.current;
+    }
+    lean.current.position.set(p.x, p.y + (down ? 0 : Math.abs(Math.sin(hop.current)) * 0.035 * moving), p.z);
     setRig(r, R, L);
 
     // Gloves on the hands (the hand bones are found once the avatar has loaded).
@@ -145,7 +163,7 @@ export function Boxer({ look, side, fightRef, glove = "#dc2626", z }: {
   });
 
   return (
-    <group ref={body} position={[0, 0, z]} rotation={[0, side === "me" ? Math.PI : 0, 0]}>
+    <group ref={body} position={[0, 0, side === "me" ? 0.62 : -0.62]} rotation={[0, side === "me" ? Math.PI : 0, 0]}>
       <group ref={lean}>
         <CitizenAvatar look={look} animation="idle" rig={rig} />
       </group>

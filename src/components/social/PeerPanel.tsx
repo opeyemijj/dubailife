@@ -276,7 +276,10 @@ export function PeerPanel({
                     id: privateSpaceId,
                     title: `🔒 Private: @${citizen?.username ?? "you"} & @${peer.username}`,
                     activityKind: "talent",
-                    invitedSpeakerId: peer.userId,
+                    isPrivate: true,
+                    maxCapacity: 2,
+                    allowedUserIds: [citizen?.id ?? "me", peer.userId],
+                    invitedCohostId: peer.userId,
                   });
                   broadcastRoomEvent({
                     type: "space_invite",

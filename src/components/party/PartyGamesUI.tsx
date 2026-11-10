@@ -5,7 +5,7 @@
 // the winner, Watch (the camera glides to the board) and clearing it.
 
 import { useEffect, useState } from "react";
-import { PARTY_GAMES, TURN_LIMIT_MS, turnOf, type PartyGameId, type PartyGames } from "@/lib/partyGames";
+import { PARTY_GAMES, SIDES, TURN_LIMIT_MS, resultText, turnOf, turnText, type PartyGameId, type PartyGames } from "@/lib/partyGames";
 import { gameAudio } from "@/utils/gameAudio";
 import type { PoolState } from "@/components/games/Pool";
 
@@ -90,12 +90,12 @@ export function PartyGameCard({ pg, me, isHost, present, onWatch }: {
   const tally = [0, 1].map((seat) => Object.values(pg.predictions).filter((x) => x === seat).length);
   const colors = SEAT_COLOR[s.game];
 
-  const status = s.over
-    ? s.over.winners.length ? `🏆 @${s.players[s.over.winners[0]]?.username} wins!` : "🤝 It's a draw"
-    : !b ? (a.id === me ? "Waiting for a guest to join…" : `@${a.username} needs a player`)
-    : turn === pg.mySeat ? (s.game === "ludo" ? "Your turn: tap the big die" : s.game === "chess" ? "Your move: tap a piece"
-      : s.game === "pool" ? "Your shot: press on the felt, drag back, let go" : "Your turn: tap a column")
-    : `@${s.players[turn ?? 0]?.username}'s turn`;
+  const res = resultText(s, pg.mySeat);
+  const status = res ? `${res.icon} ${res.title}`
+    : !b ? (a.id === me ? "Waiting for a guest to join…" : "Needs a second player")
+    : turn === pg.mySeat ? (s.game === "ludo" ? "Your turn: tap the big die" : s.game === "chess" ? "Your turn: tap a piece"
+      : s.game === "pool" ? "Your turn: press on the felt, drag back, let go" : "Your turn: tap a column")
+    : turnText(s, pg.mySeat);
   // Pool: who has solids or stripes, and the last shot's foul.
   const pool = s.game === "pool" ? (s.state as PoolState) : null;
 
@@ -118,7 +118,7 @@ export function PartyGameCard({ pg, me, isHost, present, onWatch }: {
         {[a, b].map((p, seat) => (
           <div key={seat} className={`flex items-center gap-2 rounded-xl px-2 py-1 text-xs font-bold ${turn === seat && !s.over ? "bg-white/15 ring-1 ring-amber-300" : "bg-white/5"}`}>
             <span className="w-3 h-3 rounded-full ring-1 ring-white/40" style={{ background: colors[seat] }} />
-            <span className="flex-1 truncate">{p ? (p.ai ? `🤖 ${p.username}` : p.id === me ? "You" : `@${p.username}`) : "Open seat"}{pool?.groups[seat] ? ` · ${pool.groups[seat]}` : ""}</span>
+            <span className="flex-1 truncate">{p ? (p.ai ? `🤖 ${p.username}` : p.id === me ? "You" : `${SIDES[s.game][seat]} · @${p.username}`) : "Open seat"}{pool?.groups[seat] ? ` · ${pool.groups[seat]}` : ""}</span>
             {tally[seat] > 0 && <span className="text-[10px] text-amber-300">🔮 {tally[seat]}</span>}
             {turn === seat && !s.over && b && <span className={`text-[10px] font-mono ${left <= 15 ? "text-rose-300" : "text-white/60"}`}>{left}s</span>}
           </div>
@@ -145,10 +145,7 @@ export function PartyGameCard({ pg, me, isHost, present, onWatch }: {
         {canClaim && (
           <button onClick={() => { gameAudio.playClickSound(); pg.claim(); }} className="h-8 px-3 rounded-full bg-emerald-600 text-[11px] font-black active:scale-95">🏳️ {otherGone ? "They left: claim win" : "Out of time: claim win"}</button>
         )}
-        {s.over && me && (
-          <button onClick={() => { gameAudio.playClickSound(); pg.start(s.game); onWatch(); }} className="h-8 px-3 rounded-full bg-fuchsia-600 text-[11px] font-black active:scale-95">🔁 Play {info.name}</button>
-        )}
-        {(isHost || s.over || (playing && !b)) && (
+        {(isHost || (playing && !b)) && !s.over && (
           <button onClick={() => { gameAudio.playClickSound(); pg.clear(); }} className="h-8 px-3 rounded-full bg-white/10 text-[11px] font-black text-white/80 active:scale-95">🧹 Clear board</button>
         )}
       </div>
@@ -165,14 +162,62 @@ export function PartyGameCard({ pg, me, isHost, present, onWatch }: {
             <div className="flex gap-1">
               {[a, b].map((p, seat) => (
                 <button key={seat} data-seat={seat} onClick={(e) => { gameAudio.playClickSound(); pg.predict(Number(e.currentTarget.dataset.seat)); }}
-                  className="flex-1 h-8 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black truncate px-2 active:scale-95">🔮 {p!.ai ? p!.username : `@${p!.username}`} wins</button>
+                  className="flex-1 h-8 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black truncate px-2 active:scale-95">🔮 {SIDES[s.game][seat]} wins</button>
               ))}
             </div>
           ) : (
-            <p className="text-[10px] text-white/60">🔮 You picked {s.players[mine]?.ai ? s.players[mine]?.username : `@${s.players[mine]?.username}`}</p>
+            <p className="text-[10px] text-white/60">🔮 You picked {SIDES[s.game][mine]}</p>
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * The result, for everyone at the party, as soon as a game ends: who won (from where you're standing: "You win!",
+ * "You lose", or "Red wins!"), then Rematch (the two players again), Play another (the picker) or Close.
+ */
+export function PartyGameResult({ pg, isHost, onPickAnother }: { pg: PartyGames; isHost: boolean; onPickAnother: () => void }) {
+  const s = pg.snap;
+  const [dismissed, setDismissed] = useState<string | null>(null);
+  const res = s ? resultText(s, pg.mySeat) : null;
+  const sound = s?.over ? `${s.id}:${pg.mySeat}` : "";
+  useEffect(() => {
+    if (!sound || !res) return;
+    if (res.won || pg.mySeat < 0) gameAudio.sfx(res.title === "It's a draw" ? "draw" : "win");
+    else gameAudio.sfx("lose");
+  }, [sound]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!s || !res || dismissed === s.id) return null;
+  const playing = pg.mySeat >= 0;
+  const both = !!s.players[1];
+  const close = () => {
+    gameAudio.playClickSound();
+    // The players and the host take the board down for everyone; anyone else just closes this.
+    if (playing || isHost) pg.clear();
+    else setDismissed(s.id);
+  };
+  return (
+    <div className="fixed inset-x-0 top-[calc(env(safe-area-inset-top)+5rem)] z-40 flex justify-center px-4 pointer-events-none">
+      <div className="pointer-events-auto relative w-full max-w-sm overflow-hidden rounded-3xl bg-slate-950/95 text-white shadow-2xl ring-2 ring-amber-300/70 p-5 text-center animate-in zoom-in-90 duration-300">
+        {res.won && (
+          <div className="pointer-events-none absolute inset-0">
+            {["🎉", "✨", "🎊", "⭐", "🎉", "✨", "🎊", "⭐"].map((e, i) => (
+              <span key={i} className="absolute text-xl animate-[party-cheer_2.4s_ease-out_infinite]" style={{ left: `${6 + i * 12}%`, bottom: "8%", animationDelay: `${(i % 4) * 0.35}s` }}>{e}</span>
+            ))}
+          </div>
+        )}
+        <div className="text-6xl leading-none">{res.icon}</div>
+        <p className={`mt-2 text-3xl font-black ${res.won ? "text-amber-300" : "text-white"}`}>{res.title}</p>
+        <p className="mt-1 text-xs text-white/60">{res.sub}</p>
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <button disabled={!playing || !both} onClick={() => { gameAudio.playClickSound(); pg.rematch(); }}
+            className="h-11 rounded-2xl bg-fuchsia-600 text-xs font-black active:scale-95 disabled:opacity-30">🔁 Rematch</button>
+          <button onClick={() => { gameAudio.playClickSound(); setDismissed(s.id); onPickAnother(); }}
+            className="h-11 rounded-2xl bg-white/15 text-xs font-black active:scale-95">🎲 Play another</button>
+          <button onClick={close} className="h-11 rounded-2xl bg-white/10 text-xs font-black text-white/80 active:scale-95">✕ Close</button>
+        </div>
+      </div>
     </div>
   );
 }

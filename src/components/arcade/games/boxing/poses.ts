@@ -13,6 +13,8 @@ export const POSE = {
   block: { upper: [-0.25, 0.75, 0.22], fore: [0.92, 0.22, -0.3] },
   /** Straight punches at full extension. */
   extend: { upper: [0.08, 1, -0.06], fore: [0.08, 1, -0.06] },
+  /** A body shot: driven low and forward into the ribs. */
+  body: { upper: [-0.42, 0.9, -0.02], fore: [-0.22, 0.97, -0.08] },
   /** A hook at the moment it lands: elbow out, forearm sweeping across. */
   hook: { upper: [0.08, 0.4, 0.92], fore: [0.02, 0.75, -0.66] },
   /** An uppercut at the top: driving up and through. */

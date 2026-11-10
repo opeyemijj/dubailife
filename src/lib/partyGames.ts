@@ -61,6 +61,32 @@ export function turnOf(s: PartyGameSnap): number | null {
   return MODULES[s.game].turnOf?.(s.state) ?? null;
 }
 
+/** Each side's colour, which is how people watching tell the players apart. */
+export const SIDES: Record<PartyGameId, [string, string]> = {
+  connect4: ["Red", "Yellow"], chess: ["White", "Black"], ludo: ["Red", "Yellow"], pool: ["Green", "Blue"],
+};
+
+/** Whose turn, from where I'm standing: "Your turn" / "Their turn" for the players, the colour for everyone else. */
+export function turnText(s: PartyGameSnap, mySeat: number): string {
+  const t = turnOf(s);
+  if (t === null) return "";
+  if (!s.players[1]) return "Waiting for a player";
+  if (mySeat >= 0) return t === mySeat ? "Your turn" : "Their turn";
+  return `${SIDES[s.game][t]}'s turn`;
+}
+
+/** The result, from where I'm standing. */
+export function resultText(s: PartyGameSnap, mySeat: number): { icon: string; title: string; sub: string; won: boolean } | null {
+  if (!s.over) return null;
+  const w = s.over.winners;
+  const name = PARTY_GAMES[s.game].name;
+  if (!w.length) return { icon: "🤝", title: "It's a draw", sub: name, won: false };
+  const winner = s.players[w[0]];
+  const how = s.over.claimed ? " (the other player left)" : "";
+  if (mySeat >= 0) return w[0] === mySeat ? { icon: "🏆", title: "You win!", sub: `${name}${how}`, won: true } : { icon: "😞", title: "You lose", sub: `${name}${how}`, won: false };
+  return { icon: "🏆", title: `${SIDES[s.game][w[0]]} wins!`, sub: `${winner?.ai ? winner.username : `@${winner?.username}`} · ${name}${how}`, won: true };
+}
+
 export interface Cheer { id: string; emoji: string; who: string; seat: number; at: number }
 
 /**
@@ -142,16 +168,18 @@ export function usePartyGames({ me, isHost, present }: { me: { id: string; usern
     publish(bump(cur, { players: [cur.players[0], AI(cur.game)], turnAt: now() }));
   }, [me, publish, bump]);
 
-  /** Who won, announced once by whoever finished it. */
-  const announce = useCallback((s: PartyGameSnap) => {
-    if (!s.over) return;
-    const name = PARTY_GAMES[s.game].name;
-    const [a, b] = s.players;
-    const w = s.over.winners;
-    const text = !w.length ? `🤝 ${name}: @${a.username} and @${b?.username ?? "?"} drew!`
-      : `🏆 @${s.players[w[0]]?.username ?? "?"} beat @${s.players[1 - w[0]]?.username ?? "?"} at ${name}${s.over.claimed ? " (they walked off)" : ""}!`;
-    emitRef.current?.({ type: "chat", text });
-  }, []);
+  /** The same game again with the same two players, the other one starting. */
+  const rematch = useCallback(() => {
+    const cur = snapRef.current;
+    if (!me || !cur || !cur.over || !cur.players[1] || !cur.players.some((p) => p && p.id === me.id)) return;
+    const t = now();
+    const [a, b] = cur.players;
+    publish({
+      id: `${me.id.slice(0, 8)}-${t.toString(36)}`, game: cur.game, seq: 1, by: me.id,
+      players: b.ai ? [a, b] : [b, a],
+      state: MODULES[cur.game].init(2, Math.floor(Math.random() * 1e9)), startedAt: t, turnAt: t, over: null,
+    });
+  }, [me, publish]);
 
   /** A move: the full new game state. */
   const move = useCallback((state: unknown) => {
@@ -162,8 +190,7 @@ export function usePartyGames({ me, isHost, present }: { me: { id: string; usern
     const next = bump(cur, { state, over: res ? { winners: res.winners } : null });
     if (MODULES[cur.game].turnOf?.(state) !== prevTurn) next.turnAt = now();
     publish(next);
-    if (next.over) announce(next);
-  }, [bump, publish, announce]);
+  }, [bump, publish]);
 
   /** The other player left or ran out the clock: the game is mine. */
   const claim = useCallback(() => {
@@ -171,8 +198,7 @@ export function usePartyGames({ me, isHost, present }: { me: { id: string; usern
     if (!cur || cur.over || mySeat < 0) return;
     const next = bump(cur, { over: { winners: [mySeat], claimed: true } });
     publish(next);
-    announce(next);
-  }, [mySeat, bump, publish, announce]);
+  }, [mySeat, bump, publish]);
 
   const clear = useCallback(() => {
     const cur = snapRef.current;
@@ -223,7 +249,7 @@ export function usePartyGames({ me, isHost, present }: { me: { id: string; usern
     // eslint-disable-next-line react-hooks/exhaustive-deps -- presentKey stands for present
   }, [snap?.id, me?.id, isHost, presentKey]);
 
-  return { snap, mySeat, cheers, predictions, receive, bindEmit, start, join, playComputer, move, claim, clear, cheer, predict };
+  return { snap, mySeat, cheers, predictions, receive, bindEmit, start, join, playComputer, move, claim, clear, cheer, predict, rematch };
 }
 
 export type PartyGames = ReturnType<typeof usePartyGames>;

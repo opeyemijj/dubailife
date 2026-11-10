@@ -84,6 +84,10 @@ export interface SpaceRoom {
   /** A party's own Space: where the party is (so it leads there, not to the Spaces app), and whose party it is. */
   partyRoute?: string;
   partyHost?: string;
+  /** Private 1-on-1 space: only host and cohost allowed, no audience, not publicly joinable */
+  isPrivate?: boolean;
+  maxCapacity?: number;
+  allowedUserIds?: string[];
 }
 
 const ICE_SERVERS: RTCIceServer[] = [
@@ -364,16 +368,23 @@ function connectLobby() {
     .on("broadcast", { event: "space-end" }, ({ payload }) => {
       if (!payload?.id) return;
       const endedId = payload.id as string;
+      const wasMyActiveRoom = state.activeSpaceId === endedId;
+      const endedRoom = state.rooms.find((r) => r.id === endedId);
+      const wasPrivate = Boolean(endedRoom?.isPrivate);
       roomLastSeen.delete(endedId);
-      if (state.activeSpaceId === endedId) {
+      if (wasMyActiveRoom) {
         cleanupActiveRoom();
       }
       state = {
         ...state,
         rooms: state.rooms.filter((r) => r.id !== endedId),
-        activeSpaceId: state.activeSpaceId === endedId ? null : state.activeSpaceId,
+        activeSpaceId: wasMyActiveRoom ? null : state.activeSpaceId,
       };
+      saveSpaceSession();
       emit();
+      if (wasMyActiveRoom && wasPrivate && typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("dubai:reinit-party-space"));
+      }
     })
     .subscribe((status) => {
       // Ask live hosts to announce, and auto-restore any active Host/Co-Host/Speaker session after a network blip or reload.
@@ -976,8 +987,14 @@ export function hostNewSpace(opts: {
   id?: string;
   partyRoute?: string;
   partyHost?: string;
-  /** Pre-authorized speaker for 1-on-1 private voice calls */
+  /** Pre-authorized co-host for 1-on-1 private voice calls */
+  invitedCohostId?: string;
+  /** Pre-authorized speaker for audio rooms */
   invitedSpeakerId?: string;
+  /** Private 1-on-1 space: only host and cohost allowed, no audience, not publicly joinable */
+  isPrivate?: boolean;
+  maxCapacity?: number;
+  allowedUserIds?: string[];
   stageSeats?: Record<string, SpaceSeatSnapshot>;
   /** When it ends, if not after the usual hour (a party's Space lasts the whole party). */
   endsAt?: number;
@@ -1029,6 +1046,9 @@ export function hostNewSpace(opts: {
     title: opts.title.trim() || `${me.username}'s Dubai Space`,
     partyRoute: opts.partyRoute,
     partyHost: opts.partyHost,
+    isPrivate: opts.isPrivate,
+    maxCapacity: opts.maxCapacity ?? (opts.isPrivate ? 2 : undefined),
+    allowedUserIds: opts.allowedUserIds,
     hostId: me.id,
     hostUsername: me.username,
     hostPreset: me.preset,
@@ -1039,6 +1059,7 @@ export function hostNewSpace(opts: {
     activity: { ...activity, hypePoints: 10, hypeGoal: 100 },
     stageSeats: {
       [me.id]: { role: "host", muted: false, handRaised: false },
+      ...(opts.invitedCohostId ? { [opts.invitedCohostId]: { role: "cohost" as const, muted: false, handRaised: false } } : {}),
       ...(opts.invitedSpeakerId ? { [opts.invitedSpeakerId]: { role: "speaker" as const, muted: false, handRaised: false } } : {}),
       ...(opts.stageSeats ?? {}),
     },
@@ -1119,6 +1140,25 @@ export function joinSpace(spaceId: string, initialRoomSnapshot?: SpaceRoom): { o
   const me = meInfo();
   const existingPart = room.participants.find((p) => p.id === me.id);
   const alreadyIn = Boolean(existingPart);
+
+  // Private 1-on-1 space: strictly host and allowed co-host only; no audience or outsiders
+  if (room.isPrivate) {
+    const isAllowed = room.hostId === me.id || (room.allowedUserIds && room.allowedUserIds.includes(me.id));
+    if (!isAllowed) {
+      return {
+        ok: false,
+        reason: "This is a private 1-on-1 Space. Only the host and invited co-host can enter.",
+      };
+    }
+    const maxCap = room.maxCapacity ?? 2;
+    if (!alreadyIn && room.participants.length >= maxCap) {
+      return {
+        ok: false,
+        reason: "This 1-on-1 Space is full (Host & Co-host only).",
+      };
+    }
+  }
+
   if (!alreadyIn && room.participants.length >= MAX_ROOM_CAPACITY) {
     return {
       ok: false,
@@ -1203,13 +1243,16 @@ export function leaveSpace() {
   const me = meInfo();
   const room = state.rooms.find((r) => r.id === spaceId);
 
+  const isPrivateCall = Boolean(room?.isPrivate);
+
   if (roomChannel) {
     roomChannel
       .send({ type: "broadcast", event: "participant-leave", payload: { userId: me.id } })
       .catch(() => {});
   }
 
-  if (room && room.hostId === me.id && lobbyChannel) {
+  // Ending a space: if host or in a 1-on-1 private call, notify lobby so both users exit cleanly
+  if (room && (room.hostId === me.id || isPrivateCall) && lobbyChannel) {
     lobbyChannel
       .send({ type: "broadcast", event: "space-end", payload: { id: spaceId } })
       .catch(() => {});
@@ -1228,11 +1271,16 @@ export function leaveSpace() {
           participants: r.participants.filter((p) => p.id !== me.id),
         };
       })
-      .filter((r) => r.hostId !== me.id || r.id !== spaceId),
+      .filter((r) => (!isPrivateCall && r.hostId !== me.id) || r.id !== spaceId),
   };
   saveSpaceSession();
   gameAudio.sfx("tap");
   emit();
+
+  // If ending a private 1-on-1 call, signal the party Space to re-initialize immediately
+  if (isPrivateCall && typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("dubai:reinit-party-space"));
+  }
 }
 
 /** Toggle microphone mute/unmute when on stage */
@@ -1532,6 +1580,9 @@ export const spaceExists = (id: string) => state.rooms.some((r) => r.id === id);
 
 /** The Space you're in right now, if any. */
 export const activeSpaceId = () => state.activeSpaceId;
+
+/** The active room snapshot you're in right now, if any. */
+export const activeSpaceRoom = () => state.rooms.find((r) => r.id === state.activeSpaceId) ?? null;
 
 export function useSpacesStore(): SpacesStoreState {
   return useSyncExternalStore(

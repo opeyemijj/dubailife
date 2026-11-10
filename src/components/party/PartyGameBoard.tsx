@@ -16,7 +16,10 @@ import { ludoRules, type LudoState } from "@/components/games/Ludo";
 import type { ChessState } from "@/components/games/ChessGame";
 import type { PoolState } from "@/components/games/Pool";
 import { PoolTable3D } from "./PoolTable3D";
-import { turnOf, type PartyGameSnap } from "@/lib/partyGames";
+import { resultText, turnOf, turnText, type PartyGameId, type PartyGameSnap } from "@/lib/partyGames";
+
+/** Each side's colour on the board (the dot beside "Their turn"). */
+const SIDE_COLOR: Record<PartyGameId, [string, string]> = { connect4: ["#dc2626", "#facc15"], chess: ["#f8f4ea", "#1c1917"], ludo: ["#dc2626", "#eab308"], pool: ["#16a34a", "#2563eb"] };
 import { gameAudio } from "@/utils/gameAudio";
 
 /** Where the board stands: the pool's spot, east of the house (HomeGrounds GROUNDS.pool). */
@@ -39,6 +42,7 @@ export function PartyGameBoard({ snap, mySeat, onMove, pool, grounds, lightsOut 
   if (!snap) return null;
   const turn = turnOf(snap);
   const canMove = mySeat >= 0 && turn === mySeat && !!snap.players[1];
+  const result = resultText(snap, mySeat);
   return (
     <group position={[PARTY_BOARD_AT[0], 0, PARTY_BOARD_AT[1]]}>
       <Deck pool={pool} grounds={grounds} />
@@ -49,12 +53,18 @@ export function PartyGameBoard({ snap, mySeat, onMove, pool, grounds, lightsOut 
         {snap.game === "ludo" && <Ludo3D state={snap.state as LudoState} canMove={canMove} mySeat={mySeat} onMove={onMove} />}
         {snap.game === "pool" && <PoolTable3D state={snap.state as PoolState} canMove={canMove} onMove={onMove} cover={pool} />}
       </group>
+      {/* Over the board, for everyone: whose turn (yours / theirs, or the colour), then the result, big. */}
       <Html position={snap.game === "connect4" ? [0, 3.6, 0] : snap.game === "pool" ? [0, 3.1, 0] : [-1.2, 2.3, -1.2]} center distanceFactor={14} zIndexRange={[10, 0]} style={{ pointerEvents: "none" }}>
-        <div className="whitespace-nowrap rounded-full bg-slate-950/80 px-3 py-1 text-[13px] font-black text-white shadow-lg">
-          {snap.over ? (snap.over.winners.length ? `🏆 @${snap.players[snap.over.winners[0]]?.username}` : "🤝 Draw")
-            : !snap.players[1] ? `@${snap.players[0].username} needs a player`
-            : `${turn === 0 ? "▶ " : ""}@${snap.players[0].username}  vs  @${snap.players[1].username}${turn === 1 ? " ◀" : ""}`}
-        </div>
+        {result ? (
+          <div className={`whitespace-nowrap rounded-2xl px-4 py-2 text-[22px] font-black shadow-2xl ring-2 ${result.won ? "bg-amber-400 text-slate-950 ring-amber-200 animate-pulse" : "bg-slate-950/90 text-white ring-white/30"}`}>
+            {result.icon} {result.title}
+          </div>
+        ) : (
+          <div className={`whitespace-nowrap rounded-full px-3 py-1 text-[14px] font-black shadow-lg ${canMove ? "bg-emerald-500 text-emerald-950 animate-pulse" : "bg-slate-950/80 text-white"}`}>
+            {turn !== null && <span className="mr-1.5 inline-block h-3 w-3 rounded-full align-middle ring-1 ring-white/60" style={{ background: SIDE_COLOR[snap.game][turn] }} />}
+            {turnText(snap, mySeat)}
+          </div>
+        )}
       </Html>
     </group>
   );
@@ -168,8 +178,9 @@ function ConnectFour3D({ state, canMove, onMove }: { state: C4State; canMove: bo
 function Disc({ x, y, color, glow }: { x: number; y: number; color: string; glow: boolean }) {
   const ref = useRef<THREE.Mesh>(null);
   const fall = useRef({ y: y + 2.4, v: 0 });
-  useFrame((_, dt) => {
+  useFrame((st, dt) => {
     const m = ref.current, f = fall.current;
+    if (m && glow) { const k = 1 + Math.abs(Math.sin(st.clock.elapsedTime * 5)) * 0.18; m.scale.set(k, 1, k); }
     if (!m || f.y === y) return;
     f.v += 14 * dt;
     f.y -= f.v * dt;
