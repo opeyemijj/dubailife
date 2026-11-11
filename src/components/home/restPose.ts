@@ -14,7 +14,7 @@ export type RestPose = {
 };
 
 // The sit clip lowers the hips to about this height above the feet, slightly behind them.
-const CLIP_SEAT_HEIGHT = 0.46;
+export const CLIP_SEAT_HEIGHT = 0.46;
 const CLIP_SEAT_BACK = 0.12;
 // How far the back of a lying body is below its feet line once laid flat.
 const LYING_BACK = -0.1;

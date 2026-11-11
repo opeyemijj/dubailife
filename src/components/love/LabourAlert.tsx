@@ -6,8 +6,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCitizen } from "@/lib/citizenStore";
-import { useFamily, type Child } from "@/lib/love";
+import { updateCitizen, useCitizen } from "@/lib/citizenStore";
+import { calculatePregnancyStage, useFamily, type Child } from "@/lib/love";
 import { expecting, labourOpensAt } from "@/components/arcade/games/maternity/Clinic";
 import { phoneRing } from "@/components/transit/transitAudio";
 
@@ -19,6 +19,22 @@ export function LabourAlert() {
   const router = useRouter();
   const [child, setChild] = useState<Child | null>(null);
   const me = citizen?.id;
+
+  // The bump, everywhere: the mother shows her trimester while she's expecting, and it's gone once the baby's
+  // born (checked every minute, so it goes at the birth even with the app left open).
+  const bump = citizen?.look?.pregnantWeeks ?? 0;
+  useEffect(() => {
+    if (!me || !family) return;
+    const sync = () => {
+      const now = Date.now();
+      const c = family.children.find((k) => k.mother.id === me && Date.parse(k.dueAt) > now);
+      const want = c ? calculatePregnancyStage(c, now).trimester : 0;
+      if (want !== bump) updateCitizen((x) => ({ ...x, look: { ...(x.look ?? { gender: "woman" }), pregnantWeeks: want || undefined } }));
+    };
+    sync();
+    const t = setInterval(sync, 60_000);
+    return () => clearInterval(t);
+  }, [me, family, bump]);
 
   useEffect(() => {
     const check = () => {

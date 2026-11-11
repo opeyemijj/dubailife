@@ -1,5 +1,5 @@
 {
-  "_note": "The Family app (was Hayati): partners, relatives, babies and nannies. Numbers are mirrored in supabase/migrations/*_family.sql and checked by scripts/check-life-config.mjs.",
+  "_note": "The Family app (was Hayati): partners, relatives, babies and nannies. Numbers are mirrored in supabase/migrations/*_family.sql and checked by scripts/check-life-config.mjs. Child stages (`stages`) are by days since birth: sitting up, crawling and first steps come within the first two weeks; a parent can carry a baby until `carryUntilDay`.",
   "maxWives": 4,
   "discovery": {
     "chancePercent": 10,
@@ -71,63 +71,70 @@
   ],
   "stages": [
     {
-      "week": 0,
+      "day": 0,
       "id": "newborn",
       "label": "Newborn",
       "icon": "👶",
       "text": "Tiny, sleepy and always hungry. Lots of cuddles."
     },
     {
-      "week": 1,
+      "day": 3,
+      "id": "sitting",
+      "label": "Sitting up",
+      "icon": "🧸",
+      "text": "Sitting up all by themselves, wobbling, and grinning at everyone."
+    },
+    {
+      "day": 5,
       "id": "crawling",
       "label": "Crawling",
       "icon": "🍼",
       "text": "On the move! Crawling everywhere and grabbing everything."
     },
     {
-      "week": 2,
+      "day": 10,
       "id": "first-steps",
       "label": "First steps",
       "icon": "🚶",
       "text": "Took their first wobbly steps today. Have the camera ready!"
     },
     {
-      "week": 3,
+      "day": 14,
       "id": "toddler",
       "label": "Running around",
       "icon": "🏃",
       "text": "Running around the house, laughing and exploring."
     },
     {
-      "week": 4,
+      "day": 28,
       "id": "talking",
       "label": "First words",
       "icon": "🗣️",
       "text": "Said their first words, and now they won't stop talking."
     },
     {
-      "week": 5,
+      "day": 35,
       "id": "nursery",
       "label": "Nursery",
       "icon": "🎨",
       "text": "Off to nursery: painting, songs and new friends."
     },
     {
-      "week": 7,
+      "day": 49,
       "id": "school",
       "label": "Big school",
       "icon": "🎒",
       "text": "First day at school with a brand-new bag."
     },
     {
-      "week": 10,
+      "day": 70,
       "id": "kid",
       "label": "Growing up",
       "icon": "⚽",
       "text": "Football after school, homework, and big questions."
     },
     {
-      "week": 14,
+      "day": 98,
       "id": "teen",
       "label": "Teenager",
       "icon": "🎧",
@@ -174,5 +181,6 @@
     "deliverHoursBefore": 24,
     "healthyStartDays": 7,
     "healthyStartBonus": 25
-  }
+  },
+  "carryUntilDay": 28
 }

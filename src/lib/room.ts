@@ -16,6 +16,7 @@ import { supabase } from "@/lib/supabase/client";
 import { refreshCitizen, useCitizen } from "@/lib/citizenStore";
 import type { AvatarLookProps } from "@/components/avatar/roster";
 import type { PartyGameSnap } from "@/lib/partyGames";
+import type { BabySpot } from "@/lib/love";
 import type { AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 import { sendPushNotification } from "@/lib/push/client";
 import { AWAY_EVENT, isIdle } from "@/lib/idle";
@@ -91,7 +92,9 @@ export type RoomEvent =
   | { type: "party_cheer"; gameId: string; seat: number; emoji: string }
   | { type: "party_predict"; gameId: string; seat: number }
   // Someone just arrived: whoever's playing sends the board straight away.
-  | { type: "party_sync" };
+  | { type: "party_sync" }
+  // A parent picked their baby up or put them down (src/components/home/useBabies.tsx).
+  | { type: "baby"; child: number; spot: BabySpot };
 
 export type Received = RoomEvent & { id: string; from: Peer; to?: string; at: number };
 
@@ -249,7 +252,7 @@ export function useRoom(roomId: string | null, me: Me, onEvent?: (e: Received) =
         }
         // The party board's traffic (snapshots re-sent every few seconds, cheers, predictions) goes straight to the
         // page: it isn't room news, so it never fills the events list or the social feed.
-        if (e.type === "party_game" || e.type === "party_cheer" || e.type === "party_predict" || e.type === "party_sync") {
+        if (e.type === "party_game" || e.type === "party_cheer" || e.type === "party_predict" || e.type === "party_sync" || e.type === "baby") {
           handler.current?.(e);
           return;
         }

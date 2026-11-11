@@ -37,6 +37,8 @@ export interface MyLove {
   outgoing: Array<{ id: number; kind: "date" | "propose" | "baby"; to: string }>;
   invitations: Array<{ code: string; startsAt: string; venue: string }>;
   candidates: Person[];
+  /** Relationships that ended, newest first: `divorced` when they'd married, else a break-up. */
+  past?: Array<{ partner: Person; divorced: boolean; since: string; marriedAt: string | null; endedAt: string; endedByMe: boolean }>;
 }
 export interface WeddingView {
   code: string; venue: string; startsAt: string; guestsMax: number; ceremony: "civil" | "religious"; status: "planned" | "done" | "missed" | "cancelled";
@@ -167,7 +169,13 @@ export interface Child {
   /** Hospital scans done (1 first, 2 anatomy, 3 growth), and the birth at the hospital, if it happened there. */
   scans?: number[]; deliveredAt?: string | null; bornAt?: string | null; birthScore?: number | null;
   careToday: Array<"feed" | "play" | "bath">; careRecent: number;
+  /** Where they are at home (supabase/migrations/*_baby_spot.sql): carried by a parent, or put down somewhere. */
+  spot?: BabySpot | null;
 }
+/** Where a baby is: in a parent's arms, or put down (in a bed, on a seat, on the floor) on a floor of the home. */
+export type BabySpot =
+  | { carriedBy: string }
+  | { flat?: string | null; level: number; x: number; y: number; z: number; yaw: number; on: "bed" | "chair" | "floor" };
 export interface MyFamily { relatives: Relative[]; children: Child[] }
 
 /** What a relative is called, by their gender: a sibling who's a man is a brother. */
@@ -175,12 +183,13 @@ export const relationLabel = (relation: Relation, gender?: string | null) => {
   const r = FAMILY.relations.find((x) => x.id === relation);
   return r ? (gender === "woman" ? r.woman : r.man) : relation;
 };
-/** A child's stage now: newborn, crawling, first steps… a new one each week after birth. */
+/** A child's stage now: newborn, sitting up, crawling, first steps… as the days pass after birth. */
 export function stageOf(child: Pick<Child, "dueAt">, now: number) {
-  const weeks = Math.max(0, Math.floor((now - Date.parse(child.dueAt)) / (7 * 86_400_000)));
-  const stage = [...FAMILY.stages].reverse().find((s) => weeks >= s.week) ?? FAMILY.stages[0];
-  const next = FAMILY.stages.find((s) => s.week > weeks) ?? null;
-  return { weeks, stage, next };
+  const days = Math.max(0, Math.floor((now - Date.parse(child.dueAt)) / 86_400_000));
+  const weeks = Math.floor(days / 7);
+  const stage = [...FAMILY.stages].reverse().find((s) => days >= s.day) ?? FAMILY.stages[0];
+  const next = FAMILY.stages.find((s) => s.day > days) ?? null;
+  return { days, weeks, stage, next };
 }
 /** How happy a child is (0 to 100): the care they've had over the last 3 days, or full with a nanny. */
 export function happinessOf(child: Pick<Child, "careRecent" | "nannyUntil" | "deliveredAt">, now: number) {
@@ -250,6 +259,8 @@ export function useFamily(me: string | null | undefined): MyFamily | null {
 const afterFamily = async <T,>(p: Promise<{ data?: T; error?: string }>) => { const r = await p; await Promise.all([reloadFamily(), reloadLove(), refreshCitizen()]); return r; };
 export const askForBaby = (partner?: string) => afterFamily(call<number>("ask_for_baby", who(partner)));
 export const nameChild = (child: number, name: string) => afterFamily(call<null>("name_child", { p_child: child, p_name: name }));
+/** Saves where a baby is (carried by me, or put down). The other parent hears it live from the home's room too. */
+export const setChildSpot = (child: number, spot: BabySpot) => call<null>("set_child_spot", { p_child: child, p_spot: spot });
 export const careForChild = (child: number, action: string) => afterFamily(call<null>("care_for_child", { p_child: child, p_action: action }));
 export const recordScan = (child: number, stage: number, hospital: string) => afterFamily(call<number[]>("record_scan", { p_child: child, p_stage: stage, p_hospital: hospital }));
 export const deliverBaby = (child: number, hospital: string, score: number) => afterFamily(call<{ id: number; bornAt: string; dueAt: string }>("deliver_baby", { p_child: child, p_hospital: hospital, p_score: score }));

@@ -22,6 +22,8 @@ import { gameAudio } from "@/utils/gameAudio";
 import { useNow } from "@/lib/dubaiClock";
 import { onUserEvent } from "@/lib/userChannel";
 import { partyDoor } from "@/lib/invites";
+import { openArcade } from "@/components/arcade/launcher";
+import HALLS from "@/data/venues/halls.json";
 import { AppScreen, aed, Big, Card, Note } from "./AppScreen";
 
 const Face = ({ p, size = 56 }: { p: Pick<Person, "look">; size?: number }) => (
@@ -123,6 +125,21 @@ function Partners({ love, busy, run, me }: { love: NonNullable<ReturnType<typeof
       )}
       {rel && <Together key={rel.id} rel={rel} busy={busy} run={run} me={me} many={rels.length > 1} />}
       {love.canDate && <Single candidates={love.candidates} gender={love.gender} busy={busy} run={run} taken={rels.length > 0} />}
+      {/* What came before: divorced (they'd married) or broke up. */}
+      {!!love.past?.length && (
+        <Card>
+          <p className="text-xs font-black uppercase tracking-wide text-slate-400 mb-1.5">Past</p>
+          <div className="space-y-1.5">
+            {love.past.map((x) => (
+              <div key={`${x.partner.id}-${x.endedAt}`} className="flex items-center gap-2 text-sm">
+                <span className="text-lg">{x.divorced ? "💔" : "🥀"}</span>
+                <span className="flex-1 min-w-0 truncate"><span className="font-bold">{x.divorced ? "Divorced" : "Broke up"}</span> · @{x.partner.username}</span>
+                <span className="text-xs text-slate-400 shrink-0">{new Date(x.endedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {love.outgoing.map((o) => (
         <div key={o.id} className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-slate-100 text-sm">
@@ -320,8 +337,22 @@ function Planner({ onDone, run, busy, who }: { onDone: () => void; run: Run; bus
         </select>
       </div>
       <div className="flex justify-between font-black text-lg pt-1"><span>Total</span><span>{aed(cost)}</span></div>
-      <p className="text-xs text-slate-500">You pay now. Cancelling later refunds half. On the day, you both say &ldquo;I do&rdquo; on the wedding page during the 30-minute ceremony.</p>
+      <p className="text-xs text-slate-500">You pay now. Cancelling later refunds half. On the day, you both say &ldquo;I do&rdquo; on the wedding page during the ceremony; once the wedding&apos;s over you&apos;re married.</p>
       <Big tone="green" disabled={busy} onClick={async () => { await run(() => planWedding(venue, startsAt, guests, ceremony, who), "💒 Booked! Share the invitation with your guests."); onDone(); }}>Book the wedding · {aed(cost)}</Big>
+      {/* The full event: a hotel hall you pick and pay for, decorated your way or by a decorator you hire, music,
+          and guests walking in live from your invite. Held after your engagement, it marries you when it ends. */}
+      <div className="rounded-2xl bg-white/70 p-3 space-y-2">
+        <p className="font-black">🏛️ Or hold it in an event hall</p>
+        <p className="text-xs text-slate-500">Pick the hall and pay for it, choose catering, a DJ and photos, decorate it yourself or hire a decorator, and invite your guests. They come in live, with the radio on, for the zaffa, the first dance, the cake and the bouquet.</p>
+        <div className="grid grid-cols-2 gap-1.5">
+          {HALLS.halls.map((h) => (
+            <button key={h.id} data-hall={h.id} onClick={(e) => { gameAudio.playClickSound(); openArcade({ game: "hall", params: { hall: e.currentTarget.dataset.hall, type: "wedding" } }); }}
+              className="rounded-xl bg-white px-2.5 py-2 text-left text-xs font-bold shadow-sm active:scale-95">
+              {h.name}<span className="block text-[10px] font-semibold text-slate-400">up to {h.capacity.toLocaleString()} guests</span>
+            </button>
+          ))}
+        </div>
+      </div>
       <button onClick={onDone} className="w-full text-sm font-semibold text-slate-500">Back</button>
     </Card>
   );
@@ -373,16 +404,8 @@ function Kids({ rels, kids, busy, run, me }: { rels: Relationship[]; kids: Child
     if (pregnancyInfo && expectingChild) {
       const isMother = expectingChild.mother.id === me || expectingChild.mother.username === me;
       if (isMother || citizen?.look?.gender === "woman") {
+        // The avatar's bump itself is kept in step app-wide (LabourAlert), and taken off after the birth.
         setBumpPreview(pregnancyInfo.trimester);
-        if (citizen?.look?.pregnantWeeks !== pregnancyInfo.trimester) {
-          updateCitizen((c) => ({
-            ...c,
-            look: {
-              ...(c.look ?? { gender: "woman" }),
-              pregnantWeeks: pregnancyInfo.trimester,
-            },
-          }));
-        }
       }
     }
   }, [pregnancyInfo?.trimester, expectingChild?.id, me, citizen?.look?.gender, citizen?.look?.pregnantWeeks]);
@@ -680,17 +703,17 @@ function ChildCard({ child: k, busy, run, me, now }: { child: Child; busy: boole
     );
   }
 
-  const { weeks, stage, next } = stageOf(k, now);
+  const { days, weeks, stage, next } = stageOf(k, now);
   const happy = happinessOf(k, now);
   const nanny = k.nannyUntil && Date.parse(k.nannyUntil) > now;
-  const nextIn = next ? Math.max(1, Math.ceil((Date.parse(k.dueAt) + next.week * 7 * 86_400_000 - now) / 86_400_000)) : null;
+  const nextIn = next ? Math.max(1, Math.ceil((Date.parse(k.dueAt) + next.day * 86_400_000 - now) / 86_400_000)) : null;
   return (
     <Card className="bg-gradient-to-br from-amber-50 to-pink-50">
       <div className="flex items-center gap-3">
         <span className="w-16 h-16 rounded-full bg-white flex items-center justify-center text-4xl shrink-0">{stage.icon}</span>
         <div className="flex-1 min-w-0">
           <p className="text-xl font-black truncate">{display} {k.gender === "boy" ? "👦" : "👧"}</p>
-          <p className="text-sm font-semibold text-rose-600">{stage.label} · {weeks === 0 ? "first week" : `${weeks} week${weeks === 1 ? "" : "s"} old`}</p>
+          <p className="text-sm font-semibold text-rose-600">{stage.label} · {days === 0 ? "born today" : days < 14 ? `${days} day${days === 1 ? "" : "s"} old` : `${weeks} weeks old`}</p>
           <p className="text-sm text-slate-500">with @{other.username}</p>
         </div>
       </div>

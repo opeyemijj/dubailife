@@ -23,6 +23,7 @@ import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyPeople } from "@/components/invite/PartyPeople";
 import { PartyActions } from "@/components/invite/PartyActions";
 import { usePartyBoard } from "@/components/party/usePartyBoard";
+import { useBabies } from "@/components/home/useBabies";
 import {
   drinkInHand,
   PartyHostesses,
@@ -72,7 +73,7 @@ import {
   type PlacingState,
   type CandidatePlacement,
 } from "@/components/home/ApartmentRoom";
-import { myHousehold, stageOf, useFamily, type SharedHome } from "@/lib/love";
+import { myHousehold, type SharedHome } from "@/lib/love";
 import { onUserEvent } from "@/lib/userChannel";
 import { useNow } from "@/lib/dubaiClock";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -634,37 +635,17 @@ export default function HomePage() {
     homeOff?.id,
     housingTier,
   ]);
-  // Your children at home, at their age: a newborn lying down, a crawler sitting, then up and about, growing taller
-  // each week (Family app for their care). Tap one to open the Family app.
-  const family = useFamily(citizen?.id);
-  const nowMs = useNow();
-  const kidsAtHome: Person[] = (family?.children ?? [])
-    .filter((c) => c.born)
-    .slice(0, 6)
-    .map((c, i) => {
-      const { weeks, stage } = stageOf(c, nowMs);
-      const scale = Math.min(0.75, 0.32 + weeks * 0.05);
-      return {
-        look: { gender: c.gender === "girl" ? "woman" : "man" },
-        position: [-1.6 + (i % 3) * 0.9, 0, 1.6 + Math.floor(i / 3) * 0.9] as [
-          number,
-          number,
-          number,
-        ],
-        rotation: Math.PI,
-        animation:
-          stage.id === "newborn"
-            ? "sleep"
-            : stage.id === "crawling"
-              ? "sit"
-              : weeks < 4
-                ? "wave"
-                : "idle",
-        scale,
-        label: `${stage.icon} ${c.name ?? (c.gender === "girl" ? "Baby girl" : "Baby boy")} · ${stage.label}`,
-        onClick: () => openPhone("hayati"),
-      };
-    });
+  // Living together: the home I share with my partner (as host or having moved in), when it's the one I'm in.
+  // Both of us are in its live room, so we see each other move about the house.
+  const sharedHere = [hostShare, guestShare].find((h) => h && (activeFlat?.id === h.flat || (!activeFlat && h.host))) ?? null;
+  // My children at home: put down in a bed, on a seat or on the floor (crawling, toddling about), or carried
+  // round the house by either parent.
+  const babies = useBabies({
+    meId: citizen?.id,
+    flatId: activeFlat?.id ?? homeOff?.id ?? null,
+    level,
+    onOpenFamily: () => openPhone("hayati"),
+  });
   const shareHome = async () => {
     gameAudio.playClickSound();
     if (!partyFlat) {
@@ -750,8 +731,8 @@ export default function HomePage() {
   const partyRoom = useRoom(
     party && partyFlat
       ? `flat:${partyFlat.id}`
-      : hostShare
-        ? `flat:${hostShare.flat}`
+      : sharedHere
+        ? `flat:${sharedHere.flat}`
         : null,
     {
       x: where.x,
@@ -764,8 +745,9 @@ export default function HomePage() {
       dirty: isDirty(citizen?.needs?.hygiene),
     },
     (e) => {
-      // The party game outside (its own store).
+      // The party game outside (its own store), and a baby picked up or put down by the other parent.
       if (partyGameReceive.current?.(e)) return;
+      if (babies.receive(e)) return;
       // My partner (or a guest decorating) changed the home: everyone sees the one version.
       if (e.type === "home") {
         void sharedHome.reload();
@@ -814,6 +796,7 @@ export default function HomePage() {
   useEffect(() => {
     partyGameReceive.current = partyBoard.pg.receive;
     partyBoard.pg.bindEmit(partyRoom.emit);
+    babies.bindEmit(partyRoom.emit);
   });
   // At a party in a home off the map, guests see the host's furniture: moving things round updates their copy.
   const furnitureKey = JSON.stringify(furniture.filter((f) => f.placement));
@@ -859,6 +842,8 @@ export default function HomePage() {
       animation: p.animation,
       label: `${p.away ? "💤 " : ""}@${p.username}`,
       bubble: bubbles[p.userId],
+      // My partner carrying our baby.
+      cradle: babies.cradleFor(p.userId),
       onClick: () => setGuestId(p.userId),
     }));
   const [guestId, setGuestId] = useState<string | null>(null);
@@ -1173,7 +1158,7 @@ export default function HomePage() {
             router.push(`/phone?tab=chats&chat=${m.id}`),
           ),
           ...guests,
-          ...kidsAtHome,
+          ...babies.people,
         ]}
         look={citizen?.look}
         furniture={furniture}
@@ -1205,7 +1190,7 @@ export default function HomePage() {
         partyDecor={party?.decor}
         lightsOut={!!party && lightsOut}
         myAnimation={party ? myMood : undefined}
-        onMove={party || hostShare ? onMove : undefined}
+        onMove={party || sharedHere ? onMove : undefined}
         seatCall={party ? seatCall : undefined}
         holding={party ? drinkInHand(drink) : undefined}
         dirty={isDirty(citizen?.needs?.hygiene)}
@@ -1227,9 +1212,13 @@ export default function HomePage() {
         focus={partyBoard.focus}
         poolCovered={partyBoard.poolCovered}
         clean={cleanScreen}
+        cradle={babies.cradle}
+        babyCall={babies.babyCall}
+        onBabyDown={babies.onBabyDown}
       />
       {/* The game's own card and result stay on a clear screen (the card as a pill). */}
       {partyBoard.ui}
+      {!placing && !decorating && babies.ui}
 
       {view !== "above" && !placing && !decorating && !cleanScreen && (
         <div className="absolute left-4 bottom-[max(6.5rem,calc(env(safe-area-inset-bottom)+6rem))] z-30">
@@ -1817,7 +1806,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {((party && partyFlat) || hostShare) && (
+      {((party && partyFlat) || sharedHere) && (
         <PartyPeople
           room={partyRoom}
           place={activeHomeTitle}

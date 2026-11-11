@@ -10,9 +10,10 @@ import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import type { AvatarLookProps } from "../onboarding/AvatarCanvas";
-import { restPose, type RestPose } from "./restPose";
+import { CLIP_SEAT_HEIGHT, restPose, type RestPose } from "./restPose";
 import { GROUNDS, HomeGrounds } from "./HomeGrounds";
 import { TwoFingerHint, isCoarsePointer } from "./TwoFingerHint";
+import { useCradleRig } from "./Baby";
 import type { Car } from "@/lib/cars";
 import { LuxuryDecor } from "./LuxuryDecor";
 import { buildNav, findPath, walkable, type Rect, type Seg } from "./homeNav";
@@ -77,6 +78,12 @@ export interface ApartmentRoomProps {
   /** More stops on the zone bar (a party game outside), shown for any home: where the camera goes, and where
    *  you walk (left out where you can't walk there, e.g. a flat's terrace). */
   extraZones?: PlotZone[];
+  /** A baby in my arms (I'm carrying them), cradled with both arms. */
+  cradle?: React.ReactNode;
+  /** Put the baby I'm carrying down: in the nearest bed or on the nearest seat on this floor, or on the floor in
+   *  front of me. Each new n is a new ask; the room works out where, and tells the page (onBabyDown). */
+  babyCall?: { n: number; where: "bed" | "chair" | "floor"; height: number; scale: number; anyLevel?: boolean };
+  onBabyDown?: (spot: { level: number; x: number; y: number; z: number; yaw: number; on: "bed" | "chair" | "floor" }) => void;
   /** Clear screen: the zone bar and its hint are hidden too. */
   clean?: boolean;
   /** A party game laid over the pool (the umbrella folds away). */
@@ -156,6 +163,12 @@ export interface Person {
   dirty?: boolean;
   /** Smaller than a grown-up (children: a baby is about a third). */
   scale?: number;
+  /** A baby in their arms (a parent carrying them), drawn cradled with both arms. */
+  cradle?: React.ReactNode;
+  /** On hands and knees (a crawling baby). */
+  pose?: "crawl";
+  /** How fast they move between spots, m/s (a crawler is slow). */
+  pace?: number;
 }
 
 type LabelNodes = React.RefObject<Map<string, HTMLDivElement>>;
@@ -166,6 +179,7 @@ const nowMs = () => performance.now();
 
 function PersonAvatar({ p, id, labels }: { p: Person; id: string; labels: LabelNodes }) {
   const group = useRef<THREE.Group>(null);
+  const cradleRig = useCradleRig();
   // Where they first appear; after that they move live (below).
   const [initial] = useState(p.position);
   // Other players move live: glide to where they are now, walking (and facing the way) while they move.
@@ -177,7 +191,7 @@ function PersonAvatar({ p, id, labels }: { p: Person; id: string; labels: LabelN
     const dx = tx - g.position.x, dz = tz - g.position.z, dist = Math.hypot(dx, dz);
     if (dist > 0.03) {
       // Far off (just arrived, or a jump): straight there. Otherwise at walking pace.
-      const step = dist > 4 ? dist : Math.min(dist, dt * 2.4);
+      const step = dist > 4 ? dist : Math.min(dist, dt * (p.pace ?? 2.4));
       g.position.x += (dx / dist) * step;
       g.position.z += (dz / dist) * step;
       g.rotation.y = Math.atan2(dx, dz);
@@ -208,11 +222,14 @@ function PersonAvatar({ p, id, labels }: { p: Person; id: string; labels: LabelN
       onPointerOver={p.onClick ? () => (document.body.style.cursor = "pointer") : undefined}
       onPointerOut={p.onClick ? () => (document.body.style.cursor = "") : undefined}
     >
-      {/* Asleep: lying on the floor where they were. */}
-      <group position={!moving && p.animation === "sleep" ? [0, 0.12, 0] : [0, 0, 0]} scale={p.scale ?? 1}>
-        <CitizenAvatar look={p.look} animation={moving ? "walk" : p.animation ?? "idle"} rotation={!moving && p.animation === "sleep" ? [-Math.PI / 2, 0, 0] : [0, 0, 0]}
-          holding={p.holding} carryMode={p.holding ? (moving ? "hold" : p.carryMode ?? "hold") : undefined} />
+      {/* Asleep: lying on the floor where they were. Crawling: pitched forward on hands and knees, limbs going. */}
+      <group position={p.pose === "crawl" ? [0, 0.3 * (p.scale ?? 1), 0] : !moving && p.animation === "sleep" ? [0, 0.12, 0] : [0, 0, 0]} scale={p.scale ?? 1}>
+        <CitizenAvatar look={p.look} animation={p.pose === "crawl" ? "walk" : moving ? "walk" : p.animation ?? "idle"}
+          rotation={p.pose === "crawl" ? [1.32, 0, 0] : !moving && p.animation === "sleep" ? [-Math.PI / 2, 0, 0] : [0, 0, 0]}
+          holding={p.cradle ? undefined : p.holding} carryMode={p.cradle ? undefined : p.holding ? (moving ? "hold" : p.carryMode ?? "hold") : undefined}
+          rig={p.cradle ? cradleRig : undefined} />
       </group>
+      {p.cradle}
       {p.dirty && <Flies />}
       {p.label && (
         <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
@@ -1464,6 +1481,9 @@ function CameraRig({
 function RoomScene({
   look,
   poolCovered,
+  cradle,
+  babyCall,
+  onBabyDown,
   myAnimation,
   startAt,
   onMove,
@@ -2113,8 +2133,10 @@ function RoomScene({
         lap = setInterval(step, 250);
         setAnimation("swim");
       } else if (activity === "sunbathe") {
+        // Along the lounger (it runs east-west, 1.8 m, its pillow at the east end away from the water): feet at the
+        // pool end, head on the pillow, lying on the cushion (its top is 0.36 m).
         const [lx, lz] = GROUNDS.loungers[0];
-        setPose({ position: [lx, 0.38, lz + 0.9], yaw: Math.PI, lie: true });
+        setPose({ position: [lx - 0.84, 0.36 + 0.06, lz], yaw: -Math.PI / 2, lie: true });
         setAnimation("sleep");
       } else {
         // Standing in the water, chest deep.
@@ -2227,6 +2249,46 @@ function RoomScene({
     // Only a new ask: not every time the furniture or people change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seatN]);
+
+  // Putting the baby down: in the nearest bed or on the nearest seat on this floor (walking over to it), or on the
+  // floor in front of me.
+  const cradleRig = useCradleRig();
+  const babyN = babyCall?.n ?? 0;
+  useEffect(() => {
+    if (!babyN || !babyCall) return;
+    const t = setTimeout(() => {
+      const [mx, , mz] = poseRef.current.position;
+      const yaw = poseRef.current.yaw;
+      const kind = babyCall.where;
+      if (kind === "bed" || kind === "chair") {
+        let best: { r: NonNullable<ReturnType<typeof restPose>>; d: number; level: number } | null = null;
+        for (const f of furniture) {
+          const item = getCatalogItem(f.itemId);
+          if (!item || item.interaction !== kind || f.placement?.kind !== "floor") continue;
+          const on = levelOf(f.placement);
+          if (on !== lvl && !babyCall.anyLevel) continue;
+          const r = restPose(item, f.placement, kind, babyCall.height);
+          if (!r) continue;
+          // Another floor counts as further away (this floor first).
+          const d = Math.hypot(r.position[0] - mx, r.position[2] - mz) + (on === lvl ? 0 : 50);
+          if (!best || d < best.d) best = { r, d, level: on };
+        }
+        if (best) {
+          const [x, y, z] = best.r.position;
+          // A baby sits lower on a seat than a grown-up (the seat height is the same; their hips are lower).
+          const by = kind === "chair" ? y + CLIP_SEAT_HEIGHT * (1 - babyCall.scale) : y - 0.1;
+          onBabyDown?.({ level: best.level, x, y: by, z, yaw: best.r.yaw, on: kind });
+          if (!babyCall.anyLevel && best.d > 1.6 && best.r.stand) handleFloorLocomotion(new THREE.Vector3(best.r.stand[0], 0, best.r.stand[1]));
+          return;
+        }
+      }
+      // On the floor, just in front of me, facing me.
+      onBabyDown?.({ level: lvl, x: mx + Math.sin(yaw) * 0.6, y: 0, z: mz + Math.cos(yaw) * 0.6, yaw: yaw + Math.PI, on: "floor" });
+    }, 0);
+    return () => clearTimeout(t);
+    // Only a new ask.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [babyN]);
 
   const hoverCursor = (on: boolean) => () => { document.body.style.cursor = on ? "pointer" : ""; };
 
@@ -2525,8 +2587,11 @@ function RoomScene({
           {/* Walking always shows walking (no sliding); what the page asks for (dancing, sitting) is when you stop. */}
           <group position={shownSleep && !pose.lie ? [0, 0.12, 0] : [0, 0, 0]}>
             <CitizenAvatar look={look} animation={shown} rotation={pose.lie || shownSleep ? [-Math.PI / 2, 0, 0] : [0, 0, 0]}
-              holding={holding?.prop} carryMode={holding ? (animation === "walk" ? "hold" : holding.mode) : undefined} />
+              holding={cradle ? undefined : holding?.prop} carryMode={!cradle && holding ? (animation === "walk" ? "hold" : holding.mode) : undefined}
+              rig={cradle ? cradleRig : undefined} />
           </group>
+          {/* Carrying the baby: in my arms. */}
+          {cradle && !pose.lie && cradle}
           {dirty && !pose.lie && <Flies />}
         </group>
         {people.map((p, i) => <PersonAvatar key={i} p={p} id={`p${i}`} labels={labels} />)}

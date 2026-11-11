@@ -10,6 +10,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { BELOW_SPACE_TOP, PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyActions } from "@/components/invite/PartyActions";
 import { usePartyBoard } from "@/components/party/usePartyBoard";
+import { useBabies } from "@/components/home/useBabies";
 import { drinkInHand, PartyHostesses, usePartyDrink, type HostessRun } from "@/components/invite/PartyHostess";
 import { faceNearest, PARTIES, partyMood } from "@/lib/invites";
 import { askForPush } from "@/lib/push/engage";
@@ -369,9 +370,12 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
     setWhere({ x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, yaw: Math.round(yaw * 100) / 100, walking, lift: lift ? Math.round(lift * 100) / 100 : undefined, rest });
   };
   const partyGameReceive = useRef<((e: Received) => boolean) | null>(null);
+  // My children, if this is our home: carried about, put in a bed or on a seat, crawling and toddling.
+  const babies = useBabies({ meId: me, flatId: flat.id, level, onOpenFamily: () => openPhone("hayati") });
   const room = useRoom(`flat:${flat.id}`, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : where.rest ?? myMood, lift: where.lift, level, hold: drink ?? undefined, dirty: isDirty(citizen?.needs?.hygiene) }, (e: Received) => {
     // The party game outside (its own store).
     if (partyGameReceive.current?.(e)) return;
+    if (babies.receive(e)) return;
     if (e.type === "chat") bubble(e.from.userId, e.text);
     if (e.type === "wave") bubble(e.from.userId, "👋");
     if ((e as unknown as { type: string; thief?: string }).type === "car_stolen") {
@@ -400,12 +404,15 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   const spotOf = (id: string) => spots.get(id) ?? spotFor(id);
   const people: Person[] = [
     ...resident,
+    ...babies.people,
     ...room.peers.filter((p) => (p.level ?? 0) === level).map((p): Person => ({
       look: p.look,
       position: Number.isFinite(p.x) ? [p.x, p.lift ?? 0, p.z] : spotOf(p.userId),
       holding: drinkInHand(p.hold)?.prop,
       carryMode: drinkInHand(p.hold)?.mode,
       dirty: p.dirty,
+      // My partner carrying our baby.
+      cradle: babies.cradleFor(p.userId),
       rotation: p.face ?? (party ? faceNearest([p.x, 0, p.z], [[where.x, 0, where.z], ...room.peers.map((o) => [o.x, 0, o.z] as [number, number, number])]) : undefined) ?? Math.atan2(-p.x, -p.z),
       animation: p.animation,
       label: `${p.away ? "💤 " : ""}@${p.username}${room.unread[p.userId] ? ` · 💬${room.unread[p.userId]}` : ""}`,
@@ -456,6 +463,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   useEffect(() => {
     partyGameReceive.current = partyBoard.pg.receive;
     partyBoard.pg.bindEmit(room.emit);
+    babies.bindEmit(room.emit);
   });
   const stick = useRef<{ x: number; y: number; sprint?: boolean }>({ x: 0, y: 0 });
   const [stickRun, setStickRun] = useState(false);
@@ -534,8 +542,12 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         focus={partyBoard.focus}
         poolCovered={partyBoard.poolCovered}
         clean={cleanScreen}
+        cradle={babies.cradle}
+        babyCall={babies.babyCall}
+        onBabyDown={babies.onBabyDown}
       />
       {partyBoard.ui}
+      {!placing && !decorating && babies.ui}
       {party && !cleanScreen && <PartyBanner party={party} hostAway={!room.peers.some((p) => p.username === party.host)} className={BELOW_SPACE_TOP} />}
 
       {!cleanScreen && <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2">

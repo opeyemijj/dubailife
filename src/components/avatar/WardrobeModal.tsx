@@ -46,9 +46,10 @@ const SUITS: Record<DressCodeType, Occasion[]> = {
   fashion_forward: ["night", "formal", "bridal", "traditional"],
   casual_modest: ["everyday", "traditional", "work", "bridal"],
 };
-const suitsFor = (title?: string): Occasion[] => {
+const suitsFor = (title?: string, pregnant = false): Occasion[] => {
   const code = Object.values(DRESS_CODES).find((d) => d.title === title);
-  return code ? SUITS[code.type] : [];
+  // Expecting, maternity wear is right for any dress code (except the beach, which has its own).
+  return code ? [...SUITS[code.type], ...(pregnant && code.type !== "beachwear" ? (["maternity"] as Occasion[]) : [])] : [];
 };
 
 
@@ -281,9 +282,11 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
   const face = presetFor(selectedLook);
   const currentWear = selectedLook.wear ?? face;
   const all = outfitsFor(gender);
-  const suits = suitsFor(pending?.dressCodeTitle);
+  // Expecting (the bump's showing): the wardrobe opens on maternity wear.
+  const pregnant = (selectedLook.pregnantWeeks ?? 0) > 0;
+  const suits = suitsFor(pending?.dressCodeTitle, pregnant);
   const [picked, setOccasion] = useState<"all" | "suits" | Occasion | null>(null);
-  const occasion = picked ?? (pending && suits.length ? "suits" : "all");
+  const occasion = picked ?? (pending && suits.length ? "suits" : pregnant && gender === "woman" ? "maternity" : "all");
 
   const shown = all.filter((o) => {
     const occMatch =

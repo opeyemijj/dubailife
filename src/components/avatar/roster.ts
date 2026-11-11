@@ -93,6 +93,7 @@ export const OCCASIONS = [
   { id: "formal", label: "Formal & weddings", icon: "🎩" },
   { id: "traditional", label: "Traditional", icon: "🕌" },
   { id: "bridal", label: "Bridal & Couture", icon: "👰" },
+  { id: "maternity", label: "Maternity", icon: "🤰" },
   { id: "beach", label: "Beach & pool", icon: "🏖️" },
   { id: "sport", label: "Sport & gym", icon: "🏃" },
   { id: "uniform", label: "Uniforms", icon: "🧑‍✈️" },
@@ -130,6 +131,14 @@ export interface OutfitEntry {
  * characters and cultural / bridal couture pieces.
  */
 export const OUTFITS: OutfitEntry[] = [
+  // Women — Maternity: loose, bump-friendly pieces (the bump takes the outfit's colour), for every occasion of a
+  // pregnancy: everyday, the office, an evening out, the baby shower.
+  { id: "mat_wrap_dress", gender: "woman", label: "🤰 Wrap maternity dress", occasion: "maternity", baseModel: "Female_Adult_11", defaultPrimaryColor: "#f9a8d4", price: 420, closetValue: 70 },
+  { id: "mat_lounge_set", gender: "woman", label: "🤰 Soft lounge set", occasion: "maternity", baseModel: "Female_Adult_12", defaultPrimaryColor: "#c4b5fd", price: 320, closetValue: 55 },
+  { id: "mat_office_dress", gender: "woman", label: "🤰 Bump-friendly office dress", occasion: "maternity", baseModel: "Female_Adult_15", defaultPrimaryColor: "#1e3a8a", defaultSecondaryColor: "#e2e8f0", price: 560, closetValue: 95 },
+  { id: "mat_white_maxi", gender: "woman", label: "🤰 White tunic & shorts", occasion: "maternity", baseModel: "Female_Party_01", defaultPrimaryColor: "#fafaf9", price: 680, closetValue: 120 },
+  { id: "mat_abaya", gender: "woman", label: "🤰 Maternity abaya", occasion: "maternity", culture: "emirati", baseModel: "Female_Adult_06", defaultPrimaryColor: "#111827", defaultSecondaryColor: "#d4af37", price: 740, closetValue: 140 },
+  { id: "mat_shower_gown", gender: "woman", label: "🤰 Baby shower set", occasion: "maternity", baseModel: "Female_Party_02", defaultPrimaryColor: "#bae6fd", defaultSecondaryColor: "#fde68a", price: 950, closetValue: 160 },
   // Women — Everyday, Work, Night, Formal, Beach, Sport, Uniform
   { id: "Female_Adult_01", gender: "woman", label: "Pink shirt", occasion: "everyday", closetValue: 45 },
   { id: "Female_Adult_12", gender: "woman", label: "Hoodie", occasion: "everyday", closetValue: 40 },

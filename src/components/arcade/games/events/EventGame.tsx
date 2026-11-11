@@ -34,7 +34,8 @@ export default function EventGame({ params, onClose, onShare }: ArcadeGameProps)
   const [bookings, setBookings] = useState<HallBooking[] | null>(null);
   const [picked, setPicked] = useState<number | null>(null);
   // Booking form (your own event).
-  const [type, setType] = useState("birthday");
+  // Opened from the wedding planner (Family): a wedding; else a birthday to start with.
+  const [type, setType] = useState(() => (typeof params?.type === "string" && HALLS.types.some((t: { id: string }) => t.id === params.type) ? params.type : "birthday"));
   const [when, setWhen] = useState("");
   const [guests, setGuests] = useState(50);
   const [vendors, setVendors] = useState<string[]>(["catering", "dj"]);

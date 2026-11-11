@@ -16,6 +16,7 @@ import { hallById, hallSpace, saveHallSpace, type HallSpace } from "@/lib/halls"
 import { decorators, requestHallDecorator, type DecoratorPro } from "@/lib/decorator";
 import { recordGameResult } from "@/lib/arcade";
 import { useRoom, type Received } from "@/lib/room";
+import { ClubRadioPill, useClubRadio } from "@/components/invite/PartyHere";
 import { CATALOG, getCatalogItem, HOUSING_CONFIGS, withHomeItems, type CatalogItem, type HomeStyle, type OwnedFurniture, type Placement, type Rotation } from "@/lib/furniture";
 import { gameAudio, haptic, sfx } from "@/utils/gameAudio";
 
@@ -114,6 +115,10 @@ export default function HallPage() {
   };
   const room = useRoom(space ? `hall:${space.id}` : null, { x: where.x, z: where.z, face: where.yaw, animation: where.walking ? "walk" : mood }, onEvent);
   useEffect(() => { emitRef.current = room.emit; });
+  // Music while the event's on: the game's live radio (Afrobeats from Lagos by default; the pill picks the station
+  // and the region), the same radio as clubs and house parties.
+  const eventOn = !!space && clock >= Date.parse(space.startsAt) && clock <= Date.parse(space.endsAt);
+  useClubRadio(eventOn);
 
   // The host's changes are saved as they go, and everyone here sees the new version.
   const saveKey = JSON.stringify([furniture.filter((f) => f.placement), style]);
@@ -252,6 +257,7 @@ export default function HallPage() {
       </div>
 
       {banner && <div className="absolute top-24 inset-x-3 z-30 flex justify-center pointer-events-none"><p className="max-w-md rounded-2xl bg-amber-400 text-amber-950 font-black text-center px-4 py-3 shadow-xl animate-[arcade-pop_0.6s_ease-out]">{banner}</p></div>}
+      {live && <ClubRadioPill className="top-[calc(env(safe-area-inset-top)+8.5rem)]" />}
       {toast && <div className="absolute top-40 left-1/2 -translate-x-1/2 z-30 bg-slate-950/90 text-white text-xs font-bold px-4 py-2 rounded-full whitespace-nowrap">{toast}</div>}
       {airborne && (
         <button onPointerDown={catchIt} className="absolute left-1/2 top-1/2 z-30 -translate-x-1/2 -translate-y-1/2 w-40 h-40 rounded-full bg-pink-500 text-white font-black text-3xl shadow-[0_0_40px_rgba(236,72,153,0.8)] animate-pulse">💐<span className="block text-lg">CATCH!</span></button>

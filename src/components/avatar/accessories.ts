@@ -1300,7 +1300,10 @@ export function attachLookExtras(rig: AccessoryRig, look: AvatarLookProps, model
     rig.spine
   ) {
     const weeks = Math.min(3, Math.max(1, look.pregnantWeeks));
-    const bumpRadius = H * (0.068 + weeks * 0.024);
+    // A real bump: about 23 cm across in the first trimester to 31 cm in the third, standing out 6 to 12 cm
+    // in front of the belly.
+    const bumpRadius = H * (0.055 + weeks * 0.012);
+    const standsOut = H * (0.02 + weeks * 0.018);
     const g = new THREE.Group();
     g.name = "pregnancy_bump_group";
 
@@ -1347,24 +1350,29 @@ export function attachLookExtras(rig: AccessoryRig, look: AvatarLookProps, model
       bellyClothColor = primaryHex;
     }
 
+    // The fabric's colour, not its texture: an outfit's texture is one image packed with every part of the body,
+    // so wrapped round a ball it shows scraps of the whole outfit (and skin).
+    void bellyTexture;
     const bumpMat = new THREE.MeshStandardMaterial({
       color: new THREE.Color(bellyClothColor),
       roughness: bellyRoughness,
       metalness: bellyMetalness,
-      map: bellyTexture ?? undefined,
     });
 
     const bump = new THREE.Mesh(new THREE.SphereGeometry(bumpRadius, 24, 20), bumpMat);
     bump.name = "pregnancy_bump";
     bump.userData.isClothing = true;
     bump.userData.bellyClothColor = bellyClothColor;
-    bump.scale.set(1.08, 0.95, 1.05);
+    // Rounder side to side and top to bottom than it is deep.
+    bump.scale.set(1, 1.08, 0.85);
     g.add(bump);
+    // Centred just above the waist, set back so only its front stands out of the belly (which is ~5% of the
+    // height in front of the spine).
     mountToAnchor(
       rig,
       "spine",
       g,
-      new THREE.Vector3(0, -H * 0.02, H * (0.055 + weeks * 0.018)),
+      new THREE.Vector3(0, H * 0.012, H * 0.053 + standsOut - bumpRadius * 0.85),
       attached,
     );
   }

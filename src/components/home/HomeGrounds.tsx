@@ -167,8 +167,10 @@ function Pool({ covered }: { covered?: boolean }) {
       {/* loungers and an umbrella on the deck */}
       {GROUNDS.loungers.map(([lx, lz]) => (
         <group key={lz} position={[lx - P.x, 0, lz - P.z]} rotation={[0, -Math.PI / 2, 0]}>
+          {/* A flat sun bed with a pillow at the far end (lying flat fits it: ApartmentRoom's sunbathe pose). */}
           <mesh position={[0, 0.3, 0]}><boxGeometry args={[0.7, 0.12, 1.8]} /><meshStandardMaterial color="#fafafa" /></mesh>
-          <mesh position={[0, 0.55, -0.75]} rotation={[0.6, 0, 0]}><boxGeometry args={[0.7, 0.1, 0.6]} /><meshStandardMaterial color="#fafafa" /></mesh>
+          <mesh position={[0, 0.41, -0.72]} rotation={[0.18, 0, 0]}><boxGeometry args={[0.58, 0.1, 0.34]} /><meshStandardMaterial color="#e0f2fe" /></mesh>
+          {[[-0.3, -0.8], [0.3, -0.8], [-0.3, 0.8], [0.3, 0.8]].map(([x, z]) => <mesh key={`${x}${z}`} position={[x, 0.12, z]}><boxGeometry args={[0.05, 0.24, 0.05]} /><meshStandardMaterial color="#a8a29e" /></mesh>)}
         </group>
       ))}
       {!covered && <mesh position={[3.1, 1.3, 0]}><cylinderGeometry args={[0.04, 0.04, 2.6, 8]} /><meshStandardMaterial color="#78716c" /></mesh>}
