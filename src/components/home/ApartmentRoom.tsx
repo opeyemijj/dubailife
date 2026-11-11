@@ -1673,6 +1673,15 @@ function RoomScene({
       : myAnimation;
   const shownSleep = shown === "sleep";
   const [pose, setPose] = useState<Pose>(() => (startAt ? { position: [startAt[0], 0, startAt[1]], yaw: Math.PI / 4 } : STAND));
+  // A start spot that arrives after the room has opened (who I live with loads a moment later): go there, as
+  // long as I haven't moved off the usual spot yet, so two people at home never stand inside each other.
+  const startKey = startAt ? `${startAt[0]},${startAt[1]}` : "";
+  useEffect(() => {
+    if (!startAt) return;
+    const t = setTimeout(() => setPose((p) => (p.position[0] === STAND.position[0] && p.position[2] === STAND.position[2] ? { position: [startAt[0], 0, startAt[1]], yaw: Math.PI / 4 } : p)), 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- a new spot only
+  }, [startKey]);
   const [walkTarget, setWalkTarget] = useState<[number, number] | null>(null);
   // Others in the room see where you are.
   const moveRef = useRef(onMove);

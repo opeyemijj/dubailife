@@ -11,6 +11,7 @@ import { BELOW_SPACE_TOP, PartyBanner, usePartyHere } from "@/components/invite/
 import { PartyActions } from "@/components/invite/PartyActions";
 import { usePartyBoard } from "@/components/party/usePartyBoard";
 import { useBabies } from "@/components/home/useBabies";
+import { HomeMates } from "@/components/home/HomeMates";
 import { drinkInHand, PartyHostesses, usePartyDrink, type HostessRun } from "@/components/invite/PartyHostess";
 import { faceNearest, PARTIES, partyMood } from "@/lib/invites";
 import { askForPush } from "@/lib/push/engage";
@@ -548,6 +549,8 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
       />
       {partyBoard.ui}
       {!placing && !decorating && babies.ui}
+      {/* Who's here but on another floor (Go up). */}
+      {!cleanScreen && !placing && !decorating && <HomeMates peers={room.peers} level={level} onGo={changeLevel} className="top-[calc(env(safe-area-inset-top)+7.6rem)]" />}
       {party && !cleanScreen && <PartyBanner party={party} hostAway={!room.peers.some((p) => p.username === party.host)} className={BELOW_SPACE_TOP} />}
 
       {!cleanScreen && <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2">

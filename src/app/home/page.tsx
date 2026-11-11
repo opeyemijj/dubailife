@@ -31,7 +31,8 @@ import {
   type HostessRun,
 } from "@/components/invite/PartyHostess";
 import { faceNearest, partyDoor, partyMood } from "@/lib/invites";
-import { spotsFor } from "@/components/property/PropertyRoute";
+import { spotFor, spotsFor } from "@/components/property/PropertyRoute";
+import { HomeMates } from "@/components/home/HomeMates";
 import { useRoom, type Received } from "@/lib/room";
 import { AppSetup, needsAppSetup } from "@/components/pwa/AppSetup";
 import { inviteFriends } from "@/lib/invite";
@@ -709,6 +710,16 @@ export default function HomePage() {
     lift?: number;
     rest?: "sit" | "sleep";
   }>({ x: -3.25, z: 0, yaw: 0, walking: false });
+  // In the home I share, the one who moved in starts at their own spot (the host at the usual one), so we're
+  // never standing inside each other before either of us moves.
+  const myStart = sharedHere && !sharedHere.host && citizen?.id ? spotFor(citizen.id) : null;
+  const startKey = myStart ? `${myStart[0]},${myStart[2]}` : "";
+  useEffect(() => {
+    if (!myStart) return;
+    const t = setTimeout(() => setWhere((w) => (w.x === -3.25 && w.z === 0 && !w.walking ? { ...w, x: myStart[0], z: myStart[2] } : w)), 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- a new spot only
+  }, [startKey]);
   // Sent when I set off (where I'm heading) and when I stop: everyone else walks me there in between.
   const onMove = (
     x: number,
@@ -1212,6 +1223,7 @@ export default function HomePage() {
         focus={partyBoard.focus}
         poolCovered={partyBoard.poolCovered}
         clean={cleanScreen}
+        startAt={myStart ? [myStart[0], myStart[2]] : undefined}
         cradle={babies.cradle}
         babyCall={babies.babyCall}
         onBabyDown={babies.onBabyDown}
@@ -1219,6 +1231,11 @@ export default function HomePage() {
       {/* The game's own card and result stay on a clear screen (the card as a pill). */}
       {partyBoard.ui}
       {!placing && !decorating && babies.ui}
+      {/* Who's home but not in sight: upstairs or downstairs (Go up), or my partner not in right now. */}
+      {(sharedHere || party) && !cleanScreen && !placing && !decorating && (
+        <HomeMates peers={partyRoom.peers} level={level} onGo={changeLevel} className="top-[calc(env(safe-area-inset-top)+7.6rem)]"
+          partner={sharedHere ? { id: sharedHere.partner, username: sharedHere.partnerName } : null} />
+      )}
 
       {view !== "above" && !placing && !decorating && !cleanScreen && (
         <div className="absolute left-4 bottom-[max(6.5rem,calc(env(safe-area-inset-bottom)+6rem))] z-30">
