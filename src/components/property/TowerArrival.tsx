@@ -248,8 +248,12 @@ function Corridor({ unit }: { unit: string }) {
     c.width = 256; c.height = 96;
     const g = c.getContext("2d")!;
     g.fillStyle = "#1c1917"; g.fillRect(0, 0, 256, 96);
-    g.fillStyle = "#facc15"; g.font = "bold 44px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
-    g.fillText(unit.replace(/^Apt\s*/, ""), 128, 50);
+    // The flat's number, or a venue's name, shrunk to fit the plate.
+    const label = unit.replace(/^Apt\s*/, "");
+    g.font = "bold 44px sans-serif";
+    const size = Math.max(14, Math.min(44, Math.floor(44 * 232 / Math.max(1, g.measureText(label).width))));
+    g.fillStyle = "#facc15"; g.font = `bold ${size}px sans-serif`; g.textAlign = "center"; g.textBaseline = "middle";
+    g.fillText(label, 128, 50);
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
     return tex;

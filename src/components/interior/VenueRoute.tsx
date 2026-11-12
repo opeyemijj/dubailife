@@ -2,13 +2,18 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getPlace } from "@/lib/city/places";
 import { entranceOf } from "@/lib/city/geo";
 import { updateCitizen, useRequireCitizen } from "@/lib/citizenStore";
 import { VenueExperience } from "./VenueExperience";
 import { SmallLoader } from "@/components/GameLoadingScreen";
 import { hopPending } from "@/lib/locals";
+import { TowerArrival } from "@/components/property/TowerArrival";
+import HIGHRISE from "@/data/venues/highrise.json";
+
+/** The floor a venue is on, when it's up a tower (src/data/venues/highrise.json). */
+const venueFloor = (name: string): number | undefined => (HIGHRISE.floors as Record<string, number>)[name];
 
 /** Resolves a place/venue URL, and opens the interior once the citizen has travelled there. */
 export function VenueRoute({ placeId, venueId }: { placeId: string; venueId?: string }) {
@@ -16,6 +21,8 @@ export function VenueRoute({ placeId, venueId }: { placeId: string; venueId?: st
   const { citizen, hydrated } = useRequireCitizen();
   const place = getPlace(placeId);
   const venue = place && (venueId ? place.venues.find((v) => v.id === venueId) : place.venues.length === 1 ? place.venues[0] : null);
+  // A venue up a tower: the lift up to it first, once per visit.
+  const [rodeUp, setRodeUp] = useState<string | null>(null);
 
   // A multi-venue place without a venue picked: show its directory on the map.
   useEffect(() => {
@@ -62,6 +69,12 @@ export function VenueRoute({ placeId, venueId }: { placeId: string; venueId?: st
 
   // Not there yet: the effect above opens this place's description on the map.
   if (citizen.location?.placeId !== place.id) return <SmallLoader label={`Opening ${place.name}…`} />;
+
+  const floor = venueFloor(venue.name);
+  const visit = `${place.id}/${venue.id}`;
+  if (floor && rodeUp !== visit) {
+    return <TowerArrival floor={floor} unit={venue.name} tower={place.name} look={citizen.look} onDone={() => setRodeUp(visit)} />;
+  }
 
   return <VenueExperience key={`${place.id}/${venue.id}`} place={place} venue={venue} />;
 }

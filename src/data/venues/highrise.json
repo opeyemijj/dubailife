@@ -1,0 +1,18 @@
+{
+  "_note": "Venues up a tower, by venue name, with the floor they're on: going in starts in the building's lobby and takes the lift up (src/components/property/TowerArrival.tsx, via src/components/interior/VenueRoute.tsx). Floors are the real ones where published (At the Top on 124, Neos on 63, CÉ LA VI on 54, SUSHISAMBA on 51, AURA on 50, Al Muntaha and Skyview Bar on 27, Al Dawaar on 25); the Dubai Frame's sky deck (150 m) and Sphere at The Link (100 m) are given the floor of that height.",
+  "floors": {
+    "At the Top, Burj Khalifa": 124,
+    "Neos": 63,
+    "CÉ LA VI": 54,
+    "Sky Views Observatory": 52,
+    "The View at The Palm": 52,
+    "SUSHISAMBA": 51,
+    "AURA Skypool": 50,
+    "Dubai Frame": 48,
+    "Al Muntaha": 27,
+    "Skyview Bar": 27,
+    "Sphere at The Link": 27,
+    "Al Dawaar": 25,
+    "The Penthouse": 16
+  }
+}
