@@ -16,6 +16,7 @@ import { METRO, metroFare, metroRoute, phrase, type MetroStation } from "@/lib/t
 import { BurjKhalifa, CityBlocks, dubaiSky, MetroStation as Station, MetroTrain, Road, SkyAndLight, Traffic, VIADUCT, Viaduct, type District, type Travel } from "./TransitWorld";
 import { announce, doorsClosing, doorsOpening, isTransitMuted, nolTap, setLoopSpeed, setTransitMuted, startLoop, stopLoops, stopSpeech, warmUpVoices } from "./transitAudio";
 import { PerfProbe } from "@/components/perf/PerfProbe";
+import { useScreenBusy } from "@/lib/popups";
 
 type Stage = "gate" | "waiting" | "boarding" | "riding" | "dwell" | "arriving" | "done";
 type View = "front" | "window" | "outside";
@@ -38,6 +39,8 @@ export function MetroJourney({ fromMap, toMap, gold, look, onPay, onArrive, onCa
   onArrive: () => void;
   onCancel: () => void;
 }) {
+  // On screen: popups that open by themselves wait until it's over (lib/popups).
+  useScreenBusy(true);
   const route = useMemo(() => metroRoute(fromMap, toMap), [fromMap, toMap]);
   const stops = route?.stops ?? [];
   const fare = metroFare(Math.max(1, stops.length - 1), gold);

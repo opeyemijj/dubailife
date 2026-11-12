@@ -20,6 +20,7 @@ import { aed, companyIcon, ventureType, workShift, type MyJob } from "@/lib/econ
 import { usePresentCitizens } from "@/lib/presence";
 import { gameAudio } from "@/utils/gameAudio";
 import { PerfProbe } from "@/components/perf/PerfProbe";
+import { useScreenBusy } from "@/lib/popups";
 
 interface StationOrder {
   slot: number; // 0 = left, 1 = center, 2 = right
@@ -272,6 +273,8 @@ export function ShiftScene({
   onDone: (summary: { shifts: number; shiftsPerWeek: number; bonusAed: number; vipNote: string | null }) => void;
   onCancel: () => void;
 }) {
+  // On screen: popups that open by themselves wait until it's over (lib/popups).
+  useScreenBusy(true);
   const quality = useMemo(() => canvasQuality(), []);
   const theme = useMemo(() => themeForJob(job), [job]);
   const [phase, setPhase] = useState<"playing" | "finishing" | "done">("playing");

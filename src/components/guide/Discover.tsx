@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Check, EyeOff, X } from "lucide-react";
 import { ModalPortal } from "@/components/ui/modal-portal";
-import { dialogOpen, isNewCitizen, useCitizen } from "@/lib/citizenStore";
+import { isNewCitizen, useCitizen } from "@/lib/citizenStore";
 import { activities, markSeen, refreshDiscover, setHidden, toTryCount, useDiscover, type ActivityView } from "@/lib/discover";
 import { openLife } from "@/components/life/LifeHub";
 import type { LifeTab } from "@/components/life/LifePanel";
@@ -21,6 +21,7 @@ import VISIT from "@/data/guide/places-to-visit.json";
 import PICKS from "@/data/guide/city-picks.json";
 import { DEFAULT_ORDER, goalClaimed, goalDone, goalOf, stepDone, useGoals } from "@/lib/goals";
 import { gameAudio } from "@/utils/gameAudio";
+import { POPUP, usePopupTurn, useScreenBusy } from "@/lib/popups";
 
 const INTRO = "dl_discover_intro";   // {count, at}
 
@@ -162,8 +163,8 @@ export function DiscoverHost() {
     let shown: { count: number; at: number } = { count: 0, at: 0 };
     try { shown = JSON.parse(localStorage.getItem(INTRO) ?? "null") ?? shown; } catch { /* storage blocked */ }
     if (shown.count >= 2 || (shown.count === 1 && Date.now() - shown.at < 3 * 86_400_000)) return;
+    // It waits its turn once it's ready (lib/popups) rather than watching for a clear screen itself.
     const t = setInterval(() => {
-      if (dialogOpen()) return;
       try { if (isNewCitizen(citizen) && localStorage.getItem(`tour-done:${citizen?.id}`) !== "1") return; } catch { /* storage blocked */ }
       if (toTryCount() === 0) return;   // still loading, or nothing left to suggest
       clearInterval(t);
@@ -174,7 +175,11 @@ export function DiscoverHost() {
     return () => clearInterval(t);
   }, [signedIn, path]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // One popup at a time (lib/popups): the first-visit pop-up waits its turn; the sheet the player opens is at once.
+  const popupTurn = usePopupTurn("discover-intro", signedIn && intro && !sheet, POPUP.promo);
+  useScreenBusy(signedIn && sheet);
   if (!signedIn || (!sheet && !intro)) return null;
+  if (!sheet && intro && !popupTurn) return null;
   // Mixed up on every visit, with different kinds of thing side by side; things still to try stay above finished ones.
   const list = shuffled(activities(), seed);
   const todo = contrasted(list.filter((a) => !a.done && !a.hidden), seed);

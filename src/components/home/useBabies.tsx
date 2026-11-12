@@ -12,7 +12,8 @@ import { setChildSpot, stageOf, useFamily, type BabySpot, type Child } from "@/l
 import type { Received, RoomEvent } from "@/lib/room";
 import type { Person } from "@/components/home/ApartmentRoom";
 import { gameAudio } from "@/utils/gameAudio";
-import { babyScale, CarriedBaby, poseFor, wanderFrom, type BabyPose } from "./Baby";
+import { babyScale, CarriedBaby, poseFor, type BabyPose } from "./Baby";
+import { useScreenBusy } from "@/lib/popups";
 
 type Placed = Extract<BabySpot, { level: number }>;
 const isCarried = (s: BabySpot | null | undefined): s is { carriedBy: string } => !!s && "carriedBy" in s;
@@ -49,15 +50,14 @@ export function useBabies({ meId, flatId, level, onOpenFamily }: {
       stageLabel: stage.label, stageIcon: stage.icon, scale: babyScale(days), spot,
     };
   });
-  const wandering = babies.some((b) => b.spot && !isCarried(b.spot) && b.spot.on === "floor" && (b.pose === "crawl" || b.pose === "walk"));
-
-  // A clock for the babies: once a second while one is crawling or toddling about, else once a minute.
+  // A clock for the babies' milestones: once a minute. (Crawling and toddling about is worked out in the 3D scene
+  // each frame, so the page doesn't re-render every second.)
   useEffect(() => {
     const tick = () => setClock(Date.now());
     const first = setTimeout(tick, 0);
-    const t = setInterval(tick, wandering ? 1000 : 60_000);
+    const t = setInterval(tick, 60_000);
     return () => { clearTimeout(first); clearInterval(t); };
-  }, [wandering]);
+  }, []);
 
   const set = useCallback((child: number, spot: BabySpot) => {
     setSpots((s) => ({ ...s, [child]: spot }));
@@ -124,10 +124,11 @@ export function useBabies({ meId, flatId, level, onOpenFamily }: {
     if (!s || isCarried(s) || s.level !== level) return [];
     const onFloor = s.on === "floor";
     const pose: BabyPose = s.on === "bed" ? "lie" : s.on === "chair" ? (b.pose === "lie" ? "lie" : "sit") : b.pose;
-    const [x, z] = onFloor ? wanderFrom(b.child.id, [s.x, s.z], clock, pose, 4.6) : [s.x, s.z];
+    const wanders = onFloor && (pose === "crawl" || pose === "walk");
     return [{
       look: lookOf(b.child),
-      position: [x, s.y, z],
+      position: [s.x, s.y, s.z],
+      wander: wanders ? { seed: b.child.id, at: [s.x, s.z], pose: pose as "crawl" | "walk" } : undefined,
       rotation: s.yaw,
       animation: pose === "lie" ? "sleep" : pose === "sit" ? "sit" : pose === "walk" ? "walk" : "idle",
       pose: pose === "crawl" ? "crawl" : undefined,
@@ -140,6 +141,8 @@ export function useBabies({ meId, flatId, level, onOpenFamily }: {
 
   const canCarry = (b: Baby) => b.days < FAMILY.carryUntilDay;
   const menuBaby = babies.find((b) => b.child.id === menu) ?? null;
+  // The baby's menu open: popups that open by themselves wait (lib/popups).
+  useScreenBusy(!!menuBaby);
   const heldBy = menuBaby && isCarried(menuBaby.spot) ? menuBaby.spot.carriedBy : null;
 
   const ui = (

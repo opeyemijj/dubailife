@@ -12,6 +12,7 @@ import { datePlaceOf, myMoveInRequests, respond, ringOf, useLove, type MoveInReq
 import { onUserEvent } from "@/lib/userChannel";
 import { openPhone } from "@/components/layout/PhoneOverlay";
 import { PENDING_WEDDING } from "./WeddingPage";
+import { POPUP, usePopupTurn } from "@/lib/popups";
 
 export function LoveListener() {
   const { citizen, needsOnboarding } = useCitizen();
@@ -32,7 +33,10 @@ export function LoveListener() {
   const proposal = love?.incoming.find((q) => q.kind === "propose" && !seen.includes(q.id));
   // A date request or a partner asking for a baby: a note at the top.
   const date = love?.incoming.find((q) => (q.kind === "date" || q.kind === "baby") && !seen.includes(q.id));
+  // One popup at a time, in order (lib/popups): a proposal is someone waiting on you.
+  const popupTurn = usePopupTurn("love-request", !!(proposal || date), POPUP.live);
   if (!proposal && !date) return null;
+  if (!popupTurn) return null;
 
   if (proposal) {
     const answer = async (yes: boolean) => {
@@ -88,7 +92,9 @@ export function MoveInListener() {
     return () => { clearTimeout(first); off(); clearInterval(t); };
   }, [citizen?.id]);
   const ask = asks.find((q) => q.incoming && !seen.includes(q.id));
+  const popupTurn = usePopupTurn("move-in-request", !!ask, POPUP.live);
   if (!ask) return null;
+  if (!popupTurn) return null;
   return (
     <div className="fixed top-[max(8.5rem,calc(env(safe-area-inset-top)+8rem))] inset-x-0 z-[140] px-3 pointer-events-none">
       <div className="max-w-md mx-auto pointer-events-auto flex items-center gap-3 p-2.5 rounded-[24px] bg-white text-slate-900 shadow-xl">

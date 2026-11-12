@@ -3100,6 +3100,37 @@
     "fixed": true
    },
    {
+    "id": "lift",
+    "name": "Home lift",
+    "icon": "🛗",
+    "size": [
+     2,
+     2
+    ],
+    "col": 18,
+    "row": 1,
+    "rot": 1,
+    "visual": "home-lift",
+    "interaction": "lift",
+    "fixed": true
+   },
+   {
+    "id": "lift_up",
+    "name": "Home lift",
+    "icon": "🛗",
+    "size": [
+     2,
+     2
+    ],
+    "col": 18,
+    "row": 1,
+    "rot": 1,
+    "visual": "home-lift",
+    "interaction": "lift",
+    "level": 1,
+    "fixed": true
+   },
+   {
     "id": "hall_console",
     "name": "Marble console",
     "icon": "🕰️",
@@ -3911,6 +3942,37 @@
     "fixed": true
    },
    {
+    "id": "lift",
+    "name": "Home lift",
+    "icon": "🛗",
+    "size": [
+     2,
+     2
+    ],
+    "col": 18,
+    "row": 1,
+    "rot": 1,
+    "visual": "home-lift",
+    "interaction": "lift",
+    "fixed": true
+   },
+   {
+    "id": "lift_up",
+    "name": "Home lift",
+    "icon": "🛗",
+    "size": [
+     2,
+     2
+    ],
+    "col": 18,
+    "row": 1,
+    "rot": 1,
+    "visual": "home-lift",
+    "interaction": "lift",
+    "level": 1,
+    "fixed": true
+   },
+   {
     "id": "hall_console",
     "name": "Marble console",
     "icon": "🕰️",
@@ -4718,6 +4780,37 @@
     "rot": 0,
     "visual": "stairwell",
     "interaction": "stairs",
+    "level": 1,
+    "fixed": true
+   },
+   {
+    "id": "lift",
+    "name": "Home lift",
+    "icon": "🛗",
+    "size": [
+     2,
+     2
+    ],
+    "col": 18,
+    "row": 1,
+    "rot": 1,
+    "visual": "home-lift",
+    "interaction": "lift",
+    "fixed": true
+   },
+   {
+    "id": "lift_up",
+    "name": "Home lift",
+    "icon": "🛗",
+    "size": [
+     2,
+     2
+    ],
+    "col": 18,
+    "row": 1,
+    "rot": 1,
+    "visual": "home-lift",
+    "interaction": "lift",
     "level": 1,
     "fixed": true
    },
@@ -5543,6 +5636,37 @@
     "rot": 0,
     "visual": "stairwell",
     "interaction": "stairs",
+    "level": 1,
+    "fixed": true
+   },
+   {
+    "id": "lift",
+    "name": "Home lift",
+    "icon": "🛗",
+    "size": [
+     2,
+     2
+    ],
+    "col": 18,
+    "row": 1,
+    "rot": 1,
+    "visual": "home-lift",
+    "interaction": "lift",
+    "fixed": true
+   },
+   {
+    "id": "lift_up",
+    "name": "Home lift",
+    "icon": "🛗",
+    "size": [
+     2,
+     2
+    ],
+    "col": 18,
+    "row": 1,
+    "rot": 1,
+    "visual": "home-lift",
+    "interaction": "lift",
     "level": 1,
     "fixed": true
    },

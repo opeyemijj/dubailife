@@ -10,6 +10,7 @@ import { updateCitizen, useCitizen } from "@/lib/citizenStore";
 import { calculatePregnancyStage, useFamily, type Child } from "@/lib/love";
 import { expecting, labourOpensAt } from "@/components/arcade/games/maternity/Clinic";
 import { phoneRing } from "@/components/transit/transitAudio";
+import { POPUP, usePopupTurn } from "@/lib/popups";
 
 const SEEN = "dl_labour_seen";
 
@@ -52,7 +53,10 @@ export function LabourAlert() {
     return () => { clearTimeout(first); clearInterval(every); };
   }, [family, me]);
 
+  // One popup at a time, in order (lib/popups): it shows when it's its turn.
+  const popupTurn = usePopupTurn("labour", !(!child), POPUP.urgent);
   if (!child) return null;
+  if (!popupTurn) return null;
   const mother = child.mother.id === me;
   return (
     <div className="fixed inset-x-3 top-[max(0.75rem,env(safe-area-inset-top))] z-[210] flex justify-center">

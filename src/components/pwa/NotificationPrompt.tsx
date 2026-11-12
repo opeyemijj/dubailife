@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Bell, BellRing, Check, Share, SquarePlus, Smartphone, X } from "lucide-react";
-import { dialogOpen, isNewCitizen, useCitizen } from "@/lib/citizenStore";
+import { isNewCitizen, useCitizen } from "@/lib/citizenStore";
 import {
   getNotificationPermission,
   isPushSupported,
@@ -15,12 +15,15 @@ import { gameAudio } from "@/utils/gameAudio";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { useInstallState } from "@/lib/install";
 import { bonusAmounts, enablePush, openPushCoach } from "@/lib/push/engage";
+import { usePathname } from "next/navigation";
+import { POPUP, usePopupTurn } from "@/lib/popups";
 
 const DISMISSED_KEY = "dl_push_prompt_dismissed_at";
 const SESSION_KEY = "dl_push_prompt_shown";
 
 export function NotificationPrompt() {
   const { citizen } = useCitizen();
+  const path = usePathname() ?? "/";
   const [visible, setVisible] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
   const [status, setStatus] = useState<"prompt" | "success" | "denied">("prompt");
@@ -54,7 +57,7 @@ export function NotificationPrompt() {
     if (isNewCitizen(citizen)) return;
     try { if (sessionStorage.getItem(SESSION_KEY)) return; } catch {}
     const timer = setInterval(() => {
-      if (!/^\/(explore|home)\b/.test(window.location.pathname) || dialogOpen()) return;
+      if (!/^\/(explore|home)\b/.test(window.location.pathname)) return;
       clearInterval(timer);
       try { sessionStorage.setItem(SESSION_KEY, "1"); } catch {}
       if (getNotificationPermission() === "denied") setStatus("denied");
@@ -69,7 +72,9 @@ export function NotificationPrompt() {
     if (citizen?.id) void refreshPushSubscription(citizen.id);
   }, [citizen?.id]);
 
-  if (!visible) return null;
+  // One popup at a time, in order (lib/popups): it waits its turn, on the map or at home.
+  const popupTurn = usePopupTurn("notifications", visible && /^\/(explore|home)\b/.test(path), POPUP.promo);
+  if (!visible || !popupTurn) return null;
 
   const handleEnable = async () => {
     if (isIosBrowser) {

@@ -14,10 +14,11 @@ import { dubaiSky, SkyAndLight } from "@/components/transit/TransitWorld";
 import { Building, Lamp, StreetPalm } from "@/components/home/RunJourney";
 import { footstep } from "@/components/transit/transitAudio";
 import { canvasQuality } from "@/lib/device";
-import { dialogOpen, useCitizen } from "@/lib/citizenStore";
+import { useCitizen } from "@/lib/citizenStore";
 import { MISSIONS, moveSavings, mySavings, seenPayday, type Savings } from "@/lib/missions";
 import { gameAudio } from "@/utils/gameAudio";
 import { PerfProbe } from "@/components/perf/PerfProbe";
+import { POPUP, usePopupTurn } from "@/lib/popups";
 
 function atmTexture() {
   const c = document.createElement("canvas"); c.width = 256; c.height = 192;
@@ -103,14 +104,17 @@ export function Payday() {
       const r = await mySavings();
       if (!alive || !r) return;
       setS(r);
-      if (r.payday && !r.payday.seen && !dialogOpen()) setShow(true);
+      // Its turn comes when the screen is clear (lib/popups), so it isn't skipped when something else is open.
+      if (r.payday && !r.payday.seen) setShow(true);
     };
     const first = setTimeout(() => void check(), 5000);
     const every = setInterval(() => void check(), 60000);
     return () => { alive = false; clearTimeout(first); clearInterval(every); };
   }, [me, here]);
 
+  const popupTurn = usePopupTurn("payday", !!(show && s?.payday && citizen && here), POPUP.daily);
   if (!show || !s?.payday || !citizen) return null;
+  if (!popupTurn) return null;
   const pay = s.payday;
   const choose = async (share: number) => {
     setBusy(true); setError(null);

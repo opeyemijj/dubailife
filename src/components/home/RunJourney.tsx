@@ -18,6 +18,7 @@ import { gameAudio } from "@/utils/gameAudio";
 import { footstep } from "@/components/transit/transitAudio";
 import RUNS from "@/data/life/runs.json";
 import { PerfProbe } from "@/components/perf/PerfProbe";
+import { useScreenBusy } from "@/lib/popups";
 
 export type RouteId = "citywalk" | "jbr" | "block";
 export { RUNS };
@@ -60,6 +61,8 @@ function at(pts: Pt[], cum: number[], s: number) {
 const rand = (i: number, k = 0) => { const x = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return x - Math.floor(x); };
 
 export function StreetPalm({ x, z, h = 6 }: { x: number; z: number; h?: number }) {
+  // On screen: popups that open by themselves wait until it's over (lib/popups).
+  useScreenBusy(true);
   return (
     <group position={[x, 0, z]}>
       <mesh position={[0, h / 2, 0]} castShadow><cylinderGeometry args={[0.14, 0.22, h, 8]} /><meshStandardMaterial color="#8b6b4a" roughness={0.9} /></mesh>

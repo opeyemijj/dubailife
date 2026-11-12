@@ -423,7 +423,7 @@ export const CATALOG: CatalogItem[] = [
 
 export const getCatalogItem = (id: string) => CATALOG.find((c) => c.id === id) ?? HOME_ITEMS.find((c) => c.id === id);
 
-export type Interaction = "cooler" | "bed" | "chair" | "door" | "stairs";
+export type Interaction = "cooler" | "bed" | "chair" | "door" | "stairs" | "lift";
 
 /** Things in the home you use rather than sit or lie on: the TV, the aquarium, the dining table, the kitchen counter.
     Each opens its actions (src/data/home/fixtures.json, kinds "tv", "aquarium", "dining", "island"). */

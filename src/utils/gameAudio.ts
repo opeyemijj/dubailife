@@ -52,6 +52,10 @@ export type SfxName =
   | "dorime"
   | "mgPerfect"
   | "mgThud"
+  // Boxing: a punch landing (body thump and leather slap), a heavy one, and one taken on the gloves.
+  | "punch"
+  | "punchHeavy"
+  | "punchBlocked"
   | "mgServe"
   | "mgStar"
   | "mgJackpot"
@@ -579,6 +583,23 @@ class GameAudioEngine {
         return;
       case "mgKick":
         this.K(W(-24), { vol: 0.2, dur: 0.14, drop: 0.45 });
+        return;
+      case "punch":
+        // The body's thump, the glove's leather slap, and a little crack on top.
+        this.K(W(-28), { vol: 0.42, dur: 0.16, drop: 0.5 });
+        this.L(0.06, { vol: 0.09, from: 900, to: 3200 });
+        this.L(0.025, { vol: 0.05, from: 4500, to: 8000 });
+        return;
+      case "punchHeavy":
+        this.K(W(-31), { vol: 0.55, dur: 0.26, drop: 0.4 });
+        this.K(W(-19), { vol: 0.2, dur: 0.1, drop: 0.6 });
+        this.L(0.09, { vol: 0.13, from: 700, to: 2600 });
+        this.L(0.035, { vol: 0.07, from: 4000, to: 9000 });
+        return;
+      case "punchBlocked":
+        // Glove on glove: muffled, no crack.
+        this.K(W(-14), { vol: 0.16, dur: 0.07, drop: 0.7 });
+        this.L(0.04, { vol: 0.04, from: 500, to: 1300 });
         return;
       case "mgHat":
         this.L(0.04, { vol: 0.03, from: 7000, to: 9000 });

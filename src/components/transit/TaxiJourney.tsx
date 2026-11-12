@@ -17,6 +17,7 @@ import { TAXI, taxiQuote } from "@/lib/transit";
 import { BurjKhalifa, CityBlocks, dubaiSky, laneX, Road, ROAD, SalikGate, Sedan, SkyAndLight, Traffic, type District, type Travel } from "./TransitWorld";
 import { announce, doorThud, indicatorTick, isTransitMuted, meterTick, nolTap, salikBeep, setLoopSpeed, setTransitMuted, startLoop, stopLoops, stopSpeech, warmUpVoices } from "./transitAudio";
 import { PerfProbe } from "@/components/perf/PerfProbe";
+import { useScreenBusy } from "@/lib/popups";
 
 type Stage = "kerb" | "pullup" | "board" | "ride" | "arrive" | "pay" | "done";
 type View = "seat" | "window" | "outside";
@@ -53,6 +54,8 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
   onArrive: () => void;
   onCancel: () => void;
 }) {
+  // On screen: popups that open by themselves wait until it's over (lib/popups).
+  useScreenBusy(true);
   const quote = useMemo(() => taxiQuote(metres), [metres]);
   const sky = useMemo(() => dubaiSky(), []);
   // Dubai's taxi firms each have their own roof colour; which one turns up depends on the trip.

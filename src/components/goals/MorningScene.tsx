@@ -13,13 +13,14 @@ import { CitizenAvatar, type AvatarAnimation } from "@/components/avatar/Citizen
 import type { AvatarLookProps } from "@/components/onboarding/AvatarCanvas";
 import { phoneRing } from "@/components/transit/transitAudio";
 import { canvasQuality } from "@/lib/device";
-import { adjustBalance, dialogOpen, useCitizen } from "@/lib/citizenStore";
+import { adjustBalance, useCitizen } from "@/lib/citizenStore";
 import { useGoals } from "@/lib/goals";
 import { useLifeLoop, visaInfo } from "@/lib/lifeLoop";
 import { useMissions } from "@/lib/missions";
 import { gameAudio } from "@/utils/gameAudio";
 import { DailyMissions } from "./DailyMissions";
 import { PerfProbe } from "@/components/perf/PerfProbe";
+import { POPUP, usePopupTurn } from "@/lib/popups";
 
 const STAMP_REWARDS = [
   { day: 1, icon: "🚇", label: "Nol Top-Up", aed: 150 },
@@ -107,26 +108,29 @@ export function MorningScene() {
     let seen = false;
     try { seen = localStorage.getItem(KEY(missions.day)) === "1"; } catch { seen = true; }
     if (seen) return;
+    // It waits its turn (lib/popups) rather than being skipped when something else is open.
     const t = setTimeout(() => {
-      if (!dialogOpen()) {
-        setShow(true);
-        try {
-          localStorage.setItem(KEY(missions.day), "1");
-          setStampClaimed(localStorage.getItem(STAMP_KEY(missions.day)) === "1");
-        } catch { /* storage blocked */ }
-      }
+      setShow(true);
+      try { setStampClaimed(localStorage.getItem(STAMP_KEY(missions.day)) === "1"); } catch { /* storage blocked */ }
     }, 1200);
     return () => clearTimeout(t);
   }, [missions, status?.order, path, citizen?.createdAt]);
+  const here = /^\/(explore|home)\b/.test(path);
+  const popupTurn = usePopupTurn("morning", show && !!citizen && here, POPUP.daily);
+  // Seen for today once it's actually on screen (not while it waits its turn).
+  useEffect(() => {
+    if (!popupTurn || !missions) return;
+    try { localStorage.setItem(KEY(missions.day), "1"); } catch { /* storage blocked */ }
+  }, [popupTurn, missions]);
 
   useEffect(() => {
-    if (!show) return;
+    if (!show || !popupTurn) return;
     phoneRing();
     const t = setTimeout(() => { up.current = 1; setAwake(true); }, 2600);
     return () => clearTimeout(t);
-  }, [show]);
+  }, [show, popupTurn]);
 
-  if (!show || !citizen) return null;
+  if (!show || !citizen || !popupTurn) return null;
   const name = (citizen.username ?? "").replace(/^@/, "");
   const streak = Math.max(1, life?.streak ?? 1);
   const cycleDay = ((streak - 1) % 7) + 1;

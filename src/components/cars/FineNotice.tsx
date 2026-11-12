@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useCitizen } from "@/lib/citizenStore";
 import { aed, myFines, seenFines, type Fine } from "@/lib/cars";
 import { openPhone } from "@/components/layout/PhoneOverlay";
+import { POPUP, usePopupTurn } from "@/lib/popups";
 
 const ICON: Record<Fine["kind"], string> = { speeding: "📸", parking_unpaid: "🅿️", bad_parking: "🚧" };
 
@@ -26,7 +27,10 @@ export function FineNotice() {
   }, [citizen?.id, check]);
 
   const f = fresh[0];
+  // One popup at a time, in order (lib/popups): it shows when it's its turn.
+  const popupTurn = usePopupTurn("fine", !(!f), POPUP.daily);
   if (!f) return null;
+  if (!popupTurn) return null;
   const done = (open: boolean) => {
     void seenFines([f.id]);
     setFresh((x) => x.slice(1));

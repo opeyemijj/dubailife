@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { X, Key, ShieldAlert, Sparkles, AlertTriangle, Flame } from "lucide-react";
 import { carOf, type ParkedCarView, attemptStealCar } from "@/lib/cars";
 import { gameAudio } from "@/utils/gameAudio";
+import { useScreenBusy } from "@/lib/popups";
 
 export interface VehicleTheftModalProps {
   parkedCar: ParkedCarView;
@@ -20,6 +21,8 @@ export function VehicleTheftModal({
   onSuccess,
   say,
 }: VehicleTheftModalProps) {
+  // On screen: popups that open by themselves wait until it's over (lib/popups).
+  useScreenBusy(true);
   const [wireStep, setWireStep] = useState<"ready" | "hotwiring" | "done">("ready");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

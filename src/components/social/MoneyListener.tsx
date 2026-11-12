@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase/client";
 import { refreshCitizen, useCitizen } from "@/lib/citizenStore";
 import { gameAudio } from "@/utils/gameAudio";
 import { MONEY_EVENT } from "@/lib/room";
+import { POPUP, usePopupTurn } from "@/lib/popups";
 
 interface Arrival { id: number; amount: number; from: string; place: string | null }
 
@@ -28,7 +29,6 @@ export function MoneyListener() {
       gameAudio.playCoinSound();
       const arrival = { id: Date.now() + Math.random(), amount, from, place };
       setArrivals((list) => [...list, arrival]);
-      setTimeout(() => setArrivals((list) => list.filter((a) => a.id !== arrival.id)), 6000);
     };
     const onLive = (e: Event) => {
       const d = (e as CustomEvent<{ from: string; amount: number }>).detail;
@@ -49,7 +49,18 @@ export function MoneyListener() {
     };
   }, [me]);
 
+  // One popup at a time, in order (lib/popups): it shows when it's its turn, and each arrival's 6 seconds start
+  // once it's on screen (so money that arrived while something else was open is still seen).
+  const popupTurn = usePopupTurn("money", !(!arrivals.length), POPUP.live);
+  const shownKey = popupTurn ? arrivals.map((a) => a.id).join(",") : "";
+  useEffect(() => {
+    if (!shownKey) return;
+    const ids = shownKey.split(",").map(Number);
+    const t = setTimeout(() => setArrivals((list) => list.filter((a) => !ids.includes(a.id))), 6000);
+    return () => clearTimeout(t);
+  }, [shownKey]);
   if (!arrivals.length) return null;
+  if (!popupTurn) return null;
   return (
     <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[120] space-y-2 w-[min(340px,calc(100vw-24px))] pointer-events-none">
       {arrivals.map((a) => (

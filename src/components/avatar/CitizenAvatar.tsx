@@ -91,7 +91,13 @@ export type BodyDir = [number, number, number];
  * arm's upper arm and forearm point, in the body's frame, and how strongly (0 to 1) to lay it over the clip. It wins
  * over `pose`. Directions for the left arm are given as for the right and mirrored, so one table serves both.
  */
-export interface ArmRig { weight: number; R: { upper: BodyDir; fore: BodyDir }; L: { upper: BodyDir; fore: BodyDir } }
+export interface ArmRig {
+  weight: number; R: { upper: BodyDir; fore: BodyDir }; L: { upper: BodyDir; fore: BodyDir };
+  /** The legs too (boxing footwork): where each thigh and shin point, in the body's frame, the left mirrored. */
+  legs?: { R: { thigh: BodyDir; shin: BodyDir }; L: { thigh: BodyDir; shin: BodyDir } };
+  /** Shrinks the hands (fingers and all) inside something that covers them, e.g. boxing gloves: 1 = as they are. */
+  handScale?: number;
+}
 
 export const DEFAULT_LOOK: AvatarLookProps = { gender: "woman", bodyType: "Hourglass" };
 
@@ -838,7 +844,12 @@ function useBodyPose(model: { scene: THREE.Object3D }, pose: BodyPose | undefine
       fore: named(`Bip01_${s}_Forearm`, `${full}ForeArm`),
       hand: named(`Bip01_${s}_Hand`, `${full}Hand`),
     });
-    return { L: side("L", "Left"), R: side("R", "Right"), pelvis: named("Bip01_Pelvis", "Hips"), neck: named("Bip01_Neck", "Neck") };
+    const leg = (s: "L" | "R", full: "Left" | "Right") => ({
+      thigh: named(`Bip01_${s}_Thigh`, `${full}UpLeg`),
+      calf: named(`Bip01_${s}_Calf`, `${full}Leg`),
+      foot: named(`Bip01_${s}_Foot`, `${full}Foot`),
+    });
+    return { L: side("L", "Left"), R: side("R", "Right"), LL: leg("L", "Left"), LR: leg("R", "Right"), pelvis: named("Bip01_Pelvis", "Hips"), neck: named("Bip01_Neck", "Neck") };
   }, [model]);
   const t = useMemo(() => ({ a: new THREE.Vector3(), b: new THREE.Vector3(), q: new THREE.Quaternion(), q2: new THREE.Quaternion(), id: new THREE.Quaternion(), up: new THREE.Vector3(), right: new THREE.Vector3(), fwd: new THREE.Vector3(), d: new THREE.Vector3() }), []);
   const weight = useRef(0);
@@ -918,6 +929,22 @@ function useBodyPose(model: { scene: THREE.Object3D }, pose: BodyPose | undefine
       }
       aimBone(arm.upper!, arm.fore!, upper, w, t);
       aimBone(arm.fore!, arm.hand!, fore, w, t);
+    }
+    if (live) {
+      // Legs: thighs then shins, aimed like the arms (the left mirrored across the body).
+      if (live.legs) {
+        for (const [legBones, k] of [[bones.LR, 1], [bones.LL, -1]] as const) {
+          const a = k === 1 ? live.legs.R : live.legs.L;
+          if (!legBones.thigh || !legBones.calf || !legBones.foot) continue;
+          const thigh = dir(a.thigh[0], a.thigh[1], k * a.thigh[2]).clone();
+          const shin = dir(a.shin[0], a.shin[1], k * a.shin[2]).clone();
+          aimBone(legBones.thigh, legBones.calf, thigh, w * live.weight, t);
+          aimBone(legBones.calf, legBones.foot, shin, w * live.weight, t);
+        }
+      }
+      // Hands tucked away inside gloves (the bone's scale carries the fingers with it).
+      const hs = live.handScale ?? 1;
+      for (const h of [L.hand, R.hand]) { if (h.scale.x !== hs) { h.scale.setScalar(hs); h.updateWorldMatrix(false, true); } }
     }
   });
 }

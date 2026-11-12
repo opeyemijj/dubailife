@@ -12,6 +12,7 @@ import { MoveStick, type Controls } from "@/components/street/StreetWorld";
 import { MarinaSkyline } from "@/components/interior/scenery";
 import { gameAudio } from "@/utils/gameAudio";
 import { PerfProbe } from "@/components/perf/PerfProbe";
+import { useScreenBusy } from "@/lib/popups";
 
 /** The course: buoys to round in order, then the dock. Metres, the harbour at the origin. */
 const BUOYS: Array<[number, number]> = [[0, -60], [-45, -130], [-20, -210], [50, -190], [70, -110], [30, -40]];
@@ -21,6 +22,8 @@ const MAX_SPEED = 22; // m/s at full throttle (about 43 knots: a fast yacht)
 export interface SailResult { seconds: number; buoys: number; finished: boolean }
 
 export function SailJourney({ name, onDone }: { name: string; onDone: (r: SailResult) => void }) {
+  // On screen: popups that open by themselves wait until it's over (lib/popups).
+  useScreenBusy(true);
   const controls = useRef<Controls>({ x: 0, y: 0 });
   const state = useRef({ x: 0, z: 0, yaw: Math.PI, speed: 0, next: 0, start: 0, done: false });
   const [hud, setHud] = useState({ next: 0, speed: 0, seconds: 0 });

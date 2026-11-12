@@ -12,6 +12,7 @@ import { doorThud, footstep } from "@/components/transit/transitAudio";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { canvasQuality } from "@/lib/device";
 import { PerfProbe } from "@/components/perf/PerfProbe";
+import { useScreenBusy } from "@/lib/popups";
 
 const OUTDOOR = ["townhouse", "villa"];
 const WALK_END = 4.4;
@@ -102,6 +103,8 @@ function Walk({ look, outdoor, onInside }: { look: AvatarLookProps; outdoor: boo
 }
 
 export function MoveInWalk({ look, homeId, homeLabel, caption, onDone }: { look: AvatarLookProps; homeId: string; homeLabel: string; caption?: string; onDone: () => void }) {
+  // On screen: popups that open by themselves wait until it's over (lib/popups).
+  useScreenBusy(true);
   const quality = useMemo(() => canvasQuality(), []);
   const [fading, setFading] = useState(false);
   const finished = useRef(false);

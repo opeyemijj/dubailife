@@ -9,6 +9,7 @@ import { useServices } from "@/lib/cityServices";
 import { decorJobsForMe, studioOf, type DecorRequest } from "@/lib/decorator";
 import { openPhone } from "@/components/layout/PhoneOverlay";
 import { phoneRing } from "@/components/transit/transitAudio";
+import { POPUP, usePopupTurn } from "@/lib/popups";
 
 const SEEN = "dl_decor_seen";
 
@@ -35,7 +36,10 @@ export function DecorJobAlert() {
     return () => { clearTimeout(first); clearInterval(every); };
   }, [on]);
 
+  // One popup at a time, in order (lib/popups): it shows when it's its turn.
+  const popupTurn = usePopupTurn("decor-job", !(!job), POPUP.live);
   if (!job) return null;
+  if (!popupTurn) return null;
   const s = job.studio ? studioOf(job.studio) : null;
   return (
     <div className="fixed inset-x-3 top-[max(0.75rem,env(safe-area-inset-top))] z-[210] flex justify-center">

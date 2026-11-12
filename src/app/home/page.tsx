@@ -24,6 +24,7 @@ import { PartyPeople } from "@/components/invite/PartyPeople";
 import { PartyActions } from "@/components/invite/PartyActions";
 import { usePartyBoard } from "@/components/party/usePartyBoard";
 import { useBabies } from "@/components/home/useBabies";
+import { POPUP, usePopupTurn } from "@/lib/popups";
 import {
   drinkInHand,
   PartyHostesses,
@@ -502,8 +503,12 @@ export default function HomePage() {
     const t = setTimeout(() => setTriedMoving(true), 0);
     return () => clearTimeout(t);
   }, [decorating]);
-  // After onboarding is completed, goals are set, and the user has seen their apartment, show app setup.
+  // After onboarding is completed, goals are set, and the user has seen their apartment, show app setup (when it's
+  // its turn: one popup at a time, lib/popups).
   const [appSetupOpen, setAppSetupOpen] = useState(false);
+  const appSetupTurn = usePopupTurn("app-setup", appSetupOpen && !!citizen, POPUP.daily);
+  // Taking the home lift (two-storey homes) from the floor switcher.
+  const [liftCall, setLiftCall] = useState<{ n: number } | undefined>(undefined);
   useEffect(() => {
     const onGoalDone = () => {
       setTimeout(() => {
@@ -1146,6 +1151,8 @@ export default function HomePage() {
       showToast(
         level === 0 ? "🪜 Heading upstairs…" : "🪜 Heading downstairs…",
       );
+    } else if (type === "lift") {
+      showToast(level === 0 ? "🛗 Taking the lift up…" : "🛗 Taking the lift down…");
     }
   };
 
@@ -1224,6 +1231,7 @@ export default function HomePage() {
         poolCovered={partyBoard.poolCovered}
         clean={cleanScreen}
         startAt={myStart ? [myStart[0], myStart[2]] : undefined}
+        liftCall={liftCall}
         cradle={babies.cradle}
         babyCall={babies.babyCall}
         onBabyDown={babies.onBabyDown}
@@ -1803,6 +1811,19 @@ export default function HomePage() {
                 {l.icon} {l.label}
               </button>
             ))}
+            {/* The home lift: walks you to it (beside the stairs) and rides to the other floor. */}
+            {levels && (
+              <button
+                onClick={() => {
+                  gameAudio.playClickSound();
+                  setView((v) => (v === "eye" ? "inside" : v));
+                  setLiftCall((c) => ({ n: (c?.n ?? 0) + 1 }));
+                }}
+                className="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-black whitespace-nowrap bg-slate-900 text-white"
+              >
+                🛗 Lift
+              </button>
+            )}
             {levels && rooms && rooms.length > 0 && (
               <span className="shrink-0 w-px h-5 bg-slate-200 mx-0.5" />
             )}
@@ -2371,7 +2392,7 @@ export default function HomePage() {
         !cleanScreen &&
         !placing &&
         !decorating && <HomeActions onShop={openShop} />}
-      {appSetupOpen && citizen && (
+      {appSetupOpen && citizen && appSetupTurn && (
         <AppSetup userId={citizen.id} onClose={() => setAppSetupOpen(false)} />
       )}
       {decorFirst &&

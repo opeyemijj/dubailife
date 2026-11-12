@@ -30,7 +30,7 @@ type Tap = (e: ThreeEvent<MouseEvent>) => boolean;
 /** A tap, not the end of a drag; stops it reaching the floor (which would walk you there). */
 const tapped: Tap = (e) => { if (e.delta > 6) return false; e.stopPropagation(); return true; };
 
-export function PartyGameBoard({ snap, mySeat, onMove, pool, grounds, lightsOut, onIdleTap }: {
+export function PartyGameBoard({ snap, mySeat, onMove, pool, grounds, onIdleTap }: {
   snap: PartyGameSnap | null;
   mySeat: number;
   onMove: (state: unknown) => void;
@@ -38,18 +38,18 @@ export function PartyGameBoard({ snap, mySeat, onMove, pool, grounds, lightsOut,
   pool: boolean;
   /** A villa or townhouse plot (there's already ground outside); otherwise a terrace is built for the game. */
   grounds: boolean;
+  /** Party lights out (the boards glow on their own; no extra light is added, see PoolTable3D). */
   lightsOut?: boolean;
   /** No game on: an empty Connect Four frame stands outside as an invitation; tapping it opens the picker. */
   onIdleTap?: () => void;
 }) {
-  if (!snap) return onIdleTap ? <IdleBoard pool={pool} grounds={grounds} lightsOut={lightsOut} onTap={onIdleTap} /> : null;
+  if (!snap) return onIdleTap ? <IdleBoard pool={pool} grounds={grounds} onTap={onIdleTap} /> : null;
   const turn = turnOf(snap);
   const canMove = mySeat >= 0 && turn === mySeat && !!snap.players[1];
   const result = resultText(snap, mySeat);
   return (
     <group position={[PARTY_BOARD_AT[0], 0, PARTY_BOARD_AT[1]]}>
       <Deck pool={pool} grounds={grounds} />
-      {lightsOut && <pointLight position={[0, 4, 0]} intensity={14} distance={9} color="#fde68a" />}
       <group position={[0, pool ? 0.14 : 0.05, 0]}>
         {snap.game === "connect4" && <ConnectFour3D state={snap.state as C4State} canMove={canMove} onMove={onMove} />}
         {snap.game === "chess" && <Chess3D state={snap.state as ChessState} canMove={canMove} mySeat={mySeat} onMove={onMove} />}
@@ -82,12 +82,11 @@ const IDLE_POOL = poolGame.init(2, 0) as PoolState;
  * The invitation: a pool table outside, racked, with "Let's play" (any game can be picked). On a swimming pool
  * it stands crosswise on the far-end coping (the water stays free to swim in); otherwise on the lawn or terrace.
  */
-function IdleBoard({ pool, grounds, lightsOut, onTap }: { pool: boolean; grounds: boolean; lightsOut?: boolean; onTap: () => void }) {
+function IdleBoard({ pool, grounds, onTap }: { pool: boolean; grounds: boolean; onTap: () => void }) {
   const [hover, setHover] = useState(false);
   return (
     <group position={[PARTY_BOARD_AT[0], 0, PARTY_BOARD_AT[1]]}>
       {!pool && <Deck pool={false} grounds={grounds} />}
-      {lightsOut && <pointLight position={[0, 4, pool ? -4.1 : 0]} intensity={10} distance={8} color="#fde68a" />}
       <group position={[0, 0.05, pool ? -4.1 : 0]} scale={hover ? 1.04 : 1}
         onClick={(e) => { if (!tapped(e)) return; gameAudio.playClickSound(); onTap(); }}
         onPointerOver={(e) => { e.stopPropagation(); setHover(true); document.body.style.cursor = "pointer"; }}

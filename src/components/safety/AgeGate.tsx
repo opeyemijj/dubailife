@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase/client";
 import { signOut } from "@/lib/citizenStore";
 import { ageFrom, dobIso, MIN_AGE } from "@/lib/age";
 import { setMyDob } from "@/lib/safety";
+import { POPUP, usePopupTurn } from "@/lib/popups";
 
 type State = "ok" | "ask" | "underage";
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -41,7 +42,10 @@ export function AgeGate() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  // One popup at a time, in order (lib/popups): it shows when it's its turn.
+  const popupTurn = usePopupTurn("age-gate", !(state === "ok" || path?.startsWith("/admin")), POPUP.system);
   if (state === "ok" || path?.startsWith("/admin")) return null;
+  if (!popupTurn) return null;
 
   const years = Array.from({ length: 90 }, (_, i) => String(new Date().getFullYear() - 10 - i));
   const save = async () => {

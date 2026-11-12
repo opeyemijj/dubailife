@@ -9,9 +9,10 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Flag, Phone, PhoneOff, X } from "lucide-react";
 import { ModalPortal } from "@/components/ui/modal-portal";
-import { dialogOpen, useCitizen } from "@/lib/citizenStore";
+import { useCitizen } from "@/lib/citizenStore";
 import { resolveScam, SCAM_POINTS, scamDue, type OpenScam, type ScamOutcome } from "@/lib/scams";
 import { gameAudio } from "@/utils/gameAudio";
+import { POPUP, usePopupTurn } from "@/lib/popups";
 
 const CHANNEL = {
   call: { icon: "📞", label: "Incoming call", ignore: "Hang up" },
@@ -32,8 +33,8 @@ export function ScamPhone() {
 
   useEffect(() => {
     if (!signedIn) return;
+    // It waits its turn (lib/popups) rather than being skipped when something else is open.
     const check = async () => {
-      if (dialogOpen()) return;
       const s = await scamDue();
       if (s) { setScam((cur) => (cur?.id === s.id ? cur : s)); }
     };
@@ -47,7 +48,10 @@ export function ScamPhone() {
   // Ring once when a scam arrives.
   useEffect(() => { if (scam && stage === "ring") gameAudio.playClickSound(); }, [scam?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // One popup at a time, in order (lib/popups). Hidden while ringing, it lets the next one have its turn.
+  const popupTurn = usePopupTurn("scam-call", !!scam && !path?.startsWith("/admin") && path !== "/" && !(stage === "ring" && hidden), POPUP.daily);
   if (!scam || path?.startsWith("/admin") || path === "/") return null;
+  if (!popupTurn && !(stage === "ring" && hidden)) return null;
   const s = scam.scam;
   const ch = CHANNEL[s.channel as keyof typeof CHANNEL] ?? CHANNEL.sms;
 

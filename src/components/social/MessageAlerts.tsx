@@ -10,6 +10,7 @@ import { MessageCircle } from "lucide-react";
 import { useCitizen } from "@/lib/citizenStore";
 import { contacts } from "@/lib/messages";
 import { onNewMessage, useUnreadTotal } from "@/lib/unread";
+import { POPUP, usePopupTurn } from "@/lib/popups";
 
 interface Alert { id: string; from: string; username: string; text: string }
 
@@ -28,10 +29,19 @@ export function MessageAlerts() {
     try { navigator.vibrate?.([60, 40, 60]); } catch { /* not supported */ }
     setAlert({ id: m.id, from: m.from_id, username: who?.username ?? "someone", text: m.body });
     setTimeout(() => askForPush({ icon: "💬", title: `@${who?.username ?? "someone"} messaged you`, text: "Turn on notifications to see messages the moment they arrive, even when the app is closed." }), 7500);
-    setTimeout(() => setAlert((a) => (a?.id === m.id ? null : a)), 7000);
   }), [path, params]);
 
+  // One popup at a time, in order (lib/popups): it shows when it's its turn, and its 7 seconds start then (so a
+  // message that waited is still seen).
+  const popupTurn = usePopupTurn("message", !(!alert), POPUP.live);
+  const shownId = popupTurn ? alert?.id : undefined;
+  useEffect(() => {
+    if (!shownId) return;
+    const t = setTimeout(() => setAlert((a) => (a?.id === shownId ? null : a)), 7000);
+    return () => clearTimeout(t);
+  }, [shownId]);
   if (!alert) return null;
+  if (!popupTurn) return null;
   return (
     <button
       onClick={() => { setAlert(null); router.push(`/phone?tab=chats&chat=${alert.from}`); }}

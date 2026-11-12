@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { useCitizen } from "@/lib/citizenStore";
 import { respondEntry } from "@/lib/city/flats";
+import { POPUP, usePopupTurn } from "@/lib/popups";
 
 interface Knock { id: string; flat_id: string; visitor_name: string; note: string | null }
 
@@ -31,7 +32,10 @@ export function KnockListener() {
     });
   }, [citizen?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // One popup at a time, in order (lib/popups): it shows when it's its turn.
+  const popupTurn = usePopupTurn("knock", !(!knocks.length), POPUP.live);
   if (!knocks.length) return null;
+  if (!popupTurn) return null;
   const answer = async (k: Knock, approve: boolean) => {
     setKnocks((list) => list.filter((x) => x.id !== k.id));
     await respondEntry(k.id, approve);

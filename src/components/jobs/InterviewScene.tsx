@@ -20,6 +20,7 @@ import { interviewFor, takeInterview } from "@/lib/cityServices";
 import { monthlyPay } from "@/lib/goals";
 import { gameAudio } from "@/utils/gameAudio";
 import { PerfProbe } from "@/components/perf/PerfProbe";
+import { useScreenBusy } from "@/lib/popups";
 
 type Stage = "arrive" | "ask" | "react" | "checking" | "passed" | "call" | "failed";
 const BOOTHS = ["City Metro", "Gulf Hotels", "Dubai Health", "Swift Delivery", "Marina Mall Group", "Desert Tours", "Dubai Police", "Falcon Analytics"];
@@ -162,6 +163,8 @@ function Scene({ company, look, stage, interviewerAnim, onSeated }: {
 }
 
 export function InterviewScene({ job, look, onDone }: { job: BoardJob; look?: AvatarLookProps; onDone: (hired: boolean) => void }) {
+  // On screen: popups that open by themselves wait until it's over (lib/popups).
+  useScreenBusy(true);
   const quality = useMemo(() => canvasQuality(), []);
   const questions = useMemo(() => interviewFor(job.venture, job.system), [job]);
   const [stage, setStage] = useState<Stage>("arrive");

@@ -13,7 +13,8 @@ import type { AvatarLookProps } from "../onboarding/AvatarCanvas";
 import { CLIP_SEAT_HEIGHT, restPose, type RestPose } from "./restPose";
 import { GROUNDS, HomeGrounds } from "./HomeGrounds";
 import { TwoFingerHint, isCoarsePointer } from "./TwoFingerHint";
-import { useCradleRig } from "./Baby";
+import { useCradleRig, wanderFrom } from "./Baby";
+import { liftDoors } from "./homeLift";
 import type { Car } from "@/lib/cars";
 import { LuxuryDecor } from "./LuxuryDecor";
 import { buildNav, findPath, walkable, type Rect, type Seg } from "./homeNav";
@@ -79,6 +80,8 @@ export interface ApartmentRoomProps {
   /** More stops on the zone bar (a party game outside), shown for any home: where the camera goes, and where
    *  you walk (left out where you can't walk there, e.g. a flat's terrace). */
   extraZones?: PlotZone[];
+  /** Take the lift (two-storey homes): walk to it and ride to the other floor. Each new n is a new ask. */
+  liftCall?: { n: number };
   /** A baby in my arms (I'm carrying them), cradled with both arms. */
   cradle?: React.ReactNode;
   /** Put the baby I'm carrying down: in the nearest bed or on the nearest seat on this floor, or on the floor in
@@ -170,6 +173,9 @@ export interface Person {
   pose?: "crawl";
   /** How fast they move between spots, m/s (a crawler is slow). */
   pace?: number;
+  /** Wandering about a spot (a crawling or toddling baby): worked out from the clock each frame, the same on every
+      screen, without the page re-rendering. Overrides `position` for x and z. */
+  wander?: { seed: number; at: [number, number]; pose: "crawl" | "walk" };
 }
 
 type LabelNodes = React.RefObject<Map<string, HTMLDivElement>>;
@@ -188,7 +194,7 @@ function PersonAvatar({ p, id, labels }: { p: Person; id: string; labels: LabelN
   useFrame(({ camera, size }, dt) => {
     const g = group.current;
     if (!g) return;
-    const [tx, , tz] = p.position;
+    const [tx, tz] = p.wander ? wanderFrom(p.wander.seed, p.wander.at, Date.now(), p.wander.pose, 4.6) : [p.position[0], p.position[2]];
     const dx = tx - g.position.x, dz = tz - g.position.z, dist = Math.hypot(dx, dz);
     if (dist > 0.03) {
       // Far off (just arrived, or a jump): straight there. Otherwise at walking pace.
@@ -1481,6 +1487,7 @@ function CameraRig({
 
 function RoomScene({
   look,
+  liftCall,
   poolCovered,
   cradle,
   babyCall,
@@ -1552,6 +1559,21 @@ function RoomScene({
     const d = rotatedSize(item.size, f.placement.rot)[1] * CELL;
     return { x: c.x, foot: c.z + d / 2 + 0.35, bottom: c.z + d / 2, top: c.z - d / 2, landing: c.z - d / 2 - 0.4 };
   }, [furniture]);
+  // The home lift on this floor (two-storey homes): its middle, the spot in front of its doors, and which way is
+  // in and out (its doors face the way it's turned).
+  const lift = useMemo(() => {
+    const f = furniture.find((x) => getCatalogItem(x.itemId)?.visual === "home-lift" && x.placement?.kind === "floor" && levelOf(x.placement) === lvl);
+    if (!f || f.placement?.kind !== "floor") return null;
+    const item = getCatalogItem(f.itemId)!;
+    const c = floorCenter(item.size, f.placement);
+    const turn = -f.placement.rot * (Math.PI / 2);
+    const dx = Math.sin(turn), dz = Math.cos(turn);
+    return { x: c.x, z: c.z, front: [c.x + dx * 0.95, c.z + dz * 0.95] as [number, number], inYaw: Math.atan2(-dx, -dz), outYaw: Math.atan2(dx, dz) };
+  }, [furniture, lvl]);
+  // Riding the lift: doors opening, stepping in, doors shutting, the ride; then (on the other floor) the doors
+  // opening and stepping out. `arriving` is set as the floor changes, to come out of the lift there.
+  const liftRef = useRef<{ phase: "open" | "in" | "close" | "ride" | "arrive" | "out"; t: number; next: number } | null>(null);
+  const [liftArriving, setLiftArriving] = useState(false);
   // Inside and Eye views are under the roof: the (decoratable) ceiling shows, and inner walls reach up to it.
   const roofed = (view === "inside" || view === "eye") && !upView;
   // Downstairs in a two-storey home, the ceiling is open over the staircase.
@@ -1770,7 +1792,12 @@ function RoomScene({
   const [shownLevel, setShownLevel] = useState(lvl);
   if (shownLevel !== lvl) {
     setShownLevel(lvl);
-    if (stairs) {
+    if (liftArriving && lift) {
+      setWalkTarget(null);
+      setPendingAction(null);
+      setPose({ position: [lift.x, 0, lift.z], yaw: lift.outYaw });
+      setAnimation("idle");
+    } else if (stairs) {
       setWalkTarget(null);
       setPendingAction(null);
       setPose(lvl > 0 ? { position: [stairs.x, 0, stairs.landing], yaw: Math.PI } : { position: [stairs.x, 0, stairs.foot], yaw: 0 });
@@ -1786,7 +1813,7 @@ function RoomScene({
 
   // Click-to-walk destination locomotion (supports walking out through the doors onto the villa plot!)
   const handleFloorLocomotion = (point: THREE.Vector3) => {
-    if (busy || climbRef.current) return;
+    if (busy || climbRef.current || liftRef.current) return;
     const plotGround = hasPlot(housingTier) && lvl === 0;
     const clampedX = plotGround
       ? Math.max(-15.8, Math.min(15.8, point.x))
@@ -1831,7 +1858,7 @@ function RoomScene({
     // The stick: steer the way it points (relative to the camera); blocked by furniture or a wall, slide along it.
     const sx = stick?.current.x ?? 0, sy = stick?.current.y ?? 0, mag = Math.min(1, Math.hypot(sx, sy));
     let targetVx = 0, targetVz = 0;
-    if (mag > 0.04 && !placing && !decorating && !climbRef.current) {
+    if (mag > 0.04 && !placing && !decorating && !climbRef.current && !liftRef.current) {
       if (walkTarget) { setWalkTarget(null); setClickBeacon(null); }
       routeRef.current = null;
       if (pendingAction) setPendingAction(null);
@@ -1858,7 +1885,7 @@ function RoomScene({
     }
     const currentSpeed = Math.hypot(stickVel.current.x, stickVel.current.z);
 
-    if (currentSpeed > 0.01 && !placing && !decorating && !climbRef.current) {
+    if (currentSpeed > 0.01 && !placing && !decorating && !climbRef.current && !liftRef.current) {
       const vx = stickVel.current.x, vz = stickVel.current.z;
       // Sitting or lying: up first.
       const [cx, , cz] = pose.stand ? [pose.stand[0], 0, pose.stand[1]] : pose.position;
@@ -1881,6 +1908,36 @@ function RoomScene({
       steering.current = false;
       setAnimation("idle");
       moveRef.current?.(pose.position[0], pose.position[2], pose.yaw, false);
+    }
+    const ride = liftRef.current;
+    if (ride && lift) {
+      ride.t += dt;
+      const lerp2 = (a: [number, number], b: [number, number], k: number): [number, number, number] => [a[0] + (b[0] - a[0]) * k, 0, a[1] + (b[1] - a[1]) * k];
+      if (ride.phase === "open" && ride.t >= 0.7) { ride.phase = "in"; ride.t = 0; setAnimation("walk"); }
+      else if (ride.phase === "in") {
+        // In, then round to face the doors.
+        const k = Math.min(1, ride.t / 0.9);
+        setPose({ position: lerp2(lift.front, [lift.x, lift.z], k), yaw: k < 0.7 ? lift.inYaw : lift.outYaw });
+        if (ride.t >= 0.9) { ride.phase = "close"; ride.t = 0; setAnimation("idle"); liftDoors.target = 0; }
+      } else if (ride.phase === "close" && ride.t >= 0.8) { ride.phase = "ride"; ride.t = 0; }
+      else if (ride.phase === "ride" && ride.t >= 1.3) {
+        // Arrived: onto the other floor, in the lift there.
+        liftRef.current = null;
+        liftDoors.open = 0;
+        setLiftArriving(true);
+        onChangeLevel?.(ride.next);
+      } else if (ride.phase === "arrive" && ride.t >= 0.7) { ride.phase = "out"; ride.t = 0; setAnimation("walk"); }
+      else if (ride.phase === "out") {
+        const k = Math.min(1, ride.t / 0.8);
+        setPose({ position: lerp2([lift.x, lift.z], lift.front, k), yaw: lift.outYaw });
+        if (ride.t >= 0.8) {
+          liftRef.current = null;
+          setAnimation("idle");
+          moveRef.current?.(lift.front[0], lift.front[1], lift.outYaw, false);
+          setTimeout(() => { liftDoors.target = 0; }, 900);
+        }
+      }
+      return;
     }
     const climb = climbRef.current;
     if (climb) {
@@ -1941,6 +1998,13 @@ function RoomScene({
             setPose({ position: [finalX, 0, finalZ], yaw: spot.yaw });
             setAnimation("talk");
             onUseFixture?.(act.fixture);
+          } else if (act.type === "lift" && lift) {
+            // At the doors: they open with a ding.
+            setPose({ position: [lift.front[0], 0, lift.front[1]], yaw: lift.inYaw });
+            setAnimation("idle");
+            liftDoors.target = 1;
+            gameAudio.sfx("chime");
+            liftRef.current = { phase: "open", t: 0, next: lvl === 0 ? 1 : 0 };
           } else if (act.type === "stairs" && stairs) {
             // Up the treads to the top, or down through the stairwell to the hall.
             const up = lvl === 0;
@@ -2063,7 +2127,7 @@ function RoomScene({
   };
 
   const interact = (type: Interaction, item?: CatalogItem, placement?: Placement | null) => {
-    if (climbRef.current) return;
+    if (climbRef.current || liftRef.current) return;
     onInteractObject?.(type);
     if (animTimer.current) {
       clearTimeout(animTimer.current);
@@ -2071,7 +2135,11 @@ function RoomScene({
     }
     getUp();
     const rest = item ? restPose(item, placement, type, avatarHeight) : undefined;
-    if (type === "stairs" && stairs) {
+    if (type === "lift" && lift) {
+      // Walk to the lift's doors; it opens when you get there.
+      setWalkTarget(lift.front);
+      setPendingAction({ type });
+    } else if (type === "stairs" && stairs) {
       // Walk to the foot of the stairs (or the top, upstairs), then climb.
       setWalkTarget(lvl === 0 ? [stairs.x, stairs.foot] : [stairs.x, stairs.landing]);
       setPendingAction({ type });
@@ -2089,7 +2157,7 @@ function RoomScene({
 
   // Walking over to a fixture (tapped, or asked for from the activities) to use it.
   const goUseFixture = (f: Fixture) => {
-    if (climbRef.current) return;
+    if (climbRef.current || liftRef.current) return;
     if (animTimer.current) { clearTimeout(animTimer.current); animTimer.current = null; }
     getUp();
     const spot = fixtureSpot(f);
@@ -2106,7 +2174,7 @@ function RoomScene({
   };
   // Out in the garden: the pool and the car (out of the front door, then there).
   const startGroundsUse = (what: "pool" | "car") => {
-    if (climbRef.current) return;
+    if (climbRef.current || liftRef.current) return;
     // A party game is laid over the pool: no swimming until it's cleared.
     if (what === "pool" && poolCovered) {
       window.dispatchEvent(new CustomEvent("dubai:toast", { detail: "🎲 The pool's covered by the party game. Swim once it's cleared." }));
@@ -2259,6 +2327,34 @@ function RoomScene({
     // Only a new ask: not every time the furniture or people change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seatN]);
+
+  // Asked to take the lift (a button, not a tap on it): walk over and ride.
+  const liftN = liftCall?.n ?? 0;
+  useEffect(() => {
+    if (!liftN || !lift) return;
+    const t = setTimeout(() => {
+      if (liftRef.current || climbRef.current) return;
+      getUp();
+      setWalkTarget(lift.front);
+      setPendingAction({ type: "lift" });
+    }, 0);
+    return () => clearTimeout(t);
+    // Only a new ask.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liftN]);
+
+  // Out of the lift on the floor you rode to: the doors open with a ding and you step out.
+  useEffect(() => {
+    if (!liftArriving || !lift) return;
+    const t = setTimeout(() => {
+      liftDoors.open = 0;
+      liftDoors.target = 1;
+      gameAudio.sfx("chime");
+      liftRef.current = { phase: "arrive", t: 0, next: lvl };
+      setLiftArriving(false);
+    }, 0);
+    return () => clearTimeout(t);
+  }, [liftArriving, lift, lvl]);
 
   // Putting the baby down: in the nearest bed or on the nearest seat on this floor (walking over to it), or on the
   // floor in front of me.

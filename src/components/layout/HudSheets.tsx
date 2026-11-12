@@ -6,9 +6,10 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Sheet, SheetChip } from "@/components/ui/sheet";
-import { dialogOpen, useCitizen } from "@/lib/citizenStore";
+import { useCitizen } from "@/lib/citizenStore";
 import { supabase } from "@/lib/supabase/client";
 import NEWS from "@/data/guide/whats-new.json";
+import { POPUP, usePopupTurn, useScreenBusy } from "@/lib/popups";
 
 type SheetId = "whats-new" | "suggest";
 export const openSheet = (id: SheetId) => window.dispatchEvent(new CustomEvent("dubai:open-sheet", { detail: id }));
@@ -24,11 +25,14 @@ export function HudSheets() {
   const { citizen } = useCitizen();
   const pathname = usePathname();
   const [open, setOpen] = useState<SheetId | null>(null);
+  const [auto, setAuto] = useState(false);
+  const popupTurn = usePopupTurn("hud-sheet", !!open && auto, POPUP.promo);
+  useScreenBusy(!!open && !auto);
   const signedIn = !!citizen?.id;
   const createdAt = citizen?.createdAt;
 
   useEffect(() => {
-    const show = (e: Event) => setOpen((e as CustomEvent<SheetId>).detail);
+    const show = (e: Event) => { setAuto(false); setOpen((e as CustomEvent<SheetId>).detail); };
     window.addEventListener("dubai:open-sheet", show);
     return () => window.removeEventListener("dubai:open-sheet", show);
   }, []);
@@ -42,14 +46,17 @@ export function HudSheets() {
     const want: SheetId | null = latest && read(SEEN_KEY) !== latest && settled ? "whats-new"
       : settled && Date.now() - asked > WEEK ? "suggest" : null;
     if (!want) return;
+    // It waits its turn (lib/popups) rather than being skipped when something else is open.
     const id = setTimeout(() => {
-      if (dialogOpen()) return;
       if (want === "suggest") write(ASKED_KEY, String(Date.now()));
+      setAuto(true);
       setOpen(want);
     }, want === "whats-new" ? 2500 : 90_000);
     return () => clearTimeout(id);
   }, [signedIn, pathname, createdAt]);
 
+  // By itself it waits its turn; opened by the player, at once (and nothing else opens over it).
+  if (open && auto && !popupTurn) return null;
   if (open === "whats-new") return <WhatsNew onClose={() => { write(SEEN_KEY, NEWS.items[0]?.id ?? ""); setOpen(null); }} />;
   if (open === "suggest" && signedIn) return <SuggestionBox onClose={() => setOpen(null)} />;
   return null;

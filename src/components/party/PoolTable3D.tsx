@@ -140,7 +140,8 @@ export function PoolTable3D({ state, canMove, onMove, cover = false, crosswise =
       {/* A lamp over the table (a normal-size one) */}
       {!cover && <mesh position={[0, 2.4, 0]}><boxGeometry args={[1.6, 0.12, 0.35]} /><meshStandardMaterial color="#14532d" emissive="#fef3c7" emissiveIntensity={0.3} /></mesh>}
       {!cover && [-0.8, 0.8].map((x) => <mesh key={x} position={[x, 2.7, 0]}><cylinderGeometry args={[0.008, 0.008, 0.5]} /><meshStandardMaterial color="#111" /></mesh>)}
-      {!cover && <pointLight position={[0, 2.2, 0]} intensity={6} distance={4} color="#fff7ed" />}
+      {/* No light of its own: adding or removing a light makes the phone rebuild every material's shading (a
+          freeze on slower phones); the lamp glows instead. */}
 
       <group ref={ballsRef}>
         {order.map((n) => <Ball key={n} n={n} />)}

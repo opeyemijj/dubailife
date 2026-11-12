@@ -20,6 +20,7 @@ import { CarModel } from "@/components/cars/CarModel";
 import type { Car } from "@/lib/cars";
 import type { Place } from "@/lib/city/types";
 import { PerfProbe } from "@/components/perf/PerfProbe";
+import { useScreenBusy } from "@/lib/popups";
 
 export type ArrivalKind = "club" | "hotel" | "mall" | "cafeteria" | "attraction" | "restaurant";
 
@@ -323,6 +324,8 @@ function Scene({ kind, name, look, taxi, own, onSay, onDone }: { kind: ArrivalKi
 }
 
 export function ArrivalScene({ place, label, look, taxi, own, onDone }: { place: Place; label: string; look?: AvatarLookProps; taxi: boolean; own?: ParkedCar; onDone: () => void }) {
+  // On screen: popups that open by themselves wait until it's over (lib/popups).
+  useScreenBusy(true);
   const quality = useMemo(() => canvasQuality(), []);
   const kind = arrivalKindOf(place);
   const [say, setSay] = useState<string | null>(null);

@@ -12,6 +12,7 @@ import { withHomeItems, getHousingTierFromText, type HomeStyle, type HousingTier
 import type { Accessory } from "@/lib/city/types";
 import { supabase } from "@/lib/supabase/client";
 import type { LifeState } from "@/lib/life";
+import { popupsActive } from "@/lib/popups";
 
 export interface InventoryItem {
   uid: string;
@@ -531,6 +532,7 @@ export function graduateCourse(
 export const isNewCitizen = (c: Citizen | null | undefined) =>
   !!c?.createdAt && Date.now() - Date.parse(c.createdAt) < 2 * 86_400_000;
 
-/** True while any dialog is on screen, so prompts don't stack on top of each other. */
+/** True while any dialog is on screen, a popup has its turn, or the player has something open (lib/popups), so
+    prompts that still check for themselves don't stack on top of each other. */
 export const dialogOpen = () =>
-  typeof document !== "undefined" && !!document.querySelector('[role="dialog"], [aria-modal="true"]');
+  popupsActive() || (typeof document !== "undefined" && !!document.querySelector('[role="dialog"], [aria-modal="true"]'));

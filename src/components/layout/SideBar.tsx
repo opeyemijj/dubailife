@@ -5,6 +5,7 @@
 
 import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
 import { X } from "lucide-react";
+import { useScreenBusy } from "@/lib/popups";
 
 // ---------------------------------------------------------------- the tap gesture
 
@@ -55,6 +56,8 @@ export function tapThenClose(close: () => void, delay = 380) {
 
 /** Floating items to the left of the bar (pills, no panel), closing once one is tapped. */
 export function FloatMenu({ onClose, children, label }: { onClose: () => void; children: ReactNode; label: string }) {
+  // Open: popups that open by themselves wait until it's closed (lib/popups).
+  useScreenBusy(true);
   return (
     <>
       <button aria-label={`Close ${label}`} className="fixed inset-0 z-30 cursor-default" onClick={onClose} />
@@ -91,6 +94,8 @@ export function SideButton({ icon, label, onClick, active, badge, tone = "light"
 
 /** A panel that opens to the left of the bar. Tapping outside closes it. */
 export function SidePopover({ title, onClose, children, dark }: { title: string; onClose: () => void; children: ReactNode; dark?: boolean }) {
+  // Open: popups that open by themselves wait until it's closed (lib/popups).
+  useScreenBusy(true);
   return (
     <>
       <button aria-label="Close" className="fixed inset-0 z-30 cursor-default" onClick={onClose} />

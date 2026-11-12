@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import type { ComponentType } from "react";
 import type { ArcadeGameId } from "@/lib/arcade";
 import { closeArcade, useArcadeLaunch } from "./launcher";
+import { useScreenBusy } from "@/lib/popups";
 
 export interface ArcadeGameProps {
   params?: Record<string, unknown>;
@@ -34,6 +35,8 @@ const GAMES: Partial<Record<ArcadeGameId, ComponentType<ArcadeGameProps>>> = {
 
 export function ArcadeHost() {
   const launch = useArcadeLaunch();
+  // A game on: popups wait until it's over (lib/popups).
+  useScreenBusy(!!launch);
   if (!launch) return null;
   const Game = GAMES[launch.game];
   if (!Game) return null;

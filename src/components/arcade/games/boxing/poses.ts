@@ -50,3 +50,43 @@ export function setRig(rig: ArmRig, R: ArmPose, L: ArmPose) {
 }
 
 export const newRig = (): ArmRig => ({ weight: 1, R: { ...POSE.guard }, L: { ...POSE.guard } });
+
+// ---------------------------------------------------------------- legs: the stance, footwork and punching from the legs
+
+/** What the legs are doing this frame (each 0..1 unless said): from the fight, the footwork and the punch. */
+export interface LegDrive {
+  /** Both knees bent: the stance's sit, deeper for an uppercut's dip, a body shot or a duck. */
+  bend: number;
+  /** The front (left) knee bending into a jab or hook; weight loaded onto one leg in a slip. */
+  frontBend: number; loadL: number; loadR: number;
+  /** The rear (right) leg driving a straight or a right hook: the knee turns in, the leg straightens. */
+  rearDrive: number;
+  /** Footwork: the step cycle (radians), how big the steps are, and which way (body frame: forward, right). */
+  step: number; stepAmp: number; moveF: number; moveR: number;
+}
+
+/**
+ * Where each thigh and shin point (body frame [up, forward, right], each leg's sideways outward; the left is
+ * mirrored in the avatar): an orthodox stance, left foot forward, knees soft, the feet stepping the way the
+ * boxer moves, knees lifting as each foot comes off the canvas, and the legs behind every punch.
+ */
+export function legPose(d: LegDrive): NonNullable<ArmRig["legs"]> {
+  const leg = (front: boolean): { thigh: BodyDir; shin: BodyDir } => {
+    const thigh: BodyDir = front ? [-0.94, 0.28, 0.14] : [-0.95, -0.2, 0.16];
+    const shin: BodyDir = front ? [-0.98, 0.02, 0.06] : [-0.94, -0.32, 0.08];
+    // Knees bending: the thigh comes forward and the shin goes back.
+    const kb = d.bend + (front ? d.frontBend + d.loadL : d.loadR);
+    thigh[1] += 0.32 * kb; shin[1] -= 0.4 * kb;
+    // The rear leg driving through a punch: knee turned in, leg straighter.
+    if (!front) { thigh[1] += 0.18 * d.rearDrive; shin[1] += 0.3 * d.rearDrive; thigh[2] -= 0.08 * d.rearDrive; }
+    // Footwork: each foot swings the way they're going, the two half a step apart, the knee up as it leaves the floor.
+    const sw = Math.sin(d.step + (front ? 0 : Math.PI)) * d.stepAmp;
+    const lift = Math.max(0, sw);
+    const sideways = front ? -d.moveR : d.moveR; // the left leg is mirrored
+    thigh[1] += 0.3 * d.moveF * sw + 0.22 * lift;
+    thigh[2] += 0.3 * sideways * sw;
+    shin[1] -= 0.45 * lift;
+    return { thigh, shin };
+  };
+  return { R: leg(false), L: leg(true) };
+}

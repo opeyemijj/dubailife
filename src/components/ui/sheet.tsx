@@ -6,6 +6,7 @@
 import { useEffect } from "react";
 import { X } from "lucide-react";
 import { ModalPortal } from "./modal-portal";
+import { useScreenBusy } from "@/lib/popups";
 
 export function Sheet({ icon, title, subtitle, onClose, children, footer, dim = false, z = "z-[180]" }: {
   icon?: React.ReactNode;
@@ -19,6 +20,8 @@ export function Sheet({ icon, title, subtitle, onClose, children, footer, dim = 
   dim?: boolean;
   z?: string;
 }) {
+  // Open: popups that open by themselves wait until it's closed (lib/popups).
+  useScreenBusy(true);
   useEffect(() => {
     if (!onClose) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };

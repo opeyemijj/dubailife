@@ -417,12 +417,12 @@ function Director({ fightRef, inputRef, eventsRef, hypeRef, level, playing, stic
       for (const e of s.events) {
         eventsRef.current.push(e);
         switch (e.kind) {
-          case "body": sfx("mgKick"); shake(0.05); hypeRef.current = Math.min(1, hypeRef.current + 0.08); break;
-          case "hit": sfx("mgThud"); if (s.combo >= 2) sfx(`mgHit${Math.min(7, s.combo)}`); shake(0.03); hypeRef.current = Math.min(1, hypeRef.current + 0.05); break;
-          case "counter": sfx("mgPerfect"); shake(0.08); hypeRef.current = Math.min(1, hypeRef.current + 0.2); haptic(15); break;
-          case "star": sfx("mgStar"); slowMo(0.2, 0.9); shake(0.22); hypeRef.current = 1; haptic(40); break;
-          case "taken": sfx("mgThud"); shake(0.12); haptic(25); break;
-          case "blocked": sfx("clack"); break;
+          case "body": sfx("punchHeavy"); shake(0.05); hypeRef.current = Math.min(1, hypeRef.current + 0.08); break;
+          case "hit": sfx("punch"); if (s.combo >= 2) sfx(`mgHit${Math.min(7, s.combo)}`); shake(0.03); hypeRef.current = Math.min(1, hypeRef.current + 0.05); break;
+          case "counter": sfx("punchHeavy"); sfx("mgPerfect"); shake(0.08); hypeRef.current = Math.min(1, hypeRef.current + 0.2); haptic(15); break;
+          case "star": sfx("punchHeavy"); sfx("mgStar"); slowMo(0.2, 0.9); shake(0.22); hypeRef.current = 1; haptic(40); break;
+          case "taken": sfx((e.amount ?? 0) >= 8 ? "punchHeavy" : "punch"); shake(0.12); haptic(25); break;
+          case "blocked": sfx("punchBlocked"); break;
           case "dodged": sfx("mgHit3"); hypeRef.current = Math.min(1, hypeRef.current + 0.08); break;
           case "interrupt": sfx("mgPerfect"); break;
           case "knockdown": sfx("roar"); slowMo(0.25, 1.4); shake(0.3); hypeRef.current = 1; haptic(60); break;

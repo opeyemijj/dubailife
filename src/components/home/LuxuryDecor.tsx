@@ -11,6 +11,7 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { CELL, WALL_HEIGHT } from "@/lib/furniture";
+import { liftDoors } from "./homeLift";
 
 type Ghost = "valid" | "invalid" | undefined;
 const GOLD = "#c9a24a", BRASS = "#b8892e", MARBLE = "#f2efe9", WALNUT = "#5b3a24", VELVET_DEFAULT = "#1f5c4a", IVORY = "#f3ead9";
@@ -759,6 +760,62 @@ function RugRunner({ w, d, ghost }: { w: number; d: number; ghost: Ghost }) {
 // ---------------------------------------------------------------- the staircase
 
 /** Stairs up from the hall: ten oak treads on a stringer with a glass balustrade, rising towards -z. */
+/**
+ * The home lift (villas, penthouses and other two-storey homes): a brushed-steel frame with glass sides, a lit
+ * cabin, a floor indicator over the doors and a call button, and two doors that slide apart (driven by
+ * ApartmentRoom through homeLift's liftDoors). Its doors are on the front (+z).
+ */
+function HomeLift({ w, d, ghost }: { w: number; d: number; ghost: Ghost }) {
+  const left = useRef<THREE.Group>(null);
+  const right = useRef<THREE.Group>(null);
+  const lamp = useRef<THREE.MeshStandardMaterial>(null);
+  const h = WALL_HEIGHT - 0.05, door = 2.2, half = w / 2;
+  useFrame((st, dt) => {
+    liftDoors.open = THREE.MathUtils.damp(liftDoors.open, liftDoors.target, 7, dt);
+    const o = liftDoors.open * (half - 0.08);
+    if (left.current) left.current.position.x = -half / 2 + 0.04 - o;
+    if (right.current) right.current.position.x = half / 2 - 0.04 + o;
+    // The call button glows while the lift is coming or open.
+    if (lamp.current) lamp.current.emissiveIntensity = liftDoors.target > 0 ? 1.4 : 0.35 + Math.abs(Math.sin(st.clock.elapsedTime * 2)) * 0.2;
+  });
+  const frame = "#9ca3af", steel = "#d1d5db";
+  return (
+    <group>
+      {/* The cabin: floor, back and lit ceiling */}
+      <B s={[w - 0.06, 0.04, d - 0.06]} p={[0, 0.02, 0]} c="#3f3f46" ghost={ghost} rough={0.4} />
+      <B s={[w - 0.06, 0.04, d - 0.06]} p={[0, h - 0.02, 0]} c="#f8fafc" ghost={ghost} glow={0.9} emissive="#fff7e0" />
+      <B s={[w - 0.1, h, 0.04]} p={[0, h / 2, -d / 2 + 0.04]} c="#e2e8f0" ghost={ghost} metal={0.4} rough={0.15} />
+      {/* Glass sides in a steel frame */}
+      {[-1, 1].map((sx) => (
+        <group key={sx} position={[sx * (half - 0.02), 0, 0]}>
+          <mesh position={[0, h / 2, 0]} raycast={ghost ? () => null : undefined}>
+            <boxGeometry args={[0.03, h - 0.1, d - 0.1]} />
+            {ghost ? <M color={steel} ghost={ghost} /> : <meshStandardMaterial color="#bae6fd" transparent opacity={0.28} roughness={0.05} metalness={0.2} />}
+          </mesh>
+          {[-1, 1].map((sz) => <B key={sz} s={[0.06, h, 0.06]} p={[0, h / 2, sz * (d / 2 - 0.03)]} c={frame} ghost={ghost} metal={0.8} rough={0.3} />)}
+        </group>
+      ))}
+      {/* The door frame, the floor indicator and the call button */}
+      <B s={[w, h - door, 0.08]} p={[0, door + (h - door) / 2, d / 2 - 0.04]} c={frame} ghost={ghost} metal={0.8} rough={0.3} />
+      <B s={[0.32, 0.12, 0.02]} p={[0, door + 0.18, d / 2 + 0.005]} c="#111827" ghost={ghost} glow={0.8} emissive="#f59e0b" />
+      <group position={[half + 0.1, 1.15, d / 2 - 0.02]}>
+        <B s={[0.1, 0.18, 0.03]} p={[0, 0, 0]} c={frame} ghost={ghost} metal={0.8} rough={0.25} />
+        <mesh position={[0, 0.02, 0.02]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.025, 0.025, 0.015, 16]} />
+          <meshStandardMaterial ref={lamp} color="#fde68a" emissive="#f59e0b" emissiveIntensity={0.4} />
+        </mesh>
+      </group>
+      {/* The two doors */}
+      <group ref={left} position={[-(half / 2 - 0.04), 0, d / 2 - 0.05]}>
+        <B s={[half - 0.04, door, 0.04]} p={[0, door / 2, 0]} c={steel} ghost={ghost} metal={0.55} rough={0.2} />
+      </group>
+      <group ref={right} position={[half / 2 - 0.04, 0, d / 2 - 0.05]}>
+        <B s={[half - 0.04, door, 0.04]} p={[0, door / 2, 0]} c={steel} ghost={ghost} metal={0.55} rough={0.2} />
+      </group>
+    </group>
+  );
+}
+
 function Staircase({ w, d, ghost }: { w: number; d: number; ghost: Ghost }) {
   const steps = 10, rise = WALL_HEIGHT / steps, run = d / steps;
   return (
@@ -973,6 +1030,7 @@ export function LuxuryDecor({ visual, size, ghost, tint, activity }: { visual: s
     case "rug-runner": return <RugRunner w={w} d={d} ghost={ghost} />;
     case "staircase": return <Staircase w={w} d={d} ghost={ghost} />;
     case "stairwell": return <Stairwell w={w} d={d} ghost={ghost} />;
+    case "home-lift": return <HomeLift w={w} d={d} ghost={ghost} />;
   }
   // Event pieces (ballrooms and parties): EventDecor.
   return eventDecor(visual, w, d, ghost, tint);

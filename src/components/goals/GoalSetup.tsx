@@ -12,6 +12,7 @@ import { ArrowDown, ArrowUp, Check, Lock, X } from "lucide-react";
 import { isNewCitizen, useCitizen } from "@/lib/citizenStore";
 import { DEFAULT_ORDER, goalClaimed, goalDone, goalOf, GOALS, orderProblem, setGoals, useGoals, type GoalId } from "@/lib/goals";
 import { gameAudio } from "@/utils/gameAudio";
+import { POPUP, usePopupTurn, useScreenBusy } from "@/lib/popups";
 
 const PlanScene = dynamic(() => import("./PlanScene").then((m) => m.PlanScene), { ssr: false });
 
@@ -39,10 +40,17 @@ export function GoalSetup() {
   }, []);
 
   const firstTime = !!status && !status.order;
+  // Shown by itself the first time (it waits its turn, lib/popups); opened by the player to edit, straight away
+  // (and nothing else opens over it meanwhile).
+  const autoShow = !editing && !dismissed && firstTime && !!citizen?.id && !QUIET.test(path)
+    && !(citizen?.decorFirst && isNewCitizen(citizen));
+  const popupTurn = usePopupTurn("goal-setup", autoShow, POPUP.daily);
+  useScreenBusy(editing);
   // A new player decorates first (src/components/home/MoveInGuide.tsx); the goals follow.
   if (citizen?.decorFirst && isNewCitizen(citizen) && firstTime && !editing) return null;
   if (!citizen?.id || !status || QUIET.test(path) || !(firstTime || editing)) return null;
   if (dismissed && !editing) return null;
+  if (!editing && !popupTurn) return null;
   const list = order ?? status.order ?? DEFAULT_ORDER;
   const pinned = (id: string) => (GOALS.pinned as string[]).includes(id);
 

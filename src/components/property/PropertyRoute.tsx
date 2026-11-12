@@ -117,7 +117,9 @@ export function PropertyRoute({ buildingId, unit }: { buildingId: string; unit: 
   if (!atBuilding) return <Blank spinner />;
 
   if (flat === undefined || door.state === "checking") return <Blank spinner />;
-  if (generic && flat && !upstairs) {
+  // Any home up a tower (above the ground floor): the lobby and the lift up to it, whether viewing it, visiting
+  // a friend, or a tower off the map.
+  if (flat && (generic || (flat.floor ?? 0) >= 1) && !upstairs) {
     return <TowerArrival floor={flat.floor ?? 12} unit={flat.unit} tower={building.name ?? "Residences"} look={citizen.look} onDone={() => setUpstairs(true)} />;
   }
   if (flat === null) return <Card><h1 className="text-xl font-black">That home isn&apos;t in this building</h1><Link href={`/explore?open=${buildingId}`} className="mt-4 inline-block px-4 py-2 rounded-xl bg-emerald-500 text-white font-black">See the homes here</Link></Card>;
@@ -446,6 +448,8 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
   const [upView, setUpView] = useState(isMultiRoom);
   // Looking down on the home, or over the shoulder in the room.
   const [view, setView] = useState<"above" | "inside" | "eye">("above");
+  // Taking the home lift (two-storey homes) from the floor switcher.
+  const [liftCall, setLiftCall] = useState<{ n: number } | undefined>(undefined);
   // A two-player game outside the house, on demand: any guest starts one and everyone at the party watches.
   const partyBoard = usePartyBoard({
     active: !!party,
@@ -543,6 +547,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         focus={partyBoard.focus}
         poolCovered={partyBoard.poolCovered}
         clean={cleanScreen}
+        liftCall={liftCall}
         cradle={babies.cradle}
         babyCall={babies.babyCall}
         onBabyDown={babies.onBabyDown}
@@ -609,6 +614,11 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
               {l.icon} {l.label}
             </button>
           ))}
+          {/* The home lift: walks you to it (beside the stairs) and rides to the other floor. */}
+          {levels && (
+            <button onClick={() => { gameAudio.playClickSound(); setView((v) => (v === "eye" ? "inside" : v)); setLiftCall((c) => ({ n: (c?.n ?? 0) + 1 })); }}
+              className="px-2.5 py-0.5 rounded-full text-[10px] font-black whitespace-nowrap bg-slate-900 text-white">🛗 Lift</button>
+          )}
           <div className="w-[1px] h-3 bg-slate-200" />
           {rooms.map((r) => {
             const isSelected = activeRoomId === r.id;

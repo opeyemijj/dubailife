@@ -38,6 +38,7 @@ import { gameAudio } from "@/utils/gameAudio";
 import type { Accessory } from "@/lib/city/types";
 import { canvasQuality, isEcoMode, toggleEcoMode } from "@/lib/device";
 import { PerfProbe } from "@/components/perf/PerfProbe";
+import { useScreenBusy } from "@/lib/popups";
 
 /** Which occasions suit each venue dress code. */
 const SUITS: Record<DressCodeType, Occasion[]> = {
@@ -212,6 +213,8 @@ interface WardrobeModalProps {
 
 export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
   const router = useRouter();
+  // Open: popups that open by themselves wait until it's closed (lib/popups).
+  useScreenBusy(open);
   const { citizen } = useCitizen();
   const [pending, setPending] = useState<PendingVenue | null>(null);
 

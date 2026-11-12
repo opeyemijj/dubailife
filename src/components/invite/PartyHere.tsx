@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { arriveAt, endParty, isPartyEnded, markPartyEnded, partyHere, pingParty, PARTIES, kindOf, type PartyHere } from "@/lib/invites";
 import { InviteSheet } from "./InviteSheet";
-import { activeSpaceId, activeSpaceRoom, hostNewSpace, joinSpace, leaveSpace, lockSpace, spaceExists } from "@/lib/spaces";
+import { activeSpaceId, activeSpaceRoom, hostNewSpace, joinSpace, leaveSpace, lockSpace, spaceExists, useSpacesStore } from "@/lib/spaces";
 import { supabase } from "@/lib/supabase/client";
 import { gameAudio } from "@/utils/gameAudio";
 
@@ -210,7 +210,7 @@ const radioPlayer = () => {
     radioEl = new Audio();
     radioEl.setAttribute("playsinline", "true");
     radioEl.preload = "none";
-    radioEl.volume = 0.7;
+    radioEl.volume = RADIO_VOLUME;
   }
   return radioEl;
 };
@@ -237,7 +237,23 @@ export function primePartyAudio() {
     there's only ever one.) */
 export function useClubRadio(active: boolean) { usePartyMusic(active); }
 
+/** The radio's level: normal, and quiet under people talking (in a voice Space) so everyone can hear each other. */
+const RADIO_VOLUME = 0.7;
+const RADIO_UNDER_VOICE = 0.15;
+
 function usePartyMusic(active: boolean) {
+  // In a voice Space (at a party everyone is): the radio drops right down, and comes back up after.
+  const inVoice = !!useSpacesStore().activeSpaceId;
+  useEffect(() => {
+    if (!active) return;
+    const el = radioPlayer();
+    const to = inVoice ? RADIO_UNDER_VOICE : RADIO_VOLUME;
+    // A short fade rather than a jump.
+    const from = el.volume;
+    let k = 0;
+    const t = setInterval(() => { k += 0.1; el.volume = Math.max(0, Math.min(1, from + (to - from) * Math.min(1, k))); if (k >= 1) clearInterval(t); }, 40);
+    return () => clearInterval(t);
+  }, [active, inVoice]);
   useEffect(() => {
     if (!active) return;
     let gone = false;

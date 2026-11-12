@@ -16,6 +16,7 @@ import { GAMES } from "@/lib/games/registry";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { gameAudio } from "@/utils/gameAudio";
+import { POPUP, usePopupTurn } from "@/lib/popups";
 
 interface Invite { id: number; game: string; code: string; from: { username: string; look?: { gender: "woman" | "man"; preset?: string } } }
 
@@ -50,7 +51,10 @@ export function GameInviteListener() {
     return () => { stop(); };
   }, [me]);
 
+  // One popup at a time, in order (lib/popups): it shows when it's its turn.
+  const popupTurn = usePopupTurn("game-invite", !(!invites.length), POPUP.live);
   if (!invites.length) return null;
+  if (!popupTurn) return null;
   const dismiss = (id: number) => setInvites((l) => l.filter((i) => i.id !== id));
 
   return (

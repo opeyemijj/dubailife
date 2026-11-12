@@ -14,6 +14,7 @@ import { canvasQuality } from "@/lib/device";
 import type { Car } from "@/lib/cars";
 import { CarModel } from "./CarModel";
 import { PerfProbe } from "@/components/perf/PerfProbe";
+import { useScreenBusy } from "@/lib/popups";
 
 const LANE = 2;
 const LENGTH = 1400;
@@ -48,6 +49,8 @@ function Drive({ car, travelRef, throttleRef, onSpeed }: { car: Car; travelRef: 
 }
 
 export function TestDrive({ car, onDone }: { car: Car; look?: AvatarLookProps; onDone: () => void }) {
+  // On screen: popups that open by themselves wait until it's over (lib/popups).
+  useScreenBusy(true);
   const quality = useMemo(() => canvasQuality(), []);
   const sky = useMemo(() => dubaiSky(), []);
   const travel = useRef({ s: 0, speed: 0 });

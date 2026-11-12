@@ -5,6 +5,7 @@
 // something outside to see, and a nudge if someone keeps turning with one finger without ever using two.
 
 import { useEffect, useRef, useState } from "react";
+import { POPUP, usePopupTurn } from "@/lib/popups";
 
 const SEEN = "dl.hint.twoFinger";
 const STRUGGLES = 3;
@@ -43,13 +44,14 @@ export function TwoFingerHint({ active }: { active: boolean }) {
     return () => { if (first) clearTimeout(first); window.removeEventListener("touchstart", onTouch); };
   }, [active]);
 
+  // A tip: last in line (lib/popups), never over another popup. Its few seconds start once it's on screen.
+  const popupTurn = usePopupTurn("two-finger-hint", !!show && active, POPUP.hint);
   useEffect(() => {
-    if (!show) return;
+    if (!show || !popupTurn) return;
     const t = setTimeout(() => { setShow(null); write(SEEN); }, show === "first" ? 6000 : 4500);
     return () => clearTimeout(t);
-  }, [show]);
-
-  if (!show || !active) return null;
+  }, [show, popupTurn]);
+  if (!show || !active || !popupTurn) return null;
   return (
     <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center">
       <div className="flex flex-col items-center gap-3 rounded-3xl bg-black/65 px-6 py-5 text-white shadow-2xl backdrop-blur-sm">

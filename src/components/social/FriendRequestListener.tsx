@@ -10,6 +10,7 @@ import { useCitizen } from "@/lib/citizenStore";
 import { contacts } from "@/lib/messages";
 import { gameAudio } from "@/utils/gameAudio";
 import { sendPushNotification } from "@/lib/push/client";
+import { POPUP, usePopupTurn } from "@/lib/popups";
 
 interface FriendAlert {
   id: string;
@@ -52,9 +53,6 @@ export function FriendRequestListener() {
           setAlerts((list) => [...list.filter((a) => a.senderId !== row.user_id), alertItem]);
           // A helpful moment to ask for notifications (shown after the alert, rate-limited).
           setTimeout(() => askForPush({ icon: "🤝", title: `@${username} wants to be friends`, text: "Turn on notifications so you never miss a friend request, even when the app is closed." }), 4000);
-          setTimeout(() => {
-            setAlerts((list) => list.filter((a) => a.id !== alertItem.id));
-          }, 10000);
     };
     // Someone accepted my request.
     const onAccepted = async (row: Row) => {
@@ -76,9 +74,6 @@ export function FriendRequestListener() {
           };
 
           setAlerts((list) => [...list.filter((a) => a.senderId !== row.friend_id), alertItem]);
-          setTimeout(() => {
-            setAlerts((list) => list.filter((a) => a.id !== alertItem.id));
-          }, 8000);
     };
     // On my own channel: the database tells me about requests to me and acceptances of mine.
     return onUserEvent<Row>(me, "friendships", (e) => {
@@ -89,7 +84,20 @@ export function FriendRequestListener() {
     });
   }, [me, myUsername]);
 
+  // One popup at a time, in order (lib/popups): it shows when it's its turn, and each alert's time on screen (10 s
+  // for a request, 8 s for an acceptance) starts then, so one that waited is still seen.
+  const popupTurn = usePopupTurn("friend-request", !(!alerts.length), POPUP.live);
+  const shownKey = popupTurn ? alerts.map((a) => `${a.id}|${a.type}`).join(",") : "";
+  useEffect(() => {
+    if (!shownKey) return;
+    const timers = shownKey.split(",").map((k) => {
+      const [id, type] = k.split("|");
+      return setTimeout(() => setAlerts((list) => list.filter((a) => a.id !== id)), type === "request" ? 10000 : 8000);
+    });
+    return () => timers.forEach(clearTimeout);
+  }, [shownKey]);
   if (!alerts.length) return null;
+  if (!popupTurn) return null;
 
   const acceptRequest = async (alert: FriendAlert) => {
     setAlerts((list) => list.filter((a) => a.id !== alert.id));

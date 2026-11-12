@@ -8,10 +8,11 @@
 import { useEffect, useState } from "react";
 import { Bell, Check, Settings, Share, SquarePlus, X } from "lucide-react";
 import { ModalPortal } from "@/components/ui/modal-portal";
-import { dialogOpen, useCitizen } from "@/lib/citizenStore";
+import { useCitizen } from "@/lib/citizenStore";
 import { isStandalonePwa } from "@/lib/push/client";
 import { bonusAmounts, claimBonus, enablePush, markAsked, pushStatus, recordSocialPromptDismissal, unblockSteps, type AskReason, type PushStatus } from "@/lib/push/engage";
 import { gameAudio } from "@/utils/gameAudio";
+import { POPUP, usePopupTurn, useScreenBusy } from "@/lib/popups";
 
 type Ask = AskReason & { force?: boolean };
 
@@ -60,8 +61,7 @@ export function PushCoach() {
       const s = pushStatus();
       if (s === "on" && !d.force) return;
       if (s === "unsupported") return;
-      // Never on top of another dialog unless asked for on purpose.
-      if (!d.force && dialogOpen()) return;
+      // Asked for on purpose: straight away. Otherwise it waits its turn (lib/popups) instead of being dropped.
       if (!d.force) markAsked();
       setStatus(s); setDone(null); setStillBlocked(false); setFailed(false);
       setAsk({ icon: d.icon ?? "🔔", title: d.title ?? "Stay in the loop", text: d.text ?? "Get messages, friend requests and door knocks even when the app is closed.", force: d.force });
@@ -70,7 +70,11 @@ export function PushCoach() {
     return () => window.removeEventListener("dubai:ask-push", on);
   }, []);
 
+  // One popup at a time (lib/popups): by itself it waits its turn; asked for by a tap it opens at once.
+  const popupTurn = usePopupTurn("push-coach", !!ask && !!citizen && !ask.force, POPUP.promo);
+  useScreenBusy(!!ask?.force);
   if (!ask || !citizen) return null;
+  if (!ask.force && !popupTurn) return null;
   const close = () => {
     if (status !== "on") {
       recordSocialPromptDismissal();

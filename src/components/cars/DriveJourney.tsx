@@ -27,6 +27,7 @@ import { CarModel, carLength } from "./CarModel";
 import { ArrestScene, accidentArrest, noLicenceArrest, stolenVehicleArrest, type ArrestStory } from "./ArrestScene";
 import { SteeringWheel } from "./SteeringWheel";
 import { PerfProbe } from "@/components/perf/PerfProbe";
+import { useScreenBusy } from "@/lib/popups";
 
 const DR = CARS.driving;
 const RADAR = DR.radarOver / 3.6;
@@ -686,6 +687,8 @@ export function DriveJourney({ drivables, metres, destination, look, balance, ha
   drivables: Drivable[]; metres: number; destination: string; look?: AvatarLookProps; balance: number; hasLicence?: boolean;
   onArrive: (d: Drivable) => void; onArrested: () => void; onCancel: () => void;
 }) {
+  // On screen: popups that open by themselves wait until it's over (lib/popups).
+  useScreenBusy(true);
   const quality = useMemo(() => canvasQuality(), []);
   const sky = useMemo(() => dubaiSky(), []);
   const [pick, setPick] = useState(0);

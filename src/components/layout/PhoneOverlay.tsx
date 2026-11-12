@@ -35,6 +35,7 @@ import { SpacesApp } from "@/components/phone/SpacesApp";
 import { useSpacesStore } from "@/lib/spaces";
 import { useLove } from "@/lib/love";
 import APPS from "@/data/phone/apps.json";
+import { useScreenBusy } from "@/lib/popups";
 
 /** Opens the phone, on an app's screen if given. */
 export const openPhone = (app?: Screen) => window.dispatchEvent(new CustomEvent("dubai:open-phone", { detail: app }));
@@ -49,6 +50,8 @@ export function PhoneOverlay() {
   const router = useRouter();
   const [open, setOpen] = useState<Screen | null>(null);
   const [metro, setMetro] = useState<MetroTrip | null>(null);
+  // Open: popups that open by themselves wait until it's closed (lib/popups).
+  useScreenBusy(!!open || !!metro);
   useEffect(() => {
     const show = (e: Event) => { gameAudio.sfx("open"); setOpen((e as CustomEvent<Screen | undefined>).detail ?? "home"); };
     // A page inside the phone asked to open somewhere in the city: put the phone away and go there.

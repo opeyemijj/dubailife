@@ -9,6 +9,7 @@ import { createPortal } from "react-dom";
 import { PARTY_GAMES, SIDES, TURN_LIMIT_MS, resultText, turnOf, turnText, type PartyGameId, type PartyGames } from "@/lib/partyGames";
 import { gameAudio } from "@/utils/gameAudio";
 import type { PoolState } from "@/components/games/Pool";
+import { useScreenBusy } from "@/lib/popups";
 
 const SEAT_COLOR: Record<PartyGameId, [string, string]> = {
   connect4: ["#dc2626", "#facc15"],
@@ -19,6 +20,8 @@ const SEAT_COLOR: Record<PartyGameId, [string, string]> = {
 const CHEERS = ["👏", "🔥", "😱", "🎉"];
 
 export function PartyGamePicker({ pg, onClose, onStarted }: { pg: PartyGames; onClose: () => void; onStarted: () => void }) {
+  // Open: popups that open by themselves wait until it's closed (lib/popups).
+  useScreenBusy(true);
   const running = pg.snap && !pg.snap.over;
   const go = (id: PartyGameId, ai: boolean) => {
     gameAudio.playClickSound();
@@ -200,6 +203,8 @@ export function PartyGameResult({ pg, isHost, onPickAnother }: { pg: PartyGames;
     else if (res.won || pg.mySeat < 0) gameAudio.sfx(res.title === "It's a draw" ? "draw" : "win");
     else gameAudio.sfx("lose");
   }, [sound]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The game's result is on screen at once (it's the game's own moment); other popups wait until it's closed.
+  useScreenBusy(!!s && !!res && dismissed !== s.id);
   if (!s || !res || dismissed === s.id) return null;
   const playing = pg.mySeat >= 0;
   const both = !!s.players[1];

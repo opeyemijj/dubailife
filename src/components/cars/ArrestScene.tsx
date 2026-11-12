@@ -17,6 +17,7 @@ import { canvasQuality } from "@/lib/device";
 import { CarModel } from "./CarModel";
 import { CARS, type Car } from "@/lib/cars";
 import { PerfProbe } from "@/components/perf/PerfProbe";
+import { useScreenBusy } from "@/lib/popups";
 
 // No police uniform in the avatar set: the pilot captain's dark uniform with epaulettes reads as an officer's.
 const OFFICER: AvatarLookProps = { gender: "man", preset: "Male_Adult_08", wear: "Pilot_Male_01" };
@@ -201,6 +202,8 @@ function Hazards() {
 }
 
 export function ArrestScene({ look, story = FAKE_LICENCE_ARREST, onDone }: { look?: AvatarLookProps; story?: ArrestStory; onDone: () => void }) {
+  // On screen: popups that open by themselves wait until it's over (lib/popups).
+  useScreenBusy(true);
   const quality = useMemo(() => canvasQuality(), []);
   const [say, setSay] = useState<string | null>(null);
   return (

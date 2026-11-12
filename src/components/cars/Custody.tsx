@@ -10,6 +10,7 @@ import { payBail, useServices } from "@/lib/cityServices";
 import { openPhone } from "@/components/layout/PhoneOverlay";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import CARS from "@/data/cars/cars.json";
+import { POPUP, usePopupTurn } from "@/lib/popups";
 
 export function Custody() {
   const { citizen } = useCitizen();
@@ -22,7 +23,10 @@ export function Custody() {
 
   const held = s?.cases.find((c) => c.status === "open" && c.jailUntil && Date.parse(c.jailUntil) > now);
   // The phone stays usable (to call a lawyer); the page under it is the cell.
+  // One popup at a time, in order (lib/popups): it shows when it's its turn.
+  const popupTurn = usePopupTurn("custody", !(!held || pathname.startsWith("/phone")), POPUP.urgent);
   if (!held || pathname.startsWith("/phone")) return null;
+  if (!popupTurn) return null;
   const left = Date.parse(held.jailUntil!) - now;
   const h = Math.floor(left / 3_600_000), m = Math.floor((left % 3_600_000) / 60_000), sec = Math.floor((left % 60_000) / 1000);
 
