@@ -12,6 +12,7 @@ import * as THREE from "three";
 import { canvasQuality, isWebGLAvailable, useDocumentVisible } from "@/lib/device";
 import { StudioEnvironment } from "@/components/avatar/CitizenAvatar";
 import { stageFx, useStageTicker, type QualityTier } from "./stage";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 const QualityContext = createContext<QualityTier>(2);
 /** The stage's quality tier: 2 full, 1 reduced, 0 lowest. */
@@ -53,6 +54,7 @@ export function GameStage({ children, camera, background = "#0b1020", paused = f
       gl={{ powerPreference: quality.powerPreference, antialias: tier === 2, failIfMajorPerformanceCaveat: false }}
       className="!absolute inset-0 touch-none"
     >
+      <PerfProbe scene="GameStage" />
       <color attach="background" args={[background]} />
       {environment > 0 && <StudioEnvironment intensity={environment} />}
       <PerformanceMonitor

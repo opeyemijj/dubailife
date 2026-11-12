@@ -11,6 +11,7 @@ import { canvasQuality } from "@/lib/device";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { MISSIONS } from "@/lib/missions";
 import { gameAudio } from "@/utils/gameAudio";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 function Box({ openRef }: { openRef: React.RefObject<number> }) {
   const lid = useRef<THREE.Group>(null);
@@ -102,6 +103,7 @@ export function MysteryBox({ prize, xp, onDone }: { prize: number; xp: number; o
     <ModalPortal>
       <div className="fixed inset-0 z-[206] bg-slate-950 text-white select-none" role="dialog" aria-modal="true" aria-label="Daily mystery box">
         <Canvas dpr={quality.dpr} camera={{ position: [0, 3.6, 8.5], fov: 45 }} onClick={tap} className="!absolute inset-0">
+          <PerfProbe scene="MysteryBox" />
           <color attach="background" args={["#0f0a1f"]} />
           <ambientLight intensity={0.4} />
           <spotLight position={[0, 7, 3]} angle={0.5} penumbra={0.6} intensity={120} color="#fff1c2" />

@@ -9,14 +9,14 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { game } = await params;
   const info = gameInfo(game);
   if (!info) return { title: "Game Not Found", robots: { index: false } };
-  const title = `Play ${info.name} Online Free`;
-  const description = `${info.tagline}. Play ${info.name} free against friends or computer in Dubai Life (mydubailife.app). ${info.rules}`.slice(0, 300);
+  const title = `Play ${info.name} Online Free — Dubai Life Game`;
+  const description = `${info.tagline}. Play ${info.name} free online against friends or computer in the official Dubai Life Game (mydubailife.app). ${info.rules}`.slice(0, 300);
   return {
     title,
     description,
     alternates: { canonical: `/games/${game}` },
-    openGraph: { title: `${title} - Dubai Life`, description, url: `/games/${game}` },
-    twitter: { title: `${title} - Dubai Life`, description },
+    openGraph: { title, description, url: `/games/${game}` },
+    twitter: { title, description },
   };
 }
 

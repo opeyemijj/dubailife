@@ -16,6 +16,7 @@ import { doorThud, footstep } from "@/components/transit/transitAudio";
 import { canvasQuality } from "@/lib/device";
 import { CarModel } from "./CarModel";
 import { CARS, type Car } from "@/lib/cars";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 // No police uniform in the avatar set: the pilot captain's dark uniform with epaulettes reads as an officer's.
 const OFFICER: AvatarLookProps = { gender: "man", preset: "Male_Adult_08", wear: "Pilot_Male_01" };
@@ -205,6 +206,7 @@ export function ArrestScene({ look, story = FAKE_LICENCE_ARREST, onDone }: { loo
   return (
     <div className="fixed inset-0 z-[200] bg-black">
       <Canvas dpr={quality.dpr} camera={{ position: [4.5, 3.2, -3.5], fov: 55 }}>
+        <PerfProbe scene="ArrestScene" />
         <Scene look={look} story={story} onSay={setSay} onDone={onDone} />
       </Canvas>
       <div className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 pointer-events-none">

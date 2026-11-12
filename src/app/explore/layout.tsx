@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Explore Downtown Dubai & 3D Interactive City Map",
+  title: "Explore 3D Dubai City Map — Dubai Life Game",
   description:
-    "Explore the 3D virtual city of Dubai. Walk through Downtown, visit Burj Khalifa, Dubai Mall, DIFC, beaches, and Game City in your browser on Dubai Life.",
+    "Explore the 3D virtual city of Dubai in the official Dubai Life Game. Walk through Downtown Dubai, visit Burj Khalifa, Dubai Mall, DIFC, JBR beaches, and Game City in your browser with zero downloads.",
   alternates: { canonical: "/explore" },
   openGraph: {
-    title: "Explore Downtown Dubai & 3D Interactive City Map - Dubai Life",
+    title: "Explore 3D Dubai City Map — Dubai Life Game",
     description:
-      "Explore the 3D virtual city of Dubai. Walk through Downtown, visit Burj Khalifa, Dubai Mall, DIFC, and beaches in your browser on Dubai Life.",
+      "Explore the 3D virtual city of Dubai in the official Dubai Life Game. Walk through Downtown Dubai, visit Burj Khalifa, Dubai Mall, DIFC, JBR beaches, and Game City in your browser with zero downloads.",
     url: "/explore",
   },
 };

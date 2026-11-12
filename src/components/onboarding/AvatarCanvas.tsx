@@ -10,6 +10,7 @@ import { CitizenAvatar, StudioEnvironment } from "@/components/avatar/CitizenAva
 
 export type { AvatarLookProps } from "@/components/avatar/roster";
 import type { AvatarLookProps } from "@/components/avatar/roster";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 function Pedestal() {
   return (
@@ -82,6 +83,7 @@ export function AvatarCanvas({ look }: { look: AvatarLookProps }) {
         shadows={quality.shadows}
         dpr={quality.dpr}
       >
+        <PerfProbe scene="AvatarCanvas" />
         <StudioEnvironment intensity={0.7} />
         <hemisphereLight args={["#fff7ed", "#94a3b8", 0.6]} />
         <directionalLight position={[3, 5, 4]} intensity={2} castShadow shadow-mapSize={[1024, 1024]} />

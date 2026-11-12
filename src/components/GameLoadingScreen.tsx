@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from "react";
 import { useProgress } from "@react-three/drei";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 /** What's loading, in friendly words, from the asset URL. */
 function describe(item: string) {
@@ -47,7 +48,8 @@ export function SmallLoader({ label = "Loading" }: { label?: string }) {
 
 /**
  * Shows progress while a 3D scene's models download, then fades away. Doesn't appear when everything
- * is already cached. Place it next to (not inside) the <Canvas>; it sits at the top of the parent.
+ * is already cached. Place it next to (not inside) the <Canvas>
+   <PerfProbe scene="GameLoadingScreen" />; it sits at the top of the parent.
  */
 export function SceneLoadingOverlay({ label }: { label?: string }) {
   const { active, progress, item } = useProgress();

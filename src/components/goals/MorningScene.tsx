@@ -19,6 +19,7 @@ import { useLifeLoop, visaInfo } from "@/lib/lifeLoop";
 import { useMissions } from "@/lib/missions";
 import { gameAudio } from "@/utils/gameAudio";
 import { DailyMissions } from "./DailyMissions";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 const STAMP_REWARDS = [
   { day: 1, icon: "🚇", label: "Nol Top-Up", aed: 150 },
@@ -143,6 +144,7 @@ export function MorningScene() {
   return (
     <div className="fixed inset-0 z-[204] bg-stone-900 text-white" role="dialog" aria-modal="true" aria-label="Good morning">
       <Canvas dpr={quality.dpr} camera={{ position: [1.9, 3.4, 2.2], fov: 50 }} className="!absolute inset-0">
+        <PerfProbe scene="MorningScene" />
         <Bedroom look={citizen.look} upRef={up} />
       </Canvas>
       <div className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-0 text-center pointer-events-none px-4">

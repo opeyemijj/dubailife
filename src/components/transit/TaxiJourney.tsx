@@ -16,6 +16,7 @@ import { ModalPortal } from "@/components/ui/modal-portal";
 import { TAXI, taxiQuote } from "@/lib/transit";
 import { BurjKhalifa, CityBlocks, dubaiSky, laneX, Road, ROAD, SalikGate, Sedan, SkyAndLight, Traffic, type District, type Travel } from "./TransitWorld";
 import { announce, doorThud, indicatorTick, isTransitMuted, meterTick, nolTap, salikBeep, setLoopSpeed, setTransitMuted, startLoop, stopLoops, stopSpeech, warmUpVoices } from "./transitAudio";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 type Stage = "kerb" | "pullup" | "board" | "ride" | "arrive" | "pay" | "done";
 type View = "seat" | "window" | "outside";
@@ -162,6 +163,7 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
     <ModalPortal>
       <div className="fixed inset-0 z-[300] bg-slate-950 select-none">
         <Canvas camera={{ fov: 62, near: 0.05, far: 900, position: [PAVE_X + 3, 2.2, 10] }} dpr={[1, 1.75]}>
+          <PerfProbe scene="TaxiJourney" />
           <SkyAndLight sky={sky} />
           <Road travel={travel} sky={sky} />
           <Traffic travel={travel} avoid={taxiRef} />

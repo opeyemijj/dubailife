@@ -19,6 +19,7 @@ import { applyJob, companyIcon, type BoardJob } from "@/lib/economy";
 import { interviewFor, takeInterview } from "@/lib/cityServices";
 import { monthlyPay } from "@/lib/goals";
 import { gameAudio } from "@/utils/gameAudio";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 type Stage = "arrive" | "ask" | "react" | "checking" | "passed" | "call" | "failed";
 const BOOTHS = ["City Metro", "Gulf Hotels", "Dubai Health", "Swift Delivery", "Marina Mall Group", "Desert Tours", "Dubai Police", "Falcon Analytics"];
@@ -204,6 +205,7 @@ export function InterviewScene({ job, look, onDone }: { job: BoardJob; look?: Av
     <ModalPortal>
       <div className="fixed inset-0 z-[200] bg-slate-200 select-none" role="dialog" aria-modal="true" aria-label={`Interview at ${job.venture}`}>
         <Canvas dpr={quality.dpr} camera={{ position: [1.4, 2.4, 12], fov: 50, near: 0.1, far: 120 }}>
+          <PerfProbe scene="InterviewScene" />
           <Scene company={job.venture} look={look} stage={stage} interviewerAnim={bossAnim}
             onSeated={() => { setStage("ask"); setSay(questions[0].q); }} />
         </Canvas>

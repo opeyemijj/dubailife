@@ -19,6 +19,7 @@ import { gainSkill, type SkillId } from "@/lib/life";
 import { aed, companyIcon, ventureType, workShift, type MyJob } from "@/lib/economy";
 import { usePresentCitizens } from "@/lib/presence";
 import { gameAudio } from "@/utils/gameAudio";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 interface StationOrder {
   slot: number; // 0 = left, 1 = center, 2 = right
@@ -418,6 +419,7 @@ export function ShiftScene({
     <ModalPortal>
       <div className="fixed inset-0 z-[210] bg-slate-950 text-white select-none overflow-hidden" role="dialog" aria-modal="true" aria-label="Work shift in 3D">
         <Canvas dpr={quality.dpr} shadows={quality.shadows} camera={{ position: [0, 3.2, 5.5], fov: 48 }} className="!absolute inset-0">
+          <PerfProbe scene="ShiftScene" />
           <Workplace3D job={job} look={look} targetSlot={targetSlot} orders={orders} servingSlot={servingSlot} />
         </Canvas>
 

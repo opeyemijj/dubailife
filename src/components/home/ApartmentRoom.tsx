@@ -30,6 +30,7 @@ import {
   HOUSING_CONFIGS, hasPlot, homeObjectOf, type HomeObject, type HomeActivityDef, type FloorFinish, type HomeStyle, type HousingTier, type LevelDef, type RoomZone,
   type CatalogItem, type FloorPlacement, type Interaction, type OwnedFurniture, type Placement, type Rotation, type Wall,
 } from "@/lib/furniture";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 // Only what every home has is fetched up front; shop items load when bought or shown.
 [...new Set(BUILT_INS.map((b) => b.model))].forEach((url) => url && useGLTF.preload(url));
@@ -2819,6 +2820,7 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
               antialias: true,
             }}
           >
+            <PerfProbe scene="ApartmentRoom" />
             {props.background !== "transparent" && <color attach="background" args={[props.background ?? "#7f9c78"]} />}
             <StudioEnvironment intensity={props.lightsOut ? 0.04 : 0.35} />
             <hemisphereLight args={props.lightsOut ? ["#7c3aed", "#0f172a", 0.25] : ["#fff7ed", "#6b7280", 1.0]} />

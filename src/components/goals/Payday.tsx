@@ -17,6 +17,7 @@ import { canvasQuality } from "@/lib/device";
 import { dialogOpen, useCitizen } from "@/lib/citizenStore";
 import { MISSIONS, moveSavings, mySavings, seenPayday, type Savings } from "@/lib/missions";
 import { gameAudio } from "@/utils/gameAudio";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 function atmTexture() {
   const c = document.createElement("canvas"); c.width = 256; c.height = 192;
@@ -126,6 +127,7 @@ export function Payday() {
   return (
     <div className="fixed inset-0 z-[203] bg-slate-900 text-white" role="dialog" aria-modal="true" aria-label="Payday">
       <Canvas dpr={quality.dpr} camera={{ position: [2.4, 2.0, 6], fov: 50 }} className="!absolute inset-0">
+        <PerfProbe scene="Payday" />
         <Street look={citizen.look} />
       </Canvas>
       <div className="absolute inset-x-0 bottom-0 p-3 pb-[max(1rem,env(safe-area-inset-bottom))]">

@@ -17,6 +17,7 @@ import {
 import type { AvatarLookProps } from "@/components/avatar/roster";
 import type { Accessory } from "@/lib/city/types";
 import { gameAudio } from "@/utils/gameAudio";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 interface ClothingStoreModalProps {
   open: boolean;
@@ -205,6 +206,7 @@ export function ClothingStoreModal({
                 camera={{ position: [0, 1.25, 2.6], fov: 38 }}
                 gl={{ antialias: true, alpha: true }}
               >
+                <PerfProbe scene="ClothingStoreModal" />
                 <ambientLight intensity={1.2} />
                 <directionalLight position={[2, 4, 3]} intensity={1.9} />
                 <directionalLight position={[-2, 2, -2]} intensity={0.9} />

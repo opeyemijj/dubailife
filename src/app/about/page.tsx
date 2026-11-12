@@ -3,12 +3,12 @@ import { SITE } from "@/lib/site";
 import { MIN_AGE } from "@/lib/age";
 import { AboutView } from "@/components/about/AboutView";
 
-const TITLE = "What is Dubai Life? Live your Dubai story online";
+const TITLE = "About Dubai Life Game — Official 3D Virtual World & Life Simulator";
 const DESCRIPTION =
-  "Dubai Life is a free online life simulation set in Dubai, created by Opeyemi Ishola (fondly called Brain). Rent a flat, get a job, ride the Metro, shop at Dubai Mall, host Live Audio Spaces, play games and make real friends — in your browser.";
+  "Play the official Dubai Life Game at mydubailife.app! A free 3D multiplayer life simulation set in Dubai, created by Opeyemi Ishola (Brain). Rent Marina penthouses, own Palm Jumeirah villas, drive supercars, host Live Audio Spaces, play multiplayer games, and build your fortune in virtual AED.";
 
 export const metadata: Metadata = {
-  title: { absolute: `${TITLE} - Dubai Life` },
+  title: { absolute: `${TITLE} | Dubai Life Game` },
   description: DESCRIPTION,
   alternates: { canonical: "/about" },
   openGraph: { title: TITLE, description: DESCRIPTION, url: "/about" },

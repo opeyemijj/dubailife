@@ -14,6 +14,7 @@ import { SteeringWheel } from "@/components/cars/SteeringWheel";
 import { sensorBeep } from "@/components/transit/transitAudio";
 import { CARS } from "@/lib/cars";
 import { canvasQuality } from "@/lib/device";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 const W = 340, H = 440, CAR_W = 22, CAR_L = 40, WHEELBASE = 30;
 // 10 canvas units = 1 metre in 3D so CAR_L (40) = 4.0m and CAR_W (22) = 2.2m
@@ -418,6 +419,7 @@ export function SmartYard({ onDone }: { onDone: (passed: boolean) => void }) {
 
       <div className="relative mx-auto w-full h-[340px] sm:h-[380px] rounded-2xl overflow-hidden border border-white/15 bg-slate-950 shadow-inner">
         <Canvas dpr={quality.dpr} shadows={quality.shadows} camera={{ position: [0, 12, 16], fov: 46 }}>
+          <PerfProbe scene="SmartYard" />
           <YardScene task={TASKS[task]} carRef={carRef} camMode={camMode} />
         </Canvas>
 

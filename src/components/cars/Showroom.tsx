@@ -21,6 +21,7 @@ import { ArrestScene } from "./ArrestScene";
 import { gameAudio } from "@/utils/gameAudio";
 import { CarModel } from "./CarModel";
 import { TestDrive } from "./TestDrive";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 function Room({ shop }: { shop: Shop }) {
   const W = 22, D = 16;
@@ -111,6 +112,7 @@ export function Showroom({ shop }: { shop: Shop }) {
   return (
     <main className="fixed inset-0 bg-slate-900 select-none">
       <Canvas shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false} dpr={quality.dpr} camera={{ position: [0, 4.6, 14], fov: 50 }}>
+        <PerfProbe scene="Showroom" />
         <color attach="background" args={["#0f172a"]} />
         <StudioEnvironment intensity={0.9} />
         <hemisphereLight args={["#ffffff", "#94a3b8", 0.8]} />

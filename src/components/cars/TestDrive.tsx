@@ -13,6 +13,7 @@ import { salikBeep, setLoopSpeed, startLoop, stopLoops } from "@/components/tran
 import { canvasQuality } from "@/lib/device";
 import type { Car } from "@/lib/cars";
 import { CarModel } from "./CarModel";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 const LANE = 2;
 const LENGTH = 1400;
@@ -59,6 +60,7 @@ export function TestDrive({ car, onDone }: { car: Car; look?: AvatarLookProps; o
   return (
     <div className="fixed inset-0 z-[180] bg-black select-none">
       <Canvas dpr={quality.dpr} camera={{ position: [0, 3.2, 8.5], fov: 58, near: 0.05, far: 900 }}>
+        <PerfProbe scene="TestDrive" />
         <SkyAndLight sky={sky} />
         <Road travel={travel} sky={sky} />
         <CityBlocks travel={travel} sky={sky} districtAt={(p) => (p < 0.3 ? "burj" : p < 0.7 ? "towers" : "marina")} />

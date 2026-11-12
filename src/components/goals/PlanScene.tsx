@@ -9,6 +9,7 @@ import { CitizenAvatar, type AvatarAnimation } from "@/components/avatar/Citizen
 import type { AvatarLookProps } from "@/components/onboarding/AvatarCanvas";
 import { BurjKhalifa, CityBlocks, SkyAndLight } from "@/components/transit/TransitWorld";
 import { canvasQuality } from "@/lib/device";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 const ROOF = 34;
 
@@ -48,6 +49,7 @@ export function PlanScene({ look, celebrating }: { look?: AvatarLookProps; celeb
   const travel = useRef({ s: 0, speed: 0 });
   return (
     <Canvas dpr={quality.dpr} camera={{ position: [0, ROOF + 2.6, 7], fov: 55, near: 0.1, far: 1200 }} className="!absolute inset-0">
+      <PerfProbe scene="PlanScene" />
       <SkyAndLight sky="sunset" />
       <ambientLight intensity={0.35} color="#ffd8b0" />
       <group position={[0, 0, -40]}>

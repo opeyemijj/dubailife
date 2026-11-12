@@ -19,6 +19,7 @@ import { LOCALS } from "@/lib/locals";
 import { CarModel } from "@/components/cars/CarModel";
 import type { Car } from "@/lib/cars";
 import type { Place } from "@/lib/city/types";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 export type ArrivalKind = "club" | "hotel" | "mall" | "cafeteria" | "attraction" | "restaurant";
 
@@ -328,6 +329,7 @@ export function ArrivalScene({ place, label, look, taxi, own, onDone }: { place:
   return (
     <div className="fixed inset-0 z-[190] bg-black">
       <Canvas shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false} dpr={quality.dpr} camera={{ position: [1.5, 3.4, -7], fov: 55 }}>
+        <PerfProbe scene="ArrivalScene" />
         <Scene kind={kind} name={place.name.split("·")[0].trim()} look={look} taxi={taxi || !!own} own={own} onSay={setSay} onDone={onDone} />
       </Canvas>
       <div className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 pointer-events-none">

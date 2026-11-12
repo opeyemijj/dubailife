@@ -5,11 +5,19 @@ import { ScamCheck } from "@/components/share/ScamCheck";
 // from the game's scam scenarios. Made to be sent to friends and family.
 
 export const metadata: Metadata = {
-  title: "Would you fall for it? The 30-second Dubai scam check",
-  description: "Fake police calls, toll fines and parcel fees: try a real-pattern scam safely and learn the red flags. Free, no sign-up.",
+  title: "Dubai Life Scam Check — 30-Second Dubai Fraud Test & Security Shield",
+  description: "Test yourself against fake police calls, Salik toll fines, and parcel fees on Dubai Life Game. Free 30-second fraud check with no sign-up required.",
   alternates: { canonical: "/scam-check" },
-  openGraph: { title: "Would you fall for it? 🛡️ The 30-second Dubai scam check", description: "Try a real-pattern scam safely and learn the red flags. Free, no sign-up.", url: "/scam-check",
-    images: [{ url: "/api/share-image?m=scam-fell", width: 1200, height: 630 }] },
+  openGraph: {
+    title: "Dubai Life Scam Check — 30-Second Dubai Fraud Test",
+    description: "Try a real-pattern Dubai scam scenario safely and learn the red flags on Dubai Life Game.",
+    url: "/scam-check",
+    images: [{ url: "/api/share-image?m=scam-fell", width: 1200, height: 630 }],
+  },
+  twitter: {
+    title: "Dubai Life Scam Check — 30-Second Dubai Fraud Test",
+    description: "Try a real-pattern Dubai scam scenario safely on Dubai Life Game.",
+  },
 };
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };

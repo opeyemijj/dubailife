@@ -5,9 +5,18 @@ import Link from "next/link";
 // before playing. Keep in step with supabase/migrations/*_tournament.sql and the `tournament` setting.
 
 export const metadata: Metadata = {
-  title: "Monthly tournament · Official rules",
-  description: "Free to enter, skill-based monthly tournament in Dubai Life. Eligibility, scoring, prizes and verification.",
+  title: "Dubai Life Tournament Rules — Official Skill Competition & Prizes",
+  description: "Official competition rules for the monthly Dubai Life gaming tournament. 100% skill-based, free entry, AED prizes, eligibility, and Fair Play guidelines.",
   alternates: { canonical: "/tournament/rules" },
+  openGraph: {
+    title: "Dubai Life Tournament Rules — Official Skill Competition & Prizes",
+    description: "Official competition rules for the monthly Dubai Life gaming tournament.",
+    url: "/tournament/rules",
+  },
+  twitter: {
+    title: "Dubai Life Tournament Rules — Official Skill Competition & Prizes",
+    description: "Official competition rules for the monthly Dubai Life gaming tournament.",
+  },
 };
 
 const Section = ({ n, title, children }: { n: number; title: string; children: React.ReactNode }) => (

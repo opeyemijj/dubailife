@@ -22,6 +22,7 @@ import { LOCALS } from "@/lib/locals";
 import { MARATHON, raceClock, reportProgress, serverNow, shownKm, type Overview } from "@/lib/marathon";
 import { gameAudio } from "@/utils/gameAudio";
 import { RaceMusic, type RaceMood } from "./raceMusic";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 const COURSE = MARATHON.courseMetres;
 const ROAD_W = 16;
@@ -429,6 +430,7 @@ export function MarathonRace({ o, myId, look, onExit, onFinished }: { o: Overvie
   return (
     <div className="fixed inset-0 z-[180] bg-black select-none">
       <Canvas shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false} dpr={quality.dpr} camera={{ position: [-5, 2.6, 0], fov: 60, far: 1500 }}>
+        <PerfProbe scene="MarathonRace" />
         <SkyAndLight sky={sky} />
         <ambientLight intensity={night ? 0.9 : 0.3} color={night ? "#c7d2fe" : "#ffffff"} />
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[COURSE / 2, -0.02, 0]}><planeGeometry args={[COURSE + 800, 600]} /><meshStandardMaterial color="#cdbf9f" roughness={1} /></mesh>

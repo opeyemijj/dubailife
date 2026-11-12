@@ -26,6 +26,7 @@ import { CARS, aed, carAccident, finishDrive, fuelFor, parkCar, refuel, refuelCo
 import { CarModel, carLength } from "./CarModel";
 import { ArrestScene, accidentArrest, noLicenceArrest, stolenVehicleArrest, type ArrestStory } from "./ArrestScene";
 import { SteeringWheel } from "./SteeringWheel";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 const DR = CARS.driving;
 const RADAR = DR.radarOver / 3.6;
@@ -861,6 +862,7 @@ export function DriveJourney({ drivables, metres, destination, look, balance, ha
   return (
     <div className="fixed inset-0 z-[180] bg-black select-none touch-none">
       <Canvas dpr={quality.dpr} camera={{ position: [laneX(4), 3, 8], fov: 56, near: 0.1, far: 900 }}>
+        <PerfProbe scene="DriveJourney" />
         <SkyAndLight sky={sky} />
         <Road travel={sim as unknown as React.RefObject<{ s: number; speed: number }>} sky={sky} />
         <CityBlocks travel={sim as unknown as React.RefObject<{ s: number; speed: number }>} sky={sky} clearRef={clear}

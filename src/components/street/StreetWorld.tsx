@@ -24,6 +24,7 @@ import { CarModel } from "@/components/cars/CarModel";
 import type { Car } from "@/lib/cars";
 import { canvasQuality } from "@/lib/device";
 import type { Peer } from "@/lib/room";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 export interface StreetDoor { id: string; name: string; icon: string; metres: number; href: string; x: number; z: number; mine?: boolean; /** A local shop (karak, baqala…): opens its counter instead of a page. */ shop?: string; color?: string;
   /** Not a building: your own car or pool out front (drawn by your villa's plot). */ prop?: "car" | "pool" }
@@ -537,6 +538,7 @@ export function StreetScene({ doors, look, dirty, controls, run, auto, peers, on
   // From your own villa: framed on your house, its pool and your car. Otherwise behind you, down the street.
   return (
     <Canvas shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false} dpr={quality.dpr} camera={{ position: lot ? [start[0] - 26, 13, start[1] + 2] : [start[0] - 10, 10, start[1] + 13], fov: 66 }}>
+      <PerfProbe scene="StreetWorld" />
       <SkyAndLight sky={sky} />
       <fog attach="fog" args={[night ? "#0b1324" : "#dbe7f3", 110, 420]} />
       <Street from={from} to={to} night={night} />

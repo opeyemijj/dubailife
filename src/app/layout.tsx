@@ -21,6 +21,7 @@ import { GAMES } from "@/lib/games/registry";
 import { ServiceWorker } from "@/components/pwa/ServiceWorker";
 import { KeyboardShortcuts } from "@/components/common/KeyboardShortcuts";
 import { LifeHub } from "@/components/life/LifeHub";
+import { PerfHud } from "@/components/perf/PerfHud";
 import { PhoneOverlay } from "@/components/layout/PhoneOverlay";
 import { HudSheets } from "@/components/layout/HudSheets";
 import { LoveListener, MoveInListener } from "@/components/love/LoveListener";
@@ -59,8 +60,8 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
   title: {
-    default: "Dubai Life — Official 3D Multiplayer Game & Virtual World",
-    template: "%s | Dubai Life",
+    default: "Dubai Life Game — Official 3D Multiplayer Life Simulator & Virtual World",
+    template: "%s | Dubai Life Game",
   },
   description: SITE.description,
   applicationName: SITE.name,
@@ -69,7 +70,7 @@ export const metadata: Metadata = {
     { name: SITE.name, url: SITE.url },
     { name: "Opeyemi Ishola (Brain)", url: SITE.url },
   ],
-  creator: "Opeyemi Ishola (Brain) — Dubai Life",
+  creator: "Opeyemi Ishola (Brain) — Dubai Life Game",
   publisher: SITE.name,
   category: "games",
   classification: "Virtual World / Life Simulation / Multiplayer Games",
@@ -79,7 +80,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: SITE.name,
-    title: "Dubai Life — Official 3D Multiplayer Game & Virtual World",
+    title: "Dubai Life Game — Official 3D Multiplayer Life Simulator & Virtual World",
     description: SITE.description,
     url: "/",
     locale: "en_AE",
@@ -88,13 +89,13 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Dubai Life — Official 3D Multiplayer Game & Virtual World",
+        alt: "Dubai Life Game — Official 3D Multiplayer Simulator & Virtual World",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Dubai Life — Official 3D Multiplayer Game & Virtual World",
+    title: "Dubai Life Game — Official 3D Multiplayer Life Simulator & Virtual World",
     description: SITE.description,
     images: ["/twitter-image"],
     site: "@dubailifeapp",
@@ -137,15 +138,23 @@ const STRUCTURED_DATA = {
       "@type": "WebSite",
       "@id": `${SITE.url}/#website`,
       url: SITE.url,
-      name: "Dubai Life",
-      alternateName: ["Dubai Life Game", "Dubai Life App", "Dubai Life 3D", "Dubai Life Simulator", "mydubailife.app", "MyDubaiLife", "Come to Dubai"],
+      name: "Dubai Life Game",
+      alternateName: [
+        "Dubai Life",
+        "Dubai Life Game Online",
+        "Dubai Life Simulator",
+        "Dubai Life 3D",
+        "mydubailife.app",
+        "MyDubaiLife",
+        "Come to Dubai game",
+      ],
       description: SITE.description,
       inLanguage: "en",
     },
     {
       "@type": "Organization",
       "@id": `${SITE.url}/#organization`,
-      name: "Dubai Life",
+      name: "Dubai Life Game",
       url: SITE.url,
       logo: {
         "@type": "ImageObject",
@@ -158,8 +167,15 @@ const STRUCTURED_DATA = {
     {
       "@type": ["VideoGame", "SoftwareApplication", "WebApplication"],
       "@id": `${SITE.url}/#app`,
-      name: "Dubai Life",
-      alternateName: ["Dubai Life Game", "Dubai Life App", "Dubai Life 3D", "Dubai Life Simulator", "mydubailife.app", "MyDubaiLife"],
+      name: "Dubai Life Game",
+      alternateName: [
+        "Dubai Life",
+        "Dubai Life Game Online",
+        "Dubai Life Simulator",
+        "Dubai Life 3D",
+        "mydubailife.app",
+        "MyDubaiLife",
+      ],
       url: SITE.url,
       description: SITE.description,
       image: `${SITE.url}/brand/icon-512.png`,
@@ -215,18 +231,42 @@ const STRUCTURED_DATA = {
       mainEntity: [
         {
           "@type": "Question",
-          name: "What is the official Dubai Life game?",
+          name: "What is the official Dubai Life Game?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Dubai Life (hosted officially at mydubailife.app) is a free 3D multiplayer life simulation game set in Dubai where you customize your 3D citizen, own Palm Jumeirah villas and Marina apartments, drive supercars, host cultural weddings and pool parties, join live audio Spaces, and build your fortune in AED.",
+            text: "Dubai Life Game (hosted officially at mydubailife.app) is the premier free-to-play 3D multiplayer life simulation game and virtual world set in Dubai. Players customize their 3D citizen avatar, own Palm Jumeirah luxury villas and Dubai Marina penthouses, drive sports cars, attend yacht parties, join live audio Spaces, and build a virtual fortune in AED.",
           },
         },
         {
           "@type": "Question",
-          name: "How do I play Dubai Life online for free?",
+          name: "How do I play the Dubai Life Game online for free?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Visit https://mydubailife.app on any phone, tablet, or computer browser to start playing Dubai Life instantly with zero download required, or install it to your home screen as an app.",
+            text: "You can play the Dubai Life Game instantly by visiting https://mydubailife.app on any web browser on your smartphone, tablet, Mac, or Windows PC. No app download or installation is required to start playing immediately.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Can I play Dubai Life Game on iPhone and Android?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Yes! Dubai Life Game is a high-performance Progressive Web App (PWA). You can play directly in Safari or Chrome, or tap 'Add to Home Screen' for an immersive full-screen experience with instant push notifications and zero app store fees.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "What games are included inside the Dubai Life Game?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Dubai Life Game features dozens of built-in multiplayer and single-player games including 8-Ball Pool, Ludo, Chess, Word Tiles, Dominoes, Celebrity Boxing, and the weekly Dubai Marathon tournament.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "How is mydubailife.app different from Roblox Dubai RP or mobile copies?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "mydubailife.app is the official, standalone 3D Dubai Life Game. Unlike Roblox rooms or ad-heavy mobile clones, it features real Dubai time synchronization, persistent cloud housing, custom WebRTC spatial voice spaces, and an authentic Dubai economy.",
           },
         },
       ],
@@ -262,6 +302,8 @@ export default function RootLayout({
         <LogoutConfirm />
         {children}
         <LifeHub />
+        {/* Measuring 3D performance: ?perf=1 on any page (?perf=0 to hide). */}
+        <PerfHud />
         {/* The 3D attraction games (boxing, gym, courts…), loaded only when one is opened. */}
         <ArcadeHost />
         <OutsidePhone>

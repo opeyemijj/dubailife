@@ -3,8 +3,9 @@ import { PLACES } from "@/lib/city/places";
 import { GAMES } from "@/lib/games/registry";
 import { SITE } from "@/lib/site";
 import { WIKI_HUBS } from "@/components/wiki/WikiData";
+import { ACADEMIC_CAMPUSES, ACADEMIC_COURSES } from "@/lib/city/academic";
 
-// Every indexable public page: city landmarks, venues, wiki guides, arcade games, courses and businesses.
+// Every indexable public page: city landmarks, venues, wiki guides, arcade games, courses, and driving academy.
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   const pages: MetadataRoute.Sitemap = [
@@ -12,16 +13,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE.url}/explore`, lastModified: now, changeFrequency: "daily", priority: 0.95 },
     { url: `${SITE.url}/wiki`, lastModified: now, changeFrequency: "weekly", priority: 0.95 },
     { url: `${SITE.url}/wiki/places`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
-    { url: `${SITE.url}/guide`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${SITE.url}/guide`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
     { url: `${SITE.url}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.9 },
     { url: `${SITE.url}/feedback`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
-    { url: `${SITE.url}/privacy`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
-    { url: `${SITE.url}/terms`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${SITE.url}/marathon`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
+    { url: `${SITE.url}/driving`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
+    { url: `${SITE.url}/tournament`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
+    { url: `${SITE.url}/tournament/rules`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${SITE.url}/academics`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
     { url: `${SITE.url}/business`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
-    { url: `${SITE.url}/academics`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE.url}/scam-check`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${SITE.url}/tournament/rules`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${SITE.url}/privacy`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${SITE.url}/terms`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
   ];
 
   // Official Dubai Life Wiki Guides (/wiki/[slug])
@@ -41,6 +44,26 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.85,
+    });
+  }
+
+  // Academic Campuses & Universities
+  for (const campus of Object.values(ACADEMIC_CAMPUSES)) {
+    pages.push({
+      url: `${SITE.url}/academics/${campus.id}`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    });
+  }
+
+  // Academic Courses & Degrees
+  for (const course of ACADEMIC_COURSES) {
+    pages.push({
+      url: `${SITE.url}/academics/course/${course.id}`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.75,
     });
   }
 

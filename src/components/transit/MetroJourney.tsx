@@ -15,6 +15,7 @@ import { ModalPortal } from "@/components/ui/modal-portal";
 import { METRO, metroFare, metroRoute, phrase, type MetroStation } from "@/lib/transit";
 import { BurjKhalifa, CityBlocks, dubaiSky, MetroStation as Station, MetroTrain, Road, SkyAndLight, Traffic, VIADUCT, Viaduct, type District, type Travel } from "./TransitWorld";
 import { announce, doorsClosing, doorsOpening, isTransitMuted, nolTap, setLoopSpeed, setTransitMuted, startLoop, stopLoops, stopSpeech, warmUpVoices } from "./transitAudio";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 type Stage = "gate" | "waiting" | "boarding" | "riding" | "dwell" | "arriving" | "done";
 type View = "front" | "window" | "outside";
@@ -70,6 +71,7 @@ export function MetroJourney({ fromMap, toMap, gold, look, onPay, onArrive, onCa
     <ModalPortal>
       <div className="fixed inset-0 z-[300] bg-slate-950 select-none">
         <Canvas camera={{ fov: 60, near: 0.1, far: 900, position: [PLAT_X + 5, VIADUCT.deck + 3, 16] }} dpr={[1, 1.75]}>
+          <PerfProbe scene="MetroJourney" />
           <SkyAndLight sky={sky} />
           <Road travel={travel} sky={sky} />
           <Traffic travel={travel} />

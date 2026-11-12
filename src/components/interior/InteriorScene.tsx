@@ -24,6 +24,7 @@ import { ActivityStageFX } from "./ActivityStageFX";
 import type { ActivityCategory } from "./ActivityExperienceOverlay";
 import type { ActiveRide } from "./rides/RideRig";
 import type { RideResult } from "./rides/rideIO";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 // The rides engine (about 160 KB) loads only when a ride starts, not with every venue.
 const RideRig = lazy(() => import("./rides/RideRig").then((m) => ({ default: m.RideRig })));
@@ -989,6 +990,7 @@ export function InteriorScene({
   return (
     <div className="relative w-full h-full">
     <Canvas shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false} camera={{ position: [0, 7.5, d / 2 + 6], fov: 42 }} dpr={quality.dpr}>
+      <PerfProbe scene="InteriorScene" />
       <color attach="background" args={[venue.layout === "club" ? "#120a24" : OPEN_AIR.has(venue.layout) ? "#bae6fd" : "#e7e5e4"]} />
       <StudioEnvironment intensity={dim ? 0.04 : venue.layout === "club" ? 0.35 : 0.45} />
       <Lights venue={venue} plan={plan} dim={dim} />

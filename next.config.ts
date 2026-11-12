@@ -40,7 +40,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  // The app moved from cometodubai.app to mydubailife.app: old links and bookmarks redirect permanently.
+  // The app moved from cometodubai.app to mydubailife.app: old links and bookmarks redirect permanently (301).
   async redirects() {
     return ["cometodubai.app", "www.cometodubai.app"].map((host) => ({
       source: "/:path*",

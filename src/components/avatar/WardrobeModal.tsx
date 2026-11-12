@@ -37,6 +37,7 @@ import { useRouter } from "next/navigation";
 import { gameAudio } from "@/utils/gameAudio";
 import type { Accessory } from "@/lib/city/types";
 import { canvasQuality, isEcoMode, toggleEcoMode } from "@/lib/device";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 /** Which occasions suit each venue dress code. */
 const SUITS: Record<DressCodeType, Occasion[]> = {
@@ -591,6 +592,7 @@ export function WardrobeModal({ open, onOpenChange }: WardrobeModalProps) {
                   powerPreference: quality.powerPreference,
                 }}
               >
+                <PerfProbe scene="WardrobeModal" />
                 <ambientLight intensity={1.25} />
                 <directionalLight position={[2, 4, 3]} intensity={1.9} />
                 <directionalLight position={[-2, 2, -2]} intensity={0.85} />

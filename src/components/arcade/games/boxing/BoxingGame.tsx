@@ -162,6 +162,8 @@ function Bout({ api, level, me, myName, opponent, glove, career, body, live }: {
   useEffect(() => {
     const id = setInterval(() => {
       setHud({ ...snapshot(fightRef.current, opMax), live: link.current?.status ?? null });
+      // Development only: the fight's state for automated checks (two browsers in one live bout).
+      if (process.env.NODE_ENV !== "production") (window as unknown as { __fight?: unknown }).__fight = { me: Math.round(fightRef.current.me.hp), op: Math.round(fightRef.current.op.hp), t: Math.round(fightRef.current.t * 10) / 10, live: link.current?.status, thrown: fightRef.current.stats.thrown };
       for (const e of eventsRef.current.splice(0)) {
         const text = calloutFor(e, fightRef.current);
         if (text) callouts.push(text.text, text.tone);

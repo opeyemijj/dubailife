@@ -4,18 +4,22 @@ import { ArrowLeft, Sparkles } from "lucide-react";
 import { FeedbackBoard } from "@/components/social/FeedbackBoard";
 
 export const metadata: Metadata = {
-  title: "Community Feedback & Roadmap | Dubai Life",
+  title: "Dubai Life Feedback & Community Roadmap — Feature Voting",
   description:
-    "Upvote and propose new features, yacht parties, house clubs, spaces, and districts for Dubai Life. See what our development team is building next.",
+    "Upvote and propose new features, yacht parties, house clubs, spaces, and districts for Dubai Life Game. See what the development team is building next.",
   alternates: {
-    canonical: "https://mydubailife.app/feedback",
+    canonical: "/feedback",
   },
   openGraph: {
-    title: "Community Feedback & Roadmap | Dubai Life",
-    description: "Propose features, vote up or down, and shape the virtual city with thousands of citizens.",
-    url: "https://mydubailife.app/feedback",
-    siteName: "Dubai Life",
+    title: "Dubai Life Feedback & Roadmap — Vote On New Features",
+    description: "Propose features, vote on upcoming additions, and shape Dubai Life Game with thousands of players.",
+    url: "/feedback",
+    siteName: "Dubai Life Game",
     type: "website",
+  },
+  twitter: {
+    title: "Dubai Life Feedback & Roadmap — Vote On New Features",
+    description: "Propose features and shape Dubai Life Game.",
   },
 };
 

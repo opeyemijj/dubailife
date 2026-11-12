@@ -17,6 +17,7 @@ import { gainSkill, lifeEvent } from "@/lib/life";
 import { gameAudio } from "@/utils/gameAudio";
 import { footstep } from "@/components/transit/transitAudio";
 import RUNS from "@/data/life/runs.json";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 export type RouteId = "citywalk" | "jbr" | "block";
 export { RUNS };
@@ -385,6 +386,7 @@ export function RunJourney({ route, distance, look, onDone }: { route: RouteId; 
   return (
     <div className="fixed inset-0 z-[180] bg-black">
       <Canvas shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false} dpr={quality.dpr} camera={{ position: [0, 2.2, -4], fov: 55 }}>
+        <PerfProbe scene="RunJourney" />
         <SkyAndLight sky={sky} />
         {/* Night in Dubai is lit: street lights, shopfronts and towers keep the walk bright. */}
         <ambientLight intensity={night ? 0.9 : 0.25} color={night ? "#c7d2fe" : "#ffffff"} />

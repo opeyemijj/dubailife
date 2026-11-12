@@ -11,6 +11,7 @@ import type { AvatarLookProps } from "@/components/onboarding/AvatarCanvas";
 import { doorThud, footstep } from "@/components/transit/transitAudio";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { canvasQuality } from "@/lib/device";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 const OUTDOOR = ["townhouse", "villa"];
 const WALK_END = 4.4;
@@ -124,6 +125,7 @@ export function MoveInWalk({ look, homeId, homeLabel, caption, onDone }: { look:
     <ModalPortal>
       <div className="fixed inset-0 z-[210] bg-stone-200" role="dialog" aria-modal="true" aria-label="Moving in">
         <Canvas dpr={quality.dpr} camera={{ position: [0.25, 1.75, -12], fov: 55 }}>
+          <PerfProbe scene="MoveInWalk" />
           <Walk look={look} outdoor={OUTDOOR.includes(homeId)} onInside={inside} />
         </Canvas>
         <div className="absolute top-[max(1rem,env(safe-area-inset-top))] inset-x-3 flex justify-center pointer-events-none">

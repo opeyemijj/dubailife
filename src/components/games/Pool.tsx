@@ -15,6 +15,7 @@ import { broadcastCityPulse } from "@/lib/presence";
 import { LOCALS } from "@/lib/locals";
 import { gameAudio } from "@/utils/gameAudio";
 import type { BoardProps, GameModule } from "./types";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 interface Ball { n: number; x: number; y: number; in: boolean }
 type Group = "solids" | "stripes";
@@ -510,6 +511,7 @@ function Board({ state, me, seats, onMove, canMove }: BoardProps<PoolState>) {
       >
         {mode3D ? (
           <Canvas dpr={quality.dpr} shadows={quality.shadows} camera={{ position: [0, 3.05, 1.95], fov: 42 }}>
+            <PerfProbe scene="Pool" />
             <Pool3DScene livePosRef={livePosRef} ns={ns} aim={aim} myLook={citizen?.look} turn={state.turn} />
           </Canvas>
         ) : (

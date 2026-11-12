@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Dubai Academic City — Courses, Skills & Certifications",
+  title: "Dubai Life Academic City — University Degrees, AI & Career Courses",
   description:
-    "Learn high-income skills in real estate, marketing, AI, and business at Dubai Academic City in Dubai Life. Earn certificates and advance your career.",
+    "Master high-income skills in real estate, AI engineering, finance, marketing, and business at Dubai Academic City in Dubai Life Game. Earn accredited in-game diplomas and career buffs.",
   alternates: { canonical: "/academics" },
   openGraph: {
-    title: "Dubai Academic City — Courses, Skills & Certifications - Dubai Life",
+    title: "Dubai Life Academic City — Degrees, AI & Career Courses",
     description:
-      "Learn high-income skills in real estate, marketing, AI, and business at Dubai Academic City in Dubai Life. Earn certificates and advance your career.",
+      "Learn high-income skills in real estate, AI, and business at Dubai Academic City in Dubai Life Game.",
     url: "/academics",
+  },
+  twitter: {
+    title: "Dubai Life Academic City — Degrees, AI & Career Courses",
+    description: "Learn high-income skills in real estate, AI, and business at Dubai Academic City in Dubai Life Game.",
   },
 };
 

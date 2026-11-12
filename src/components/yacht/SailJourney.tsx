@@ -11,6 +11,7 @@ import * as THREE from "three";
 import { MoveStick, type Controls } from "@/components/street/StreetWorld";
 import { MarinaSkyline } from "@/components/interior/scenery";
 import { gameAudio } from "@/utils/gameAudio";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 /** The course: buoys to round in order, then the dock. Metres, the harbour at the origin. */
 const BUOYS: Array<[number, number]> = [[0, -60], [-45, -130], [-20, -210], [50, -190], [70, -110], [30, -40]];
@@ -61,6 +62,7 @@ export function SailJourney({ name, onDone }: { name: string; onDone: (r: SailRe
   return (
     <div className="fixed inset-0 z-[120] bg-sky-300" role="dialog" aria-label={`Sailing ${name}`}>
       <Canvas dpr={[1, 1.5]} camera={{ fov: 62, position: [0, 9, 22], near: 0.5, far: 900 }}>
+        <PerfProbe scene="SailJourney" />
         <Sea state={state} controls={controls} onDock={() => { gameAudio.playCoinSound(); end(true); }} onBuoy={() => gameAudio.playClickSound()} />
       </Canvas>
       <div className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 flex items-center gap-2">

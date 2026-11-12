@@ -110,3 +110,38 @@ export function canvasQuality() {
     eco,
   };
 }
+
+// ---------------------------------------------------------------- how strong this device is
+
+let gpuCached: string | null = null;
+/** The graphics chip's name, where the browser says ("Apple GPU", "Adreno (TM) 640", "Mali-G52"…), else "". */
+export function gpuName(): string {
+  if (gpuCached !== null) return gpuCached;
+  gpuCached = "";
+  if (typeof document === "undefined") return gpuCached;
+  try {
+    const gl = document.createElement("canvas").getContext("webgl");
+    const ext = gl?.getExtension("WEBGL_debug_renderer_info");
+    gpuCached = (ext && gl ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) : "") || "";
+    gl?.getExtension("WEBGL_lose_context")?.loseContext();
+  } catch { /* blocked */ }
+  return gpuCached;
+}
+
+/**
+ * A rough strength score for this device (about 4 for an old budget phone to 20+ for a recent iPhone or a laptop
+ * with a proper graphics card), from its processor cores, memory and graphics chip. Used to pick which phone runs
+ * a live match (the stronger) and, with what the frame rate does, the 3D quality tier.
+ */
+export function deviceScore(): number {
+  if (typeof navigator === "undefined") return 10;
+  const cores = Math.min(12, navigator.hardwareConcurrency ?? 4);
+  const memory = Math.min(8, (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 4);
+  const g = gpuName().toLowerCase();
+  let chip = 0;
+  if (/apple|nvidia|geforce|radeon|rtx|arc\b|m1|m2|m3|m4/.test(g)) chip = 6;
+  else if (/adreno.*(7\d\d|6[4-9]\d)|mali-g(7[1-9]|[89]\d|7\d\d)|immortalis|xclipse/.test(g)) chip = 4;
+  else if (/adreno.*(6[0-3]\d|5[3-9]\d)|mali-g(5\d|6\d)|powervr|intel/.test(g)) chip = 2;
+  else if (/adreno.*([1-4]\d\d|50\d|51\d)|mali-(4|t)|swiftshader|llvmpipe|software/.test(g)) chip = -2;
+  return Math.round(cores * 0.8 + memory * 1.2 + chip);
+}

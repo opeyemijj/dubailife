@@ -10,6 +10,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { CitizenAvatar, type AvatarLookProps } from "@/components/avatar/CitizenAvatar";
 import { gameAudio } from "@/utils/gameAudio";
+import { PerfProbe } from "@/components/perf/PerfProbe";
 
 // The timeline, in seconds.
 const LOBBY_END = 2.8;   // walked into the lift
@@ -58,6 +59,7 @@ export function TowerArrival({ floor, unit, tower, look, onDone }: { floor: numb
   return (
     <div className="fixed inset-0 z-[60] bg-slate-900" role="dialog" aria-label={`Taking the lift to ${unit}`}>
       <Canvas shadows={false} dpr={[1, 1.75]} camera={{ fov: 72, position: [0.4, 2.3, 9.6], near: 0.05, far: 80 }}>
+        <PerfProbe scene="TowerArrival" />
         <Scene look={look} unit={unit} startRef={start} onReady={ready} />
       </Canvas>
       <div className="pointer-events-none absolute inset-x-0 top-[max(1rem,env(safe-area-inset-top))] flex flex-col items-center gap-2">

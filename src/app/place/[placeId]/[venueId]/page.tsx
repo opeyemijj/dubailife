@@ -11,15 +11,15 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const venue = getVenue(placeId, venueId);
   if (!place || !venue) return { title: "Place not found", robots: { index: false } };
   const where = place.venues.length > 1 ? ` at ${place.name}` : "";
-  const title = `${venue.name}${where} — Virtual Dubai 3D`;
-  const description = `Walk into ${venue.name}${where} in 3D: ${venue.blurb} Shop, meet real players and hang out on Dubai Life (mydubailife.app), the free virtual Dubai browser game.`.slice(0, 300);
+  const title = `${venue.name}${where} — Dubai Life 3D Venue`;
+  const description = `Walk into ${venue.name}${where} in 3D: ${venue.blurb} Shop, meet real players, and socialize on Dubai Life Game (mydubailife.app), the free virtual Dubai browser simulator.`.slice(0, 300);
   const url = `/place/${placeId}/${venueId}`;
   return {
     title,
     description,
     alternates: { canonical: url },
-    openGraph: { title: `${title} - Dubai Life`, description, url },
-    twitter: { title: `${title} - Dubai Life`, description },
+    openGraph: { title: `${title} | Dubai Life Game`, description, url },
+    twitter: { title: `${title} | Dubai Life Game`, description },
   };
 }
 
