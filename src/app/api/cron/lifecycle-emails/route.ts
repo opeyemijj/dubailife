@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { supabaseServer } from "@/lib/supabase/server";
 import { sendLifecycleEmail } from "@/lib/email/send";
 
 export const dynamic = "force-dynamic";
@@ -18,22 +19,86 @@ export async function POST(req: Request) {
   return handleCron(req);
 }
 
+async function getUserEmail(
+  db: SupabaseClient,
+  userId: string,
+  cookieSupabase?: SupabaseClient
+): Promise<string | null> {
+  // 1. Try service role auth admin API
+  try {
+    const { data: userAuth } = await db.auth.admin.getUserById(userId);
+    if (userAuth?.user?.email) return userAuth.user.email;
+  } catch {}
+
+  // 2. Try admin_list_citizens RPC via cookie or service client
+  try {
+    const client = cookieSupabase || db;
+    const { data: rows } = await client.rpc("admin_list_citizens", { p_query: userId, p_limit: 5 });
+    if (rows && Array.isArray(rows)) {
+      const match = rows.find((r: any) => r.id === userId);
+      if (match?.email) return match.email;
+    }
+  } catch {}
+
+  return null;
+}
+
 async function handleCron(req: Request) {
   const authHeader = req.headers.get("authorization") || req.headers.get("x-cron-secret");
   const cronSecret = process.env.CRON_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  // In production, strictly require authorization secret matching CRON_SECRET or SUPABASE_SERVICE_ROLE_KEY
-  if (!cronSecret) {
-    if (process.env.NODE_ENV !== "development") {
-      return NextResponse.json({ error: "CRON_SECRET is not configured on the server." }, { status: 500 });
+  let isAuthorized = false;
+  let cookieSupabase: SupabaseClient | undefined;
+
+  // 1. Verify via CRON_SECRET or service role key header
+  if (cronSecret) {
+    if (authHeader === `Bearer ${cronSecret}` || authHeader === cronSecret) {
+      isAuthorized = true;
     }
-  } else {
-    const isSecretValid = authHeader === `Bearer ${cronSecret}` || authHeader === cronSecret;
-    if (!isSecretValid) {
-      if (process.env.NODE_ENV !== "development") {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // 2. Verify via Backoffice admin cookie session (e.g. manual trigger from admin console)
+  if (!isAuthorized) {
+    try {
+      cookieSupabase = await supabaseServer();
+      const { data: { user } } = await cookieSupabase.auth.getUser();
+      if (user) {
+        const { data: isAdmin } = await cookieSupabase.rpc("is_admin");
+        if (isAdmin) {
+          isAuthorized = true;
+        }
       }
-    }
+    } catch {}
+  }
+
+  // 3. Verify via Bearer session access token (e.g. fetch with Authorization from client)
+  if (!isAuthorized && authHeader?.startsWith("Bearer ")) {
+    try {
+      const token = authHeader.replace(/^Bearer\s+/i, "");
+      const adminClient = getAdminClient();
+      const { data: userData } = await adminClient.auth.getUser(token);
+      if (userData?.user) {
+        const { data: isAdmin } = await adminClient.rpc("is_admin", { p_user: userData.user.id });
+        if (isAdmin) {
+          isAuthorized = true;
+        }
+      }
+    } catch {}
+  }
+
+  // 4. In development mode, allow triggers for local development
+  if (!isAuthorized && process.env.NODE_ENV === "development") {
+    isAuthorized = true;
+  }
+
+  if (!isAuthorized) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Unauthorized: Administrator sign-in or valid CRON_SECRET required.",
+      },
+      { status: 401 }
+    );
   }
 
   const db = getAdminClient();
@@ -75,8 +140,7 @@ async function handleCron(req: Request) {
       if (alreadySent) continue;
 
       // Fetch user's email via auth RPC or profiles
-      const { data: userAuth } = await db.auth.admin.getUserById(cand.id).catch(() => ({ data: null }));
-      const email = userAuth?.user?.email;
+      const email = await getUserEmail(db, cand.id, cookieSupabase);
       if (!email) continue;
 
       const res = await sendLifecycleEmail({
@@ -115,8 +179,7 @@ async function handleCron(req: Request) {
 
       if (alreadySent) continue;
 
-      const { data: userAuth } = await db.auth.admin.getUserById(user.id).catch(() => ({ data: null }));
-      const email = userAuth?.user?.email;
+      const email = await getUserEmail(db, user.id, cookieSupabase);
       if (!email) continue;
 
       const res = await sendLifecycleEmail({
@@ -155,8 +218,7 @@ async function handleCron(req: Request) {
 
       if (alreadySent) continue;
 
-      const { data: userAuth } = await db.auth.admin.getUserById(user.id).catch(() => ({ data: null }));
-      const email = userAuth?.user?.email;
+      const email = await getUserEmail(db, user.id, cookieSupabase);
       if (!email) continue;
 
       const res = await sendLifecycleEmail({

@@ -141,7 +141,15 @@ export function EmailsAdmin() {
   const handleTriggerCronManual = async () => {
     setTriggeringCron(true);
     try {
-      const res = await fetch("/api/cron/lifecycle-emails", { method: "POST" });
+      const { data: sessionData } = await db().auth.getSession();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (sessionData?.session?.access_token) {
+        headers["Authorization"] = `Bearer ${sessionData.session.access_token}`;
+      }
+      const res = await fetch("/api/cron/lifecycle-emails", {
+        method: "POST",
+        headers,
+      });
       const data = await res.json();
       if (res.ok && data.ok) {
         setMessage({
