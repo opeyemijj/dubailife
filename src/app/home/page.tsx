@@ -24,7 +24,6 @@ import { PartyPeople } from "@/components/invite/PartyPeople";
 import { PartyActions } from "@/components/invite/PartyActions";
 import { usePartyBoard } from "@/components/party/usePartyBoard";
 import { useBabies } from "@/components/home/useBabies";
-import { POPUP, usePopupTurn } from "@/lib/popups";
 import {
   drinkInHand,
   PartyHostesses,
@@ -35,7 +34,6 @@ import { faceNearest, partyDoor, partyMood } from "@/lib/invites";
 import { spotFor, spotsFor } from "@/components/property/PropertyRoute";
 import { HomeMates } from "@/components/home/HomeMates";
 import { useRoom, type Received } from "@/lib/room";
-import { AppSetup, needsAppSetup } from "@/components/pwa/AppSetup";
 import { inviteFriends } from "@/lib/invite";
 import { useMyDecor } from "@/lib/decorator";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
@@ -503,35 +501,10 @@ export default function HomePage() {
     const t = setTimeout(() => setTriedMoving(true), 0);
     return () => clearTimeout(t);
   }, [decorating]);
-  // After onboarding is completed, goals are set, and the user has seen their apartment, show app setup (when it's
-  // its turn: one popup at a time, lib/popups).
-  const [appSetupOpen, setAppSetupOpen] = useState(false);
-  const appSetupTurn = usePopupTurn("app-setup", appSetupOpen && !!citizen, POPUP.daily);
+  // Installing the app and notifications are asked on the map (ExploreAppSetup), not here: home's first visit is
+  // decorating and the goals.
   // Taking the home lift (two-storey homes) from the floor switcher.
   const [liftCall, setLiftCall] = useState<{ n: number } | undefined>(undefined);
-  useEffect(() => {
-    const onGoalDone = () => {
-      setTimeout(() => {
-        if (needsAppSetup()) setAppSetupOpen(true);
-      }, 700);
-    };
-    window.addEventListener("dubai:goal-setup-completed", onGoalDone);
-
-    // If goals are already set (not in decorFirst mode), prompt after the apartment has loaded and been seen
-    if (!decorFirst) {
-      const t = setTimeout(() => {
-        if (needsAppSetup()) setAppSetupOpen(true);
-      }, 1500);
-      return () => {
-        clearTimeout(t);
-        window.removeEventListener("dubai:goal-setup-completed", onGoalDone);
-      };
-    }
-
-    return () => {
-      window.removeEventListener("dubai:goal-setup-completed", onGoalDone);
-    };
-  }, [decorFirst]);
   const decorated =
     triedMoving ||
     !!decorJob ||
@@ -1168,7 +1141,6 @@ export default function HomePage() {
           driveOpen ||
           exteriorOpen ||
           decoratorOpen ||
-          appSetupOpen ||
           partyOpen
         }
         people={[
@@ -2392,11 +2364,7 @@ export default function HomePage() {
         !cleanScreen &&
         !placing &&
         !decorating && <HomeActions onShop={openShop} />}
-      {appSetupOpen && citizen && appSetupTurn && (
-        <AppSetup userId={citizen.id} onClose={() => setAppSetupOpen(false)} />
-      )}
       {decorFirst &&
-        !appSetupOpen &&
         !cleanScreen &&
         !placing &&
         !decorating &&

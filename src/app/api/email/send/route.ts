@@ -51,6 +51,13 @@ export async function POST(req: Request) {
     if (!callerUser) {
       return NextResponse.json({ ok: false, error: "Unauthorized: Sign in required to send emails" }, { status: 401 });
     }
+    // Signed in as the caller, so is_admin() and the admin-only log insert see who they are.
+    const callerDb = authHeader
+      ? createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+          auth: { persistSession: false, autoRefreshToken: false },
+          global: { headers: { Authorization: `Bearer ${authHeader}` } },
+        })
+      : await supabaseServer();
 
     // Rate limit per user
     if (isRateLimited(`email:${callerUser.id}`)) {
@@ -69,7 +76,7 @@ export async function POST(req: Request) {
     // 2. Authorization check: Non-admins can only send emails to their own verified email address
     let isAdmin = false;
     try {
-      const { data } = await adminClient.rpc("is_admin");
+      const { data } = await callerDb.rpc("is_admin");
       isAdmin = Boolean(data);
     } catch {
       isAdmin = false;
@@ -170,7 +177,7 @@ export async function POST(req: Request) {
 
     // Record delivery into email_campaign_logs
     try {
-      await adminClient.from("email_campaign_logs").insert({
+      await callerDb.from("email_campaign_logs").insert({
         id: crypto.randomUUID(),
         user_id: userId || callerUser.id || null,
         email: cleanToEmail,

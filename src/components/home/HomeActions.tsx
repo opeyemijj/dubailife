@@ -12,6 +12,10 @@ import NEWS from "@/data/guide/whats-new.json";
 import { openSheet } from "@/components/layout/HudSheets";
 import { useCitizen } from "@/lib/citizenStore";
 import { inviteFriends } from "@/lib/invite";
+import { currentGoal, goalDone, stepDone, useGoals, type GoalStep } from "@/lib/goals";
+import { openGoalSetup } from "@/components/goals/GoalSetup";
+import { openLife } from "@/components/life/LifeHub";
+import { useRouter } from "next/navigation";
 
 export const HOME_ACTIONS_HIDDEN = "home-actions-hidden";
 const tile = "shrink-0 w-[7.5rem] rounded-2xl bg-slate-50 hover:bg-slate-100 p-2.5 text-left select-none";
@@ -21,6 +25,8 @@ export function HomeActions({ onShop }: { onShop: () => void }) {
   const { citizen } = useCitizen();
   const [copied, setCopied] = useState(false);
   const row = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const { status } = useGoals(citizen?.id);
   const drag = useRef<{ x: number; left: number; moved: boolean } | null>(null);
   if (hidden) return null;
   const hide = () => {
@@ -35,6 +41,7 @@ export function HomeActions({ onShop }: { onShop: () => void }) {
           <p className="text-sm font-black">{ACTIONS.title}</p>
           <button onClick={hide} aria-label="Hide suggestions" className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500"><X className="w-3.5 h-3.5" /></button>
         </div>
+        <NextUp status={status} onGo={(s) => { if (!s) router.push("/goals"); else if (s.action === "visa") openLife("visa"); else if (s.href) router.push(s.href); }} />
         {news && (
           <button onClick={() => openSheet("whats-new")} className="w-full flex items-center gap-2 rounded-2xl bg-amber-50 px-3 py-2 text-left">
             <span className="text-lg">{news.icon}</span>
@@ -77,5 +84,38 @@ export function HomeActions({ onShop }: { onShop: () => void }) {
         {copied && <p className="text-xs font-bold text-violet-700 px-1">Invite link copied. Send it to your friends!</p>}
       </div>
     </div>
+  );
+}
+
+/** The one thing to do next, at the top: the next step of your current goal (or setting your goals). */
+function NextUp({ status, onGo }: { status: ReturnType<typeof useGoals>["status"]; onGo: (s: GoalStep | null) => void }) {
+  if (!status) return null;
+  const cls = "w-full flex items-center gap-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2.5 text-left";
+  if (!status.order) {
+    return (
+      <button onClick={openGoalSetup} className={cls}>
+        <span className="text-xl">🎯</span>
+        <span className="flex-1 min-w-0">
+          <span className="block text-[10px] font-black uppercase tracking-wider text-emerald-100">Your next step</span>
+          <span className="block text-sm font-black">Set your goals for Dubai</span>
+        </span>
+        <span className="font-black">›</span>
+      </button>
+    );
+  }
+  const goal = currentGoal(status);
+  if (!goal) return null;
+  const ready = goalDone(status, goal);
+  const step = (goal.steps as GoalStep[]).find((s) => !stepDone(status, s));
+  if (!ready && !step) return null;
+  return (
+    <button onClick={() => onGo(ready || !step ? null : step)} className={cls}>
+      <span className="text-xl">{ready ? "🎁" : goal.icon}</span>
+      <span className="flex-1 min-w-0">
+        <span className="block text-[10px] font-black uppercase tracking-wider text-emerald-100">{ready ? `${goal.title}: done` : `Your next step · ${goal.title}`}</span>
+        <span className="block text-sm font-black truncate">{ready ? "Collect your reward" : step!.title}</span>
+      </span>
+      <span className="font-black">›</span>
+    </button>
   );
 }

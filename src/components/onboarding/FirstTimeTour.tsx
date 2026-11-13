@@ -8,13 +8,16 @@ import { useRouter } from "next/navigation";
 import FIRST_CITY from "@/data/guide/first-city.json";
 import NEWS from "@/data/guide/whats-new.json";
 import { openSheet, SEEN_KEY } from "@/components/layout/HudSheets";
-import { dialogOpen, useCitizen } from "@/lib/citizenStore";
+import { isNewCitizen, useCitizen } from "@/lib/citizenStore";
+import { POPUP, usePopupTurn } from "@/lib/popups";
 import { inviteFriends } from "@/lib/invite";
 import { goalClaimed, goalDone, goalOf, useGoals, type GoalId } from "@/lib/goals";
 import { ModalPortal } from "@/components/ui/modal-portal";
 
 const SLIDES = FIRST_CITY.slides as (typeof FIRST_CITY.slides[number] & { goal?: GoalId })[];
 const SEEN = "map-actions-seen";
+/** Set when the tour was finished in this visit (Discover then waits for the next one). */
+export const TOUR_NOW = "map-tour-finished-now";
 type Slide = { icon: string; title: string; text: string; cta: string; href?: string; isNews?: boolean };
 type NewsItem = { id: string; icon: string; title: string; text: string; cta?: string; href?: string };
 const SWIPE_PX = 50;
@@ -34,26 +37,23 @@ export function FirstTimeTour() {
   const { status: goals } = useGoals(citizen?.id);
   const createdAt = citizen?.createdAt;
 
-  // Once per login, as soon as nothing else is on screen (goals, the morning scene and so on).
+  // Once per login. It waits its turn (lib/popups): the goals, the morning scene and setting up the app go first,
+  // and this comes last, so whatever came before, the player ends up with something to go and do.
   useEffect(() => {
     if (!citizen?.id) return;
     try { if (sessionStorage.getItem(SEEN) === "1") return; } catch { /* storage blocked */ }
-    let t: ReturnType<typeof setInterval>;
-    // A beat first: anything due as the map opens (like the morning scene) goes ahead of these.
+    // A beat first, so everything due as the map opens is in line ahead of it.
     const start = setTimeout(() => {
-      t = setInterval(() => {
-        if (dialogOpen()) return;
-        clearInterval(t);
-        try {
-          sessionStorage.setItem(SEEN, "1");
-          const settled = !!createdAt && Date.now() - Date.parse(createdAt) > 2 * 86_400_000;
-          setShowNews(settled && localStorage.getItem(SEEN_KEY) !== NEWS.items[0]?.id);
-        } catch { /* storage blocked */ }
-        setOpen(true);
-      }, 1000);
+      try {
+        sessionStorage.setItem(SEEN, "1");
+        const settled = !!createdAt && Date.now() - Date.parse(createdAt) > 2 * 86_400_000;
+        setShowNews(settled && localStorage.getItem(SEEN_KEY) !== NEWS.items[0]?.id);
+      } catch { /* storage blocked */ }
+      setOpen(true);
     }, 2500);
-    return () => { clearTimeout(start); clearInterval(t); };
+    return () => clearTimeout(start);
   }, [citizen?.id, createdAt]);
+  const popupTurn = usePopupTurn("first-tour", open, POPUP.promo);
 
   // What's new goes first, if there's something you haven't seen (new players have enough to take in).
   const news = NEWS.items[0] as NewsItem | undefined;
@@ -66,10 +66,12 @@ export function FirstTimeTour() {
     setOpen(false);
     try {
       localStorage.setItem(key, "1");
+      // A new player's Discover suggestions wait for another visit: one guide at a time.
+      if (isNewCitizen(citizen)) sessionStorage.setItem(TOUR_NOW, "1");
       if (news && showNews) localStorage.setItem(SEEN_KEY, news.id);
     } catch { /* storage blocked */ }
   };
-  if (!open) return null;
+  if (!open || !popupTurn) return null;
   const at = Math.min(step, slides.length - 1);
   const s = slides[at];
   const last = at === slides.length - 1;

@@ -1,8 +1,9 @@
 "use client";
 
-// "Get the full Dubai Life": a new player's first stop at home, straight after moving in. Install the app and turn
-// on notifications, with the steps for this browser (src/data/guide/app-setup.json). Each step ticks itself off;
-// on an iPhone the second step happens in the installed app. "Later" hides it until the next visit.
+// "Get the full Dubai Life": install the app and turn on notifications, with the steps for this browser
+// (src/data/guide/app-setup.json). Each step ticks itself off; on an iPhone the second step happens in the installed
+// app. It opens by itself on the map (ExploreAppSetup): on a player's first visit there, so their first time at home
+// is only decorating and their goals, then every few days while it's still not done. "Later" hides it for this visit.
 
 import { useEffect, useState } from "react";
 import { Bell, Check, Plus, Share, X } from "lucide-react";
@@ -11,6 +12,8 @@ import { ModalPortal } from "@/components/ui/modal-portal";
 import { promptInstall, useInstallState } from "@/lib/install";
 import { enablePush, pushStatus, unblockSteps, type PushStatus } from "@/lib/push/engage";
 import { gameAudio } from "@/utils/gameAudio";
+import { useCitizen } from "@/lib/citizenStore";
+import { POPUP, usePopupTurn } from "@/lib/popups";
 
 const LATER = "app-setup-later";
 type Guide = keyof typeof SETUP.install;
@@ -179,4 +182,35 @@ export function AppSetup({ userId, onClose }: { userId: string; onClose: () => v
       </div>
     </ModalPortal>
   );
+}
+
+const ASKED = (id: string) => `app-setup-asked:${id}`;
+const AGAIN_MS = 3 * 86_400_000;
+
+/** On the map: the first visit, then every few days while the app or notifications still aren't set up. It waits
+    its turn (lib/popups), ahead of the map's tour, which then shows what to do next. */
+export function ExploreAppSetup() {
+  const { citizen } = useCitizen();
+  const id = citizen?.id;
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!id) return;
+    // A beat for the map to appear, but before the tour asks (FirstTimeTour), so this goes first.
+    const t = setTimeout(() => {
+      if (!needsAppSetup()) return;
+      let last = 0;
+      try { last = Number(localStorage.getItem(ASKED(id)) ?? 0); } catch { /* storage blocked */ }
+      if (last && Date.now() - last < AGAIN_MS) return;
+      setOpen(true);
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [id]);
+  const turn = usePopupTurn("app-setup", open && !!id, POPUP.daily);
+  // Asked once it's actually on screen, not while it waits.
+  useEffect(() => {
+    if (!turn || !id) return;
+    try { localStorage.setItem(ASKED(id), String(Date.now())); } catch { /* storage blocked */ }
+  }, [turn, id]);
+  if (!open || !turn || !id) return null;
+  return <AppSetup userId={id} onClose={() => setOpen(false)} />;
 }

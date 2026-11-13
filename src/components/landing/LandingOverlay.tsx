@@ -349,6 +349,7 @@ export function LandingOverlay({
             <Link href="/about" className="hover:text-slate-800 transition-colors">About</Link>
             <Link href="/privacy" className="hover:text-slate-800 transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-slate-800 transition-colors">Terms</Link>
+            <Link href="/credits" className="hover:text-slate-800 transition-colors">Credits</Link>
             {SOCIALS.map((n) => n.href
               ? <a key={n.label} href={n.href} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 transition-colors">{n.label}</a>
               : <span key={n.label} className="hover:text-slate-800 cursor-pointer transition-colors">{n.label}</span>)}

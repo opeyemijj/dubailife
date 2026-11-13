@@ -17,7 +17,7 @@ export interface EmailTemplateDefinition {
 
 function baseHtml(title: string, bodyContent: string, ctaText?: string, ctaUrl?: string, unsubscribeUrl?: string): string {
   const targetUrl = ctaUrl || "https://mydubailife.app";
-  const unsub = unsubscribeUrl || "https://mydubailife.app/home?unsubscribe=email";
+  const unsub = unsubscribeUrl || "https://www.mydubailife.app/profile";
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -144,35 +144,35 @@ export const EMAIL_TEMPLATES: Record<string, EmailTemplateDefinition> = {
     },
   },
 
-  // 3. 7-Day Inactive Re-engagement (+AED Bonus)
+  // 3. 7-Day Inactive Re-engagement
   inactive_7d: {
     id: "inactive_7d",
-    name: "7-Day Inactive Welcome-Back (+AED 2,500)",
+    name: "7-Day Inactive Welcome-Back",
     category: "lifecycle",
-    defaultSubject: "We credited AED 2,500 to your Dubai bank account 🎁",
-    timingDescription: "Sent when a user hasn't logged in for 7 days. Offers an AED 2,500 stimulus bonus.",
+    defaultSubject: "A week away from Dubai: here's what you missed 🏙️",
+    timingDescription: "Sent when a player hasn't been seen for 7 days (stops after 30 days away).",
     render: (data) => {
       const name = data.username ? `@${data.username}` : "citizen";
-      const target = data.loginUrl || "https://mydubailife.app/home?bonus=welcome_back";
+      const target = data.loginUrl || "https://mydubailife.app/home";
       const html = baseHtml(
-        "A Stimulus Grant is Waiting 🎁",
+        "The City Kept Moving 🏙️",
         `<p>Salam <strong>${name}</strong>,</p>
-         <p>The Dubai City Council noticed you've been away for a week. To welcome you back, we've set aside a special citizenship stimulus grant of <strong>AED 2,500</strong> for your avatar!</p>
+         <p>It's been a week since you were last in Dubai Life. Your home, your money and your friends are all still there, right where you left them.</p>
          <div class="highlight-card">
-           <h4>💰 Claim Your Re-engagement Bonus:</h4>
-           <p>• <strong>AED 2,500 credited</strong> to your account upon login<br>
-              • Spend it on luxury penthouse decor, VIP lounge tickets, or business investments<br>
-              • Catch up on direct messages and door knocks you missed</p>
+           <h4>✨ Waiting for you:</h4>
+           <p>• Messages, knocks and invites from other citizens<br>
+              • Parties, Live Audio Spaces and multiplayer games running every day<br>
+              • Your daily gift from the Locals, ready to collect</p>
          </div>
-         <p>Log in with the button below within 48 hours to activate your stimulus funds.</p>`,
-        "Claim AED 2,500 Bonus & Enter City ›",
+         <p>Pop in for a minute and see what's new.</p>`,
+        "Enter the City ›",
         target,
         data.unsubscribeUrl
       );
       return {
-        subject: "We credited AED 2,500 to your Dubai bank account 🎁",
+        subject: "A week away from Dubai: here's what you missed 🏙️",
         html,
-        text: `Salam ${name},\n\nWe set aside an AED 2,500 stimulus bonus for you in Dubai Life! Log in now to claim your funds: ${target}\n\nDubai Life Team`,
+        text: `Salam ${name},\n\nIt's been a week since you were last in Dubai Life. Your home, your money and your friends are still there. Come back in: ${target}\n\nDubai Life Team`,
       };
     },
   },

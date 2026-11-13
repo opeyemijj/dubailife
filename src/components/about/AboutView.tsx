@@ -464,6 +464,9 @@ export function AboutView() {
             <Link href="/terms" className="hover:text-emerald-500">
               Terms of Service
             </Link>
+            <Link href="/credits" className="hover:text-emerald-500">
+              Credits
+            </Link>
             <Link href="/wiki" className="hover:text-emerald-500">
               Citizen Codex (Wiki)
             </Link>

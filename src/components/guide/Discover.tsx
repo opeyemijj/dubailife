@@ -4,6 +4,7 @@
 // (every place, club, bar and lounge in the city: src/data/guide/places-to-visit.json). Opened from the
 // phone and the top bar's status panel, plus a one-time pop-up on the map that suggests the first few. Items tick themselves off.
 
+import { TOUR_NOW } from "@/components/onboarding/FirstTimeTour";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -165,7 +166,11 @@ export function DiscoverHost() {
     if (shown.count >= 2 || (shown.count === 1 && Date.now() - shown.at < 3 * 86_400_000)) return;
     // It waits its turn once it's ready (lib/popups) rather than watching for a clear screen itself.
     const t = setInterval(() => {
-      try { if (isNewCitizen(citizen) && localStorage.getItem(`tour-done:${citizen?.id}`) !== "1") return; } catch { /* storage blocked */ }
+      try {
+        if (isNewCitizen(citizen) && localStorage.getItem(`tour-done:${citizen?.id}`) !== "1") return;
+        // Just had the tour: the suggestions keep for the next visit.
+        if (sessionStorage.getItem(TOUR_NOW) === "1") { clearInterval(t); return; }
+      } catch { /* storage blocked */ }
       if (toTryCount() === 0) return;   // still loading, or nothing left to suggest
       clearInterval(t);
       if (shown.count === 1 && activities().filter((x) => x.item.core && !x.done && !x.hidden).length < 3) return;

@@ -1,6 +1,7 @@
 "use client";
 
 import { FirstTimeTour } from "@/components/onboarding/FirstTimeTour";
+import { ExploreAppSetup } from "@/components/pwa/AppSetup";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRequireCitizen } from "@/lib/citizenStore";
@@ -166,6 +167,7 @@ function Explore() {
 
       {/* Persistent Bottom Bar with Safe Area Insets */}
       <BottomNav />
+      <ExploreAppSetup />
       <FirstTimeTour />
     </main>
   );

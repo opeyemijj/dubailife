@@ -625,6 +625,7 @@ function SettingsTab({ onClose, onProfile }: { onClose: () => void; onProfile: (
       <button onClick={() => onProfile()} className="w-full text-left flex items-center gap-3 rounded-3xl bg-slate-100/80 p-4 font-bold">👤 <span className="flex-1">Profile & look</span>›</button>
       <Link href="/wallet" onClick={onClose} className="flex items-center gap-3 rounded-3xl bg-slate-100/80 p-4 font-bold">💳 <span className="flex-1">Wallet</span>›</Link>
       <Link href="/guide" onClick={onClose} className="flex items-center gap-3 rounded-3xl bg-amber-50 p-4 font-bold">📖 <span className="flex-1">How Dubai works<span className="block text-xs font-semibold text-slate-500">Visas, money, jobs, prizes and more</span></span>›</Link>
+      <Link href="/credits" onClick={onClose} className="flex items-center gap-3 rounded-3xl bg-slate-100/80 p-4 font-bold">🎬 <span className="flex-1">Credits<span className="block text-xs font-semibold text-slate-500">The artists and software behind the game</span></span>›</Link>
       <div className="hidden sm:flex items-center gap-3 rounded-3xl bg-slate-100/80 p-4 text-sm text-slate-600">⌨️ <span className="flex-1">Press <kbd className="px-1.5 py-0.5 rounded bg-white font-mono font-bold">S</kbd> anywhere to open this panel, <kbd className="px-1.5 py-0.5 rounded bg-white font-mono font-bold">?</kbd> for all shortcuts.</span></div>
       <EmailRow />
       <BlockedPlayers />
@@ -651,7 +652,32 @@ function EmailRow() {
           : <button onClick={async () => setNote((await sendVerification()).text)} className="text-xs font-black px-3 py-1.5 rounded-full bg-amber-500 text-white">{st.sentAt ? "Resend" : "Send link"}</button>}
       </div>
       {note && <p className="text-xs font-bold text-slate-600 mt-2">{note}</p>}
+      <ReminderEmails />
     </div>
+  );
+}
+
+/** The occasional "we miss you" and welcome-series emails: on unless they've been turned off. */
+function ReminderEmails() {
+  const [on, setOn] = useState<boolean | null>(null);
+  useEffect(() => {
+    void supabase().from("email_prefs").select("opted_out_at").maybeSingle().then(({ data }) => setOn(!data?.opted_out_at));
+  }, []);
+  if (on === null) return null;
+  const toggle = async () => {
+    const next = !on;
+    setOn(next);
+    const { error } = await supabase().rpc("set_email_reminders", { p_on: next });
+    if (error) setOn(!next);
+  };
+  return (
+    <button onClick={toggle} className="mt-3 w-full flex items-center gap-3 text-left" aria-pressed={on}>
+      <span className="flex-1 min-w-0">
+        <span className="block text-sm font-bold">Reminder emails</span>
+        <span className="block text-xs text-slate-500">Tips for your first two weeks, and a note if you&apos;ve been away</span>
+      </span>
+      <span className={`w-12 h-7 rounded-full p-1 transition-colors ${on ? "bg-emerald-500" : "bg-slate-300"}`}><span className={`block w-5 h-5 rounded-full bg-white shadow transition-transform ${on ? "translate-x-5" : ""}`} /></span>
+    </button>
   );
 }
 
