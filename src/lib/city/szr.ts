@@ -41,6 +41,8 @@ const DEFAULTS: Default[] = [
   { id: "the-h-dubai", name: "The H Dubai", type: "szr-tower", x: 3570, width: 130, height: 300, back: TOWER_BACK, sign: "THE H DUBAI", glass: "#64748b", frame: "#e5e7eb", accent: "#f59e0b", crown: "twin" },
   { id: "enish-dubai", name: "Enish · The H Dubai", type: "szr-club", x: 3520, width: 110, height: 86, marquee: "ENISH", colors: ["#22c55e", "#ffffff", "#16a34a"] },
   { id: "gambachi-social-club", name: "Gambachi Social Club · The H Dubai", type: "szr-club", x: 3630, width: 110, height: 86, marquee: "GAMBACHI", colors: ["#facc15", "#16a34a", "#f97316"] },
+  // Dubai Autodrome: races between players in their own cars (src/app/autodrome).
+  { id: "dubai-autodrome", name: "Dubai Autodrome", type: "szr-club", x: 1240, width: 150, height: 96, marquee: "🏁 AUTODROME", colors: ["#dc2626", "#ffffff", "#111827"] },
 ];
 
 // Car rental counters and dealership showrooms along the same stretch (data: src/data/cars/cars.json).

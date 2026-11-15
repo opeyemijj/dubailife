@@ -24,9 +24,9 @@ function Top() {
       <div className="relative max-w-md mx-auto px-4 pt-[max(1.5rem,env(safe-area-inset-top))] space-y-4">
         <header className="flex items-center gap-3">
           <Link href="/city" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center" aria-label="Back to the City"><ArrowLeft className="w-4 h-4" /></Link>
-          <h1 className="text-2xl font-black flex-1">Top users</h1>
+          <h1 className="text-2xl font-black flex-1">{params?.get("tab") === "online" ? "Available to chat" : "Top users"}</h1>
         </header>
-        <TopUsersList dark start={params?.get("tab") === "rich" ? "rich" : params?.get("tab") === "givers" ? "givers" : "week"} />
+        <TopUsersList dark start={(["rich", "givers", "online"] as const).find((t) => t === params?.get("tab")) ?? "week"} />
       </div>
       <BottomNav />
     </main>

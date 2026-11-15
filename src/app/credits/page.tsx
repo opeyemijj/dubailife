@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { UniversalNav } from "@/components/layout/UniversalNav";
 
 // Who made what: the game's own work, and every piece of art, sound, font and code from someone else with its
 // licence. Kept in step with public/models/CREDITS.md and public/audio/CREDITS.md.
@@ -134,6 +135,7 @@ export default function CreditsPage() {
           credited? Tell us through <Link href="/feedback" className="text-emerald-400 hover:underline">Feedback</Link>.
         </p>
       </main>
+      <UniversalNav />
     </div>
   );
 }

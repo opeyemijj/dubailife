@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { WikiView } from "@/components/wiki/WikiView";
 import { WIKI_HUBS } from "@/components/wiki/WikiData";
+import { UniversalNav } from "@/components/layout/UniversalNav";
 
 export async function generateMetadata({
   params,
@@ -40,6 +41,6 @@ export default async function WikiSlugPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  return <WikiView slug={slug} />;
+  return <><WikiView slug={slug} /><UniversalNav /></>;
 }
 

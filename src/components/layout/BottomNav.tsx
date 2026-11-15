@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BookOpen, Flame, Home, LayoutGrid, ListChecks, Map, Smartphone, Trophy, User, UserPlus, X } from "lucide-react";
+import { Flame, Home, LayoutGrid, Map, Smartphone, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { inviteFriends } from "@/lib/invite";
+import { openMore, useMoreBadge } from "@/components/layout/MoreMenu";
 import { describePost, loadFeed, loadLiveParties } from "@/lib/cityFeed";
 import { useCitizen } from "@/lib/citizenStore";
-import { openDiscover, toTryCount, useDiscover } from "@/lib/discover";
 import { useUnreadTotal } from "@/lib/unread";
 import { useLifeLoop, visaInfo } from "@/lib/lifeLoop";
 import { openLife } from "@/components/life/LifeHub";
@@ -117,65 +116,25 @@ function CityButton({ active }: { active: boolean }) {
   );
 }
 
-/** More: Me, To do, Top users, Invite friends, How to play, in a small panel above the bar. Counts inside show on it. */
+/** More: opens the menu of everywhere to go (MoreMenu), with the To do count on it. */
 function MoreButton({ active }: { active: boolean }) {
-  useDiscover();
-  const count = toTryCount();
-  const router = useRouter();
-  const { citizen } = useCitizen();
-  const [open, setOpen] = useState(false);
-  const [note, setNote] = useState<string | null>(null);
-  const go = (fn: () => void) => { gameAudio.playClickSound(); setOpen(false); fn(); };
-  const items: { id: string; icon: React.ReactNode; label: string; sub: string; badge?: number; run: () => void }[] = [
-    { id: "me", icon: <User className="w-5 h-5" />, label: "Me", sub: "Profile, look and settings", run: () => openLife("profile") },
-    { id: "todo", icon: <ListChecks className="w-5 h-5" />, label: "To do", sub: "Things to try, with rewards", badge: count, run: () => openDiscover("do") },
-    { id: "top", icon: <Trophy className="w-5 h-5" />, label: "Top users", sub: "This week's top and the richest", run: () => router.push("/top") },
-    {
-      id: "invite", icon: <UserPlus className="w-5 h-5" />, label: "Invite friends", sub: "WhatsApp, share or copy your link",
-      run: async () => {
-        const r = await inviteFriends(citizen?.username);
-        if (r === "copied") { setNote("Invite link copied. Send it to your friends!"); setOpen(true); }
-      },
-    },
-    { id: "wiki", icon: <BookOpen className="w-5 h-5" />, label: "How to play", sub: "The wiki, and how to get to the top", run: () => router.push("/wiki") },
-  ];
+  const count = useMoreBadge();
   return (
-    <>
-      <button
-        onClick={() => { gameAudio.playClickSound(); setNote(null); setOpen((o) => !o); }}
-        aria-label={count ? `More, ${count} to try` : "More"}
-        aria-expanded={open}
-        className={`relative h-full rounded-full flex items-center justify-center gap-2 transition-all active:scale-95 ${
-          active || open ? "flex-[1.6] bg-emerald-50 text-emerald-700 font-bold text-lg" : "flex-1 text-slate-600 hover:text-slate-900"
-        }`}
-      >
-        <LayoutGrid className="w-6 h-6" />
-        {(active || open) && <span>More</span>}
-        {count > 0 && !open && (
-          <span className="absolute top-1 left-1/2 ml-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center ring-2 ring-white">
-            {count > 99 ? "99+" : count}
-          </span>
-        )}
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-[-1] pointer-events-auto" onClick={() => setOpen(false)} aria-hidden />
-          <div className="absolute bottom-[calc(100%+0.5rem)] right-0 w-[min(20rem,calc(100vw-1.5rem))] rounded-3xl bg-white shadow-[0_12px_40px_rgba(15,23,42,0.3)] p-2 pointer-events-auto animate-[sheetUp_0.18s_ease-out]" role="menu">
-            {items.map((it) => (
-              <button key={it.id} role="menuitem" onClick={() => go(it.run)} className="w-full flex items-center gap-3 rounded-2xl p-2.5 text-left hover:bg-slate-50">
-                <span className="w-10 h-10 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">{it.icon}</span>
-                <span className="flex-1 min-w-0">
-                  <span className="block font-black text-slate-900 leading-tight">{it.label}</span>
-                  <span className="block text-xs text-slate-500 truncate">{it.sub}</span>
-                </span>
-                {it.badge ? <span className="min-w-[22px] h-[22px] px-1.5 rounded-full bg-rose-500 text-white text-xs font-black flex items-center justify-center">{it.badge > 99 ? "99+" : it.badge}</span> : null}
-              </button>
-            ))}
-            {note && <p className="px-3 pb-2 text-xs font-bold text-violet-700">{note}</p>}
-          </div>
-        </>
+    <button
+      onClick={() => { gameAudio.playClickSound(); openMore(); }}
+      aria-label={count ? `More, ${count} to try` : "More"}
+      className={`relative h-full rounded-full flex items-center justify-center gap-2 transition-all active:scale-95 ${
+        active ? "flex-[1.6] bg-emerald-50 text-emerald-700 font-bold text-lg" : "flex-1 text-slate-600 hover:text-slate-900"
+      }`}
+    >
+      <LayoutGrid className="w-6 h-6" />
+      {active && <span>More</span>}
+      {count > 0 && (
+        <span className="absolute top-1 left-1/2 ml-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center ring-2 ring-white">
+          {count > 99 ? "99+" : count}
+        </span>
       )}
-    </>
+    </button>
   );
 }
 

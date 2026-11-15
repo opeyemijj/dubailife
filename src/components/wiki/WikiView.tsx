@@ -530,9 +530,9 @@ export function WikiView({ slug }: { slug?: string }) {
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 py-3">
           <div className="flex items-center gap-3 min-w-0">
+            {/* The logo always goes to the city map (the wiki's home is "Codex Home"). */}
             <Link
-              href="/wiki"
-              onClick={() => setSearch("")}
+              href="/explore"
               className="flex items-center gap-2.5 group min-w-0"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1117,11 +1117,11 @@ export function WikiView({ slug }: { slug?: string }) {
       <footer className="border-t border-[var(--dl-border)] bg-[var(--dl-surface)]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 grid gap-8 sm:grid-cols-[1.4fr_1fr]">
           <div className="space-y-3">
-            <div className="flex items-center gap-2.5">
+            <Link href="/explore" className="flex items-center gap-2.5 w-fit">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/brand/icon-192.png" alt="" className="w-8 h-8 rounded-lg" />
               <span className="font-black text-lg">Dubai Life</span>
-            </div>
+            </Link>
             <p className="text-xs text-[var(--dl-text-soft)] leading-relaxed max-w-md">
               The official Dubai Life Citizen Codex. All AED balances, properties, vehicles, and
               prizes in the simulation are virtual game currency and cannot be cashed out.

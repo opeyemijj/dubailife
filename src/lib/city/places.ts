@@ -1231,6 +1231,11 @@ export const PLACES: Place[] = [
     id: c.id, name: c.name, kind: "mall", blurb: c.blurb, route: `/cars/${c.id}`,
     venues: [venue(c.name, c.rent ? "Car rental" : "Car dealership", "electronics", { blurb: c.blurb, role: c.rent ? "Rental agent" : "Sales consultant", noJob: true })],
   })),
+  {
+    id: "dubai-autodrome", name: "Dubai Autodrome", kind: "attraction", route: "/autodrome",
+    blurb: "Motor City's race circuit. Bring your own car, invite your friends and race wheel to wheel, live.",
+    venues: [venue("Dubai Autodrome", "Race circuit", "electronics", { blurb: "Motor City's race circuit: open a race and invite friends who have cars.", role: "Race marshal", noJob: true })],
+  },
   { id: "timeout-market", name: "Time Out Market Dubai", kind: "food-hall", blurb: "Food hall with Dubai's best-reviewed chefs under one roof, overlooking the fountain.", venues: TIME_OUT },
   { id: "the-guild", name: "The Guild", kind: "food-hall", blurb: "A multi-venue dining collective — lunch, drinks, dinner and a nightcap by the piano.", venues: GUILD },
   {

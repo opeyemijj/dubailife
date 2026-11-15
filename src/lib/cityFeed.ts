@@ -9,7 +9,7 @@ import { gameInfo } from "@/lib/games/registry";
 import CARS from "@/data/cars/cars.json";
 import type { AvatarLookProps } from "@/components/avatar/roster";
 
-export type FeedKind = "party" | "win" | "arrived" | "home" | "car" | "gift" | "married" | "hired" | "reward" | "rain";
+export type FeedKind = "party" | "win" | "arrived" | "home" | "car" | "gift" | "married" | "hired" | "reward" | "rain" | "race";
 export type FeedScope = "all" | "following";
 
 export interface FeedPerson { id: string; username: string; name?: string | null; look?: AvatarLookProps | null }
@@ -82,13 +82,14 @@ export function shortAed(n: number): string {
 const PARTY_WORD: Record<string, string> = { house_party: "a house party", pool_party: "a pool party", club_night: "a club night", seminar: "a seminar" };
 
 /** A car's name from its id (any dealer's list in src/data/cars/cars.json). */
-function carName(id: string): string {
+export function carName(id: string): string {
   const seen = new Set<unknown>();
   const find = (v: unknown): string | null => {
     if (!v || typeof v !== "object" || seen.has(v)) return null;
     seen.add(v);
     if (Array.isArray(v)) { for (const x of v) { const r = find(x); if (r) return r; } return null; }
     const o = v as Record<string, unknown>;
+    if (o.id === id && typeof o.make === "string") return `${o.make} ${String(o.model ?? "")}`.trim();
     if (o.id === id && typeof o.name === "string") return o.name;
     for (const x of Object.values(o)) { const r = find(x); if (r) return r; }
     return null;
@@ -128,6 +129,12 @@ export function describePost(p: FeedPost, now = Date.now()): PostView {
       return { icon: "💍", text: `${who} and ${p.other ? `@${p.other.username}` : "their partner"} got married`, action: { label: "Congratulate", like: true } };
     case "hired":
       return { icon: "💼", text: `${who} got a job${d.title ? ` as ${String(d.title)}` : ""}${d.venture ? ` at ${String(d.venture)}` : ""}`, action: { label: "Congratulate", like: true } };
+    case "race":
+      return {
+        icon: "🏁",
+        text: `${who} won a ${Number(d.racers ?? 2)}-car race at Dubai Autodrome in a ${carName(String(d.car))}${d.ms ? ` (${Math.floor(Number(d.ms) / 60000)}:${String(Math.floor((Number(d.ms) % 60000) / 1000)).padStart(2, "0")})` : ""}`,
+        action: { label: `Race @${p.actor.username}`, href: "/autodrome" },
+      };
     case "rain":
       return {
         icon: "💸",

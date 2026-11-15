@@ -218,11 +218,11 @@ export function LandingOverlay({
           <div className="w-full flex items-center justify-between gap-2 pointer-events-auto">
             {/* Left Brand & Online Stats Pill */}
             <div className="flex items-center gap-2.5 sm:gap-3 bg-white/95 hover:bg-white backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] px-3 sm:px-4 py-2 rounded-full transition-all">
-              <div className="flex items-center gap-1.5 font-black text-slate-900 text-xs sm:text-sm">
+              <Link href="/explore" className="flex items-center gap-1.5 font-black text-slate-900 text-xs sm:text-sm">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/brand/icon-192.png" alt="" width={22} height={22} className="w-[22px] h-[22px] rounded-md" />
                 <span>Dubai Life</span>
-              </div>
+              </Link>
 
               <div className="w-[1px] h-3.5 bg-slate-200" />
 

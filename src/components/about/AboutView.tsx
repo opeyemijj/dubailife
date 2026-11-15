@@ -122,7 +122,8 @@ export function AboutView() {
         style={{ backgroundColor: "var(--dl-surface-glass)" }}
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 py-3">
-          <Link href="/" className="flex items-center gap-2.5 group">
+          {/* The logo always goes to the city map. */}
+          <Link href="/explore" className="flex items-center gap-2.5 group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/brand/icon-192.png"

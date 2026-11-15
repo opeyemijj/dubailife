@@ -8,6 +8,7 @@ import { HomeActions } from "@/components/home/HomeActions";
 import { useCleanScreen } from "@/lib/cleanScreen";
 import { usePhoneButtonHere } from "@/lib/phoneButtons";
 import { MoveInGuide } from "@/components/home/MoveInGuide";
+import { openMore, useMoreBadge } from "@/components/layout/MoreMenu";
 import { useTopUsersPending } from "@/components/social/TopUsers";
 import { PartySheet } from "@/components/invite/PartySheet";
 import {
@@ -55,6 +56,7 @@ import {
   ShoppingBag,
   Map,
   Smartphone,
+  LayoutGrid,
   Sparkles,
   X,
   Megaphone,
@@ -498,6 +500,7 @@ export default function HomePage() {
   const decorFirst = !!citizen?.decorFirst && isNewCitizen(citizen);
   // A new player meets the top users first (TopUsersWelcome), then the move-in guide.
   const topPending = useTopUsersPending();
+  const moreBadge = useMoreBadge();
   const [triedMoving, setTriedMoving] = useState(false);
   useEffect(() => {
     if (!decorating) return;
@@ -1270,6 +1273,14 @@ export default function HomePage() {
             label={unread ? `Phone: ${unread} unread` : "Phone"}
             badge={unread}
             onClick={() => openPhone()}
+          />
+        )}
+        {!cleanScreen && (
+          <SideButton
+            icon={<LayoutGrid className="w-5 h-5" />}
+            label="More: everywhere to go"
+            badge={moreBadge}
+            onClick={() => openMore()}
           />
         )}
         <SideButton

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { PhoneFab } from "@/components/layout/PhoneFab";
+import { MoreFab, MoreSheet } from "@/components/layout/MoreMenu";
 import { ConnectionSaver } from "@/lib/idle";
 import { TapLayer } from "@/components/layout/SideBar";
 import { PartySheetHost } from "@/components/invite/PartySheetHost";
@@ -317,6 +318,8 @@ export default function RootLayout({
           <BackToParty />
           <PhoneOverlay />
           <PhoneFab />
+          <MoreFab />
+          <MoreSheet />
           <ConnectionSaver />
           <PartySheetHost />
           <TapLayer />

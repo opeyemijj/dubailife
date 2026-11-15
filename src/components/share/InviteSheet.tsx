@@ -11,7 +11,7 @@ import { useScreenBusy } from "@/lib/popups";
 import { gameAudio } from "@/utils/gameAudio";
 import { ModalPortal } from "@/components/ui/modal-portal";
 
-export type InviteKind = "party" | "space";
+export type InviteKind = "party" | "space" | "race";
 
 /** The link: the landing page, which remembers who invited them and where to go. */
 export function inviteUrl(me: string, path: string, kind: InviteKind, ref: string): string {
@@ -30,6 +30,8 @@ export function InviteSheet({ me, kind, refId, path, title, onClose, progress }:
   const url = inviteUrl(me, path, kind, refId);
   const text = kind === "party"
     ? `I'm hosting a party in ${SITE.name} right now: "${title}". Come join me! 🎉`
+    : kind === "race"
+    ? `Race me at Dubai Autodrome in ${SITE.name}! ${title} 🏁 Bring your car.`
     : `I'm live on ${SITE.name} Spaces: "${title}". Come listen and talk with us! 🎙️`;
 
   const whatsapp = () => {
@@ -57,7 +59,7 @@ export function InviteSheet({ me, kind, refId, path, title, onClose, progress }:
           <div className="pr-8">
             <h2 className="text-xl font-black">Invite friends</h2>
             <p className="text-sm text-slate-600">
-              {kind === "party" ? "10 friends at your party pays AED 10M." : "20 listeners pays AED 10M."} Each friend who comes from your link pays AED 1M.
+              {kind === "race" ? "Send the link to friends with cars. They join your race in one tap." : <>{kind === "party" ? "10 friends at your party pays AED 10M." : "20 listeners pays AED 10M."} Each friend who comes from your link pays AED 1M.</>}
             </p>
             {progress && <p className="mt-1 inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800">{progress}</p>}
           </div>

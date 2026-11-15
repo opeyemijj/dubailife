@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Scale, AlertTriangle, ShieldCheck, FileCheck } from "lucide-react";
 import { SITE } from "@/lib/site";
 import { MIN_AGE } from "@/lib/age";
+import { UniversalNav } from "@/components/layout/UniversalNav";
 
 const TITLE = "Terms of Service";
 const DESCRIPTION =
@@ -245,6 +246,7 @@ export default function TermsOfServicePage() {
           </Link>
         </div>
       </footer>
+      <UniversalNav />
     </div>
   );
 }

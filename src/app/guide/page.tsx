@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { WikiView } from "@/components/wiki/WikiView";
+import { UniversalNav } from "@/components/layout/UniversalNav";
 
 export const metadata: Metadata = {
   title: "Dubai Life Starter Guide — How to Play & Virtual Dubai Manual",
@@ -19,5 +20,5 @@ export const metadata: Metadata = {
 };
 
 export default function GuidePage() {
-  return <WikiView />;
+  return <><WikiView /><UniversalNav /></>;
 }

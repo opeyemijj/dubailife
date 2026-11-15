@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Shield, Lock, FileText, CheckCircle2 } from "lucide-react";
 import { SITE } from "@/lib/site";
+import { UniversalNav } from "@/components/layout/UniversalNav";
 
 const TITLE = "Privacy Policy";
 const DESCRIPTION =
@@ -269,6 +270,7 @@ export default function PrivacyPolicyPage() {
           </Link>
         </div>
       </footer>
+      <UniversalNav />
     </div>
   );
 }

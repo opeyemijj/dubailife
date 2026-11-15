@@ -146,8 +146,10 @@ function City() {
               return (
                 <li key={p.id} className="rounded-3xl bg-white/[0.06] border border-white/10 p-3.5 space-y-2.5">
                   <div className="flex items-start gap-3">
-                    <Face look={p.actor.look} />
+                    {/* Tap a player: their profile, with Message first. */}
+                    <Link href={`/u/${p.actor.username}`} aria-label={`@${p.actor.username}'s profile`}><Face look={p.actor.look} /></Link>
                     <div className="flex-1 min-w-0">
+                      <Link href={`/u/${p.actor.username}`} className="text-sm font-black text-fuchsia-300">@{p.actor.username}</Link>
                       <p className="text-[15px] leading-snug"><span className="mr-1">{v.icon}</span>{v.text}</p>
                       <p className="text-xs text-white/45 mt-0.5">{ago(p.at)}</p>
                     </div>

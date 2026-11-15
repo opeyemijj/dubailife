@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { WikiView } from "@/components/wiki/WikiView";
+import { UniversalNav } from "@/components/layout/UniversalNav";
 
 export const metadata: Metadata = {
   title: "Dubai Life Game Wiki & Player Guide · How to Play Online",
@@ -8,6 +9,6 @@ export const metadata: Metadata = {
 };
 
 export default function WikiHomePage() {
-  return <WikiView />;
+  return <><WikiView /><UniversalNav /></>;
 }
 

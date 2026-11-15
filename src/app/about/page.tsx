@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SITE } from "@/lib/site";
 import { MIN_AGE } from "@/lib/age";
 import { AboutView } from "@/components/about/AboutView";
+import { UniversalNav } from "@/components/layout/UniversalNav";
 
 const TITLE = "About Dubai Life Game — Official 3D Virtual World & Life Simulator";
 const DESCRIPTION =
@@ -86,6 +87,7 @@ export default function AboutPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED) }}
       />
       <AboutView />
+      <UniversalNav />
     </>
   );
 }

@@ -5,6 +5,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import Link from "next/link";
 import { ArrowLeft, Ban, Flag, HandCoins, MessageCircle, Send, X } from "lucide-react";
 import { broadcastRoomEvent, type ChatMessage, type Peer } from "@/lib/room";
 import { loadConversation } from "@/lib/messages";
@@ -255,7 +256,7 @@ export function PeerPanel({
           {mode !== "menu" && <button onClick={() => { setMode("menu"); setNote(null); }} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center" aria-label="Back"><ArrowLeft className="w-4 h-4" /></button>}
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-fuchsia-500 text-white font-black flex items-center justify-center">{peer.name.slice(0, 1).toUpperCase()}</div>
           <div className="flex-1 min-w-0">
-            <div className="font-black leading-tight truncate">{peer.name}</div>
+            <div className="font-black leading-tight truncate">{peer.name} <Link href={`/u/${peer.username}`} className="ml-1 text-[11px] font-black text-fuchsia-600 hover:underline">Profile ›</Link></div>
             <div className="text-[11px] font-bold text-sky-600">@{peer.username}{generous && <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-black text-amber-800">💛 Generous</span>}{peer.away && <span className="ml-1.5 text-slate-500">· 💤 Away</span>}</div>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center" aria-label="Close"><X className="w-4 h-4" /></button>
