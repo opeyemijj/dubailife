@@ -172,15 +172,11 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
+/** The player count shown at the top: starts from 1231, plus signed-in players active in the last 2 minutes
+    (the owner's choice). */
 export const BASE_ONLINE_PLAYERS = 1231;
-
-/** Number of people online right now: starts from 1231 + signed-in players active in the last 2 minutes. */
 export function useOnlineCount(): number {
-  return useSyncExternalStore(
-    subscribe,
-    () => BASE_ONLINE_PLAYERS + (count ?? 1),
-    () => BASE_ONLINE_PLAYERS + 1
-  );
+  return useSyncExternalStore(subscribe, () => BASE_ONLINE_PLAYERS + (count ?? 1), () => BASE_ONLINE_PLAYERS + 1);
 }
 
 const EMPTY: ReadonlySet<string> = new Set();

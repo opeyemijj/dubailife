@@ -657,12 +657,32 @@ function EmailRow() {
   );
 }
 
-/** The occasional "we miss you" and welcome-series emails: on unless they've been turned off. */
+const DIGEST_KINDS = [
+  { id: "friend", label: "Friend requests" },
+  { id: "invite", label: "Party and event invites" },
+  { id: "message", label: "Unread messages" },
+  { id: "money", label: "Money sent to you" },
+  { id: "love", label: "Proposals and date asks" },
+  { id: "game", label: "Game invites" },
+  { id: "follow", label: "New followers" },
+] as const;
+
+/** The occasional "we miss you" and welcome-series emails, and the "while you were away" emails by kind. */
 function ReminderEmails() {
   const [on, setOn] = useState<boolean | null>(null);
+  const [off, setOff] = useState<string[]>([]);
+  const [open, setOpen] = useState(false);
   useEffect(() => {
-    void supabase().from("email_prefs").select("opted_out_at").maybeSingle().then(({ data }) => setOn(!data?.opted_out_at));
+    void supabase().from("email_prefs").select("opted_out_at, digest_off").maybeSingle().then(({ data }) => {
+      setOn(!data?.opted_out_at);
+      setOff((data?.digest_off as string[] | undefined) ?? []);
+    });
   }, []);
+  const flip = async (id: string) => {
+    const next = off.includes(id) ? off.filter((x) => x !== id) : [...off, id];
+    setOff(next);
+    await supabase().rpc("set_digest_off", { p_off: next });
+  };
   if (on === null) return null;
   const toggle = async () => {
     const next = !on;
@@ -671,6 +691,7 @@ function ReminderEmails() {
     if (error) setOn(!next);
   };
   return (
+    <>
     <button onClick={toggle} className="mt-3 w-full flex items-center gap-3 text-left" aria-pressed={on}>
       <span className="flex-1 min-w-0">
         <span className="block text-sm font-bold">Reminder emails</span>
@@ -678,6 +699,27 @@ function ReminderEmails() {
       </span>
       <span className={`w-12 h-7 rounded-full p-1 transition-colors ${on ? "bg-emerald-500" : "bg-slate-300"}`}><span className={`block w-5 h-5 rounded-full bg-white shadow transition-transform ${on ? "translate-x-5" : ""}`} /></span>
     </button>
+    <button onClick={() => setOpen(!open)} className="mt-3 w-full flex items-center gap-3 text-left">
+      <span className="flex-1 min-w-0">
+        <span className="block text-sm font-bold">Emails while you&apos;re away</span>
+        <span className="block text-xs text-slate-500">When people reach out and you&apos;re not in the app: one email, at most twice a day</span>
+      </span>
+      <span className="text-slate-400">{open ? "⌄" : "›"}</span>
+    </button>
+    {open && (
+      <div className="mt-2 space-y-1">
+        {DIGEST_KINDS.map((k) => {
+          const yes = !off.includes(k.id);
+          return (
+            <button key={k.id} onClick={() => void flip(k.id)} aria-pressed={yes} className="w-full flex items-center gap-3 rounded-2xl bg-white/70 px-3 py-2 text-left">
+              <span className="flex-1 text-sm">{k.label}</span>
+              <span className={`w-10 h-6 rounded-full p-0.5 transition-colors ${yes ? "bg-emerald-500" : "bg-slate-300"}`}><span className={`block w-5 h-5 rounded-full bg-white shadow transition-transform ${yes ? "translate-x-4" : ""}`} /></span>
+            </button>
+          );
+        })}
+      </div>
+    )}
+    </>
   );
 }
 

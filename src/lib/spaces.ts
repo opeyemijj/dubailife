@@ -503,7 +503,29 @@ function closeAllPeers() {
   }
 }
 
+// Spaces on the server (migration 20270110000000_social_rewards.sql): the host says it's live and listeners say
+// they're there, once a minute, so hosting and listening count toward rewards and the weekly top users. Private
+// 1-on-1 calls and a party's own Space don't count (the party itself does).
+let serverBeat: ReturnType<typeof setInterval> | null = null;
+function startServerPresence(spaceId: string) {
+  stopServerPresence();
+  const beat = () => {
+    const room = state.rooms.find((r) => r.id === spaceId);
+    if (!room || room.isPrivate || room.partyRoute || room.scheduledFor) return;
+    const me = meInfo();
+    if (room.hostId === me.id) void supabase().rpc("space_started", { p_id: spaceId, p_title: room.title });
+    else void supabase().rpc("space_here", { p_id: spaceId });
+  };
+  beat();
+  serverBeat = setInterval(beat, 60_000);
+}
+function stopServerPresence() {
+  if (serverBeat) clearInterval(serverBeat);
+  serverBeat = null;
+}
+
 function cleanupActiveRoom() {
+  stopServerPresence();
   gameAudio.holdMusic(false);
   stopLocalMic();
   closeAllPeers();
@@ -1099,6 +1121,7 @@ export function hostNewSpace(opts: {
   subscribeToSpaceChannel(id);
   broadcastRoomToLobby(newRoom);
   startExpiryWatcher();
+  startServerPresence(id);
   // The city music stops while you're in a Space, and your mic goes live.
   gameAudio.holdMusic(true);
   unlockAudio();
@@ -1227,6 +1250,7 @@ export function joinSpace(spaceId: string, initialRoomSnapshot?: SpaceRoom): { o
     if (myRole === "host") announceMyRoom();
   });
   startExpiryWatcher();
+  startServerPresence(spaceId);
   gameAudio.holdMusic(true);
   unlockAudio();
   if (myRole !== "listener" && !myMuted) {
@@ -1250,6 +1274,9 @@ export function leaveSpace() {
       .send({ type: "broadcast", event: "participant-leave", payload: { userId: me.id } })
       .catch(() => {});
   }
+
+  // The host ending it: closed on the server too.
+  if (room && room.hostId === me.id && !isPrivateCall) void supabase().rpc("space_ended", { p_id: spaceId });
 
   // Ending a space: if host or in a 1-on-1 private call, notify lobby so both users exit cleanly
   if (room && (room.hostId === me.id || isPrivateCall) && lobbyChannel) {

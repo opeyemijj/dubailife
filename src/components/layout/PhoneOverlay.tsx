@@ -36,6 +36,7 @@ import { useSpacesStore } from "@/lib/spaces";
 import { useLove } from "@/lib/love";
 import APPS from "@/data/phone/apps.json";
 import { useScreenBusy } from "@/lib/popups";
+import { PHONE_FOLDER, isNewApp, loadPopularity, noteAppOpen, orderApps } from "@/lib/phoneOrder";
 
 /** Opens the phone, on an app's screen if given. */
 export const openPhone = (app?: Screen) => window.dispatchEvent(new CustomEvent("dubai:open-phone", { detail: app }));
@@ -48,6 +49,8 @@ interface App { id: string; name: string; icon: string; bg: string; href?: strin
 export function PhoneOverlay() {
   const { citizen } = useCitizen();
   const router = useRouter();
+  // Everyone's app use, ready before the phone opens (its order is set once, on opening).
+  useEffect(() => { if (citizen?.id) void loadPopularity(); }, [citizen?.id]);
   const [open, setOpen] = useState<Screen | null>(null);
   const [metro, setMetro] = useState<MetroTrip | null>(null);
   // Open: popups that open by themselves wait until it's closed (lib/popups).
@@ -112,21 +115,22 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
   }, []);
   const apps: App[] = useMemo(() => [
     // The apps people in Dubai open every day.
-    { id: "spaces", name: "Spaces", icon: "🎙️", bg: "from-purple-600 to-slate-900", screen: "spaces", badge: liveSpacesBadge, isNew: true },
-    { id: "food", name: APPS.delivery.app.name, icon: APPS.delivery.app.icon, bg: APPS.delivery.app.bg, screen: "food", isNew: true },
-    ...APPS.delivery.stores.filter((st) => st.home).map((st): App => ({ id: st.id, name: st.name, icon: st.icon, bg: st.bg, screen: `store:${st.id}`, isNew: true })),
-    { id: "rides", name: APPS.rides.app.name, icon: APPS.rides.app.icon, bg: APPS.rides.app.bg, screen: "rides", isNew: true },
-    { id: "grocery", name: APPS.grocery.app.name, icon: APPS.grocery.app.icon, bg: APPS.grocery.app.bg, screen: "grocery", isNew: true },
-    { id: "police", name: "Dubai Police", icon: "🚓", bg: "from-blue-700 to-slate-900", screen: "court", badge: courtBadge, isNew: true },
-    { id: "health", name: "Dubai Health", icon: "🩺", bg: "from-teal-400 to-cyan-700", screen: "clinic", badge: clinicBadge, isNew: true },
-    { id: "hayati", name: "Family", icon: "👨‍👩‍👧", bg: "from-rose-400 to-pink-600", screen: "hayati", badge: loveBadge, isNew: true },
-    { id: "cars", name: "My Car", icon: "🚗", bg: "from-slate-600 to-slate-900", screen: "cars", isNew: true },
-    { id: "decor", name: "Decor", icon: "🧑‍🎨", bg: "from-emerald-400 to-teal-700", screen: "decor", isNew: true },
-    { id: "invites", name: "Invites", icon: "🎉", bg: "from-fuchsia-500 to-violet-700", screen: "invites", badge: invitesBadge, isNew: true },
-    { id: "marathon", name: "Marathon", icon: "🏅", bg: "from-emerald-500 to-teal-700", href: "/marathon", isNew: true },
+    { id: "spaces", name: "Spaces", icon: "🎙️", bg: "from-purple-600 to-slate-900", screen: "spaces", badge: liveSpacesBadge },
+    { id: "food", name: APPS.delivery.app.name, icon: APPS.delivery.app.icon, bg: APPS.delivery.app.bg, screen: "food" },
+    ...APPS.delivery.stores.filter((st) => st.home).map((st): App => ({ id: st.id, name: st.name, icon: st.icon, bg: st.bg, screen: `store:${st.id}` })),
+    { id: "rides", name: APPS.rides.app.name, icon: APPS.rides.app.icon, bg: APPS.rides.app.bg, screen: "rides" },
+    { id: "grocery", name: APPS.grocery.app.name, icon: APPS.grocery.app.icon, bg: APPS.grocery.app.bg, screen: "grocery" },
+    { id: "police", name: "Dubai Police", icon: "🚓", bg: "from-blue-700 to-slate-900", screen: "court", badge: courtBadge },
+    { id: "health", name: "Dubai Health", icon: "🩺", bg: "from-teal-400 to-cyan-700", screen: "clinic", badge: clinicBadge },
+    { id: "hayati", name: "Family", icon: "👨‍👩‍👧", bg: "from-rose-400 to-pink-600", screen: "hayati", badge: loveBadge },
+    { id: "cars", name: "My Car", icon: "🚗", bg: "from-slate-600 to-slate-900", screen: "cars" },
+    { id: "decor", name: "Decor", icon: "🧑‍🎨", bg: "from-emerald-400 to-teal-700", screen: "decor" },
+    { id: "invites", name: "Invites", icon: "🎉", bg: "from-fuchsia-500 to-violet-700", screen: "invites", badge: invitesBadge },
+    { id: "marathon", name: "Marathon", icon: "🏅", bg: "from-emerald-500 to-teal-700", href: "/marathon" },
     { id: "messages", name: "Messages", icon: "💬", bg: "from-sky-400 to-blue-600", screen: "page:/phone", badge: unread },
+    { id: "city", name: "City", icon: "🔥", bg: "from-fuchsia-500 to-rose-600", href: "/city" },
     { id: "jobs", name: "Jobs", icon: "💼", bg: "from-emerald-400 to-emerald-700", screen: "jobs" },
-    { id: "goals", name: "Goals", icon: "🎯", bg: "from-teal-400 to-emerald-700", screen: "page:/goals", isNew: true },
+    { id: "goals", name: "Goals", icon: "🎯", bg: "from-teal-400 to-emerald-700", screen: "page:/goals" },
     { id: "wallet", name: "Wallet", icon: "💳", bg: "from-amber-300 to-orange-500", screen: "page:/wallet" },
     { id: "games", name: "Games", icon: "🎱", bg: "from-emerald-500 to-green-800", screen: "games" },
     { id: "metro", name: "Map", icon: "🗺️", bg: "from-cyan-300 to-teal-600", href: "/explore" },
@@ -138,7 +142,6 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
     { id: "business", name: "Business", icon: "🏪", bg: "from-fuchsia-400 to-pink-600", screen: "page:/business" },
     { id: "ventures", name: "Ventures", icon: "📈", bg: "from-teal-400 to-emerald-700", screen: "page:/ventures" },
     { id: "tournament", name: "Tournament", icon: "🏆", bg: "from-yellow-300 to-amber-600", screen: "page:/tournament" },
-    { id: "wishes", name: "Wishes", icon: "✨", bg: "from-green-400 to-emerald-600", run: () => openLife("goals") },
     { id: "skills", name: "Skills", icon: "⭐", bg: "from-orange-300 to-orange-600", run: () => openLife("skills") },
     { id: "scams", name: "Scam Check", icon: "🛡️", bg: "from-red-400 to-rose-700", screen: "page:/scam-check" },
     { id: "news", name: "What's new", icon: "✨", bg: "from-violet-300 to-indigo-500", run: () => openSheet("whats-new") },
@@ -148,12 +151,22 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
     { id: "profile", name: "Profile", icon: "🙂", bg: "from-zinc-300 to-zinc-500", run: () => openLife("profile") },
   ], [unread, clinicBadge, courtBadge, loveBadge, liveSpacesBadge, invitesBadge]);
 
-  const home = () => setScreen("home");
+  // The home screen's order, set once as the phone opens (lib/phoneOrder): it never shuffles while open.
+  const [order] = useState(() => orderApps(apps.map((a) => a.id)));
+  const [folder, setFolder] = useState(false);
+  const home = () => { setScreen("home"); setFolder(false); };
   // App screens are white, so the status bar and home bar turn dark on them.
   const light = screen !== "home" && screen !== "games";
-  const shown = q.trim() ? apps.filter((a) => a.name.toLowerCase().includes(q.trim().toLowerCase())) : apps;
+  const byId = new Map<string, App>(apps.map((a) => [a.id, { ...a, isNew: isNewApp(a.id) }]));
+  const shown = q.trim()
+    ? apps.filter((a) => a.name.toLowerCase().includes(q.trim().toLowerCase()))
+    : folder
+      ? PHONE_FOLDER.map((id) => byId.get(id)).filter((a): a is App => !!a)
+      : order.map((id) => byId.get(id)).filter((a): a is App => !!a);
+  const folderApps = PHONE_FOLDER.map((id) => byId.get(id)).filter((a): a is App => !!a);
   const launch = (a: App) => {
     gameAudio.playClickSound();
+    noteAppOpen(a.id);
     if (a.screen) { setScreen(a.screen); return; }
     if (a.run) { onClose(); a.run(); return; }
     onClose();
@@ -224,6 +237,9 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
                   <Search className="w-5 h-5 shrink-0" />
                   <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search apps" className="flex-1 min-w-0 bg-transparent outline-none placeholder:text-white/80 text-base" />
                 </label>
+                {folder && !q.trim() && (
+                  <button onClick={() => setFolder(false)} className="mt-4 flex items-center gap-1 font-bold text-white/90"><ChevronLeft className="w-5 h-5" /> All apps</button>
+                )}
                 <div className="grid grid-cols-4 gap-x-3 gap-y-4 mt-5">
                   {shown.map((a) => (
                     <button key={a.id} onClick={() => launch(a)} className="flex flex-col items-center gap-1.5 active:scale-90 transition-transform">
@@ -235,6 +251,14 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
                       <span className="max-w-full px-1.5 rounded-md bg-slate-900/45 text-[12px] font-semibold leading-tight truncate">{a.name}</span>
                     </button>
                   ))}
+                  {!folder && !q.trim() && folderApps.length > 0 && (
+                    <button onClick={() => { gameAudio.playClickSound(); setFolder(true); }} className="flex flex-col items-center gap-1.5 active:scale-90 transition-transform">
+                      <span className="relative w-[62px] h-[62px] max-w-full aspect-square rounded-[18px] bg-white/25 backdrop-blur grid grid-cols-2 gap-1 p-2 shadow-[0_4px_10px_rgba(0,0,0,0.25)]">
+                        {folderApps.slice(0, 4).map((f) => <span key={f.id} className="flex items-center justify-center text-sm leading-none">{f.icon}</span>)}
+                      </span>
+                      <span className="max-w-full px-1.5 rounded-md bg-slate-900/45 text-[12px] font-semibold leading-tight truncate">More</span>
+                    </button>
+                  )}
                 </div>
                 {shown.length === 0 && <p className="text-center text-white/90 font-bold mt-8">No app called “{q}”.</p>}
               </div>

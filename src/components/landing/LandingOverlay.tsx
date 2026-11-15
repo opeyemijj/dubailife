@@ -39,6 +39,11 @@ export function LandingOverlay({
   const ref = searchParams.get("ref");
   const go = searchParams.get("go");
   const invite = searchParams.get("invite");
+  const via = searchParams.get("via");
+  useEffect(() => {
+    // A party or Space link (?via=host:kind:ref): counted for the host once they're signed in (LifeHub).
+    if (via && /^[a-z0-9_]{3,24}:(party|space):[\w-]{1,80}$/.test(via)) { try { localStorage.setItem("dl_via", via); } catch { /* storage blocked */ } }
+  }, [via]);
   useEffect(() => {
     if (isInviteCode(invite)) rememberInvite(invite);
     if (ref && /^[a-z0-9_]{3,24}$/.test(ref)) { try { localStorage.setItem("dl_ref", ref); } catch { /* storage blocked */ } }
@@ -282,7 +287,7 @@ export function LandingOverlay({
               <div className="w-6 h-6 rounded-full border-2 border-white bg-emerald-400 flex items-center justify-center text-xs">🧕🏼</div>
             </div>
             <span>
-              <strong className="font-black text-slate-900">{formatOnline(onlineCount)} {onlineCount === 1 ? "Citizen" : "Citizens"}</strong> playing right now · free
+              <strong className="font-black text-slate-900">{formatOnline(onlineCount)} Citizens</strong> playing right now · free
             </span>
           </div>
 

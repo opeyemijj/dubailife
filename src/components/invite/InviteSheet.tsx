@@ -29,8 +29,11 @@ export function InviteSheet({ code, title, text: shareText, onClose }: { code: s
   const [who, setWho] = useState("");
   const [sent, setSent] = useState<Record<string, string>>({});
   const [note, setNote] = useState<string | null>(null);
+  // Today's reward progress (requirements R5): friends who've come and stayed.
+  const [counted, setCounted] = useState<number | null>(null);
   useEffect(() => {
     if (!me) return;
+    void supabase().rpc("my_reward_progress").then(({ data }) => setCounted(Number((data as { partyGuests?: number } | null)?.partyGuests ?? 0)));
     void friendsOf(me).then(setFriends);
     void listConversations(me).then((c) => setChats(c.map((x) => x.with)));
   }, [me]);
@@ -59,6 +62,11 @@ export function InviteSheet({ code, title, text: shareText, onClose }: { code: s
             <input value={who} onChange={(e) => setWho(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { void invite(who); setWho(""); } }} placeholder="@username" aria-label="Invite by username"
               className="flex-1 min-w-0 h-11 rounded-xl bg-slate-50 border border-slate-200 px-3 font-bold outline-none" />
             <button onClick={() => { void invite(who); setWho(""); }} className="h-11 px-4 rounded-xl bg-fuchsia-600 text-white font-black">Invite</button>
+          </div>
+          <div className="rounded-2xl bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-900">
+            <p className="font-black">💰 10 friends at your party pays AED 10M</p>
+            <p>5 friends pays 3M, 3 pays 1M. Each friend who comes from your link pays AED 1M. Friends count after 10 minutes.</p>
+            {counted !== null && counted > 0 && <p className="mt-1 font-black text-emerald-700">{counted} of 10 friends counted today</p>}
           </div>
           {note && <p className="text-sm font-bold text-rose-600">{note}</p>}
           <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">

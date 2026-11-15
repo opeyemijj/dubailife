@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { useCitizen } from "@/lib/citizenStore";
+import { InviteSheet } from "@/components/share/InviteSheet";
 import { gameAudio } from "@/utils/gameAudio";
 import {
   formatSpaceTimer,
@@ -62,6 +63,7 @@ export function SpacesApp({
   const [commentText, setCommentText] = useState("");
   const [emojiIdx, setEmojiIdx] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
+  const [inviting, setInviting] = useState(false);
   const [selectedUser, setSelectedUser] = useState<SpaceParticipant | null>(null);
 
   // Create Space form state
@@ -273,13 +275,9 @@ export function SpacesApp({
     const isOnStage = myParticipant && myParticipant.role !== "listener";
     const timer = formatSpaceTimer(activeRoom.expiresAt, now);
 
-    const handleShare = () => {
-      const url = `${window.location.origin}/explore?space=${activeRoom.id}`;
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(url).catch(() => {});
-      }
-      setToast("🔗 Space invite link copied to clipboard!");
-    };
+    // WhatsApp, share or copy (requirements R9): the link counts friends toward the inviter's rewards.
+    const handleShare = () => setInviting(true);
+    const listenerCount = activeRoom.participants.filter((p) => p.id !== activeRoom.hostId).length;
 
     const handleCommentSubmit = (e: React.FormEvent) => {
       e.preventDefault();
@@ -346,6 +344,17 @@ export function SpacesApp({
 
         {/* Scrollable Middle Content */}
         <div className="flex-1 overflow-y-auto pr-0.5 space-y-3.5 pb-3">
+          {inviting && citizen?.username && (
+            <InviteSheet me={citizen.username} kind="space" refId={activeRoom.id} path={`/explore?space=${activeRoom.id}`}
+              title={activeRoom.title} progress={isHostOrCohost ? `${listenerCount} listening now · 20 pays AED 10M` : undefined}
+              onClose={() => setInviting(false)} />
+          )}
+          {!activeRoom.isPrivate && !activeRoom.partyRoute && (
+            <button type="button" onClick={handleShare}
+              className="w-full h-11 rounded-2xl bg-[#25D366] text-white font-black text-sm flex items-center justify-center gap-2">
+              <Share2 className="w-4 h-4" /> Invite friends{isHostOrCohost ? " · 20 listeners = AED 10M" : ""}
+            </button>
+          )}
           {/* Title + Share & Flag */}
           <div>
             <div className="flex items-start justify-between gap-2">

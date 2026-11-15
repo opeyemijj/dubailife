@@ -53,14 +53,25 @@ export function LifeHub() {
       }
     };
     void syncLife().then((r) => after(r as (LifeStatus & LifeTick) | null));
+    // The player's time zone, so "while you were away" emails keep to their quiet hours (send_social_digests).
+    try { void supabase().rpc("set_my_timezone", { p_tz: Intl.DateTimeFormat().resolvedOptions().timeZone }); } catch { /* old browser */ }
     // Redeem an invite saved on the landing page, and route to any deep-link destination (?go=...).
     try {
       const ref = localStorage.getItem("dl_ref");
       if (ref) void supabase().rpc("claim_referral", { p_username: ref }).then(() => { try { localStorage.removeItem("dl_ref"); } catch { /* blocked */ } });
       const urlGo = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("go") : null;
       const go = urlGo || localStorage.getItem("dl_go");
-      // A brand-new player finishes moving in and decorating first; the link waits until then.
-      if (go && go.startsWith("/") && !go.startsWith("//") && !citizen?.decorFirst) {
+      // Came through a host's party or Space link: tell the database who brought them (public.came_via).
+      const urlVia = new URLSearchParams(window.location.search).get("via");
+      const via = urlVia || localStorage.getItem("dl_via");
+      const viaParts = via?.match(/^([a-z0-9_]{3,24}):(party|space):([\w-]{1,80})$/);
+      if (viaParts) {
+        void supabase().rpc("came_via", { p_host: viaParts[1], p_kind: viaParts[2], p_ref: viaParts[3] })
+          .then(() => { try { localStorage.removeItem("dl_via"); } catch { /* blocked */ } });
+      }
+      // A brand-new player finishes moving in and decorating first; the link waits until then. Except a friend's
+      // party or Space, which is happening now: straight in.
+      if (go && go.startsWith("/") && !go.startsWith("//") && (!citizen?.decorFirst || !!viaParts)) {
         try { localStorage.removeItem("dl_go"); } catch { /* blocked */ }
         if (window.location.pathname !== go.split("?")[0]) {
           window.dispatchEvent(new CustomEvent("dubai:toast", { detail: ref ? `🚀 Joining @${ref} now…` : "🚀 Teleporting to your invite…" }));

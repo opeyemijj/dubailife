@@ -66,7 +66,8 @@ export async function getEmailConfig(): Promise<EmailConfig> {
         ...DEFAULT_EMAIL_CONFIG,
         ...val,
         fromEmail: normalizeSenderEmail(val.fromEmail),
-        apiKey: val.apiKey || process.env.POSTMARK_SERVER_TOKEN || "",
+        // Never from settings (anyone can read them): only the server environment.
+        apiKey: process.env.POSTMARK_SERVER_TOKEN || "",
         campaigns: {
           ...DEFAULT_EMAIL_CONFIG.campaigns,
           ...(val.campaigns ?? {}),

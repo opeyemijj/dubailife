@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { arriveAt, endParty, isPartyEnded, markPartyEnded, partyHere, pingParty, PARTIES, kindOf, type PartyHere } from "@/lib/invites";
 import { InviteSheet } from "./InviteSheet";
+import { CashDropBubble, RainButton } from "./CashDrop";
 import { activeSpaceId, activeSpaceRoom, hostNewSpace, joinSpace, leaveSpace, lockSpace, spaceExists, useSpacesStore } from "@/lib/spaces";
 import { supabase } from "@/lib/supabase/client";
 import { gameAudio } from "@/utils/gameAudio";
@@ -400,6 +401,8 @@ export function PartyBanner({ party, hostAway, className = "" }: { party: PartyH
       <RegionPicker dark={false} down />
       {mode === "radio" && <button onClick={nextStation} aria-label="Next station" className="shrink-0 w-7 h-7 rounded-full bg-white/20 text-[11px] font-black">⏭</button>}
       <button onClick={() => setInviting(true)} className="shrink-0 h-7 px-3 rounded-full bg-white text-fuchsia-700 text-[11px] font-black">Invite</button>
+      <RainButton code={party.code} />
+      <CashDropBubble code={party.code} />
       {party.isHost && (ending === "ask" ? (
         <span className="shrink-0 flex items-center gap-1 pl-1">
           <span className="text-[11px] font-black">End it?</span>

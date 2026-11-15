@@ -58,7 +58,12 @@ const ERRORS: Record<string, string> = {
 };
 const friendly = (m: string) => ERRORS[Object.keys(ERRORS).find((k) => m.includes(k)) ?? ""] ?? "Something went wrong. Try again.";
 
-export const inviteUrl = (code: string) => `${window.location.origin}/i/${code}`;
+/** The invite's link. It carries who shared it (?via=), so friends who come through it count toward their rewards
+    (public.came_via; requirements R9). */
+export const inviteUrl = (code: string) => {
+  const me = getCitizenState()?.citizen?.username;
+  return `${window.location.origin}/i/${code}${me ? `?via=${encodeURIComponent(`${me}:party:${code}`)}` : ""}`;
+};
 
 export async function createEvent(a: {
   kind: EventKind; title: string; startsAt: Date; label: string;

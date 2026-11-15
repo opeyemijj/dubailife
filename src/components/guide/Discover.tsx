@@ -5,6 +5,8 @@
 // phone and the top bar's status panel, plus a one-time pop-up on the map that suggests the first few. Items tick themselves off.
 
 import { TOUR_NOW } from "@/components/onboarding/FirstTimeTour";
+import { openPhone } from "@/components/layout/PhoneOverlay";
+import { inviteFriends } from "@/lib/invite";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -65,11 +67,18 @@ function Lines({ where, why, what, points }: { where?: string; why?: string; wha
 function TodoRow({ a, now, onGo, onHide }: { a: ActivityView; now: number; onGo: () => void; onHide?: () => void }) {
   const { item } = a;
   const router = useRouter();
+  const { citizen } = useCitizen();
   const go = () => {
     gameAudio.playClickSound();
     if (item.done === "seen") markSeen(item.id);
     onGo();
-    if ("href" in item && item.href) router.push(item.href);
+    // "phone:<app>" opens that app on the phone; "phone:invite" the invite sheet.
+    if ("href" in item && item.href?.startsWith("phone:")) {
+      const app = item.href.slice(6);
+      if (app === "invite") void inviteFriends(citizen?.username);
+      else setTimeout(() => openPhone(app as Parameters<typeof openPhone>[0]), 150);
+    }
+    else if ("href" in item && item.href) router.push(item.href);
     else if ("action" in item && item.action) setTimeout(() => openLife(item.action as LifeTab), 150);
   };
   return (

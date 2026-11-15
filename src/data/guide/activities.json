@@ -16,6 +16,66 @@
   ],
   "items": [
     {
+      "id": "reward-party-10",
+      "cat": "Rewards",
+      "icon": "🎉",
+      "title": "Host a party and get 10 friends to come: AED 10M",
+      "where": "At home or any venue: tap Host a party, then Invite friends and send the link on WhatsApp",
+      "why": "Paid as soon as 10 friends have been there 10 minutes. 5 friends pays 3M, 3 friends pays 1M, and each friend who comes from your link pays another 1M.",
+      "done": "seen",
+      "go": "Host a party",
+      "href": "/home",
+      "points": "Up to AED 10M a day",
+      "core": true
+    },
+    {
+      "id": "reward-space-20",
+      "cat": "Rewards",
+      "icon": "🎙️",
+      "title": "Host a Space with 20 listeners: AED 10M",
+      "where": "Phone → Spaces → Start a Space, then Invite friends on WhatsApp",
+      "why": "20 listeners who stay 10 minutes pays 10M. 10 listeners pays 5M, 5 pays 1M.",
+      "done": "seen",
+      "go": "Start a Space",
+      "href": "phone:spaces",
+      "points": "Up to AED 10M a day"
+    },
+    {
+      "id": "reward-invite",
+      "cat": "Rewards",
+      "icon": "💌",
+      "title": "Bring a friend to Dubai Life: AED 2M",
+      "where": "More → Invite friends, or the Invite button at your party",
+      "why": "Every new player who signs up with your link and plays for 10 minutes pays you 2M.",
+      "done": "invite",
+      "go": "Invite a friend",
+      "href": "phone:invite",
+      "points": "AED 2M each"
+    },
+    {
+      "id": "reward-win",
+      "cat": "Rewards",
+      "icon": "🏆",
+      "title": "Beat a real player: AED 1M a win",
+      "where": "Games: Ludo, chess, pool and more, against other players",
+      "why": "Your first 5 wins against real players each day pay 1M each.",
+      "done": "seen",
+      "go": "Play now",
+      "href": "/games/ludo",
+      "points": "Up to AED 5M a day"
+    },
+    {
+      "id": "reward-top",
+      "cat": "Rewards",
+      "icon": "👑",
+      "title": "Become a top user this week",
+      "where": "City → Top users",
+      "why": "Host parties and Spaces, bring friends and win games. The week's top users are shown to every player.",
+      "done": "seen",
+      "go": "See the list",
+      "href": "/top"
+    },
+    {
       "id": "verify-email",
       "cat": "Rewards",
       "icon": "📧",

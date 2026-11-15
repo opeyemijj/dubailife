@@ -48,6 +48,11 @@ export function InvitePage({ code, initial }: { code: string; initial: InviteVie
 
   // Keep the code through sign-up, and read the invite again signed in (for your own reply).
   useEffect(() => { rememberInvite(code); }, [code]);
+  // Who shared the link: kept until they're signed in, then counted for them (LifeHub → public.came_via).
+  useEffect(() => {
+    const via = new URLSearchParams(window.location.search).get("via");
+    if (via && /^[a-z0-9_]{3,24}:(party|space):[\w-]{1,80}$/.test(via)) { try { localStorage.setItem("dl_via", via); } catch { /* storage blocked */ } }
+  }, []);
   useEffect(() => {
     if (!hydrated) return;
     let live = true;

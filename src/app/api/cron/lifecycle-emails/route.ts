@@ -23,12 +23,28 @@ export async function POST(req: Request) {
   return run(req);
 }
 
-/** The cron key from the request (pg_cron sends x-cron-secret, Vercel cron sends Bearer CRON_SECRET). */
+const isJwt = (t: string) => /^eyJ[\w-]+\.[\w-]+\.[\w-]+$/.test(t);
+
+/** The cron key from the request (pg_cron sends x-cron-secret, Vercel cron sends Bearer CRON_SECRET). A signed-in
+    admin's session token isn't a key: that request runs as them. */
 function keyFrom(req: Request): string | null {
-  const h = req.headers.get("x-cron-secret") || req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || "";
+  const bearer = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || "";
+  const h = req.headers.get("x-cron-secret") || (bearer && !isJwt(bearer) ? bearer : "");
   if (h) return h;
-  if (process.env.NODE_ENV === "development" && process.env.CRON_SECRET) return process.env.CRON_SECRET;
+  if (process.env.NODE_ENV === "development" && process.env.CRON_SECRET && !bearer) return process.env.CRON_SECRET;
   return null;
+}
+
+/** Signed in as the caller (the admin page sends its session token, or its cookie). */
+async function callerClient(req: Request): Promise<SupabaseClient> {
+  const bearer = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || "";
+  if (bearer && isJwt(bearer)) {
+    return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { headers: { Authorization: `Bearer ${bearer}` } },
+    });
+  }
+  return supabaseServer();
 }
 
 function anonClient(): SupabaseClient {
@@ -53,7 +69,7 @@ async function run(req: Request) {
   const dry = new URL(req.url).searchParams.get("dry") === "1";
   const key = keyFrom(req);
   // With a key: the database checks it. Without: a signed-in admin (the back office).
-  const db = key ? anonClient() : await supabaseServer();
+  const db = key ? anonClient() : await callerClient(req);
 
   const { data: cfgRow } = await db.from("app_settings").select("value").eq("key", "email_config").maybeSingle();
   const cfg = { ...DEFAULT_EMAIL_CONFIG, ...((cfgRow?.value as Partial<EmailConfig>) ?? {}) };
@@ -77,7 +93,11 @@ async function run(req: Request) {
       recipients: due.map((d) => ({ username: d.username, email: mask(d.email), campaign: d.campaign_id })),
     });
   }
-  if (!due.length) return NextResponse.json({ ok: true, sent: 0, due: counts });
+  if (!due.length) {
+    const { data: sw } = await db.from("app_settings").select("value").eq("key", "lifecycle_emails").maybeSingle();
+    const on = !!(sw?.value as { enabled?: boolean } | null)?.enabled;
+    return NextResponse.json({ ok: true, sent: 0, due: counts, enabled: on });
+  }
 
   const items = due.filter((d) => d.log_id).map((d) => {
     const template = EMAIL_TEMPLATES[d.campaign_id];

@@ -34,7 +34,7 @@ interface CampaignLog {
   email: string;
   user_id: string | null;
   campaign_id: string;
-  subject: string;
+  subject: string | null;
   status: string;
   provider: string;
   provider_message_id: string | null;
@@ -138,30 +138,109 @@ export function EmailsAdmin() {
     }
   };
 
-  const handleTriggerCronManual = async () => {
+  // Automatic emails: the database sends them every hour (10:00 to 22:00 Dubai time) while this is on
+  // (app_settings 'lifecycle_emails', migration 20270107000000).
+  const [autoOn, setAutoOn] = useState<boolean | null>(null);
+  const [switching, setSwitching] = useState(false);
+  const [preview, setPreview] = useState<{ due: Record<string, number>; recipients: { username: string | null; email: string; campaign: string }[] } | null>(null);
+  useEffect(() => {
+    void db().from("app_settings").select("value").eq("key", "lifecycle_emails").maybeSingle()
+      .then(({ data }) => setAutoOn(!!(data?.value as { enabled?: boolean } | null)?.enabled));
+  }, []);
+
+  const toggleAuto = async () => {
+    if (autoOn === null) return;
+    const next = !autoOn;
+    if (next && !window.confirm("Turn on automatic emails? Players who are due will start getting them within the hour.")) return;
+    setSwitching(true);
+    const { error } = await db().rpc("admin_set_setting", { p_key: "lifecycle_emails", p_value: { enabled: next } });
+    setSwitching(false);
+    if (error) { setMessage({ text: `Couldn't change it: ${error.message}`, tone: "error" }); return; }
+    setAutoOn(next);
+    setMessage({ text: next ? "Automatic emails are on." : "Automatic emails are off. Nothing more will be sent.", tone: "success" });
+  };
+
+  // Rewards for taking part (parties, Spaces, invites, wins): paid by the database every 5 minutes while on
+  // (app_settings 'social_rewards', migration 20270110000000). Turning on records when, so nothing earlier is paid.
+  const [rewardsOn, setRewardsOn] = useState<boolean | null>(null);
+  useEffect(() => {
+    void db().from("app_settings").select("value").eq("key", "social_rewards").maybeSingle()
+      .then(({ data }) => setRewardsOn(!!(data?.value as { enabled?: boolean } | null)?.enabled));
+  }, []);
+  const toggleRewards = async () => {
+    if (rewardsOn === null) return;
+    const next = !rewardsOn;
+    if (next && !window.confirm("Turn on rewards? Players start earning from now: up to AED 10M for a party with 10 friends.")) return;
+    setSwitching(true);
+    const { error } = await db().rpc("admin_set_setting", { p_key: "social_rewards", p_value: next ? { enabled: true, since: new Date().toISOString() } : { enabled: false } });
+    setSwitching(false);
+    if (error) { setMessage({ text: `Couldn't change it: ${error.message}`, tone: "error" }); return; }
+    setRewardsOn(next);
+    setMessage({ text: next ? "Rewards are on. Payouts start within 5 minutes." : "Rewards are off. Nothing more will be paid.", tone: "success" });
+  };
+
+  // "While you were away" emails (friend requests, invites, messages…): sent by the database every 15 minutes while
+  // on (app_settings 'social_emails', migration 20270111000000).
+  const [socialOn, setSocialOn] = useState<boolean | null>(null);
+  const [socialPreview, setSocialPreview] = useState<{ username: string; lines: string[] }[] | null>(null);
+  useEffect(() => {
+    void db().from("app_settings").select("value").eq("key", "social_emails").maybeSingle()
+      .then(({ data }) => setSocialOn(!!(data?.value as { enabled?: boolean } | null)?.enabled));
+  }, []);
+  const toggleSocial = async () => {
+    if (socialOn === null) return;
+    const next = !socialOn;
+    if (next && !window.confirm("Turn on \"while you were away\" emails? Players who are away start getting them within 15 minutes.")) return;
+    setSwitching(true);
+    const { error } = await db().rpc("admin_set_setting", { p_key: "social_emails", p_value: { enabled: next } });
+    setSwitching(false);
+    if (error) { setMessage({ text: `Couldn't change it: ${error.message}`, tone: "error" }); return; }
+    setSocialOn(next);
+    setMessage({ text: next ? "\"While you were away\" emails are on." : "\"While you were away\" emails are off.", tone: "success" });
+  };
+  const previewSocial = async () => {
+    const { data, error } = await db().rpc("preview_social_digests");
+    if (error) { setMessage({ text: error.message, tone: "error" }); return; }
+    setSocialPreview((data ?? []) as { username: string; lines: string[] }[]);
+  };
+
+  const callRoute = async (dry: boolean) => {
+    const { data: sessionData } = await db().auth.getSession();
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (sessionData?.session?.access_token) headers["Authorization"] = `Bearer ${sessionData.session.access_token}`;
+    const res = await fetch(`/api/cron/lifecycle-emails${dry ? "?dry=1" : ""}`, { method: "POST", headers });
+    return { res, data: await res.json() };
+  };
+
+  const handlePreview = async () => {
     setTriggeringCron(true);
     try {
-      const { data: sessionData } = await db().auth.getSession();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (sessionData?.session?.access_token) {
-        headers["Authorization"] = `Bearer ${sessionData.session.access_token}`;
-      }
-      const res = await fetch("/api/cron/lifecycle-emails", {
-        method: "POST",
-        headers,
-      });
-      const data = await res.json();
+      const { res, data } = await callRoute(true);
+      if (res.ok && data.ok) setPreview({ due: data.due ?? {}, recipients: data.recipients ?? [] });
+      else setMessage({ text: data.error || "Couldn't load who's due.", tone: "error" });
+    } catch (err) {
+      setMessage({ text: err instanceof Error ? err.message : "Couldn't load who's due.", tone: "error" });
+    } finally {
+      setTriggeringCron(false);
+    }
+  };
+
+  const handleTriggerCronManual = async () => {
+    if (!autoOn) { setMessage({ text: "Automatic emails are off. Turn them on first, or use Preview to see who's due.", tone: "error" }); return; }
+    if (!window.confirm("Send the emails that are due right now?")) return;
+    setTriggeringCron(true);
+    try {
+      const { res, data } = await callRoute(false);
       if (res.ok && data.ok) {
-        setMessage({
-          text: `Retention cron evaluated successfully: ${data.processed.incomplete_signup} drop-offs, ${data.processed.inactive_3d} 3-day inactive, ${data.processed.inactive_7d} 7-day bonuses sent.`,
-          tone: "success",
-        });
+        const kinds = Object.entries((data.due ?? {}) as Record<string, number>).map(([k, n]) => `${n} ${k}`).join(", ");
+        setMessage({ text: data.sent ? `Sent ${data.sent} email${data.sent === 1 ? "" : "s"} (${kinds}).` : "Nobody is due an email right now.", tone: "success" });
+        setPreview(null);
         reloadLogs();
       } else {
-        setMessage({ text: data.error || "Cron execution failed", tone: "error" });
+        setMessage({ text: data.error || "The run failed.", tone: "error" });
       }
-    } catch (err: any) {
-      setMessage({ text: err?.message || "Failed to run cron job", tone: "error" });
+    } catch (err) {
+      setMessage({ text: err instanceof Error ? err.message : "The run failed.", tone: "error" });
     } finally {
       setTriggeringCron(false);
     }
@@ -175,7 +254,7 @@ export function EmailsAdmin() {
     return logs.filter(
       (l) =>
         l.email.toLowerCase().includes(q) ||
-        l.subject.toLowerCase().includes(q) ||
+        (l.subject ?? "").toLowerCase().includes(q) ||
         l.campaign_id.toLowerCase().includes(q)
     );
   }, [logs, logSearch]);
@@ -191,13 +270,12 @@ export function EmailsAdmin() {
       subtitle="Configure lifecycle triggers, automated drip series, email provider settings, and view delivery logs."
       actions={
         <div className="flex items-center gap-2">
-          <Button
-            tone="secondary"
-            onClick={handleTriggerCronManual}
-            disabled={triggeringCron}
-          >
+          <Button tone="secondary" onClick={handlePreview} disabled={triggeringCron}>
+            <Eye className="w-3.5 h-3.5 mr-1" /> Preview who&apos;s due
+          </Button>
+          <Button tone="secondary" onClick={handleTriggerCronManual} disabled={triggeringCron || !autoOn}>
             <Play className="w-3.5 h-3.5 mr-1" />
-            {triggeringCron ? "Running Cron…" : "Run Lifecycle Check"}
+            {triggeringCron ? "Working…" : "Send due emails now"}
           </Button>
           <Button tone="primary" onClick={() => setTestModalOpen(true)}>
             <Send className="w-3.5 h-3.5 mr-1" /> Send Test Email
@@ -222,6 +300,103 @@ export function EmailsAdmin() {
           </button>
         </div>
       )}
+
+      {/* The on/off switch for automatic emails, and who's due */}
+      <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 space-y-3">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-base font-black text-white">Automatic emails</h2>
+            <p className="text-xs text-slate-400">
+              While on, due players are emailed every hour from 10:00 to 22:00 Dubai time: at most one email a day each,
+              never to anyone who unsubscribed. Off means nothing is sent.
+            </p>
+          </div>
+          <button
+            onClick={toggleAuto}
+            disabled={autoOn === null || switching}
+            aria-pressed={!!autoOn}
+            className={`shrink-0 w-14 h-8 rounded-full p-1 transition-colors disabled:opacity-50 ${autoOn ? "bg-emerald-500" : "bg-slate-600"}`}
+          >
+            <span className={`block w-6 h-6 rounded-full bg-white shadow transition-transform ${autoOn ? "translate-x-6" : ""}`} />
+            <span className="sr-only">{autoOn ? "On" : "Off"}</span>
+          </button>
+        </div>
+        <div className="flex items-center justify-between gap-4 border-t border-white/10 pt-3">
+          <div>
+            <h2 className="text-base font-black text-white">Rewards for taking part</h2>
+            <p className="text-xs text-slate-400">
+              Party, Space, invite, game-win and follow rewards (src/data/social/rewards.json). Paid by the database every
+              5 minutes while on; only for things done after it&apos;s turned on.
+            </p>
+          </div>
+          <button
+            onClick={toggleRewards}
+            disabled={rewardsOn === null || switching}
+            aria-pressed={!!rewardsOn}
+            className={`shrink-0 w-14 h-8 rounded-full p-1 transition-colors disabled:opacity-50 ${rewardsOn ? "bg-emerald-500" : "bg-slate-600"}`}
+          >
+            <span className={`block w-6 h-6 rounded-full bg-white shadow transition-transform ${rewardsOn ? "translate-x-6" : ""}`} />
+            <span className="sr-only">{rewardsOn ? "On" : "Off"}</span>
+          </button>
+        </div>
+        <div className="flex items-center justify-between gap-4 border-t border-white/10 pt-3">
+          <div>
+            <h2 className="text-base font-black text-white">&quot;While you were away&quot; emails</h2>
+            <p className="text-xs text-slate-400">
+              Friend requests, invites, unread messages, money and more, bundled into one email for players who are away:
+              an hour after it happens, at most every 2 hours and twice a day, never overnight in their time zone.{" "}
+              <button onClick={previewSocial} className="underline text-amber-300">Preview who&apos;s waiting</button>
+            </p>
+          </div>
+          <button
+            onClick={toggleSocial}
+            disabled={socialOn === null || switching}
+            aria-pressed={!!socialOn}
+            className={`shrink-0 w-14 h-8 rounded-full p-1 transition-colors disabled:opacity-50 ${socialOn ? "bg-emerald-500" : "bg-slate-600"}`}
+          >
+            <span className={`block w-6 h-6 rounded-full bg-white shadow transition-transform ${socialOn ? "translate-x-6" : ""}`} />
+            <span className="sr-only">{socialOn ? "On" : "Off"}</span>
+          </button>
+        </div>
+        {socialPreview && (
+          <div className="rounded-xl border border-white/10 bg-slate-950/60 p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-black text-white">{socialPreview.length ? `${socialPreview.length} players have something waiting` : "Nothing waiting right now"}</p>
+              <button onClick={() => setSocialPreview(null)} className="text-white/40 hover:text-white" aria-label="Close preview"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="max-h-56 overflow-y-auto divide-y divide-white/5">
+              {socialPreview.map((r) => (
+                <div key={r.username} className="py-1.5 text-xs">
+                  <p className="text-white font-bold">@{r.username}</p>
+                  {r.lines.map((l, i) => <p key={i} className="text-slate-400" dangerouslySetInnerHTML={{ __html: `· ${l}` }} />)}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {preview && (
+          <div className="rounded-xl border border-white/10 bg-slate-950/60 p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-black text-white">
+                {preview.recipients.length ? `${preview.recipients.length} due right now` : "Nobody is due right now"}
+                {preview.recipients.length >= 50 ? " (first 50 shown; the rest go in the next hour)" : ""}
+              </p>
+              <button onClick={() => setPreview(null)} className="text-white/40 hover:text-white" aria-label="Close preview"><X className="w-4 h-4" /></button>
+            </div>
+            {Object.keys(preview.due).length > 0 && (
+              <p className="text-xs text-slate-400">{Object.entries(preview.due).map(([k, n]) => `${k}: ${n}`).join(" · ")}</p>
+            )}
+            <div className="max-h-56 overflow-y-auto divide-y divide-white/5">
+              {preview.recipients.map((r, i) => (
+                <div key={i} className="flex items-center justify-between py-1.5 text-xs">
+                  <span className="text-white font-bold">@{r.username ?? "?"} <span className="text-slate-500 font-normal">{r.email}</span></span>
+                  <span className="font-mono text-[11px] text-amber-300">{r.campaign}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* Provider & Sender Settings */}
       <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 space-y-4">
@@ -255,13 +430,9 @@ export function EmailsAdmin() {
             <label className="text-xs font-black uppercase tracking-wider text-slate-400">
               Provider API Key
             </label>
-            <input
-              type="password"
-              value={config.apiKey || ""}
-              onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
-              placeholder={config.provider === "test" ? "Not required in test mode" : "re_... or server-token"}
-              className="w-full h-10 rounded-xl bg-slate-950 border border-slate-800 px-3 text-sm text-white placeholder-slate-600"
-            />
+            <p className="h-10 flex items-center text-xs text-slate-400">
+              Kept on the server (Supabase Vault and the POSTMARK_SERVER_TOKEN setting), never in these settings, which anyone can read.
+            </p>
           </div>
 
           <div className="space-y-1.5">
@@ -461,12 +632,14 @@ export function EmailsAdmin() {
                   className={`inline-flex items-center gap-1 font-bold text-[10px] px-2 py-0.5 rounded-full ${
                     log.status === "sent"
                       ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                      : log.status === "queued"
+                      ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
                       : log.status === "simulated"
                       ? "bg-sky-500/20 text-sky-300 border border-sky-500/30"
                       : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
                   }`}
                 >
-                  {log.status === "sent" ? "✓ Sent" : log.status === "simulated" ? "⚡ Test" : "✕ Failed"}
+                  {log.status === "sent" ? "✓ Sent" : log.status === "queued" ? "… Sending" : log.status === "simulated" ? "⚡ Test" : "✕ Failed"}
                 </span>
               </td>
               <td className="px-3 py-2.5 font-mono text-[10px] text-slate-500 truncate max-w-[120px]">

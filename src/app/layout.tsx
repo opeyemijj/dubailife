@@ -11,6 +11,8 @@ import { MoneyListener } from "@/components/social/MoneyListener";
 import { MessageAlerts } from "@/components/social/MessageAlerts";
 import { FriendRequestListener } from "@/components/social/FriendRequestListener";
 import { NotificationPrompt } from "@/components/pwa/NotificationPrompt";
+import { TopUsersWelcome } from "@/components/social/TopUsers";
+import { RewardCelebration } from "@/components/social/RewardCelebration";
 import { PushCoach } from "@/components/pwa/PushCoach";
 import { AgeGate } from "@/components/safety/AgeGate";
 import { ScamPhone } from "@/components/safety/ScamPhone";
@@ -292,6 +294,8 @@ export default function RootLayout({
           <FriendRequestListener />
           <Suspense fallback={null}><MessageAlerts /></Suspense>
           <NotificationPrompt />
+          <TopUsersWelcome />
+          <RewardCelebration />
           <PushCoach />
           <AgeGate />
           <NextStep />

@@ -763,6 +763,96 @@ export const WIKI_HUBS: WikiHub[] = [
       },
     ],
   },
+  {
+    slug: "top-users",
+    icon: "🏆",
+    title: "Top users & the richest",
+    subtitle:
+      "How the weekly Top users list and the Richest list work, how to get on them, and the rewards for hosting and bringing friends.",
+    toneA: "#FFF6DC",
+    toneB: "#FDE68A",
+    blocks: [
+      {
+        id: "become-top",
+        icon: "🏆",
+        title: "How to become a top user",
+        badge: "Resets every Monday",
+        summary:
+          "Top users this week are the players who did the most with other players since Monday 00:00 Dubai time. Everyone sees the list on their first visit of the week, and new players follow the top users when they arrive.",
+        bullets: [
+          "**Host parties.** Every house party, pool party, club night or seminar you host scores 100.",
+          "**Fill them.** Every guest who actually comes scores 30. Ten friends at one party is 300.",
+          "**Host Spaces.** Every Space you host scores 100, and every listener who stays 10 minutes scores 30.",
+          "**Win games against real players.** Every multiplayer win scores 20 (wins against the computer don't count).",
+          "**Bring friends to Dubai Life.** Every friend who joins through your invite link scores 50.",
+          "**Be generous.** Every 1M you give to other players scores 10 (up to 200 a week).",
+        ],
+        tip: "The fastest way up: host a party, tap **Invite friends**, and send the link to your WhatsApp groups.",
+        cta: { label: "See this week's top users", href: "/top" },
+      },
+      {
+        id: "become-richest",
+        icon: "💎",
+        title: "How to become one of the richest",
+        badge: "Updated live",
+        summary:
+          "The Richest list ranks players by net worth: the money in your account, plus the homes you own (what you paid) and your cars.",
+        bullets: [
+          "**Earn every day:** work shifts at your job, run a venture, and collect your daily missions.",
+          "**Take the big rewards:** host parties and Spaces your friends join (see the table below).",
+          "**Own, don't just rent:** a home you buy counts toward your net worth; rent doesn't.",
+          "**Win games** against friends, and invite new players with your link.",
+          "**Make it rain:** the richest players who share at parties and Spaces become the city's best-known names.",
+        ],
+        tip: "Follow the richest players: they host the biggest parties and drop cash at them.",
+        cta: { label: "See the richest", href: "/top?tab=rich" },
+      },
+      {
+        id: "big-givers",
+        icon: "💸",
+        title: "Cash drops and Big Givers",
+        badge: "Resets every Monday",
+        summary:
+          "At any party, tap 💸 on the party bar to make it rain: pick an amount and how many people share it. Everyone else at the party gets 2 minutes to grab a share; whatever nobody grabs comes back to you.",
+        bullets: [
+          "**Big Givers** ranks who gave the most to other players this week: gifts sent, plus cash-drop shares grabbed by others.",
+          "**The top 3 wear the 💛 Generous badge** on their profile for the week.",
+          "**Every cash drop shows up in the City**, so the whole city sees who's making it rain.",
+          "**Giving counts toward top users too:** every 1M given scores 10 (up to 200 a week).",
+          "Gifts are only ever offered: nobody can ask you for money in the game.",
+        ],
+        cta: { label: "See Big Givers", href: "/top?tab=givers" },
+      },
+      {
+        id: "rewards",
+        icon: "💰",
+        title: "Rewards for taking part",
+        summary:
+          "Paid straight into your account when you do these with real players. A bigger reward replaces a smaller one for the same party or Space.",
+        bullets: [
+          "Guests and listeners count once they've stayed 10 minutes.",
+          "Only real accounts count: at least 3 days old, with a verified email.",
+          "Each reward can be earned once per day for each size.",
+        ],
+        table: {
+          headers: ["Do this", "Reward"],
+          rows: [
+            ["Host a party (any kind, any venue) with 10+ friends joining", "AED 10M"],
+            ["Host a party with 5+ friends joining", "AED 3M"],
+            ["Host a party with 3+ friends joining", "AED 1M"],
+            ["Host a Space with 20+ listeners", "AED 10M"],
+            ["Host a Space with 10+ listeners", "AED 5M"],
+            ["Host a Space with 5+ listeners", "AED 1M"],
+            ["A friend joins your party or Space from your invite", "AED 1M each"],
+            ["Someone new signs up with your link and plays", "AED 2M"],
+            ["Win a game against a friend (first 5 a day)", "AED 1M"],
+            ["Spend 10+ minutes at a party or Space", "AED 1M (once a day)"],
+            ["Follow 5 top users when you join", "AED 1M (once)"],
+          ],
+        },
+      },
+    ],
+  },
 ];
 
 export const MAIN_GRID_SLUGS = [
@@ -773,6 +863,7 @@ export const MAIN_GRID_SLUGS = [
   "getting-around",
   "social",
   "games-and-prizes",
+  "top-users",
   "safety-and-scams",
   "glossary",
 ] as const;

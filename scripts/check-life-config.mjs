@@ -328,5 +328,13 @@ for (const v of halls.vendors) {
 if (!hallSql.includes(`interval '${halls.slotHours} hours'`)) { bad++; console.error("halls: slotHours differs from SQL"); }
 if (!hallSql.includes(`p_guests not in (${halls.guestOptions.join(", ")})`)) { bad++; console.error("halls: guestOptions differ from SQL"); }
 if (!hallSql.includes(`p_type not in (${halls.types.map((t) => `'${t.id}'`).join(", ")})`)) { bad++; console.error("halls: event types differ from SQL"); }
-console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving, parking, goals, missions, fun, decorator, penalty, arcade, maternity and hall config match the database.");
+// Social rewards (src/data/social/rewards.json vs public.social_rewards_config()): the same JSON, minus the note.
+{
+  const rewards = JSON.parse(readFileSync("src/data/social/rewards.json", "utf8"));
+  delete rewards._note;
+  const sqlJson = latestDef("social_rewards_config").match(/social_rewards_config\(\)[\s\S]*?select '(\{.*?\})'::jsonb/)?.[1];
+  const norm = (v) => JSON.stringify(v, (_, x) => (x && typeof x === "object" && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort()) : x));
+  if (!sqlJson || norm(JSON.parse(sqlJson)) !== norm(rewards)) { bad++; console.error("social rewards: JSON differs from SQL"); }
+}
+console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving, parking, goals, missions, fun, decorator, penalty, arcade, maternity, hall and social reward config match the database.");
 process.exit(bad ? 1 : 0);

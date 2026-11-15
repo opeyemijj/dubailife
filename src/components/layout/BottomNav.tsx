@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, ListChecks, Map, Smartphone, User, X } from "lucide-react";
+import { BookOpen, Flame, Home, LayoutGrid, ListChecks, Map, Smartphone, Trophy, User, UserPlus, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase/client";
+import { inviteFriends } from "@/lib/invite";
+import { describePost, loadFeed, loadLiveParties } from "@/lib/cityFeed";
 import { useCitizen } from "@/lib/citizenStore";
 import { openDiscover, toTryCount, useDiscover } from "@/lib/discover";
 import { useUnreadTotal } from "@/lib/unread";
@@ -39,26 +43,15 @@ export function BottomNav() {
             <VisaChip />
           </div>
         )}
+        {onMap && <CityStrip />}
         {/* One white bar: the buttons and, on the map, the About and social links under them. */}
         <div className={`bg-white/95 backdrop-blur-2xl border border-white pointer-events-auto shadow-[0_8px_28px_rgba(15,23,42,0.25)] ${onMap ? "rounded-[30px]" : "rounded-full"}`}>
-          <nav className="h-[60px] p-1.5 flex items-center">
+          <nav className="relative h-[60px] p-1.5 flex items-center">
             <NavItem href="/home" icon={<Home className="w-6 h-6" />} label="Home" active={isActive("/home")} />
             <NavItem href="/explore" icon={<Map className="w-6 h-6" />} label="Map" active={isActive("/explore")} />
-            {citizen?.id && <TodoButton />}
-            <button
-              onClick={() => {
-                gameAudio.playClickSound();
-                openLife("profile");
-              }}
-              aria-label="Me"
-              className={`h-full rounded-full flex items-center justify-center gap-2 transition-all active:scale-95 ${
-                isActive("/profile") ? "flex-[1.6] bg-emerald-50 text-emerald-700 font-bold text-lg" : "flex-1 text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <User className="w-6 h-6" />
-              {isActive("/profile") && <span>Me</span>}
-            </button>
+            {citizen?.id && <CityButton active={isActive("/city")} />}
             <PhoneButton unread={unread} />
+            {citizen?.id && <MoreButton active={isActive("/top") || isActive("/wiki")} />}
           </nav>
           {onMap && <MapFooter />}
         </div>
@@ -67,26 +60,122 @@ export function BottomNav() {
   );
 }
 
-/** To do: the same list as on the phone, with how many things are still to try. */
-function TodoButton() {
+/** On the map: the newest thing happening in the City, one line, a tap away (requirements R4). */
+function CityStrip() {
+  const [line, setLine] = useState<{ icon: string; text: string } | null>(null);
+  useEffect(() => {
+    let live = true;
+    const load = async () => {
+      const [posts, parties] = await Promise.all([loadFeed("all"), loadLiveParties()]);
+      if (!live) return;
+      const p = parties[0];
+      if (p) { setLine({ icon: "🎉", text: `@${p.host} is hosting ${p.title ? `"${p.title}"` : "a party"} · ${p.arrived} there` }); return; }
+      const first = posts.find((x) => Date.now() - Date.parse(x.at) < 6 * 3_600_000);
+      setLine(first ? describePost(first) : null);
+    };
+    const first = setTimeout(() => void load(), 2500);
+    const every = setInterval(() => void load(), 120_000);
+    return () => { live = false; clearTimeout(first); clearInterval(every); };
+  }, []);
+  if (!line) return null;
+  return (
+    <Link href="/city" className="pointer-events-auto mb-2 flex items-center gap-2 rounded-full bg-slate-950/80 backdrop-blur text-white px-3.5 py-2 text-xs font-bold shadow-lg">
+      <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0" />
+      <span className="shrink-0">{line.icon}</span>
+      <span className="flex-1 min-w-0 truncate">{line.text}</span>
+      <span className="shrink-0 text-fuchsia-300">City ›</span>
+    </Link>
+  );
+}
+
+/** The City Feed, with a dot when there's a post newer than the last one seen there. */
+function CityButton({ active }: { active: boolean }) {
+  const [fresh, setFresh] = useState(false);
+  useEffect(() => {
+    let live = true;
+    const check = async () => {
+      const { data } = await supabase().rpc("city_latest");
+      let seen = 0;
+      try { seen = Number(localStorage.getItem("city-feed-seen") ?? 0); } catch { /* storage blocked */ }
+      if (live) setFresh(Number(data ?? 0) > seen);
+    };
+    const first = setTimeout(() => void check(), 3000);
+    const every = setInterval(() => void check(), 120_000);
+    const seenNow = () => setFresh(false);
+    window.addEventListener("dubai:city-seen", seenNow);
+    return () => { live = false; clearTimeout(first); clearInterval(every); window.removeEventListener("dubai:city-seen", seenNow); };
+  }, []);
+  return (
+    <Link href="/city" aria-label={fresh ? "City, new posts" : "City"} aria-current={active ? "page" : undefined}
+      className={`relative h-full rounded-full flex items-center justify-center gap-2 transition-all active:scale-95 ${
+        active ? "flex-[1.6] bg-fuchsia-50 text-fuchsia-700 font-bold text-lg" : "flex-1 text-slate-600 hover:text-slate-900"
+      }`}>
+      <Flame className="w-6 h-6" />
+      {active && <span>City</span>}
+      {fresh && !active && <span className="absolute top-2 left-1/2 ml-2 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-white" />}
+    </Link>
+  );
+}
+
+/** More: Me, To do, Top users, Invite friends, How to play, in a small panel above the bar. Counts inside show on it. */
+function MoreButton({ active }: { active: boolean }) {
   useDiscover();
   const count = toTryCount();
+  const router = useRouter();
+  const { citizen } = useCitizen();
+  const [open, setOpen] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  const go = (fn: () => void) => { gameAudio.playClickSound(); setOpen(false); fn(); };
+  const items: { id: string; icon: React.ReactNode; label: string; sub: string; badge?: number; run: () => void }[] = [
+    { id: "me", icon: <User className="w-5 h-5" />, label: "Me", sub: "Profile, look and settings", run: () => openLife("profile") },
+    { id: "todo", icon: <ListChecks className="w-5 h-5" />, label: "To do", sub: "Things to try, with rewards", badge: count, run: () => openDiscover("do") },
+    { id: "top", icon: <Trophy className="w-5 h-5" />, label: "Top users", sub: "This week's top and the richest", run: () => router.push("/top") },
+    {
+      id: "invite", icon: <UserPlus className="w-5 h-5" />, label: "Invite friends", sub: "WhatsApp, share or copy your link",
+      run: async () => {
+        const r = await inviteFriends(citizen?.username);
+        if (r === "copied") { setNote("Invite link copied. Send it to your friends!"); setOpen(true); }
+      },
+    },
+    { id: "wiki", icon: <BookOpen className="w-5 h-5" />, label: "How to play", sub: "The wiki, and how to get to the top", run: () => router.push("/wiki") },
+  ];
   return (
-    <button
-      onClick={() => {
-        gameAudio.playClickSound();
-        openDiscover("do");
-      }}
-      aria-label={count ? `To do, ${count} to try` : "To do"}
-      className="relative flex-1 h-full rounded-full flex items-center justify-center text-slate-600 hover:text-slate-900 transition-all active:scale-95"
-    >
-      <ListChecks className="w-6 h-6" />
-      {count > 0 && (
-        <span className="absolute top-1 left-1/2 ml-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center ring-2 ring-white">
-          {count > 99 ? "99+" : count}
-        </span>
+    <>
+      <button
+        onClick={() => { gameAudio.playClickSound(); setNote(null); setOpen((o) => !o); }}
+        aria-label={count ? `More, ${count} to try` : "More"}
+        aria-expanded={open}
+        className={`relative h-full rounded-full flex items-center justify-center gap-2 transition-all active:scale-95 ${
+          active || open ? "flex-[1.6] bg-emerald-50 text-emerald-700 font-bold text-lg" : "flex-1 text-slate-600 hover:text-slate-900"
+        }`}
+      >
+        <LayoutGrid className="w-6 h-6" />
+        {(active || open) && <span>More</span>}
+        {count > 0 && !open && (
+          <span className="absolute top-1 left-1/2 ml-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center ring-2 ring-white">
+            {count > 99 ? "99+" : count}
+          </span>
+        )}
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-[-1] pointer-events-auto" onClick={() => setOpen(false)} aria-hidden />
+          <div className="absolute bottom-[calc(100%+0.5rem)] right-0 w-[min(20rem,calc(100vw-1.5rem))] rounded-3xl bg-white shadow-[0_12px_40px_rgba(15,23,42,0.3)] p-2 pointer-events-auto animate-[sheetUp_0.18s_ease-out]" role="menu">
+            {items.map((it) => (
+              <button key={it.id} role="menuitem" onClick={() => go(it.run)} className="w-full flex items-center gap-3 rounded-2xl p-2.5 text-left hover:bg-slate-50">
+                <span className="w-10 h-10 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">{it.icon}</span>
+                <span className="flex-1 min-w-0">
+                  <span className="block font-black text-slate-900 leading-tight">{it.label}</span>
+                  <span className="block text-xs text-slate-500 truncate">{it.sub}</span>
+                </span>
+                {it.badge ? <span className="min-w-[22px] h-[22px] px-1.5 rounded-full bg-rose-500 text-white text-xs font-black flex items-center justify-center">{it.badge > 99 ? "99+" : it.badge}</span> : null}
+              </button>
+            ))}
+            {note && <p className="px-3 pb-2 text-xs font-bold text-violet-700">{note}</p>}
+          </div>
+        </>
       )}
-    </button>
+    </>
   );
 }
 

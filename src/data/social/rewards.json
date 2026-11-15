@@ -1,0 +1,11 @@
+{
+  "_note": "Rewards for taking part with other players (requirements R5). Paid by the database (public.social_rewards_config() in *_social_rewards.sql mirrors this exactly; checked by scripts/check-life-config.mjs). A guest or listener counts once they've stayed stayMinutes; only accounts at least minAccountDays old with a verified email count or earn (the follow reward excepted). A bigger party or Space tier replaces a smaller one the same day: the difference is paid.",
+  "eligibility": { "minAccountDays": 3, "verifiedEmail": true, "stayMinutes": 10 },
+  "party": { "tiers": [ { "count": 3, "aed": 1000000 }, { "count": 5, "aed": 3000000 }, { "count": 10, "aed": 10000000 } ] },
+  "space": { "tiers": [ { "count": 5, "aed": 1000000 }, { "count": 10, "aed": 5000000 }, { "count": 20, "aed": 10000000 } ] },
+  "inviteJoin": { "aed": 1000000, "perDay": 10 },
+  "signup": { "aed": 2000000, "playMinutes": 10 },
+  "gameWin": { "aed": 1000000, "perDay": 5 },
+  "attend": { "aed": 1000000, "perDay": 1 },
+  "followTop": { "aed": 1000000, "follows": 5 }
+}
