@@ -21,7 +21,7 @@ import { RemoteEngine, V10, setRaceVolume } from "@/lib/raceAudio";
 
 interface Remote { dist: number; offset: number; speed: number; at: number; done?: boolean }
 /** How often each car sends its position: three times a second with a few cars, down to once a second with ten or
-    more, so a full grid stays within the Realtime message budget (12 cars × 1 a second × 11 listeners). Between
+    more, so a full grid stays within the Realtime message budget (10 cars × 1 a second × 9 listeners, plus anyone watching). Between
     updates the others carry on along the track at their speed, so they still move smoothly. */
 const sendEvery = (cars: number) => Math.max(333, Math.min(1000, cars * 100));
 
@@ -137,9 +137,11 @@ function Skyline() {
 
 // ---------------------------------------------------------------- the cars and the camera
 
-function Cars({ racers, me, mine, remotes, startsAtRef, laps }: {
+function Cars({ racers, me, mine, remotes, startsAtRef, laps, spectator }: {
   racers: Racer[]; me: string; mine: React.RefObject<DriveState & { rpm: number; gear: number }>;
   remotes: React.RefObject<Map<string, Remote>>; startsAtRef: React.RefObject<number>; laps: number;
+  /** Watching, not driving: the camera follows whoever is in front (mine holds the leader's place). */
+  spectator?: boolean;
 }) {
   const groups = useRef(new Map<string, THREE.Group>());
   const camera = useThree((s) => s.camera);
@@ -187,8 +189,8 @@ function Cars({ racers, me, mine, remotes, startsAtRef, laps }: {
       g.rotation.y = pose.yaw;
       if (r.id === me) mePos = pose.p;
     }
-    // The chase camera: behind and above your car, looking up the track.
-    if (mePos) {
+    // The chase camera: behind and above your car (or the leader, when watching), looking up the track.
+    if (mePos || spectator) {
       const ahead = trackPose(meState.dist + 14, meState.offset * 0.6).p;
       const behind = trackPose(meState.dist - 11, meState.offset).p;
       camPos.current.lerp(new THREE.Vector3(behind.x, 4.2 + Math.min(meState.speed, 80) * 0.01, behind.z), Math.min(1, dt * 5));
@@ -218,12 +220,14 @@ function Cars({ racers, me, mine, remotes, startsAtRef, laps }: {
 // ---------------------------------------------------------------- the race
 
 export function RaceScene({ code, me, racers, laps, startsAt, onFinish, onLeave }: {
+  /** me not among the racers: watching (follow the leader, no controls, nothing sent). */
   code: string; me: string; racers: Racer[]; laps: number;
   /** When the race starts, on this device's clock (already corrected for the server's). */
   startsAt: number;
   onFinish: (ms: number) => void; onLeave: () => void;
 }) {
   const quality = useMemo(() => canvasQuality(), []);
+  const spectator = !racers.some((r) => r.id === me);
   const myIndex = Math.max(0, racers.findIndex((r) => r.id === me));
   const myCar = racers[myIndex]?.car ?? "nissan-sunny";
   const perf = useMemo(() => perfOf(myCar), [myCar]);
@@ -233,7 +237,7 @@ export function RaceScene({ code, me, racers, laps, startsAt, onFinish, onLeave 
   const startsAtRef = useRef(startsAt);
   const finished = useRef<number | null>(null);
   const L = TRACK.length;
-  const [hud, setHud] = useState({ speed: 0, gear: 1, lap: 1, pos: 1, time: 0, count: 6, done: null as number | null, left: 6, dots: [] as { id: string; x: number; y: number; me: boolean }[] });
+  const [hud, setHud] = useState({ speed: 0, gear: 1, lap: 1, pos: 1, time: 0, count: 6, done: null as number | null, left: 6, dots: [] as { id: string; x: number; y: number; me: boolean }[], order: [] as string[] });
   const [sound, setSound] = useState(true);
 
   useEffect(() => { startsAtRef.current = startsAt; }, [startsAt]);
@@ -246,19 +250,21 @@ export function RaceScene({ code, me, racers, laps, startsAt, onFinish, onLeave 
       if (!p?.u || p.u === me) return;
       remotes.current.set(p.u, { dist: p.d, offset: p.o, speed: p.v, at: Date.now(), done: !!p.f });
     }).subscribe();
-    const send = setInterval(() => {
+    // Watching: listen only.
+    const send = spectator ? null : setInterval(() => {
       const s = mine.current;
       void ch.send({ type: "broadcast", event: "pos", payload: { u: me, d: Math.round(s.dist * 10) / 10, o: Math.round(s.offset * 10) / 10, v: Math.round(s.speed * 10) / 10, f: finished.current !== null } });
     }, sendEvery(racers.length));
-    return () => { clearInterval(send); void supabase().removeChannel(ch); };
-  }, [code, me, racers.length]);
+    return () => { if (send) clearInterval(send); void supabase().removeChannel(ch); };
+  }, [code, me, racers.length, spectator]);
 
   // Your engine.
   const engine = useRef<V10 | null>(null);
   useEffect(() => {
+    if (spectator) return;
     try { engine.current = new V10(); } catch { engine.current = null; }
     return () => { engine.current?.stop(); engine.current = null; };
-  }, []);
+  }, [spectator]);
 
   // Driving: a fixed-rate loop, so every phone drives the same.
   useEffect(() => {
@@ -269,6 +275,20 @@ export function RaceScene({ code, me, racers, laps, startsAt, onFinish, onLeave 
       last = t;
       const now = Date.now();
       const s = mine.current;
+      // Watching: "mine" is the leader's place on the track, so the camera and the sound follow the race.
+      if (spectator) {
+        let best: Remote | null = null;
+        remotes.current.forEach((R) => { if (!best || R.dist > best.dist) best = R; });
+        const lead = best as Remote | null;
+        if (lead) {
+          const ahead = lead.done ? 0 : Math.min(1.5, (now - lead.at) / 1000) * lead.speed;
+          s.dist += (lead.dist + ahead - s.dist) * Math.min(1, dt * 6);
+          s.offset += (lead.offset - s.offset) * Math.min(1, dt * 4);
+          s.speed = lead.speed;
+        }
+        raf = requestAnimationFrame(tick);
+        return;
+      }
       const go = now >= startsAtRef.current && finished.current === null;
       const inp = go ? input.current : { throttle: 0, brake: 1, steer: 0 };
       // Before the lights: revving on the line.
@@ -291,7 +311,7 @@ export function RaceScene({ code, me, racers, laps, startsAt, onFinish, onLeave 
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [perf, laps, L, onFinish]);
+  }, [perf, laps, L, onFinish, spectator]);
 
   const minimap = useMemo(() => {
     const xs = TRACK.samples.map((s) => s.p.x), zs = TRACK.samples.map((s) => s.p.z);
@@ -316,6 +336,7 @@ export function RaceScene({ code, me, racers, laps, startsAt, onFinish, onLeave 
         speed: Math.round(s.speed * 3.6), gear: s.gear, lap: Math.max(1, Math.min(laps, Math.floor(Math.max(0, s.dist) / L) + 1)),
         pos, time: Math.max(0, (finished.current ?? now - startsAtRef.current)), count: racers.length, done: finished.current,
         left: Math.ceil((startsAtRef.current - now) / 1000), dots,
+        order: racers.map((r, i) => ({ u: r.username, d: all[i] })).sort((a, b) => b.d - a.d).map((x) => x.u),
       });
     }, 100);
     return () => clearInterval(t);
@@ -350,14 +371,16 @@ export function RaceScene({ code, me, racers, laps, startsAt, onFinish, onLeave 
         <directionalLight position={[300, 400, -200]} intensity={1.5} />
         <Suspense fallback={null}>
           <Circuit />
-          <Cars racers={racers} me={me} mine={mine} remotes={remotes} startsAtRef={startsAtRef} laps={laps} />
+          <Cars racers={racers} me={me} mine={mine} remotes={remotes} startsAtRef={startsAtRef} laps={laps} spectator={spectator} />
         </Suspense>
       </Canvas>
 
       {/* HUD */}
       <div className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 flex items-start justify-between pointer-events-none">
         <div className="rounded-2xl bg-slate-950/75 text-white px-3 py-2 space-y-0.5">
-          <p className="text-2xl font-black leading-none">P{hud.pos}<span className="text-sm text-white/60">/{hud.count}</span></p>
+          {spectator
+            ? <p className="text-sm font-black leading-none">👀 Watching</p>
+            : <p className="text-2xl font-black leading-none">P{hud.pos}<span className="text-sm text-white/60">/{hud.count}</span></p>}
           <p className="text-xs font-bold text-white/80">Lap {hud.lap}/{laps}</p>
           <p className="text-xs font-mono text-white/80">{lapTime(hud.time)}</p>
         </div>
@@ -375,7 +398,7 @@ export function RaceScene({ code, me, racers, laps, startsAt, onFinish, onLeave 
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center">
             <p className="text-8xl font-black text-white drop-shadow-[0_4px_20px_rgba(0,0,0,0.6)]">{countdown > 5 ? "🏁" : countdown}</p>
-            <p className="mt-2 text-white font-black drop-shadow">Hold the gas to rev it</p>
+            <p className="mt-2 text-white font-black drop-shadow">{spectator ? "The race is about to start" : "Hold the gas to rev it"}</p>
           </div>
         </div>
       )}
@@ -391,8 +414,15 @@ export function RaceScene({ code, me, racers, laps, startsAt, onFinish, onLeave 
         </div>
       )}
 
+      {/* Watching: the standings, leader first. */}
+      {spectator && (
+        <div className="absolute left-3 bottom-[max(1rem,env(safe-area-inset-bottom))] rounded-2xl bg-slate-950/80 text-white px-3 py-2 space-y-0.5 pointer-events-none">
+          {hud.order.map((u, i) => <p key={u} className={`text-xs font-black ${i === 0 ? "text-amber-300" : "text-white/85"}`}>{i + 1}. @{u}</p>)}
+        </div>
+      )}
+
       {/* The speedo, and the controls on a phone. */}
-      <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] inset-x-3 flex items-end justify-between">
+      {!spectator && <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] inset-x-3 flex items-end justify-between">
         {/* A real wheel: turn it with your thumb; how far you turn it is how hard you steer, and it centres itself. */}
         <SteeringWheel size={132} className="bg-white/25 backdrop-blur-sm ring-1 ring-white/40" onSteer={onSteer} />
         <div className="pointer-events-none rounded-2xl bg-slate-950/75 text-white px-4 py-2 text-center mb-1">
@@ -403,7 +433,7 @@ export function RaceScene({ code, me, racers, laps, startsAt, onFinish, onLeave 
           <Hold k="brake" v={1} set={setInput} label="Brake" className="w-16 h-20 rounded-2xl bg-rose-500/90 text-white font-black text-sm active:bg-rose-500">BRAKE</Hold>
           <Hold k="throttle" v={1} set={setInput} label="Gas" className="w-20 h-24 rounded-2xl bg-emerald-500/90 text-white font-black active:bg-emerald-500">GAS</Hold>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

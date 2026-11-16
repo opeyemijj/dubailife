@@ -15,8 +15,11 @@ import { InviteSheet } from "@/components/share/InviteSheet";
 import { RaceScene } from "@/components/autodrome/RaceScene";
 import { raceAudio } from "@/lib/raceAudio";
 import {
-  finishRace, friendsWithCars, joinRace, lapTime, leaveRace, myRaceCars, raceView, startRace, type RaceCar, type RaceView,
+  finishRace, friendsWithCars, joinRace, lapTime, leaveRace, myRaceCars, prizesFor, raceView, startRace,
+  type RaceCar, type RaceView,
 } from "@/lib/autodrome";
+import { refreshCitizen } from "@/lib/citizenStore";
+import { shortAed } from "@/lib/cityFeed";
 import { gameAudio } from "@/utils/gameAudio";
 
 export default function RacePage({ params }: { params: Promise<{ code: string }> }) {
@@ -35,6 +38,7 @@ export default function RacePage({ params }: { params: Promise<{ code: string }>
   const [sent, setSent] = useState<Record<string, boolean>>({});
   const [cars, setCars] = useState<RaceCar[]>([]);
   const finishedSent = useRef(false);
+  const [watching, setWatching] = useState(false);
 
   const load = useCallback(async () => {
     const r = await raceView(code);
@@ -83,11 +87,17 @@ export default function RacePage({ params }: { params: Promise<{ code: string }>
     return <RaceScene code={code} me={me} racers={view.racers} laps={view.laps} startsAt={startsAt} onFinish={onFinish} onLeave={() => router.push("/autodrome")} />;
   }
 
+  // Watching (not in the race): the race live, following the leader.
+  if (view.status === "racing" && !inRace && watching) {
+    return <RaceScene code={code} me={me} racers={view.racers} laps={view.laps} startsAt={startsAt} onFinish={() => {}} onLeave={() => setWatching(false)} />;
+  }
+
   const join = async (car: number) => {
+    if (view.entryFee > 0 && !window.confirm(`Join for AED ${view.entryFee.toLocaleString()}? You get it back if you leave before the start.`)) return;
     setBusy(true); setError(null);
     const r = await joinRace(code, car);
     setBusy(false);
-    if (r.error) setError(r.error); else void load();
+    if (r.error) setError(r.error); else { void refreshCitizen(); void load(); }
   };
   const start = async () => {
     setBusy(true); setError(null); gameAudio.playClickSound();
@@ -112,6 +122,8 @@ export default function RacePage({ params }: { params: Promise<{ code: string }>
         <p className="text-sm text-white/85">{view.laps} lap{view.laps === 1 ? "" : "s"} · {view.racers.length}/{view.max} cars · {view.status === "lobby" ? "on the grid" : view.status === "racing" ? "racing now" : "finished"}</p>
       </section>
 
+      <Prizes view={view} />
+
       {view.status === "done" || (view.status === "racing" && myEntry?.finishMs) ? (
         <section className="rounded-3xl bg-white/[0.06] border border-white/10 p-4 space-y-2">
           <h2 className="font-black">{view.status === "done" ? "🏆 Results" : "🏁 You finished. Waiting for the others…"}</h2>
@@ -122,13 +134,19 @@ export default function RacePage({ params }: { params: Promise<{ code: string }>
                 <span className="block font-black truncate">@{r.username}</span>
                 <span className="block text-xs text-white/60">{carName(r.car)}</span>
               </Link>
-              <span className="font-mono text-sm">{r.finishMs ? lapTime(r.finishMs) : "racing…"}</span>
+              <span className="text-right">
+                <span className="block font-mono text-sm">{r.finishMs ? lapTime(r.finishMs) : "racing…"}</span>
+                {r.prize ? <span className="block text-xs font-black text-emerald-300">+AED {shortAed(r.prize)}</span> : null}
+              </span>
             </div>
           ))}
           <Link href="/autodrome" className="block text-center h-11 leading-[2.75rem] rounded-2xl bg-red-600 font-black">Race again</Link>
         </section>
       ) : view.status === "racing" ? (
-        <p className="text-center text-white/70 py-6">This race is under way. Open your own and invite friends!</p>
+        <div className="text-center py-4 space-y-3">
+          <p className="text-white/70">This race is under way.</p>
+          <button onClick={() => { raceAudio(); setWatching(true); }} className="h-12 px-6 rounded-full bg-red-600 font-black">👀 Watch it live</button>
+        </div>
       ) : (
         <>
           <section className="rounded-3xl bg-white/[0.06] border border-white/10 p-4 space-y-2">
@@ -148,7 +166,7 @@ export default function RacePage({ params }: { params: Promise<{ code: string }>
               <div className="pt-1 space-y-1.5">
                 <p className="text-xs font-black text-white/60">Join with:</p>
                 <div className="flex gap-2 flex-wrap">
-                  {cars.map((c) => <button key={c.id} onClick={() => void join(c.id)} disabled={busy} className="h-10 px-3 rounded-full bg-red-600 text-xs font-black disabled:opacity-60">{carName(c.car)}</button>)}
+                  {cars.map((c) => <button key={c.id} onClick={() => void join(c.id)} disabled={busy} className="h-10 px-3 rounded-full bg-red-600 text-xs font-black disabled:opacity-60">{carName(c.car)}{view.entryFee > 0 ? ` · AED ${shortAed(view.entryFee)}` : ""}</button>)}
                 </div>
               </div>
             ) : <p className="text-sm text-white/60">You need a car of your own to join.</p>)}
@@ -192,6 +210,35 @@ export default function RacePage({ params }: { params: Promise<{ code: string }>
         <InviteSheet me={citizen.username} kind="race" refId={code} path={`/autodrome/${code}`} title={`${view.laps} laps at the Autodrome`} onClose={() => setSharing(false)} />
       )}
     </Shell>
+  );
+}
+
+/** The pot and what each place wins: winner takes all, or the 1st/2nd/3rd split. All of it is paid out. */
+function Prizes({ view }: { view: RaceView }) {
+  const prizes = prizesFor(view.pot, view.prizeMode, view.split, view.racers.length);
+  const medal = ["🥇", "🥈", "🥉"];
+  return (
+    <section className="rounded-3xl bg-gradient-to-br from-amber-500/25 to-amber-900/10 border border-amber-400/30 p-4 space-y-2">
+      <div className="flex items-center justify-between">
+        <h2 className="font-black">💰 Prize pot</h2>
+        <p className="text-xl font-black text-amber-300">AED {shortAed(view.pot)}</p>
+      </div>
+      <p className="text-xs text-white/70">
+        {view.entryFee > 0 ? `Entry AED ${shortAed(view.entryFee)} a driver. ` : "Free to enter. "}
+        {view.prizeMode === "winner" ? "Winner takes all." : `1st, 2nd and 3rd share it ${view.split.join(" / ")}.`}
+        {view.entryFee > 0 ? " Leave the grid before the start and you get your entry back." : ""}
+      </p>
+      {view.pot > 0 && (
+        <div className="flex gap-2">
+          {prizes.map((p, i) => (
+            <div key={i} className="flex-1 rounded-2xl bg-white/10 px-3 py-2 text-center">
+              <p className="text-lg">{medal[i]}</p>
+              <p className="font-black text-sm">AED {shortAed(p)}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 

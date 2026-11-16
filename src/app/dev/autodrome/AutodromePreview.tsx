@@ -20,5 +20,7 @@ export function AutodromePreview() {
       </div>
     );
   }
-  return <RaceScene code="DEVTEST" me="me" racers={RACERS} laps={1} startsAt={start} onFinish={() => {}} onLeave={() => setStart(null)} />;
+  // ?watch=1: as a spectator (not in the race).
+  const watch = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("watch") === "1";
+  return <RaceScene code="DEVTEST" me={watch ? "spectator" : "me"} racers={RACERS} laps={1} startsAt={start} onFinish={() => {}} onLeave={() => setStart(null)} />;
 }

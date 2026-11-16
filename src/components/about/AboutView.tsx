@@ -468,6 +468,18 @@ export function AboutView() {
             <Link href="/credits" className="hover:text-emerald-500">
               Credits
             </Link>
+            <Link href="/cookies" className="hover:text-emerald-500">
+              Cookie Policy
+            </Link>
+            <Link href="/community-guidelines" className="hover:text-emerald-500">
+              Community Guidelines
+            </Link>
+            <Link href="/investors" className="hover:text-emerald-500">
+              Investors
+            </Link>
+            <Link href="/contact" className="hover:text-emerald-500">
+              Contact
+            </Link>
             <Link href="/wiki" className="hover:text-emerald-500">
               Citizen Codex (Wiki)
             </Link>

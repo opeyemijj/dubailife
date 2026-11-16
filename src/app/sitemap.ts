@@ -25,6 +25,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE.url}/scam-check`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
     { url: `${SITE.url}/privacy`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE.url}/credits`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${SITE.url}/legal`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
+    { url: `${SITE.url}/cookies`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${SITE.url}/community-guidelines`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
+    { url: `${SITE.url}/purchases`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${SITE.url}/prize-rules`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
+    { url: `${SITE.url}/delete-account`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${SITE.url}/contact`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
+    { url: `${SITE.url}/investors`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE.url}/terms`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
   ];
 

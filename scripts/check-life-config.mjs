@@ -336,6 +336,16 @@ if (!hallSql.includes(`p_type not in (${halls.types.map((t) => `'${t.id}'`).join
   const norm = (v) => JSON.stringify(v, (_, x) => (x && typeof x === "object" && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort()) : x));
   if (!sqlJson || norm(JSON.parse(sqlJson)) !== norm(rewards)) { bad++; console.error("social rewards: JSON differs from SQL"); }
 }
+// Autodrome entry fees and prize split (src/data/autodrome/entry.json vs race_entry_rules(), minus the note).
+{
+  const entry = JSON.parse(readFileSync("src/data/autodrome/entry.json", "utf8"));
+  delete entry._note;
+  const sqlJson = latestDef("race_entry_rules").match(/race_entry_rules\(\)[\s\S]*?select '(\{.*?\})'::jsonb/)?.[1];
+  const norm = (v) => JSON.stringify(v, (_, x) => (x && typeof x === "object" && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort()) : x));
+  if (!sqlJson || norm(JSON.parse(sqlJson)) !== norm(entry)) { bad++; console.error("autodrome prizes: JSON differs from SQL"); }
+  if (!readdirSync("supabase/migrations").some((f) => readFileSync(`supabase/migrations/${f}`, "utf8").includes(`check (max_racers between 2 and ${entry.maxRacers})`))) { bad++; console.error("autodrome: maxRacers differs from SQL"); }
+  if (entry.split.reduce((a, b) => a + b, 0) !== 100) { bad++; console.error("autodrome: the split must add up to 100"); }
+}
 // Hotel suites and room service (src/data/hotels/suites.json vs hotel_suite_rule() and hotel_service_price()).
 {
   const hotels = JSON.parse(readFileSync("src/data/hotels/suites.json", "utf8"));
@@ -344,5 +354,5 @@ if (!hallSql.includes(`p_type not in (${halls.types.map((t) => `'${t.id}'`).join
   for (const it of hotels.roomService) if (!svcSql.includes(`when '${it.id}' then ${it.price}`)) { bad++; console.error(`room service ${it.id}: price differs from SQL`); }
   if (!latestDef("book_hotel").includes(`p_nights not in (${hotels.nights.join(", ")})`)) { bad++; console.error("hotel nights differ from SQL"); }
 }
-console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving, parking, goals, missions, fun, decorator, penalty, arcade, maternity, hall, social reward and hotel config match the database.");
+console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving, parking, goals, missions, fun, decorator, penalty, arcade, maternity, hall, social reward, hotel and Autodrome prize config match the database.");
 process.exit(bad ? 1 : 0);

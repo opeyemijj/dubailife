@@ -1,7 +1,7 @@
 "use client";
 
 // Dubai Autodrome (src/app/autodrome): the circuit, how each car drives on it, and the races (lobby, start, finish:
-// supabase/migrations/*_autodrome.sql). Up to 12 cars. During a race, positions go player to player on the Realtime
+// supabase/migrations/*_autodrome.sql). Up to 10 cars, an entry fee each and prizes from the pot (src/data/autodrome/entry.json). During a race, positions go player to player on the Realtime
 // channel race:<code>, three times a second with a few cars and once a second with a full grid; between updates each
 // car carries on along the track at its last speed, so it moves smoothly without flooding the channel.
 
@@ -110,9 +110,14 @@ export function gearbox(speed: number, top: number) {
 
 // ---------------------------------------------------------------- races
 
-export interface Racer { id: string; username: string; look: AvatarLookProps | null; car: string; plate: string | null; finishMs: number | null; place: number | null }
-export interface RaceView { code: string; hostId: string; host: string; laps: number; max: number; status: "lobby" | "racing" | "done" | "cancelled"; startsAt: string | null; now: string; racers: Racer[] }
-export interface OpenRace { code: string; host: string; look: AvatarLookProps | null; laps: number; status: string; racers: number; max: number }
+export type PrizeMode = "winner" | "top3";
+export interface Racer { id: string; username: string; look: AvatarLookProps | null; car: string; plate: string | null; finishMs: number | null; place: number | null; prize?: number | null }
+export interface RaceView {
+  code: string; hostId: string; host: string; laps: number; max: number; status: "lobby" | "racing" | "done" | "cancelled"; startsAt: string | null; now: string; racers: Racer[];
+  /** What each driver pays to join, the split, and the pot so far (all of it paid out). */
+  entryFee: number; prizeMode: PrizeMode; pot: number; split: number[];
+}
+export interface OpenRace { code: string; host: string; look: AvatarLookProps | null; laps: number; status: string; racers: number; max: number; entryFee: number; prizeMode: PrizeMode; pot: number }
 export interface RaceCar { id: number; car: string; plate: string | null }
 
 const ERR: Record<string, string> = {
@@ -122,6 +127,8 @@ const ERR: Record<string, string> = {
   need_two: "You need at least one other driver to start.",
   not_host: "Only the host can start the race.",
   no_race: "That race doesn't exist any more.",
+  insufficient_funds: "You don't have enough for the entry fee.",
+  bad_fee: "Pick one of the entry fees.",
 };
 const friendly = (m: string) => ERR[Object.keys(ERR).find((k) => m.includes(k)) ?? ""] ?? "Something went wrong. Try again.";
 
@@ -131,7 +138,7 @@ async function call<T>(fn: string, args: Record<string, unknown>): Promise<{ dat
 }
 export const myRaceCars = () => call<RaceCar[]>("my_race_cars", {});
 export const openRaces = () => call<OpenRace[]>("open_races", {});
-export const createRace = (car: number, laps: number) => call<string>("create_race", { p_car: car, p_laps: laps });
+export const createRace = (car: number, laps: number, fee: number, mode: PrizeMode) => call<string>("create_race", { p_car: car, p_laps: laps, p_fee: fee, p_mode: mode });
 export const joinRace = (code: string, car: number) => call<null>("join_race", { p_code: code, p_car: car });
 export const leaveRace = (code: string) => call<null>("leave_race", { p_code: code });
 export const startRace = (code: string) => call<string>("start_race", { p_code: code });
@@ -141,3 +148,12 @@ export const friendsWithCars = () => call<{ id: string; username: string; look: 
 
 /** "1:23.4" */
 export const lapTime = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor((ms % 60000) / 1000)).padStart(2, "0")}.${Math.floor((ms % 1000) / 100)}`;
+
+/** What each place wins from the pot: winner takes all, or the 1st/2nd/3rd split (a share nobody claims goes to 1st). */
+export function prizesFor(pot: number, mode: PrizeMode, split: number[], cars: number): number[] {
+  if (mode === "winner") return [pot];
+  const places = Math.max(1, Math.min(3, cars));
+  const shares = split.slice(0, places).map((p) => Math.floor((pot * p) / 100));
+  shares[0] += pot - shares.reduce((a, b) => a + b, 0);
+  return shares;
+}

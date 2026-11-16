@@ -626,6 +626,7 @@ function SettingsTab({ onClose, onProfile }: { onClose: () => void; onProfile: (
       <Link href="/wallet" onClick={onClose} className="flex items-center gap-3 rounded-3xl bg-slate-100/80 p-4 font-bold">💳 <span className="flex-1">Wallet</span>›</Link>
       <Link href="/guide" onClick={onClose} className="flex items-center gap-3 rounded-3xl bg-amber-50 p-4 font-bold">📖 <span className="flex-1">How Dubai works<span className="block text-xs font-semibold text-slate-500">Visas, money, jobs, prizes and more</span></span>›</Link>
       <Link href="/credits" onClick={onClose} className="flex items-center gap-3 rounded-3xl bg-slate-100/80 p-4 font-bold">🎬 <span className="flex-1">Credits<span className="block text-xs font-semibold text-slate-500">The artists and software behind the game</span></span>›</Link>
+      <Link href="/legal" onClick={onClose} className="flex items-center gap-3 rounded-3xl bg-slate-100/80 p-4 font-bold">⚖️ <span className="flex-1">Legal &amp; privacy<span className="block text-xs font-semibold text-slate-500">Terms, privacy, cookies, rules and your data</span></span>›</Link>
       <div className="hidden sm:flex items-center gap-3 rounded-3xl bg-slate-100/80 p-4 text-sm text-slate-600">⌨️ <span className="flex-1">Press <kbd className="px-1.5 py-0.5 rounded bg-white font-mono font-bold">S</kbd> anywhere to open this panel, <kbd className="px-1.5 py-0.5 rounded bg-white font-mono font-bold">?</kbd> for all shortcuts.</span></div>
       <EmailRow />
       <BlockedPlayers />
