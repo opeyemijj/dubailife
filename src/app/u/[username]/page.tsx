@@ -68,7 +68,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
     setBusy(false);
     setP({ ...p, iFollow: !p.iFollow, followers: p.followers + (p.iFollow ? -1 : 1) });
   };
-  const seen = p.online ? "Online now" : p.lastSeen ? `Last seen ${ago(p.lastSeen)} ago` : null;
+  const seen = p.online ? "Available to chat" : p.lastSeen ? `Last seen ${ago(p.lastSeen)} ago` : null;
 
   return (
     <Shell>

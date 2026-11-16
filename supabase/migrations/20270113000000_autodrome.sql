@@ -175,7 +175,7 @@ create or replace function public.friends_with_cars() returns jsonb
 language sql stable security definer set search_path = public as $$
   select coalesce(jsonb_agg(x), '[]'::jsonb) from (
     select jsonb_build_object('id', p.id, 'username', p.username, 'look', p.citizen -> 'look',
-             'online', exists (select 1 from online_now o where o.user_id = p.id and o.seen_at > now() - interval '2 minutes'),
+             'online', not p.chat_off and exists (select 1 from online_now o where o.user_id = p.id and o.seen_at > now() - interval '2 minutes'),
              'car', (select c.car from owned_cars c where c.user_id = p.id and not coalesce(c.is_stolen, false) order by c.price desc nulls last limit 1)) as x
       from friendships f join profiles p on p.id = case when f.user_id = auth.uid() then f.friend_id else f.user_id end
      where f.status = 'accepted' and auth.uid() in (f.user_id, f.friend_id)

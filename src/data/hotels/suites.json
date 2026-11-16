@@ -1,0 +1,24 @@
+{
+  "_note": "Hotel stays (src/app/hotels, src/app/hotel/[stayId]): luxury suites only, at any hotel on the map. Every suite has the king bed, an in-suite jacuzzi on the terrace, a spa room (massage table and steam room), a gaming lounge, a minibar and room service. Prices per night (AED) and room-service prices are mirrored exactly in public.hotel_suite_rule() and public.hotel_service_price() (*_hotels.sql; checked by scripts/check-life-config.mjs). Nights: the lengths you can book.",
+  "nights": [1, 2, 3, 7],
+  "suites": [
+    { "id": "deluxe", "name": "Deluxe Skyline Suite", "perNight": 25000, "icon": "🌆", "blurb": "King bed, jacuzzi on the terrace, a spa room and floor-to-ceiling skyline views.", "perks": ["King bed", "Terrace jacuzzi", "Spa room", "Gaming lounge", "Minibar"] },
+    { "id": "royal", "name": "Royal Jacuzzi Suite", "perNight": 60000, "icon": "👑", "blurb": "Gold and marble, a bigger jacuzzi, steam room and a private massage therapist.", "perks": ["King canopy bed", "Terrace jacuzzi", "Steam room", "Private massage", "Gaming lounge", "Champagne minibar"] },
+    { "id": "presidential", "name": "Presidential Penthouse Suite", "perNight": 150000, "icon": "💎", "blurb": "The top floor: a butler on call, the best view in the hotel and everything in the Royal Suite.", "perks": ["Butler on call", "King canopy bed", "Terrace jacuzzi", "Steam room", "Private massage", "Gaming lounge", "Grand piano"] }
+  ],
+  "roomService": [
+    { "id": "breakfast", "name": "Arabic breakfast in bed", "icon": "🥐", "price": 450, "need": "hunger", "amount": 45 },
+    { "id": "wagyu", "name": "Wagyu steak dinner", "icon": "🥩", "price": 1200, "need": "hunger", "amount": 75 },
+    { "id": "sushi", "name": "Sushi platter", "icon": "🍣", "price": 900, "need": "hunger", "amount": 60 },
+    { "id": "mocktails", "name": "Gold-leaf mocktails", "icon": "🍹", "price": 350, "need": "social", "amount": 30 },
+    { "id": "dessert", "name": "Chocolate fondant & karak", "icon": "🍫", "price": 300, "need": "fun", "amount": 25 }
+  ],
+  "activities": [
+    { "id": "sleep", "label": "Sleep in the king bed", "icon": "🛏️", "need": "energy", "amount": 80, "animation": "sleep" },
+    { "id": "jacuzzi", "label": "Soak in the jacuzzi", "icon": "🛁", "need": "energy", "amount": 40, "also": { "need": "fun", "amount": 25 }, "animation": "sit" },
+    { "id": "massage", "label": "Spa massage", "icon": "💆", "need": "hygiene", "amount": 50, "also": { "need": "energy", "amount": 30 }, "animation": "sleep" },
+    { "id": "steam", "label": "Steam room", "icon": "♨️", "need": "hygiene", "amount": 60, "animation": "sit" },
+    { "id": "games", "label": "Play games on the big screen", "icon": "🎮", "need": "fun", "amount": 40, "animation": "sit" },
+    { "id": "minibar", "label": "Help yourself to the minibar", "icon": "🍾", "need": "social", "amount": 20, "also": { "need": "fun", "amount": 15 }, "animation": "drink" }
+  ]
+}

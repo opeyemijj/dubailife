@@ -115,6 +115,10 @@ export const getEntityCategoryInfo = (entity: any) => {
   const id = (entity?.id || '').toLowerCase();
   const name = (entity?.name || '').toLowerCase();
 
+  // 0. Cars & Racing: the Autodrome, and the car showrooms and rentals on Sheikh Zayed Road.
+  if (id === 'dubai-autodrome') return { icon: '🏁', category: 'Cars & Racing', key: 'racing', color: 'from-red-500 to-rose-700', badgeBg: 'bg-red-900/60 border-red-500/40 text-red-200' };
+  if (type === 'szr-cars') return { icon: '🚗', category: 'Cars & Racing', key: 'racing', color: 'from-red-500 to-rose-700', badgeBg: 'bg-red-900/60 border-red-500/40 text-red-200' };
+
   // 1. Small Houses / Residential Homes (Checked FIRST to avoid any substring overlap)
   if (type === 'small-house' || type === 'house' || type === 'townhouse' || id.includes('mews') || id.includes('small-house') || name.includes('mews') || name.includes('smart home') || (name.includes('house') && !name.includes('opera'))) {
     return { icon: '🏡', category: 'Residential Homes', key: 'houses', color: 'from-emerald-500 to-teal-600', badgeBg: 'bg-green-900/60 border-green-500/40 text-green-200' };
@@ -1320,6 +1324,9 @@ export function InteractiveMap({
                 }
                 if (q === 'club' || q === 'clubs' || q === 'nightlife') {
                   return catInfo.key === 'clubs';
+                }
+                if (/^(race|races|racing|race track|track|circuit|autodrome|drift|drag|car race|car races|cars|car|dealer|dealers|showroom|rent a car|car rental)$/.test(q)) {
+                  return catInfo.key === 'racing';
                 }
                 if (q === 'villa' || q === 'villas') {
                   return catInfo.key === 'villas';

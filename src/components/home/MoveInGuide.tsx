@@ -11,7 +11,7 @@ export function MoveInGuide({ name, decorated, hired, onShop, onMove, onDecorato
   name: string; decorated: boolean; hired: boolean; onShop: () => void; onMove: () => void; onDecorator: () => void; onDone: () => void;
 }) {
   return (
-    <div className="fixed inset-x-3 bottom-[max(5.5rem,calc(env(safe-area-inset-bottom)+5.5rem))] z-[60] flex justify-center animate-[sheetUp_0.3s_ease-out]" role="dialog" aria-label="Decorate your home">
+    <div className="fixed inset-x-3 bottom-[max(6.25rem,calc(env(safe-area-inset-bottom)+6rem))] z-[60] flex justify-center animate-[sheetUp_0.3s_ease-out]" role="dialog" aria-label="Decorate your home">
       <div className="w-full max-w-md rounded-[26px] bg-white text-slate-900 p-4 shadow-2xl space-y-2.5">
         {decorated ? (
           <>

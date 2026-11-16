@@ -19,7 +19,7 @@ begin
   out := jsonb_build_object(
     'id', p.id, 'username', p.username, 'name', p.display_name, 'look', p.citizen -> 'look',
     'joined', p.created_at,
-    'online', exists (select 1 from online_now o where o.user_id = p.id and o.seen_at > now() - interval '2 minutes'),
+    'online', not p.chat_off and exists (select 1 from online_now o where o.user_id = p.id and o.seen_at > now() - interval '2 minutes'),
     'lastSeen', p.last_seen,
     'isMe', p.id = me,
     'worth', jsonb_build_object('total', p.balance + homes_v + cars_v, 'cash', p.balance, 'homes', homes_v, 'cars', cars_v),

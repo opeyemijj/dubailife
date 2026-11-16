@@ -165,7 +165,7 @@ export default function RacePage({ params }: { params: Promise<{ code: string }>
                   <span className={`w-2.5 h-2.5 rounded-full ${f.online ? "bg-emerald-500" : "bg-slate-500"}`} />
                   <div className="flex-1 min-w-0">
                     <p className="font-black truncate">@{f.username}</p>
-                    <p className="text-xs text-white/60">{f.car ? carName(f.car) : ""}{f.online ? " · online" : ""}</p>
+                    <p className="text-xs text-white/60">{f.car ? carName(f.car) : ""}{f.online ? " · available to chat" : ""}</p>
                   </div>
                   {view.racers.some((r) => r.id === f.id) ? <span className="text-xs font-black text-emerald-400">On the grid</span>
                     : sent[f.id] ? <span className="text-xs font-black text-white/60">Invited ✓</span>

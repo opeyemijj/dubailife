@@ -100,6 +100,8 @@ export interface ApartmentRoomProps {
   myAnimation?: AvatarAnimation;
   /** Where you start in the room (x, z), when it isn't the usual spot. */
   startAt?: [number, number];
+  /** Go to a spot now (x, z, facing): each new n moves you there (a hotel suite's jacuzzi, spa table…). */
+  goTo?: { n: number; at: [number, number]; yaw?: number };
   /** Where you are as you move about (x, z, facing, walking), so others can see you live. */
   onMove?: (x: number, z: number, yaw: number, walking: boolean, lift?: number, rest?: "sit" | "sleep") => void;
   /** Sit down (on the nearest free seat: sofa, armchair, chair, majlis) or stand up again. Each new `n` is a new ask. */
@@ -1494,6 +1496,7 @@ function RoomScene({
   onBabyDown,
   myAnimation,
   startAt,
+  goTo,
   onMove,
   seatCall,
   fixtureCall,
@@ -1705,6 +1708,13 @@ function RoomScene({
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- a new spot only
   }, [startKey]);
+  // Asked to go somewhere now: there, facing the way given.
+  useEffect(() => {
+    if (!goTo) return;
+    const t = setTimeout(() => setPose({ position: [goTo.at[0], 0, goTo.at[1]], yaw: goTo.yaw ?? Math.PI / 4 }), 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- a new ask only
+  }, [goTo?.n]);
   const [walkTarget, setWalkTarget] = useState<[number, number] | null>(null);
   // Others in the room see where you are.
   const moveRef = useRef(onMove);

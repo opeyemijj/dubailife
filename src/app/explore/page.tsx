@@ -9,7 +9,7 @@ import dynamic from "next/dynamic";
 import { SmallLoader } from "@/components/GameLoadingScreen";
 import { TopBar } from "@/components/layout/TopBar";
 import { BottomNav } from "@/components/layout/BottomNav";
-import { Search, Coffee, Music, ShoppingBag, Trophy, Navigation, Home, X, SlidersHorizontal, Building2, Building, Sparkles } from "lucide-react";
+import { Search, Coffee, Music, ShoppingBag, Trophy, Navigation, Home, X, SlidersHorizontal, Building2, Building, Sparkles, Flag } from "lucide-react";
 
 const InteractiveMap = dynamic(
   () => import("@/components/map/InteractiveMap").then((mod) => mod.InteractiveMap),
@@ -55,6 +55,7 @@ function Explore() {
     { id: "clubs", label: "Clubs & Nightlife", icon: <Music className="w-3.5 h-3.5" /> },
     { id: "food", label: "Dining & Cafes", icon: <Coffee className="w-3.5 h-3.5" /> },
     { id: "attractions", label: "Tourist Attractions", icon: <Sparkles className="w-3.5 h-3.5 text-amber-400" /> },
+    { id: "racing", label: "Cars & Racing", icon: <Flag className="w-3.5 h-3.5 text-red-400" /> },
     { id: "hotels", label: "Hotels & Resorts", icon: <Building2 className="w-3.5 h-3.5" /> },
     { id: "towers", label: "High-Rise Towers", icon: <Building className="w-3.5 h-3.5" /> },
     { id: "villas", label: "Luxury Villas", icon: <Trophy className="w-3.5 h-3.5" /> },
@@ -103,7 +104,7 @@ function Explore() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") setSearchOpen(false); }}
-              placeholder="Search Burj Khalifa, Ting Irie, villas..." 
+              placeholder="Search Burj Khalifa, car race, villas..." 
               className="w-full h-11 sm:h-12 pl-11 pr-20 bg-slate-950/85 hover:bg-slate-950/95 focus:bg-slate-950 backdrop-blur-xl border border-white/20 text-white text-xs sm:text-sm rounded-2xl placeholder:text-slate-400 font-bold focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all shadow-xl"
             />
 

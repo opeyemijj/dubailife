@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { BookOpen, Briefcase, Flame, Gamepad2, LayoutGrid, ListChecks, MessageCircle, Mic, Target, Trophy, User, UserPlus, Wallet, X } from "lucide-react";
+import { BedDouble, BookOpen, Briefcase, Flag, Flame, Gamepad2, LayoutGrid, ListChecks, MessageCircle, Mic, Target, Trophy, User, UserPlus, Wallet, X } from "lucide-react";
 import { openPhone } from "@/components/layout/PhoneOverlay";
 import { useCitizen } from "@/lib/citizenStore";
 import { openDiscover, toTryCount, useDiscover } from "@/lib/discover";
@@ -49,6 +49,8 @@ export function MoreSheet() {
     { id: "city", icon: <Flame className="w-5 h-5" />, label: "City", tone: "bg-fuchsia-100 text-fuchsia-700", run: () => router.push("/city") },
     { id: "spaces", icon: <Mic className="w-5 h-5" />, label: "Spaces", tone: "bg-purple-100 text-purple-700", run: () => openPhone("spaces") },
     { id: "games", icon: <Gamepad2 className="w-5 h-5" />, label: "Games", tone: "bg-green-100 text-green-700", run: () => openPhone("games") },
+    { id: "race", icon: <Flag className="w-5 h-5" />, label: "Car race", tone: "bg-red-100 text-red-700", run: () => router.push("/autodrome") },
+    { id: "hotels", icon: <BedDouble className="w-5 h-5" />, label: "Hotels", tone: "bg-amber-100 text-amber-700", run: () => router.push("/hotels") },
     { id: "jobs", icon: <Briefcase className="w-5 h-5" />, label: "Jobs", tone: "bg-sky-100 text-sky-700", run: () => router.push("/jobs") },
     { id: "wallet", icon: <Wallet className="w-5 h-5" />, label: "Wallet", tone: "bg-orange-100 text-orange-700", run: () => router.push("/wallet") },
     {

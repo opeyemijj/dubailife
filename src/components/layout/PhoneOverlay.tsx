@@ -129,6 +129,8 @@ function Phone({ me, start, onClose, onMetro }: { me: string; start: Screen; onC
     { id: "marathon", name: "Marathon", icon: "🏅", bg: "from-emerald-500 to-teal-700", href: "/marathon" },
     { id: "messages", name: "Messages", icon: "💬", bg: "from-sky-400 to-blue-600", screen: "page:/phone", badge: unread },
     { id: "city", name: "City", icon: "🔥", bg: "from-fuchsia-500 to-rose-600", href: "/city" },
+    { id: "racing", name: "Car Race", icon: "🏁", bg: "from-red-500 to-slate-900", href: "/autodrome" },
+    { id: "hotels", name: "Hotels", icon: "🏨", bg: "from-amber-400 to-yellow-700", href: "/hotels" },
     { id: "jobs", name: "Jobs", icon: "💼", bg: "from-emerald-400 to-emerald-700", screen: "jobs" },
     { id: "goals", name: "Goals", icon: "🎯", bg: "from-teal-400 to-emerald-700", screen: "page:/goals" },
     { id: "wallet", name: "Wallet", icon: "💳", bg: "from-amber-300 to-orange-500", screen: "page:/wallet" },

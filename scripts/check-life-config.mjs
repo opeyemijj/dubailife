@@ -336,5 +336,13 @@ if (!hallSql.includes(`p_type not in (${halls.types.map((t) => `'${t.id}'`).join
   const norm = (v) => JSON.stringify(v, (_, x) => (x && typeof x === "object" && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort()) : x));
   if (!sqlJson || norm(JSON.parse(sqlJson)) !== norm(rewards)) { bad++; console.error("social rewards: JSON differs from SQL"); }
 }
-console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving, parking, goals, missions, fun, decorator, penalty, arcade, maternity, hall and social reward config match the database.");
+// Hotel suites and room service (src/data/hotels/suites.json vs hotel_suite_rule() and hotel_service_price()).
+{
+  const hotels = JSON.parse(readFileSync("src/data/hotels/suites.json", "utf8"));
+  const suiteSql = latestDef("hotel_suite_rule"), svcSql = latestDef("hotel_service_price");
+  for (const su of hotels.suites) if (!suiteSql.includes(`when '${su.id}' then ${su.perNight}`)) { bad++; console.error(`hotel suite ${su.id}: price differs from SQL`); }
+  for (const it of hotels.roomService) if (!svcSql.includes(`when '${it.id}' then ${it.price}`)) { bad++; console.error(`room service ${it.id}: price differs from SQL`); }
+  if (!latestDef("book_hotel").includes(`p_nights not in (${hotels.nights.join(", ")})`)) { bad++; console.error("hotel nights differ from SQL"); }
+}
+console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving, parking, goals, missions, fun, decorator, penalty, arcade, maternity, hall, social reward and hotel config match the database.");
 process.exit(bad ? 1 : 0);

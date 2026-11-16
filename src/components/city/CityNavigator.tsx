@@ -26,6 +26,9 @@ import { DriveJourney } from "@/components/cars/DriveJourney";
 import { drivables, fuelFor, useGarage, type Drivable } from "@/lib/cars";
 import { reloadServices } from "@/lib/cityServices";
 import { openPhone } from "@/components/layout/PhoneOverlay";
+import Link from "next/link";
+import { BookSuite } from "@/components/hotel/BookSuite";
+import { myStay, type Stay } from "@/lib/hotels";
 
 export type TravelMode = "walk" | "taxi" | "metro" | "direct" | "drive";
 
@@ -283,6 +286,7 @@ function PlaceIntro({ place, onPick }: { place: Place; onPick: (v: Venue) => voi
 
   return (
     <>
+      {place.kind === "hotel" && <HotelStayButton place={place} />}
       <div className="space-y-2">
         <p className="text-[17px] text-slate-500 leading-relaxed">{place.blurb}</p>
         <button onClick={share} className="flex items-center gap-2 text-[17px] font-semibold text-sky-600 hover:underline text-left"><Link2 className="w-5 h-5 shrink-0" /> Share a link to {place.name}</button>
@@ -314,6 +318,26 @@ function PlaceIntro({ place, onPick }: { place: Place; onPick: (v: Venue) => voi
           </div>
         )}
       </div>
+    </>
+  );
+}
+
+/** At a hotel: book a luxury suite here (or go back up to the one you're staying in). */
+function HotelStayButton({ place }: { place: Place }) {
+  const [open, setOpen] = useState(false);
+  const [stay, setStay] = useState<Stay | null>(null);
+  useEffect(() => { void myStay().then((r) => setStay(r.data ?? null)); }, []);
+  if (stay && stay.place_id === place.id) {
+    return <Link href={`/hotel/${stay.id}`} className="w-full flex items-center gap-3 rounded-2xl bg-amber-400 text-slate-950 p-3 font-black">🛎️ <span className="flex-1">Go up to your suite · room {stay.room}</span>›</Link>;
+  }
+  return (
+    <>
+      <button onClick={() => setOpen(true)} className="w-full flex items-center gap-3 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 p-3 text-left">
+        <span className="text-2xl">🛏️</span>
+        <span className="flex-1"><span className="block font-black">Book a luxury suite</span><span className="block text-xs font-semibold text-slate-800/80">King bed, jacuzzi, spa room and gaming lounge, from AED 25,000 a night</span></span>
+        <span className="font-black">›</span>
+      </button>
+      {open && <BookSuite placeId={place.id} hotel={place.name} onClose={() => setOpen(false)} />}
     </>
   );
 }

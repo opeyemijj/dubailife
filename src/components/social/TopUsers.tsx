@@ -25,7 +25,8 @@ interface TopRow {
   id: string; username: string; look?: AvatarLookProps | null; friend?: FriendStatus;
   score?: number; hosted?: number; guests?: number; spaces?: number; listeners?: number; wins?: number; invited?: number; gave?: number;
   total?: number; gifts?: number; drops?: number;
-  period?: "this_week" | "last_week" | "month" | "active" | "ever"; placeId?: string | null;
+  /** Which week they're on the list for: this_week, last_week, weeks_ago:N, month, ever, or active (filling up). */
+  period?: string; placeId?: string | null;
 }
 
 const RPC: Record<TopTab, string> = { week: "top_users_week", rich: "richest_users", givers: "big_givers_week", online: "online_players" };
@@ -40,17 +41,21 @@ export async function addFriend(id: string): Promise<FriendStatus> {
   return error ? null : ((data as FriendStatus) ?? null);
 }
 
+/** " · last week", " · 3 weeks ago", or nothing for this week. */
+const whenOf = (period?: string) =>
+  !period || period === "this_week" ? "" : period === "last_week" ? " · last week" : period.startsWith("weeks_ago:") ? ` · ${period.slice(10)} weeks ago`
+    : period === "month" ? " · this month" : period === "ever" ? " · all time" : "";
+
 /** Why they're on the list, in a few words. */
 function reason(r: TopRow, tab: TopTab): string {
   if (tab === "online") {
     const place = r.placeId ? getPlace(r.placeId)?.name : null;
-    return place ? `Online now · at ${place}` : "Online now";
+    return place ? `Available to chat · at ${place}` : "Available to chat";
   }
   if (tab === "rich") return `Net worth AED ${shortAed(Number(r.total ?? 0))}`;
   if (tab === "givers") {
     const bits = [r.gifts ? `gifts AED ${shortAed(Number(r.gifts))}` : "", r.drops ? `cash drops AED ${shortAed(Number(r.drops))}` : ""].filter(Boolean);
-    const when = r.period === "last_week" ? " last week" : r.period === "month" ? " this month" : r.period === "ever" ? "" : " this week";
-    return `Gave AED ${shortAed(Number(r.total ?? 0))}${when}${bits.length ? ` (${bits.join(", ")})` : ""}`;
+    return `Gave AED ${shortAed(Number(r.total ?? 0))}${bits.length ? ` (${bits.join(", ")})` : ""}${whenOf(r.period) || (r.period === "this_week" ? " this week" : "")}`;
   }
   if (r.period === "active") return "One of the most active players";
   const bits: string[] = [];
@@ -61,14 +66,14 @@ function reason(r: TopRow, tab: TopTab): string {
   if (r.invited) bits.push(`brought ${r.invited} friend${r.invited === 1 ? "" : "s"}`);
   if (r.gave) bits.push(`gave AED ${shortAed(Number(r.gave))}`);
   const s = bits.join(" · ");
-  return s ? s[0].toUpperCase() + s.slice(1) : "Active this week";
+  return (s ? s[0].toUpperCase() + s.slice(1) : "Active this week") + whenOf(r.period);
 }
 
 const INTRO: Record<TopTab, string> = {
   week: "Who did the most with other players since Monday. They host the best parties and Spaces.",
   rich: "The richest make it rain. Add them as friends so you never miss a cash drop at their parties and Spaces.",
   givers: "Who gave the most to other players this week: gifts and cash drops at parties. The top 3 wear the Generous badge.",
-  online: "Real players in the city right now. Say hi: tap Message to start a chat.",
+  online: "Real players in the city right now who are happy to chat. Say hi: tap Message.",
 };
 const PERIOD: Record<string, Record<string, string>> = {
   week: {
@@ -111,23 +116,25 @@ export function TopUsersList({ start = "week", dark = false, onAdded }: { start?
   const card = dark ? "bg-white/[0.06] border border-white/10" : "bg-slate-50";
   const muted = dark ? "text-white/55" : "text-slate-500";
   const pill = `h-9 px-3 rounded-full text-xs font-black flex items-center gap-1 ${dark ? "bg-white/10 text-white/70" : "bg-slate-200 text-slate-600"}`;
-  const period = others[0]?.period;
-  const note = period ? PERIOD[tab]?.[period] : undefined;
+  // Said once, when nobody at all is on it for this week yet.
+  const period = others.some((r) => r.period === "this_week") ? undefined : others[0]?.period;
+  const note = period ? PERIOD[tab]?.[period] ?? (tab === "week" || tab === "givers" ? "A quiet week so far: here are the top of the last few weeks." : undefined) : undefined;
   return (
     <div className="space-y-3">
       <div className={`grid grid-cols-4 gap-1 rounded-2xl p-1 ${dark ? "bg-white/5" : "bg-slate-100"}`} role="tablist">
-        {([["week", "🏆 Top"], ["rich", "💎 Richest"], ["givers", "💸 Givers"], ["online", "💬 Online"]] as const).map(([id, label]) => (
+        {([["week", "🏆 Top"], ["rich", "💎 Richest"], ["givers", "💸 Givers"], ["online", "💬 Chat"]] as const).map(([id, label]) => (
           <button key={id} role="tab" aria-selected={tab === id} onClick={() => { setRows(null); setTab(id); }}
             className={`h-10 rounded-xl text-[13px] font-black ${tab === id ? (id === "online" ? "bg-emerald-500 text-white" : "bg-amber-400 text-slate-950") : muted}`}>{label}</button>
         ))}
       </div>
       <p className={`text-xs ${muted}`}>{note ?? INTRO[tab]}</p>
+      {tab === "online" && <ChatSwitch dark={dark} />}
       {rows === null ? (
         <p className={`text-center py-6 text-sm ${muted}`}>Loading…</p>
       ) : others.length === 0 ? (
         <p className={`text-center py-6 text-sm ${muted}`}>
           {tab === "givers" ? "Nobody has given anything yet this week. Make it rain at a party and you're first."
-            : tab === "online" ? "Nobody else is online right now. Check back soon, or invite a friend."
+            : tab === "online" ? "Nobody's available to chat right now. Check back soon, or invite a friend."
             : "Nobody to show yet."}
         </p>
       ) : (
@@ -141,7 +148,7 @@ export function TopUsersList({ start = "week", dark = false, onAdded }: { start?
                 {tab === "online" && <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white" />}
               </Link>
               <span className="flex-1 min-w-0">
-                <Link href={`/u/${r.username}`} className="block font-black truncate hover:underline">@{r.username}{tab === "givers" && i < 3 && (!period || period === "this_week") && <span className="ml-1.5 align-middle rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-black text-amber-800">💛 Generous</span>}</Link>
+                <Link href={`/u/${r.username}`} className="block font-black truncate hover:underline">@{r.username}{tab === "givers" && i < 3 && r.period === "this_week" && <span className="ml-1.5 align-middle rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-black text-amber-800">💛 Generous</span>}</Link>
                 <span className={`block text-xs truncate ${muted}`}>{reason(r, tab)}</span>
               </span>
               {r.friend === "friends" ? <span className={pill}><Check className="w-3.5 h-3.5" /> Friends</span>
@@ -160,6 +167,25 @@ export function TopUsersList({ start = "week", dark = false, onAdded }: { start?
       )}
       {tab !== "online" && <Link href="/wiki/top-users" className={`block text-center text-sm font-black ${dark ? "text-amber-300" : "text-amber-700"}`}>How do I get on this list? ›</Link>}
     </div>
+  );
+}
+
+/** Whether I show up as available to chat (on unless switched off). */
+function ChatSwitch({ dark }: { dark: boolean }) {
+  const [on, setOn] = useState<boolean | null>(null);
+  useEffect(() => { void supabase().rpc("my_available_to_chat").then(({ data }) => setOn(data !== false)); }, []);
+  if (on === null) return null;
+  const flip = async () => {
+    const next = !on;
+    setOn(next);
+    const { error } = await supabase().rpc("set_available_to_chat", { p_on: next });
+    if (error) setOn(!next);
+  };
+  return (
+    <button onClick={() => void flip()} aria-pressed={on} className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2 text-left ${dark ? "bg-white/5" : "bg-slate-50"}`}>
+      <span className="flex-1 text-sm font-bold">{on ? "You're available to chat" : "You're not showing as available"}</span>
+      <span className={`w-11 h-6 rounded-full p-0.5 transition-colors ${on ? "bg-emerald-500" : "bg-slate-400"}`}><span className={`block w-5 h-5 rounded-full bg-white shadow transition-transform ${on ? "translate-x-5" : ""}`} /></span>
+    </button>
   );
 }
 

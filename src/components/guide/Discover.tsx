@@ -121,7 +121,7 @@ function PlaceRow({ spot, visited, onGo }: { spot: Spot; visited: boolean; onGo:
         <p className={`font-black text-sm ${visited ? "text-emerald-800" : "text-slate-900"}`}>Visit {venue?.name ?? place.name}{visited && <Check className="inline w-4 h-4 ml-1 text-emerald-600" />}</p>
         <Lines what={spot.what} where={spot.where} why={spot.why} />
       </div>
-      <button onClick={() => { gameAudio.playClickSound(); onGo(); router.push(vid ? `/place/${pid}/${vid}` : `/place/${pid}`); }}
+      <button onClick={() => { gameAudio.playClickSound(); onGo(); router.push(vid ? `/place/${pid}/${vid}` : place.route ?? `/place/${pid}`); }}
         className={`shrink-0 text-xs font-black px-3 py-1.5 rounded-full ${visited ? "bg-slate-100 text-slate-600" : "bg-sky-600 text-white"}`}>{visited ? "Again" : "Go"}</button>
     </div>
   );
@@ -145,6 +145,7 @@ export function DiscoverHost() {
   const [tab, setTab] = useState<"do" | "places">("do");
   const [todoCat, setTodoCat] = useState<string | null>(null);
   const [placeCat, setPlaceCat] = useState<string | null>(null);
+  const [placeQuery, setPlaceQuery] = useState("");
   const [now] = useState(() => Date.now());
   const [seed, setSeed] = useState(newSeed);
   const signedIn = !!citizen?.id;
@@ -203,7 +204,15 @@ export function DiscoverHost() {
   const visited = (id: string) => (citizen?.visited ?? []).some((k) => (id.includes("/") ? k === id : k === id || k.startsWith(`${id}/`)));
   const allSpots = shuffled(VISIT.places, seed ^ 0x5bd1e995);
   const placesLeft = allSpots.filter((sp) => !visited(sp.id)).length;
-  const spots = allSpots.filter((sp) => !placeCat || sp.category === placeCat);
+  // Search: by name, where it is, what you do there, or its category ("race", "pool", "afrobeats"…).
+  const q = placeQuery.trim().toLowerCase();
+  const spotText = (sp: Spot) => {
+    const [pid, vid] = sp.id.split("/");
+    const place = getPlace(pid);
+    const venue = vid ? place?.venues.find((v) => v.id === vid) : null;
+    return `${venue?.name ?? ""} ${place?.name ?? ""} ${sp.category} ${sp.where} ${sp.what} ${sp.why} ${sp.category === "Cars & racing" ? "race racing car cars track drive" : ""}`.toLowerCase();
+  };
+  const spots = allSpots.filter((sp) => (!placeCat || sp.category === placeCat) && (!q || q.split(/\s+/).every((w) => spotText(sp).includes(w))));
   const todoShown = todo.filter((a) => !todoCat || a.item.cat === todoCat);
   const openAll = (t: "do" | "places") => { setIntro(false); setTab(t); setSheet(true); };
   const showIntro = intro && !sheet;
@@ -251,7 +260,10 @@ export function DiscoverHost() {
               </>
             ) : tab === "places" ? (
               <>
+                <input value={placeQuery} onChange={(e) => setPlaceQuery(e.target.value)} placeholder="Search places: car race, pool, Afrobeats, brunch…" aria-label="Search places"
+                  className="w-full h-11 rounded-2xl bg-white border border-slate-200 px-4 text-sm font-semibold outline-none focus:ring-2 focus:ring-sky-500" />
                 <Chips items={VISIT.categories} value={placeCat} onChange={setPlaceCat} tone="bg-sky-600" />
+                {spots.length === 0 && <p className="text-sm text-slate-500 text-center py-4">No place matches “{placeQuery}”. Try another word or category.</p>}
                 {[...spots.filter((sp) => !visited(sp.id)), ...spots.filter((sp) => visited(sp.id))].map((sp) => <PlaceRow key={sp.id} spot={sp} visited={visited(sp.id)} onGo={close} />)}
               </>
             ) : (

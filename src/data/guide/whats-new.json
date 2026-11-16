@@ -1,6 +1,26 @@
 {
   "items": [
     {
+      "id": "2026-11-16-hotel-suites",
+      "date": "2026-11-16",
+      "icon": "🏨",
+      "title": "Stay in a luxury hotel suite",
+      "text": "Book a suite at any hotel in the city, check in at the front desk and go up to your room in 3D: a king bed, a jacuzzi on the terrace, a spa room with massage and steam, a gaming lounge, a minibar and room service.",
+      "how": "Tap any hotel on the map → Book a luxury suite. Or Phone → Hotels.",
+      "cta": "See the hotels",
+      "href": "/hotels"
+    },
+    {
+      "id": "2026-11-16-autodrome",
+      "date": "2026-11-16",
+      "icon": "🏁",
+      "title": "Race your friends at Dubai Autodrome",
+      "text": "Open a race, invite friends who have cars and go wheel to wheel live: up to 12 cars, a real steering wheel and a screaming V10. The winner makes the City feed.",
+      "how": "Phone → Car Race, More → Car race, or the 🏁 Autodrome on the map (Cars & Racing).",
+      "cta": "Go racing",
+      "href": "/autodrome"
+    },
+    {
       "id": "2026-11-10-party-games",
       "date": "2026-11-10",
       "icon": "🎲",

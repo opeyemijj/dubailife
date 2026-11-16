@@ -9,7 +9,7 @@ import { gameInfo } from "@/lib/games/registry";
 import CARS from "@/data/cars/cars.json";
 import type { AvatarLookProps } from "@/components/avatar/roster";
 
-export type FeedKind = "party" | "win" | "arrived" | "home" | "car" | "gift" | "married" | "hired" | "reward" | "rain" | "race";
+export type FeedKind = "party" | "win" | "arrived" | "home" | "car" | "gift" | "married" | "hired" | "reward" | "rain" | "race" | "hotel";
 export type FeedScope = "all" | "following";
 
 export interface FeedPerson { id: string; username: string; name?: string | null; look?: AvatarLookProps | null }
@@ -129,6 +129,10 @@ export function describePost(p: FeedPost, now = Date.now()): PostView {
       return { icon: "💍", text: `${who} and ${p.other ? `@${p.other.username}` : "their partner"} got married`, action: { label: "Congratulate", like: true } };
     case "hired":
       return { icon: "💼", text: `${who} got a job${d.title ? ` as ${String(d.title)}` : ""}${d.venture ? ` at ${String(d.venture)}` : ""}`, action: { label: "Congratulate", like: true } };
+    case "hotel": {
+      const names: Record<string, string> = { deluxe: "Deluxe Skyline Suite", royal: "Royal Jacuzzi Suite", presidential: "Presidential Penthouse Suite" };
+      return { icon: "🏨", text: `${who} checked into the ${names[String(d.suite)] ?? "suite"} at ${String(d.hotel ?? "a hotel")} for ${Number(d.nights ?? 1)} night${Number(d.nights) === 1 ? "" : "s"}`, action: { label: "Book a suite", href: "/hotels" } };
+    }
     case "race":
       return {
         icon: "🏁",

@@ -8,7 +8,7 @@ import { HomeActions } from "@/components/home/HomeActions";
 import { useCleanScreen } from "@/lib/cleanScreen";
 import { usePhoneButtonHere } from "@/lib/phoneButtons";
 import { MoveInGuide } from "@/components/home/MoveInGuide";
-import { openMore, useMoreBadge } from "@/components/layout/MoreMenu";
+import { BottomNav } from "@/components/layout/BottomNav";
 import { useTopUsersPending } from "@/components/social/TopUsers";
 import { PartySheet } from "@/components/invite/PartySheet";
 import {
@@ -52,11 +52,8 @@ import {
   Menu,
   ChevronUp,
   ChevronDown,
-  Home,
   ShoppingBag,
   Map,
-  Smartphone,
-  LayoutGrid,
   Sparkles,
   X,
   Megaphone,
@@ -140,7 +137,6 @@ import {
 } from "@/lib/presence";
 import { matesInRoom, useBedspace } from "@/lib/bedspace";
 import { openPhone } from "@/components/layout/PhoneOverlay";
-import { useUnreadTotal } from "@/lib/unread";
 import { useLifeLoop } from "@/lib/lifeLoop";
 import { WardrobeModal } from "@/components/avatar/WardrobeModal";
 import { getPendingVenue, clearPendingVenue } from "@/components/city/VenueDressCodeModal";
@@ -413,7 +409,6 @@ export default function HomePage() {
   // A bed space is shared with up to three other players, each at their own bed.
   const bedspace = useBedspace(housingTier === "bed_space");
   const onlineNames = useOnlineUsernames();
-  const unread = useUnreadTotal(citizen?.id);
 
   const housingConfig = HOUSING_CONFIGS[housingTier] ?? HOUSING_CONFIGS.studio;
   const activeBuildingName = activeFlat
@@ -500,7 +495,6 @@ export default function HomePage() {
   const decorFirst = !!citizen?.decorFirst && isNewCitizen(citizen);
   // A new player meets the top users first (TopUsersWelcome), then the move-in guide.
   const topPending = useTopUsersPending();
-  const moreBadge = useMoreBadge();
   const [triedMoving, setTriedMoving] = useState(false);
   useEffect(() => {
     if (!decorating) return;
@@ -1224,7 +1218,7 @@ export default function HomePage() {
       )}
 
       {view !== "above" && !placing && !decorating && !cleanScreen && (
-        <div className="absolute left-4 bottom-[max(6.5rem,calc(env(safe-area-inset-bottom)+6rem))] z-30">
+        <div className="absolute left-4 bottom-[max(7rem,calc(env(safe-area-inset-bottom)+6.5rem))] z-30">
           <MoveStick controls={stick} allowRun={false} />
         </div>
       )}
@@ -1268,20 +1262,13 @@ export default function HomePage() {
           />
         )}
         {!cleanScreen && (
-          <SideButton
-            icon={<Smartphone className="w-5 h-5" />}
-            label={unread ? `Phone: ${unread} unread` : "Phone"}
-            badge={unread}
-            onClick={() => openPhone()}
-          />
+          <SideButton icon={<ShoppingBag className="w-5 h-5" />} label="Buy furniture" onClick={() => setBuyModalOpen(true)} />
         )}
         {!cleanScreen && (
-          <SideButton
-            icon={<LayoutGrid className="w-5 h-5" />}
-            label="More: everywhere to go"
-            badge={moreBadge}
-            onClick={() => openMore()}
-          />
+          <SideButton icon={<Shirt className="w-5 h-5" />} label="Wardrobe" onClick={() => setWardrobeModalOpen(true)} />
+        )}
+        {!cleanScreen && (
+          <SideButton icon={<Move className="w-5 h-5" />} label={decorating ? "Done decorating" : "Decorate: move things"} active={decorating} onClick={() => setDecorating((d) => !d)} />
         )}
         <SideButton
           icon={
@@ -1356,7 +1343,7 @@ export default function HomePage() {
               `/street?home=1&from=${encodeURIComponent(activeFlat?.building_id ?? "home")}&area=${encodeURIComponent(activeFlat ? (activeBuildingName ?? housingConfig.area) : housingConfig.area)}${hasPlot(housingTier) ? `&villa=1&ext=${encodeURIComponent((homeStyle.exterior ?? []).join(","))}` : ""}`,
             );
           }}
-          className="fixed right-3 bottom-[max(5.25rem,calc(env(safe-area-inset-bottom)+4.75rem))] sm:bottom-24 z-30 h-11 pl-3 pr-4 rounded-full bg-emerald-600 text-white shadow-lg flex items-center gap-1.5 font-black text-sm active:scale-95"
+          className="fixed right-3 bottom-[max(6.25rem,calc(env(safe-area-inset-bottom)+5.75rem))] sm:bottom-28 z-30 h-11 pl-3 pr-4 rounded-full bg-emerald-600 text-white shadow-lg flex items-center gap-1.5 font-black text-sm active:scale-95"
           aria-label="Go outside"
         >
           🚪 <span>Outside</span>
@@ -2055,7 +2042,7 @@ export default function HomePage() {
       {/* RELATABLE HOME ACTIVITIES DOCK (Collapsible Floating Pill / Expanded Drawer) */}
       {!cleanScreen && !placing && (
         <div
-          className={`fixed z-30 pointer-events-auto ${ritualsExpanded ? "bottom-[4.85rem] sm:bottom-24 left-1/2 -translate-x-1/2" : "right-3 bottom-[max(8.5rem,calc(env(safe-area-inset-bottom)+8rem))] sm:bottom-40"}`}
+          className={`fixed z-30 pointer-events-auto ${ritualsExpanded ? "bottom-[6.25rem] sm:bottom-28 left-1/2 -translate-x-1/2" : "right-3 bottom-[max(9.25rem,calc(env(safe-area-inset-bottom)+8.75rem))] sm:bottom-40"}`}
         >
           {!ritualsExpanded ? (
             <button
@@ -2208,54 +2195,9 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* BOTTOM NAVIGATION BAR (Image 2) */}
-      {!cleanScreen && !placing && (
-        <div className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] sm:bottom-5 left-0 w-full z-40 pointer-events-none px-4">
-          <div className="max-w-sm sm:max-w-2xl mx-auto bg-white/95 backdrop-blur-2xl border border-white shadow-[0_16px_48px_rgba(0,0,0,0.25)] rounded-full p-1.5 flex items-center justify-between pointer-events-auto">
-            {/* Home (Active) */}
-            <button className="flex-1 min-h-[48px] py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full bg-slate-900 text-white font-black text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 shadow-md">
-              <Home className="w-3.5 h-3.5" />
-              <span>Home</span>
-            </button>
-
-            {/* Buy Furniture */}
-            <button
-              onClick={() => setBuyModalOpen(true)}
-              className="flex-1 min-h-[48px] py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full hover:bg-slate-100 text-slate-700 font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors"
-            >
-              <ShoppingBag className="w-3.5 h-3.5" />
-              <span>Buy</span>
-            </button>
-
-            {/* Wardrobe: change clothes */}
-            <button
-              onClick={() => setWardrobeModalOpen(true)}
-              className="flex-1 min-h-[48px] py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full hover:bg-slate-100 text-slate-700 font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors"
-            >
-              <Shirt className="w-3.5 h-3.5" />
-              <span>Wardrobe</span>
-            </button>
-
-            {/* Decorate: move furniture */}
-            <button
-              onClick={() => setDecorating((d) => !d)}
-              className={`flex-1 min-h-[48px] py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors ${decorating ? "bg-emerald-500 text-white" : "hover:bg-slate-100 text-slate-700"}`}
-            >
-              <Move className="w-3.5 h-3.5" />
-              <span>Decorate</span>
-            </button>
-
-            {/* Map (Routes to /explore) */}
-            <button
-              onClick={() => router.push("/explore")}
-              className="flex-1 min-h-[48px] py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-full hover:bg-slate-100 text-slate-700 font-bold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 transition-colors"
-            >
-              <Map className="w-3.5 h-3.5" />
-              <span>Map</span>
-            </button>
-          </div>
-        </div>
-      )}
+      {/* The same bottom bar as everywhere (Home · Map · City · Phone · More). Buy, Wardrobe and Decorate are in the
+          side buttons. Hidden for a clean screen and while placing furniture. */}
+      {!cleanScreen && !placing && <BottomNav />}
 
       {/* Floating Interactive Toast */}
       {runPicker && (

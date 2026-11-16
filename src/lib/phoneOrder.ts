@@ -11,7 +11,7 @@ import { supabase } from "@/lib/supabase/client";
 export const PHONE_TOP = ["messages", "spaces", "wallet", "city"];
 
 /** Before there's 14 days of data: the likely order after the top row. */
-const STARTING = ["games", "invites", "jobs", "metro", "people", "hayati", "cars", "food", "rides", "goals"];
+const STARTING = ["games", "racing", "hotels", "invites", "jobs", "metro", "people", "hayati", "cars", "food", "rides", "goals"];
 
 /** Rarely opened: kept together in a "More" folder. */
 export const PHONE_FOLDER = ["scams", "ideas", "news", "guide", "skills"];
@@ -19,6 +19,8 @@ export const PHONE_FOLDER = ["scams", "ideas", "news", "guide", "skills"];
 /** Apps added recently show "New" for a week after this date (YYYY-MM-DD). */
 export const PHONE_ADDED: Record<string, string> = {
   city: "2026-11-16",
+  racing: "2026-11-16",
+  hotels: "2026-11-16",
 };
 export const isNewApp = (id: string, now = Date.now()) => {
   const at = PHONE_ADDED[id];

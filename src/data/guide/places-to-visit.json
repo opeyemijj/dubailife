@@ -1,17 +1,114 @@
 {
   "_note": "Discover → Places to visit: every place in the city (and each club, bar and lounge inside hotels and malls) with what to do, where and why. 'id' is a place id, or 'placeId/venueId' for a venue inside one. A place ticks off once you've walked into it.",
   "categories": [
+    "Hotels & pools",
     "Clubs & lounges",
     "Bars",
-    "Landmarks",
+    "Food",
+    "Shopping",
+    "Cars & racing",
     "Fun & shows",
     "Beaches & parks",
-    "Shopping",
-    "Food",
-    "Culture",
-    "Hotels & pools"
+    "Landmarks",
+    "Culture"
   ],
   "places": [
+    {
+      "id": "dubai-autodrome",
+      "category": "Cars & racing",
+      "icon": "🏁",
+      "where": "Motor City",
+      "what": "Race your friends in your own car, live, on the 2.9 km circuit.",
+      "why": "Up to 12 cars, a real steering wheel and a screaming V10. The winner makes the City Feed."
+    },
+    {
+      "id": "al-futtaim-toyota",
+      "category": "Cars & racing",
+      "icon": "🚗",
+      "where": "Sheikh Zayed Road",
+      "what": "Buy a car of your own, then take it to the Autodrome.",
+      "why": "Toyota's showroom: the Corolla, Camry and the Land Cruiser everyone in the Gulf wants."
+    },
+    {
+      "id": "arabian-automobiles-nissan",
+      "category": "Cars & racing",
+      "icon": "🚗",
+      "where": "Sheikh Zayed Road",
+      "what": "Buy a car of your own, then take it to the Autodrome.",
+      "why": "Nissan's Dubai home, from the Sunny to the desert-ready Patrol."
+    },
+    {
+      "id": "agmc-bmw",
+      "category": "Cars & racing",
+      "icon": "🚗",
+      "where": "Sheikh Zayed Road",
+      "what": "Buy a car of your own, then take it to the Autodrome.",
+      "why": "BMW's glass showroom on Sheikh Zayed Road."
+    },
+    {
+      "id": "gargash-mercedes",
+      "category": "Cars & racing",
+      "icon": "🚗",
+      "where": "Sheikh Zayed Road",
+      "what": "Buy a car of your own, then take it to the Autodrome.",
+      "why": "Dubai's Mercedes-Benz dealer since 1958: E-Class to the G-Wagon."
+    },
+    {
+      "id": "lamborghini-dubai",
+      "category": "Cars & racing",
+      "icon": "🚗",
+      "where": "Sheikh Zayed Road",
+      "what": "Buy a car of your own, then take it to the Autodrome.",
+      "why": "The world's largest Lamborghini showroom, right on Sheikh Zayed Road."
+    },
+    {
+      "id": "tesla-dubai",
+      "category": "Cars & racing",
+      "icon": "🚗",
+      "where": "Sheikh Zayed Road",
+      "what": "Buy a car of your own, then take it to the Autodrome.",
+      "why": "Tesla's showroom on Sheikh Zayed Road: the electric Model Y, charged at Superchargers across the city."
+    },
+    {
+      "id": "sixt-szr",
+      "category": "Cars & racing",
+      "icon": "🔑",
+      "where": "Sheikh Zayed Road",
+      "what": "Rent a car by the day, week or month.",
+      "why": "The orange counter on Sheikh Zayed Road: premium German cars by the day, week or month."
+    },
+    {
+      "id": "hertz-szr",
+      "category": "Cars & racing",
+      "icon": "🔑",
+      "where": "Sheikh Zayed Road",
+      "what": "Rent a car by the day, week or month.",
+      "why": "The yellow sign travellers know from the airport, with a branch on Sheikh Zayed Road."
+    },
+    {
+      "id": "europcar-szr",
+      "category": "Cars & racing",
+      "icon": "🔑",
+      "where": "Sheikh Zayed Road",
+      "what": "Rent a car by the day, week or month.",
+      "why": "Daily and monthly rentals, from city runabouts to family SUVs."
+    },
+    {
+      "id": "budget-szr",
+      "category": "Cars & racing",
+      "icon": "🔑",
+      "where": "Sheikh Zayed Road",
+      "what": "Rent a car by the day, week or month.",
+      "why": "Good-value rentals for residents and visitors alike."
+    },
+    {
+      "id": "autostrad-szr",
+      "category": "Cars & racing",
+      "icon": "🔑",
+      "where": "Sheikh Zayed Road",
+      "what": "Rent a car by the day, week or month.",
+      "why": "A UAE rental favourite, with monthly deals on everything from sedans to Land Cruisers."
+    },
     {
       "id": "enish-dubai",
       "category": "Clubs & lounges",
