@@ -6,6 +6,8 @@
 // count down the exits, and yours turns amber. A steering wheel and pedals (or the keys), the V10, and Cruise to hold
 // 100 km/h in your lane. Skip whenever you like.
 //
+// Traffic (lib/city/traffic) is the city's own cars, keeping their distance and changing lanes only into a gap.
+//
 // Like every scene here, it moves three.js objects (and the camera) frame by frame, outside React's render.
 /* eslint-disable react-hooks/immutability */
 
@@ -13,7 +15,8 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { carOf, type Car } from "@/lib/cars";
-import { CarModel } from "@/components/cars/CarModel";
+import { CarModel, carLength } from "@/components/cars/CarModel";
+import { TrafficCar } from "@/components/cars/TrafficCar";
 import { SteeringWheel } from "@/components/cars/SteeringWheel";
 import { PerfProbe } from "@/components/perf/PerfProbe";
 import { canvasQuality } from "@/lib/device";
@@ -22,13 +25,12 @@ import { V10, setRaceVolume } from "@/lib/raceAudio";
 import { dubaiSky, SkyAndLight } from "@/components/transit/TransitWorld";
 import { City, Palms } from "@/components/street/OsmWorld";
 import { laneCentres, LANE_W, loadPiece, roadStep, type Corridor, type Leg, type RoadPath, type RoadState } from "@/lib/city/drives";
+import { freeSpot, spawnTraffic, stepTraffic, trafficLooks, type Vehicle } from "@/lib/city/traffic";
 import { OSM_ATTRIBUTION, OSM_COPYRIGHT_URL, type OsmArea } from "@/lib/city/osmDistrict";
 
 const CRUISE = 100 / 3.6;
 const hash = (n: number) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
-const COLORS = ["#f8fafc", "#0f172a", "#9ca3af", "#1e3a8a", "#7f1d1d", "#e5e7eb", "#334155"];
 
-interface Bot { s: number; offset: number; target: number; speed: number; color: string; taxi: boolean; truck: boolean }
 
 // ---------------------------------------------------------------- the road surface, lines, barriers, tunnel
 
@@ -135,33 +137,9 @@ function Gantry({ road, s, title, sub, mine }: { road: RoadPath; s: number; titl
 
 // ---------------------------------------------------------------- cars
 
-function BoxCar({ color, taxi, truck }: { color: string; taxi?: boolean; truck?: boolean }) {
-  if (truck) return (
-    <group>
-      <mesh position={[0, 1.6, -1.2]}><boxGeometry args={[2.4, 2.8, 7.5]} /><meshStandardMaterial color="#e5e7eb" roughness={0.6} /></mesh>
-      <mesh position={[0, 1.3, 3.4]}><boxGeometry args={[2.3, 2.2, 1.9]} /><meshStandardMaterial color={color} roughness={0.4} /></mesh>
-    </group>
-  );
-  return (
-    <group>
-      <mesh position={[0, 0.55, 0]}><boxGeometry args={[1.8, 0.7, 4.4]} /><meshStandardMaterial color={taxi ? "#efe2c2" : color} metalness={0.4} roughness={0.35} /></mesh>
-      <mesh position={[0, 1.1, -0.2]}><boxGeometry args={[1.6, 0.5, 2.3]} /><meshStandardMaterial color={taxi ? "#b91c1c" : "#1e293b"} roughness={0.2} metalness={0.5} /></mesh>
-      <mesh position={[0, 0.6, -2.21]}><planeGeometry args={[1.5, 0.22]} /><meshBasicMaterial color="#ef4444" side={THREE.DoubleSide} /></mesh>
-    </group>
-  );
-}
-
-function makeBots(n: number, around: number, road: RoadPath, seed: number): Bot[] {
-  return Array.from({ length: n }, (_, i) => {
-    const s = around + (i - n * 0.3) * (900 / n) + hash(seed + i) * 30;
-    const lanes = laneCentres(road.lanesAt(Math.max(0, s)));
-    const o = lanes[Math.floor(hash(seed + i * 3) * lanes.length)];
-    const truck = hash(seed + i * 7) > 0.88;
-    return { s, offset: o, target: o, speed: (truck ? 20 : 24) + hash(seed + i * 5) * 8, color: COLORS[i % COLORS.length], taxi: hash(seed + i * 11) > 0.8, truck };
-  });
-}
-
 // ---------------------------------------------------------------- the driver (physics, camera, traffic)
+
+const OWN_CARS = 16, ONCOMING = 10;
 
 function Driver({ own, other, start, end, carId, plate, input, cruise, st, hud, engine, onArrive }: {
   own: RoadPath; other: RoadPath; start: number; end: number; carId: string; plate: string;
@@ -170,39 +148,53 @@ function Driver({ own, other, start, end, carId, plate, input, cruise, st, hud, 
 }) {
   const car = useMemo(() => carOf(carId) as (Car & { model3d?: string }) | undefined, [carId]);
   const perf = useMemo(() => perfOf(carId), [carId]);
+  const myLen = car ? carLength(car) : 4.7;
   const camera = useThree((s) => s.camera);
   const me = useRef<THREE.Group>(null);
-  // Your side's traffic (moved frame by frame; the list itself never changes).
-  const bots = useMemo(() => makeBots(16, start, own, 1), [start, own]);
-  const oncoming = useRef<Bot[]>([]);
+  // Your side's traffic, spread out lane by lane around you (moved frame by frame; the list itself never changes).
+  const bots = useMemo(() => spawnTraffic(own, start - 150, start + 900, 5, 1).filter((v) => Math.abs(v.s - start) > 22).slice(0, OWN_CARS), [start, own]);
+  const looks = useMemo(() => trafficLooks(OWN_CARS, 7), []);
+  const onLooks = useMemo(() => trafficLooks(ONCOMING, 91), []);
+  const oncoming = useRef<Vehicle[]>([]);
   const otherS = useRef(-1);
   const botRefs = useRef<Array<THREE.Group | null>>([]), onRefs = useRef<Array<THREE.Group | null>>([]);
   const arrived = useRef(false);
+  const meV = useRef<Vehicle>({ s: start, offset: 0, target: 0, speed: 0, want: 30, len: myLen, think: 0 });
   const camPos = useRef(new THREE.Vector3()), camLook = useRef(new THREE.Vector3());
   const tmp = useMemo(() => new THREE.Vector3(), []), tmp2 = useMemo(() => new THREE.Vector3(), []);
   const ground = useRef<THREE.Mesh>(null);
 
-  useFrame((_, raw) => {
-    const dt = Math.min(0.05, raw);
+  useFrame(({ clock }, raw) => {
+    const dt = Math.min(0.05, raw), now = clock.elapsedTime;
     const S = st.current, inp = input.current;
-    // Cruise: hold 100 in your lane unless you're on the pedals or the wheel.
+    // Cruise: hold 100 in your lane (easing off for the car in front) unless you're on the pedals or the wheel.
     const live = { throttle: inp.throttle, brake: inp.brake, steer: inp.steer };
-    if (cruise.current && !inp.throttle && !inp.brake) { live.throttle = S.speed < CRUISE - 0.5 ? 0.7 : 0; live.brake = S.speed > CRUISE + 2 ? 0.3 : 0; }
+    if (cruise.current && !inp.throttle && !inp.brake) {
+      const lead = bots.reduce<Vehicle | null>((b, v) => (v.s > S.s && Math.abs(v.offset - S.offset) < 1.9 && (!b || v.s < b.s) ? v : b), null);
+      const gap = lead ? lead.s - lead.len / 2 - (S.s + myLen / 2) : Infinity;
+      const want = gap < 12 + S.speed * 1.3 ? Math.min(CRUISE, (lead?.speed ?? CRUISE) - (gap < 8 + S.speed * 0.8 ? 2 : 0)) : CRUISE;
+      live.throttle = S.speed < want - 0.5 ? 0.7 : 0; live.brake = S.speed > want + 1.5 ? Math.min(1, (S.speed - want) / 6) : 0;
+    }
     if (cruise.current && !inp.steer && performance.now() - inp.touched > 1500) {
       const lanes = laneCentres(own.lanesAt(S.s));
       const target = lanes.reduce((b, o) => (Math.abs(o - S.offset) < Math.abs(b - S.offset) ? o : b), lanes[0]);
       live.steer = THREE.MathUtils.clamp((target - S.offset) * 0.8, -1, 1);
     }
     const next = roadStep(S, live, perf, own, dt);
-    // Traffic in your lane ahead: you can't drive through it.
+    // You can't drive through anyone: alongside (changing lanes into them) or into the back of them.
     for (const b of bots) {
-      const ds = b.s - next.s, dOff = Math.abs(b.offset - next.offset);
-      if (ds > 0 && ds < (b.truck ? 9 : 5) && dOff < 2.1) { next.s = b.s - (b.truck ? 9 : 5); if (next.speed > b.speed) { if (next.speed - b.speed > 4) engine.current?.thud(); next.speed = b.speed * 0.9; } }
+      const ds = b.s - next.s, dOff = Math.abs(b.offset - next.offset), touch = (b.len + myLen) / 2 + 0.3;
+      if (Math.abs(ds) < touch && dOff < 1.95) {
+        if (ds > 0) { next.s = b.s - touch; if (next.speed > b.speed) { if (next.speed - b.speed > 3) engine.current?.thud(); next.speed = b.speed * 0.95; } }
+        else if (Math.abs(S.offset - b.offset) >= 1.95) { next.offset = S.offset; } // side by side: you stay in your lane
+        else { b.s = next.s - touch; b.speed = Math.min(b.speed, next.speed); }
+      }
     }
     if (next.wall && !S.wall && S.speed > 8) engine.current?.thud();
     const gb = gearbox(next.speed, perf.top / 0.82);
     Object.assign(S, next, { gear: gb.gear, rpm: gb.rpm });
     engine.current?.update(gb.rpm, live.throttle, gb.gear, 0);
+    Object.assign(meV.current, { s: S.s, offset: S.offset, target: S.offset, speed: S.speed });
 
     const pose = own.pose(S.s, S.offset, tmp);
     hud.current.tunnel = pose.tunnel;
@@ -222,25 +214,36 @@ function Driver({ own, other, start, end, carId, plate, input, cruise, st, hud, 
     camera.lookAt(camLook.current);
     if (ground.current) ground.current.position.set(Math.round(pose.p.x / 50) * 50, 0, Math.round(pose.p.z / 50) * 50);
 
-    // Your side's traffic: along at its own pace, changing lanes now and then, moved on round you.
+    // Your side's traffic: keeping its distance, changing lanes when there's room, and you're one of the cars.
+    stepTraffic(bots, own, dt, [meV.current], now);
     bots.forEach((b, i) => {
-      b.s += b.speed * dt;
-      if (hash(i + Math.floor(b.s / 300)) > 0.985) { const L = laneCentres(own.lanesAt(b.s)); b.target = L[Math.floor(hash(b.s) * L.length)]; }
-      b.offset += THREE.MathUtils.clamp(b.target - b.offset, -1.2 * dt, 1.2 * dt);
-      if (b.s < S.s - 250) { b.s = S.s + 550 + hash(i + S.s) * 250; const L = laneCentres(own.lanesAt(b.s)); b.offset = b.target = L[i % L.length]; }
-      if (b.s > S.s + 900) b.s = S.s - 200;
+      // Far behind you or far ahead: rejoin the road somewhere near you where there's room.
+      if (b.s < S.s - 260 || b.s > S.s + 1100) {
+        const ahead = b.s < S.s;
+        for (let t = 0; t < 6; t++) {
+          const s = ahead ? S.s + 500 + hash(i * 7 + t + now) * 450 : S.s - 160 - hash(i + t + now) * 60;
+          const lane = freeSpot(bots.filter((x) => x !== b), own, s, [meV.current], 35, i + t);
+          if (lane !== null && s > 0 && s < own.length) { Object.assign(b, { s, offset: lane, target: lane, speed: b.want * (ahead ? 0.85 : 1) }); break; }
+        }
+      }
       const g = botRefs.current[i];
-      if (g) { const p = own.pose(b.s, b.offset, tmp).p; g.position.set(p.x, p.y + 0.12, p.z); g.rotation.y = own.pose(b.s).yaw; g.visible = b.s < own.length - 5; }
+      if (g) { const p = own.pose(b.s, b.offset, tmp).p; const ps = own.pose(b.s); g.position.set(p.x, p.y + 0.12, p.z); g.rotation.set(-ps.pitch, ps.yaw + (b.target - b.offset) * -0.06, 0, "YXZ"); g.visible = b.s > 2 && b.s < own.length - 5; }
     });
-    // Coming the other way, across the barrier.
+    // Coming the other way, across the barrier (the same rules on their side).
     otherS.current = other.nearest(pose.p.x, pose.p.z, otherS.current < 0 ? other.nearestAll(pose.p.x, pose.p.z) : otherS.current, 120);
-    if (!oncoming.current.length) oncoming.current = makeBots(10, otherS.current - 300, other, 99);
-    oncoming.current.forEach((b, i) => {
-      b.s += b.speed * dt;
-      if (b.s > otherS.current + 250) { b.s = otherS.current - 600 - hash(i + b.s) * 300; }
-      if (b.s < otherS.current - 1000) b.s = otherS.current + 100;
+    if (!oncoming.current.length) oncoming.current = spawnTraffic(other, otherS.current - 900, otherS.current + 150, 2, 99).slice(0, ONCOMING);
+    const on = oncoming.current;
+    stepTraffic(on, other, dt, [], now);
+    on.forEach((b, i) => {
+      if (b.s > otherS.current + 300 || b.s < otherS.current - 1400) {
+        for (let t = 0; t < 6; t++) {
+          const s = otherS.current - 700 - hash(i * 5 + t + now) * 500;
+          const lane = freeSpot(on.filter((x) => x !== b), other, s, [], 35, i + t);
+          if (lane !== null && s > 0) { Object.assign(b, { s, offset: lane, target: lane, speed: b.want }); break; }
+        }
+      }
       const g = onRefs.current[i];
-      if (g) { const p = other.pose(b.s, b.offset, tmp).p; g.position.set(p.x, p.y + 0.12, p.z); g.rotation.y = other.pose(b.s).yaw; g.visible = b.s > 0 && b.s < other.length; }
+      if (g) { const p = other.pose(b.s, b.offset, tmp).p; const ps = other.pose(b.s); g.position.set(p.x, p.y + 0.12, p.z); g.rotation.set(-ps.pitch, ps.yaw, 0, "YXZ"); g.visible = b.s > 2 && b.s < other.length - 2; }
     });
 
     if (!arrived.current && S.s >= end - 6) { arrived.current = true; onArrive(); }
@@ -249,11 +252,11 @@ function Driver({ own, other, start, end, carId, plate, input, cruise, st, hud, 
   return (
     <group>
       <mesh ref={ground} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}><planeGeometry args={[6000, 6000]} /><meshStandardMaterial color="#e4d5b7" roughness={1} /></mesh>
-      <group ref={me}>
-        <Suspense fallback={<BoxCar color="#ef4444" />}>{car ? <CarModel car={car} plate={plate} /> : <BoxCar color="#ef4444" />}</Suspense>
-      </group>
-      {bots.map((b, i) => <group key={`b${i}`} ref={(g) => { botRefs.current[i] = g; }}><BoxCar color={b.color} taxi={b.taxi} truck={b.truck} /></group>)}
-      {Array.from({ length: 10 }, (_, i) => <group key={`o${i}`} ref={(g) => { onRefs.current[i] = g; }}><BoxCar color={COLORS[(i + 3) % COLORS.length]} taxi={i % 4 === 0} /></group>)}
+      <group ref={me}><Suspense fallback={null}>{car && <CarModel car={car} plate={plate} />}</Suspense></group>
+      <Suspense fallback={null}>
+        {looks.map((l, i) => <group key={`b${i}`} ref={(g) => { botRefs.current[i] = g; }} visible={false}><TrafficCar look={l} /></group>)}
+        {onLooks.map((l, i) => <group key={`o${i}`} ref={(g) => { onRefs.current[i] = g; }} visible={false}><TrafficCar look={l} /></group>)}
+      </Suspense>
     </group>
   );
 }
@@ -306,7 +309,8 @@ export function DriveScene({ corridor, leg, carId, plate, destination, onArrive,
   const engine = useRef<V10 | null>(null);
 
   useEffect(() => {
-    try { engine.current = new V10(); } catch { engine.current = null; }
+    // Half the Autodrome's volume: this is a drive, not a race.
+    try { engine.current = new V10(0.5); } catch { engine.current = null; }
     return () => { engine.current?.stop(); engine.current = null; };
   }, []);
   useEffect(() => {

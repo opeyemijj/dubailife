@@ -23,6 +23,8 @@ import { canvasQuality } from "@/lib/device";
 import type { Peer } from "@/lib/room";
 import { PerfProbe } from "@/components/perf/PerfProbe";
 import { blocked, ROAD_CLASSES, type District, type OsmArea } from "@/lib/city/osmDistrict";
+import { TrafficCar } from "@/components/cars/TrafficCar";
+import { trafficLooks } from "@/lib/city/traffic";
 import { Walker, type AutoWalk, type Controls, type StreetDoor } from "./StreetWorld";
 
 const WALK = 1.8, RUN = 5.2;
@@ -320,54 +322,91 @@ function nextNode(adj: number[][], from: number, at: number, seed: number) {
   return opts[Math.floor(hash(seed) * opts.length) % opts.length];
 }
 
+interface StreetCar { from: number; to: number; next: number; pos: number; speed: number; want: number; seed: number; holds: number; held: number }
+const CAR_GAP = 6.5; // metres from one car's centre to the next's when queued
+
+/** Cars round the streets, keeping right: each keeps its distance from the car ahead (on its road, or just round
+    the corner), and crosses a junction only when nobody else is in it, so they never drive through each other. */
 export function Traffic({ d }: { d: OsmArea }) {
-  // Cars only on the roads (not service lanes or paths), keeping right.
+  // Cars only on the roads (not service lanes or paths).
   const carAdj = useMemo(() => {
     const adj: number[][] = Array.from({ length: d.nodes.length / 2 }, () => []);
     const width = new Map<string, number>();
     for (const r of d.roads) {
-      if (r.cls > 3) continue;
+      if (r.cls > 3 || r.tunnel) continue;
       for (let i = 0; i < r.idx.length - 1; i++) {
         const a = r.idx[i], b = r.idx[i + 1];
+        if (a === b) continue;
         adj[a].push(b); adj[b].push(a);
         width.set(`${a}-${b}`, ROAD_CLASSES[r.cls].w); width.set(`${b}-${a}`, ROAD_CLASSES[r.cls].w);
       }
     }
     return { adj, width };
   }, [d]);
-  const cars = useMemo(() => {
+  const edgeLen = useCallback((a: number, b: number) => Math.hypot(d.nodes[b * 2] - d.nodes[a * 2], d.nodes[b * 2 + 1] - d.nodes[a * 2 + 1]) || 0.01, [d]);
+  const cars = useMemo<StreetCar[]>(() => {
+    // Each on a different stretch of road to begin with.
     const starts = carAdj.adj.map((n, i) => (n.length ? i : -1)).filter((i) => i >= 0);
-    if (!starts.length) return [];
-    return Array.from({ length: Math.min(16, Math.ceil(starts.length / 6)) }, (_, i) => {
+    const used = new Set<number>(), out: StreetCar[] = [];
+    for (let i = 0; out.length < Math.min(16, Math.ceil(starts.length / 6)) && i < 200; i++) {
       const a = starts[Math.floor(hash(i + 1) * starts.length)];
-      return { from: a, to: carAdj.adj[a][0], t: hash(i + 9), speed: 8 + hash(i + 3) * 6, taxi: i % 4 === 0, color: ["#f8fafc", "#0f172a", "#9ca3af", "#1e3a8a", "#7f1d1d"][i % 5], seed: i * 101 };
-    });
-  }, [carAdj]);
+      if (used.has(a)) continue;
+      const b = carAdj.adj[a][0];
+      used.add(a); used.add(b);
+      out.push({ from: a, to: b, next: nextNode(carAdj.adj, a, b, i * 101), pos: edgeLen(a, b) * 0.3, speed: 0, want: 8 + hash(i + 3) * 5, seed: i * 101, holds: -1, held: 0 });
+    }
+    return out;
+  }, [carAdj, edgeLen]);
+  const looks = useMemo(() => trafficLooks(16, 5), []);
   const refs = useRef<Array<THREE.Group | null>>([]);
-  useFrame((_, raw) => {
-    const dt = Math.min(raw, 0.05);
+  const junctions = useRef(new Map<number, number>()); // node → the car crossing it
+
+  useFrame(({ clock }, raw) => {
+    const dt = Math.min(raw, 0.05), now = clock.elapsedTime, J = junctions.current;
     cars.forEach((c, i) => {
+      const L = edgeLen(c.from, c.to);
+      // The car ahead: on this stretch, or on the next one (where this car is turning).
+      let gap = Infinity;
+      for (const o of cars) {
+        if (o === c) continue;
+        if (o.from === c.from && o.to === c.to && o.pos > c.pos) gap = Math.min(gap, o.pos - c.pos);
+        else if (o.from === c.to && o.to === c.next) gap = Math.min(gap, L - c.pos + o.pos);
+      }
+      // The junction at the end: take it if it's free, or stop short and wait.
+      const left = L - c.pos;
+      if (left < 9 && carAdj.adj[c.to].length > 2) {
+        const holder = J.get(c.to);
+        if (holder === undefined || holder === i || now - cars[holder].held > 8) { J.set(c.to, i); c.holds = c.to; c.held = now; }
+        else gap = Math.min(gap, left - 5 + CAR_GAP);
+      }
+      const target = Math.max(0, Math.min(c.want, (gap - CAR_GAP) / 1.1));
+      c.speed += Math.max(-9 * dt, Math.min(3 * dt, target - c.speed));
+      if (gap - CAR_GAP < 0.3) c.speed = Math.min(c.speed, 0);
+      c.pos += c.speed * dt;
+      if (c.pos >= L) {
+        c.pos -= L; c.seed++;
+        c.from = c.to; c.to = c.next; c.next = nextNode(carAdj.adj, c.from, c.to, c.seed);
+      }
+      // Out of the junction behind it: free for the next car.
+      if (c.holds >= 0 && c.holds !== c.to && c.pos > 7) { if (J.get(c.holds) === i) J.delete(c.holds); c.holds = -1; }
       const ax = d.nodes[c.from * 2], az = d.nodes[c.from * 2 + 1], bx = d.nodes[c.to * 2], bz = d.nodes[c.to * 2 + 1];
-      const L = Math.hypot(bx - ax, bz - az) || 1;
-      c.t += (c.speed * dt) / L;
-      if (c.t >= 1) { c.seed++; const n = nextNode(carAdj.adj, c.from, c.to, c.seed); c.from = c.to; c.to = n; c.t = 0; return; }
+      const L2 = edgeLen(c.from, c.to), t = Math.min(1, c.pos / L2);
       const w = carAdj.width.get(`${c.from}-${c.to}`) ?? 7;
-      const dx = (bx - ax) / L, dz = (bz - az) / L, off = w * 0.25;
+      const dx = (bx - ax) / L2, dz = (bz - az) / L2, off = w * 0.25;
       const g = refs.current[i];
-      if (g) { g.position.set(ax + (bx - ax) * c.t - dz * off, GROUND_Y + d.heights[c.from] + (d.heights[c.to] - d.heights[c.from]) * c.t, az + (bz - az) * c.t + dx * off); g.rotation.y = Math.atan2(dx, dz); }
+      if (g) {
+        g.position.set(ax + (bx - ax) * t - dz * off, GROUND_Y + d.heights[c.from] + (d.heights[c.to] - d.heights[c.from]) * t, az + (bz - az) * t + dx * off);
+        // Turn smoothly onto the new heading rather than snapping.
+        const want = Math.atan2(dx, dz), diff = Math.atan2(Math.sin(want - g.rotation.y), Math.cos(want - g.rotation.y));
+        g.rotation.y += diff * Math.min(1, dt * 8);
+      }
     });
   });
   return (
     <group>
-      {cars.map((c, i) => (
-        <group key={i} ref={(g) => { refs.current[i] = g; }}>
-          <mesh position={[0, 0.55, 0]}><boxGeometry args={[1.8, 0.7, 4.3]} /><meshStandardMaterial color={c.taxi ? "#efe2c2" : c.color} metalness={0.4} roughness={0.35} /></mesh>
-          <mesh position={[0, 1.1, -0.2]}><boxGeometry args={[1.6, 0.5, 2.2]} /><meshStandardMaterial color={c.taxi ? "#b91c1c" : "#1e293b"} roughness={0.2} metalness={0.5} /></mesh>
-          {[[-0.8, 1.4], [0.8, 1.4], [-0.8, -1.4], [0.8, -1.4]].map(([x, z]) => (
-            <mesh key={`${x}${z}`} position={[x, 0.32, z]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.32, 0.32, 0.22, 10]} /><meshStandardMaterial color="#111" /></mesh>
-          ))}
-        </group>
-      ))}
+      <Suspense fallback={null}>
+        {cars.map((c, i) => <group key={i} ref={(g) => { refs.current[i] = g; }}><TrafficCar look={looks[i]} /></group>)}
+      </Suspense>
     </group>
   );
 }

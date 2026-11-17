@@ -59,12 +59,14 @@ export class V10 {
   private lastThrottle = 0; private lastGear = 1; private lastRpm = 1000; private crackleUntil = 0;
   private buf: AudioBuffer;
 
-  constructor() {
+  /** level: how loud overall (1 at the Autodrome; driving the city's roads is quieter). */
+  constructor(level = 1) {
     const a = raceAudio()!;
     this.c = a.ctx;
     const c = this.c;
     this.out = c.createGain(); this.out.gain.value = 0;
-    this.out.connect(a.master);
+    if (level === 1) this.out.connect(a.master);
+    else { const trim = c.createGain(); trim.gain.value = level; this.out.connect(trim).connect(a.master); }
 
     const mix = c.createGain(); mix.gain.value = 0.32;
     this.fire = c.createOscillator(); this.fire.type = "sawtooth";
