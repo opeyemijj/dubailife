@@ -78,6 +78,8 @@ export function KeyboardShortcuts() {
 
       // If user is not logged in, any gameplay navigation or interaction key redirects directly to the login popup
       const key = e.key.toLowerCase();
+      // Out on the street (and in a hotel suite) W, A, S and D walk you, so they aren't shortcuts there.
+      if (["w", "a", "s", "d"].includes(key) && /^\/(street|hotel\/)/.test(window.location.pathname)) return;
       if (!isLoggedIn) {
         if (
           ["m", "h", "p", "s", "t", "e", "b", "c", "r"].includes(key) ||

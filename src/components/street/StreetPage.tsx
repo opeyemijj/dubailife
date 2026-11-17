@@ -1,9 +1,11 @@
 "use client";
 
 // /street?from=<place or building>&v=<venue>&home=1 : out of the door you came from, onto the street. The real
-// places nearby line it in order; walk to one with the stick, or ask "Where to?".
+// places nearby line it in order; walk to one with the stick, or ask "Where to?". Where the area has its real
+// streets built (src/data/city/osm-districts.json, from OpenStreetMap) you're out on those (OsmWorld), with everyone
+// else out in the same district; otherwise on the classic boulevard (StreetWorld).
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, MapPin, Search, X } from "lucide-react";
 import { useCitizen } from "@/lib/citizenStore";
@@ -19,6 +21,8 @@ import { getHousingTierFromText, HOUSING_CONFIGS } from "@/lib/furniture";
 import { DriveSheet } from "@/components/home/DriveSheet";
 import { drivables, useGarage } from "@/lib/cars";
 import { useNow } from "@/lib/dubaiClock";
+import { districtFor, districtName, loadDistrict, OSM_ATTRIBUTION, OSM_COPYRIGHT_URL, route, type District } from "@/lib/city/osmDistrict";
+import { OsmScene } from "./OsmWorld";
 import { StreetScene, MoveStick, STREET_LIMIT_X, type AutoWalk, type Controls, type StreetDoor } from "./StreetWorld";
 import type { AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 
@@ -82,6 +86,35 @@ export function StreetPage() {
     return [mine, ...extras, ...places, ...locals];
   }, [from, venue, fromHome, origin, originName, area, villas, myCar, homeExt]);
 
+  // The real streets: load this area's district (if it has one); until then a moment's wait, and if it can't load,
+  // the boulevard.
+  const districtId = useMemo(() => districtFor(area, { villas, place: from }), [area, villas, from]);
+  const [osm, setOsm] = useState<{ id: string; d: District | null } | null>(null);
+  useEffect(() => {
+    if (!districtId) return;
+    let live = true;
+    loadDistrict(districtId).then((d) => { if (live) setOsm({ id: districtId, d }); });
+    return () => { live = false; };
+  }, [districtId]);
+  const mode: "loading" | "osm" | "classic" = !districtId ? "classic" : osm?.id !== districtId ? "loading" : osm.d ? "osm" : "classic";
+  const district = mode === "osm" ? osm!.d! : null;
+  // On the real streets each door goes on a building near you, nearest first (your own door at the first).
+  const osmDoors = useMemo(() => {
+    if (!district) return [];
+    const [mine, ...rest] = doors;
+    // Your own door first: from a villa, on the nearest villa-sized building.
+    const firstIdx = villas && fromHome ? Math.max(0, district.slots.findIndex((sl) => sl.h > 0 && sl.h < 11)) : 0;
+    const order = district.slots.length ? [district.slots[firstIdx], ...district.slots.filter((_, i) => i !== firstIdx)] : [];
+    const s0 = order[0] ?? { x: district.start[0], z: district.start[1], yaw: 0, h: 0 };
+    const placed: Array<StreetDoor & { yaw: number }> = [{ ...mine, x: s0.x, z: s0.z, yaw: s0.yaw }];
+    [...rest].sort((a, b) => a.metres - b.metres).forEach((d, i) => {
+      const sl = order[i + 1];
+      if (sl) placed.push({ ...d, x: sl.x, z: sl.z, yaw: sl.yaw });
+    });
+    return placed;
+  }, [district, doors, villas, fromHome]);
+  const lastPos = useRef<[number, number] | null>(null);
+
   const controls = useRef<Controls>({ x: 0, y: 0 });
   const auto = useRef<AutoWalk | null>(null);
   const [run, setRun] = useState(false);
@@ -92,16 +125,29 @@ export function StreetPage() {
 
   // Out here with whoever else stepped out of the same place.
   const [me, setMe] = useState({ x: 12.8, z: 4.5, face: Math.PI, animation: "idle" as AvatarAnimation });
-  const room = useRoom(from ? `street:${from}` : null, { ...me, dirty: isDirty(citizen?.needs?.hygiene) });
-  const onMove = (x: number, z: number, face: number, moving: boolean, running: boolean) =>
+  const roomId = mode === "loading" ? null : mode === "osm" ? `street-osm:${districtId}` : from ? `street:${from}` : null;
+  const room = useRoom(roomId, { ...me, dirty: isDirty(citizen?.needs?.hygiene) });
+  const onMove = (x: number, z: number, face: number, moving: boolean, running: boolean) => {
+    lastPos.current = [x, z];
     setMe({ x: Math.round(x * 10) / 10, z: Math.round(z * 10) / 10, face: Math.round(face * 100) / 100, animation: moving ? (running ? "run" : "walk") : "idle" });
+  };
 
   const go = (href: string) => { gameAudio.playClickSound(); router.push(href); };
   // "Where to?" on this street: walk there by yourself (along the pavement), then in through the door.
   const walkTo = (d: StreetDoor) => {
     setWhere(false);
+    const then = () => (d.prop === "car" ? setDriveOpen(true) : d.shop ? (setShopNote(null), setShopAt(d)) : go(d.href));
+    if (district) {
+      // Along the real streets, then up to the door.
+      const at = osmDoors.find((o) => o.id === d.id);
+      if (!at) return;
+      const fromPos = lastPos.current ?? [osmDoors[0].x, osmDoors[0].z];
+      auto.current = { points: route(district, fromPos, [at.x, at.z]), run, then };
+      gameAudio.playClickSound();
+      return;
+    }
     const side = Math.sign(d.x);
-    auto.current = { points: [[side * 12.6, me.z], [side * 12.6, d.z], [side * STREET_LIMIT_X, d.z]], run, then: () => (d.prop === "car" ? setDriveOpen(true) : d.shop ? (setShopNote(null), setShopAt(d)) : go(d.href)) };
+    auto.current = { points: [[side * 12.6, me.z], [side * 12.6, d.z], [side * STREET_LIMIT_X, d.z]], run, then };
     gameAudio.playClickSound();
   };
   // Further away: the walk fast-forwarded, or a taxi.
@@ -124,13 +170,18 @@ export function StreetPage() {
 
   return (
     <main className="fixed inset-0 w-screen h-[100dvh] overflow-hidden select-none bg-sky-200 text-slate-900 overscroll-none">
-      <StreetScene villas={villas} lot={villas && fromHome ? { pool: homeExt.includes("pool"), car: homeExt.includes("carpark") || homeExt.includes("garage") ? myCar : null } : undefined} doors={doors} look={citizen?.look} dirty={isDirty(citizen?.needs?.hygiene)} controls={controls} run={run} auto={auto} peers={room.peers} onMove={onMove} onNear={setNear} />
+      {mode === "loading" && <div className="absolute inset-0 flex items-center justify-center text-sm font-black text-slate-600">🚶 Stepping outside…</div>}
+      {district && <OsmScene district={district} doors={osmDoors} look={citizen?.look} dirty={isDirty(citizen?.needs?.hygiene)} controls={controls} run={run} auto={auto} peers={room.peers} onMove={onMove} onNear={setNear} />}
+      {mode === "classic" && <StreetScene villas={villas} lot={villas && fromHome ? { pool: homeExt.includes("pool"), car: homeExt.includes("carpark") || homeExt.includes("garage") ? myCar : null } : undefined} doors={doors} look={citizen?.look} dirty={isDirty(citizen?.needs?.hygiene)} controls={controls} run={run} auto={auto} peers={room.peers} onMove={onMove} onNear={setNear} />}
+      {district && (
+        <a href={OSM_COPYRIGHT_URL} target="_blank" rel="noopener noreferrer" className="absolute right-2 bottom-1 z-30 rounded bg-white/75 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">{OSM_ATTRIBUTION}</a>
+      )}
 
       <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2 pointer-events-none">
         <button onClick={() => go(doors[0].href)} className="pointer-events-auto w-10 h-10 rounded-full bg-white/95 shadow-lg flex items-center justify-center" aria-label={`Back inside ${doors[0].name}`}><ArrowLeft className="w-4 h-4" /></button>
         <div className="pointer-events-auto bg-white/95 rounded-2xl shadow-lg px-3 py-1.5 min-w-0">
           <div className="font-black text-sm truncate">🚶 Outside {originName}</div>
-          <div className="text-[11px] text-slate-500 truncate">{villas ? "Villa community" : areaLabel(area)} · {room.peers.length ? `${room.peers.length} out here with you` : "walk anywhere or tap Where to?"}</div>
+          <div className="text-[11px] text-slate-500 truncate">{district ? districtName(district.id) : villas ? "Villa community" : areaLabel(area)} · {room.peers.length ? `${room.peers.length} out here with you` : "walk anywhere or tap Where to?"}</div>
         </div>
         <div className="flex-1" />
         <button onClick={() => setWhere(true)} className="pointer-events-auto h-10 px-4 rounded-full bg-slate-900 text-white shadow-lg flex items-center gap-1.5 text-xs font-black"><MapPin className="w-4 h-4" /> Where to?</button>
@@ -142,7 +193,7 @@ export function StreetPage() {
         </button>
       )}
 
-      {driveOpen && <DriveSheet car={myCar?.car ?? null} onClose={() => setDriveOpen(false)} />}
+      {driveOpen && <DriveSheet car={myCar?.car ?? null} plate={myCar?.plate} from={{ area, place: fromHome ? undefined : from }} onClose={() => setDriveOpen(false)} />}
       {shopAt?.shop && (
         <div className="fixed inset-0 z-[200] bg-black/40 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-label={shopAt.name} onClick={() => setShopAt(null)}>
           <div className="w-full max-w-md bg-white rounded-t-[28px] sm:rounded-[28px] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-2" onClick={(e) => e.stopPropagation()}>
@@ -175,7 +226,7 @@ export function StreetPage() {
               <button onClick={() => setWhere(false)} aria-label="Close" className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"><X className="w-4 h-4" /></button>
             </div>
             <p className="text-xs font-black uppercase tracking-wider text-slate-400">On this street: walk there yourself</p>
-            {doors.filter((d) => !d.mine).sort((a, b) => b.z - a.z).map((d) => (
+            {(district ? osmDoors.filter((d) => !d.mine) : doors.filter((d) => !d.mine).sort((a, b) => b.z - a.z)).map((d) => (
               <button key={d.id} onClick={() => walkTo(d)} className="w-full flex items-center gap-3 rounded-2xl bg-slate-50 hover:bg-slate-100 px-3 py-2.5 text-left">
                 <span className="text-2xl">{d.icon}</span>
                 <span className="flex-1 min-w-0"><span className="block font-black truncate">{d.name}</span><span className="block text-xs text-slate-500">{Math.max(1, Math.round(d.metres / WALK_M_PER_MIN))} min walk</span></span>
