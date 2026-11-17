@@ -9,6 +9,8 @@
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
+/** The very last volume (after the limiter, so turning it down really is quieter). */
+let output: GainNode | null = null;
 
 /** The race's audio, started by a tap (browsers only allow sound after one). */
 export function raceAudio(): { ctx: AudioContext; master: GainNode } | null {
@@ -22,10 +24,19 @@ export function raceAudio(): { ctx: AudioContext; master: GainNode } | null {
     // A gentle limiter so ten cars at once never clip.
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -14; comp.ratio.value = 6; comp.attack.value = 0.003; comp.release.value = 0.2;
-    master.connect(comp).connect(ctx.destination);
+    output = ctx.createGain();
+    output.gain.value = outputLevel;
+    master.connect(comp).connect(output).connect(ctx.destination);
   }
   if (ctx.state === "suspended") void ctx.resume();
   return { ctx, master: master! };
+}
+
+let outputLevel = 1;
+/** Overall loudness after the limiter: 1 at the Autodrome; the city's roads set it lower while you drive. */
+export function setRaceOutput(level: number) {
+  outputLevel = level;
+  if (output && ctx) output.gain.setTargetAtTime(level, ctx.currentTime, 0.05);
 }
 
 export function setRaceVolume(on: boolean) {

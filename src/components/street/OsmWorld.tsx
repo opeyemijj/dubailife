@@ -236,10 +236,35 @@ export function City({ d, night, ground = true }: { d: OsmArea; night: boolean; 
   );
 }
 
-/** Palms along the main roads, both sides, as two instanced meshes. */
-export function Palms({ d, solid }: { d: OsmArea; /** Is a spot taken (inside a building)? */ solid?: (x: number, z: number) => boolean }) {
-  const spots = useMemo(() => {
+/** Is a spot on any road or path (its full width, and a little more)? Segments by 30 m cell, built once per area. */
+function onRoads(d: OsmArea) {
+  const CELL = 30, grid = new Map<string, Array<[number, number, number, number, number]>>();
+  for (const r of d.roads) {
+    const hw = ROAD_CLASSES[r.cls].w / 2 + (ROAD_CLASSES[r.cls].foot ? 0.6 : 1.2);
+    for (let i = 0; i < r.idx.length - 1; i++) {
+      const ax = d.nodes[r.idx[i] * 2], az = d.nodes[r.idx[i] * 2 + 1], bx = d.nodes[r.idx[i + 1] * 2], bz = d.nodes[r.idx[i + 1] * 2 + 1];
+      const seg: [number, number, number, number, number] = [ax, az, bx, bz, hw];
+      for (let cx = Math.floor((Math.min(ax, bx) - hw) / CELL); cx <= Math.floor((Math.max(ax, bx) + hw) / CELL); cx++)
+        for (let cz = Math.floor((Math.min(az, bz) - hw) / CELL); cz <= Math.floor((Math.max(az, bz) + hw) / CELL); cz++) {
+          const k = `${cx},${cz}`, list = grid.get(k);
+          if (list) list.push(seg); else grid.set(k, [seg]);
+        }
+    }
+  }
+  return (x: number, z: number) => {
+    for (const [ax, az, bx, bz, hw] of grid.get(`${Math.floor(x / CELL)},${Math.floor(z / CELL)}`) ?? []) {
+      const dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz || 1e-9;
+      const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L2));
+      if (Math.hypot(ax + dx * t - x, az + dz * t - z) < hw) return true;
+    }
+    return false;
+  };
+}
+
+/** Where the palms go: along the main roads' pavements, both sides, 6 m apart at least, never on any road. */
+export function palmSpots(d: OsmArea, solid?: (x: number, z: number) => boolean) {
     const out: Array<[number, number, number]> = [];
+    const road = onRoads(d);
     for (const r of d.roads) {
       if (r.cls < 1 || r.cls > 3 || r.bridge || r.tunnel) continue;
       const off = ROAD_CLASSES[r.cls].w / 2 + 1.6;
@@ -250,13 +275,17 @@ export function Palms({ d, solid }: { d: OsmArea; /** Is a spot taken (inside a 
           const t = s / L, x = ax + (bx - ax) * t, z = az + (bz - az) * t;
           for (const side of [1, -1]) {
             const px = x + nx * off * side, pz = z + nz * off * side;
-            if (!solid?.(px, pz)) out.push([px, pz, hash(px * 3 + pz)]);
+            if (!road(px, pz) && !solid?.(px, pz) && !out.some(([qx, qz]) => Math.abs(qx - px) < 6 && Math.abs(qz - pz) < 6)) out.push([px, pz, hash(px * 3 + pz)]);
           }
         }
       }
     }
     return out;
-  }, [d, solid]);
+}
+
+/** Palms along the main roads' pavements, both sides; never on a road (this one, or the one beside it). */
+export function Palms({ d, solid }: { d: OsmArea; /** Is a spot taken (a building, or a road drawn from elsewhere)? */ solid?: (x: number, z: number) => boolean }) {
+  const spots = useMemo(() => palmSpots(d, solid), [d, solid]);
   const trunk = useRef<THREE.InstancedMesh>(null), crown = useRef<THREE.InstancedMesh>(null);
   useEffect(() => {
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();

@@ -21,7 +21,7 @@ import { SteeringWheel } from "@/components/cars/SteeringWheel";
 import { PerfProbe } from "@/components/perf/PerfProbe";
 import { canvasQuality } from "@/lib/device";
 import { gearbox, perfOf, type DriveInput } from "@/lib/autodrome";
-import { V10, setRaceVolume } from "@/lib/raceAudio";
+import { V10, setRaceOutput, setRaceVolume } from "@/lib/raceAudio";
 import { dubaiSky, SkyAndLight } from "@/components/transit/TransitWorld";
 import { City, Palms } from "@/components/street/OsmWorld";
 import { laneCentres, LANE_W, loadPiece, roadStep, type Corridor, type Leg, type RoadPath, type RoadState } from "@/lib/city/drives";
@@ -29,6 +29,8 @@ import { freeSpot, spawnTraffic, stepTraffic, trafficLooks, type Vehicle } from 
 import { OSM_ATTRIBUTION, OSM_COPYRIGHT_URL, type OsmArea } from "@/lib/city/osmDistrict";
 
 const CRUISE = 100 / 3.6;
+/** How loud driving is, against the Autodrome (1). */
+const DRIVE_VOLUME = 0.14;
 const hash = (n: number) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
 
 
@@ -284,7 +286,21 @@ function Pieces({ corridor, st, own }: { corridor: Corridor; st: React.RefObject
     const t = setInterval(tick, 1500);
     return () => { live = false; clearTimeout(t0); clearInterval(t); };
   }, [corridor, st, own]);
-  return <>{areas.map(({ k, a }) => <group key={k}><City d={a} night={night} ground={false} /><Palms d={a} /></group>)}</>;
+  // Nothing grows on the motorway: both carriageways at their real width (wider than the map's road), and the median.
+  const onMotorway = useMemo(() => {
+    const CELL = 40, grid = new Map<string, Array<[number, number, number]>>();
+    for (const road of [corridor.fwd, corridor.back]) for (let s = 0; s < road.length; s += 4) {
+      const p = road.pose(s).p, k = `${Math.floor(p.x / CELL)},${Math.floor(p.z / CELL)}`, list = grid.get(k);
+      const item: [number, number, number] = [p.x, p.z, road.halfWidth(s) + 3];
+      if (list) list.push(item); else grid.set(k, [item]);
+    }
+    return (x: number, z: number) => {
+      const cx = Math.floor(x / CELL), cz = Math.floor(z / CELL);
+      for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) for (const [px, pz, r] of grid.get(`${cx + i},${cz + j}`) ?? []) if (Math.hypot(px - x, pz - z) < r) return true;
+      return false;
+    };
+  }, [corridor]);
+  return <>{areas.map(({ k, a }) => <group key={k}><City d={a} night={night} ground={false} /><Palms d={a} solid={onMotorway} /></group>)}</>;
 }
 
 // ---------------------------------------------------------------- the scene and the dashboard
@@ -309,9 +325,10 @@ export function DriveScene({ corridor, leg, carId, plate, destination, onArrive,
   const engine = useRef<V10 | null>(null);
 
   useEffect(() => {
-    // About a third of the Autodrome's volume: this is a drive, not a race.
-    try { engine.current = new V10(0.35); } catch { engine.current = null; }
-    return () => { engine.current?.stop(); engine.current = null; };
+    // Much quieter than the Autodrome (this is a drive, not a race): set after the limiter, so it really is 14%.
+    setRaceOutput(DRIVE_VOLUME);
+    try { engine.current = new V10(); } catch { engine.current = null; }
+    return () => { engine.current?.stop(); engine.current = null; setRaceOutput(1); };
   }, []);
   useEffect(() => {
     const t = setInterval(() => { const S = st.current; setHud({ kmh: Math.round(S.speed * 3.6), gear: S.gear, left: Math.max(0, end - S.s), tunnel: hudRef.current.tunnel }); }, 150);
