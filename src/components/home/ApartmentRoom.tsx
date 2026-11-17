@@ -105,7 +105,7 @@ export interface ApartmentRoomProps {
   /** Where you are as you move about (x, z, facing, walking), so others can see you live. */
   onMove?: (x: number, z: number, yaw: number, walking: boolean, lift?: number, rest?: "sit" | "sleep") => void;
   /** Sit down (on the nearest free seat: sofa, armchair, chair, majlis) or stand up again. Each new `n` is a new ask. */
-  seatCall?: { n: number; sit: boolean };
+  seatCall?: { n: number; sit: boolean; on?: "chair" | "bed" };
   /** Walk to the nearest fixture of this kind (the shower for "Morning Shower") and use it; each call is a new ask. */
   fixtureCall?: { n: number; kind: string };
   /** What an object in use is showing (the meal on the table, flakes in the tank, the TV on…): its action's `serve`. */
@@ -2311,6 +2311,8 @@ function RoomScene({
   useEffect(() => { peopleRef.current = people; }, [people]);
   const seatN = seatCall?.n ?? 0;
   const seatSit = !!seatCall?.sit;
+  // A seat (the default), or a bed to lie down in (a hotel suite's "sleep in the king bed").
+  const seatOn = seatCall?.on ?? "chair";
   useEffect(() => {
     if (!seatN) return;
     const t = setTimeout(() => {
@@ -2322,16 +2324,22 @@ function RoomScene({
       }
       const [mx, , mz] = poseRef.current.position;
       const taken = (x: number, z: number) => peopleRef.current.some((o) => Math.hypot(o.position[0] - x, o.position[2] - z) < 0.45);
-      let best: { item: CatalogItem; placement: Placement; d: number } | null = null;
+      let best: { item: CatalogItem; placement: Placement; d: number; stand?: [number, number] } | null = null;
       for (const f of furniture) {
         const item = getCatalogItem(f.itemId);
-        if (!item || item.interaction !== "chair" || f.placement?.kind !== "floor" || levelOf(f.placement) !== lvl) continue;
-        const r = restPose(item, f.placement, "chair", avatarHeight);
+        if (!item || item.interaction !== seatOn || f.placement?.kind !== "floor" || levelOf(f.placement) !== lvl) continue;
+        const r = restPose(item, f.placement, seatOn, avatarHeight);
         if (!r || taken(r.position[0], r.position[2])) continue;
         const d = Math.hypot(r.position[0] - mx, r.position[2] - mz);
-        if (!best || d < best.d) best = { item, placement: f.placement, d };
+        if (!best || d < best.d) best = { item, placement: f.placement, d, stand: r.stand };
       }
-      if (best) interactRef.current("chair", best.item, best.placement);
+      if (!best) return;
+      // To bed: straight to the bedside first (the walk there can be long, through doorways), then lie down.
+      if (seatOn === "bed" && best.stand) {
+        const b = best;
+        setPose({ position: [b.stand![0], 0, b.stand![1]], yaw: poseRef.current.yaw });
+        setTimeout(() => interactRef.current("bed", b.item, b.placement), 50);
+      } else interactRef.current(seatOn, best.item, best.placement);
     }, 0);
     return () => clearTimeout(t);
     // Only a new ask: not every time the furniture or people change.

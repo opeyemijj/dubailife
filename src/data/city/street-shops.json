@@ -60,11 +60,12 @@
     }
   },
   "areas": {
+    "palm": { "label": "Palm Jumeirah", "match": ["palm", "atlantis", "pointe", "frond"], "box": [100, 1750, 1900, 3200], "shops": ["juice", "gym", "karak", "barber"] },
     "old-dubai": { "label": "Old Dubai (Deira, Bur Dubai, Karama)", "match": ["deira", "bur dubai", "karama", "satwa", "al fahidi", "gold souk"], "box": [4000, 6000, -1000, 700], "shops": ["karak", "baqala", "grill", "barber", "karak", "juice", "baqala", "grill"] },
     "barsha": { "label": "Al Barsha and JVC", "match": ["barsha", "jvc", "jumeirah village", "al quoz", "sports city"], "box": [900, 1500, 850, 1400], "shops": ["karak", "baqala", "grill", "gym", "juice", "karak", "baqala"] },
-    "marina": { "label": "Dubai Marina and JBR", "match": ["marina", "jbr", "jlt", "harbour"], "box": [0, 900, 1200, 2600], "shops": ["juice", "gym", "grill", "karak", "baqala", "juice", "gym"] },
+    "marina": { "label": "Dubai Marina and JBR", "match": ["marina", "jbr", "jlt", "harbour"], "box": [-1600, 900, 1000, 2600], "shops": ["juice", "gym", "grill", "karak", "baqala", "juice", "gym"] },
     "downtown": { "label": "Downtown and Business Bay", "match": ["downtown", "business bay", "difc", "creek harbour", "city walk"], "box": [1500, 4000, 300, 1250], "shops": ["juice", "gym", "karak", "grill", "baqala", "gym"] },
-    "suburbs": { "label": "Family suburbs", "match": ["arabian ranches", "damac", "dubai hills", "mirdif", "palm"], "shops": ["baqala", "karak", "gym", "grill", "juice"] },
+    "suburbs": { "label": "Family suburbs", "match": ["arabian ranches", "damac", "dubai hills", "mirdif"], "shops": ["baqala", "karak", "gym", "grill", "juice"] },
     "default": { "label": "Dubai", "match": [], "shops": ["karak", "baqala", "grill", "gym", "juice", "barber"] }
   }
 }

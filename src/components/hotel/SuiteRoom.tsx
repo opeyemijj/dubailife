@@ -34,6 +34,9 @@ export function SuiteRoom({ look, suite, onToast }: { look?: AvatarLookProps; su
   const [view, setView] = useState<"above" | "inside">("above");
   const [focus, setFocus] = useState<{ n: number; at: [number, number] } | undefined>(undefined);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Sleeping is in the bed itself (the room engine walks you there and lays you down); everything else gets you up.
+  const [seat, setSeat] = useState<{ n: number; sit: boolean; on: "chair" | "bed" } | undefined>(undefined);
+  const inBed = useRef(false);
   const gold = suite !== "deluxe";
 
   const run = (a: SuiteActivity) => {
@@ -41,6 +44,8 @@ export function SuiteRoom({ look, suite, onToast }: { look?: AvatarLookProps; su
     if (timer.current) clearTimeout(timer.current);
     setDoing(a.id);
     setFocus((f) => ({ n: (f?.n ?? 0) + 1, at: SPOT[a.id] ?? [0, 0] }));
+    if (a.id === "sleep") { setSeat((s) => ({ n: (s?.n ?? 0) + 1, sit: true, on: "bed" })); inBed.current = true; }
+    else if (inBed.current) { setSeat((s) => ({ n: (s?.n ?? 0) + 1, sit: false, on: "bed" })); inBed.current = false; }
     boostNeed(a.need as NeedKey, a.amount);
     const also = (a as SuiteActivity & { also?: { need: string; amount: number } }).also;
     if (also) boostNeed(also.need as NeedKey, also.amount);
@@ -59,8 +64,9 @@ export function SuiteRoom({ look, suite, onToast }: { look?: AvatarLookProps; su
         extras={<SuiteExtras active={doing} gold={gold} />}
         stick={stick}
         focus={focus}
-        goTo={focus ? { n: focus.n, at: STAND_AT[doing ?? ""] ?? focus.at } : undefined}
-        myAnimation={current ? ANIM[current.animation] : undefined}
+        goTo={focus && doing !== "sleep" ? { n: focus.n, at: STAND_AT[doing ?? ""] ?? focus.at } : undefined}
+        seatCall={seat}
+        myAnimation={current && current.id !== "sleep" ? ANIM[current.animation] : undefined}
         loadingLabel="Going up to your suite…"
       />
       {view === "inside" && (

@@ -1,6 +1,26 @@
 {
   "items": [
     {
+      "id": "2026-11-17-drive-szr-palm",
+      "date": "2026-11-17",
+      "icon": "🛣️",
+      "title": "Drive Sheikh Zayed Road and the Palm",
+      "text": "Get in your car and drive the real Sheikh Zayed Road (22 km from Trade Centre to JLT) and Palm Jumeirah (down the trunk and through the tunnel to Atlantis): the real towers, flyovers and interchanges, traffic in every lane, exit gantries, and your engine. Cruise holds 100 in your lane; Skip whenever you like. And if you live on the Palm, you now step out onto its real fronds.",
+      "how": "Outside, walk up to your car → Get in your car → pick somewhere along the road (Downtown, Al Barsha, the Marina, the Palm…).",
+      "cta": "Open the map",
+      "href": "/explore"
+    },
+    {
+      "id": "2026-11-17-real-streets",
+      "date": "2026-11-17",
+      "icon": "🗺️",
+      "title": "Step outside onto Dubai's real streets",
+      "text": "Step outside in Dubai Marina, Downtown, Bur Dubai, Al Barsha, Arabian Ranches or on the Palm and you're on the real streets: every building where it really is, the real roads, the marina and the parks, with traffic, Locals out walking and other players. The doors of the places nearby are on the buildings around you.",
+      "how": "Inside any place tap 🚪 Outside, or Go outside from home. Tap Where to? and you'll walk there along the streets.",
+      "cta": "Open the map",
+      "href": "/explore"
+    },
+    {
       "id": "2026-11-16-hotel-suites",
       "date": "2026-11-16",
       "icon": "🏨",

@@ -1,0 +1,44 @@
+{
+  "_how": "Real streets outside (components/street/OsmWorld) and real roads to drive (components/drive). Built once, offline, from OpenStreetMap by `node scripts/osm/build-districts.mjs` (never from the game itself); map data © OpenStreetMap contributors, ODbL. DISTRICTS: a square of `r` metres either side of a centre (lat, lng), written to public/osm/<id>.json. Which one you step out into: `places` (a place id) first, then `villas` (from a villa or townhouse, by street area), then `areas` (street area, src/data/city/street-shops.json); none: the classic boulevard. CORRIDORS: a road to drive, routed along the motorway network through `waypoints` (lat, lng; `prefer` = road names it keeps to), cut into ~1 km pieces (public/osm/<id>/index.json and <n>.json) covering `width` metres either side. `exits` are where you join or leave it, matched by your place (`places`) or street area (`areas`). `link` joins two corridors: driving from one onto the other goes through those two exits.",
+  "attribution": "© OpenStreetMap contributors",
+  "districts": {
+    "marina": { "name": "Dubai Marina", "lat": 25.0805, "lng": 55.1405, "r": 480 },
+    "downtown": { "name": "Downtown Dubai", "lat": 25.1955, "lng": 55.2772, "r": 480 },
+    "old-dubai": { "name": "Bur Dubai", "lat": 25.2635, "lng": 55.2965, "r": 420 },
+    "barsha": { "name": "Al Barsha", "lat": 25.1140, "lng": 55.1975, "r": 450 },
+    "suburbs": { "name": "Arabian Ranches", "lat": 25.0536, "lng": 55.2755, "r": 420 },
+    "palm-trunk": { "name": "Palm Jumeirah", "lat": 25.1140, "lng": 55.1383, "r": 450 },
+    "palm-frond": { "name": "Palm Jumeirah fronds", "lat": 25.1227, "lng": 55.1275, "r": 420 },
+    "palm-atlantis": { "name": "Atlantis & The Pointe", "lat": 25.1299, "lng": 55.1202, "r": 450 }
+  },
+  "places": { "atlantis-the-palm": "palm-atlantis", "atlantis-the-royal": "palm-atlantis", "the-pointe": "palm-atlantis" },
+  "villas": { "palm": "palm-frond", "suburbs": "suburbs" },
+  "areas": { "marina": "marina", "downtown": "downtown", "old-dubai": "old-dubai", "barsha": "barsha", "suburbs": "suburbs", "palm": "palm-trunk", "default": "downtown" },
+  "corridors": {
+    "szr": {
+      "name": "Sheikh Zayed Road", "width": 320, "piece": 1000,
+      "roads": "motorway|motorway_link|trunk|trunk_link|primary|primary_link",
+      "prefer": "Sheikh Zayed|الشيخ زايد|E 11|E11",
+      "waypoints": [[25.2218, 55.2826], [25.2014, 55.2690], [25.1557, 55.2287], [25.1213, 55.2003], [25.1010, 55.1736], [25.0800, 55.1478], [25.0712, 55.1365]],
+      "exits": [
+        { "id": "trade-centre", "name": "Trade Centre · Bur Dubai · Deira", "lat": 25.2210, "lng": 55.2815, "areas": ["old-dubai"] },
+        { "id": "downtown", "name": "Downtown · Burj Khalifa", "lat": 25.2014, "lng": 55.2690, "areas": ["downtown", "default"] },
+        { "id": "barsha", "name": "Mall of the Emirates · Al Barsha", "lat": 25.1213, "lng": 55.2003, "areas": ["barsha", "suburbs"] },
+        { "id": "palm", "name": "Palm Jumeirah", "lat": 25.0985, "lng": 55.1695, "areas": [] },
+        { "id": "marina", "name": "Dubai Marina · JBR", "lat": 25.0800, "lng": 55.1478, "areas": ["marina"] }
+      ]
+    },
+    "palm": {
+      "name": "Palm Jumeirah", "width": 300, "piece": 1000,
+      "roads": "motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link",
+      "prefer": "Palm|Crescent|نخلة|الهلال|King Salman|الملك سلمان",
+      "waypoints": [[25.1009, 55.1598], [25.1140, 55.1383], [25.1268, 55.1218], [25.1306, 55.1172]],
+      "exits": [
+        { "id": "gateway", "name": "Sheikh Zayed Road", "lat": 25.1009, "lng": 55.1598, "areas": ["marina", "downtown", "old-dubai", "barsha", "suburbs", "default"] },
+        { "id": "trunk", "name": "Palm Jumeirah Mall · the trunk", "lat": 25.1140, "lng": 55.1383, "areas": ["palm"] },
+        { "id": "atlantis", "name": "Atlantis · The Pointe", "lat": 25.1306, "lng": 55.1172, "areas": [], "places": ["atlantis-the-palm", "atlantis-the-royal", "the-pointe"] }
+      ]
+    }
+  },
+  "link": { "szr": "palm", "palm": "gateway" }
+}
