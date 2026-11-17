@@ -371,7 +371,7 @@ function LocalWalker({ x, z0, span, speed, phase, look }: { x: number; z0: numbe
 
 // ---------------------------------------------------------------- people
 
-export function Walker({ peer }: { peer: Peer }) {
+function Walker({ peer }: { peer: Peer }) {
   const g = useRef<THREE.Group>(null);
   const [moving, setMoving] = useState(false);
   useFrame((_, dt) => {

@@ -20,7 +20,6 @@ import {
 } from "@/components/layout/SideBar";
 import { ExteriorSheet } from "@/components/home/ExteriorSheet";
 import { DriveSheet } from "@/components/home/DriveSheet";
-import { streetArea } from "@/lib/city/streetShops";
 import { drivables, useGarage } from "@/lib/cars";
 import { PartyBanner, usePartyHere } from "@/components/invite/PartyHere";
 import { PartyPeople } from "@/components/invite/PartyPeople";
@@ -2014,8 +2013,6 @@ export default function HomePage() {
       {driveOpen && (
         <DriveSheet
           car={myCar?.car ?? null}
-          plate={myCar?.plate}
-          from={{ area: streetArea(null, activeFlat ? (activeBuildingName ?? housingConfig.area) : housingConfig.area) }}
           onClose={() => setDriveOpen(false)}
         />
       )}

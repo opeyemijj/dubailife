@@ -72,13 +72,6 @@ const SECTIONS: Array<{ icon: string; title: string; intro?: string; items: Item
     ],
   },
   {
-    icon: "🗺️",
-    title: "Maps",
-    items: [
-      { what: "The real streets outside and the roads you drive (buildings, roads, flyovers, water and parks of Dubai Marina, Downtown, Bur Dubai, Al Barsha, Arabian Ranches, Palm Jumeirah and along Sheikh Zayed Road)", by: "© OpenStreetMap contributors", source: "https://www.openstreetmap.org/copyright", licence: { name: "Open Database License (ODbL) 1.0", url: "https://opendatacommons.org/licenses/odbl/1-0/" }, note: "Downloaded once and simplified into the game's own 3D streets (scripts/osm). The game never loads anything from OpenStreetMap's servers while you play. The adapted map data is available under the same licence on request." },
-    ],
-  },
-  {
     icon: "🧩",
     title: "Open-source software",
     items: [

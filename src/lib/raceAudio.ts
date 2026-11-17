@@ -9,8 +9,6 @@
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
-/** The very last volume (after the limiter, so turning it down really is quieter). */
-let output: GainNode | null = null;
 
 /** The race's audio, started by a tap (browsers only allow sound after one). */
 export function raceAudio(): { ctx: AudioContext; master: GainNode } | null {
@@ -24,19 +22,10 @@ export function raceAudio(): { ctx: AudioContext; master: GainNode } | null {
     // A gentle limiter so ten cars at once never clip.
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -14; comp.ratio.value = 6; comp.attack.value = 0.003; comp.release.value = 0.2;
-    output = ctx.createGain();
-    output.gain.value = outputLevel;
-    master.connect(comp).connect(output).connect(ctx.destination);
+    master.connect(comp).connect(ctx.destination);
   }
   if (ctx.state === "suspended") void ctx.resume();
   return { ctx, master: master! };
-}
-
-let outputLevel = 1;
-/** Overall loudness after the limiter: 1 at the Autodrome; the city's roads set it lower while you drive. */
-export function setRaceOutput(level: number) {
-  outputLevel = level;
-  if (output && ctx) output.gain.setTargetAtTime(level, ctx.currentTime, 0.05);
 }
 
 export function setRaceVolume(on: boolean) {
@@ -70,14 +59,12 @@ export class V10 {
   private lastThrottle = 0; private lastGear = 1; private lastRpm = 1000; private crackleUntil = 0;
   private buf: AudioBuffer;
 
-  /** level: how loud overall (1 at the Autodrome; driving the city's roads is quieter). */
-  constructor(level = 1) {
+  constructor() {
     const a = raceAudio()!;
     this.c = a.ctx;
     const c = this.c;
     this.out = c.createGain(); this.out.gain.value = 0;
-    if (level === 1) this.out.connect(a.master);
-    else { const trim = c.createGain(); trim.gain.value = level; this.out.connect(trim).connect(a.master); }
+    this.out.connect(a.master);
 
     const mix = c.createGain(); mix.gain.value = 0.32;
     this.fire = c.createOscillator(); this.fire.type = "sawtooth";

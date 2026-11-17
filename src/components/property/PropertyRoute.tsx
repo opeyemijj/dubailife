@@ -858,8 +858,6 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
       {driveOpen && (
         <DriveSheet
           car={parkedCar?.car ? carOf(parkedCar.car) ?? null : null}
-          plate={parkedCar?.plate}
-          from={isGenericHome(flat.building_id) ? undefined : { place: flat.building_id }}
           onClose={() => setDriveOpen(false)}
         />
       )}
