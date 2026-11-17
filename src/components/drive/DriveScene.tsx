@@ -309,8 +309,8 @@ export function DriveScene({ corridor, leg, carId, plate, destination, onArrive,
   const engine = useRef<V10 | null>(null);
 
   useEffect(() => {
-    // Half the Autodrome's volume: this is a drive, not a race.
-    try { engine.current = new V10(0.5); } catch { engine.current = null; }
+    // About a third of the Autodrome's volume: this is a drive, not a race.
+    try { engine.current = new V10(0.35); } catch { engine.current = null; }
     return () => { engine.current?.stop(); engine.current = null; };
   }, []);
   useEffect(() => {
