@@ -36,9 +36,10 @@ const round = (n: number, to: number) => Math.round(n / to) * to;
 const q = (v: unknown) => (v === null || v === undefined ? "null" : typeof v === "number" ? String(v) : `'${String(v).replace(/'/g, "''")}'`);
 
 function occupancy(r: () => number) {
+  // Every home is for real players: none is lived in by a made-up resident (those that used to be are for rent or
+  // sale; the name is still drawn so every other home comes out exactly as before).
   const x = r();
-  if (x < 0.35) return { owner_npc: NPCS[Math.floor(r() * NPCS.length)] };
-  if (x < 0.5) return { tenant_npc: NPCS[Math.floor(r() * NPCS.length)] };
+  if (x < 0.5) { r(); return { listing: "rent_or_sale" }; }
   if (x < 0.78) return { listing: "rent" };
   if (x < 0.92) return { listing: "sale" };
   return { listing: "rent_or_sale" };
