@@ -47,7 +47,7 @@ import { SmallLoader } from "@/components/GameLoadingScreen";
 import { WardrobeModal } from "@/components/avatar/WardrobeModal";
 import { DecorationCatalogue } from "@/components/home/DecorationCatalogue";
 import { myHousehold, type SharedHome } from "@/lib/love";
-import { getFlatParkedCar, carOf, type ParkedCarView, type Drivable, useGarage } from "@/lib/cars";
+import { getFlatParkedCar, carOf, paintedCar, type ParkedCarView, type Drivable, useGarage } from "@/lib/cars";
 import { VehicleTheftModal } from "@/components/cars/VehicleTheftModal";
 import { DriveSheet } from "@/components/home/DriveSheet";
 import { DriveJourney } from "@/components/cars/DriveJourney";
@@ -497,7 +497,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
         loadingLabel={`Opening ${flatTitle(flat)}`}
         look={look}
         homeStyle={homeLook}
-        ownCar={parkedCar && !parkedCar.isStolen ? { car: carOf(parkedCar.car)!, plate: parkedCar.plate } : null}
+        ownCar={parkedCar && !parkedCar.isStolen && carOf(parkedCar.car) ? { car: paintedCar(parkedCar.car, parkedCar.color)!, plate: parkedCar.plate } : null}
         onUseFixture={(f) => {
           if (f.kind === "car") {
             if (!parkedCar || parkedCar.isStolen) {
@@ -837,7 +837,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
           onSuccess={(stolen) => {
             room.emit({ type: "car_stolen", thief: citizen?.username });
             void refreshParkedCar();
-            const carDef = carOf(stolen.car);
+            const carDef = paintedCar(stolen.car, parkedCar?.id === stolen.carId ? parkedCar.color : null);
             if (carDef) {
               setStolenDrive({
                 kind: "stolen",
@@ -857,7 +857,7 @@ function Inside({ flat, me, canEdit, reason, furniture, setFurniture, look, onEx
 
       {driveOpen && (
         <DriveSheet
-          car={parkedCar?.car ? carOf(parkedCar.car) ?? null : null}
+          car={parkedCar?.car ? paintedCar(parkedCar.car, parkedCar.color) ?? null : null}
           onClose={() => setDriveOpen(false)}
         />
       )}

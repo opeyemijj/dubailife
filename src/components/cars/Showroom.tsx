@@ -2,7 +2,8 @@
 
 // A car dealership or rental branch in 3D: a glass-fronted showroom with a polished floor, the brand's
 // colours, and every car on its own lit turntable. Pick a car to bring it centre stage; take it for a
-// test drive on Sheikh Zayed Road; then rent it (day, week or month) or buy it (insured and registered).
+// test drive on Sheikh Zayed Road; then rent it (day, week or month) or buy it (insured and registered) in the
+// colour you choose (the car on the turntable shows it).
 // Both need the driving license from the Driving Academy.
 
 import { Suspense, useMemo, useRef, useState } from "react";
@@ -14,7 +15,8 @@ import { CitizenAvatar } from "@/components/avatar/CitizenAvatar";
 import { StudioEnvironment } from "@/components/avatar/CitizenAvatar";
 import { canvasQuality } from "@/lib/device";
 import { useCitizen } from "@/lib/citizenStore";
-import { aed, buyCar, buyTotal, CARS, insuranceFor, rentCar, rentCarFake, rentCost, returnCar, useGarage, type Car, type Shop } from "@/lib/cars";
+import { aed, buyCar, buyTotal, CARS, insuranceFor, painted, paintName, rentCar, rentCarFake, rentCost, returnCar, useGarage, type Car, type Shop } from "@/lib/cars";
+import { PaintPicker } from "./PaintPicker";
 import { reloadServices } from "@/lib/cityServices";
 import { openPhone } from "@/components/layout/PhoneOverlay";
 import { ArrestScene } from "./ArrestScene";
@@ -75,13 +77,16 @@ export function Showroom({ shop }: { shop: Shop }) {
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   const [driving, setDriving] = useState(false);
   const [arrested, setArrested] = useState(false);
+  // The colour for the car you're buying (null: as it comes); a new car starts at its factory colour.
+  const [paint, setPaint] = useState<string | null>(null);
   const car = shop.cars[pick];
+  const choose = (i: number) => { gameAudio.playClickSound(); setPick(i); setPaint(null); setNote(null); };
   const spots = shop.cars.map((_, i) => ({ x: (i - (shop.cars.length - 1) / 2) * 6.6, z: i % 2 ? -1.6 : 0.4 }));
   const licensed = !!garage?.licence;
   const balance = citizen?.balance ?? 0;
   const price = shop.rent ? rentCost(car, days) + CARS.deposit : buyTotal(car);
 
-  if (driving) return <TestDrive car={car} look={citizen?.look} onDone={() => setDriving(false)} />;
+  if (driving) return <TestDrive car={shop.rent ? car : painted(car, paint)} look={citizen?.look} onDone={() => setDriving(false)} />;
   if (arrested) return <ArrestScene look={citizen?.look} onDone={() => { setArrested(false); void reloadServices(); openPhone("court"); }} />;
 
   // No license, at a rental counter: the risky option. Usually the agent spots it and calls the police.
@@ -99,14 +104,14 @@ export function Showroom({ shop }: { shop: Shop }) {
 
   const act = async () => {
     setBusy(true);
-    const r = shop.rent ? await rentCar(shop.id, car.id, days) : await buyCar(shop.id, car.id);
+    const r = shop.rent ? await rentCar(shop.id, car.id, days) : await buyCar(shop.id, car.id, paint);
     setBusy(false);
     if (r.error) return setNote({ ok: false, text: r.error });
     gameAudio.playCoinSound();
     void reload();
     setNote({ ok: true, text: shop.rent
       ? `🔑 Your ${car.make} ${car.model} is ready for ${days} day${days > 1 ? "s" : ""}. Bring it back any time for your deposit.`
-      : `🎉 You own a ${car.make} ${car.model}! Plate ${(r.data as { plate: string }).plate}, insured and registered for a year.` });
+      : `🎉 You own a ${paint ? `${paintName(paint)} ` : ""}${car.make} ${car.model}! Plate ${(r.data as { plate: string }).plate}, insured and registered for a year.` });
   };
 
   return (
@@ -119,7 +124,7 @@ export function Showroom({ shop }: { shop: Shop }) {
         <directionalLight position={[4, 9, 6]} intensity={1.6} castShadow />
         <Suspense fallback={null}>
           <Room shop={shop} />
-          {shop.cars.map((c, i) => <Turntable key={c.id} car={c} x={spots[i].x} z={spots[i].z} active={i === pick} onPick={() => { gameAudio.playClickSound(); setPick(i); }} />)}
+          {shop.cars.map((c, i) => <Turntable key={c.id} car={i === pick && !shop.rent ? painted(c, paint) : c} x={spots[i].x} z={spots[i].z} active={i === pick} onPick={() => choose(i)} />)}
           <group position={[spots[pick].x + 3.2, 0, spots[pick].z + 2.2]} rotation={[0, -0.8, 0]}><CitizenAvatar look={{ gender: "man", preset: "Business_Male_04" }} animation="talk" /></group>
           <group position={[spots[pick].x - 2.6, 0, spots[pick].z + 3]} rotation={[0, 2.5, 0]}><CitizenAvatar look={citizen?.look} animation="idle" /></group>
         </Suspense>
@@ -140,7 +145,7 @@ export function Showroom({ shop }: { shop: Shop }) {
         <div className="max-w-md mx-auto bg-white text-slate-900 rounded-[28px] shadow-2xl p-4 space-y-3">
           <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1">
             {shop.cars.map((c, i) => (
-              <button key={c.id} onClick={() => { gameAudio.playClickSound(); setPick(i); setNote(null); }}
+              <button key={c.id} onClick={() => choose(i)}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-semibold ${i === pick ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"}`}>{c.make} {c.model}</button>
             ))}
           </div>
@@ -163,7 +168,10 @@ export function Showroom({ shop }: { shop: Shop }) {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-slate-500">Includes a year&apos;s insurance ({aed(insuranceFor(car))}) and RTA registration ({aed(CARS.registration)}).</p>
+            <>
+              <PaintPicker factory={car.color} value={paint} onChange={(hex) => { gameAudio.playClickSound(); setPaint(hex); setNote(null); }} />
+              <p className="text-xs text-slate-500">Any colour at no extra cost. Includes a year&apos;s insurance ({aed(insuranceFor(car))}) and RTA registration ({aed(CARS.registration)}).</p>
+            </>
           )}
           {note && <p className={`rounded-2xl px-3 py-2 text-sm font-semibold ${note.ok ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-700"}`}>{note.text}</p>}
           {/* Until the garage loads (or if it can't), the buttons still show: the server checks the license. */}

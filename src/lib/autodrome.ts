@@ -111,14 +111,14 @@ export function gearbox(speed: number, top: number) {
 // ---------------------------------------------------------------- races
 
 export type PrizeMode = "winner" | "top3";
-export interface Racer { id: string; username: string; look: AvatarLookProps | null; car: string; plate: string | null; finishMs: number | null; place: number | null; prize?: number | null }
+export interface Racer { id: string; username: string; look: AvatarLookProps | null; car: string; /** Its paint (null: factory). */ color?: string | null; plate: string | null; finishMs: number | null; place: number | null; prize?: number | null }
 export interface RaceView {
   code: string; hostId: string; host: string; laps: number; max: number; status: "lobby" | "racing" | "done" | "cancelled"; startsAt: string | null; now: string; racers: Racer[];
   /** What each driver pays to join, the split, and the pot so far (all of it paid out). */
   entryFee: number; prizeMode: PrizeMode; pot: number; split: number[];
 }
 export interface OpenRace { code: string; host: string; look: AvatarLookProps | null; laps: number; status: string; racers: number; max: number; entryFee: number; prizeMode: PrizeMode; pot: number }
-export interface RaceCar { id: number; car: string; plate: string | null }
+export interface RaceCar { id: number; car: string; plate: string | null; color?: string | null }
 
 const ERR: Record<string, string> = {
   no_car: "You need a car of your own (not impounded) to race. Get one from a dealer on Sheikh Zayed Road.",

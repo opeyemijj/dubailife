@@ -180,6 +180,13 @@ const cneed = (label, text, sql = carSql) => { if (!sql.includes(text)) { bad++;
 for (const c of cars.cars) cneed(`price ${c.id}`, `when '${c.id}' then array[${c.price}, ${c.day}]`, driveSql);
 for (const r of cars.rentals) cneed(`fleet ${r.id}`, `when p_place = '${r.id}' and p_car in (${r.fleet.map((x) => `'${x}'`).join(", ")}) then 'rent'`, driveSql);
 for (const d of cars.dealers) cneed(`stock ${d.id}`, `when p_place = '${d.id}' and p_car in (${d.stock.map((x) => `'${x}'`).join(", ")}) then 'buy'`, driveSql);
+// Car paint (cars.json → paints vs car_paint_rule()).
+{
+  const paintSql = latestDef("car_paint_rule").match(/select '(\{[^']+\})'::jsonb/)?.[1];
+  const want = { respray: cars.paints.respray, colors: cars.paints.colors.map((c) => c.hex.toLowerCase()) };
+  if (!paintSql || JSON.stringify(JSON.parse(paintSql)) !== JSON.stringify(want)) { bad++; console.error("car paints: JSON differs from SQL"); }
+  if (new Set(want.colors).size !== want.colors.length) { bad++; console.error("car paints: a colour is listed twice"); }
+}
 // Driving (cars.json → each car's tank and use, fuel, driving vs *_driving.sql).
 for (const c of cars.cars) cneed(`energy ${c.id}`, `when '${c.id}' then array[${c.tank}, ${c.per100}, ${c.electric ? 1 : 0}]`, driveSql);
 const dr = cars.driving;

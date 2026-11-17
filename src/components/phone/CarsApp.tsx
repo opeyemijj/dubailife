@@ -1,13 +1,16 @@
 "use client";
 
-// Cars on the phone: your license, the cars you own (plate, insurance, registration, fuel, and the impound
-// if the police took it) and your rental, and every rental company and dealership on Sheikh Zayed Road.
+// Cars on the phone: your license, the cars you own (plate, colour, insurance, registration, fuel, and the impound
+// if the police took it; a respray at the paint shop) and your rental, and every rental company and dealership on
+// Sheikh Zayed Road.
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCitizen } from "@/lib/citizenStore";
 import { useNow } from "@/lib/dubaiClock";
-import { aed, carOf, CARS, myFines, releaseCar, reportStolenCar, shopOf, useGarage, type Fine } from "@/lib/cars";
+import { aed, carOf, CARS, myFines, paintName, releaseCar, reportStolenCar, RESPRAY_COST, setCarColor, shopOf, useGarage, type Fine } from "@/lib/cars";
+import { PaintPicker } from "@/components/cars/PaintPicker";
+import { gameAudio } from "@/utils/gameAudio";
 import { AppScreen, Card } from "./AppScreen";
 
 const date = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
@@ -26,6 +29,19 @@ export function CarsApp({ onBack, onClose }: { onBack: () => void; onClose: () =
     const r = await releaseCar(id);
     setBusy(null);
     if (r.error) setError(r.error); else void reload();
+  };
+  // The paint shop: which car is open for a respray, and the colour picked (not paid for until you confirm).
+  const [respray, setRespray] = useState<{ id: number; color: string | null } | null>(null);
+  const doRespray = async () => {
+    if (!respray) return;
+    setBusy(respray.id); setError(null);
+    const r = await setCarColor(respray.id, respray.color);
+    setBusy(null);
+    if (r.error) return setError(r.error);
+    gameAudio.playCoinSound();
+    window.dispatchEvent(new CustomEvent("dubai:toast", { detail: `🎨 Resprayed ${paintName(respray.color)}` }));
+    setRespray(null);
+    void reload();
   };
   // To a showroom: on the map with its journey planner open, so you travel there first.
   const visit = (id: string) => { onClose(); router.push(`/explore?open=${id}`); };
@@ -65,9 +81,22 @@ export function CarsApp({ onBack, onClose }: { onBack: () => void; onClose: () =
             return (
               <Card key={o.id} className={impounded ? "bg-rose-50" : undefined}>
                 <div className="flex items-center gap-3">
-                  <span className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ background: c?.color ?? "#e5e7eb" }}>🚗</span>
-                  <div className="flex-1 min-w-0"><p className="font-black truncate">{c?.make} {c?.model}</p><p className="text-sm text-slate-500">Plate {o.plate} · bought for {aed(o.price)}</p></div>
+                  <span className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ background: o.color ?? c?.color ?? "#e5e7eb" }}>🚗</span>
+                  <div className="flex-1 min-w-0"><p className="font-black truncate">{c?.make} {c?.model}</p><p className="text-sm text-slate-500">Plate {o.plate} · {paintName(o.color)} · bought for {aed(o.price)}</p></div>
                 </div>
+                {/* The paint shop: pick a colour, see it, then pay. */}
+                {c && !o.isStolen && !impounded && (respray?.id === o.id ? (
+                  <div className="rounded-2xl bg-slate-50 p-3 space-y-2">
+                    <PaintPicker size="sm" factory={c.color} value={respray.color} onChange={(hex) => { gameAudio.playClickSound(); setRespray({ id: o.id, color: hex }); }} />
+                    <div className="grid grid-cols-2 gap-2">
+                      <button onClick={() => setRespray(null)} className="h-10 rounded-full bg-white border border-slate-200 text-sm font-bold">Cancel</button>
+                      <button onClick={doRespray} disabled={busy === o.id || (respray.color ?? null) === (o.color ?? null) || (citizen?.balance ?? 0) < RESPRAY_COST}
+                        className="h-10 rounded-full bg-slate-900 text-white text-sm font-black disabled:opacity-40">{busy === o.id ? "Spraying…" : `Respray · ${aed(RESPRAY_COST)}`}</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => { gameAudio.playClickSound(); setError(null); setRespray({ id: o.id, color: o.color ?? null }); }} className="w-full h-10 rounded-full bg-slate-100 text-sm font-bold">🎨 Change the colour</button>
+                ))}
                 <FuelBar fuel={Number(o.fuel)} electric={!!c?.electric} />
                 <p className="text-xs text-slate-500">Insured and registered until {date(o.insuredUntil)}</p>
 

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { X, Key, ShieldAlert, Sparkles, AlertTriangle, Flame } from "lucide-react";
-import { carOf, type ParkedCarView, attemptStealCar } from "@/lib/cars";
+import { paintedCar, type ParkedCarView, attemptStealCar } from "@/lib/cars";
 import { gameAudio } from "@/utils/gameAudio";
 import { useScreenBusy } from "@/lib/popups";
 
@@ -27,7 +27,7 @@ export function VehicleTheftModal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const car = carOf(parkedCar.car);
+  const car = paintedCar(parkedCar.car, parkedCar.color);
 
   const startHotwire = async () => {
     setBusy(true);

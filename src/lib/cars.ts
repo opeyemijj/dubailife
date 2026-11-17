@@ -22,6 +22,8 @@ export interface Garage {
     dealer: string;
     plate: string;
     price: number;
+    /** Its paint (hex), or null for the factory colour. */
+    color?: string | null;
     registeredUntil: string;
     insuredUntil: string;
     boughtAt: string;
@@ -40,6 +42,7 @@ export interface Garage {
     dealer: string;
     plate: string;
     price: number;
+    color?: string | null;
     fuel: number;
     ownerId: string;
     ownerUsername: string;
@@ -51,6 +54,20 @@ export interface Garage {
 }
 
 export const carOf = (id: string) => CARS.cars.find((c) => c.id === id) as Car | undefined;
+
+// ---------------------------------------------------------------- paint
+
+export interface Paint { id: string; name: string; hex: string }
+/** The colours on offer (cars.json → paints; the server only accepts these). */
+export const PAINTS = CARS.paints.colors as Paint[];
+export const RESPRAY_COST = CARS.paints.respray;
+export const paintName = (hex: string | null | undefined) => PAINTS.find((p) => p.hex.toLowerCase() === hex?.toLowerCase())?.name ?? "Factory colour";
+/** A car in its owner's paint (no paint chosen: as it came from the factory). */
+export const painted = (car: Car, color?: string | null): Car => (color ? { ...car, color } : car);
+/** One of your cars (or a parked or racing one) by its model and paint. */
+export const paintedCar = (id: string, color?: string | null) => { const c = carOf(id); return c ? painted(c, color) : undefined; };
+/** Respray one of your cars (RESPRAY_COST); null puts it back to the factory colour. */
+export const setCarColor = (carId: number, color: string | null) => call<{ id: number; color: string | null; cost: number }>("set_car_color", { p_car: carId, p_color: color });
 export function shopOf(id: string): Shop | null {
   const r = CARS.rentals.find((x) => x.id === id);
   if (r) return { ...r, rent: true, cars: r.fleet.map(carOf).filter((c): c is Car => !!c) };
@@ -64,6 +81,11 @@ export const buyTotal = (car: Car) => car.price + insuranceFor(car) + CARS.regis
 
 const ERRORS: Record<string, string> = {
   needs_licence: "You need a driving license. Pass your test at the Driving Academy first.",
+  unknown_color: "That colour isn't available. Pick one from the paint chart.",
+  same_color: "Your car is already that colour.",
+  car_impounded: "It's in the police impound. Release it first, then respray it.",
+  car_stolen: "It's been stolen. Get it back first.",
+  not_your_car: "That isn't your car.",
   already_renting: "You already have a rental. Return it first.",
   insufficient_funds: "You don't have enough AED for that.",
   not_offered: "That car isn't available here.",
@@ -96,7 +118,7 @@ export const rentCar = (company: string, car: string, days: number) => call<numb
 export const returnCar = () => call<{ caught: boolean; caseId?: number }>("return_car");
 /** Renting on a fake license: usually spotted, and then the police are called. */
 export const rentCarFake = (company: string, car: string, days: number) => call<{ caught: boolean; caseId?: number; rentalId?: number }>("rent_car_fake", { p_company: company, p_car: car, p_days: days });
-export const buyCar = (dealer: string, car: string) => call<{ plate: string; total: number; insurance: number }>("buy_car", { p_dealer: dealer, p_car: car });
+export const buyCar = (dealer: string, car: string, color: string | null = null) => call<{ plate: string; total: number; insurance: number }>("buy_car", { p_dealer: dealer, p_car: car, p_color: color });
 export const aed = (n: number) => `AED ${Math.round(n).toLocaleString()}`;
 
 /** A car you can drive: one of yours (not impounded or stolen), your rental, or a car you hotwired. */
@@ -115,7 +137,7 @@ export function drivables(g: Garage | null, now: number): Drivable[] {
   if (!g) return [];
   const out: Drivable[] = [];
   for (const o of g.owned) {
-    const car = carOf(o.car);
+    const base = carOf(o.car), car = base && painted(base, o.color);
     if (car && !o.isStolen && !(o.impoundedUntil && Date.parse(o.impoundedUntil) > now)) {
       out.push({ kind: "owned", id: o.id, car, plate: o.plate, fuel: Number(o.fuel) });
     }
@@ -125,7 +147,7 @@ export function drivables(g: Garage | null, now: number): Drivable[] {
     out.push({ kind: "rental", id: r.id, car: rc, plate: "RENTAL", fuel: Number(r.fuel) });
   }
   for (const s of g.stolen ?? []) {
-    const car = carOf(s.car);
+    const base = carOf(s.car), car = base && painted(base, s.color);
     if (car) {
       out.push({
         kind: "stolen",
@@ -145,6 +167,7 @@ export function drivables(g: Garage | null, now: number): Drivable[] {
 export interface ParkedCarView {
   id: number;
   car: string;
+  color?: string | null;
   plate: string;
   dealer: string;
   price: number;

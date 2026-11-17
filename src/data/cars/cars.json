@@ -323,6 +323,26 @@
       "per100": 17
     }
   ],
+  "paints": {
+    "_note": "Colours you can choose when you buy a car (free), or respray it later at the paint shop (Phone → Cars) for `respray` AED. Hex colours; the car's own catalogue colour is its factory colour. Mirrored in public.car_paint_rule() (supabase/migrations/*_car_paint.sql), checked by scripts/check-life-config.mjs.",
+    "respray": 2500,
+    "colors": [
+      { "id": "pearl-white", "name": "Pearl White", "hex": "#f8fafc" },
+      { "id": "silver", "name": "Silver", "hex": "#cbd5e1" },
+      { "id": "graphite", "name": "Graphite", "hex": "#4b5563" },
+      { "id": "black", "name": "Obsidian Black", "hex": "#0f172a" },
+      { "id": "desert-sand", "name": "Desert Sand", "hex": "#d6c3a1" },
+      { "id": "champagne", "name": "Champagne Gold", "hex": "#c8a96a" },
+      { "id": "racing-red", "name": "Racing Red", "hex": "#b91c1c" },
+      { "id": "sunset-orange", "name": "Sunset Orange", "hex": "#ea580c" },
+      { "id": "giallo", "name": "Giallo Yellow", "hex": "#facc15" },
+      { "id": "emerald", "name": "Emerald Green", "hex": "#15803d" },
+      { "id": "gulf-blue", "name": "Gulf Blue", "hex": "#2563eb" },
+      { "id": "midnight-blue", "name": "Midnight Blue", "hex": "#1e3a8a" },
+      { "id": "royal-purple", "name": "Royal Purple", "hex": "#6d28d9" },
+      { "id": "rose-gold", "name": "Rose Gold", "hex": "#e8a598" }
+    ]
+  },
   "rentDays": [
     1,
     7,

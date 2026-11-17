@@ -17,6 +17,7 @@ import { ago, carName, describePost, follow, shortAed, unfollow, type FeedPost }
 import { getEntity } from "@/lib/city/geo";
 import { isGenericHome, towerName } from "@/lib/city/partyHome";
 import { gameAudio } from "@/utils/gameAudio";
+import { carOf, paintName } from "@/lib/cars";
 
 interface Profile {
   id: string; username: string; name: string | null; look: AvatarLookProps | null; joined: string; online: boolean; lastSeen: string | null;
@@ -24,7 +25,7 @@ interface Profile {
   worth: { total: number; cash: number; homes: number; cars: number };
   homes: { buildingId: string; unit: string; type: string; bedrooms: number | null; view: string | null; owned: boolean }[];
   starterHome: string | null;
-  cars: { car: string; price: number | null; plate: string | null }[];
+  cars: { car: string; price: number | null; plate: string | null; color?: string | null }[];
   job: { title: string; venture: string | null } | null;
   partner: { username: string; status: string } | null;
   followers: number; following: number; friends: number;
@@ -129,7 +130,10 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
           <div className="grid grid-cols-2 gap-2">
             {p.cars.map((c, i) => (
               <div key={i} className="rounded-2xl bg-white/5 p-3">
-                <p className="font-black text-sm leading-tight">{carName(c.car)}</p>
+                <p className="font-black text-sm leading-tight flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-full border border-white/30 shrink-0" style={{ background: c.color ?? carOf(c.car)?.color ?? "#94a3b8" }} title={paintName(c.color)} />
+                  {carName(c.car)}
+                </p>
                 <p className="text-[11px] text-white/50">{c.plate ? `${c.plate} · ` : ""}{c.price ? `AED ${shortAed(c.price)}` : ""}</p>
               </div>
             ))}

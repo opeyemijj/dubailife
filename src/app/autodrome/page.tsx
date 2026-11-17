@@ -11,6 +11,7 @@ import { useRequireCitizen } from "@/lib/citizenStore";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { carName } from "@/lib/cityFeed";
+import { carOf } from "@/lib/cars";
 import { createRace, joinRace, myRaceCars, openRaces, prizesFor, type OpenRace, type PrizeMode, type RaceCar } from "@/lib/autodrome";
 import { refreshCitizen } from "@/lib/citizenStore";
 import { shortAed } from "@/lib/cityFeed";
@@ -85,7 +86,7 @@ export default function AutodromePage() {
                 <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
                   {cars.map((c) => (
                     <button key={c.id} onClick={() => setCar(c.id)} className={`shrink-0 rounded-2xl px-3 py-2 text-left ${car === c.id ? "bg-white text-slate-950" : "bg-black/25"}`}>
-                      <span className="block text-sm font-black">{carName(c.car)}</span>
+                      <span className="flex items-center gap-1.5 text-sm font-black"><span className="w-3 h-3 rounded-full border border-black/20 shrink-0" style={{ background: c.color ?? carOf(c.car)?.color ?? "#94a3b8" }} />{carName(c.car)}</span>
                       <span className="block text-[11px] opacity-70">{c.plate}</span>
                     </button>
                   ))}

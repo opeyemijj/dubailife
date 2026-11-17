@@ -11,7 +11,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
-import { carOf, type Car } from "@/lib/cars";
+import { paintedCar, type Car } from "@/lib/cars";
 import { CarModel } from "@/components/cars/CarModel";
 import { SteeringWheel } from "@/components/cars/SteeringWheel";
 import { PerfProbe } from "@/components/perf/PerfProbe";
@@ -203,7 +203,7 @@ function Cars({ racers, me, mine, remotes, startsAtRef, laps, spectator }: {
   return (
     <>
       {racers.map((r) => {
-        const car = carOf(r.car) as (Car & { model3d?: string }) | undefined;
+        const car = paintedCar(r.car, r.color) as (Car & { model3d?: string }) | undefined;
         if (!car) return null;
         return (
           <group key={r.id} ref={(g) => { if (g) groups.current.set(r.id, g); else groups.current.delete(r.id); }}>
