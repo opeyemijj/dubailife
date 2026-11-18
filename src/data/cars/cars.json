@@ -115,10 +115,11 @@
       "icon": "⭐",
       "color": "#1f2937",
       "x": 3780,
-      "blurb": "Dubai's Mercedes-Benz dealer since 1958: E-Class to the G-Wagon.",
+      "blurb": "Dubai's Mercedes-Benz dealer since 1958: E-Class and the G-Wagon to the AMG GT 63.",
       "stock": [
         "mercedes-e",
-        "mercedes-g63"
+        "mercedes-g63",
+        "mercedes-amg-gt"
       ]
     },
     {
@@ -127,10 +128,11 @@
       "icon": "🐂",
       "color": "#d4a017",
       "x": 3900,
-      "blurb": "The world's largest Lamborghini showroom, right on Sheikh Zayed Road.",
+      "blurb": "The world's largest Lamborghini showroom, right on Sheikh Zayed Road: the Urus, the Huracán and the V12 hybrid Revuelto.",
       "stock": [
         "lamborghini-urus",
-        "lamborghini-huracan"
+        "lamborghini-huracan",
+        "lamborghini-revuelto"
       ]
     },
     {
@@ -142,6 +144,44 @@
       "blurb": "Tesla's showroom on Sheikh Zayed Road: the electric Model Y, charged at Superchargers across the city.",
       "stock": [
         "tesla-model-y"
+      ]
+    },
+    {
+      "id": "al-tayer-ferrari",
+      "name": "Al Tayer Motors Ferrari",
+      "icon": "🐎",
+      "color": "#dc2626",
+      "x": 3370,
+      "blurb": "Ferrari's Sheikh Zayed Road showroom: the Roma grand tourer, the 296 GTB and the 1,000 hp SF90 Stradale.",
+      "stock": [
+        "ferrari-roma",
+        "ferrari-296-gtb",
+        "ferrari-sf90"
+      ]
+    },
+    {
+      "id": "mclaren-dubai",
+      "name": "McLaren Dubai",
+      "icon": "🏎️",
+      "color": "#f97316",
+      "x": 3480,
+      "blurb": "Papaya orange and carbon fibre: the hybrid Artura and the 750S, straight from Woking.",
+      "stock": [
+        "mclaren-artura",
+        "mclaren-750s"
+      ]
+    },
+    {
+      "id": "porsche-centre-dubai",
+      "name": "Porsche Centre Dubai",
+      "icon": "🏁",
+      "color": "#a16207",
+      "x": 3590,
+      "blurb": "The 911 in Turbo S and track-ready GT3 RS form, and the all-electric Taycan Turbo S.",
+      "stock": [
+        "porsche-911-turbo-s",
+        "porsche-911-gt3-rs",
+        "porsche-taycan-turbo-s"
       ]
     }
   ],
@@ -319,6 +359,157 @@
       "suv": true,
       "model3d": "suv",
       "electric": true,
+      "tank": 75,
+      "per100": 17
+    },
+    {
+      "id": "ferrari-roma",
+      "make": "Ferrari",
+      "model": "Roma",
+      "kind": "Grand tourer",
+      "color": "#dc2626",
+      "price": 920000,
+      "day": 2900,
+      "seats": 4,
+      "top": 320,
+      "low": true,
+      "model3d": "sport-sedan",
+      "tank": 80,
+      "per100": 12
+    },
+    {
+      "id": "ferrari-296-gtb",
+      "make": "Ferrari",
+      "model": "296 GTB",
+      "kind": "Supercar",
+      "color": "#facc15",
+      "price": 1250000,
+      "day": 3800,
+      "seats": 2,
+      "top": 330,
+      "low": true,
+      "model3d": "supercar",
+      "tank": 65,
+      "per100": 11
+    },
+    {
+      "id": "ferrari-sf90",
+      "make": "Ferrari",
+      "model": "SF90 Stradale",
+      "kind": "Hypercar",
+      "color": "#b91c1c",
+      "price": 2050000,
+      "day": 5800,
+      "seats": 2,
+      "top": 340,
+      "low": true,
+      "model3d": "supercar",
+      "tank": 68,
+      "per100": 13
+    },
+    {
+      "id": "mclaren-artura",
+      "make": "McLaren",
+      "model": "Artura",
+      "kind": "Supercar",
+      "color": "#2563eb",
+      "price": 1000000,
+      "day": 3200,
+      "seats": 2,
+      "top": 330,
+      "low": true,
+      "model3d": "supercar",
+      "tank": 66,
+      "per100": 11
+    },
+    {
+      "id": "mclaren-750s",
+      "make": "McLaren",
+      "model": "750S",
+      "kind": "Supercar",
+      "color": "#f97316",
+      "price": 1400000,
+      "day": 4200,
+      "seats": 2,
+      "top": 332,
+      "low": true,
+      "model3d": "supercar",
+      "tank": 72,
+      "per100": 13
+    },
+    {
+      "id": "porsche-911-turbo-s",
+      "make": "Porsche",
+      "model": "911 Turbo S",
+      "kind": "Sports car",
+      "color": "#94a3b8",
+      "price": 1050000,
+      "day": 2900,
+      "seats": 4,
+      "top": 330,
+      "low": true,
+      "model3d": "sport-sedan",
+      "tank": 67,
+      "per100": 12
+    },
+    {
+      "id": "porsche-911-gt3-rs",
+      "make": "Porsche",
+      "model": "911 GT3 RS",
+      "kind": "Track car",
+      "color": "#65a30d",
+      "price": 1300000,
+      "day": 3600,
+      "seats": 2,
+      "top": 296,
+      "low": true,
+      "model3d": "supercar",
+      "tank": 64,
+      "per100": 13
+    },
+    {
+      "id": "porsche-taycan-turbo-s",
+      "make": "Porsche",
+      "model": "Taycan Turbo S",
+      "kind": "Electric sports car",
+      "color": "#f8fafc",
+      "price": 850000,
+      "day": 2400,
+      "seats": 4,
+      "top": 260,
+      "low": true,
+      "model3d": "sport-sedan",
+      "electric": true,
+      "tank": 105,
+      "per100": 22
+    },
+    {
+      "id": "mercedes-amg-gt",
+      "make": "Mercedes-AMG",
+      "model": "GT 63",
+      "kind": "Sports car",
+      "color": "#cbd5e1",
+      "price": 760000,
+      "day": 2300,
+      "seats": 4,
+      "top": 315,
+      "low": true,
+      "model3d": "sport-sedan",
+      "tank": 70,
+      "per100": 13
+    },
+    {
+      "id": "lamborghini-revuelto",
+      "make": "Lamborghini",
+      "model": "Revuelto",
+      "kind": "Hypercar",
+      "color": "#f97316",
+      "price": 2300000,
+      "day": 6500,
+      "seats": 2,
+      "top": 350,
+      "low": true,
+      "model3d": "supercar",
       "tank": 75,
       "per100": 17
     }

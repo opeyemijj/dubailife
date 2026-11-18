@@ -51,10 +51,10 @@ function occupancy(r) {
   // for rent or sale; the rest ~25% for rent, ~12% for sale, ~8% rent or sale. (The name is still drawn, so every
   // other flat comes out exactly as before.)
   const x = r();
-  if (x < 0.55) { r(); return { listing: "rent_or_sale" }; }
-  if (x < 0.8) return { listing: "rent" };
-  if (x < 0.92) return { listing: "sale" };
-  return { listing: "rent_or_sale" };
+  if (x < 0.55) { r(); return { listing: "rent_or_sale", freed: true }; }
+  if (x < 0.8) return { listing: "rent", freed: false };
+  if (x < 0.92) return { listing: "sale", freed: false };
+  return { listing: "rent_or_sale", freed: false };
 }
 
 function flatRow(building, unit, floor, type, r, viewOptions) {
@@ -71,12 +71,13 @@ function flatRow(building, unit, floor, type, r, viewOptions) {
     bedrooms: t.bedrooms,
     size_sqft: sqft,
     view: viewOptions[Math.floor(r() * viewOptions.length)],
-    owner_npc: occ.owner_npc ?? null,
-    tenant_npc: occ.tenant_npc ?? null,
+    owner_npc: null,
+    tenant_npc: null,
     listing: occ.listing ?? "none",
     rent_price: round(t.rent * premium * (0.92 + r() * 0.16), 250),
     sale_price: round(sqft * t.ppsf * premium * (0.94 + r() * 0.12), 10000),
-    access: occ.owner_npc || occ.tenant_npc ? (r() < 0.25 ? "public" : "private") : "private",
+    // A freed home still draws the number its resident used to pick public or private with (same sequence).
+    access: occ.freed ? (r(), "private") : "private",
   };
 }
 

@@ -39,10 +39,10 @@ function occupancy(r: () => number) {
   // Every home is for real players: none is lived in by a made-up resident (those that used to be are for rent or
   // sale; the name is still drawn so every other home comes out exactly as before).
   const x = r();
-  if (x < 0.5) { r(); return { listing: "rent_or_sale" }; }
-  if (x < 0.78) return { listing: "rent" };
-  if (x < 0.92) return { listing: "sale" };
-  return { listing: "rent_or_sale" };
+  if (x < 0.5) { r(); return { listing: "rent_or_sale", freed: true }; }
+  if (x < 0.78) return { listing: "rent", freed: false };
+  if (x < 0.92) return { listing: "sale", freed: false };
+  return { listing: "rent_or_sale", freed: false };
 }
 
 const rows: Array<Record<string, unknown>> = [];
@@ -56,10 +56,11 @@ function add(buildingId: string, unit: string, floor: number, type: string, r: (
     // Villas are stored as the "Villa" type the game already knows; the name says which kind.
     property_type: type === "Garden Home" || type === "Signature Villa" ? "Villa" : type,
     bedrooms: t.bedrooms, size_sqft: sqft, view: views[Math.floor(r() * views.length)],
-    owner_npc: occ.owner_npc ?? null, tenant_npc: occ.tenant_npc ?? null, listing: occ.listing ?? "none",
+    owner_npc: null, tenant_npc: null, listing: occ.listing,
     rent_price: round(t.rent * lift * (0.92 + r() * 0.16), 500),
     sale_price: round(sqft * t.ppsf * lift * (0.94 + r() * 0.12), 50000),
-    access: occ.owner_npc || occ.tenant_npc ? (r() < 0.25 ? "public" : "private") : "private",
+    // A freed home still draws the number its resident used to pick public or private with (same sequence).
+    access: occ.freed ? (r(), "private") : "private",
   });
 }
 

@@ -177,9 +177,11 @@ const carSql = readFileSync(`supabase/migrations/${carFile}`, "utf8");
 const driveFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_driving.sql")).sort().pop();
 const driveSql = readFileSync(`supabase/migrations/${driveFile}`, "utf8");
 const cneed = (label, text, sql = carSql) => { if (!sql.includes(text)) { bad++; console.error(`cars ${label}: differs from SQL (${text})`); } };
-for (const c of cars.cars) cneed(`price ${c.id}`, `when '${c.id}' then array[${c.price}, ${c.day}]`, driveSql);
-for (const r of cars.rentals) cneed(`fleet ${r.id}`, `when p_place = '${r.id}' and p_car in (${r.fleet.map((x) => `'${x}'`).join(", ")}) then 'rent'`, driveSql);
-for (const d of cars.dealers) cneed(`stock ${d.id}`, `when p_place = '${d.id}' and p_car in (${d.stock.map((x) => `'${x}'`).join(", ")}) then 'buy'`, driveSql);
+// Prices, stock and tanks are redefined whenever cars are added (sports cars: *_sports_cars_catalogue.sql): the newest of each.
+const priceSql = latestDef("car_price"), offerSql = latestDef("car_offered"), energySql = latestDef("car_energy");
+for (const c of cars.cars) cneed(`price ${c.id}`, `when '${c.id}' then array[${c.price}, ${c.day}]`, priceSql);
+for (const r of cars.rentals) cneed(`fleet ${r.id}`, `when p_place = '${r.id}' and p_car in (${r.fleet.map((x) => `'${x}'`).join(", ")}) then 'rent'`, offerSql);
+for (const d of cars.dealers) cneed(`stock ${d.id}`, `when p_place = '${d.id}' and p_car in (${d.stock.map((x) => `'${x}'`).join(", ")}) then 'buy'`, offerSql);
 // Car paint (cars.json → paints vs car_paint_rule()).
 {
   const paintSql = latestDef("car_paint_rule").match(/select '(\{[^']+\})'::jsonb/)?.[1];
@@ -188,7 +190,7 @@ for (const d of cars.dealers) cneed(`stock ${d.id}`, `when p_place = '${d.id}' a
   if (new Set(want.colors).size !== want.colors.length) { bad++; console.error("car paints: a colour is listed twice"); }
 }
 // Driving (cars.json → each car's tank and use, fuel, driving vs *_driving.sql).
-for (const c of cars.cars) cneed(`energy ${c.id}`, `when '${c.id}' then array[${c.tank}, ${c.per100}, ${c.electric ? 1 : 0}]`, driveSql);
+for (const c of cars.cars) cneed(`energy ${c.id}`, `when '${c.id}' then array[${c.tank}, ${c.per100}, ${c.electric ? 1 : 0}]`, energySql);
 const dr = cars.driving;
 for (const [label, text] of [["petrol", `else ${cars.fuel.petrolPerLitre} end`], ["charge", `when e[3] = 1 then ${cars.fuel.chargePerKwh} else`],
   ["speeding fine", `fine := ${dr.speedingFine};`], ["fuel factor", `/ 1000.0 * ${dr.fuelGameFactor} * e[2] / 100`], ["accident custody", `'accident', now() + interval '${dr.custodyHours} hours'`],

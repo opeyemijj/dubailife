@@ -80,6 +80,8 @@ type Panel =
   | { kind: "interview"; step: number; score: number }
   | { kind: "shift"; step: number; correct: number }
   | { kind: "bag" }
+  /** The menu, brought to my table: order without getting up. */
+  | { kind: "tableMenu" }
   | { kind: "peer"; userId: string; startIn?: "menu" | "chat" }
   | { kind: "local"; id: string }
   | null;
@@ -219,6 +221,11 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   const anchorId = plan.stations.find((s) => ANCHORS.includes(s.kind))?.id;
   const productsAt = (s: StationDef) =>
     venue.products.filter((p) => p.station === s.kind || (s.id === anchorId && !stationKinds.has(p.station)));
+  // Sitting at a table or booth (got there and sat down, not just on the way).
+  const seated = !!mySeat && playerAnimation === "sit";
+  /** Food and drink that can be brought to a table (not services, things to wear or take home). */
+  const orderable = (p: Product) => !p.service && !p.wearable && (!!serveKindOf(p) || p.consumable?.need === "hunger");
+  const tableMenu = useMemo(() => venue.products.filter(orderable), [venue.products]);
   const activitiesAt = (s: StationDef) =>
     (venue.activities ?? []).filter((a) =>
       s.rides ? !!a.ride && s.rides.includes(a.ride)
@@ -311,6 +318,11 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
 
   const openStation = (s: StationDef) => {
     gameAudio.playClickSound();
+    // Sitting at a table: the menu comes to you (no getting up to walk to the counter).
+    if (seated && tableMenu.length && (s.id === mySeat?.table || (["menu", "bar", "counter", "till"].includes(s.kind) && productsAt(s).some(orderable)))) {
+      setPanel({ kind: "tableMenu" });
+      return;
+    }
     setActiveStation(s.id);
     setPanel(null);
     const pt = approachPoint(s, 0.85);
@@ -369,10 +381,9 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     return index;
   };
 
-  /** Opens the menu where food and drink are ordered (for someone already seated). */
+  /** Opens the menu at my table (for someone already seated): what's ordered is brought to my seat. */
   const openMenu = () => {
-    const menu = plan.stations.find((s) => s.kind === "menu") ?? plan.stations.find((s) => s.id === anchorId);
-    if (menu) { setActiveStation(menu.id); setPanel({ kind: "station", station: menu }); }
+    if (tableMenu.length) setPanel({ kind: "tableMenu" });
   };
 
   // ---------------------------------------------------------------- bottle service (seen by everyone)
@@ -433,11 +444,13 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     const toTable = here.kind === "booth" || (venue.layout === "dining" && here.kind !== "bar" && tables.length > 0);
     // Food goes to my table (the one I'm at, or the nearest with a free seat).
     const nearest = (list: StationDef[]) => list.slice().sort((a, b) => Math.hypot(a.position[0] - me.x, a.position[1] - me.z) - Math.hypot(b.position[0] - me.x, b.position[1] - me.z));
-    const station = here.kind === "booth" ? here
+    // Sitting at a table: it's brought to my place there, whatever I ordered it from.
+    const myStation = seated && mySeat ? plan.stations.find((t) => t.id === mySeat.table) : undefined;
+    const station = myStation ?? (here.kind === "booth" ? here
       : toTable ? tables.find((t) => t.id === myTable) ?? nearest(tables).find((t) => freeSeat(t) !== null) ?? tables[0]
-      : here;
+      : here);
     const id = uniqueId(product.id);
-    const seatIndex = toTable ? (mySeat?.table === station.id ? mySeat.index : sitAt(station) ?? 0) : 0;
+    const seatIndex = myStation && mySeat ? mySeat.index : toTable ? (mySeat?.table === station.id ? mySeat.index : sitAt(station) ?? 0) : 0;
 
     if (kind === "bottle") {
       startBottleService(station, id, { username: citizen?.username ?? "you", mine: true });
@@ -957,7 +970,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         setTimeout(() => setActiveConsumption((c) => (c?.propKind === foodProp ? null : c)), 20000);
 
         // In dining venues, walk/sit at table to eat if not seated
-        if (venue.layout === "dining" && playerAnimation !== "sit") {
+        if (venue.layout === "dining" && !seated) {
           const diningTables = plan.stations.filter((s) => s.kind === "booth" || s.kind === "table");
           const targetTable = diningTables.find((t) => t.id === myTable) ?? diningTables.find((t) => freeSeat(t) !== null);
           if (targetTable) sitAt(targetTable);
@@ -972,7 +985,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       say("🍾 Bottle service is on its way to your table — cheers!");
     } else if (product.consumable) {
       boostNeed(product.consumable.need, product.consumable.amount);
-      if (!serveKind && !isFood && !isDrink) {
+      if (!serveKind && !isFood && !isDrink && !seated) {
         setPlayerAnimation(venue.layout === "dining" ? "sit" : "clap");
         setTimeout(() => setPlayerAnimation("idle"), 3500);
       }
@@ -1218,10 +1231,22 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
           </button>
         ))}
         {s.kind === "booth" && venue.layout === "dining" && (
-          <button onClick={() => { setPanel(null); sitAt(s); say("🪑 You take a seat. Order at the counter and it'll be brought to this table."); }} className="w-full p-3 rounded-2xl bg-indigo-50 border border-indigo-100 text-left font-black text-sm">🪑 Sit down</button>
+          <button onClick={() => { setPanel(null); sitAt(s, { then: () => { if (tableMenu.length) say("🪑 You take a seat. Tap 🍽️ Order to order from your table."); } }); }} className="w-full p-3 rounded-2xl bg-indigo-50 border border-indigo-100 text-left font-black text-sm">🪑 Sit down</button>
         )}
         {s.kind !== "fitting" && products.map((p) => <ProductRow key={p.id} p={p} {...rowProps} />)}
         {s.kind !== "fitting" && products.length === 0 && activities.length === 0 && s.kind !== "booth" && <p className="text-xs text-slate-500">Nothing here right now.</p>}
+      </Sheet>
+    );
+  } else if (panel?.kind === "tableMenu") {
+    const drinks = tableMenu.filter((p) => { const k = serveKindOf(p); return k && !["plate", "dessert", "pastry"].includes(k); });
+    const food = tableMenu.filter((p) => !drinks.includes(p));
+    sheet = (
+      <Sheet onClose={closeAll} title="🍽️ Order from your table" subtitle={`${venue.name} · brought to your seat`}>
+        <p className="text-xs text-slate-500">Stay seated. What you order is served right here at your place, and everyone at the table sees it arrive.</p>
+        {food.length > 0 && <p className="pt-1 text-[11px] font-black uppercase tracking-wider text-slate-400">Food</p>}
+        {food.map((p) => <ProductRow key={p.id} p={p} {...rowProps} />)}
+        {drinks.length > 0 && <p className="pt-1 text-[11px] font-black uppercase tracking-wider text-slate-400">Drinks</p>}
+        {drinks.map((p) => <ProductRow key={p.id} p={p} {...rowProps} />)}
       </Sheet>
     );
   } else if (panel?.kind === "product") {
@@ -1230,7 +1255,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     const other = panel.compareWith;
     const keys = [...new Set([...Object.keys(p.specs ?? {}), ...Object.keys(other?.specs ?? {})])];
     sheet = (
-      <Sheet onClose={closeAll} title={p.name} subtitle={`${venue.name} · ${aed(p.price)}`} onBack={() => setPanel(null)}>
+      <Sheet onClose={closeAll} title={p.name} subtitle={`${venue.name} · ${aed(p.price)}`} onBack={() => setPanel(seated && orderable(p) ? { kind: "tableMenu" } : null)}>
         <div className="text-6xl text-center py-2">{p.icon}</div>
         <p className="text-sm text-slate-600">{p.desc}</p>
         {keys.length > 0 && (
@@ -1712,6 +1737,10 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       {/* Bottom right, opposite the stick: what this place is for (its activities), and the way outside. */}
       {!panel && !ride && (
         <div className="absolute right-4 bottom-[max(1.5rem,env(safe-area-inset-bottom))] z-40 flex flex-col items-end gap-2">
+          {seated && tableMenu.length > 0 && (
+            <button onClick={() => { gameAudio.playClickSound(); setPanel({ kind: "tableMenu" }); }}
+              className="h-12 px-5 rounded-full bg-rose-600 text-white font-black shadow-xl text-sm flex items-center gap-1.5 active:scale-95 transition-all">🍽️ Order</button>
+          )}
           {(venue.activities ?? []).length > 0 && (
             <button onClick={() => { gameAudio.playClickSound(); setPanel({ kind: "activities" }); }}
               className="h-11 px-4 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black shadow-xl text-xs flex items-center gap-1.5 active:scale-95 transition-all">
