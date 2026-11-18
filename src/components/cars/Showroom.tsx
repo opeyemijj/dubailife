@@ -8,6 +8,7 @@
 
 import { Suspense, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
@@ -17,6 +18,7 @@ import { canvasQuality } from "@/lib/device";
 import { useCitizen } from "@/lib/citizenStore";
 import { aed, buyCar, buyTotal, CARS, insuranceFor, painted, paintName, rentCar, rentCarFake, rentCost, returnCar, useGarage, type Car, type Shop } from "@/lib/cars";
 import { PaintPicker } from "./PaintPicker";
+import { DriveSheet } from "@/components/home/DriveSheet";
 import { reloadServices } from "@/lib/cityServices";
 import { openPhone } from "@/components/layout/PhoneOverlay";
 import { ArrestScene } from "./ArrestScene";
@@ -79,8 +81,13 @@ export function Showroom({ shop }: { shop: Shop }) {
   const [arrested, setArrested] = useState(false);
   // The colour for the car you're buying (null: as it comes); a new car starts at its factory colour.
   const [paint, setPaint] = useState<string | null>(null);
+  // Just bought or rented: the car that's now yours, with the way out (drive it off, or walk out).
+  const [got, setGot] = useState<Car | null>(null);
+  const [driveOff, setDriveOff] = useState(false);
+  const router = useRouter();
+  const leave = () => { gameAudio.playClickSound(); router.push(`/street?from=${encodeURIComponent(shop.id)}`); };
   const car = shop.cars[pick];
-  const choose = (i: number) => { gameAudio.playClickSound(); setPick(i); setPaint(null); setNote(null); };
+  const choose = (i: number) => { gameAudio.playClickSound(); setPick(i); setPaint(null); setNote(null); setGot(null); };
   const spots = shop.cars.map((_, i) => ({ x: (i - (shop.cars.length - 1) / 2) * 6.6, z: i % 2 ? -1.6 : 0.4 }));
   const licensed = !!garage?.licence;
   const balance = citizen?.balance ?? 0;
@@ -99,6 +106,7 @@ export function Showroom({ shop }: { shop: Shop }) {
     if (r.data?.caught) { setArrested(true); return; }
     gameAudio.playCoinSound();
     void reload();
+    setGot(car);
     setNote({ ok: true, text: `😅 The agent didn't look closely. The ${car.make} ${car.model} is yours for ${days} day${days > 1 ? "s" : ""}… for now.` });
   };
 
@@ -109,6 +117,7 @@ export function Showroom({ shop }: { shop: Shop }) {
     if (r.error) return setNote({ ok: false, text: r.error });
     gameAudio.playCoinSound();
     void reload();
+    setGot(shop.rent ? car : painted(car, paint));
     setNote({ ok: true, text: shop.rent
       ? `🔑 Your ${car.make} ${car.model} is ready for ${days} day${days > 1 ? "s" : ""}. Bring it back any time for your deposit.`
       : `🎉 You own a ${paint ? `${paintName(paint)} ` : ""}${car.make} ${car.model}! Plate ${(r.data as { plate: string }).plate}, insured and registered for a year.` });
@@ -175,7 +184,15 @@ export function Showroom({ shop }: { shop: Shop }) {
           )}
           {note && <p className={`rounded-2xl px-3 py-2 text-sm font-semibold ${note.ok ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-700"}`}>{note.text}</p>}
           {/* Until the garage loads (or if it can't), the buttons still show: the server checks the license. */}
-          {garage && !licensed ? (
+          {got ? (
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => { gameAudio.playClickSound(); setDriveOff(true); }} className="h-14 rounded-full bg-emerald-700 text-white font-black shadow-[inset_0_-4px_0_rgba(0,0,0,0.2)]">🚗 Drive it away</button>
+                <button onClick={leave} className="h-14 rounded-full bg-slate-900 text-white font-black">🚪 Leave the showroom</button>
+              </div>
+              <button onClick={() => { setGot(null); setNote(null); }} className="w-full h-9 rounded-full text-sm font-semibold text-slate-500">Keep looking around</button>
+            </div>
+          ) : garage && !licensed ? (
             <div className="rounded-2xl bg-amber-50 p-3 text-sm space-y-2">
               <p className="font-semibold text-amber-900">🪪 You need a driving license to {shop.rent ? "rent" : "buy"} a car.</p>
               <Link href="/driving" className="block text-center h-11 leading-[2.75rem] rounded-full bg-amber-500 text-white font-black">Go to the Driving Academy</Link>
@@ -198,6 +215,7 @@ export function Showroom({ shop }: { shop: Shop }) {
           {garage?.licence && <p className="text-center text-[11px] text-slate-400">🪪 License {garage.licence.number}</p>}
         </div>
       </div>
+      {driveOff && got && <DriveSheet car={got} onClose={() => setDriveOff(false)} />}
     </main>
   );
 }
