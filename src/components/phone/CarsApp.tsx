@@ -95,7 +95,10 @@ export function CarsApp({ onBack, onClose }: { onBack: () => void; onClose: () =
                     </div>
                   </div>
                 ) : (
-                  <button onClick={() => { gameAudio.playClickSound(); setError(null); setRespray({ id: o.id, color: o.color ?? null }); }} className="w-full h-10 rounded-full bg-slate-100 text-sm font-bold">🎨 Change the colour</button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button onClick={() => { gameAudio.playClickSound(); setError(null); setRespray({ id: o.id, color: o.color ?? null }); }} className="h-10 rounded-full bg-slate-100 text-sm font-bold">🎨 Change the colour</button>
+                    <button onClick={() => { gameAudio.playClickSound(); onClose(); router.push("/garage"); }} className="h-10 rounded-full bg-slate-900 text-white text-sm font-bold">🔧 Tune it for racing</button>
+                  </div>
                 ))}
                 <FuelBar fuel={Number(o.fuel)} electric={!!c?.electric} />
                 <p className="text-xs text-slate-500">Insured and registered until {date(o.insuredUntil)}</p>

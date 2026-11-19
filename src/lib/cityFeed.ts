@@ -7,6 +7,7 @@
 import { supabase } from "@/lib/supabase/client";
 import { gameInfo } from "@/lib/games/registry";
 import CARS from "@/data/cars/cars.json";
+import TRACKS from "@/data/autodrome/tracks.json";
 import type { AvatarLookProps } from "@/components/avatar/roster";
 
 export type FeedKind = "party" | "win" | "arrived" | "home" | "car" | "gift" | "married" | "hired" | "reward" | "rain" | "race" | "hotel";
@@ -136,7 +137,7 @@ export function describePost(p: FeedPost, now = Date.now()): PostView {
     case "race":
       return {
         icon: "🏁",
-        text: `${who} won a ${Number(d.racers ?? 2)}-car race at Dubai Autodrome in a ${carName(String(d.car))}${d.ms ? ` (${Math.floor(Number(d.ms) / 60000)}:${String(Math.floor((Number(d.ms) % 60000) / 1000)).padStart(2, "0")})` : ""}${Number(d.prize ?? 0) > 0 ? ` and took AED ${shortAed(Number(d.prize))}` : ""}`,
+        text: `${who} ${Number(d.deadHeat ?? 1) > 1 ? `tied for the win (a dead heat, prize shared ${Number(d.deadHeat)} ways) in` : "won"} a ${Number(d.racers ?? 2)}-car race on the ${TRACKS.tracks.find((t) => t.id === d.track)?.name ?? "Grand Prix Circuit"} at Dubai Autodrome in a ${carName(String(d.car))}${d.ms ? ` (${Math.floor(Number(d.ms) / 60000)}:${String(Math.floor((Number(d.ms) % 60000) / 1000)).padStart(2, "0")})` : ""}${Number(d.prize ?? 0) > 0 ? ` and took AED ${shortAed(Number(d.prize))}` : ""}`,
         action: { label: `Race @${p.actor.username}`, href: "/autodrome" },
       };
     case "rain":

@@ -16,7 +16,7 @@ import { CarModel } from "@/components/cars/CarModel";
 import { SteeringWheel } from "@/components/cars/SteeringWheel";
 import { PerfProbe } from "@/components/perf/PerfProbe";
 import { canvasQuality } from "@/lib/device";
-import { TRACK, TRACK_HALF_WIDTH, gearbox, lapTime, perfOf, step, trackPose, type DriveInput, type DriveState, type Racer } from "@/lib/autodrome";
+import { TRACK_HALF_WIDTH, gearbox, lapTime, perfOf, step, trackOf, trackPose, type DriveInput, type DriveState, type Racer, type Track } from "@/lib/autodrome";
 import { RemoteEngine, V10, setRaceVolume } from "@/lib/raceAudio";
 
 interface Remote { dist: number; offset: number; speed: number; at: number; done?: boolean }
@@ -30,9 +30,10 @@ const gridSpot = (i: number) => ({ dist: -12 - 10 * Math.floor(i / 2), offset: i
 
 // ---------------------------------------------------------------- the circuit
 
-function Circuit() {
+function Circuit({ track }: { track: Track }) {
+  const theme = track.def.theme;
   const { road, kerbs, line } = useMemo(() => {
-    const S = TRACK.samples, N = S.length;
+    const S = track.samples, N = S.length;
     // Layers well apart (sand, grass, road, kerbs, line), so no phone's depth buffer mixes them up.
     const ribbon = (inner: number, outer: number, colorAt?: (i: number) => THREE.Color, y = 0.12) => {
       const pos: number[] = [], col: number[] = [], idx: number[] = [];
@@ -51,14 +52,14 @@ function Circuit() {
       g.computeVertexNormals();
       return g;
     };
-    const red = new THREE.Color("#dc2626"), white = new THREE.Color("#f8fafc");
+    const red = new THREE.Color(theme.kerb), white = new THREE.Color("#f8fafc");
     const kerbColor = (i: number) => (Math.floor(i / 3) % 2 ? red : white);
     return {
       road: ribbon(-TRACK_HALF_WIDTH, TRACK_HALF_WIDTH),
       kerbs: [ribbon(TRACK_HALF_WIDTH, TRACK_HALF_WIDTH + 1.4, kerbColor, 0.16), ribbon(-TRACK_HALF_WIDTH - 1.4, -TRACK_HALF_WIDTH, kerbColor, 0.16)],
-      line: trackPose(0, 0),
+      line: trackPose(track, 0, 0),
     };
-  }, []);
+  }, [track, theme.kerb]);
   // The start/finish line: a chequered strip across the track.
   const checker = useMemo(() => {
     const c = document.createElement("canvas"); c.width = 128; c.height = 16;
@@ -68,14 +69,14 @@ function Circuit() {
   }, []);
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[250, -0.2, 330]} receiveShadow>
-        <planeGeometry args={[2400, 2400]} />
-        <meshStandardMaterial color="#d6b98c" roughness={1} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[track.centre[0], -0.2, track.centre[1]]} receiveShadow>
+        <planeGeometry args={[Math.max(2400, track.radius * 6), Math.max(2400, track.radius * 6)]} />
+        <meshStandardMaterial color={theme.ground} roughness={theme.scenery === "palms" ? 0.35 : 1} />
       </mesh>
-      {/* Grass inside the circuit. */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[230, -0.05, 330]}>
-        <circleGeometry args={[330, 48]} />
-        <meshStandardMaterial color="#5f8f3a" roughness={1} />
+      {/* Inside the circuit: grass, a plaza, sand. */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[track.centre[0], -0.05, track.centre[1]]}>
+        <circleGeometry args={[track.radius * 0.72, 48]} />
+        <meshStandardMaterial color={theme.infield} roughness={1} />
       </mesh>
       <mesh geometry={road} receiveShadow><meshStandardMaterial color="#2b2d31" roughness={0.85} /></mesh>
       {kerbs.map((k, i) => <mesh key={i} geometry={k}><meshStandardMaterial vertexColors roughness={0.7} /></mesh>)}
@@ -89,23 +90,23 @@ function Circuit() {
         <mesh position={[TRACK_HALF_WIDTH + 1.5, 4, 0]}><boxGeometry args={[0.6, 8, 0.6]} /><meshStandardMaterial color="#111827" /></mesh>
         <mesh position={[0, 8, 0]}><boxGeometry args={[TRACK_HALF_WIDTH * 2 + 4, 1.6, 0.8]} /><meshStandardMaterial color="#dc2626" emissive="#7f1d1d" /></mesh>
       </group>
-      <Stands />
-      <Skyline />
+      <Stands sign={theme.sign} color={theme.signColor} />
+      <Scenery track={track} />
     </group>
   );
 }
 
 /** Grandstands and the pit building along the main straight. */
-function Stands() {
+function Stands({ sign: text, color }: { sign: string; color: string }) {
   const crowd = useMemo(() => ["#f43f5e", "#22d3ee", "#facc15", "#a3e635", "#f8fafc", "#fb923c"], []);
   // The sign on the pit building, painted once.
   const sign = useMemo(() => {
     const c = document.createElement("canvas"); c.width = 512; c.height = 64;
     const g = c.getContext("2d")!;
-    g.fillStyle = "#dc2626"; g.fillRect(0, 0, 512, 64);
-    g.fillStyle = "#ffffff"; g.font = "900 40px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("DUBAI AUTODROME", 256, 34);
+    g.fillStyle = color; g.fillRect(0, 0, 512, 64);
+    g.fillStyle = "#ffffff"; g.font = `900 ${text.length > 16 ? 32 : 40}px sans-serif`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(text, 256, 34);
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
-  }, []);
+  }, [text, color]);
   return (
     <group>
       {[40, 130, 220, 310].map((x, i) => (
@@ -122,23 +123,58 @@ function Stands() {
   );
 }
 
-/** Motor City and the towers in the distance (the same every time). */
-const TOWERS = (() => {
-  let seed = 7;
-  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  return Array.from({ length: 70 }, () => {
-    const a = rnd() * Math.PI * 2, r = 900 + rnd() * 400;
-    return { x: 250 + Math.cos(a) * r, z: 330 + Math.sin(a) * r, w: 20 + rnd() * 40, h: 40 + rnd() * 220, c: ["#94a3b8", "#cbd5e1", "#64748b", "#e2e8f0"][Math.floor(rnd() * 4)] };
-  });
-})();
-function Skyline() {
-  return <group>{TOWERS.map((t, i) => <mesh key={i} position={[t.x, t.h / 2, t.z]}><boxGeometry args={[t.w, t.h, t.w]} /><meshStandardMaterial color={t.c} /></mesh>)}</group>;
+/** What stands around each track (the same every time): Motor City's towers, the Marina's skyscrapers close in, dunes,
+    mountains, or palms along the sea wall. */
+function Scenery({ track }: { track: Track }) {
+  const kind = track.def.theme.scenery;
+  const items = useMemo(() => {
+    let seed = 7;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const [cx, cz] = track.centre, R = track.radius;
+    const ring = (n: number, from: number, to: number) => Array.from({ length: n }, () => {
+      const a = rnd() * Math.PI * 2, r = R + from + rnd() * (to - from);
+      return { x: cx + Math.cos(a) * r, z: cz + Math.sin(a) * r, r1: rnd(), r2: rnd() };
+    });
+    if (kind === "palms") {
+      // Palms just inside the track, every so often.
+      const S = track.samples;
+      return Array.from({ length: 44 }, (_, i) => {
+        const s = S[Math.floor((i / 44) * S.length)];
+        const side = i % 2 ? 1 : -1;
+        const p = s.p.clone().addScaledVector(s.n, side * 30);
+        return { x: p.x, z: p.z, r1: rnd(), r2: rnd() };
+      }).concat(ring(14, 700, 1100));
+    }
+    return ring(kind === "marina" ? 60 : kind === "towers" ? 70 : 40, kind === "marina" ? 260 : 450, kind === "marina" ? 700 : 900);
+  }, [track, kind]);
+  if (kind === "dunes") return <group>{items.map((t, i) => <mesh key={i} position={[t.x, 0, t.z]} scale={[90 + t.r1 * 120, 18 + t.r2 * 40, 60 + t.r2 * 90]}><sphereGeometry args={[1, 12, 8]} /><meshStandardMaterial color={t.r1 > 0.5 ? "#e0b872" : "#d4a85f"} roughness={1} /></mesh>)}</group>;
+  if (kind === "mountains") return <group>{items.map((t, i) => <mesh key={i} position={[t.x, 0, t.z]}><coneGeometry args={[120 + t.r1 * 160, 160 + t.r2 * 340, 7]} /><meshStandardMaterial color={t.r2 > 0.6 ? "#7c6f62" : "#94877a"} flatShading roughness={1} /></mesh>)}</group>;
+  if (kind === "palms") return <group>{items.map((t, i) => i < 44 ? <Palm key={i} x={t.x} z={t.z} h={9 + t.r1 * 5} /> : <mesh key={i} position={[t.x, 60 + t.r1 * 80, t.z]}><boxGeometry args={[40, 120 + t.r1 * 160, 40]} /><meshStandardMaterial color="#f1e7d6" /></mesh>)}</group>;
+  const marina = kind === "marina";
+  return <group>{items.map((t, i) => {
+    const h = marina ? 120 + t.r1 * 300 : 40 + t.r1 * 220, w = marina ? 24 + t.r2 * 26 : 20 + t.r2 * 40;
+    const c = marina ? ["#60a5fa", "#93c5fd", "#1e3a8a", "#cbd5e1"][Math.floor(t.r2 * 4)] : ["#94a3b8", "#cbd5e1", "#64748b", "#e2e8f0"][Math.floor(t.r2 * 4)];
+    return <mesh key={i} position={[t.x, h / 2, t.z]}><boxGeometry args={[w, h, w]} /><meshStandardMaterial color={c} metalness={marina ? 0.3 : 0} roughness={marina ? 0.3 : 0.8} /></mesh>;
+  })}</group>;
+}
+
+function Palm({ x, z, h }: { x: number; z: number; h: number }) {
+  return (
+    <group position={[x, 0, z]}>
+      <mesh position={[0, h / 2, 0]}><cylinderGeometry args={[0.35, 0.5, h, 6]} /><meshStandardMaterial color="#8b5a2b" /></mesh>
+      {[0, 1, 2, 3, 4].map((k) => (
+        <mesh key={k} position={[Math.cos(k * 1.26) * 2, h, Math.sin(k * 1.26) * 2]} rotation={[Math.sin(k * 1.26) * 0.9, 0, -Math.cos(k * 1.26) * 0.9]}>
+          <boxGeometry args={[0.5, 0.15, 4.5]} /><meshStandardMaterial color="#15803d" />
+        </mesh>
+      ))}
+    </group>
+  );
 }
 
 // ---------------------------------------------------------------- the cars and the camera
 
-function Cars({ racers, me, mine, remotes, startsAtRef, laps, spectator }: {
-  racers: Racer[]; me: string; mine: React.RefObject<DriveState & { rpm: number; gear: number }>;
+function Cars({ track, racers, me, mine, remotes, startsAtRef, laps, spectator }: {
+  track: Track; racers: Racer[]; me: string; mine: React.RefObject<DriveState & { rpm: number; gear: number }>;
   remotes: React.RefObject<Map<string, Remote>>; startsAtRef: React.RefObject<number>; laps: number;
   /** Watching, not driving: the camera follows whoever is in front (mine holds the leader's place). */
   spectator?: boolean;
@@ -147,7 +183,7 @@ function Cars({ racers, me, mine, remotes, startsAtRef, laps, spectator }: {
   const camera = useThree((s) => s.camera);
   const camPos = useRef(new THREE.Vector3(-30, 6, 0));
   const engines = useRef(new Map<string, RemoteEngine>());
-  const perfs = useMemo(() => new Map(racers.map((r) => [r.id, perfOf(r.car)])), [racers]);
+  const perfs = useMemo(() => new Map(racers.map((r) => [r.id, perfOf(r.car, r.tune)])), [racers]);
 
   useEffect(() => {
     const e = engines.current;
@@ -179,20 +215,20 @@ function Cars({ racers, me, mine, remotes, startsAtRef, laps, spectator }: {
         if (now >= startsAtRef.current - 3000) {
           let eng = engines.current.get(r.id);
           if (!eng) { try { eng = new RemoteEngine(); engines.current.set(r.id, eng); } catch { /* no audio */ } }
-          const p = trackPose(dist, offset).p;
-          const mp = trackPose(meState.dist, meState.offset).p;
+          const p = trackPose(track, dist, offset).p;
+          const mp = trackPose(track, meState.dist, meState.offset).p;
           eng?.update(gearbox(speed, perfs.get(r.id)?.top ?? 60).rpm, p.distanceTo(mp));
         }
       }
-      const pose = trackPose(dist, offset);
+      const pose = trackPose(track, dist, offset);
       g.position.set(pose.p.x, 0.12, pose.p.z);
       g.rotation.y = pose.yaw;
       if (r.id === me) mePos = pose.p;
     }
     // The chase camera: behind and above your car (or the leader, when watching), looking up the track.
     if (mePos || spectator) {
-      const ahead = trackPose(meState.dist + 14, meState.offset * 0.6).p;
-      const behind = trackPose(meState.dist - 11, meState.offset).p;
+      const ahead = trackPose(track, meState.dist + 14, meState.offset * 0.6).p;
+      const behind = trackPose(track, meState.dist - 11, meState.offset).p;
       camPos.current.lerp(new THREE.Vector3(behind.x, 4.2 + Math.min(meState.speed, 80) * 0.01, behind.z), Math.min(1, dt * 5));
       camera.position.copy(camPos.current);
       camera.lookAt(ahead.x, 1.2, ahead.z);
@@ -219,9 +255,11 @@ function Cars({ racers, me, mine, remotes, startsAtRef, laps, spectator }: {
 
 // ---------------------------------------------------------------- the race
 
-export function RaceScene({ code, me, racers, laps, startsAt, onFinish, onLeave }: {
+export function RaceScene({ code, me, racers, laps, track: trackId, startsAt, onFinish, onLeave }: {
   /** me not among the racers: watching (follow the leader, no controls, nothing sent). */
   code: string; me: string; racers: Racer[]; laps: number;
+  /** Which track (lib/autodrome TRACKS). */
+  track?: string;
   /** When the race starts, on this device's clock (already corrected for the server's). */
   startsAt: number;
   onFinish: (ms: number) => void; onLeave: () => void;
@@ -230,13 +268,15 @@ export function RaceScene({ code, me, racers, laps, startsAt, onFinish, onLeave 
   const spectator = !racers.some((r) => r.id === me);
   const myIndex = Math.max(0, racers.findIndex((r) => r.id === me));
   const myCar = racers[myIndex]?.car ?? "nissan-sunny";
-  const perf = useMemo(() => perfOf(myCar), [myCar]);
+  const myTune = racers[myIndex]?.tune;
+  const perf = useMemo(() => perfOf(myCar, myTune), [myCar, myTune]);
+  const track = useMemo(() => trackOf(trackId), [trackId]);
   const mine = useRef<DriveState & { rpm: number; gear: number }>({ ...gridSpot(myIndex), speed: 0, drift: 0, wall: 0, rpm: 1000, gear: 1 });
   const input = useRef<DriveInput>({ throttle: 0, brake: 0, steer: 0 });
   const remotes = useRef(new Map<string, Remote>());
   const startsAtRef = useRef(startsAt);
   const finished = useRef<number | null>(null);
-  const L = TRACK.length;
+  const L = track.length;
   const [hud, setHud] = useState({ speed: 0, gear: 1, lap: 1, pos: 1, time: 0, count: 6, done: null as number | null, left: 6, dots: [] as { id: string; x: number; y: number; me: boolean }[], order: [] as string[] });
   const [sound, setSound] = useState(true);
 
@@ -297,7 +337,7 @@ export function RaceScene({ code, me, racers, laps, startsAt, onFinish, onLeave 
         s.rpm += (rev - s.rpm) * Math.min(1, dt * 6);
         engine.current?.update(s.rpm, input.current.throttle, 1, 0);
       } else {
-        const next = step(s, inp, perf, dt);
+        const next = step(track, s, inp, perf, dt);
         const gb = gearbox(next.speed, perf.top);
         if (next.wall && !s.wall) engine.current?.thud();
         Object.assign(s, next, { rpm: gb.rpm, gear: gb.gear });
@@ -311,15 +351,15 @@ export function RaceScene({ code, me, racers, laps, startsAt, onFinish, onLeave 
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [perf, laps, L, onFinish, spectator]);
+  }, [track, perf, laps, L, onFinish, spectator]);
 
   const minimap = useMemo(() => {
-    const xs = TRACK.samples.map((s) => s.p.x), zs = TRACK.samples.map((s) => s.p.z);
+    const xs = track.samples.map((s) => s.p.x), zs = track.samples.map((s) => s.p.z);
     const minX = Math.min(...xs), maxX = Math.max(...xs), minZ = Math.min(...zs), maxZ = Math.max(...zs);
     const k = 100 / Math.max(maxX - minX, maxZ - minZ);
     const pt = (x: number, z: number) => [(x - minX) * k + 4, (z - minZ) * k + 4] as const;
-    return { d: TRACK.samples.map((s, i) => `${i ? "L" : "M"}${pt(s.p.x, s.p.z).join(",")}`).join(" ") + "Z", pt };
-  }, []);
+    return { d: track.samples.map((s, i) => `${i ? "L" : "M"}${pt(s.p.x, s.p.z).join(",")}`).join(" ") + "Z", pt };
+  }, [track]);
 
   // The HUD, ten times a second.
   useEffect(() => {
@@ -329,7 +369,8 @@ export function RaceScene({ code, me, racers, laps, startsAt, onFinish, onLeave 
       const pos = 1 + all.filter((d, i) => racers[i].id !== me && d > s.dist).length;
       const now = Date.now();
       const dots = racers.map((r, i) => {
-        const [x, y] = minimap.pt(trackPose(all[i], 0).p.x, trackPose(all[i], 0).p.z);
+        const at = trackPose(track, all[i], 0).p;
+        const [x, y] = minimap.pt(at.x, at.z);
         return { id: r.id, x, y, me: r.id === me };
       });
       setHud({
@@ -340,7 +381,7 @@ export function RaceScene({ code, me, racers, laps, startsAt, onFinish, onLeave 
       });
     }, 100);
     return () => clearInterval(t);
-  }, [racers, me, laps, L, minimap]);
+  }, [track, racers, me, laps, L, minimap]);
   const countdown = hud.left;
 
   // Keyboard: arrows or WASD, space to brake.
@@ -365,13 +406,13 @@ export function RaceScene({ code, me, racers, laps, startsAt, onFinish, onLeave 
     <div className="fixed inset-0 z-[150] bg-slate-900 select-none touch-none">
       <Canvas dpr={quality.dpr} camera={{ fov: 62, near: 0.5, far: 2600, position: [-30, 6, 0] }} gl={{ powerPreference: quality.powerPreference }}>
         <PerfProbe scene="Autodrome" />
-        <color attach="background" args={["#9fd3f5"]} />
-        <fog attach="fog" args={["#cfe8f7", 400, 1600]} />
+        <color attach="background" args={[track.def.theme.sky]} />
+        <fog attach="fog" args={[track.def.theme.fog, 400, Math.max(1600, track.radius * 3.5)]} />
         <hemisphereLight args={["#ffffff", "#c2a37a", 0.8]} />
         <directionalLight position={[300, 400, -200]} intensity={1.5} />
         <Suspense fallback={null}>
-          <Circuit />
-          <Cars racers={racers} me={me} mine={mine} remotes={remotes} startsAtRef={startsAtRef} laps={laps} spectator={spectator} />
+          <Circuit track={track} />
+          <Cars track={track} racers={racers} me={me} mine={mine} remotes={remotes} startsAtRef={startsAtRef} laps={laps} spectator={spectator} />
         </Suspense>
       </Canvas>
 
@@ -381,7 +422,7 @@ export function RaceScene({ code, me, racers, laps, startsAt, onFinish, onLeave 
           {spectator
             ? <p className="text-sm font-black leading-none">👀 Watching</p>
             : <p className="text-2xl font-black leading-none">P{hud.pos}<span className="text-sm text-white/60">/{hud.count}</span></p>}
-          <p className="text-xs font-bold text-white/80">Lap {hud.lap}/{laps}</p>
+          <p className="text-xs font-bold text-white/80">Lap {hud.lap}/{laps} · {track.def.name}</p>
           <p className="text-xs font-mono text-white/80">{lapTime(hud.time)}</p>
         </div>
         <svg viewBox="0 0 108 108" className="w-24 h-24 rounded-2xl bg-slate-950/60">

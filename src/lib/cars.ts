@@ -68,6 +68,15 @@ export const painted = (car: Car, color?: string | null): Car => (color ? { ...c
 export const paintedCar = (id: string, color?: string | null) => { const c = carOf(id); return c ? painted(c, color) : undefined; };
 /** Respray one of your cars (RESPRAY_COST); null puts it back to the factory colour. */
 export const setCarColor = (carId: number, color: string | null) => call<{ id: number; color: string | null; cost: number }>("set_car_color", { p_car: carId, p_color: color });
+
+// ---------------------------------------------------------------- the tuning garage (src/app/garage)
+
+export interface CarTuning { id: number; engine: number; turbo: number; tyres: number }
+/** The tuning stages on each of my cars. */
+export const myCarTuning = () => call<CarTuning[]>("my_car_tuning");
+/** Fit the next stage of a part (engine, turbo or tyres) to one of my cars. */
+export const tuneCar = (carId: number, part: "engine" | "turbo" | "tyres") => call<{ id: number; part: string; stage: number; cost: number }>("tune_car", { p_car: carId, p_part: part });
+
 export function shopOf(id: string): Shop | null {
   const r = CARS.rentals.find((x) => x.id === id);
   if (r) return { ...r, rent: true, cars: r.fleet.map(carOf).filter((c): c is Car => !!c) };
@@ -86,6 +95,8 @@ const ERRORS: Record<string, string> = {
   car_impounded: "It's in the police impound. Release it first, then respray it.",
   car_stolen: "It's been stolen. Get it back first.",
   not_your_car: "That isn't your car.",
+  max_stage: "That's already the top stage.",
+  unknown_part: "That part isn't fitted here.",
   already_renting: "You already have a rental. Return it first.",
   insufficient_funds: "You don't have enough AED for that.",
   not_offered: "That car isn't available here.",

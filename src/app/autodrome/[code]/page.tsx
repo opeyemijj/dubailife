@@ -15,7 +15,7 @@ import { InviteSheet } from "@/components/share/InviteSheet";
 import { RaceScene } from "@/components/autodrome/RaceScene";
 import { raceAudio } from "@/lib/raceAudio";
 import {
-  finishRace, friendsWithCars, joinRace, lapTime, leaveRace, myRaceCars, prizesFor, raceView, startRace,
+  finishRace, friendsWithCars, joinRace, lapTime, leaveRace, myRaceCars, prizesFor, raceView, startRace, trackDef,
   type RaceCar, type RaceView,
 } from "@/lib/autodrome";
 import { refreshCitizen } from "@/lib/citizenStore";
@@ -78,18 +78,18 @@ export default function RacePage({ params }: { params: Promise<{ code: string }>
           <div className="text-center space-y-4">
             <p className="text-6xl">🏁</p>
             <p className="text-2xl font-black">You&apos;re on the grid</p>
-            <p className="text-white/80">{view.racers.length} cars · {view.laps} lap{view.laps === 1 ? "" : "s"}</p>
+            <p className="text-white/80">{trackDef(view.track).name} · {view.racers.length} cars · {view.laps} lap{view.laps === 1 ? "" : "s"}</p>
             <button onClick={() => { raceAudio(); setReady(true); }} className="h-16 px-8 rounded-full bg-white text-slate-950 text-xl font-black animate-pulse">🔑 Start your engine</button>
           </div>
         </div>
       );
     }
-    return <RaceScene code={code} me={me} racers={view.racers} laps={view.laps} startsAt={startsAt} onFinish={onFinish} onLeave={() => router.push("/autodrome")} />;
+    return <RaceScene code={code} me={me} racers={view.racers} laps={view.laps} track={view.track} startsAt={startsAt} onFinish={onFinish} onLeave={() => router.push("/autodrome")} />;
   }
 
   // Watching (not in the race): the race live, following the leader.
   if (view.status === "racing" && !inRace && watching) {
-    return <RaceScene code={code} me={me} racers={view.racers} laps={view.laps} startsAt={startsAt} onFinish={() => {}} onLeave={() => setWatching(false)} />;
+    return <RaceScene code={code} me={me} racers={view.racers} laps={view.laps} track={view.track} startsAt={startsAt} onFinish={() => {}} onLeave={() => setWatching(false)} />;
   }
 
   const join = async (car: number) => {
@@ -112,13 +112,17 @@ export default function RacePage({ params }: { params: Promise<{ code: string }>
     const url = `${window.location.origin}/autodrome/${code}`;
     await sendMessage(me, f.id, `🏁 Race me at Dubai Autodrome! Bring your car: ${url}`, null, `/autodrome/${code}`);
   };
-  const results = [...view.racers].sort((a, b) => (a.place ?? 99) - (b.place ?? 99));
+  const results = [...view.racers].sort((a, b) => (a.place ?? 99) - (b.place ?? 99) || (a.finishMs ?? 0) - (b.finishMs ?? 0));
+  // Cars sharing a place: a dead heat (the same time to a tenth), and they split what those places pay.
+  const tied = (place: number | null) => place !== null && view.racers.filter((x) => x.place === place).length > 1;
+  const track = trackDef(view.track);
 
   return (
     <Shell>
       <section className="rounded-3xl bg-gradient-to-br from-red-600 to-rose-800 p-5 space-y-1">
         <p className="text-xs font-black uppercase tracking-wider text-white/75">Dubai Autodrome · race {view.code}</p>
         <h1 className="text-2xl font-black">@{view.host}&apos;s race</h1>
+        <p className="text-sm font-black">🏁 {track.name} <span className="font-semibold text-white/75">· {track.place}</span></p>
         <p className="text-sm text-white/85">{view.laps} lap{view.laps === 1 ? "" : "s"} · {view.racers.length}/{view.max} cars · {view.status === "lobby" ? "on the grid" : view.status === "racing" ? "racing now" : "finished"}</p>
       </section>
 
@@ -132,7 +136,7 @@ export default function RacePage({ params }: { params: Promise<{ code: string }>
               <span className="w-8 text-center text-xl font-black">{r.place === 1 ? "🥇" : r.place === 2 ? "🥈" : r.place === 3 ? "🥉" : r.place ?? "–"}</span>
               <Link href={`/u/${r.username}`} className="flex-1 min-w-0">
                 <span className="block font-black truncate">@{r.username}</span>
-                <span className="block text-xs text-white/60">{carName(r.car)}</span>
+                <span className="block text-xs text-white/60">{carName(r.car)}{tied(r.place) ? " · 🤝 dead heat, prize shared" : ""}</span>
               </Link>
               <span className="text-right">
                 <span className="block font-mono text-sm">{r.finishMs ? lapTime(r.finishMs) : "racing…"}</span>

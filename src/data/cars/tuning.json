@@ -1,0 +1,36 @@
+{
+  "_note": "The tuning garage (src/app/garage): upgrades for a car you own, three stages each, bought one stage at a time. A stage costs costPct % of the car's price (at least minCost AED, rounded to AED 100). boost is the total gain at each stage (percent): engine → top speed, turbo → acceleration, tyres → grip in the corners; they change how the car drives at the Autodrome (lib/autodrome perfOf). Stages stay with the car. Prices are enforced in car_tuning_rule() (*_race_garage_tracks.sql; checked by scripts/check-life-config.mjs).",
+  "minCost": 2000,
+  "parts": [
+    {
+      "id": "engine",
+      "name": "Engine remap",
+      "icon": "⚙️",
+      "stat": "Top speed",
+      "blurb": "An ECU remap, a freer exhaust and a cold-air intake: more power at the top end.",
+      "stages": ["Stage 1 remap", "Stage 2 exhaust and intake", "Stage 3 built engine"],
+      "costPct": [3, 6, 10],
+      "boost": [4, 8, 12]
+    },
+    {
+      "id": "turbo",
+      "name": "Turbo",
+      "icon": "🌀",
+      "stat": "Acceleration",
+      "blurb": "Bigger turbos and more boost: it pulls harder out of every corner.",
+      "stages": ["Street turbo", "Twin turbo", "Race turbo with launch control"],
+      "costPct": [3, 6, 10],
+      "boost": [10, 20, 30]
+    },
+    {
+      "id": "tyres",
+      "name": "Tyres and suspension",
+      "icon": "🛞",
+      "stat": "Grip",
+      "blurb": "Stickier tyres and stiffer, lower suspension: take the corners faster without running wide.",
+      "stages": ["Sport tyres", "Semi-slicks and coilovers", "Race slicks and aero"],
+      "costPct": [2, 4, 6],
+      "boost": [6, 12, 18]
+    }
+  ]
+}

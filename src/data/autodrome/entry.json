@@ -1,7 +1,8 @@
 {
-  "_note": "Autodrome race prizes (src/app/autodrome): the host picks an entry fee (AED, 0 = free) and a split. Every driver pays the fee to join; the fees are the pot, all paid out. 'winner' = winner takes all; 'top3' = split[0]% to 1st, split[1]% to 2nd, split[2]% to 3rd, any share nobody claims to 1st. Fee back on leaving the grid; everyone's back if the race is closed or nobody finishes. Mirrored exactly in public.race_entry_rules() (*_race_entry_prizes.sql; checked by scripts/check-life-config.mjs).",
+  "_note": "Autodrome race prizes (src/app/autodrome): the host picks an entry fee (AED, 0 = free) and a split. Every driver pays the fee to join; the fees are the pot, all paid out. 'winner' = winner takes all; 'top3' = split[0]% to 1st, split[1]% to 2nd, split[2]% to 3rd, any share nobody claims to 1st. A draw (drawMs: the same time to a tenth of a second, as the board shows it) shares the place, and the tied cars split what those places pay equally. Fee back on leaving the grid; everyone's back if the race is closed or nobody finishes. Mirrored exactly in public.race_entry_rules() (*_race_entry_prizes.sql, now *_race_garage_tracks.sql; checked by scripts/check-life-config.mjs).",
   "fees": [0, 100000, 1000000, 5000000, 10000000, 50000000],
   "split": [60, 30, 10],
   "maxRacers": 10,
-  "bigWinFeed": 1000000
+  "bigWinFeed": 1000000,
+  "drawMs": 100
 }

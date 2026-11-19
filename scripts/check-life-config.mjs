@@ -354,6 +354,17 @@ if (!hallSql.includes(`p_type not in (${halls.types.map((t) => `'${t.id}'`).join
   if (!sqlJson || norm(JSON.parse(sqlJson)) !== norm(entry)) { bad++; console.error("autodrome prizes: JSON differs from SQL"); }
   if (!readdirSync("supabase/migrations").some((f) => readFileSync(`supabase/migrations/${f}`, "utf8").includes(`check (max_racers between 2 and ${entry.maxRacers})`))) { bad++; console.error("autodrome: maxRacers differs from SQL"); }
   if (entry.split.reduce((a, b) => a + b, 0) !== 100) { bad++; console.error("autodrome: the split must add up to 100"); }
+  // Tracks (src/data/autodrome/tracks.json vs race_track_rules(): each track's id and fastest possible lap).
+  const tracks = JSON.parse(readFileSync("src/data/autodrome/tracks.json", "utf8")).tracks;
+  const trackSql = latestDef("race_track_rules").match(/race_track_rules\(\)[\s\S]*?select '(\{.*?\})'::jsonb/)?.[1];
+  const wantTracks = Object.fromEntries(tracks.map((t) => [t.id, t.minLapMs]));
+  if (!trackSql || JSON.stringify(JSON.parse(trackSql)) !== JSON.stringify(wantTracks)) { bad++; console.error("autodrome tracks: JSON differs from SQL"); }
+  // The tuning garage (src/data/cars/tuning.json vs car_tuning_rule(): the minimum and each part's stage prices).
+  const tuning = JSON.parse(readFileSync("src/data/cars/tuning.json", "utf8"));
+  const tuneSql = latestDef("car_tuning_rule").match(/car_tuning_rule\(\)[\s\S]*?select '(\{.*?\})'::jsonb/)?.[1];
+  const wantTune = { minCost: tuning.minCost, ...Object.fromEntries(tuning.parts.map((p) => [p.id, p.costPct])) };
+  if (!tuneSql || JSON.stringify(JSON.parse(tuneSql)) !== JSON.stringify(wantTune)) { bad++; console.error("tuning garage: JSON differs from SQL"); }
+  for (const p of tuning.parts) if (p.costPct.length !== 3 || p.boost.length !== 3 || p.stages.length !== 3) { bad++; console.error(`tuning ${p.id}: needs three stages`); }
 }
 // Hotel suites and room service (src/data/hotels/suites.json vs hotel_suite_rule() and hotel_service_price()).
 {

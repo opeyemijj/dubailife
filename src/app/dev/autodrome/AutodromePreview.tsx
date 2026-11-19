@@ -22,5 +22,7 @@ export function AutodromePreview() {
   }
   // ?watch=1: as a spectator (not in the race).
   const watch = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("watch") === "1";
-  return <RaceScene code="DEVTEST" me={watch ? "spectator" : "me"} racers={RACERS} laps={1} startsAt={start} onFinish={() => {}} onLeave={() => setStart(null)} />;
+  // ?track=<id>: one of the tracks (lib/autodrome TRACKS).
+  const track = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("track") ?? undefined : undefined;
+  return <RaceScene code="DEVTEST" me={watch ? "spectator" : "me"} racers={RACERS} laps={1} track={track} startsAt={start} onFinish={() => {}} onLeave={() => setStart(null)} />;
 }

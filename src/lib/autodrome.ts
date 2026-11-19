@@ -9,22 +9,31 @@ import * as THREE from "three";
 import { supabase } from "@/lib/supabase/client";
 import { carOf, type Car } from "@/lib/cars";
 import type { AvatarLookProps } from "@/components/avatar/roster";
+import TRACKS_DATA from "@/data/autodrome/tracks.json";
+import TUNING from "@/data/cars/tuning.json";
 
-// ---------------------------------------------------------------- the circuit
+// ---------------------------------------------------------------- the circuits
 
-/** The circuit's centre line (metres, x/z), clockwise from the start line on the main straight: a long straight,
-    a hairpin, the esses, a sweeper and the back straight. About 2.9 km. */
-const POINTS: [number, number][] = [
-  [0, 0], [220, 0], [440, 0], [600, 10], [680, 80], [690, 190], [630, 270], [520, 290], [430, 340], [410, 440],
-  [470, 540], [450, 640], [340, 690], [200, 660], [120, 560], [40, 470], [-90, 450], [-200, 380], [-240, 260],
-  [-190, 150], [-230, 60], [-160, 0],
-];
+export interface TrackTheme { ground: string; infield: string; sky: string; fog: string; kerb: string; scenery: "towers" | "marina" | "dunes" | "mountains" | "palms"; sign: string; signColor: string }
+export interface TrackDef { id: string; name: string; place: string; blurb: string; minLapMs: number; theme: TrackTheme; points: number[][] }
+/** The tracks a host can pick (src/data/autodrome/tracks.json); each starts on a straight past the grandstands. */
+export const TRACKS = TRACKS_DATA.tracks as TrackDef[];
+export const DEFAULT_TRACK = "grand-prix";
+export const trackDef = (id?: string | null) => TRACKS.find((t) => t.id === id) ?? TRACKS[0];
+
 export const TRACK_HALF_WIDTH = 9;
 const WALL = 16;
 
 export interface TrackSample { p: THREE.Vector3; t: THREE.Vector3; n: THREE.Vector3; curv: number }
-export const TRACK = (() => {
-  const curve = new THREE.CatmullRomCurve3(POINTS.map(([x, z]) => new THREE.Vector3(x, 0, z)), true, "centripetal");
+export interface Track { def: TrackDef; curve: THREE.CatmullRomCurve3; length: number; samples: TrackSample[]; N: number; centre: [number, number]; radius: number }
+
+const built = new Map<string, Track>();
+/** A track's centre line, sampled (built once per track). */
+export function trackOf(id?: string | null): Track {
+  const def = trackDef(id);
+  const done = built.get(def.id);
+  if (done) return done;
+  const curve = new THREE.CatmullRomCurve3(def.points.map(([x, z]) => new THREE.Vector3(x, 0, z)), true, "centripetal");
   const length = curve.getLength();
   const N = 900;
   const samples: TrackSample[] = [];
@@ -42,16 +51,21 @@ export const TRACK = (() => {
     const ang = Math.atan2(a.x * b.z - a.z * b.x, a.x * b.x + a.z * b.z);
     samples[i].curv = ang / ((6 / N) * length);
   }
-  return { curve, length, samples, N };
-})();
+  const xs = samples.map((s) => s.p.x), zs = samples.map((s) => s.p.z);
+  const centre: [number, number] = [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...zs) + Math.max(...zs)) / 2];
+  const radius = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...zs) - Math.min(...zs)) / 2;
+  const track = { def, curve, length, samples, N, centre, radius };
+  built.set(def.id, track);
+  return track;
+}
 
 /** Where a distance along the circuit and an offset across it put you: position, heading and the curve there. */
-export function trackPose(dist: number, offset: number) {
-  const L = TRACK.length;
+export function trackPose(track: Track, dist: number, offset: number) {
+  const L = track.length;
   const s = ((dist % L) + L) % L;
-  const f = (s / L) * TRACK.N;
-  const i = Math.floor(f) % TRACK.N, j = (i + 1) % TRACK.N, k = f - Math.floor(f);
-  const A = TRACK.samples[i], B = TRACK.samples[j];
+  const f = (s / L) * track.N;
+  const i = Math.floor(f) % track.N, j = (i + 1) % track.N, k = f - Math.floor(f);
+  const A = track.samples[i], B = track.samples[j];
   const p = A.p.clone().lerp(B.p, k);
   const t = A.t.clone().lerp(B.t, k).normalize();
   const n = new THREE.Vector3(-t.z, 0, t.x);
@@ -61,16 +75,36 @@ export function trackPose(dist: number, offset: number) {
 
 // ---------------------------------------------------------------- driving
 
+/** The stages a car has had in the tuning garage (0 to 3 each). */
+export interface Tune { engine: number; turbo: number; tyres: number }
+export const NO_TUNE: Tune = { engine: 0, turbo: 0, tyres: 0 };
+export interface TunePart { id: keyof Tune; name: string; icon: string; stat: string; blurb: string; stages: string[]; costPct: number[]; boost: number[] }
+export const TUNE_PARTS = TUNING.parts as TunePart[];
+/** The total gain (%) a part gives at a stage. */
+export const tuneBoost = (part: keyof Tune, stage: number) => (stage > 0 ? TUNE_PARTS.find((p) => p.id === part)?.boost[Math.min(3, stage) - 1] ?? 0 : 0);
+/** What the next stage costs for this car (null at the top stage): the same sum as car_tune_cost() on the server. */
+export function tuneCost(carId: string, part: keyof Tune, stage: number): number | null {
+  const p = TUNE_PARTS.find((x) => x.id === part), c = carOf(carId);
+  if (!p || !c || stage >= 3) return null;
+  return Math.max(TUNING.minCost, Math.round((c.price * p.costPct[stage]) / 100 / 100) * 100);
+}
+
 export interface CarPerf { top: number; accel: number; grip: number }
 /** How a car drives here (m/s, m/s²): its real top speed (a little less on a circuit), and acceleration and grip
-    by kind: a supercar pulls hardest and holds the corners best. */
-export function perfOf(carId: string): CarPerf {
+    by kind: a supercar pulls hardest and holds the corners best. The tuning garage adds to each (engine → top speed,
+    turbo → acceleration, tyres → grip). */
+export function perfOf(carId: string, tune?: Tune | null): CarPerf {
   const c = carOf(carId) as (Car & { model3d?: string }) | undefined;
   const kind = c?.model3d ?? "sedan";
   const top = ((c?.top ?? 190) / 3.6) * 0.82;
   const accel = kind === "supercar" ? 13.5 : (c?.top ?? 0) >= 290 ? 12 : kind === "sport-sedan" ? 9.5 : kind === "suv" ? 8.5 : 8;
   const grip = kind === "supercar" ? 1.25 : kind === "sport-sedan" ? 1.05 : kind === "suv" ? 0.85 : 0.95;
-  return { top, accel, grip };
+  const t = tune ?? NO_TUNE;
+  return {
+    top: top * (1 + tuneBoost("engine", t.engine) / 100),
+    accel: accel * (1 + tuneBoost("turbo", t.turbo) / 100),
+    grip: grip * (1 + tuneBoost("tyres", t.tyres) / 100),
+  };
 }
 
 export interface DriveState { dist: number; offset: number; speed: number; drift: number; wall: number }
@@ -78,9 +112,9 @@ export interface DriveInput { throttle: number; brake: number; steer: number }
 
 /** One step of driving: speed from throttle, brake and drag; steering across the track; the corners pushing you wide
     the faster you take them (more grip, less push); off the tarmac is slow, and the walls stop you. */
-export function step(s: DriveState, input: DriveInput, perf: CarPerf, dt: number): DriveState {
+export function step(track: Track, s: DriveState, input: DriveInput, perf: CarPerf, dt: number): DriveState {
   let { speed, offset } = s;
-  const pose = trackPose(s.dist, offset);
+  const pose = trackPose(track, s.dist, offset);
   const off = Math.abs(offset) > TRACK_HALF_WIDTH;
   const top = off ? Math.min(perf.top, 22) : perf.top;
   if (input.throttle > 0) speed += perf.accel * input.throttle * Math.max(0, 1 - speed / top) * dt;
@@ -111,14 +145,14 @@ export function gearbox(speed: number, top: number) {
 // ---------------------------------------------------------------- races
 
 export type PrizeMode = "winner" | "top3";
-export interface Racer { id: string; username: string; look: AvatarLookProps | null; car: string; /** Its paint (null: factory). */ color?: string | null; plate: string | null; finishMs: number | null; place: number | null; prize?: number | null }
+export interface Racer { id: string; username: string; look: AvatarLookProps | null; car: string; /** Its paint (null: factory). */ color?: string | null; plate: string | null; finishMs: number | null; place: number | null; prize?: number | null; /** Its tuning-garage stages. */ tune?: Tune | null }
 export interface RaceView {
-  code: string; hostId: string; host: string; laps: number; max: number; status: "lobby" | "racing" | "done" | "cancelled"; startsAt: string | null; now: string; racers: Racer[];
+  code: string; hostId: string; host: string; laps: number; /** The track (TRACKS). */ track?: string; max: number; status: "lobby" | "racing" | "done" | "cancelled"; startsAt: string | null; now: string; racers: Racer[];
   /** What each driver pays to join, the split, and the pot so far (all of it paid out). */
   entryFee: number; prizeMode: PrizeMode; pot: number; split: number[];
 }
-export interface OpenRace { code: string; host: string; look: AvatarLookProps | null; laps: number; status: string; racers: number; max: number; entryFee: number; prizeMode: PrizeMode; pot: number }
-export interface RaceCar { id: number; car: string; plate: string | null; color?: string | null }
+export interface OpenRace { code: string; host: string; look: AvatarLookProps | null; laps: number; track?: string; status: string; racers: number; max: number; entryFee: number; prizeMode: PrizeMode; pot: number }
+export interface RaceCar { id: number; car: string; plate: string | null; color?: string | null; tune?: Tune | null }
 
 const ERR: Record<string, string> = {
   no_car: "You need a car of your own (not impounded) to race. Get one from a dealer on Sheikh Zayed Road.",
@@ -129,6 +163,7 @@ const ERR: Record<string, string> = {
   no_race: "That race doesn't exist any more.",
   insufficient_funds: "You don't have enough for the entry fee.",
   bad_fee: "Pick one of the entry fees.",
+  bad_track: "Pick one of the tracks.",
 };
 const friendly = (m: string) => ERR[Object.keys(ERR).find((k) => m.includes(k)) ?? ""] ?? "Something went wrong. Try again.";
 
@@ -138,7 +173,7 @@ async function call<T>(fn: string, args: Record<string, unknown>): Promise<{ dat
 }
 export const myRaceCars = () => call<RaceCar[]>("my_race_cars", {});
 export const openRaces = () => call<OpenRace[]>("open_races", {});
-export const createRace = (car: number, laps: number, fee: number, mode: PrizeMode) => call<string>("create_race", { p_car: car, p_laps: laps, p_fee: fee, p_mode: mode });
+export const createRace = (car: number, laps: number, fee: number, mode: PrizeMode, track: string = DEFAULT_TRACK) => call<string>("create_race", { p_car: car, p_laps: laps, p_fee: fee, p_mode: mode, p_track: track });
 export const joinRace = (code: string, car: number) => call<null>("join_race", { p_code: code, p_car: car });
 export const leaveRace = (code: string) => call<null>("leave_race", { p_code: code });
 export const startRace = (code: string) => call<string>("start_race", { p_code: code });

@@ -12,7 +12,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { carName } from "@/lib/cityFeed";
 import { carOf } from "@/lib/cars";
-import { createRace, joinRace, myRaceCars, openRaces, prizesFor, type OpenRace, type PrizeMode, type RaceCar } from "@/lib/autodrome";
+import { createRace, DEFAULT_TRACK, joinRace, myRaceCars, openRaces, prizesFor, trackDef, trackOf, TRACKS, type OpenRace, type PrizeMode, type RaceCar } from "@/lib/autodrome";
 import { refreshCitizen } from "@/lib/citizenStore";
 import { shortAed } from "@/lib/cityFeed";
 import ENTRY from "@/data/autodrome/entry.json";
@@ -26,6 +26,7 @@ export default function AutodromePage() {
   const [laps, setLaps] = useState(3);
   const [fee, setFee] = useState(ENTRY.fees[1]);
   const [mode, setMode] = useState<PrizeMode>("winner");
+  const [track, setTrack] = useState(DEFAULT_TRACK);
   const [races, setRaces] = useState<OpenRace[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +43,7 @@ export default function AutodromePage() {
   const open = async () => {
     if (!car) return;
     setBusy(true); setError(null); gameAudio.playClickSound();
-    const r = await createRace(car, laps, fee, mode);
+    const r = await createRace(car, laps, fee, mode, track);
     setBusy(false);
     if (r.error || !r.data) { setError(r.error ?? "Couldn't open a race."); return; }
     void refreshCitizen();
@@ -66,8 +67,9 @@ export default function AutodromePage() {
           <Link href="/explore" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center" aria-label="Back to the map"><ArrowLeft className="w-4 h-4" /></Link>
           <div className="flex-1">
             <h1 className="text-2xl font-black leading-tight">Dubai Autodrome</h1>
-            <p className="text-xs text-white/60">Motor City · 2.9 km circuit</p>
+            <p className="text-xs text-white/60">Motor City · {TRACKS.length} tracks</p>
           </div>
+          <Link href="/garage" className="h-10 px-3 rounded-full bg-white/10 text-xs font-black flex items-center gap-1.5">🔧 Garage</Link>
         </header>
 
         <section className="rounded-3xl bg-gradient-to-br from-red-600 to-rose-800 p-5 space-y-3 shadow-xl">
@@ -91,6 +93,20 @@ export default function AutodromePage() {
                     </button>
                   ))}
                 </div>
+              </div>
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-wider text-white/70 mb-1">Track</p>
+                <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+                  {TRACKS.map((t) => (
+                    <button key={t.id} onClick={() => { gameAudio.playClickSound(); setTrack(t.id); }} aria-pressed={track === t.id}
+                      className={`shrink-0 w-36 rounded-2xl p-2 text-left ${track === t.id ? "bg-white text-slate-950" : "bg-black/25"}`}>
+                      <TrackShape id={t.id} className={`w-full h-14 ${track === t.id ? "text-red-600" : "text-white/80"}`} />
+                      <span className="block text-xs font-black leading-tight mt-1">{t.name}</span>
+                      <span className="block text-[10px] opacity-70">{t.place} · {(trackOf(t.id).length / 1000).toFixed(1)} km</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-white/75 mt-1">{trackDef(track).blurb}</p>
               </div>
               <div className="flex items-center gap-2">
                 <p className="text-[11px] font-black uppercase tracking-wider text-white/70">Laps</p>
@@ -125,7 +141,7 @@ export default function AutodromePage() {
               <img src={rosterThumb(presetFor(r.look ?? { gender: "woman" }))} alt="" className="w-10 h-10 rounded-full object-cover object-top bg-slate-700" />
               <div className="flex-1 min-w-0">
                 <p className="font-black truncate">@{r.host}&apos;s race</p>
-                <p className="text-xs text-white/60">{r.laps} lap{r.laps === 1 ? "" : "s"} · {r.racers}/{r.max} cars · {r.entryFee ? `AED ${shortAed(r.entryFee)} entry` : "free"} · {r.prizeMode === "winner" ? "winner takes all" : "top 3 paid"} · {r.status === "racing" ? "racing now" : "on the grid"}</p>
+                <p className="text-xs text-white/60">{trackDef(r.track).name} · {r.laps} lap{r.laps === 1 ? "" : "s"} · {r.racers}/{r.max} cars · {r.entryFee ? `AED ${shortAed(r.entryFee)} entry` : "free"} · {r.prizeMode === "winner" ? "winner takes all" : "top 3 paid"} · {r.status === "racing" ? "racing now" : "on the grid"}</p>
                 {r.pot > 0 && <p className="text-xs font-black text-amber-300">Pot AED {shortAed(r.pot)}</p>}
               </div>
               <div className="flex gap-1.5 shrink-0">
@@ -139,4 +155,14 @@ export default function AutodromePage() {
       <BottomNav />
     </main>
   );
+}
+
+/** A track's outline, for picking one. */
+function TrackShape({ id, className }: { id: string; className?: string }) {
+  const t = trackOf(id);
+  const xs = t.samples.map((s) => s.p.x), zs = t.samples.map((s) => s.p.z);
+  const minX = Math.min(...xs), minZ = Math.min(...zs), k = 96 / Math.max(Math.max(...xs) - minX, Math.max(...zs) - minZ);
+  const w = (Math.max(...xs) - minX) * k, h = (Math.max(...zs) - minZ) * k;
+  const d = t.samples.filter((_, i) => i % 6 === 0).map((s, i) => `${i ? "L" : "M"}${((s.p.x - minX) * k + (100 - w) / 2).toFixed(1)},${((s.p.z - minZ) * k + (100 - h) / 2).toFixed(1)}`).join(" ") + "Z";
+  return <svg viewBox="0 0 100 100" className={className} aria-hidden><path d={d} fill="none" stroke="currentColor" strokeWidth="6" strokeLinejoin="round" /></svg>;
 }
