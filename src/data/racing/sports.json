@@ -1,0 +1,72 @@
+{
+  "_note": "Racing beyond cars (src/app/racing/<sport>; the lobby, entry fees, prizes and dead heats are the Autodrome's, src/data/autodrome/entry.json). Each racer picks a mount from the venue's stable or paddock (no need to own one): horses at Meydan, camels at Al Marmoom, superbikes at the Autodrome. Each mount trades one strength for another, so the rider's race craft decides it. Horses and camels: top is the flat-out speed (km/h) when pushed, accel how quickly it gets there (m/s²), stamina how many seconds of pushing it has before it tires, agility how well it holds a line in the bends. Superbikes: top (km/h), accel (m/s²) and grip, ridden like a car (lib/autodrome step). The sport ids, their tracks (src/data/autodrome/tracks.json, by sport) and the mount ids are mirrored in race_sport_rules() (*_horse_camel_bike_racing.sql; checked by scripts/check-life-config.mjs).",
+  "sports": [
+    {
+      "id": "horse",
+      "name": "Horse racing",
+      "short": "Horse race",
+      "icon": "🏇",
+      "venue": "Meydan Racecourse",
+      "place": "Nad Al Sheba",
+      "mapId": "meydan-racecourse",
+      "rider": "jockey",
+      "laps": [1, 2],
+      "pick": "Your horse",
+      "tagline": "Ride a thoroughbred on the Dubai World Cup course",
+      "blurb": "Pick a horse from the Meydan stable, open a race and ride against your friends live. Push too early and your horse fades; save it for the final furlong.",
+      "gradient": "from-emerald-700 to-emerald-950",
+      "accent": "#d4af37",
+      "mounts": [
+        { "id": "thunder-road", "name": "Thunder Road", "breed": "Thoroughbred colt · bay", "blurb": "A sprinter: the quickest away and the fastest flat out, but he empties his tank early.", "coat": "#5b3018", "mane": "#120c08", "top": 66, "accel": 7.6, "stamina": 30, "agility": 1.0 },
+        { "id": "desert-crown", "name": "Desert Crown", "breed": "Thoroughbred mare · chestnut", "blurb": "A stayer: a little slower at the top, with stamina to push from a long way out.", "coat": "#9a4a1c", "mane": "#6e3412", "top": 63.5, "accel": 6.2, "stamina": 48, "agility": 1.0 },
+        { "id": "silver-mirage", "name": "Silver Mirage", "breed": "Arabian stallion · grey", "blurb": "All-rounder: good speed, good stamina, steady in the bends.", "coat": "#bdbab2", "mane": "#efede8", "top": 64.8, "accel": 6.9, "stamina": 39, "agility": 1.12 },
+        { "id": "midnight-falcon", "name": "Midnight Falcon", "breed": "Thoroughbred colt · black", "blurb": "Nimble: hugs the rail through the turns like no other, so he saves ground every bend.", "coat": "#1c1714", "mane": "#060504", "top": 64.2, "accel": 7.0, "stamina": 36, "agility": 1.35 }
+      ]
+    },
+    {
+      "id": "camel",
+      "name": "Camel racing",
+      "short": "Camel race",
+      "icon": "🐪",
+      "venue": "Al Marmoom Camel Racetrack",
+      "place": "Al Marmoom",
+      "mapId": "al-marmoom-camel-racetrack",
+      "rider": "robot",
+      "laps": [1, 2],
+      "pick": "Your camel",
+      "tagline": "Race the desert's fastest camels, robot jockeys and all",
+      "blurb": "Pick a racing camel, open a race and drive your robot jockey from the 4x4 alongside, live against your friends. Camels have stamina to burn: the race is won by the one who pushes at the right time.",
+      "gradient": "from-amber-600 to-orange-900",
+      "accent": "#facc15",
+      "mounts": [
+        { "id": "bint-al-reeh", "name": "Bint Al Reeh", "breed": "Omani dromedary · golden", "blurb": "\"Daughter of the wind\": the fastest when she's pushed, but she tires sooner than the others.", "coat": "#c9a066", "mane": "#a47c47", "top": 62, "accel": 3.6, "stamina": 55, "agility": 1.0 },
+        { "id": "al-asfar", "name": "Al Asfar", "breed": "Sudani dromedary · pale", "blurb": "A stayer from the old bloodlines: never the quickest, never tired.", "coat": "#e3cfa2", "mane": "#cdb584", "top": 58.5, "accel": 3.0, "stamina": 90, "agility": 1.0 },
+        { "id": "najmat-al-layl", "name": "Najmat Al Layl", "breed": "Majaheem dromedary · black", "blurb": "\"Star of the night\": quick off the line and steady round the bends.", "coat": "#3a2a1e", "mane": "#24180f", "top": 60, "accel": 4.0, "stamina": 66, "agility": 1.2 },
+        { "id": "mubaraka", "name": "Mubaraka", "breed": "Omani dromedary · bay", "blurb": "The all-rounder the trainers love: good at everything.", "coat": "#8f6239", "mane": "#6d4826", "top": 60.5, "accel": 3.4, "stamina": 72, "agility": 1.08 }
+      ]
+    },
+    {
+      "id": "bike",
+      "name": "Superbike racing",
+      "short": "Superbike race",
+      "icon": "🏍️",
+      "venue": "Dubai Autodrome",
+      "place": "Motor City",
+      "mapId": "dubai-autodrome",
+      "rider": "rider",
+      "laps": [1, 3, 5],
+      "pick": "Your superbike",
+      "tagline": "300 km/h superbikes on the Autodrome's five circuits",
+      "blurb": "Take a superbike from the paddock, open a race and go knee-down against your friends live. Bikes pull harder than any car, but they have less grip, so brake before the bends.",
+      "gradient": "from-sky-600 to-slate-950",
+      "accent": "#38bdf8",
+      "mounts": [
+        { "id": "ducati-panigale-v4r", "name": "Ducati Panigale V4 R", "breed": "1,000 cc V4 · 240 hp", "blurb": "The fastest down the straights, and a handful in the bends.", "color": "#dc2626", "top": 312, "accel": 15.4, "grip": 1.0 },
+        { "id": "bmw-m1000rr", "name": "BMW M 1000 RR", "breed": "1,000 cc inline-four · 212 hp", "blurb": "Winglets and huge brakes: stable and quick everywhere.", "color": "#2563eb", "top": 306, "accel": 14.8, "grip": 1.1 },
+        { "id": "kawasaki-zx10rr", "name": "Kawasaki Ninja ZX-10RR", "breed": "1,000 cc inline-four · 204 hp", "blurb": "World Superbike pedigree: grips and turns better than it pulls.", "color": "#16a34a", "top": 299, "accel": 14.4, "grip": 1.18 },
+        { "id": "yamaha-r1m", "name": "Yamaha YZF-R1M", "breed": "1,000 cc crossplane four · 200 hp", "blurb": "The sweetest handling in the paddock, the slowest flat out.", "color": "#1e3a8a", "top": 296, "accel": 14.2, "grip": 1.24 },
+        { "id": "honda-fireblade-sp", "name": "Honda CBR1000RR-R Fireblade SP", "breed": "1,000 cc inline-four · 215 hp", "blurb": "Explodes out of the corners: the best acceleration on the grid.", "color": "#f97316", "top": 303, "accel": 16.0, "grip": 1.04 }
+      ]
+    }
+  ]
+}

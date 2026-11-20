@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase/client";
 import { gameInfo } from "@/lib/games/registry";
 import CARS from "@/data/cars/cars.json";
 import TRACKS from "@/data/autodrome/tracks.json";
+import SPORTS from "@/data/racing/sports.json";
 import type { AvatarLookProps } from "@/components/avatar/roster";
 
 export type FeedKind = "party" | "win" | "arrived" | "home" | "car" | "gift" | "married" | "hired" | "reward" | "rain" | "race" | "hotel";
@@ -134,12 +135,27 @@ export function describePost(p: FeedPost, now = Date.now()): PostView {
       const names: Record<string, string> = { deluxe: "Deluxe Skyline Suite", royal: "Royal Jacuzzi Suite", presidential: "Presidential Penthouse Suite" };
       return { icon: "🏨", text: `${who} checked into the ${names[String(d.suite)] ?? "suite"} at ${String(d.hotel ?? "a hotel")} for ${Number(d.nights ?? 1)} night${Number(d.nights) === 1 ? "" : "s"}`, action: { label: "Book a suite", href: "/hotels" } };
     }
-    case "race":
+    case "race": {
+      const sp = SPORTS.sports.find((x) => x.id === d.sport);
+      const track = TRACKS.tracks.find((t) => t.id === d.track)?.name ?? "Grand Prix Circuit";
+      const time = d.ms ? ` (${Math.floor(Number(d.ms) / 60000)}:${String(Math.floor((Number(d.ms) % 60000) / 1000)).padStart(2, "0")})` : "";
+      const won = Number(d.deadHeat ?? 1) > 1 ? `tied for the win (a dead heat, prize shared ${Number(d.deadHeat)} ways) in` : "won";
+      const prize = Number(d.prize ?? 0) > 0 ? ` and took AED ${shortAed(Number(d.prize))}` : "";
+      if (sp) {
+        const mount = sp.mounts.find((m) => m.id === d.mount)?.name;
+        const on = sp.id === "bike" ? `on a ${mount ?? "superbike"}` : `on ${mount ?? `a ${sp.id}`}`;
+        return {
+          icon: sp.icon,
+          text: `${who} ${won} a ${Number(d.racers ?? 2)}-runner ${sp.short.toLowerCase()} on the ${track} at ${sp.venue} ${on}${time}${prize}`,
+          action: { label: `Race @${p.actor.username}`, href: `/racing/${sp.id}` },
+        };
+      }
       return {
         icon: "🏁",
-        text: `${who} ${Number(d.deadHeat ?? 1) > 1 ? `tied for the win (a dead heat, prize shared ${Number(d.deadHeat)} ways) in` : "won"} a ${Number(d.racers ?? 2)}-car race on the ${TRACKS.tracks.find((t) => t.id === d.track)?.name ?? "Grand Prix Circuit"} at Dubai Autodrome in a ${carName(String(d.car))}${d.ms ? ` (${Math.floor(Number(d.ms) / 60000)}:${String(Math.floor((Number(d.ms) % 60000) / 1000)).padStart(2, "0")})` : ""}${Number(d.prize ?? 0) > 0 ? ` and took AED ${shortAed(Number(d.prize))}` : ""}`,
+        text: `${who} ${won} a ${Number(d.racers ?? 2)}-car race on the ${track} at Dubai Autodrome in a ${carName(String(d.car))}${time}${prize}`,
         action: { label: `Race @${p.actor.username}`, href: "/autodrome" },
       };
+    }
     case "rain":
       return {
         icon: "💸",

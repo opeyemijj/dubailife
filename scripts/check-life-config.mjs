@@ -359,6 +359,12 @@ if (!hallSql.includes(`p_type not in (${halls.types.map((t) => `'${t.id}'`).join
   const trackSql = latestDef("race_track_rules").match(/race_track_rules\(\)[\s\S]*?select '(\{.*?\})'::jsonb/)?.[1];
   const wantTracks = Object.fromEntries(tracks.map((t) => [t.id, t.minLapMs]));
   if (!trackSql || JSON.stringify(JSON.parse(trackSql)) !== JSON.stringify(wantTracks)) { bad++; console.error("autodrome tracks: JSON differs from SQL"); }
+  // Horses, camels and superbikes (src/data/racing/sports.json vs race_sport_rules(): each sport's tracks and mounts; cars the circuits).
+  const sports = JSON.parse(readFileSync("src/data/racing/sports.json", "utf8")).sports;
+  const sportSql = latestDef("race_sport_rules").match(/race_sport_rules\(\)[\s\S]*?select '(\{.*?\})'::jsonb/)?.[1];
+  const circuits = tracks.filter((t) => !t.sport).map((t) => t.id);
+  const wantSports = { car: { tracks: circuits }, ...Object.fromEntries(sports.map((sp) => [sp.id, { tracks: sp.id === "bike" ? circuits : tracks.filter((t) => t.sport === sp.id).map((t) => t.id), mounts: sp.mounts.map((m) => m.id) }])) };
+  if (!sportSql || JSON.stringify(JSON.parse(sportSql)) !== JSON.stringify(wantSports)) { bad++; console.error("racing sports: JSON differs from SQL"); }
   // The tuning garage (src/data/cars/tuning.json vs car_tuning_rule(): the minimum and each part's stage prices).
   const tuning = JSON.parse(readFileSync("src/data/cars/tuning.json", "utf8"));
   const tuneSql = latestDef("car_tuning_rule").match(/car_tuning_rule\(\)[\s\S]*?select '(\{.*?\})'::jsonb/)?.[1];

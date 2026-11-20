@@ -1233,8 +1233,18 @@ export const PLACES: Place[] = [
   })),
   {
     id: "dubai-autodrome", name: "Dubai Autodrome", kind: "attraction", route: "/autodrome",
-    blurb: "Motor City's race circuit. Bring your own car, invite your friends and race wheel to wheel, live.",
+    blurb: "Motor City's race circuit. Bring your own car, or take a superbike from the paddock, invite your friends and race wheel to wheel, live.",
     venues: [venue("Dubai Autodrome", "Race circuit", "electronics", { blurb: "Motor City's race circuit: open a race and invite friends who have cars.", role: "Race marshal", noJob: true })],
+  },
+  {
+    id: "meydan-racecourse", name: "Meydan Racecourse", kind: "attraction", route: "/racing/horse",
+    blurb: "Home of the Dubai World Cup. Pick a thoroughbred from the stable and race your friends on the turf or the dirt, live.",
+    venues: [venue("Meydan Racecourse", "Horse racing", "electronics", { blurb: "Pick a horse from the stable, open a race and invite your friends.", role: "Race steward", noJob: true })],
+  },
+  {
+    id: "al-marmoom-camel-racetrack", name: "Al Marmoom Camel Racetrack", kind: "attraction", route: "/racing/camel",
+    blurb: "The desert's great camel racetrack: pick a racing camel, steer its robot jockey from the 4x4 and race your friends, live.",
+    venues: [venue("Al Marmoom Camel Racetrack", "Camel racing", "electronics", { blurb: "Pick a racing camel from the stable, open a race and invite your friends.", role: "Race steward", noJob: true })],
   },
   { id: "timeout-market", name: "Time Out Market Dubai", kind: "food-hall", blurb: "Food hall with Dubai's best-reviewed chefs under one roof, overlooking the fountain.", venues: TIME_OUT },
   { id: "the-guild", name: "The Guild", kind: "food-hall", blurb: "A multi-venue dining collective — lunch, drinks, dinner and a nightcap by the piano.", venues: GUILD },

@@ -68,3 +68,11 @@ Car models by Quaternius, from Poly Pizza (https://poly.pizza), repainted per ca
 - cars/suv.glb — "SUV" https://poly.pizza/m/xsMtZhBkxL (CC0 1.0)
 - cars/supercar.glb — "Car" by Quaternius https://poly.pizza/m/HQ0hvRM2XR, licensed under CC BY 3.0
   (https://creativecommons.org/licenses/by/3.0/)
+
+## Racing (Meydan, Al Marmoom, Autodrome superbikes)
+From Poly Pizza (https://poly.pizza), recoloured per horse, camel and bike in the app:
+- racing/horse.glb — "Horse" by Quaternius https://poly.pizza/m/qvTrSG9pZF (CC0 1.0), with its gallop animation
+- racing/camel.glb — "Camel" by Poly by Google https://poly.pizza/m/1IBKBalN1yt, licensed under CC BY 3.0
+  (https://creativecommons.org/licenses/by/3.0/); its legs are animated in the app
+- racing/superbike.glb — "Motorcycle" by Poly by Google https://poly.pizza/m/dse64pqMKAR, licensed under CC BY 3.0
+  (https://creativecommons.org/licenses/by/3.0/)

@@ -216,6 +216,40 @@ function HomeMenuRow({
 const newFurnitureUid = (itemId: string) =>
   `${itemId}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
+/** One home in the "switch home" list: tap it to live there, or the door to go to it on the map. */
+function HomeChoiceRow({ icon, title, badge, current, sub, right, onPick, onVisit, children }: {
+  icon: string; title: string; badge: { text: string; tone: string }; current: boolean; sub: string;
+  right: React.ReactNode; onPick: () => void; onVisit?: () => void; children?: React.ReactNode;
+}) {
+  return (
+    <div className={`w-full p-3.5 rounded-2xl border text-left transition-all ${current ? "border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20 shadow-sm" : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"}`}>
+      <button onClick={onPick} className="w-full flex items-center justify-between gap-3 text-left cursor-pointer">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="text-2xl shrink-0">{icon}</span>
+          <div className="min-w-0">
+            <div className="text-xs sm:text-sm font-black text-slate-900 flex flex-wrap items-center gap-1.5">
+              <span className="truncate">{title}</span>
+              <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full ${badge.tone}`}>{badge.text}</span>
+              {current && <span className="text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-200/70 px-1.5 py-0.5 rounded-full">You&apos;re here</span>}
+            </div>
+            <div className="text-[11px] text-slate-500 truncate">{sub}</div>
+          </div>
+        </div>
+        <div className="text-right shrink-0">{right}</div>
+      </button>
+      <div className="mt-2 flex gap-2">
+        <button onClick={onPick} disabled={current} className="flex-1 h-8 rounded-full bg-emerald-600 text-white text-[11px] font-black disabled:bg-emerald-200 disabled:text-emerald-800">
+          {current ? "✓ Living here" : "🏠 Live here"}
+        </button>
+        {onVisit && (
+          <button onClick={onVisit} className="flex-1 h-8 rounded-full bg-slate-900 text-white text-[11px] font-black">🚪 Go to the door</button>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
 export default function HomePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -325,7 +359,9 @@ export default function HomePage() {
     if (!citizen?.id) return;
     let live = true;
     void myFlats(citizen.id).then((list) => {
-      if (live) setFlats(list);
+      // A lease that has run out isn't a home of mine any more (no end date: rented for good).
+      const now = Date.now();
+      if (live) setFlats(list.filter((f) => f.owner_id === citizen.id || !f.tenant_until || Date.parse(f.tenant_until) > now));
     });
     return () => {
       live = false;
@@ -345,19 +381,21 @@ export default function HomePage() {
     };
   }, [citizen?.id]);
 
-  const guestShare = shared.find((h) => !h.host) ?? null;
   const hostShare = shared.find((h) => h.host) ?? null;
-  const maritalShare = guestShare ?? hostShare;
-
-  const [maritalFlat, setMaritalFlat] = useState<FlatView | null>(null);
+  // Every partner who moved me into their home (a husband can have up to four wives, each with her own home): each one
+  // is a home of mine to switch to, like the ones I own or rent.
+  const guestShares = React.useMemo(() => shared.filter((h) => !h.host), [shared]);
+  const guestKey = guestShares.map((h) => h.flat).join(",");
+  const [partnerHomes, setPartnerHomes] = useState<{ share: SharedHome; flat: FlatView }[]>([]);
   useEffect(() => {
-    const flatId = maritalShare?.flat;
-    if (flatId) {
-      void getFlat(flatId).then(setMaritalFlat);
-    } else {
-      setMaritalFlat(null);
-    }
-  }, [maritalShare?.flat]);
+    let live = true;
+    void Promise.all(guestShares.map(async (share) => ({ share, flat: await getFlat(share.flat) }))).then((list) => {
+      if (live) setPartnerHomes(list.filter((x): x is { share: SharedHome; flat: FlatView } => !!x.flat));
+    });
+    return () => {
+      live = false;
+    };
+  }, [guestKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Rank properties so owned mansions/villas/penthouses lead by default unless the player picked another.
   const TIER_RANK: Record<HousingTier, number> = {
@@ -384,19 +422,20 @@ export default function HomePage() {
     });
   }, [flats, citizen?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // The home I'm in: the one I last switched to (one I own, rent, or share at a partner's, or "starter" for the home
+  // I started in), else a partner's home I moved into, else my best one.
   const activeFlat = React.useMemo(() => {
-    // If explicitly switched to marital home (or by default when living together as moved-in partner)
-    if (maritalFlat && (citizen?.activeFlatId === maritalFlat.id || (!citizen?.activeFlatId && guestShare))) {
-      return maritalFlat;
-    }
-    if (!sortedFlats.length) return maritalFlat ?? null;
-    if (citizen?.activeFlatId === "starter") return null;
-    if (citizen?.activeFlatId) {
-      const match = sortedFlats.find((f) => f.id === citizen.activeFlatId);
+    const id = citizen?.activeFlatId;
+    if (id === "starter") return null;
+    if (id) {
+      const match = sortedFlats.find((f) => f.id === id) ?? partnerHomes.find((p) => p.flat.id === id)?.flat;
       if (match) return match;
     }
-    return maritalFlat ?? sortedFlats[0];
-  }, [sortedFlats, citizen?.activeFlatId, maritalFlat, guestShare]);
+    return partnerHomes[0]?.flat ?? sortedFlats[0] ?? null;
+  }, [sortedFlats, citizen?.activeFlatId, partnerHomes]);
+  // The partner whose home I'm in now (if it's theirs), and the first partner who moved me in (the shortcut to theirs).
+  const guestShare = guestShares.find((h) => h.flat === activeFlat?.id) ?? null;
+  const firstGuestShare = guestShares[0] ?? null;
 
   const rawTier = (
     citizen?.home ||
@@ -542,8 +581,8 @@ export default function HomePage() {
       : null;
   const partyFlat = activeFlat ?? homeOff;
 
-  const guestRoute = guestShare
-    ? `/property/${guestShare.building}/${encodeURIComponent(guestShare.unit)}`
+  const guestRoute = firstGuestShare
+    ? `/property/${firstGuestShare.building}/${encodeURIComponent(firstGuestShare.unit)}`
     : null;
   const goToShared = () => {
     if (guestRoute) router.push(partyDoor(guestRoute));
@@ -1129,6 +1168,30 @@ export default function HomePage() {
     }
   };
 
+  /** Live in another of my homes: it opens here at once. null: the home I started in. */
+  const switchHome = (f: FlatView | null, label: string, home: string) => {
+    updateCitizen((c) => ({ ...c, activeFlatId: f ? f.id : "starter", home }));
+    if (f) {
+      const t = housingTierFor(f.property_type, f.bedrooms);
+      const cfg = HOUSING_CONFIGS[t] ?? HOUSING_CONFIGS.studio;
+      if (cfg.rooms?.length || cfg.levels) {
+        setUpView(true);
+        setActiveRoomId(t === "one_bedroom" ? "bedroom" : "living");
+      } else {
+        setUpView(false);
+      }
+    }
+    setTierModalOpen(false);
+    showToast(`Switched home to ${label}!`);
+    gameAudio.playConfirmSound();
+  };
+  /** Go to one of my homes on the map: put at its front door. */
+  const visitHome = (f: FlatView) => {
+    setTierModalOpen(false);
+    gameAudio.playClickSound();
+    router.push(partyDoor(flatRoute(f)));
+  };
+
   return (
     // Pinned to the screen so Safari never scrolls the page (which turns taps into scrolls).
     <main className="fixed inset-0 w-screen h-[100dvh] bg-[#788e6e] overflow-hidden overscroll-none select-none font-sans touch-none">
@@ -1320,7 +1383,7 @@ export default function HomePage() {
         </FloatMenu>
       )}
       {/* Living with my partner at theirs: one tap home to them. */}
-      {guestShare && !cleanScreen && !placing && (
+      {firstGuestShare && !cleanScreen && !placing && (
         <button
           onClick={() => {
             gameAudio.playClickSound();
@@ -1330,7 +1393,7 @@ export default function HomePage() {
         >
           🏠{" "}
           <span className="truncate max-w-[60vw]">
-            Our home with @{guestShare.partnerName ?? "your partner"}
+            Our home with @{firstGuestShare.partnerName ?? "your partner"}
           </span>
         </button>
       )}
@@ -2401,154 +2464,55 @@ export default function HomePage() {
               <span className="text-lg font-black">›</span>
             </button>
 
-            {/* Marital Home (Shared with Spouse) */}
-            {maritalFlat && (
-              <div
-                className={`w-full p-3.5 rounded-2xl border text-left transition-all ${
-                  activeFlat?.id === maritalFlat.id
-                    ? "border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20 shadow-sm"
-                    : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                }`}
-              >
-                <button
-                  onClick={() => {
-                    updateCitizen((c) => ({
-                      ...c,
-                      activeFlatId: maritalFlat.id,
-                      home: `Marital Home with @${maritalShare?.partnerName ?? "partner"}`,
-                    }));
-                    const mTier = housingTierFor(maritalFlat.property_type, maritalFlat.bedrooms);
-                    const cfg = HOUSING_CONFIGS[mTier] ?? HOUSING_CONFIGS.studio;
-                    if (cfg.rooms?.length || cfg.levels) {
-                      setUpView(true);
-                      setActiveRoomId(mTier === "one_bedroom" ? "bedroom" : "living");
-                    } else {
-                      setUpView(false);
-                    }
-                    setTierModalOpen(false);
-                    showToast(`Switched to Marital Home with @${maritalShare?.partnerName ?? "partner"}!`);
-                    gameAudio.playConfirmSound();
-                  }}
-                  className="w-full flex items-center justify-between gap-3 text-left cursor-pointer"
+            {/* Every home of mine: at a partner's, owned, rented, and the one I started in. Tap one to live there (it opens
+                here); the door button takes you to it on the map. */}
+            {partnerHomes.map(({ share, flat: f }) => {
+              const fTier = housingTierFor(f.property_type, f.bedrooms);
+              const cfg = HOUSING_CONFIGS[fTier] ?? HOUSING_CONFIGS.studio;
+              const bldgName = getEntity(f.building_id)?.name ?? f.building_id.replace(/-/g, " ");
+              const partner = share.partnerName ?? "your partner";
+              return (
+                <HomeChoiceRow
+                  key={`p:${f.id}`}
+                  icon="💍"
+                  title={`${f.property_type}${/^\d/.test(f.unit) ? ` · Unit ${f.unit}` : ""}`}
+                  badge={{ text: `@${partner}'s home`, tone: "bg-rose-100 text-rose-800" }}
+                  current={activeFlat?.id === f.id}
+                  sub={`${bldgName}${f.size_sqft ? ` · ${f.size_sqft.toLocaleString()} sq ft` : ""} · you live here together`}
+                  right={<div className="text-[11px] font-black text-rose-600">Co-resident</div>}
+                  onPick={() => switchHome(f, `@${partner}'s home`, `${cfg.label} with @${partner}`)}
+                  onVisit={() => visitHome(f)}
+                />
+              );
+            })}
+
+            {sortedFlats.map((f) => {
+              const isOwned = f.owner_id === citizen?.id;
+              const fTier = housingTierFor(f.property_type, f.bedrooms);
+              const cfg = HOUSING_CONFIGS[fTier] ?? HOUSING_CONFIGS.studio;
+              const bldgName = getEntity(f.building_id)?.name ?? f.building_id.replace(/-/g, " ");
+              const isCurrent = activeFlat?.id === f.id;
+              const unitLabel = /^\d/.test(f.unit) ? `${f.property_type} · Unit ${f.unit}` : `${f.property_type} (${f.unit})`;
+              const sharedWith = shared.find((h) => h.host && h.flat === f.id)?.partnerName;
+              return (
+                <HomeChoiceRow
+                  key={f.id}
+                  icon={cfg.icon}
+                  title={unitLabel}
+                  badge={isOwned ? { text: "Owned", tone: "bg-amber-100 text-amber-800" } : { text: "Rented", tone: "bg-sky-100 text-sky-800" }}
+                  current={isCurrent}
+                  sub={`${bldgName}${f.size_sqft ? ` · ${f.size_sqft.toLocaleString()} sq ft` : ""}${sharedWith ? ` · shared with @${sharedWith}` : ""}`}
+                  right={isOwned ? (
+                    <div className="text-[11px] font-black text-emerald-700">Deed owned</div>
+                  ) : (
+                    <>
+                      <div className="text-xs font-black text-slate-900">AED {(f.rent_price ?? cfg.monthly).toLocaleString()}</div>
+                      <div className="text-[10px] text-slate-400">/month</div>
+                    </>
+                  )}
+                  onPick={() => switchHome(f, `${unitLabel} at ${bldgName}`, `${cfg.label}, ${bldgName}`)}
+                  onVisit={() => visitHome(f)}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-2xl shrink-0">💍</span>
-                    <div className="min-w-0">
-                      <div className="text-xs sm:text-sm font-black text-slate-900 flex flex-wrap items-center gap-1.5">
-                        <span className="truncate">Marital Home ({maritalFlat.property_type})</span>
-                        <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-800">
-                          Shared with @{maritalShare?.partnerName ?? "partner"}
-                        </span>
-                        {activeFlat?.id === maritalFlat.id && (
-                          <span className="text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-200/70 px-1.5 py-0.5 rounded-full">
-                            Active
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[11px] text-slate-500 truncate">
-                        Unit {maritalFlat.unit} · {maritalFlat.size_sqft?.toLocaleString() ?? ""} sq ft · Both have full decorating &amp; wardrobe access
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <div className="text-[11px] font-black text-rose-600">Co-Resident</div>
-                  </div>
-                </button>
-              </div>
-            )}
-
-            {/* Owned & Rented Properties from `flats` */}
-            {sortedFlats.filter((f) => f.id !== maritalFlat?.id).length > 0
-              ? sortedFlats.filter((f) => f.id !== maritalFlat?.id).map((f) => {
-                  const isOwned = f.owner_id === citizen?.id;
-                  const fTier = housingTierFor(f.property_type, f.bedrooms);
-                  const cfg = HOUSING_CONFIGS[fTier] ?? HOUSING_CONFIGS.studio;
-                  const bldgName =
-                    getEntity(f.building_id)?.name ??
-                    f.building_id.replace(/-/g, " ");
-                  const isCurrent = activeFlat?.id === f.id;
-                  const unitLabel = /^\d/.test(f.unit)
-                    ? `${f.property_type} · Unit ${f.unit}`
-                    : `${f.property_type} (${f.unit})`;
-
-                  return (
-                    <div
-                      key={f.id}
-                      className={`w-full p-3.5 rounded-2xl border text-left transition-all ${
-                        isCurrent
-                          ? "border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20 shadow-sm"
-                          : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                      }`}
-                    >
-                      <button
-                        onClick={() => {
-                          updateCitizen((c) => ({
-                            ...c,
-                            activeFlatId: f.id,
-                            home: `${cfg.label}, ${bldgName}`,
-                          }));
-                          if (cfg.rooms?.length || cfg.levels) {
-                            setUpView(true);
-                            setActiveRoomId(
-                              fTier === "one_bedroom" ? "bedroom" : "living",
-                            );
-                          } else {
-                            setUpView(false);
-                          }
-                          setTierModalOpen(false);
-                          showToast(
-                            `Switched home to ${unitLabel} at ${bldgName}!`,
-                          );
-                          gameAudio.playConfirmSound();
-                        }}
-                        className="w-full flex items-center justify-between gap-3 text-left cursor-pointer"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <span className="text-2xl shrink-0">{cfg.icon}</span>
-                          <div className="min-w-0">
-                            <div className="text-xs sm:text-sm font-black text-slate-900 flex flex-wrap items-center gap-1.5">
-                              <span className="truncate">{unitLabel}</span>
-                              <span
-                                className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full ${
-                                  isOwned
-                                    ? "bg-amber-100 text-amber-800"
-                                    : "bg-sky-100 text-sky-800"
-                                }`}
-                              >
-                                {isOwned ? "Owned" : "Rented"}
-                              </span>
-                              {isCurrent && (
-                                <span className="text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-200/70 px-1.5 py-0.5 rounded-full">
-                                  Active
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-[11px] text-slate-500 truncate">
-                              {bldgName} · {f.size_sqft?.toLocaleString() ?? ""}{" "}
-                              sq ft
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          {isOwned ? (
-                            <div className="text-[11px] font-black text-emerald-700">
-                              Deed Owned
-                            </div>
-                          ) : (
-                            <>
-                              <div className="text-xs font-black text-slate-900">
-                                AED{" "}
-                                {(f.rent_price ?? cfg.monthly).toLocaleString()}
-                              </div>
-                              <div className="text-[10px] text-slate-400">
-                                /month
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </button>
-
-                      {/* Holiday Home Subletting Payout for Extra Owned Properties (24h Return Hook) */}
                       {isOwned &&
                         !isCurrent &&
                         (() => {
@@ -2601,100 +2565,32 @@ export default function HomePage() {
                             </div>
                           );
                         })()}
-                    </div>
-                  );
-                })
-              : /* Fallback when the player hasn't rented or bought a map property yet: show their current starter/blueprint residence */
-                (() => {
-                  const starterTier = getHousingTierFromText(
-                    citizen?.home || life?.blueprint?.housing || "studio",
-                  );
-                  const h =
-                    HOUSING_CONFIGS[starterTier] ?? HOUSING_CONFIGS.studio;
-                  return (
-                    <div className="p-3.5 rounded-2xl border border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{h.icon}</span>
-                        <div>
-                          <div className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1.5">
-                            <span>{h.label}</span>
-                            <span className="text-[9px] font-black uppercase tracking-wider text-sky-800 bg-sky-100 px-1.5 py-0.5 rounded-full">
-                              Rented
-                            </span>
-                            <span className="text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-200/60 px-1.5 py-0.5 rounded-full">
-                              Active
-                            </span>
-                          </div>
-                          <div className="text-[11px] text-slate-500">
-                            {h.area}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="text-xs font-black text-slate-900">
-                          AED {h.monthly.toLocaleString()}
-                        </div>
-                        <div className="text-[10px] text-slate-400">/month</div>
-                      </div>
-                    </div>
-                  );
-                })()}
+                </HomeChoiceRow>
+              );
+            })}
 
-            {/* Option to switch back to starter residence if they own/rent flats but want their starter apartment */}
-            {sortedFlats.length > 0 &&
-              (() => {
-                const starterTier = getHousingTierFromText(
-                  life?.blueprint?.housing || "studio",
-                );
-                const h =
-                  HOUSING_CONFIGS[starterTier] ?? HOUSING_CONFIGS.studio;
-                const isStarterActive = !activeFlat;
-                return (
-                  <button
-                    onClick={() => {
-                      updateCitizen((c) => ({
-                        ...c,
-                        activeFlatId: "starter",
-                        home: `${h.label}, ${h.area.split(" · ")[0]}`,
-                      }));
-                      setTierModalOpen(false);
-                      showToast(`Switched to ${h.label}!`);
-                      gameAudio.playConfirmSound();
-                    }}
-                    className={`w-full p-3 rounded-2xl border text-left transition-all flex items-center justify-between ${
-                      isStarterActive
-                        ? "border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20"
-                        : "border-slate-200 hover:bg-slate-50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">{h.icon}</span>
-                      <div>
-                        <div className="text-xs font-black text-slate-900 flex items-center gap-1.5">
-                          <span>{h.label}</span>
-                          <span className="text-[9px] font-black uppercase tracking-wider text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded-full">
-                            Blueprint Residence
-                          </span>
-                          {isStarterActive && (
-                            <span className="text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-200/60 px-1.5 py-0.5 rounded-full">
-                              Active
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[11px] text-slate-500">
-                          {h.area}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <div className="text-xs font-black text-slate-900">
-                        AED {h.monthly.toLocaleString()}
-                      </div>
+            {/* The home I started in: always there to go back to. */}
+            {(() => {
+              const starterTier = getHousingTierFromText(life?.blueprint?.housing || citizen?.home || "studio");
+              const h = HOUSING_CONFIGS[starterTier] ?? HOUSING_CONFIGS.studio;
+              const only = !sortedFlats.length && !partnerHomes.length;
+              return (
+                <HomeChoiceRow
+                  icon={h.icon}
+                  title={h.label}
+                  badge={{ text: only ? "Rented" : "Where you started", tone: "bg-slate-100 text-slate-600" }}
+                  current={!activeFlat}
+                  sub={h.area}
+                  right={
+                    <>
+                      <div className="text-xs font-black text-slate-900">AED {h.monthly.toLocaleString()}</div>
                       <div className="text-[10px] text-slate-400">/month</div>
-                    </div>
-                  </button>
-                );
-              })()}
+                    </>
+                  }
+                  onPick={() => switchHome(null, h.label, `${h.label}, ${h.area.split(" · ")[0]}`)}
+                />
+              );
+            })()}
 
             <Link
               href="/explore"

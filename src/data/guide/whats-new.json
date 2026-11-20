@@ -1,6 +1,16 @@
 {
   "items": [
     {
+      "id": "2026-11-20-race-days",
+      "date": "2026-11-20",
+      "icon": "🏇",
+      "title": "Horse, camel and superbike racing",
+      "text": "Ride a thoroughbred on the Dubai World Cup turf at Meydan, race camels with robot jockeys at Al Marmoom, or take a 300 km/h superbike round the Autodrome's five circuits, live against your friends. Pick yours from the stable: no need to own one. Push at the right time, hug the rail and ride the slipstream. Entry fees, prizes and dead heats work as in the car races.",
+      "how": "Phone → Horse Race, Camel Race or Superbikes; More → the same; or Meydan Racecourse and Al Marmoom Camel Racetrack on the map (Cars & Racing).",
+      "cta": "Go to Meydan",
+      "href": "/racing/horse"
+    },
+    {
       "id": "2026-11-16-hotel-suites",
       "date": "2026-11-16",
       "icon": "🏨",

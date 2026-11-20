@@ -188,3 +188,66 @@ export class RemoteEngine {
     setTimeout(() => { try { this.osc.stop(); this.osc2.stop(); } catch { /* stopped */ } }, 400);
   }
 }
+
+/** Hooves on turf, dirt or sand: a horse's gallop is four beats a stride (one hoof after another, then the moment all
+    four are off the ground), a camel's pace two. Each beat is a soft low thud with a little grit, quicker and harder the
+    faster it goes. */
+export class Hooves {
+  private c: AudioContext; private out: GainNode; private buf: AudioBuffer;
+  private next = 0;
+  private beat = 0;
+  constructor(private beats: 2 | 4, private stride: number, soft = false) {
+    const a = raceAudio();
+    if (!a) throw new Error("no audio");
+    this.c = a.ctx;
+    this.out = this.c.createGain(); this.out.gain.value = soft ? 0.45 : 0.7;
+    this.out.connect(a.master);
+    this.buf = noiseBuffer(this.c, 1);
+  }
+  /** Called every frame with the speed (m/s). */
+  update(speed: number) {
+    const t = this.c.currentTime;
+    if (speed < 0.8) { this.next = t; return; }
+    if (t < this.next) return;
+    const strideTime = this.stride / Math.max(1, speed);
+    // A gallop's beats come close together, then a gap.
+    const gaps = this.beats === 4 ? [0.16, 0.16, 0.16, 0.52] : [0.5, 0.5];
+    const g = gaps[this.beat % gaps.length] * strideTime;
+    this.beat++;
+    this.next = t + g;
+    const hit = Math.min(1, 0.35 + speed / 20);
+    const o = this.c.createOscillator(); o.type = "sine";
+    o.frequency.setValueAtTime(120 + Math.random() * 25, t); o.frequency.exponentialRampToValueAtTime(48, t + 0.09);
+    const og = this.c.createGain(); og.gain.setValueAtTime(hit, t); og.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    o.connect(og).connect(this.out); o.start(t); o.stop(t + 0.13);
+    const n = this.c.createBufferSource(); n.buffer = this.buf;
+    const f = this.c.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 700 + Math.random() * 500; f.Q.value = 0.8;
+    const ng = this.c.createGain(); ng.gain.setValueAtTime(hit * 0.35, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+    n.connect(f).connect(ng).connect(this.out); n.start(t, Math.random() * 0.8); n.stop(t + 0.07);
+  }
+  stop() { this.out.gain.setTargetAtTime(0, this.c.currentTime, 0.1); }
+}
+
+/** The crowd in the stands: a murmur that swells to a roar (0 to 1) as the runners come home. */
+export class Crowd {
+  private c: AudioContext; private out: GainNode; private src: AudioBufferSourceNode; private f: BiquadFilterNode;
+  constructor() {
+    const a = raceAudio();
+    if (!a) throw new Error("no audio");
+    this.c = a.ctx;
+    this.src = this.c.createBufferSource(); this.src.buffer = noiseBuffer(this.c, 3); this.src.loop = true;
+    this.f = this.c.createBiquadFilter(); this.f.type = "bandpass"; this.f.frequency.value = 600; this.f.Q.value = 0.6;
+    this.out = this.c.createGain(); this.out.gain.value = 0.03;
+    this.src.connect(this.f).connect(this.out).connect(a.master);
+    this.src.start();
+  }
+  update(level: number) {
+    const t = this.c.currentTime, l = Math.max(0, Math.min(1, level));
+    this.out.gain.setTargetAtTime(0.03 + l * 0.22, t, 0.4);
+    this.f.frequency.setTargetAtTime(600 + l * 700, t, 0.4);
+  }
+  stop() {
+    this.out.gain.setTargetAtTime(0, this.c.currentTime, 0.2);
+    setTimeout(() => { try { this.src.stop(); } catch { /* stopped */ } }, 800);
+  }
+}

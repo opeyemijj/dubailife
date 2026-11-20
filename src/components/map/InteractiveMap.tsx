@@ -116,6 +116,7 @@ export const getEntityCategoryInfo = (entity: any) => {
   const name = (entity?.name || '').toLowerCase();
 
   // 0. Cars & Racing: the Autodrome, and the car showrooms and rentals on Sheikh Zayed Road.
+  if (type === 'racecourse' || type === 'camel-track') return { icon: type === 'racecourse' ? '🏇' : '🐪', category: 'Cars & Racing', key: 'racing', color: 'from-red-500 to-rose-700', badgeBg: 'bg-red-900/60 border-red-500/40 text-red-200' };
   if (id === 'dubai-autodrome') return { icon: '🏁', category: 'Cars & Racing', key: 'racing', color: 'from-red-500 to-rose-700', badgeBg: 'bg-red-900/60 border-red-500/40 text-red-200' };
   if (type === 'szr-cars') return { icon: '🚗', category: 'Cars & Racing', key: 'racing', color: 'from-red-500 to-rose-700', badgeBg: 'bg-red-900/60 border-red-500/40 text-red-200' };
 
@@ -1325,7 +1326,7 @@ export function InteractiveMap({
                 if (q === 'club' || q === 'clubs' || q === 'nightlife') {
                   return catInfo.key === 'clubs';
                 }
-                if (/^(race|races|racing|race track|track|circuit|autodrome|drift|drag|car race|car races|cars|car|dealer|dealers|showroom|rent a car|car rental)$/.test(q)) {
+                if (/^(race|races|racing|race track|track|circuit|autodrome|drift|drag|car race|car races|cars|car|dealer|dealers|showroom|rent a car|car rental|horse|horses|horse race|horse racing|meydan|camel|camels|camel race|camel racing|marmoom|al marmoom|bike|bikes|superbike|superbikes|motorbike|motorcycle|jockey)$/.test(q)) {
                   return catInfo.key === 'racing';
                 }
                 if (q === 'villa' || q === 'villas') {

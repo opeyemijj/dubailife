@@ -9,6 +9,7 @@ import { DISTRICT_NAMES, GAME_TILES } from "./gameCity";
 import { ACADEMIC_TILES } from "./academic";
 import { OLD_DUBAI_ENTITIES } from "./oldDubai";
 import { SZR_DEFAULTS } from "./szr";
+import { RACING_ENTITIES } from "./racing";
 import transit from "@/data/transit/transit.json";
 
 /** How far a station sprite's anchor sits above the track line, so its platform lines up with the viaduct. */
@@ -24,7 +25,7 @@ const METRO_MAP_ENTITIES = (transit.metro.stations as Array<{ en: string; map?: 
   }));
 
 const SEED_IDS = new Set(mapSeed.map((e) => e.id));
-const PALM_IDS = new Set([...PALM_ENTITIES, ...COAST_ENTITIES, ...GAME_TILES, ...ACADEMIC_TILES, ...OLD_DUBAI_ENTITIES].map((e) => e.id));
+const PALM_IDS = new Set([...PALM_ENTITIES, ...COAST_ENTITIES, ...GAME_TILES, ...ACADEMIC_TILES, ...OLD_DUBAI_ENTITIES, ...RACING_ENTITIES].map((e) => e.id));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const CITY_ENTITIES: any[] = [
@@ -32,6 +33,8 @@ export const CITY_ENTITIES: any[] = [
   ...PALM_ENTITIES, ...COAST_ENTITIES, ...GAME_TILES, ...ACADEMIC_TILES,
   // Bur Dubai and Deira, either side of Dubai Creek (lib/city/oldDubai.ts).
   ...OLD_DUBAI_ENTITIES,
+  // Meydan's horse racing and Al Marmoom's camel racing (lib/city/racing.ts).
+  ...RACING_ENTITIES,
   // Sheikh Zayed Road hotels and clubs: editable, so a copy saved in the map editor replaces the default.
   ...SZR_DEFAULTS.filter((e) => !SEED_IDS.has(e.id)),
   // Red Line stations on the viaduct: editable like the Sheikh Zayed Road defaults.

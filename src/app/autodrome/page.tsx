@@ -12,7 +12,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { carName } from "@/lib/cityFeed";
 import { carOf } from "@/lib/cars";
-import { createRace, DEFAULT_TRACK, joinRace, myRaceCars, openRaces, prizesFor, trackDef, trackOf, TRACKS, type OpenRace, type PrizeMode, type RaceCar } from "@/lib/autodrome";
+import { SPORTS, createRace, DEFAULT_TRACK, joinRace, myRaceCars, openRaces, prizesFor, trackDef, trackOf, TRACKS, type OpenRace, type PrizeMode, type RaceCar } from "@/lib/autodrome";
 import { refreshCitizen } from "@/lib/citizenStore";
 import { shortAed } from "@/lib/cityFeed";
 import ENTRY from "@/data/autodrome/entry.json";
@@ -71,6 +71,12 @@ export default function AutodromePage() {
           </div>
           <Link href="/garage" className="h-10 px-3 rounded-full bg-white/10 text-xs font-black flex items-center gap-1.5">🔧 Garage</Link>
         </header>
+
+        {/* The other race days: superbikes here, horses at Meydan, camels at Al Marmoom. */}
+        <nav className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+          <span className="shrink-0 h-9 px-3 rounded-full bg-white text-slate-950 text-xs font-black flex items-center">🏁 Cars</span>
+          {SPORTS.map((s) => <Link key={s.id} href={`/racing/${s.id}`} className="shrink-0 h-9 px-3 rounded-full bg-white/10 text-xs font-black flex items-center">{s.icon} {s.short.replace(" race", "s")}</Link>)}
+        </nav>
 
         <section className="rounded-3xl bg-gradient-to-br from-red-600 to-rose-800 p-5 space-y-3 shadow-xl">
           <p className="text-4xl">🏁</p>
@@ -135,7 +141,7 @@ export default function AutodromePage() {
 
         <section className="space-y-2">
           <h2 className="font-black">Races now</h2>
-          {races.length === 0 ? <p className="text-sm text-white/60">No races open. Open one and invite your friends.</p> : races.map((r) => (
+          {races.filter((r) => !r.sport || r.sport === "car").length === 0 ? <p className="text-sm text-white/60">No races open. Open one and invite your friends.</p> : races.map((r) => (
             <div key={r.code} className="flex items-center gap-3 rounded-2xl bg-white/[0.06] border border-white/10 p-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={rosterThumb(presetFor(r.look ?? { gender: "woman" }))} alt="" className="w-10 h-10 rounded-full object-cover object-top bg-slate-700" />
