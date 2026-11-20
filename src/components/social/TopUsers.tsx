@@ -103,7 +103,8 @@ export function TopUsersList({ start = "week", dark = false, onAdded }: { start?
     return () => { live = false; if (every) clearInterval(every); };
   }, [tab]);
 
-  const others = (rows ?? []).filter((r) => r.id !== citizen?.id);
+  // Everyone on the list, you included, in your real place (the chat tab is only others: the server leaves you out).
+  const others = rows ?? [];
   const add = async (id: string) => {
     setBusy(id);
     gameAudio.playClickSound();
@@ -140,7 +141,7 @@ export function TopUsersList({ start = "week", dark = false, onAdded }: { start?
       ) : (
         <ol className="space-y-1.5">
           {others.map((r, i) => (
-            <li key={r.id} className={`flex items-center gap-2.5 rounded-2xl p-2.5 ${card}`}>
+            <li key={r.id} className={`flex items-center gap-2.5 rounded-2xl p-2.5 ${r.id === citizen?.id ? (dark ? "bg-amber-400/15 border border-amber-300/40" : "bg-amber-50 ring-1 ring-amber-300") : card}`}>
               {tab !== "online" && <span className={`w-5 text-center text-sm font-black ${i < 3 ? "text-amber-500" : muted}`}>{i + 1}</span>}
               <Link href={`/u/${r.username}`} className="relative shrink-0" aria-label={`@${r.username}'s profile`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -151,7 +152,8 @@ export function TopUsersList({ start = "week", dark = false, onAdded }: { start?
                 <Link href={`/u/${r.username}`} className="block font-black truncate hover:underline">@{r.username}{tab === "givers" && i < 3 && r.period === "this_week" && <span className="ml-1.5 align-middle rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-black text-amber-800">💛 Generous</span>}</Link>
                 <span className={`block text-xs truncate ${muted}`}>{reason(r, tab)}</span>
               </span>
-              {r.friend === "friends" ? <span className={pill}><Check className="w-3.5 h-3.5" /> Friends</span>
+              {r.id === citizen?.id ? <span className="h-9 px-3 rounded-full text-xs font-black flex items-center bg-amber-400 text-slate-950">You</span>
+                : r.friend === "friends" ? <span className={pill}><Check className="w-3.5 h-3.5" /> Friends</span>
                 : r.friend === "requested" ? <span className={pill}>Requested</span>
                 : (
                   <button onClick={() => void add(r.id)} disabled={busy === r.id} aria-label={r.friend === "incoming" ? `Accept @${r.username}` : `Add @${r.username} as a friend`}
@@ -159,8 +161,8 @@ export function TopUsersList({ start = "week", dark = false, onAdded }: { start?
                     <UserPlus className="w-3.5 h-3.5" />{r.friend === "incoming" ? "Accept" : "Add"}
                   </button>
                 )}
-              <button onClick={() => message(r.id)} aria-label={`Message @${r.username}`}
-                className="h-9 w-9 shrink-0 rounded-full bg-emerald-500 text-white flex items-center justify-center"><MessageCircle className="w-4 h-4" /></button>
+              {r.id !== citizen?.id && <button onClick={() => message(r.id)} aria-label={`Message @${r.username}`}
+                className="h-9 w-9 shrink-0 rounded-full bg-emerald-500 text-white flex items-center justify-center"><MessageCircle className="w-4 h-4" /></button>}
             </li>
           ))}
         </ol>
