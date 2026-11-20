@@ -481,7 +481,8 @@ export const ACADEMIC_COURSES: AcademicCourse[] = [
 // ACADEMIC TILES ON THE WEST COAST MAP PLOT
 // ============================================================================
 
-export const ACADEMIC_MAP_CENTER = { x: 165, y: 467 };
+/** The West Coast plot's centre (keep in step with tile-west-coast-marina in src/data/mapSeed.ts). */
+export const ACADEMIC_MAP_CENTER = { x: 174, y: 467 };
 
 export const ACADEMIC_TILES = [
   // --- 3D Higher Education & Skills Institutions ---

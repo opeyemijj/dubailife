@@ -634,6 +634,7 @@ export function RaceScene({ code, me, racers, laps, track: trackId, sport = "car
   }, [spectator, legs, sport]);
 
   const lastBump = useRef(0);
+  const bikeSteer = useRef(0);
   // Development preview: the others driven here by bots (braking for the bends, keeping to a lane; horses and camels
   // on the rail, pushing for home in the last 700 m), as if their phones were sending their positions.
   const bots = useRef(new Map<string, Mine>());
@@ -709,7 +710,9 @@ export function RaceScene({ code, me, racers, laps, track: trackId, sport = "car
           onFinish(finished.current);
         }
       } else {
-        const next = step(track, s, inp, perf, dt);
+        // A bike's left and right buttons are on or off: ease into the lean, as a rider tips it in.
+        if (sport === "bike") bikeSteer.current += (inp.steer - bikeSteer.current) * Math.min(1, dt * 7);
+        const next = step(track, s, sport === "bike" ? { ...inp, steer: bikeSteer.current } : inp, perf, dt);
         const gb = gearbox(next.speed, perf.top);
         if (next.wall && !s.wall) engine.current?.thud();
         Object.assign(s, next, { rpm: gb.rpm, gear: gb.gear });
@@ -902,8 +905,16 @@ export function RaceScene({ code, me, racers, laps, track: trackId, sport = "car
 
       {/* The speedo, and the controls on a phone. */}
       {!spectator && !legs && <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] inset-x-3 flex items-end justify-between">
-        {/* A real wheel: turn it with your thumb; how far you turn it is how hard you steer, and it centres itself. */}
-        <SteeringWheel size={132} className="bg-white/25 backdrop-blur-sm ring-1 ring-white/40" onSteer={onSteer} />
+        {/* A car: a real wheel (turn it with your thumb; how far you turn it is how hard you steer, and it centres
+            itself). A bike: left and right buttons to lean it over. */}
+        {sport === "bike" ? (
+          <div className="flex gap-2">
+            <Hold k="steer" v={-1} set={setInput} label="Left" className="w-16 h-20 rounded-2xl bg-white/25 backdrop-blur-sm ring-1 ring-white/40 text-white text-3xl font-black active:bg-white/45">◀</Hold>
+            <Hold k="steer" v={1} set={setInput} label="Right" className="w-16 h-20 rounded-2xl bg-white/25 backdrop-blur-sm ring-1 ring-white/40 text-white text-3xl font-black active:bg-white/45">▶</Hold>
+          </div>
+        ) : (
+          <SteeringWheel size={132} className="bg-white/25 backdrop-blur-sm ring-1 ring-white/40" onSteer={onSteer} />
+        )}
         <div className="pointer-events-none rounded-2xl bg-slate-950/75 text-white px-4 py-2 text-center mb-1">
           <p className="text-3xl font-black tabular-nums leading-none">{hud.speed}</p>
           <p className="text-[10px] font-bold text-white/60">KM/H · GEAR {hud.gear}</p>

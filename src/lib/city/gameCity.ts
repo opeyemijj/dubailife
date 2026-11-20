@@ -3,8 +3,8 @@
 
 import { GAMES, tileId } from "@/lib/games/registry";
 
-/** The Dubai Hills plot's centre (virtual coords) and the West Coast plot's. */
-export const GAME_CITY = { id: "tile-dubai-hills-central", x: 1139, y: -12, name: "Game City · Dubai Hills" };
+/** The Dubai Hills plot's centre (virtual coords; keep in step with its plot in src/data/mapSeed.ts) and the West Coast plot's. */
+export const GAME_CITY = { id: "tile-dubai-hills-central", x: 1136, y: -40, name: "Game City · Dubai Hills" };
 export const ACADEMIC_CITY = { id: "tile-west-coast-marina", name: "Academic City · West Coast" };
 
 /** Renamed plots, by map entity id. */
