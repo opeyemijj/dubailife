@@ -1237,6 +1237,16 @@ export const PLACES: Place[] = [
     venues: [venue("Dubai Autodrome", "Race circuit", "electronics", { blurb: "Motor City's race circuit: open a race and invite friends who have cars.", role: "Race marshal", noJob: true })],
   },
   {
+    id: "autodrome-circuit", name: "Dubai Autodrome Circuit", kind: "attraction", route: "/autodrome",
+    blurb: "The Autodrome's five circuits: bring your own car, invite your friends and race wheel to wheel, live.",
+    venues: [venue("Dubai Autodrome Circuit", "Car racing", "electronics", { blurb: "Open a car race and invite friends who have cars.", role: "Race marshal", noJob: true })],
+  },
+  {
+    id: "superbike-circuit", name: "Superbike Circuit", kind: "attraction", route: "/racing/bike",
+    blurb: "300 km/h superbikes on the Autodrome's circuits: take one from the paddock and race your friends, live.",
+    venues: [venue("Superbike Circuit", "Superbike racing", "electronics", { blurb: "Take a superbike from the paddock, open a race and invite your friends.", role: "Race marshal", noJob: true })],
+  },
+  {
     id: "meydan-racecourse", name: "Meydan Racecourse", kind: "attraction", route: "/racing/horse",
     blurb: "Home of the Dubai World Cup. Pick a thoroughbred from the stable and race your friends on the turf or the dirt, live.",
     venues: [venue("Meydan Racecourse", "Horse racing", "electronics", { blurb: "Pick a horse from the stable, open a race and invite your friends.", role: "Race steward", noJob: true })],

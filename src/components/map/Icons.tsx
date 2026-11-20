@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { CamelTrackSprite, MeydanSprite } from './RacingSprites';
+import { BikeCircuitSprite, CamelTrackSprite, CarCircuitSprite, MeydanSprite } from './RacingSprites';
 import { MallBlock, type MallBlockProps } from './MallBlock';
 import { MuseumOfFutureIcon, type MuseumOfFutureProps } from './MuseumOfFuture';
 import { HotelBlock, type HotelBlockProps, HotelResortComponent } from './HotelBlock';
@@ -4324,6 +4324,8 @@ export const getBuildingSprite = (id: string, type: string, seed?: number, title
   // Meydan's horse racing and Al Marmoom's camel racing (lib/city/racing.ts)
   if (type === 'racecourse') return <MeydanSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
   if (type === 'camel-track') return <CamelTrackSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'race-circuit') return <CarCircuitSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'bike-circuit') return <BikeCircuitSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
   if (type === 'szr-club') return <SZRLounge width={loc?.width} height={loc?.height} name={title || loc?.name} sign={loc?.marquee} colors={loc?.colors} />;
   // Palm Jumeirah landmarks
   if (type === 'hotel-atlantis') return <AtlantisPalmSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;

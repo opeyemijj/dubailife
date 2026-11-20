@@ -7,6 +7,7 @@
 //    robot jockeys and the owners' 4x4s.
 
 import React from 'react';
+import TRACKS from '@/data/autodrome/tracks.json';
 
 type SpriteProps = { width?: number; height?: number; name?: string };
 const SVG_CLASS = 'drop-shadow-xl cursor-pointer hover:scale-105 transition-transform origin-bottom select-none overflow-visible';
@@ -161,3 +162,80 @@ export const CamelTrackSprite = ({ width = 400, height = 230, name = 'Al Marmoom
     </svg>
   );
 };
+
+// ---------------------------------------------------------------- The circuits (car races, superbikes)
+
+
+/** A track's real layout (src/data/autodrome/tracks.json) fitted onto the plinth, as ground points (u across, v deep). */
+function circuitPath(P: (u: number, v: number) => readonly [number, number], id: string, u0: number, v0: number, w: number, d: number) {
+  const pts = TRACKS.tracks.find((t) => t.id === id)!.points;
+  const xs = pts.map((p) => p[0]), zs = pts.map((p) => p[1]);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minZ = Math.min(...zs), maxZ = Math.max(...zs);
+  // Stretched to fill the plinth; the track's z runs away from the grandstands, so it goes into the distance (v).
+  const kx = w / (maxX - minX), kz = d / (maxZ - minZ);
+  const g = pts.map(([x, z]) => P(u0 + (x - minX) * kx, v0 + (z - minZ) * kz));
+  // A smooth closed curve through the points.
+  const n = g.length;
+  let d0 = `M${g[0][0].toFixed(1)},${g[0][1].toFixed(1)}`;
+  for (let i = 0; i < n; i++) {
+    const p0 = g[(i - 1 + n) % n], p1 = g[i], p2 = g[(i + 1) % n], p3 = g[(i + 2) % n];
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6], c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    d0 += ` C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+  }
+  // The start straight runs from the first point to the second: places along it, for the line and the racers.
+  const along = (t: number) => [g[0][0] + (g[1][0] - g[0][0]) * t, g[0][1] + (g[1][1] - g[0][1]) * t] as const;
+  return { d: d0 + 'Z', along };
+}
+
+/** A small car or bike on the track, seen from above at the map's angle. */
+function Racer({ x, y, color, bike }: { x: number; y: number; color: string; bike?: boolean }) {
+  return bike ? (
+    <g transform={`translate(${x},${y})`}>
+      <ellipse cx="0" cy="0" rx="4.5" ry="1.6" fill="#111827" />
+      <path d="M-3,-1 L2,-3.5 L4,-1 Z" fill={color} />
+      <circle cx="-0.5" cy="-4.2" r="1.6" fill={color} stroke="#fff" strokeWidth="0.4" />
+    </g>
+  ) : (
+    <g transform={`translate(${x},${y})`}>
+      <rect x="-6" y="-3.5" width="12" height="4.5" rx="1.6" fill={color} />
+      <rect x="-3" y="-5.5" width="6" height="2.6" rx="1" fill="#0f172a" opacity="0.75" />
+      <circle cx="-3.6" cy="1.2" r="1.3" fill="#111" /><circle cx="3.6" cy="1.2" r="1.3" fill="#111" />
+    </g>
+  );
+}
+
+function CircuitSprite({ width, height, name, track, sign, signColor, bike, racers }: SpriteProps & { track: string; sign: string; signColor: string; bike?: boolean; racers: string[] }) {
+  const P = ground(10, 212);
+  const { d: path, along } = circuitPath(P, track, 14, 14, 296, 110);
+  return (
+    <svg viewBox="0 0 420 230" preserveAspectRatio="none" style={{ width, height }} className={SVG_CLASS} aria-label={name}>
+      <Plinth x={10} y={212} w={320} d={150} fill="#c9b48a" edge="#a68f63" />
+      {/* Grass inside, run-off, then the tarmac with its red and white kerbs. */}
+      <path d={path} fill="#6a9a43" stroke="#d6c39b" strokeWidth="20" strokeLinejoin="round" />
+      <path d={path} fill="none" stroke="#dc2626" strokeWidth="13" strokeLinejoin="round" />
+      <path d={path} fill="none" stroke="#f8fafc" strokeWidth="13" strokeLinejoin="round" strokeDasharray="5 5" />
+      <path d={path} fill="none" stroke="#2b2d31" strokeWidth="10" strokeLinejoin="round" />
+      <path d={path} fill="none" stroke="#f8fafc" strokeWidth="0.6" strokeDasharray="4 6" opacity="0.7" />
+      {/* The start line and the cars (or bikes) coming down the straight. */}
+      {(() => { const [x, y] = along(0.05); return <rect x={x - 1.5} y={y - 5} width={3} height={10} fill="#f8fafc" />; })()}
+      {racers.map((c, i) => { const [x, y] = along(0.3 + i * 0.14); return <Racer key={i} x={x} y={y + (i % 2 ? 1.5 : -1.5)} color={c} bike={bike} />; })}
+      {/* The pits and the grandstand along the front straight's far side. */}
+      <Box x={P(40, 138)[0]} y={P(40, 138)[1]} w={240} h={18} d={10} front="#e5e7eb" side="#cbd5e1" top="#f1f5f9" />
+      {[0, 1, 2].map((t) => <rect key={t} x={P(40, 138)[0] + 4} y={P(40, 138)[1] - 5 - t * 4.5} width={232} height={2.5} fill={['#f43f5e', '#38bdf8', '#facc15'][t]} opacity="0.6" />)}
+      <Box x={P(36, 138)[0]} y={P(36, 138)[1] - 18} w={248} h={3} d={14} front="#1e293b" side="#0f172a" top="#334155" />
+      <rect x={P(110, 138)[0]} y={P(110, 138)[1] - 16} width={100} height={11} rx="2" fill={signColor} />
+      <text x={P(160, 138)[0]} y={P(160, 138)[1] - 8} textAnchor="middle" fontSize="7.5" fontWeight="900" fill="#ffffff" fontFamily="system-ui, sans-serif" letterSpacing="1.5">{sign}</text>
+      {/* The start gantry. */}
+      {(() => { const [x, y] = along(0.05); return <g><rect x={x - 9} y={y - 18} width="1.6" height="18" fill="#111827" /><rect x={x + 8} y={y - 18} width="1.6" height="18" fill="#111827" /><rect x={x - 10} y={y - 21} width="21" height="4" fill={signColor} /></g>; })()}
+      <NameBoard x={170} y={222} text={name ?? ''} bg={signColor} />
+    </svg>
+  );
+}
+
+export const CarCircuitSprite = ({ width = 420, height = 230, name = 'Dubai Autodrome Circuit' }: SpriteProps) => (
+  <CircuitSprite width={width} height={height} name={name} track="grand-prix" sign="AUTODROME" signColor="#dc2626" racers={['#dc2626', '#facc15', '#0f172a', '#f8fafc']} />
+);
+
+export const BikeCircuitSprite = ({ width = 420, height = 230, name = 'Superbike Circuit' }: SpriteProps) => (
+  <CircuitSprite width={width} height={height} name={name} track="jebel-jais" sign="SUPERBIKES" signColor="#0369a1" bike racers={['#dc2626', '#2563eb', '#16a34a', '#f97316', '#1e3a8a']} />
+);

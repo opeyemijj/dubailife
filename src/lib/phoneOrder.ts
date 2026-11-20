@@ -1,7 +1,8 @@
 "use client";
 
 // The phone's home screen in order of use: a fixed top row (Messages, Spaces, Wallet, City), then every other app
-// by how much players use it (the last 14 days, everyone: public.app_popularity), nudged by this player's own use.
+// by how much players use it (the last 14 days, everyone: public.app_popularity), nudged by this player's own use,
+// with a few apps kept straight after Hotels (AFTER_HOTELS).
 // Until there's enough data, a starting order. The order is worked out when the phone opens and never shuffles
 // while it's open.
 
@@ -13,6 +14,9 @@ export const PHONE_TOP = ["messages", "spaces", "wallet", "city"];
 /** Before there's 14 days of data: the likely order after the top row. */
 const STARTING = ["games", "racing", "hotels", "invites", "jobs", "metro", "people", "hayati", "cars", "food", "rides", "goals"];
 
+/** Always straight after Hotels, together and in this order, wherever use puts Hotels. */
+export const AFTER_HOTELS = ["horse-race", "camel-race", "bike-race", "driving", "marathon", "decor"];
+
 /** Rarely opened: kept together in a "More" folder. */
 export const PHONE_FOLDER = ["scams", "ideas", "news", "guide", "skills"];
 
@@ -21,6 +25,9 @@ export const PHONE_ADDED: Record<string, string> = {
   city: "2026-11-16",
   racing: "2026-11-16",
   hotels: "2026-11-16",
+  "horse-race": "2026-11-20",
+  "camel-race": "2026-11-20",
+  "bike-race": "2026-11-20",
 };
 export const isNewApp = (id: string, now = Date.now()) => {
   const at = PHONE_ADDED[id];
@@ -66,5 +73,10 @@ export function orderApps(ids: string[]): string[] {
   const score = (id: string) => (pop.get(id) ?? 0) + Math.min(own[id] ?? 0, 30) * 3;
   const rest = ids.filter((id) => !PHONE_TOP.includes(id) && !PHONE_FOLDER.includes(id));
   rest.sort((a, b) => (enough ? score(b) - score(a) : 0) || start(a) - start(b) || (own[b] ?? 0) - (own[a] ?? 0));
-  return [...PHONE_TOP.filter((id) => ids.includes(id)), ...rest];
+  // The race days, driving, the marathon and decor ride along right after Hotels.
+  const group = AFTER_HOTELS.filter((id) => rest.includes(id));
+  const ordered = rest.filter((id) => !group.includes(id));
+  const at = ordered.indexOf("hotels");
+  ordered.splice(at < 0 ? ordered.length : at + 1, 0, ...group);
+  return [...PHONE_TOP.filter((id) => ids.includes(id)), ...ordered];
 }

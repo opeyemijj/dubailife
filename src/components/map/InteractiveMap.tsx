@@ -116,7 +116,7 @@ export const getEntityCategoryInfo = (entity: any) => {
   const name = (entity?.name || '').toLowerCase();
 
   // 0. Cars & Racing: the Autodrome, and the car showrooms and rentals on Sheikh Zayed Road.
-  if (type === 'racecourse' || type === 'camel-track') return { icon: type === 'racecourse' ? '🏇' : '🐪', category: 'Cars & Racing', key: 'racing', color: 'from-red-500 to-rose-700', badgeBg: 'bg-red-900/60 border-red-500/40 text-red-200' };
+  if (type === 'racecourse' || type === 'camel-track' || type === 'race-circuit' || type === 'bike-circuit') return { icon: type === 'racecourse' ? '🏇' : type === 'camel-track' ? '🐪' : type === 'bike-circuit' ? '🏍️' : '🏁', category: 'Cars & Racing', key: 'racing', color: 'from-red-500 to-rose-700', badgeBg: 'bg-red-900/60 border-red-500/40 text-red-200' };
   if (id === 'dubai-autodrome') return { icon: '🏁', category: 'Cars & Racing', key: 'racing', color: 'from-red-500 to-rose-700', badgeBg: 'bg-red-900/60 border-red-500/40 text-red-200' };
   if (type === 'szr-cars') return { icon: '🚗', category: 'Cars & Racing', key: 'racing', color: 'from-red-500 to-rose-700', badgeBg: 'bg-red-900/60 border-red-500/40 text-red-200' };
 
