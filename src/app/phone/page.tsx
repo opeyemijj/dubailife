@@ -54,7 +54,7 @@ const when = (iso: string) => {
 
 function Face({ c, online, size = 48 }: { c: Pick<Contact, "look" | "name">; online?: boolean; size?: number }) {
   return (
-    <span className="relative shrink-0" style={{ width: size, height: size }}>
+    <span className="relative shrink-0 block" style={{ width: size, height: size }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={rosterThumb(presetFor(c.look ?? { gender: "woman" }))} alt="" className="w-full h-full rounded-full object-cover object-top bg-slate-800 ring-1 ring-white/10" />
       {online !== undefined && <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full ring-2 ring-zinc-950 ${online ? "bg-emerald-400" : "bg-zinc-600"}`} />}
@@ -367,7 +367,7 @@ function Chats({ me, online, open }: { me: string; online: ReadonlySet<string>; 
       )}
       {shown.map((c) => (
         <button key={c.with.id} onClick={() => open(c.with.id)} className="w-full flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-left transition-colors">
-          <ProfileLink username={c.with.username}><Face c={c.with} online={online.has(c.with.username)} /></ProfileLink>
+          <ProfileLink username={c.with.username} className="shrink-0 block"><Face c={c.with} online={online.has(c.with.username)} /></ProfileLink>
           <span className="flex-1 min-w-0">
             <span className="flex items-baseline gap-2">
               <ProfileLink username={c.with.username} className="font-bold truncate">{c.with.name}</ProfileLink>
@@ -476,7 +476,7 @@ function Thread({ me, other, online, onBack }: { me: string; other: string; onli
       <header className="shrink-0 bg-zinc-950/95 border-b border-white/10 px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] flex items-center gap-3">
         <button onClick={onBack} className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center" aria-label="Back"><ArrowLeft className="w-4 h-4" /></button>
         {/* Their face and name open their profile. */}
-        {who && <ProfileLink username={who.username}><Face c={who} online={online.has(who.username)} size={40} /></ProfileLink>}
+        {who && <ProfileLink username={who.username} className="shrink-0 block"><Face c={who} online={online.has(who.username)} size={40} /></ProfileLink>}
         <div className="min-w-0">
           <div className="font-bold truncate">{who ? <ProfileLink username={who.username}>{who.name}</ProfileLink> : "…"}</div>
           <div className="text-[11px] text-sky-300">{who ? <ProfileLink username={who.username} /> : ""}{who && online.has(who.username) ? " · online" : ""}{isBlocked ? " · blocked" : ""}</div>
@@ -673,7 +673,7 @@ function People({ me, online, open }: { me: string; online: ReadonlySet<string>;
 
   const row = (c: Contact | undefined, action: React.ReactNode, key: string) => c && (
     <div key={key} className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
-      <ProfileLink username={c.username}><Face c={c} online={online.has(c.username)} size={44} /></ProfileLink>
+      <ProfileLink username={c.username} className="shrink-0 block"><Face c={c} online={online.has(c.username)} size={44} /></ProfileLink>
       <span className="flex-1 min-w-0">
         <ProfileLink username={c.username} className="block font-bold truncate">{c.name}</ProfileLink>
         <span className="block text-[11px] text-sky-300 truncate"><ProfileLink username={c.username} />{online.has(c.username) ? " · online" : ""}</span>
