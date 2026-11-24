@@ -23,6 +23,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { SmallLoader } from "@/components/GameLoadingScreen";
 import { presetFor, rosterThumb } from "@/components/avatar/roster";
 import { broadcastCityPulse, useOnlineUsernames } from "@/lib/presence";
+import { markSocialRead, myNotices, noticeText } from "@/lib/social";
 import {
   MESSAGE_DAYS, contacts, findPeople, listConversations, loadConversation, onIncoming, sendMessage,
   type Contact, type Conversation, type Message,
@@ -720,7 +721,7 @@ function People({ me, online, open }: { me: string; online: ReadonlySet<string>;
 
 // ---------------------------------------------------------------- alerts
 
-interface Alert { id: string; icon: string; title: string; detail?: string; at: string; href?: string }
+interface Alert { id: string; icon: string; title: string; detail?: string; at: string; href?: string; open?: string; unread?: boolean }
 
 function PushSettingsCard({ me }: { me: string }) {
   const [permission, setPermission] = useState<string>("default");
@@ -825,12 +826,14 @@ function Alerts({ me }: { me: string }) {
   useEffect(() => {
     const db = supabase();
     (async () => {
-      const [transfers, knocks, requests, invites] = await Promise.all([
+      const [transfers, knocks, requests, invites, notices] = await Promise.all([
         db.from("transfers").select("id, from_id, to_id, amount, place, created_at").order("created_at", { ascending: false }).limit(30),
         db.from("entry_requests").select("id, visitor_id, visitor_name, flat_id, status, created_at").order("created_at", { ascending: false }).limit(30),
         db.from("friendships").select("user_id, created_at").eq("friend_id", me).eq("status", "pending"),
         db.from("game_invites").select("id, from_id, game, code, status, created_at").eq("to_id", me).order("created_at", { ascending: false }).limit(20),
+        myNotices(),
       ]);
+      const social = notices.data ?? [];
       const ids = [...(transfers.data ?? []).flatMap((t) => [t.from_id, t.to_id]), ...(requests.data ?? []).map((r) => r.user_id), ...(invites.data ?? []).map((i) => i.from_id)];
       const who = await contacts(ids);
       const name = (id: string) => `@${who.get(id)?.username ?? "someone"}`;
@@ -848,7 +851,13 @@ function Alerts({ me }: { me: string }) {
           return { id: `g${i.id}`, icon: g?.icon ?? "🎲", title: `${name(i.from_id)} invited you to ${g?.name ?? "a game"}`, detail: i.status === "joined" ? "You joined" : i.status === "declined" ? "You said not now" : undefined, at: i.created_at, href: i.status === "sent" ? `/games/${i.game}?room=${i.code}` : undefined };
         }),
       ];
+      // Likes, comments, replies, mentions and follows on the City (lib/social.ts).
+      list.push(...social.map((n) => {
+        const t = noticeText(n);
+        return { id: `s${n.id}`, icon: t.icon, title: t.text, at: n.at, unread: !n.read, href: n.kind === "follow" ? `/u/${n.actor.username}` : n.postId ? `/city?post=${n.postId}` : undefined, open: n.kind === "follow" ? "View" : "Open" };
+      }));
       setAlerts(list.sort((a, b) => b.at.localeCompare(a.at)));
+      if (social.some((n) => !n.read)) void markSocialRead();
     })();
   }, [me]);
 
@@ -862,17 +871,17 @@ function Alerts({ me }: { me: string }) {
         <div className="text-center py-10 space-y-2">
           <div className="text-4xl">🔔</div>
           <p className="text-sm text-white/60">Nothing yet.</p>
-          <p className="text-xs text-white/40">Money, knocks on your door, friend requests and game invites show up here.</p>
+          <p className="text-xs text-white/40">Likes, comments, mentions, money, knocks on your door, friend requests and game invites show up here.</p>
         </div>
       ) : (
         grouped.map((a) => (
-          <div key={a.id} className="flex items-start gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
+          <div key={a.id} className={`flex items-start gap-3 p-3 rounded-2xl border ${a.unread ? "bg-fuchsia-500/10 border-fuchsia-400/30" : "bg-white/5 border-white/10"}`}>
             <span className="text-2xl leading-none mt-0.5">{a.icon}</span>
             <span className="flex-1 min-w-0">
               <span className="block text-sm font-bold">{a.title}</span>
               {a.detail && <span className="block text-xs text-white/50 capitalize-first">{a.detail}</span>}
             </span>
-            {a.href ? <Link href={a.href} className="shrink-0 h-8 px-3 rounded-full bg-emerald-500 text-white text-xs font-black flex items-center">Join</Link>
+            {a.href ? <Link href={a.href} className="shrink-0 h-8 px-3 rounded-full bg-emerald-500 text-white text-xs font-black flex items-center">{a.open ?? "Join"}</Link>
               : <span className="text-[11px] text-white/40 shrink-0">{when(a.at)}</span>}
           </div>
         ))

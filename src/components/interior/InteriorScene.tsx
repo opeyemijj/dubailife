@@ -26,6 +26,7 @@ import type { ActivityCategory } from "./ActivityExperienceOverlay";
 import type { ActiveRide } from "./rides/RideRig";
 import type { RideResult } from "./rides/rideIO";
 import { PerfProbe } from "@/components/perf/PerfProbe";
+import { SnapProbe } from "@/components/social/SnapProbe";
 
 // The rides engine (about 160 KB) loads only when a ride starts, not with every venue.
 const RideRig = lazy(() => import("./rides/RideRig").then((m) => ({ default: m.RideRig })));
@@ -1102,6 +1103,7 @@ export function InteriorScene({
         autoRotate={boat || drone}
         autoRotateSpeed={drone ? 0.5 : 0.35}
       />
+      <SnapProbe />
     </Canvas>
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-[1]">
       {labels.map((l) => (

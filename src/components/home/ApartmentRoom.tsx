@@ -33,6 +33,7 @@ import {
   type CatalogItem, type FloorPlacement, type Interaction, type OwnedFurniture, type Placement, type Rotation, type Wall,
 } from "@/lib/furniture";
 import { PerfProbe } from "@/components/perf/PerfProbe";
+import { SnapProbe } from "@/components/social/SnapProbe";
 
 // Only what every home has is fetched up front; shop items load when bought or shown.
 [...new Set(BUILT_INS.map((b) => b.model))].forEach((url) => url && useGLTF.preload(url));
@@ -2963,6 +2964,7 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
               minDistance={props.upView ? 6 : props.view === "eye" ? 0.05 : props.view === "inside" ? 1.8 : 6}
               maxDistance={props.upView ? 38 : props.view === "eye" ? EYE_BACK + 0.15 : props.view === "inside" ? 7 : showZoneBar ? 38 : 30}
             />
+            <SnapProbe />
           </Canvas>
         </WebGLErrorBoundary>
       )}

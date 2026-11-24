@@ -1,0 +1,9 @@
+{
+  "_note": "Posts and comments (City feed, profiles): how long they can be, how many a player can write, and what is refused. Links and phone numbers are refused (the usual way scams start), and so is anything containing a blocked word (matched as a whole word, any case). Admins extend 'blocked' here and in social_rules() (*_social_posts.sql), kept identical by scripts/check-life-config.mjs. Photos are snaps taken in the game only (no uploads from the phone).",
+  "postMax": 500,
+  "commentMax": 300,
+  "postsPerDay": 20,
+  "commentsPerHour": 60,
+  "mentionsMax": 10,
+  "blocked": ["fuck", "fucking", "fucker", "motherfucker", "shit", "bitch", "bastard", "cunt", "dick", "pussy", "whore", "slut", "faggot", "retard", "nigger", "nigga", "kill yourself", "kys"]
+}

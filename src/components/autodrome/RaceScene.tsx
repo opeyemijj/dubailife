@@ -22,6 +22,8 @@ import {
 } from "@/lib/autodrome";
 import { Crowd, Hooves, RemoteEngine, V10, setRaceVolume } from "@/lib/raceAudio";
 import { BikeModel, CamelModel, HorseModel, silksFor, type Motion } from "@/components/racing/Mounts";
+import { SnapProbe } from "@/components/social/SnapProbe";
+import { SnapButton } from "@/components/social/SnapButton";
 
 interface Remote { dist: number; offset: number; speed: number; at: number; done?: boolean }
 /** How often each car sends its position: three times a second with a few cars, down to once a second with ten or
@@ -816,6 +818,7 @@ export function RaceScene({ code, me, racers, laps, track: trackId, sport = "car
     <div className="fixed inset-0 z-[150] bg-slate-900 select-none touch-none">
       <Canvas dpr={quality.dpr} camera={{ fov: legs ? 58 : 62, near: 0.3, far: 2600, position: [-30, 6, 0] }} gl={{ powerPreference: quality.powerPreference }}>
         <PerfProbe scene={sport === "car" ? "Autodrome" : `Racing ${sport}`} />
+        <SnapProbe />
         <color attach="background" args={[track.def.theme.sky]} />
         <fog attach="fog" args={[track.def.theme.fog, 400, Math.max(1600, track.radius * 3.5)]} />
         <hemisphereLight args={["#ffffff", "#c2a37a", 0.8]} />
@@ -843,6 +846,7 @@ export function RaceScene({ code, me, racers, laps, track: trackId, sport = "car
         <div className="flex flex-col items-end gap-1.5 pointer-events-auto">
           <button onClick={onLeave} className="h-9 px-3 rounded-full bg-slate-950/75 text-white text-xs font-black">Leave</button>
           <button onClick={() => { setSound(!sound); setRaceVolume(!sound); }} className="h-9 px-3 rounded-full bg-slate-950/75 text-white text-xs font-black">{sound ? "🔊" : "🔇"}</button>
+          <SnapButton placeName={track.def.name} />
         </div>
       </div>
 

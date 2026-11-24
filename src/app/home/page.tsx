@@ -137,6 +137,7 @@ import {
 } from "@/lib/presence";
 import { matesInRoom, useBedspace } from "@/lib/bedspace";
 import { openPhone } from "@/components/layout/PhoneOverlay";
+import { SnapButton } from "@/components/social/SnapButton";
 import { useLifeLoop } from "@/lib/lifeLoop";
 import { WardrobeModal } from "@/components/avatar/WardrobeModal";
 import { getPendingVenue, clearPendingVenue } from "@/components/city/VenueDressCodeModal";
@@ -1324,6 +1325,7 @@ export default function HomePage() {
             }}
           />
         )}
+        {!cleanScreen && <SnapButton placeName="At home" />}
         {!cleanScreen && (
           <SideButton icon={<ShoppingBag className="w-5 h-5" />} label="Buy furniture" onClick={() => setBuyModalOpen(true)} />
         )}

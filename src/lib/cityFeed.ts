@@ -11,8 +11,9 @@ import TRACKS from "@/data/autodrome/tracks.json";
 import SPORTS from "@/data/racing/sports.json";
 import type { AvatarLookProps } from "@/components/avatar/roster";
 
-export type FeedKind = "party" | "win" | "arrived" | "home" | "car" | "gift" | "married" | "hired" | "reward" | "rain" | "race" | "hotel";
-export type FeedScope = "all" | "following";
+export type FeedKind = "party" | "win" | "arrived" | "home" | "car" | "gift" | "married" | "hired" | "reward" | "rain" | "race" | "hotel" | "post";
+/** Everyone, people I follow and my friends, or players' own posts only. */
+export type FeedScope = "all" | "following" | "posts";
 
 export interface FeedPerson { id: string; username: string; name?: string | null; look?: AvatarLookProps | null }
 export interface FeedPost {
@@ -26,6 +27,10 @@ export interface FeedPost {
   likes: number;
   liked: boolean;
   iFollow: boolean;
+  /** Comments on it (not counting anyone either of us has blocked). */
+  comments?: number;
+  /** It's my post. */
+  mine?: boolean;
 }
 export interface LiveParty { inviteId: number; title: string | null; partyKind: string; route: string | null; host: string; hostId: string; look?: AvatarLookProps | null; arrived: number }
 
@@ -106,6 +111,9 @@ export function describePost(p: FeedPost, now = Date.now()): PostView {
   const who = `@${p.actor.username}`;
   const d = p.data;
   switch (p.kind) {
+    case "post":
+      // A player's own post: the card shows the caption and the snap itself (components/social/PostCard).
+      return { icon: "", text: String(d.text ?? "") };
     case "party": {
       const live = Date.parse(String(d.startsAt ?? "")) <= now && now < (d.endsAt ? Date.parse(String(d.endsAt)) : Date.parse(String(d.startsAt ?? "")) + 3 * 3_600_000);
       const what = PARTY_WORD[String(d.partyKind)] ?? "a party";

@@ -18,6 +18,8 @@ import { getEntity } from "@/lib/city/geo";
 import { isGenericHome, towerName } from "@/lib/city/partyHome";
 import { gameAudio } from "@/utils/gameAudio";
 import { carOf, paintName } from "@/lib/cars";
+import { snapUrl, userPosts } from "@/lib/social";
+import { PostCard } from "@/components/social/PostCard";
 
 interface Profile {
   id: string; username: string; name: string | null; look: AvatarLookProps | null; joined: string; online: boolean; lastSeen: string | null;
@@ -105,6 +107,8 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
         </div>
       </section>
 
+      <PostsGrid userId={p.id} mine={!!p.isMe} />
+
       <Card title="💰 Net worth" right={`AED ${shortAed(p.worth.total)}`}>
         <div className="grid grid-cols-3 gap-2 text-center">
           {([["Cash", p.worth.cash], ["Homes", p.worth.homes], ["Cars", p.worth.cars]] as const).map(([k, v]) => (
@@ -160,6 +164,64 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
         </Card>
       )}
     </Shell>
+  );
+}
+
+/** Their posts as a grid of snaps (text-only posts as a caption tile). Tap one to open it with its comments. */
+function PostsGrid({ userId, mine }: { userId: string; mine: boolean }) {
+  const [posts, setPosts] = useState<FeedPost[] | null>(null);
+  const [open, setOpen] = useState<FeedPost | null>(null);
+  const [more, setMore] = useState(false);
+  useEffect(() => {
+    let live = true;
+    void userPosts(userId).then((r) => { if (live) { setPosts(r.data ?? []); setMore((r.data ?? []).length >= 30); } });
+    return () => { live = false; };
+  }, [userId]);
+  const loadMore = async () => {
+    const last = posts?.at(-1);
+    if (!last) return;
+    const r = await userPosts(userId, last.id);
+    setPosts((cur) => [...(cur ?? []), ...(r.data ?? [])]);
+    setMore((r.data ?? []).length >= 30);
+  };
+  if (posts === null) return null;
+  if (posts.length === 0 && !mine) return null;
+  const patch = (id: number, x: Partial<FeedPost>) => {
+    setPosts((cur) => cur?.map((q) => (q.id === id ? { ...q, ...x } : q)) ?? cur);
+    setOpen((o) => (o && o.id === id ? { ...o, ...x } : o));
+  };
+  return (
+    <Card title="📸 Posts" right={posts.length ? String(posts.length) + (more ? "+" : "") : undefined}>
+      {posts.length === 0 ? (
+        <p className="text-sm text-white/60">No posts yet. Tap 📸 at a party, on a yacht or at the races to share a moment, or post from the <Link href="/city?tab=posts" className="underline">City</Link>.</p>
+      ) : (
+        <div className="grid grid-cols-3 gap-1 -mx-1">
+          {posts.map((q) => {
+            const d = q.data as { text?: string; image?: string };
+            return (
+              <button key={q.id} onClick={() => setOpen(q)} className="relative aspect-square rounded-xl overflow-hidden bg-white/5 text-left" aria-label={d.text ?? "Post"}>
+                {d.image
+                  // eslint-disable-next-line @next/next/no-img-element
+                  ? <img src={snapUrl(d.image)} alt="" loading="lazy" className="w-full h-full object-cover" />
+                  : <span className="block p-2 text-[11px] leading-snug text-white/80 line-clamp-5">{d.text}</span>}
+                {(q.likes > 0 || (q.comments ?? 0) > 0) && (
+                  <span className="absolute bottom-1 left-1 rounded-full bg-slate-950/70 px-1.5 text-[10px] font-bold">{q.likes > 0 ? `♥ ${q.likes}` : ""}{(q.comments ?? 0) > 0 ? ` 💬 ${q.comments}` : ""}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      {more && <button onClick={() => void loadMore()} className="w-full h-10 rounded-full bg-white/10 text-sm font-black">Show more</button>}
+      {open && (
+        <div className="fixed inset-0 z-[200] bg-slate-950/95 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Post">
+          <div className="max-w-md mx-auto px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-10 space-y-3">
+            <button onClick={() => setOpen(null)} className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center" aria-label="Back"><ArrowLeft className="w-4 h-4" /></button>
+            <PostCard post={open} onChange={(x) => patch(open.id, x)} onDeleted={() => { setPosts((cur) => cur?.filter((q) => q.id !== open.id) ?? cur); setOpen(null); }} />
+          </div>
+        </div>
+      )}
+    </Card>
   );
 }
 

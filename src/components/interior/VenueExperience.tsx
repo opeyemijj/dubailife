@@ -21,6 +21,7 @@ import { BELOW_SPACE_TOP, ClubRadioPill, PartyBanner, useClubRadio, usePartyHere
 import { PartyDecor } from "@/components/invite/PartyDecor";
 import { PartyActions } from "@/components/invite/PartyActions";
 import { FloatMenu, tapThenClose, ViewCycle } from "@/components/layout/SideBar";
+import { SnapButton } from "@/components/social/SnapButton";
 import { SailJourney } from "@/components/yacht/SailJourney";
 import { PartyHostesses, drinkInHand, usePartyDrink, type HostessRun } from "@/components/invite/PartyHostess";
 import { partyMood } from "@/lib/invites";
@@ -1734,6 +1735,8 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
             <span className="text-xl leading-none">📱</span>Phone
             {unreadMsgs > 0 && <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center ring-2 ring-white">{unreadMsgs > 99 ? "99+" : unreadMsgs}</span>}
           </button>
+          {/* 📸 Photograph the scene and post it to the City. */}
+          <SnapButton place={place.id} placeName={venue.name} className="!w-14 !h-14 !rounded-[18px]" />
         </div>
       )}
       {/* Bottom right, opposite the stick: what this place is for (its activities), and the way outside. */}

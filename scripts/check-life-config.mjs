@@ -365,6 +365,11 @@ if (!hallSql.includes(`p_type not in (${halls.types.map((t) => `'${t.id}'`).join
   const circuits = tracks.filter((t) => !t.sport).map((t) => t.id);
   const wantSports = { car: { tracks: circuits }, ...Object.fromEntries(sports.map((sp) => [sp.id, { tracks: sp.id === "bike" ? circuits : tracks.filter((t) => t.sport === sp.id).map((t) => t.id), mounts: sp.mounts.map((m) => m.id) }])) };
   if (!sportSql || JSON.stringify(JSON.parse(sportSql)) !== JSON.stringify(wantSports)) { bad++; console.error("racing sports: JSON differs from SQL"); }
+  // Posts and comments (src/data/social/rules.json vs social_rules(): lengths, rate limits, blocked words).
+  const socialRules = JSON.parse(readFileSync("src/data/social/rules.json", "utf8"));
+  const socialSql = latestDef("social_rules").match(/social_rules\(\)[\s\S]*?select '(\{.*?\})'::jsonb/)?.[1];
+  const { _note: _sn, ...wantSocial } = socialRules;
+  if (!socialSql || JSON.stringify(JSON.parse(socialSql)) !== JSON.stringify(wantSocial)) { bad++; console.error("social rules: JSON differs from SQL"); }
   // The tuning garage (src/data/cars/tuning.json vs car_tuning_rule(): the minimum and each part's stage prices).
   const tuning = JSON.parse(readFileSync("src/data/cars/tuning.json", "utf8"));
   const tuneSql = latestDef("car_tuning_rule").match(/car_tuning_rule\(\)[\s\S]*?select '(\{.*?\})'::jsonb/)?.[1];
