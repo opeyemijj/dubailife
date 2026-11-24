@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // An event hall, live (/hall/<booking>): a hotel ballroom you walk around in 3D, with the guests there now. The
 // host decorates it like a home (the store's event pieces, floors, walls and ceiling), or hires a player interior
@@ -245,7 +246,7 @@ export default function HallPage() {
         <div className="w-full max-w-md rounded-2xl bg-white/95 text-slate-900 shadow-xl px-4 py-2.5 flex items-center gap-3 pointer-events-auto">
           <div className="flex-1 min-w-0">
             <p className="text-sm font-black truncate">🎊 {space.title}</p>
-            <p className="text-[11px] text-slate-500 truncate">{hall?.name} · hosted by @{space.host.username} · {room.peers.length + 1} here · {live ? "on now" : `starts ${new Date(space.startsAt).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })}`}</p>
+            <p className="text-[11px] text-slate-500 truncate">{hall?.name} · hosted by <ProfileLink username={space.host.username} /> · {room.peers.length + 1} here · {live ? "on now" : `starts ${new Date(space.startsAt).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })}`}</p>
           </div>
           <Link href="/explore" className="text-xs font-bold text-slate-500 shrink-0">Leave</Link>
         </div>
@@ -361,7 +362,7 @@ function HireDecorator({ booking, busy, onDone }: { booking: number; busy: boole
       <p className="text-xs text-slate-600">Players with the interior decorator job. They walk into this hall and decorate it within your budget; what they don&apos;t spend comes back to you.</p>
       {pros.map((p) => (
         <button key={p.id} onClick={() => setPick(p.id)} className={`w-full rounded-2xl border p-3 text-left flex justify-between ${pick === p.id ? "border-emerald-500 bg-emerald-50" : "border-slate-200"}`}>
-          <span className="font-black text-sm">@{p.username}</span><span className="text-xs font-mono text-emerald-700">fee {aed(p.fee)}</span>
+          <span className="font-black text-sm"><ProfileLink username={p.username} /></span><span className="text-xs font-mono text-emerald-700">fee {aed(p.fee)}</span>
         </button>
       ))}
       <div className="flex gap-1.5">{[10000, 25000, 50000, 100000].map((b) => <button key={b} onClick={() => setBudget(b)} className={`flex-1 rounded-xl py-2 text-xs font-black border ${budget === b ? "bg-slate-900 text-white" : "border-slate-200"}`}>{aed(b)}</button>)}</div>

@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // The frame every attraction game runs in, full screen: an intro card (how to play, your best, level and streak,
 // this week's top three) while the game's heavy parts load, the 3-2-1 countdown, pause (button or Esc), and the
@@ -244,7 +245,7 @@ function LeaderboardMini({ board }: { board: Leaderboard | null }) {
     <div className="rounded-2xl bg-white/5 p-3 text-left">
       <p className="text-[10px] font-black uppercase tracking-wider text-white/50 mb-1.5 flex items-center gap-1"><Trophy className="w-3 h-3" /> This week</p>
       {board.top.slice(0, 3).map((r) => (
-        <div key={r.username} className="flex justify-between text-sm py-0.5"><span className="font-bold truncate">{["🥇", "🥈", "🥉"].at(r.place - 1) ?? `${r.place}.`} @{r.username}</span><span className="font-black tabular-nums">{r.score.toLocaleString()}</span></div>
+        <div key={r.username} className="flex justify-between text-sm py-0.5"><span className="font-bold truncate">{["🥇", "🥈", "🥉"].at(r.place - 1) ?? `${r.place}.`} <ProfileLink username={r.username} /></span><span className="font-black tabular-nums">{r.score.toLocaleString()}</span></div>
       ))}
       {board.me && board.me.place > 3 && <div className="flex justify-between text-sm pt-1 mt-1 border-t border-white/10 text-amber-300"><span className="font-bold">{board.me.place}. You</span><span className="font-black tabular-nums">{board.me.score.toLocaleString()}</span></div>}
     </div>

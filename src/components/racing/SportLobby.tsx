@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // A sport's lobby: Meydan for horses, Al Marmoom for camels, the Autodrome's paddock for superbikes. Pick a mount from
 // the stable (no need to own one), a track, laps, the entry fee and the prize split, and open a race to invite friends
@@ -188,7 +189,7 @@ export function SportLobby({ sport: sportId }: { sport: string }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={rosterThumb(presetFor(r.look ?? { gender: "woman" }))} alt="" className="w-10 h-10 rounded-full object-cover object-top bg-slate-700" />
               <div className="flex-1 min-w-0">
-                <p className="font-black truncate">@{r.host}&apos;s race</p>
+                <p className="font-black truncate"><ProfileLink username={r.host} />&apos;s race</p>
                 <p className="text-xs text-white/60">{trackDef(r.track).name} · {r.laps} lap{r.laps === 1 ? "" : "s"} · {r.racers}/{r.max} riders · {r.entryFee ? `AED ${shortAed(r.entryFee)} entry` : "free"} · {r.prizeMode === "winner" ? "winner takes all" : "top 3 paid"} · {r.status === "racing" ? "racing now" : "waiting"}</p>
                 {r.pot > 0 && <p className="text-xs font-black text-amber-300">Pot AED {shortAed(r.pot)}</p>}
               </div>

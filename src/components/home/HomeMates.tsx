@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // Who else is home (your partner, family, guests in the home's live room) when they're not where you can see
 // them: on another floor ("@maryam is upstairs" · Go up), or, for the person you live with, not in right now.
@@ -23,7 +24,7 @@ export function HomeMates({ peers, level, onGo, partner, className = "" }: {
       {elsewhere.map((p) => (
         <button key={p.userId} data-level={p.level ?? 0} onClick={(e) => onGo(Number(e.currentTarget.dataset.level))}
           className="pointer-events-auto h-8 pl-3 pr-1 rounded-full bg-slate-950/85 text-white text-[11px] font-black flex items-center gap-1.5 shadow-lg">
-          @{p.username} is {floor(p.level ?? 0)}
+          <ProfileLink username={p.username} /> is {floor(p.level ?? 0)}
           <span className="h-6 px-2.5 rounded-full bg-amber-400 text-slate-950 flex items-center">{(p.level ?? 0) > level ? "⬆️ Go up" : "⬇️ Go down"}</span>
         </button>
       ))}

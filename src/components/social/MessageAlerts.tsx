@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // A flashing alert when someone messages you, anywhere in the app (venues and homes show their
 // own, so this stays out of the way there). Tap it to open the conversation.
@@ -49,7 +50,7 @@ export function MessageAlerts() {
     >
       <span className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0"><MessageCircle className="w-5 h-5" /></span>
       <span className="flex-1 min-w-0">
-        <span className="block text-xs font-black">@{alert.username}</span>
+        <span className="block text-xs font-black"><ProfileLink username={alert.username} /></span>
         <span className="block text-sm truncate">{alert.text}</span>
       </span>
       <span className="text-[11px] font-black bg-white text-sky-600 rounded-full px-2.5 py-1">Reply</span>

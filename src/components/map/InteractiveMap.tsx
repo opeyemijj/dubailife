@@ -1512,8 +1512,11 @@ export function InteractiveMap({
                         }}
                       >
                         {/* Invisible sizing ghost: perfectly matches height & rooftop crest of the sprite */}
+                        {/* (Just an empty box of the sprite's size when it's known, rather than a hidden copy of the drawing.) */}
                         <div className={`${loc.size || ''} flex justify-center items-end opacity-0 pointer-events-none select-none invisible`} aria-hidden="true">
-                          <EntitySprite loc={loc} />
+                          {Number(loc.width) > 0 && Number(loc.height) > 0
+                            ? <div style={{ width: Number(loc.width), height: Number(loc.height) }} />
+                            : <EntitySprite loc={loc} />}
                         </div>
 
                         {/* Topmost Interactive Badge Pin */}

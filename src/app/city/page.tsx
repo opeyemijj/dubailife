@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // The City Feed (requirements R4): what players are doing right now, each post with a button that takes you there.
 // Live now at the top (parties and Spaces happening this minute), then Following (people you follow and your friends)
@@ -107,14 +108,14 @@ function City() {
             <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
               {parties.map((p) => (
                 <button key={`p${p.inviteId}`} onClick={() => p.route && router.push(p.route)} className="shrink-0 w-44 rounded-2xl bg-gradient-to-br from-fuchsia-600 to-rose-600 p-3 text-left">
-                  <div className="flex items-center gap-2"><Face look={p.look} size={32} /><span className="text-xs font-black truncate">@{p.host}</span></div>
+                  <div className="flex items-center gap-2"><Face look={p.look} size={32} /><span className="text-xs font-black truncate"><ProfileLink username={p.host} /></span></div>
                   <p className="mt-2 text-sm font-black leading-tight line-clamp-2">🎉 {p.title || "House party"}</p>
                   <p className="mt-1 text-[11px] text-white/80">{p.arrived} there · Join ›</p>
                 </button>
               ))}
               {spaces.map((r) => (
                 <button key={`s${r.id}`} onClick={() => { if (joinSpace(r.id).ok) openPhone("spaces"); }} className="shrink-0 w-44 rounded-2xl bg-gradient-to-br from-purple-700 to-slate-900 p-3 text-left">
-                  <p className="text-xs font-black truncate">🎙️ @{r.hostUsername}</p>
+                  <p className="text-xs font-black truncate">🎙️ <ProfileLink username={r.hostUsername} /></p>
                   <p className="mt-2 text-sm font-black leading-tight line-clamp-2">{r.title}</p>
                   <p className="mt-1 text-[11px] text-white/80">{r.participants.length} listening · Listen ›</p>
                 </button>

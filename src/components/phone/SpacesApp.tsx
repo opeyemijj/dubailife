@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -387,7 +388,7 @@ export function SpacesApp({
 
             {/* Host & Counts & AI Safety Check Pill */}
             <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-slate-500 font-semibold">
-              <span>@{activeRoom.hostUsername}</span>
+              <span><ProfileLink username={activeRoom.hostUsername} /></span>
               <span>·</span>
               {activeRoom.isPrivate ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 text-purple-900 border border-purple-200 px-2.5 py-0.5 text-[11px] font-extrabold">
@@ -441,7 +442,7 @@ export function SpacesApp({
                   NOW SPEAKING
                 </div>
                 <div className="mt-0.5 flex items-center gap-1.5 text-lg font-extrabold text-slate-900 truncate">
-                  <span className="truncate">{nowSpeaking.username}</span>
+                  <ProfileLink username={nowSpeaking.username} className="truncate">{nowSpeaking.username}</ProfileLink>
                   {(nowSpeaking.role === "host" || nowSpeaking.role === "cohost") && (
                     <span className="text-amber-400 text-base" title="Host">
                       👑
@@ -593,9 +594,9 @@ export function SpacesApp({
                       </span>
                     </div>
 
-                    <span className="mt-1.5 max-w-[74px] truncate text-xs font-semibold text-slate-900">
+                    <ProfileLink username={p.username} className="mt-1.5 max-w-[74px] truncate text-xs font-semibold text-slate-900">
                       {p.username}
-                    </span>
+                    </ProfileLink>
                     <span className="text-[11px] font-semibold text-emerald-700">
                       {p.role === "host"
                         ? "Host"
@@ -647,9 +648,9 @@ export function SpacesApp({
                         </span>
                       )}
                     </div>
-                    <span className="mt-1 max-w-[60px] truncate text-[10px] font-semibold text-slate-600">
+                    <ProfileLink username={p.username} className="mt-1 max-w-[60px] truncate text-[10px] font-semibold text-slate-600">
                       {p.username}
-                    </span>
+                    </ProfileLink>
                   </button>
                 ))}
               </div>
@@ -661,7 +662,7 @@ export function SpacesApp({
             <div className="rounded-2xl bg-slate-900 text-white p-3.5 space-y-2 shadow-xl">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-extrabold">
-                  Manage @{selectedUser.username} ({selectedUser.role})
+                  Manage <ProfileLink username={selectedUser.username} /> ({selectedUser.role})
                 </span>
                 <button
                   type="button"
@@ -725,7 +726,7 @@ export function SpacesApp({
                       className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 animate-[sheetUp_0.2s_ease-out]"
                     >
                       <span>{rx.emoji}</span>
-                      <span className="text-[10px] text-slate-500">@{rx.username}</span>
+                      <span className="text-[10px] text-slate-500"><ProfileLink username={rx.username} /></span>
                     </span>
                   ))}
                 </div>
@@ -736,7 +737,7 @@ export function SpacesApp({
                     key={c.id}
                     className="text-xs bg-slate-50 rounded-xl px-3 py-1.5 flex items-baseline gap-1.5"
                   >
-                    <span className="font-bold text-slate-900 shrink-0">@{c.username}:</span>
+                    <span className="font-bold text-slate-900 shrink-0"><ProfileLink username={c.username} />:</span>
                     <span className="text-slate-600 break-words">{c.text}</span>
                   </div>
                 ))}
@@ -967,7 +968,7 @@ export function SpacesApp({
                       </span>
                     ))}
                   </div>
-                  <span className="text-sm text-slate-500 truncate">@{room.hostUsername}</span>
+                  <span className="text-sm text-slate-500 truncate"><ProfileLink username={room.hostUsername} /></span>
                 </div>
 
                 <div className="text-sm font-semibold text-slate-700 shrink-0">

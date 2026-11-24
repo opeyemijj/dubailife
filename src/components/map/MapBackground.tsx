@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { WORLD_WIDTH, WORLD_HEIGHT } from './Icons';
-import { PALM_CAUSEWAY } from '@/lib/city/palm';
+import { PALM_CAUSEWAY, PALM_SLANT } from '@/lib/city/palm';
 import { CREEK } from '@/lib/city/oldDubai';
 
 /** Dubai Creek as a smooth path through its centre-line points (a Catmull-Rom curve drawn as cubic Béziers). */
@@ -395,7 +395,9 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
                 
 
 
-                {/* Palm Jumeirah causeway: four lanes from the Jumeirah coast road out to the Palm's bridge, with the monorail beside it */}
+                {/* Palm Jumeirah causeway: four lanes from the Jumeirah coast road out to the Palm's bridge, with the monorail
+                    beside it; leaning with the map's slant (like the island), pivoted where it meets the bridge. */}
+                <g transform={`matrix(1 0 ${PALM_SLANT} 1 ${-PALM_SLANT * PALM_CAUSEWAY.toVirtualY} 0)`}>
                 <path d={`M ${PALM_CAUSEWAY.x} ${PALM_CAUSEWAY.fromVirtualY} L ${PALM_CAUSEWAY.x} ${PALM_CAUSEWAY.toVirtualY}`} fill="none" stroke="#e2e8f0" strokeWidth="58" />
                 <path d={`M ${PALM_CAUSEWAY.x} ${PALM_CAUSEWAY.fromVirtualY} L ${PALM_CAUSEWAY.x} ${PALM_CAUSEWAY.toVirtualY}`} fill="none" stroke="#334155" strokeWidth="50" />
                 <path d={`M ${PALM_CAUSEWAY.x} ${PALM_CAUSEWAY.fromVirtualY} L ${PALM_CAUSEWAY.x} ${PALM_CAUSEWAY.toVirtualY}`} fill="none" stroke="#facc15" strokeWidth="2" />
@@ -411,6 +413,7 @@ export const MapBackground: React.FC<MapBackgroundProps> = ({
                     <circle cx={PALM_CAUSEWAY.x + 30} cy={PALM_CAUSEWAY.fromVirtualY + 30 + i * 60} r="2.5" fill="#fde68a" />
                   </g>
                 ))}
+                </g>
                 
                 {/* Jumeirah Coast Road - STRAIGHT, END-TO-END (-3000 to 6600) */}
                 <path d="M -3000 1312 L 6600 1152" fill="none" stroke="#64748b" strokeWidth="40" strokeLinecap="round" />

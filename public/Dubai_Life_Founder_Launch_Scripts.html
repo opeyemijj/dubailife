@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dubai Life Game — Founder Launch & Social Media Video Kit</title>
+<style>
+  @page {
+    size: A4;
+    margin: 16mm 14mm 16mm 14mm;
+    @bottom-right {
+      content: counter(page);
+    }
+  }
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    background: #ffffff;
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  /* Header Cover Block */
+  .header-card {
+    background: linear-gradient(135deg, #090d16 0%, #111827 60%, #1e1b4b 100%);
+    color: #ffffff;
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    border-left: 6px solid #f59e0b;
+  }
+  .header-card h1 {
+    font-size: 24px;
+    font-weight: 900;
+    margin: 0 0 6px 0;
+    letter-spacing: -0.5px;
+    color: #ffffff;
+  }
+  .header-card .badge {
+    display: inline-block;
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .header-card p {
+    margin: 4px 0 0 0;
+    font-size: 13px;
+    color: #94a3b8;
+  }
+  .header-card .meta {
+    margin-top: 14px;
+    display: flex;
+    gap: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #cbd5e1;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 10px;
+  }
+
+  h2 {
+    font-size: 16px;
+    font-weight: 800;
+    color: #0f172a;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 6px;
+    margin: 22px 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 14px 0 6px 0;
+  }
+
+  /* Table Styles */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 16px 0;
+    font-size: 12px;
+    page-break-inside: avoid;
+  }
+  th {
+    background: #0f172a;
+    color: #ffffff;
+    font-weight: 700;
+    text-align: left;
+    padding: 8px 10px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  th:first-child { border-top-left-radius: 6px; }
+  th:last-child { border-top-right-radius: 6px; }
+  td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: top;
+    line-height: 1.45;
+  }
+  tr:nth-child(even) td {
+    background: #f8fafc;
+  }
+
+  /* Script Boxes */
+  .script-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    page-break-inside: avoid;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .script-card.featured {
+    border: 1.5px solid #f59e0b;
+    background: #fffdfa;
+  }
+  .script-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 6px;
+  }
+  .script-title {
+    font-weight: 800;
+    font-size: 14px;
+    color: #0f172a;
+  }
+  .script-pill {
+    background: #0f172a;
+    color: #f8fafc;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+  .script-pill.gold {
+    background: #f59e0b;
+    color: #ffffff;
+  }
+
+  .quote-box {
+    background: #f1f5f9;
+    border-left: 4px solid #f59e0b;
+    padding: 8px 12px;
+    margin: 6px 0;
+    font-style: italic;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  /* Key Takeaway / Tip Box */
+  .tip-box {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-left: 4px solid #16a34a;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 11.5px;
+    color: #166534;
+    page-break-inside: avoid;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    page-break-inside: avoid;
+  }
+  .card-mini {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .card-mini h4 {
+    margin: 0 0 4px 0;
+    font-size: 12px;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .card-mini p {
+    margin: 0;
+    font-size: 11px;
+    color: #64748b;
+  }
+
+  .page-break {
+    page-break-after: always;
+  }
+
+  .footer-note {
+    text-align: center;
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 20px;
+    padding-top: 10px;
+    border-top: 1px solid #e2e8f0;
+  }
+</style>
+</head>
+<body>
+
+  <!-- PAGE 1: TITLE & CORE FOUNDER SCRIPTS -->
+  <div class="header-card">
+    <div class="badge">Official Founder Launch Playbook</div>
+    <h1>Dubai Life Game — Social Media Launch Kit</h1>
+    <p>High-Converting 20-Second Video Scripts, Viral Hooks &amp; Production Playbook</p>
+    <div class="meta">
+      <span>🌐 Website: mydubailife.app</span>
+      <span>⏱️ Format: 20s TikTok / Reels / Shorts</span>
+      <span>👤 Persona: Founder Direct-to-Camera</span>
+    </div>
+  </div>
+
+  <h2>🎯 The Core Value Proposition in One Sentence</h2>
+  <div class="quote-box">
+    &ldquo;I created a game where you simulate your entire life in Dubai — from renting luxury apartments and passing driving school, to Formula 1 Autodrome racing and rooftop house parties — completely in your phone browser with zero downloads.&rdquo;
+  </div>
+
+  <h2>🎬 Section 1: The Three Master 20-Second Founder Scripts</h2>
+
+  <!-- SCRIPT 1 -->
+  <div class="script-card featured">
+    <div class="script-header">
+      <span class="script-title">Video 1: "The Dubai Dream" (Aspirational &amp; Magnetic)</span>
+      <span class="script-pill gold">Primary Hook · ~20 Sec</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 15%;">Timing</th>
+          <th style="width: 35%;">Visual &amp; Camera Action</th>
+          <th style="width: 32%;">Spoken Script (Word-for-Word)</th>
+          <th style="width: 18%;">On-Screen Text</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>0:00 - 0:04</strong></td>
+          <td>Founder looks straight into lens, holding up smartphone with high energy:</td>
+          <td><em>&ldquo;I built a game where you can simulate your entire dream life in Dubai.&rdquo;</em></td>
+          <td><strong>Simulate Dubai Life 🏙️</strong></td>
+        </tr>
+        <tr>
+          <td><strong>0:04 - 0:08</strong></td>
+          <td>Cut to gameplay: Walking into luxury flat overlooking Burj Khalifa skyline; 50,000 AED balance:</td>
+          <td><em>&ldquo;You start with 50k cash, rent your first luxury apartment, and work high-paying tech jobs...&rdquo;</em></td>
+          <td><strong>Rent Penthouses &amp; Work 🔑💼</strong></td>
+        </tr>
+        <tr>
+          <td><strong>0:08 - 0:12</strong></td>
+          <td>Cut to gameplay: Smart Yard 90° bay parking, then drifting supercar on Dubai Autodrome track:</td>
+          <td><em>&ldquo;...pass the RTA driving school to unlock supercars, and race on the Dubai Autodrome track...&rdquo;</em></td>
+          <td><strong>RTA School &amp; Autodrome 🏎️💨</strong></td>
+        </tr>
+        <tr>
+          <td><strong>0:12 - 0:16</strong></td>
+          <td>Cut to gameplay: Penthouse party with real avatars dancing and live voice space waveform:</td>
+          <td><em>&ldquo;...and throw penthouse house parties with real people from around the world.&rdquo;</em></td>
+          <td><strong>Penthouse Parties &amp; Voice 🪩🎙️</strong></td>
+        </tr>
+        <tr>
+          <td><strong>0:16 - 0:20</strong></td>
+          <td>Back to Founder smiling, pointing directly to the link:</td>
+          <td><em>&ldquo;No app download needed. Jump into mydubailife.app right now.&rdquo;</em></td>
+          <td><strong>Play Free 👉 mydubailife.app</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SCRIPT 2 -->
+  <div class="script-card">
+    <div class="script-header">
+      <span class="script-title">Video 2: "Test-Drive Dubai" (Provocative &amp; High-Retention)</span>
+      <span class="script-pill">Curiosity Hook · ~20 Sec</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 15%;">Timing</th>
+          <th style="width: 35%;">Visual &amp; Camera Action</th>
+          <th style="width: 32%;">Spoken Script (Word-for-Word)</th>
+          <th style="width: 18%;">On-Screen Text</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>0:00 - 0:03</strong></td>
+          <td>Founder leans into camera intimately:</td>
+          <td><em>&ldquo;Before you move to Dubai in real life, test-drive it in my new game first.&rdquo;</em></td>
+          <td><strong>Test-drive Dubai first ✈️🇦🇪</strong></td>
+        </tr>
+        <tr>
+          <td><strong>0:03 - 0:08</strong></td>
+          <td>Gameplay: Signing rental contract, then doing the tricky RTA reverse parking:</td>
+          <td><em>&ldquo;You have to survive the real Dubai hustle: find an apartment, pass the brutal RTA parking exam...&rdquo;</em></td>
+          <td><strong>Renting &amp; RTA Parking 🚗</strong></td>
+        </tr>
+        <tr>
+          <td><strong>0:08 - 0:12</strong></td>
+          <td>Gameplay: High-speed Formula race at the Autodrome with smoke and engine roar:</td>
+          <td><em>&ldquo;...race Formula supercars on the Autodrome at 200 miles an hour...&rdquo;</em></td>
+          <td><strong>Autodrome Formula Racing 🏁</strong></td>
+        </tr>
+        <tr>
+          <td><strong>0:12 - 0:16</strong></td>
+          <td>Gameplay: Avatars on yacht deck talking with live voice audio waves:</td>
+          <td><em>&ldquo;...and throw crazy house parties with friends you meet in live voice spaces.&rdquo;</em></td>
+          <td><strong>House Parties &amp; Voice Spaces 🍾</strong></td>
+        </tr>
+        <tr>
+          <td><strong>0:16 - 0:20</strong></td>
+          <td>Back to Founder:</td>
+          <td><em>&ldquo;Zero downloads. Open your phone browser and play at mydubailife.app.&rdquo;</em></td>
+          <td><strong>Open Safari 👉 mydubailife.app</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- PAGE 2: SCRIPT 3 & FEATURE DEEP DIVES -->
+  <h2>🎬 Section 2: Dedicated Feature Deep-Dives</h2>
+
+  <!-- SCRIPT 3 -->
+  <div class="script-card">
+    <div class="script-header">
+      <span class="script-title">Video 3: "Nightlife &amp; Speed in Virtual Dubai"</span>
+      <span class="script-pill gold">Autodrome + House Party + Spaces · ~20 Sec</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 15%;">Timing</th>
+          <th style="width: 35%;">Visual &amp; Camera Action</th>
+          <th style="width: 32%;">Spoken Script (Word-for-Word)</th>
+          <th style="width: 18%;">On-Screen Text</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>0:00 - 0:03</strong></td>
+          <td>Founder holds phone with racing clip playing:</td>
+          <td><em>&ldquo;If you love racing and crazy nightlife, look at what we just launched in Dubai Life:&rdquo;</em></td>
+          <td><strong>Racing &amp; Nightlife Update 🏎️🪩</strong></td>
+        </tr>
+        <tr>
+          <td><strong>0:03 - 0:08</strong></td>
+          <td>Gameplay: Supercars lined up at the Autodrome grid, blasting past the apex at full throttle:</td>
+          <td><em>&ldquo;First, take your supercar to the Dubai Autodrome and race live against other players at 200 miles an hour.&rdquo;</em></td>
+          <td><strong>Dubai Autodrome Live 🏁</strong></td>
+        </tr>
+        <tr>
+          <td><strong>0:08 - 0:13</strong></td>
+          <td>Gameplay: Marina penthouse filled with real avatars, customized strobe lights:</td>
+          <td><em>&ldquo;Then, invite your squad back to your penthouse for a private house party...&rdquo;</em></td>
+          <td><strong>Private House Parties 🍾</strong></td>
+        </tr>
+        <tr>
+          <td><strong>0:13 - 0:17</strong></td>
+          <td>Gameplay: 1-on-1 private voice bubble connecting two players by the balcony:</td>
+          <td><em>&ldquo;...and drop into live 1-on-1 voice spaces to talk in real-time.&rdquo;</em></td>
+          <td><strong>1-on-1 Audio Spaces 🎙️</strong></td>
+        </tr>
+        <tr>
+          <td><strong>0:17 - 0:20</strong></td>
+          <td>Founder with phone:</td>
+          <td><em>&ldquo;No downloads. Jump on the track right now at mydubailife.app.&rdquo;</em></td>
+          <td><strong>Jump on Track 👉 mydubailife.app</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SCRIPT 4: 5 QUICK FEATURES -->
+  <div class="script-card">
+    <div class="script-header">
+      <span class="script-title">Video 4: "5 Insane Features in 20 Seconds" (Rapid-Fire Countdown)</span>
+      <span class="script-pill">Viral Checklist Format · ~20 Sec</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 15%;">Timing</th>
+          <th style="width: 35%;">Visual &amp; Camera Action</th>
+          <th style="width: 32%;">Spoken Script (Word-for-Word)</th>
+          <th style="width: 18%;">On-Screen Text</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>0:00 - 0:03</strong></td>
+          <td>Founder flashes 5 fingers:</td>
+          <td><em>&ldquo;Here are five insane things you can do in my new Dubai game right now:&rdquo;</em></td>
+          <td><strong>5 Insane Features 🏙️🔥</strong></td>
+        </tr>
+        <tr>
+          <td><strong>0:03 - 0:06</strong></td>
+          <td>Gameplay: Bank balance pops +50,000 AED with coin SFX:</td>
+          <td><em>&ldquo;Number one: You start with 50,000 AED cash in your bank.&rdquo;</em></td>
+          <td><strong>1. 50k Starting Cash 💰</strong></td>
+        </tr>
+        <tr>
+          <td><strong>0:06 - 0:10</strong></td>
+          <td>Gameplay: Smart Yard reverse parking into bay + revving supercar:</td>
+          <td><em>&ldquo;Two: Pass the real RTA parking test and drive supercars.&rdquo;</em></td>
+          <td><strong>2. RTA Test &amp; Supercars 🏎️</strong></td>
+        </tr>
+        <tr>
+          <td><strong>0:10 - 0:13</strong></td>
+          <td>Gameplay: Placing furniture in luxury high-rise apartment:</td>
+          <td><em>&ldquo;Three: Rent luxury apartments and furnish your penthouse.&rdquo;</em></td>
+          <td><strong>3. Furnish Penthouses 🛋️</strong></td>
+        </tr>
+        <tr>
+          <td><strong>0:13 - 0:16</strong></td>
+          <td>Gameplay: Yacht party dancing + voice waveform:</td>
+          <td><em>&ldquo;Four: Jump into yacht parties and live voice chat with real players.&rdquo;</em></td>
+          <td><strong>4. Yacht Parties &amp; Voice 🛥️</strong></td>
+        </tr>
+        <tr>
+          <td><strong>0:16 - 0:20</strong></td>
+          <td>Founder taps phone screen:</td>
+          <td><em>&ldquo;And five: Zero downloads. Just open your browser at mydubailife.app.&rdquo;</em></td>
+          <td><strong>5. ZERO DOWNLOADS 👉 mydubailife.app</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>💡 Filming &amp; Audio SFX Guide</h2>
+  <div class="grid-2">
+    <div class="card-mini">
+      <h4>🎙️ Voice Delivery &amp; Camera Energy</h4>
+      <p>Speak at 2.4 - 2.6 words/sec. No introductory filler like "Hey guys". Look directly into the camera lens with energetic projection.</p>
+    </div>
+    <div class="card-mini">
+      <h4>🔊 Crucial Audio Sound Effects</h4>
+      <p>• <strong>0:04</strong> Cash register &ldquo;cha-ching&rdquo; on 50k AED<br>• <strong>0:09</strong> V10 engine roar + tire screech on Autodrome<br>• <strong>0:13</strong> Bass-heavy club music on house party</p>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- PAGE 3: PRODUCTION PLAYBOOK & DISTRIBUTION -->
+  <h2>📋 Section 3: Technical &amp; Production Checklist</h2>
+
+  <div class="grid-2">
+    <div class="card-mini">
+      <h4>📱 Phone Screen Setup for Recording</h4>
+      <p>• Set iPhone brightness to 100%.<br>• Open Safari with <code>https://mydubailife.app</code> loaded.<br>• Tilt screen slightly away from key lights to prevent glossy glare.</p>
+    </div>
+    <div class="card-mini">
+      <h4>🎨 Editing &amp; CapCut Typography</h4>
+      <p>• Font: The Bold Font / Montserrat Black.<br>• Color: Yellow highlight (<code>#F59E0B</code>) on action words.<br>• Motion: Pop-in animation with haptic sound.</p>
+    </div>
+  </div>
+
+  <h2>🚀 Section 4: Multi-Platform Publishing Roadmap</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 20%;">Platform</th>
+        <th style="width: 40%;">Recommended Caption / Hook</th>
+        <th style="width: 40%;">Hashtag Stack &amp; Pin Strategy</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>TikTok</strong></td>
+        <td>I spent months recreating the entire city of Dubai into a browser game you can play without an App Store download. 🏙️ Drop a comment if you made it to the Autodrome!</td>
+        <td><code>#dubailife #mydubailife #dubai #gtaonline #sims4 #webgl #browsergame #gamingtok #dubaicars</code><br><em>Pin top comment with website URL.</em></td>
+      </tr>
+      <tr>
+        <td><strong>Instagram Reels</strong></td>
+        <td>From renting penthouses to 200mph Autodrome racing and live voice house parties. Welcome to Dubai Life. Link in bio! 🏎️💨</td>
+        <td><code>#mydubai #dubailife #dubailifestyle #supercarsdubai #dubaiexpat #webgame #threejs #indiegame</code></td>
+      </tr>
+      <tr>
+        <td><strong>YouTube Shorts</strong></td>
+        <td>How I built a 3D multiplayer Dubai simulator in Safari... and people are already hosting yacht parties in it.</td>
+        <td><code>#Shorts #Gaming #Dubai #Simulator #WebDev</code><br><em>Pin link in comments: mydubailife.app</em></td>
+      </tr>
+      <tr>
+        <td><strong>X (Twitter)</strong></td>
+        <td>We built Dubai into a 3D multiplayer browser simulator. 50k AED starting cash, RTA driving school, Autodrome racing, and penthouse parties. Zero downloads: https://mydubailife.app</td>
+        <td>Attach the Video 1 mp4 directly to tweet. Follow up with technical thread on WebGL performance.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="tip-box">
+    <strong>💡 Pro Strategy for Video 1 Launch:</strong> Pin a comment saying: <em>&ldquo;I'm the founder hanging out inside the Marina right now — look for avatar 'Brain'. Let me know in the chat what features you want me to add next!&rdquo;</em> This builds instant emotional connection and spikes concurrent player numbers.
+  </div>
+
+  <div class="footer-note">
+    Dubai Life Game © 2026 · mydubailife.app · Official Founder Launch Strategy Kit
+  </div>
+
+</body>
+</html>

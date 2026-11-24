@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // Player ventures and crews (design spec sections 10 and 20.1): start a business, bring up to 4 friends in
 // as partners, post jobs, hire players, and split the profit. Revenue grows 0.5x for each qualified staff
@@ -149,7 +150,7 @@ function VentureCard({ v, me, say, reload }: { v: Venture; me: string; say: (ok:
           </div>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          {v.members.map((m) => <span key={m.id} className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${m.role === "invited" ? "bg-white/5 text-slate-400" : "bg-white/10"}`}>@{m.username}{m.id === me ? " (you)" : ""} · {m.role}</span>)}
+          {v.members.map((m) => <span key={m.id} className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${m.role === "invited" ? "bg-white/5 text-slate-400" : "bg-white/10"}`}><ProfileLink username={m.username} />{m.id === me ? " (you)" : ""} · {m.role}</span>)}
         </div>
         {inviting && <InviteFriend me={me} exclude={v.members.map((m) => m.id)} onPick={(id) => { setInviting(false); void run(inviteToCrew(v.id, id), "Invite sent"); }} />}
       </div>
@@ -159,7 +160,7 @@ function VentureCard({ v, me, say, reload }: { v: Venture; me: string; say: (ok:
         {v.staff.length === 0 ? <p className="text-xs text-slate-500">No staff yet. Each qualified employee who works shifts adds 0.5× revenue (up to 3×).</p>
           : v.staff.map((s) => (
             <div key={s.id} className="flex items-center gap-2 rounded-xl bg-white/5 p-2.5 mb-1">
-              <span className="flex-1 text-sm"><b>@{s.username}</b> · {s.title}{s.qualified ? " 🎓" : ""}<span className="block text-[11px] text-slate-400">{aed(s.weeklyWage)}/wk · {s.shifts}/{s.shiftsPerWeek} shifts this week</span></span>
+              <span className="flex-1 text-sm"><b><ProfileLink username={s.username} /></b> · {s.title}{s.qualified ? " 🎓" : ""}<span className="block text-[11px] text-slate-400">{aed(s.weeklyWage)}/wk · {s.shifts}/{s.shiftsPerWeek} shifts this week</span></span>
               <button onClick={() => { if (confirm(`Let @${s.username} go?`)) void run(endJob(s.id), "They've left the venture."); }} className="text-[11px] font-bold text-rose-300">Let go</button>
             </div>
           ))}
@@ -192,7 +193,7 @@ function VentureCard({ v, me, say, reload }: { v: Venture; me: string; say: (ok:
               <button onClick={() => run(closeJob(j.id), "Job closed")} className="text-[11px] font-bold text-slate-400">Close</button></div>
             {j.applicants.length === 0 ? <p className="text-[11px] text-slate-500">No applicants yet.</p> : j.applicants.map((a) => (
               <div key={a.id} className="flex items-center gap-2 text-sm">
-                <span className="flex-1">@{a.username} {a.qualified ? "🎓" : ""}{a.licence ? " 🚗" : ""}</span>
+                <span className="flex-1"><ProfileLink username={a.username} /> {a.qualified ? "🎓" : ""}{a.licence ? " 🚗" : ""}</span>
                 <button onClick={() => run(reviewApplication(j.id, a.id, true), `@${a.username} hired!`)} className="text-[11px] font-black px-2.5 py-1 rounded-full bg-emerald-500 text-slate-950">Hire</button>
                 <button onClick={() => run(reviewApplication(j.id, a.id, false), "Application declined")} className="text-[11px] font-bold text-slate-400">Decline</button>
               </div>

@@ -2,7 +2,7 @@
 // Development only: every green plain where the map puts it (centred, y flipped as on the map), scaled to fit.
 import { FloorTile } from "@/components/map/FloorTile";
 import { CITY_ENTITIES } from "@/lib/city/mapEntities";
-import { getBuildingSprite } from "@/components/map/Icons";
+import { getBuildingSprite, IsometricDubaiVilla, VillaLite } from "@/components/map/Icons";
 
 export function Plains({ scale = 0.16 }: { scale?: number }) {
   const tiles = CITY_ENTITIES.filter((e) => e.type === "floor-tile" && !/bur-dubai|deira/.test(e.id));
@@ -22,6 +22,19 @@ export function Plains({ scale = 0.16 }: { scale?: number }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+/** The villa as drawn now beside its light version, big and at the Palm's size. */
+export function VillaCompare() {
+  const sig = { wallColor: "#fffbeb", accentColor: "#c08a3e", hasPalm: true, plotColor: "#fde68a" };
+  const plain = { wallColor: "#f5f5f4", accentColor: "#a8a29e", hasPalm: false, plotColor: "#fde68a" };
+  return (
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 30, padding: 30, background: "#38bdf8" }}>
+      <IsometricDubaiVilla width={380} height={300} {...sig} /><VillaLite width={380} height={300} {...sig} />
+      <IsometricDubaiVilla width={50} height={39} {...sig} /><VillaLite width={50} height={39} {...sig} />
+      <IsometricDubaiVilla width={50} height={39} {...plain} /><VillaLite width={50} height={39} {...plain} />
     </div>
   );
 }

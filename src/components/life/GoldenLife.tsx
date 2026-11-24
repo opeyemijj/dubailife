@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // Life after the Golden Visa (design spec 19.4, US-5.5): the Hall of Residents and newcomers to mentor.
 
@@ -38,7 +39,7 @@ export function GoldenLife({ me }: { me: string }) {
         {mentees.length === 0 ? <p className="text-xs text-amber-900/70">No new arrivals right now. Check back later.</p>
           : mentees.map((n) => (
             <div key={n.id} className="flex items-center gap-2 rounded-2xl bg-white p-2.5 mb-1">
-              <span className="flex-1 text-sm"><b>{n.name}</b> <span className="text-slate-500">@{n.username} · {n.visa.toLowerCase()} visa</span></span>
+              <span className="flex-1 text-sm"><b>{n.name}</b> <span className="text-slate-500"><ProfileLink username={n.username} /> · {n.visa.toLowerCase()} visa</span></span>
               {asked.has(n.id) ? <span className="text-[11px] font-bold text-emerald-700">Request sent</span>
                 : <button onClick={() => befriend(n)} className="text-[11px] font-black px-3 py-1.5 rounded-full bg-slate-900 text-white">Say hello</button>}
             </div>
@@ -47,7 +48,7 @@ export function GoldenLife({ me }: { me: string }) {
       {hall && (
         <div>
           <p className="text-xs font-black uppercase tracking-wider text-amber-900/70 mb-1.5">Hall of Residents · {hall.count}</p>
-          <div className="flex flex-wrap gap-1.5">{hall.residents.map((r) => <span key={r.username} className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-white">🌟 @{r.username}</span>)}</div>
+          <div className="flex flex-wrap gap-1.5">{hall.residents.map((r) => <span key={r.username} className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-white">🌟 <ProfileLink username={r.username} /></span>)}</div>
         </div>
       )}
     </section>

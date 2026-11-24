@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // The monthly tournament (design spec section 13): free to enter, skill only, points from what you do.
 
@@ -69,7 +70,7 @@ export default function TournamentPage() {
                   {t.standings.map((s) => (
                     <li key={s.username} className={`flex items-center gap-3 rounded-2xl px-3 py-2 ${s.me ? "bg-amber-500 text-slate-950" : "bg-white/5"}`}>
                       <span className="w-7 text-center font-black text-sm">{s.rank <= 3 ? ["🥇", "🥈", "🥉"][s.rank - 1] : s.rank}</span>
-                      <span className="flex-1 font-bold text-sm truncate">@{s.username}{s.me ? " (you)" : ""}</span>
+                      <span className="flex-1 font-bold text-sm truncate"><ProfileLink username={s.username} />{s.me ? " (you)" : ""}</span>
                       <span className="font-black text-sm">{s.total.toLocaleString()}</span>
                     </li>
                   ))}

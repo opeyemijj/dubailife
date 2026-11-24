@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // Dubai Health on the phone. Patients: see a player doctor (their fee is held until they treat you) or a
 // Local doctor straight away. Doctors: the patients waiting for you, your fee, and the prescription.
@@ -202,7 +203,7 @@ export function ClinicApp({ onBack }: { onBack: () => void }) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={rosterThumb(presetFor(d.look ?? { gender: "woman" }))} alt="" className="w-12 h-12 rounded-full object-cover object-top bg-white" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold truncate">Dr @{d.username}</p>
+                  <p className="font-semibold truncate">Dr <ProfileLink username={d.username} /></p>
                   <p className={`text-sm ${online.has(d.username) ? "text-emerald-600" : "text-slate-400"}`}>{online.has(d.username) ? "● On duty now" : "Off duty: may take a while"}</p>
                 </div>
                 <p className="font-black">{aed(d.fee)}</p>

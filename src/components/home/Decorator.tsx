@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // Hiring an interior decorator at home: a budget, an optional style, and a request to any player with the job. A
 // banner says how it's going; when they've finished and you're home, the new look is in and you get your key back.
@@ -105,7 +106,7 @@ export function DecoratorSheet({ tier, preselect, onClose, onHired }: { tier: Ho
                   <div key={p.id} className={`flex items-center gap-3 rounded-2xl border p-2.5 ${p.username === preselect ? "border-emerald-500 ring-2 ring-emerald-500/30 bg-emerald-50" : "border-slate-200"}`}>
                     <span className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-xl">🧑‍🎨</span>
                     <div className="flex-1 min-w-0">
-                      <p className="font-black text-sm truncate">@{p.username} {isOnline(p.username) && <span className="text-[10px] font-black text-emerald-600">● online</span>}</p>
+                      <p className="font-black text-sm truncate"><ProfileLink username={p.username} /> {isOnline(p.username) && <span className="text-[10px] font-black text-emerald-600">● online</span>}</p>
                       <p className="text-[11px] text-slate-500">Fee {aed(p.fee)} · total held {aed(budget + p.fee)}</p>
                     </div>
                     <button disabled={busy || budget < DECORATORS.budget.min} onClick={() => send(p)} className="h-9 px-3 rounded-xl bg-emerald-600 text-white text-xs font-black disabled:opacity-50">🔑 Send request</button>

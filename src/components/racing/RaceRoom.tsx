@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // One race, any sport (its sport is the race's own): at Dubai Autodrome in cars or on superbikes, at Meydan on horses,
 // at Al Marmoom on camels. The grid (who's in, in which car or on which mount), inviting friends (a message in the
@@ -138,7 +139,7 @@ export function RaceRoom({ code: raw }: { code: string }) {
     <Shell home={home}>
       <section className={`rounded-3xl bg-gradient-to-br ${sd?.gradient ?? "from-red-600 to-rose-800"} p-5 space-y-1`}>
         <p className="text-xs font-black uppercase tracking-wider text-white/75">{venue} · {sd ? sd.short.toLowerCase() : "race"} {view.code}</p>
-        <h1 className="text-2xl font-black">@{view.host}&apos;s race</h1>
+        <h1 className="text-2xl font-black"><ProfileLink username={view.host} />&apos;s race</h1>
         <p className="text-sm font-black">{sd?.icon ?? "🏁"} {track.name} <span className="font-semibold text-white/75">· {track.place}</span></p>
         <p className="text-sm text-white/85">{view.laps} lap{view.laps === 1 ? "" : "s"} · {view.racers.length}/{view.max} {sport === "car" ? "cars" : "runners"} · {view.status === "lobby" ? (sport === "horse" || sport === "camel" ? "going to the stalls" : "on the grid") : view.status === "racing" ? "racing now" : "finished"}</p>
       </section>
@@ -178,7 +179,7 @@ export function RaceRoom({ code: raw }: { code: string }) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={rosterThumb(presetFor(r.look ?? { gender: "woman" }))} alt="" className="w-9 h-9 rounded-full object-cover object-top bg-slate-700" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-black truncate">@{r.username}{r.id === view.hostId ? " · host" : ""}</p>
+                  <p className="font-black truncate"><ProfileLink username={r.username} />{r.id === view.hostId ? " · host" : ""}</p>
                   <p className="text-xs text-white/60">{sport === "car" ? `${carName(r.car)} · ${r.plate}` : `${rideName(sport, r)} · ${mountOf(sport, r.mount)?.breed ?? ""}`}</p>
                 </div>
               </div>
@@ -233,7 +234,7 @@ export function RaceRoom({ code: raw }: { code: string }) {
                 <button onClick={() => void start()} disabled={busy || view.racers.length < 2} className="flex-[2] h-12 rounded-2xl bg-red-600 font-black disabled:opacity-50">
                   {view.racers.length < 2 ? (sport === "car" ? "Waiting for drivers…" : "Waiting for riders…") : busy ? "Starting…" : `Start the race (${view.racers.length} ${sport === "car" ? "cars" : "runners"})`}
                 </button>
-              ) : <p className="flex-[2] h-12 rounded-2xl bg-white/5 text-sm font-bold flex items-center justify-center text-white/70">Waiting for @{view.host} to start</p>}
+              ) : <p className="flex-[2] h-12 rounded-2xl bg-white/5 text-sm font-bold flex items-center justify-center text-white/70">Waiting for <ProfileLink username={view.host} /> to start</p>}
             </div>
           )}
         </>

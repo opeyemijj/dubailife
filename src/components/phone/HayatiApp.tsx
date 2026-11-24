@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // Family (once called Hayati): partners, kids and relatives on the phone.
 //   Partners: ask a friend out; dating → daily love, dates and the proposal; engaged → plan the wedding. A man may
@@ -100,8 +101,8 @@ function Partners({ love, busy, run, me }: { love: NonNullable<ReturnType<typeof
           <div className="flex items-center gap-3">
             <Face p={x.other} />
             <div className="flex-1 min-w-0">
-              <p className="font-black text-lg leading-tight">😱 You found out about @{x.other.username}</p>
-              <p className="text-slate-600">@{x.partner.username} has been {x.status === "married" ? "married to" : x.status === "engaged" ? "engaged to" : "seeing"} @{x.other.username} too. It cost you {FAMILY.discovery.heartsLost} hearts.</p>
+              <p className="font-black text-lg leading-tight">😱 You found out about <ProfileLink username={x.other.username} /></p>
+              <p className="text-slate-600"><ProfileLink username={x.partner.username} /> has been {x.status === "married" ? "married to" : x.status === "engaged" ? "engaged to" : "seeing"} <ProfileLink username={x.other.username} /> too. It cost you {FAMILY.discovery.heartsLost} hearts.</p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -118,7 +119,7 @@ function Partners({ love, busy, run, me }: { love: NonNullable<ReturnType<typeof
         <div className="flex gap-2 overflow-x-auto pb-1">
           {rels.map((r, i) => (
             <button key={r.id} onClick={() => setPick(i)} className={`shrink-0 flex items-center gap-2 pl-1 pr-3 h-12 rounded-full ${i === pick ? "bg-rose-500 text-white" : "bg-slate-100"}`}>
-              <Face p={r.partner} size={40} /><span className="font-semibold">@{r.partner.username}</span>
+              <Face p={r.partner} size={40} /><span className="font-semibold"><ProfileLink username={r.partner.username} /></span>
             </button>
           ))}
         </div>
@@ -133,7 +134,7 @@ function Partners({ love, busy, run, me }: { love: NonNullable<ReturnType<typeof
             {love.past.map((x) => (
               <div key={`${x.partner.id}-${x.endedAt}`} className="flex items-center gap-2 text-sm">
                 <span className="text-lg">{x.divorced ? "💔" : "🥀"}</span>
-                <span className="flex-1 min-w-0 truncate"><span className="font-bold">{x.divorced ? "Divorced" : "Broke up"}</span> · @{x.partner.username}</span>
+                <span className="flex-1 min-w-0 truncate"><span className="font-bold">{x.divorced ? "Divorced" : "Broke up"}</span> · <ProfileLink username={x.partner.username} /></span>
                 <span className="text-xs text-slate-400 shrink-0">{new Date(x.endedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
               </div>
             ))}
@@ -182,7 +183,7 @@ function Single({ candidates, gender, busy, run, taken }: { candidates: Person[]
             {candidates.map((p) => (
               <div key={p.id} className="flex items-center gap-3 p-3 rounded-[22px] bg-slate-100/80">
                 <Face p={p} size={48} />
-                <span className="flex-1 font-semibold truncate">@{p.username}</span>
+                <span className="flex-1 font-semibold truncate"><ProfileLink username={p.username} /></span>
                 <button disabled={busy} onClick={() => run(() => askOut(p.id, msg), `💌 Asked @${p.username} out. Fingers crossed!`)} className="h-10 px-4 rounded-full bg-rose-500 text-white font-semibold disabled:opacity-50">Ask out</button>
               </div>
             ))}
@@ -211,7 +212,7 @@ function Together({ rel, busy, run, me, many }: { rel: Relationship; busy: boole
           <Face p={p} size={64} />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-rose-600">{label} {rel.status === "engaged" && ringOf(rel.ring)?.icon}</p>
-            <p className="text-xl font-black truncate">@{p.username}</p>
+            <p className="text-xl font-black truncate"><ProfileLink username={p.username} /></p>
             <p className="text-slate-500">since {since}</p>
           </div>
         </div>
@@ -681,7 +682,7 @@ function ChildCard({ child: k, busy, run, me, now }: { child: Child; busy: boole
     return (
       <Card className="bg-gradient-to-br from-sky-50 to-pink-50 border border-pink-200 space-y-2.5">
         <div className="flex items-center justify-between">
-          <p className="font-black text-lg">🤰 Expecting {k.name ? k.name : `a ${k.gender}`} with @{other.username}</p>
+          <p className="font-black text-lg">🤰 Expecting {k.name ? k.name : `a ${k.gender}`} with <ProfileLink username={other.username} /></p>
           <span className="px-2.5 py-1 rounded-full bg-rose-600 text-white font-black text-xs shadow-sm">
             {stage.trimesterLabel}
           </span>
@@ -714,7 +715,7 @@ function ChildCard({ child: k, busy, run, me, now }: { child: Child; busy: boole
         <div className="flex-1 min-w-0">
           <p className="text-xl font-black truncate">{display} {k.gender === "boy" ? "👦" : "👧"}</p>
           <p className="text-sm font-semibold text-rose-600">{stage.label} · {days === 0 ? "born today" : days < 14 ? `${days} day${days === 1 ? "" : "s"} old` : `${weeks} weeks old`}</p>
-          <p className="text-sm text-slate-500">with @{other.username}</p>
+          <p className="text-sm text-slate-500">with <ProfileLink username={other.username} /></p>
         </div>
       </div>
       <p className="text-slate-600">{stage.text}</p>
@@ -786,7 +787,7 @@ function Relatives({ me, relatives, busy, run }: { me: string; relatives: Relati
         <Card key={r.id} className="bg-violet-50">
           <div className="flex items-center gap-3">
             <Face p={r.person} />
-            <p className="flex-1 font-black">@{r.person.username} says they&apos;re your {relationLabel(r.relation, r.person.look?.gender).toLowerCase()}</p>
+            <p className="flex-1 font-black"><ProfileLink username={r.person.username} /> says they&apos;re your {relationLabel(r.relation, r.person.look?.gender).toLowerCase()}</p>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <Big tone="light" disabled={busy} onClick={() => run(() => respondRelative(r.id, false), "Declined.")}>Not family</Big>
@@ -800,11 +801,11 @@ function Relatives({ me, relatives, busy, run }: { me: string; relatives: Relati
         {relatives === null ? <p className="text-slate-500">Loading…</p> : accepted.length === 0 ? <p className="text-slate-500">Add your brother, sister, parents, children or cousins who play. They have to say yes.</p> : accepted.map((r) => (
           <div key={r.id} className="flex items-center gap-3">
             <Face p={r.person} size={44} />
-            <div className="flex-1 min-w-0"><p className="font-semibold truncate">@{r.person.username}</p><p className="text-sm text-slate-500">{relationLabel(r.relation, r.person.look?.gender)}</p></div>
+            <div className="flex-1 min-w-0"><p className="font-semibold truncate"><ProfileLink username={r.person.username} /></p><p className="text-sm text-slate-500">{relationLabel(r.relation, r.person.look?.gender)}</p></div>
             <button disabled={busy} onClick={() => { if (confirm(`Remove @${r.person.username} from your family?`)) void run(() => removeRelative(r.id), "Removed."); }} className="text-sm font-semibold text-slate-400">Remove</button>
           </div>
         ))}
-        {outgoing.map((r) => <p key={r.id} className="text-sm text-slate-500">Waiting for @{r.person.username} to confirm ({relationLabel(r.relation, r.person.look?.gender).toLowerCase()})</p>)}
+        {outgoing.map((r) => <p key={r.id} className="text-sm text-slate-500">Waiting for <ProfileLink username={r.person.username} /> to confirm ({relationLabel(r.relation, r.person.look?.gender).toLowerCase()})</p>)}
       </Card>
 
       <Card>
@@ -819,7 +820,7 @@ function Relatives({ me, relatives, busy, run }: { me: string; relatives: Relati
           : friends.filter((f) => !linked.has(f.id)).map((f) => (
             <div key={f.id} className="flex items-center gap-3">
               <Face p={{ look: (f.look ?? null) as Person["look"] }} size={40} />
-              <span className="flex-1 font-semibold truncate">@{f.username}</span>
+              <span className="flex-1 font-semibold truncate"><ProfileLink username={f.username} /></span>
               <button disabled={busy} onClick={() => run(() => addRelative(f.id, relation), `Asked @${f.username} to confirm.`)} className="h-9 px-3 rounded-full bg-violet-600 text-white text-sm font-semibold disabled:opacity-50">Add</button>
             </div>
           ))}

@@ -6,6 +6,7 @@
 // centred where the wall puts them (about 1.7 m up); ceiling pieces hang from the ceiling.
 
 import { CounterWork, TableMeal, TankActivity } from "./HomeActivityProps";
+import { RoomLight } from "./partyLite";
 import { eventDecor } from "./EventDecor";
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
@@ -63,7 +64,7 @@ function ChandelierCrystal({ ghost }: { ghost: Ghost }) {
       {drops.map((p, i) => (
         <mesh key={i} position={p}><octahedronGeometry args={[0.04, 0]} /><M color="#ffffff" ghost={ghost} metal={0.1} rough={0.02} emissive="#fff7e0" glow={0.8} /></mesh>
       ))}
-      {!ghost && <pointLight position={[0, top - 0.9, 0]} intensity={4} distance={6} color="#ffe7b0" />}
+      {!ghost && <RoomLight position={[0, top - 0.9, 0]} intensity={4} distance={6} color="#ffe7b0" />}
     </group>
   );
 }
@@ -78,7 +79,7 @@ function ChandelierRing({ ghost }: { ghost: Ghost }) {
           <torusGeometry args={[r, 0.022, 10, 48]} /><M color={GOLD} ghost={ghost} metal={0.9} rough={0.2} emissive="#ffd88a" glow={0.6} />
         </mesh>
       ))}
-      {!ghost && <pointLight position={[0, top - 0.9, 0]} intensity={3.5} distance={6} color="#ffe2a8" />}
+      {!ghost && <RoomLight position={[0, top - 0.9, 0]} intensity={3.5} distance={6} color="#ffe2a8" />}
     </group>
   );
 }
@@ -94,7 +95,7 @@ function PendantTrio({ w, ghost }: { w: number; ghost: Ghost }) {
           <mesh position={[0, top - 1.05, 0]}><sphereGeometry args={[0.16, 20, 14]} /><M color="#3f3a36" ghost={ghost} metal={0.3} rough={0.1} emissive="#ffcf87" glow={0.5} opacity={0.85} /></mesh>
         </group>
       ))}
-      {!ghost && <pointLight position={[0, top - 1.1, 0]} intensity={2.5} distance={5} color="#ffd59a" />}
+      {!ghost && <RoomLight position={[0, top - 1.1, 0]} intensity={2.5} distance={5} color="#ffd59a" />}
     </group>
   );
 }
@@ -107,7 +108,7 @@ function TripodLamp({ ghost }: { ghost: Ghost }) {
         return <Cyl key={i} r={0.012} h={1.55} p={[Math.cos(a) * 0.12, 0.76, Math.sin(a) * 0.12]} c={BRASS} ghost={ghost} metal={0.85} rough={0.3} rot={[Math.sin(a) * 0.12, 0, -Math.cos(a) * 0.12]} />;
       })}
       <Cyl r={0.2} top={0.15} h={0.28} p={[0, 1.6, 0]} c={IVORY} ghost={ghost} rough={0.9} seg={20} />
-      {!ghost && <pointLight position={[0, 1.5, 0]} intensity={1.2} distance={3} color="#ffd08a" />}
+      {!ghost && <RoomLight position={[0, 1.5, 0]} intensity={1.2} distance={3} color="#ffd08a" />}
     </group>
   );
 }
@@ -119,7 +120,7 @@ function Sconces({ w, ghost }: { w: number; ghost: Ghost }) {
         <group key={k} position={[k * (w / 2 - 0.15), 0.3, 0]}>
           <B s={[0.08, 0.2, 0.04]} p={[0, 0, 0.02]} c={BRASS} ghost={ghost} metal={0.85} />
           <Cyl r={0.07} top={0.05} h={0.16} p={[0, 0.12, 0.1]} c={IVORY} ghost={ghost} />
-          {!ghost && <pointLight position={[0, 0.25, 0.15]} intensity={0.6} distance={1.6} color="#ffd08a" />}
+          {!ghost && <RoomLight position={[0, 0.25, 0.15]} intensity={0.6} distance={1.6} color="#ffd08a" />}
         </group>
       ))}
     </group>
@@ -161,7 +162,7 @@ function Fireplace({ w, ghost }: { w: number; ghost: Ghost }) {
       <B s={[w * 0.8, 0.36, 0.02]} p={[0, 0.45, 0.17]} c="#111111" ghost={ghost} rough={0.2} />
       {!ghost && <mesh ref={flameRef} position={[0, 0.42, 0.185]}><planeGeometry args={[w * 0.72, 0.16]} /><meshStandardMaterial color="#ff8a1f" emissive="#ff6a00" emissiveIntensity={1.8} /></mesh>}
       <B s={[w + 0.1, 0.05, 0.46]} p={[0, 1.22, -0.04]} c={MARBLE} ghost={ghost} rough={0.25} />
-      {!ghost && <pointLight position={[0, 0.5, 0.6]} intensity={1.2} distance={3} color="#ff9a3d" />}
+      {!ghost && <RoomLight position={[0, 0.5, 0.6]} intensity={1.2} distance={3} color="#ff9a3d" />}
     </group>
   );
 }
@@ -729,7 +730,7 @@ function Console({ w, ghost }: { w: number; ghost: Ghost }) {
       <Cyl r={0.14} top={0.1} h={0.18} p={[-w * 0.3, 1.27, 0]} c={IVORY} ghost={ghost} />
       <B s={[0.3, 0.06, 0.22]} p={[w * 0.15, 0.88, 0]} c="#1e3a8a" ghost={ghost} />
       <B s={[0.28, 0.05, 0.2]} p={[w * 0.15, 0.93, 0]} c="#f5f5f4" ghost={ghost} />
-      {!ghost && <pointLight position={[-w * 0.3, 1.3, 0.2]} intensity={0.6} distance={2} color="#ffd08a" />}
+      {!ghost && <RoomLight position={[-w * 0.3, 1.3, 0.2]} intensity={0.6} distance={2} color="#ffd08a" />}
     </group>
   );
 }
@@ -830,7 +831,7 @@ function Staircase({ w, d, ghost }: { w: number; d: number; ghost: Ghost }) {
       <mesh position={[-w * 0.47, WALL_HEIGHT / 2, 0]} rotation={[Math.atan2(WALL_HEIGHT, d), 0, 0]}><boxGeometry args={[0.06, 0.25, Math.hypot(WALL_HEIGHT, d)]} /><M color="#f5f5f4" ghost={ghost} /></mesh>
       <mesh position={[-w * 0.45, WALL_HEIGHT / 2 + 0.5, 0]} rotation={[Math.atan2(WALL_HEIGHT, d), 0, 0]}><boxGeometry args={[0.02, 0.9, Math.hypot(WALL_HEIGHT, d)]} /><M color="#bae6fd" ghost={ghost} opacity={0.3} rough={0.05} /></mesh>
       <mesh position={[-w * 0.45, WALL_HEIGHT / 2 + 0.95, 0]} rotation={[Math.atan2(WALL_HEIGHT, d), 0, 0]}><boxGeometry args={[0.04, 0.04, Math.hypot(WALL_HEIGHT, d)]} /><M color={GOLD} ghost={ghost} metal={0.9} /></mesh>
-      {!ghost && <pointLight position={[0, 1.2, 0]} intensity={0.6} distance={2.5} color="#ffd08a" />}
+      {!ghost && <RoomLight position={[0, 1.2, 0]} intensity={0.6} distance={2.5} color="#ffd08a" />}
     </group>
   );
 }

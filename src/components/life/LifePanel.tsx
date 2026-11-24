@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // The citizen's life at a glance, opened from the needs dock at home (or S on a keyboard): Profile,
 // Needs and feelings, Goals (wishes, certificates, perks), Skills, People, Career and Settings.
@@ -529,7 +530,7 @@ function PeopleTab({ c, onClose }: { c: Citizen; onClose: () => void }) {
     <Link href="/phone" onClick={onClose} className="flex items-center gap-3 rounded-3xl bg-slate-100/80 p-3">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={rosterThumb(presetFor(p.look ?? { gender: "woman" }))} alt="" className="w-11 h-11 rounded-full object-cover object-top bg-white" />
-      <div className="flex-1 min-w-0"><div className="font-bold truncate">{p.name}</div><div className="text-xs text-slate-500 truncate">@{p.username}</div></div>
+      <div className="flex-1 min-w-0"><div className="font-bold truncate">{p.name}</div><div className="text-xs text-slate-500 truncate"><ProfileLink username={p.username} /></div></div>
       {talked.has(p.id) && <span className="text-[11px] font-bold text-emerald-600">Talked today</span>}
       <span className="text-[11px] font-black px-2.5 py-1 rounded-full bg-white text-slate-600">{tag}</span>
     </Link>
@@ -744,7 +745,7 @@ function BlockedPlayers() {
             : people.length === 0 ? <p className="text-xs text-slate-500">You haven&apos;t blocked anyone. Block someone from their panel: tap them, then <b>Report or block</b>.</p>
             : people.map((p) => (
               <div key={p.id} className="flex items-center gap-2 rounded-2xl bg-white p-2.5">
-                <span className="flex-1 text-sm font-bold">@{p.username}</span>
+                <span className="flex-1 text-sm font-bold"><ProfileLink username={p.username} /></span>
                 <button onClick={async () => { if (!(await unblockUser(p.id))) setPeople(people.filter((x) => x.id !== p.id)); }} className="text-xs font-black px-3 py-1.5 rounded-full bg-slate-900 text-white">Unblock</button>
               </div>
             ))}

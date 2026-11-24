@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // A game's room in Game City: pick how to play (against the computer, quick match, a private room with a
 // code, or join a friend's code), play, see the result, and the Hall of Fame. "Back to Game City" returns
@@ -400,7 +401,7 @@ function RoomChat({ roomId, myId, myUsername, floating = false }: { roomId: stri
         {lines.length === 0 && <p className="text-xs text-slate-400 text-center mt-14">Say hi to the table 👋</p>}
         {lines.map((l) => (
           <div key={l.id} className={`max-w-[85%] rounded-2xl px-3 py-1.5 text-sm ${l.user_id === myId ? "ml-auto bg-indigo-600 text-white" : "bg-slate-100"}`}>
-            {l.user_id !== myId && <span className="block text-[10px] font-black text-indigo-700">@{l.username}</span>}{l.body}
+            {l.user_id !== myId && <span className="block text-[10px] font-black text-indigo-700"><ProfileLink username={l.username} /></span>}{l.body}
           </div>
         ))}
       </div>
@@ -501,7 +502,7 @@ function PlayerStrip({ seats, me, turn, slots }: { seats: Seat[]; me: number; tu
       {seats.map((s, i) => (
         <div key={i} className={`flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border-2 bg-white ${turn === i ? "border-emerald-500" : "border-slate-200"}`}>
           <Avatar look={s.look} name={s.name} ai={s.ai} />
-          <span className="text-sm font-black">{i === me ? "You" : s.name}{s.username && i !== me ? <span className="block text-[10px] font-bold text-slate-500">@{s.username}</span> : null}</span>
+          <span className="text-sm font-black">{i === me ? "You" : s.name}{s.username && i !== me ? <span className="block text-[10px] font-bold text-slate-500"><ProfileLink username={s.username} /></span> : null}</span>
         </div>
       ))}
       {slots && Array.from({ length: Math.max(0, slots - seats.length) }, (_, i) => (
@@ -532,7 +533,7 @@ function HallOfFame({ game }: { game: GameId }) {
               <li key={r.user_id} className="flex items-center gap-3 px-4 py-2.5 border-b border-slate-50 last:border-0">
                 <span className="w-6 text-center font-black text-slate-400">{i === 0 ? <Crown className="w-5 h-5 text-amber-500 mx-auto" /> : i + 1}</span>
                 <Avatar look={r.look} name={r.name} />
-                <span className="flex-1 min-w-0"><span className="block font-black text-sm truncate">{r.name}</span><span className="block text-[11px] text-slate-500">@{r.username}</span></span>
+                <span className="flex-1 min-w-0"><span className="block font-black text-sm truncate">{r.name}</span><span className="block text-[11px] text-slate-500"><ProfileLink username={r.username} /></span></span>
                 <span className="text-right text-xs font-bold text-slate-600">{r.wins} wins · {r.played} played<span className="block font-black text-slate-900">{r.points} pts</span></span>
               </li>
             ))}

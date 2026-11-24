@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // The weekly league and friend quests (design spec 19.4, US-7.3). Points come only from actions the server
 // records: lessons and exams, scams reported or avoided, multiplayer wins, days at Peak Performer.
@@ -124,7 +125,7 @@ export function LeagueTab({ onClose }: { onClose: () => void }) {
               <li key={s.username} className={`flex items-center gap-3 rounded-2xl px-3 py-2 ${s.me ? "bg-slate-900 text-white" : zone === "up" ? "bg-emerald-50" : zone === "down" ? "bg-rose-50" : "bg-slate-50"}`}>
                 <span className="w-6 text-center font-black text-sm">{i + 1}</span>
                 <span className="flex-1 min-w-0">
-                  <span className="block font-bold text-sm truncate">@{s.username}{s.plus ? " ✨" : ""}{s.me ? " (you)" : ""}</span>
+                  <span className="block font-bold text-sm truncate"><ProfileLink username={s.username} />{s.plus ? " ✨" : ""}{s.me ? " (you)" : ""}</span>
                   {s.title && <span className={`block text-[10px] font-bold truncate ${s.me ? "text-amber-300" : "text-amber-700"}`}>{cosmeticName(s.title).name}</span>}
                 </span>
                 <span className="font-black text-sm">{s.points}</span>
@@ -196,7 +197,7 @@ export function LeagueTab({ onClose }: { onClose: () => void }) {
                     return (
                       <div key={f.id} className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3">
                         <span className="flex-1 min-w-0">
-                          <span className="block text-sm font-bold truncate">@{f.username}</span>
+                          <span className="block text-sm font-bold truncate"><ProfileLink username={f.username} /></span>
                           <span className="block text-[11px] text-slate-500">You {Math.min(quests.me, quests.target)}/{quests.target} · them {Math.min(f.points, quests.target)}/{quests.target}</span>
                         </span>
                         {f.claimed ? <span className="text-xs font-black text-emerald-600">Claimed ✓</span>

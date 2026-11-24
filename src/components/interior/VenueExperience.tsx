@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // Inside a venue: the 3D room plus everything you can do there — browse each station, inspect and
 // compare products, try accessories on, buy (with confirmation), talk to staff, apply for a job,
@@ -110,7 +111,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
   const [guideOpen, setGuideOpen] = useState(false);
   // Over-the-shoulder camera in the room, or the overview.
   // Above (the whole room), inside (over the shoulder) or eye (first person, drag to look around).
-  const [cam, setCam] = useState<"above" | "inside" | "eye" | "boat">("above");
+  const [cam, setCam] = useState<"above" | "inside" | "eye" | "boat" | "drone">("above");
   const inside = cam === "inside" || cam === "eye";
   // The 🎉 Party items, floating by the bar; sailing the yacht yourself.
   const [partyOpen, setPartyOpen] = useState(false);
@@ -1486,6 +1487,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
         inside={cam === "inside" && !ride}
         eye={cam === "eye" && !ride}
         boat={cam === "boat" && !ride}
+        drone={cam === "drone" && !ride}
         playerDirty={dirty}
         stick={inside && !ride ? stick : undefined}
         stickRun={stickRun}
@@ -1662,7 +1664,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
                 <span>🍾</span>
               </div>
               <h2 className="text-base sm:text-lg font-black text-white leading-tight">
-                @{vipCelebration.username} just popped champagne at the VIP Booth!
+                <ProfileLink username={vipCelebration.username} /> just popped champagne at the VIP Booth!
               </h2>
               <p className="text-[11px] text-amber-200/80 font-medium">
                 Sparklers ignited · VIP Booth reserved · Table status updated
@@ -1719,7 +1721,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
             <span className="text-xl leading-none">{showButtons ? "✕" : "☰"}</span>{showButtons ? "Close" : "Menu"}
           </button>
           {/* One button for the views: tap to go Above → Inside → Eyes (→ Boat on a yacht). */}
-          <ViewCycle big view={cam} views={venue.layout === "yacht" ? ["above", "inside", "eye", "boat"] : ["above", "inside", "eye"]} onChange={(v) => { gameAudio.playClickSound(); setCam(v as typeof cam); }} />
+          <ViewCycle big view={cam} views={venue.layout === "yacht" ? ["above", "inside", "eye", "boat", "drone"] : ["above", "inside", "eye"]} onChange={(v) => { gameAudio.playClickSound(); setCam(v as typeof cam); }} />
           {party && (
             <button onClick={() => { gameAudio.playClickSound(); setShowButtons(false); setPartyOpen((o) => !o); }} aria-expanded={partyOpen} aria-label="Party"
               className={`w-14 h-14 rounded-[18px] shadow-xl flex flex-col items-center justify-center text-[10px] font-black ${partyOpen ? "bg-slate-900 text-white" : "bg-gradient-to-br from-fuchsia-500 to-amber-400 text-white"}`}>
@@ -1830,7 +1832,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
             <button key={p.userId} onClick={() => { setPeopleOpen(false); setPanel({ kind: "peer", userId: p.userId, startIn: "chat" }); }}
               className="w-full flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100 text-left">
               <span className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-fuchsia-500 text-white font-black flex items-center justify-center">{p.name.slice(0, 1).toUpperCase()}</span>
-              <span className="flex-1 min-w-0"><span className="block font-black text-sm truncate">{p.name}</span><span className="block text-[11px] text-sky-600 font-bold">@{p.username}</span></span>
+              <span className="flex-1 min-w-0"><span className="block font-black text-sm truncate">{p.name}</span><span className="block text-[11px] text-sky-600 font-bold"><ProfileLink username={p.username} /></span></span>
               {room.unread[p.userId] ? <span className="min-w-6 h-6 px-1.5 rounded-full bg-rose-500 text-white text-xs font-black flex items-center justify-center">{room.unread[p.userId]}</span> : <MessagesSquare className="w-4 h-4 text-slate-400" />}
             </button>
           ))}
@@ -1839,7 +1841,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
             <button key={p.userId} onClick={() => { setPeopleOpen(false); openLocal(p); }}
               className="w-full flex items-center gap-3 p-3 rounded-2xl bg-amber-50 border border-amber-100 text-left">
               <span className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-300 to-orange-400 text-slate-900 font-black flex items-center justify-center">✨</span>
-              <span className="flex-1 min-w-0"><span className="block font-black text-sm truncate">{p.name}</span><span className="block text-[11px] text-amber-700 font-bold">@{p.username} · Local</span></span>
+              <span className="flex-1 min-w-0"><span className="block font-black text-sm truncate">{p.name}</span><span className="block text-[11px] text-amber-700 font-bold"><ProfileLink username={p.username} /> · Local</span></span>
             </button>
           ))}
         </Sheet>
@@ -2064,7 +2066,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
                 </span>
               </div>
               <h4 className="text-sm font-black text-white mt-1 truncate">
-                @{incomingBoxingChallenge.challengerUsername} challenged you!
+                <ProfileLink username={incomingBoxingChallenge.challengerUsername} /> challenged you!
               </h4>
               <p className="text-[11px] text-slate-300 mt-0.5">
                 Full 3D Celebrity Boxing Ring match. Accept to enter the ring, or decline to cancel.

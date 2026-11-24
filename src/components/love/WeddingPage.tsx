@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // A wedding's page, opened from the invitation link. Guests RSVP and send gifts; the couple shares the
 // invitation, gives guests roles and, during the ceremony, both say "I do". Someone without an account is
@@ -241,7 +242,7 @@ export function WeddingPage({ code }: { code: string }) {
           <Face p={w.woman} />
         </div>
         <h1 className="text-3xl font-black tracking-tight">
-          @{w.man.username} &amp; @{w.woman.username}
+          <ProfileLink username={w.man.username} /> &amp; <ProfileLink username={w.woman.username} />
         </h1>
         <p className="text-slate-600">
           {venue?.icon} {venue?.name}
@@ -295,7 +296,7 @@ export function WeddingPage({ code }: { code: string }) {
           </ol>
           {w.status === "planned" && (
             <p className="text-sm text-slate-600">
-              &ldquo;I do&rdquo;: @{w.man.username} {w.iDoMan ? "✅" : "…"} · @
+              &ldquo;I do&rdquo;: <ProfileLink username={w.man.username} /> {w.iDoMan ? "✅" : "…"} · @
               {w.woman.username} {w.iDoWoman ? "✅" : "…"}
             </p>
           )}
@@ -591,7 +592,7 @@ export function WeddingPage({ code }: { code: string }) {
             <div key={g.id} className="flex items-center gap-3">
               <Face p={g} size={40} />
               <span className="flex-1 font-semibold truncate">
-                @{g.username}
+                <ProfileLink username={g.username} />
               </span>
               {couple && w.status === "planned" ? (
                 <select

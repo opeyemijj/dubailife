@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // The race page, opened from the phone's Events app, the reminder banner or a shared link: the next race
 // and a countdown, signing up (and your bib), inviting friends, who's running, last week's podium, and
@@ -119,7 +120,7 @@ export function MarathonPage() {
             <span className="w-6 text-right text-sm font-black text-slate-400">{phase === "live" || r.finishMs ? i + 1 : ""}</span>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={rosterThumb(presetFor(r.look ?? { gender: "woman" }))} alt="" className="w-9 h-9 rounded-full object-cover object-top bg-slate-100" />
-            <span className="flex-1 min-w-0 font-semibold truncate">#{r.bib} @{r.username}</span>
+            <span className="flex-1 min-w-0 font-semibold truncate">#{r.bib} <ProfileLink username={r.username} /></span>
             <span className="text-sm text-slate-500 tabular-nums">{r.finishMs ? raceClock(r.finishMs) : phase === "live" ? `${shownKm(r.distance)} km` : ""}</span>
           </div>
         ))}
@@ -129,7 +130,7 @@ export function MarathonPage() {
         <section className="rounded-[28px] bg-white shadow p-5 space-y-2">
           <p className="font-black text-lg">Last week&apos;s podium</p>
           {o.last.podium.map((p, i) => (
-            <p key={p.username} className="flex items-center gap-2"><span className="text-2xl">{["🥇", "🥈", "🥉"][i]}</span><span className="flex-1 font-semibold">@{p.username}</span><span className="tabular-nums text-slate-500">{raceClock(p.finishMs)}</span></p>
+            <p key={p.username} className="flex items-center gap-2"><span className="text-2xl">{["🥇", "🥈", "🥉"][i]}</span><span className="flex-1 font-semibold"><ProfileLink username={p.username} /></span><span className="tabular-nums text-slate-500">{raceClock(p.finishMs)}</span></p>
           ))}
           <p className="text-xs text-slate-400">{o.last.finishers} finishers</p>
         </section>

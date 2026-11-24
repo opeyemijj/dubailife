@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // Runs on every page while signed in: a game invite arrives as a card at the top with Join (straight
 // into the room) or Not now. Unanswered invites show when the app opens (if the room is still waiting);
@@ -70,7 +71,7 @@ export function GameInviteListener() {
                 <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center text-sm" style={{ background: g?.bg ?? "#f1f5f9" }}>{g?.icon ?? "🎲"}</span>
               </span>
               <div className="flex-1 min-w-0">
-                <p className="font-black leading-tight truncate">@{inv.from.username} invited you</p>
+                <p className="font-black leading-tight truncate"><ProfileLink username={inv.from.username} /> invited you</p>
                 <p className="text-sm text-slate-500 truncate">to play {g?.name ?? "a game"}</p>
               </div>
               <button

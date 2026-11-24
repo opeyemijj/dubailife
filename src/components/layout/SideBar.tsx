@@ -111,9 +111,9 @@ export function SidePopover({ title, onClose, children, dark }: { title: string;
   );
 }
 
-export type ViewMode = "above" | "inside" | "eye" | "boat";
+export type ViewMode = "above" | "inside" | "eye" | "boat" | "drone";
 const VIEWS: Record<ViewMode, { icon: string; label: string }> = {
-  above: { icon: "🏠", label: "Above" }, inside: { icon: "👤", label: "Inside" }, eye: { icon: "👁️", label: "Eyes" }, boat: { icon: "🛥️", label: "Boat" },
+  above: { icon: "🏠", label: "Above" }, inside: { icon: "👤", label: "Inside" }, eye: { icon: "👁️", label: "Eyes" }, boat: { icon: "🛥️", label: "Boat" }, drone: { icon: "🚁", label: "Drone" },
 };
 /** One button for the views: shows the one you're in; each tap moves to the next (Above → Inside → Eyes …). */
 export function ViewCycle({ view, views = ["above", "inside", "eye"], onChange, big }: { view: ViewMode; views?: ViewMode[]; onChange: (v: ViewMode) => void; big?: boolean }) {

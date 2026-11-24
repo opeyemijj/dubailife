@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { PALM_SKEW } from '@/lib/city/palm';
 import { BikeCircuitSprite, CamelTrackSprite, CarCircuitSprite, MeydanSprite } from './RacingSprites';
 import { MallBlock, type MallBlockProps } from './MallBlock';
 import { MuseumOfFutureIcon, type MuseumOfFutureProps } from './MuseumOfFuture';
@@ -286,6 +287,40 @@ export interface IsometricDubaiVillaProps {
   onClick?: () => void;
   className?: string;
 }
+
+/**
+ * The villa drawn light, for where it's small (the Palm's 65 frond villas): the same look as IsometricDubaiVilla
+ * (a plot, a two-storey white villa with its accent trim, the pool, a palm) in about 20 shapes instead of ~200,
+ * and no shadow filter, so the island stays smooth to pan and zoom.
+ */
+export const VillaLite: React.FC<Pick<IsometricDubaiVillaProps, "width" | "height" | "wallColor" | "accentColor" | "hasPool" | "hasPalm" | "plotColor" | "name" | "onClick">> = ({
+  width = 120, height = 95, wallColor = "#f8fafc", accentColor = "#fef3c7", hasPool = true, hasPalm = true, plotColor = "#bbf7d0", name = "Villa", onClick,
+}) => (
+  <svg viewBox="0 0 140 105" preserveAspectRatio="none" style={{ width: `${width}px`, height: `${height}px` }} className="cursor-pointer select-none" onClick={onClick} aria-label={name}>
+    {/* The plot (its front edge below), the terrace paving. */}
+    <polygon points="18,93 134,95 134,99 18,97" fill="#94a3b8" />
+    <polygon points="18,91 134,93 141,43 25,41" fill={plotColor} />
+    <polygon points="24,86 128,88 134,48 30,46" fill="#e2e8f0" />
+    {/* The pool, front left. */}
+    {hasPool && <polygon points="29,85 60,86 64,62 33,61" fill="#0ea5e9" stroke="#ffffff" strokeWidth="1.6" />}
+    {/* The house: a dark glass ground floor, the white first floor, the roof terrace with its pergola. */}
+    <polygon points="115,81 121,77 121,40 115,44" fill="#cbd5e1" />
+    <rect x="65" y="58" width="50" height="23" fill="#0f172a" />
+    <line x1="90" y1="59" x2="90" y2="80" stroke="#475569" strokeWidth="1" />
+    <rect x="63" y="40" width="54" height="19" fill={wallColor} />
+    <rect x="63" y="56" width="54" height="3" fill={accentColor} />
+    <rect x="67" y="43" width="22" height="11" fill="#0284c7" opacity="0.75" />
+    <rect x="92" y="43" width="22" height="11" fill="#0284c7" opacity="0.75" />
+    <polygon points="63,40 117,40 121,27 67,27" fill="#f1f5f9" stroke="#cbd5e1" strokeWidth="0.6" />
+    <path d="M73,38 L76,28 M82,38 L85,28 M91,38 L94,28 M100,38 L103,28 M109,38 L112,28" stroke="#b45309" strokeWidth="2" />
+    {hasPalm && (
+      <g>
+        <path d="M124,84 Q122,68 126,54" stroke="#8b5a2b" strokeWidth="2.4" fill="none" />
+        <path d="M126,54 Q133,49 139,54 M126,54 Q122,48 116,52 M126,54 Q130,46 134,45" stroke="#16a34a" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+      </g>
+    )}
+  </svg>
+);
 
 export const IsometricDubaiVilla: React.FC<IsometricDubaiVillaProps> = ({
   width = 120,
@@ -2633,7 +2668,10 @@ export const PalmCommunityBlock = ({ width = 420, height = 380, bare = false }: 
     viewBox="0 0 520 440" 
     preserveAspectRatio="none"
     style={{ width: `${width}px`, height: `${height}px` }} 
-    className={`drop-shadow-2xl z-20 relative select-none ${bare ? '' : 'cursor-pointer group hover:scale-[1.02] transition-transform origin-bottom'}`}
+    // No shadow on the bare island (it lies on the sea, and a shadow this big needs a huge image buffer to draw).
+    // Drawn through the map's slant (PALM_SKEW), so it may reach past its box.
+    className={`${bare ? '' : 'drop-shadow-2xl'} z-20 relative select-none ${bare ? '' : 'cursor-pointer group hover:scale-[1.02] transition-transform origin-bottom'}`}
+    overflow="visible"
   >
     <defs>
       {/* Palm Sand Gradient */}
@@ -2665,6 +2703,7 @@ export const PalmCommunityBlock = ({ width = 420, height = 380, bare = false }: 
         <stop offset="100%" stopColor="#ca8a04" />
       </linearGradient>
     </defs>
+    <g transform={PALM_SKEW}>
 
     {/* 1. Deep Ocean Floor Cutout & Shadow */}
     <ellipse cx="260" cy="235" rx="245" ry="175" fill="#0284c7" opacity="0.35" />
@@ -2789,6 +2828,8 @@ export const PalmCommunityBlock = ({ width = 420, height = 380, bare = false }: 
     <g>
       <polygon points="240,360 280,360 284,400 236,400" fill="#475569" stroke="#334155" strokeWidth="1" />
       <line x1="260" y1="360" x2="260" y2="400" stroke="#facc15" strokeWidth="1.5" strokeDasharray="4 4" />
+    </g>
+
     </g>
 
     {/* 8. Crisp Island Badge */}
@@ -4457,6 +4498,13 @@ export const getBuildingSprite = (id: string, type: string, seed?: number, title
     );
   }
   if (type === 'dubai-villa' || type === 'villa' || type === 'luxury-villa' || type === 'isometric-dubai-villa') {
+    // Drawn small (the Palm's frond villas): the light villa, which looks the same at that size.
+    if ((loc?.scale ?? 1) < 0.8) {
+      return (
+        <VillaLite width={loc?.width} height={loc?.height} wallColor={loc?.wallColor || loc?.color} accentColor={loc?.accentColor}
+          hasPool={loc?.hasPool !== false} hasPalm={loc?.hasPalm !== false} plotColor={loc?.plotColor} name={title || loc?.name} onClick={loc?.onClick} />
+      );
+    }
     return (
       <IsometricDubaiVilla
         id={id || loc?.id}

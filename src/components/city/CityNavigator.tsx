@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // Choosing a destination in a building and travelling to it across the city map.
 //   directory (stores / vendors / facilities / flats) → journey (walk · taxi · direct) → arrive → enter
@@ -305,7 +306,7 @@ function PlaceIntro({ place, onPick }: { place: Place; onPick: (v: Venue) => voi
             {players.slice(0, 8).map((p) => (
               <span key={p.username} className="inline-flex items-center gap-2 pl-1 pr-3.5 h-11 rounded-full bg-slate-100">
                 <Face src={p.preset ? rosterThumb(p.preset) : null} online />
-                <span className="font-semibold">@{p.username}</span>
+                <span className="font-semibold"><ProfileLink username={p.username} /></span>
               </span>
             ))}
             {locals.slice(0, Math.max(0, 8 - players.length)).map((l) => (

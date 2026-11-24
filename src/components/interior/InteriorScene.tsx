@@ -4,6 +4,7 @@
 // Clicking a station walks the citizen there; on arrival the page opens that station's panel.
 
 import { Ceiling } from "@/components/interior/Ceiling";
+import { YachtNight } from "./yachtScene";
 import { Flies } from "@/components/avatar/Flies";
 import { VenueLuxury } from "./VenueLuxury";
 import { canvasQuality } from "@/lib/device";
@@ -127,6 +128,8 @@ interface Props {
   eye?: boolean;
   /** On a yacht: the whole boat seen from out on the water. */
   boat?: boolean;
+  /** On a yacht: from a drone high above, circling the boat. */
+  drone?: boolean;
   /** I haven't washed: flies buzz round me. */
   playerDirty?: boolean;
   /** The on-screen stick and RUN (Inside and Eye views), and where it takes me. */
@@ -572,7 +575,7 @@ const EYE_HEIGHT = 1.62;
 /** Eyes view: wide lens, camera a little behind the head (user, 2026-11-04: "too zoomed in"). */
 const EYE_FOV = 74, EYE_BACK = 0.45;
 
-function FollowCamera({ follow, inside, eye = false, boat = false, hideMe = false }: { follow: Follow; inside: boolean; eye?: boolean; boat?: boolean; /** On a ride or activity: the ride draws you, so your standing self is hidden (no double). */ hideMe?: boolean }) {
+function FollowCamera({ follow, inside, eye = false, boat = false, drone = false, hideMe = false }: { follow: Follow; inside: boolean; eye?: boolean; boat?: boolean; drone?: boolean; /** On a ride or activity: the ride draws you, so your standing self is hidden (no double). */ hideMe?: boolean }) {
   const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
   const camera = useThree((s) => s.camera);
   const last = useRef<THREE.Vector3 | null>(null);
@@ -593,16 +596,20 @@ function FollowCamera({ follow, inside, eye = false, boat = false, hideMe = fals
       if (!me) return;
       controls.target.set(me.position.x, 1.45, me.position.z);
       camera.position.set(me.position.x, INSIDE_UP, me.position.z + INSIDE_BACK);
+    } else if (drone) {
+      // A drone high over the water, the whole yacht and its wake below.
+      controls.target.set(0, -0.5, 2);
+      camera.position.set(-18, 30, 34);
     } else if (boat) {
-      // Out on the water off the yacht's quarter, the whole boat and the skyline in view.
+      // Out on the water off the yacht's quarter, low, the whole boat and the skyline in view.
       controls.target.set(0, -0.5, 0);
-      camera.position.set(22, 9, 26);
+      camera.position.set(20, 4.5, 24);
     } else {
       controls.target.copy(TARGET);
       camera.position.set(0, 7.5, 12);
     }
     controls.update();
-  }, [inside, eye, boat, controls, camera, follow]);
+  }, [inside, eye, boat, drone, controls, camera, follow]);
   useFrame((_, dt) => {
     const me = follow.current.get("me");
     if (!controls || !me) return;
@@ -931,6 +938,7 @@ export function InteriorScene({
   inside = false,
   eye = false,
   boat = false,
+  drone = false,
   playerDirty = false,
   stick,
   stickRun = false,
@@ -991,12 +999,13 @@ export function InteriorScene({
     <div className="relative w-full h-full">
     <Canvas shadows={quality.shadows ? { type: THREE.PCFShadowMap } : false} camera={{ position: [0, 7.5, d / 2 + 6], fov: 42 }} dpr={quality.dpr}>
       <PerfProbe scene="InteriorScene" />
-      <color attach="background" args={[venue.layout === "club" ? "#120a24" : OPEN_AIR.has(venue.layout) ? "#bae6fd" : "#e7e5e4"]} />
+      <color attach="background" args={[venue.layout === "club" ? "#120a24" : venue.layout === "yacht" ? (dim ? "#1b1f45" : "#f4b88a") : OPEN_AIR.has(venue.layout) ? "#bae6fd" : "#e7e5e4"]} />
       <StudioEnvironment intensity={dim ? 0.04 : venue.layout === "club" ? 0.35 : 0.45} />
       <Lights venue={venue} plan={plan} dim={dim} />
       {/* The room appears at once; everything with a model streams in on its own as it arrives. */}
       <Room venue={venue} plan={plan} onFloor={onFloor} onWallAdClick={onWallAdClick} ceiling={eye} />
-      <Suspense fallback={null}>{plan.decor}</Suspense>
+      {/* On a yacht, the lights going down make it night on the water. */}
+      <YachtNight.Provider value={!!dim}><Suspense fallback={null}>{plan.decor}</Suspense></YachtNight.Provider>
       {extras}
       {plan.stations.map((s) => (
         <Station key={s.id} s={s} active={highlight === s.id} hover={hovered === s.id} onHover={(on) => setHovered((h) => (on ? s.id : h === s.id ? null : h))} onClick={clickStation(s)} />
@@ -1076,19 +1085,22 @@ export function InteriorScene({
       {ride && onRideEnd && <Suspense fallback={null}><RideRig key={ride.key} active={ride} look={look} worn={worn} onEnd={onRideEnd} /></Suspense>}
       <ActivityFXLayer activityFX={activityFX} follow={followNodes} />
       <LabelTracker labels={labels} nodes={labelNodes} follow={followNodes} />
-      {!inside && !eye && !boat && <FitCamera width={w} depth={d} />}
-      <FollowCamera follow={followNodes} inside={inside || eye} eye={eye} boat={boat} hideMe={!!ride} />
+      {!inside && !eye && !boat && !drone && <FitCamera width={w} depth={d} />}
+      <FollowCamera follow={followNodes} inside={inside || eye} eye={eye} boat={boat} drone={drone} hideMe={!!ride} />
       <OrbitControls
         makeDefault
         target={TARGET}
         enablePan={false}
         enableDamping
         minPolarAngle={eye ? 0.35 : inside ? 0.6 : 0.45}
-        maxPolarAngle={eye ? 2.4 : inside ? 1.5 : boat ? 1.45 : 1.2}
-        minAzimuthAngle={inside || eye || boat ? -Infinity : -0.9}
-        maxAzimuthAngle={inside || eye || boat ? Infinity : 0.9}
+        maxPolarAngle={eye ? 2.4 : inside ? 1.5 : boat ? 1.5 : drone ? 1.2 : 1.2}
+        minAzimuthAngle={inside || eye || boat || drone ? -Infinity : -0.9}
+        maxAzimuthAngle={inside || eye || boat || drone ? Infinity : 0.9}
         minDistance={eye ? 0.05 : inside ? 3 : 6}
-        maxDistance={eye ? EYE_BACK + 0.15 : inside ? 11 : boat ? 70 : Math.max(w, d) + 6}
+        maxDistance={eye ? EYE_BACK + 0.15 : inside ? 11 : boat || drone ? 80 : Math.max(w, d) + 6}
+        // From the water or the drone, the camera circles the yacht slowly by itself (drag to look round).
+        autoRotate={boat || drone}
+        autoRotateSpeed={drone ? 0.5 : 0.35}
       />
     </Canvas>
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-[1]">

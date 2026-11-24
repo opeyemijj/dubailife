@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // Cars on the phone: your license, the cars you own (plate, colour, insurance, registration, fuel, and the impound
 // if the police took it; a respray at the paint shop) and your rental, and every rental company and dealership on
@@ -181,7 +182,7 @@ export function CarsApp({ onBack, onClose }: { onBack: () => void; onClose: () =
                       <span className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl bg-rose-200">🏎️</span>
                       <div className="flex-1 min-w-0">
                         <p className="font-black text-slate-900 truncate">{c?.make} {c?.model}</p>
-                        <p className="text-xs font-bold text-rose-700">Stolen from @{s.ownerUsername} · Plate {s.plate}</p>
+                        <p className="text-xs font-bold text-rose-700">Stolen from <ProfileLink username={s.ownerUsername} /> · Plate {s.plate}</p>
                       </div>
                     </div>
                     {s.isReportedStolen && (

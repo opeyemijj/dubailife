@@ -3,6 +3,7 @@
 import { Ceiling, type CeilingHole } from "@/components/interior/Ceiling";
 import { Flies } from "@/components/avatar/Flies";
 import { PartyDecor } from "@/components/invite/PartyDecor";
+import { PartyOn, clearedForParty } from "./partyLite";
 import { canvasQuality, isWebGLAvailable, resetWebGLCache, useDocumentVisible } from "@/lib/device";
 import React, { createContext, Suspense, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, Component } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
@@ -797,11 +798,11 @@ const LAYER_STEP = 0.012;
 function PlacedTransform({ item, placement, children }: { item: CatalogItem | { size: [number, number] }; placement: Placement; children: React.ReactNode }) {
   if (placement.kind === "wall") {
     const t = wallTransform(item.size, placement);
-    return <group position={[t.x, t.y, t.z]} rotation={[0, t.yaw, 0]}>{children}</group>;
+    return <group position={[t.x, t.y, t.z]} rotation={[0, t.yaw, 0]} userData={{ item: "id" in item ? item.id : undefined }}>{children}</group>;
   }
   const c = floorCenter(item.size, placement);
   // Overlapping pieces: the higher layer sits a hair above, so it shows on top (a rug over a rug, a chair on a rug).
-  return <group position={[c.x, (placement.layer ?? 0) * LAYER_STEP, c.z]} rotation={[0, -placement.rot * (Math.PI / 2), 0]}>{children}</group>;
+  return <group position={[c.x, (placement.layer ?? 0) * LAYER_STEP, c.z]} rotation={[0, -placement.rot * (Math.PI / 2), 0]} userData={{ item: "id" in item ? item.id : undefined }}>{children}</group>;
 }
 
 // ---------- room shell ----------
@@ -2553,26 +2554,6 @@ function RoomScene({
         />
       )}
 
-      {/* Outdoor Pool & Garden Party Vibes when hosting a house party on a villa/townhouse plot */}
-      {hasPlot(housingTier) && lvl === 0 && partyDecor && (
-        <group>
-          <pointLight position={[1.5, 2.2, 10.6]} intensity={5} distance={10} color="#ec4899" />
-          <pointLight position={[10.0, 2.2, 6.0]} intensity={4} distance={9} color="#38bdf8" />
-          <pointLight position={[-8.5, 2.2, 11.2]} intensity={4} distance={9} color="#f59e0b" />
-          <Suspense fallback={null}>
-            <group position={[5.8, 0, 8.8]} rotation={[0, -0.7, 0]}>
-              <CitizenAvatar look={{ gender: "woman", outfit: "party" }} animation="dance" holding="champagne" carryMode="drink" />
-            </group>
-            <group position={[-2.8, 0, 8.6]} rotation={[0, 0.6, 0]}>
-              <CitizenAvatar look={{ gender: "man", outfit: "casual" }} animation="dance" holding="cocktail" carryMode="drink" />
-            </group>
-            <group position={[9.4, 0, 6.2]} rotation={[0, -1.2, 0]}>
-              <CitizenAvatar look={{ gender: "woman", outfit: "casual" }} animation="dance" holding="cocktail" carryMode="drink" />
-            </group>
-          </Suspense>
-        </group>
-      )}
-
       {/* Visual Click-to-Walk Destination Beacon */}
       {clickBeacon && (
         <group position={[clickBeacon.x, 0.03, clickBeacon.z]} raycast={() => null}>
@@ -2592,6 +2573,8 @@ function RoomScene({
         const item = getCatalogItem(f.itemId);
         if (!item || !f.placement || f.uid === placing?.uid || levelOf(f.placement) !== lvl) return null;
         if (!item.model && !item.visual && item.kind !== "wall" && !item.id.includes("tv")) return null;
+        // A party: what's in the way of the dance floor is put away (lib: partyLite).
+        if (partyDecor !== undefined && clearedForParty(item)) return null;
         // Wall art disappears with its wall when that wall is cut away.
         if (f.placement.kind === "wall" && hiddenWalls.has(f.placement.wall)) return null;
         return (
@@ -2941,7 +2924,8 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
             <directionalLight
               position={[5, 9, 4]}
               intensity={props.lightsOut ? 0.15 : 2.2}
-              castShadow
+              // No sun shadows at a party: that pass draws every guest and piece of furniture a second time.
+              castShadow={props.partyDecor === undefined}
               shadow-mapSize={quality.shadowMapSize}
               shadow-camera-left={-6}
               shadow-camera-right={6}
@@ -2951,6 +2935,7 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
             />
             <pointLight position={[0, 2.6, 0]} intensity={props.lightsOut ? 1.2 : 6} distance={9} color={props.lightsOut ? "#c084fc" : "#fde68a"} />
 
+            <PartyOn.Provider value={props.partyDecor !== undefined}>
             <Suspense fallback={null}>
               <RoomScene
                 {...props}
@@ -2962,6 +2947,7 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
                 setIsDraggingItem={setIsDraggingItem}
               />
             </Suspense>
+            </PartyOn.Provider>
             {props.extras}
             {props.partyDecor && <PartyDecor decor={props.partyDecor} w={ROOM_SIZE} d={ROOM_SIZE} h={WALL_HEIGHT} />}
 

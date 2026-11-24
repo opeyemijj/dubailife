@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // Dubai Police and the courts on the phone. Suspects: why the money is held, hire a lawyer (a player
 // lawyer, Legal Aid or Senior Counsel), and go to court. Lawyers: their clients and the defence.
@@ -338,7 +339,7 @@ function OpenCase({ c }: { c: CaseView }) {
           {(lawyers ?? []).slice().sort((a, b) => Number(online.has(b.username)) - Number(online.has(a.username))).map((l) => (
             <button key={l.id} disabled={busy || balance < l.fee} onClick={() => void hire("player", l.id, `Lawyer @${l.username}`)}
               className="w-full flex items-center gap-2 px-3 py-3 rounded-2xl bg-white text-left disabled:opacity-50">
-              <span className="flex-1"><span className="font-semibold">@{l.username}</span> <span className={`text-xs ${online.has(l.username) ? "text-emerald-600" : "text-slate-400"}`}>{online.has(l.username) ? "● online" : "offline"}</span></span>
+              <span className="flex-1"><span className="font-semibold"><ProfileLink username={l.username} /></span> <span className={`text-xs ${online.has(l.username) ? "text-emerald-600" : "text-slate-400"}`}>{online.has(l.username) ? "● online" : "offline"}</span></span>
               <span className="font-black">{aed(l.fee)}</span>
             </button>
           ))}

@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // The citizen's phone: real conversations (kept 7 days), friends and people to find, and alerts
 // for money, knocks and friend requests — all live from the database.
@@ -268,7 +269,7 @@ function Chats({ me, online, open }: { me: string; online: ReadonlySet<string>; 
               <div>
                 <div className="text-xs font-black text-white">{activeSquad.name}</div>
                 <div className="text-[10px] text-sky-300">
-                  {activeSquad.tag} · @{activeSquad.members.join(", @")}
+                  {activeSquad.tag} · {activeSquad.members.map((m, i) => <span key={m}>{i ? ", " : ""}<ProfileLink username={m} /></span>)}
                 </div>
               </div>
               <button
@@ -307,7 +308,7 @@ function Chats({ me, online, open }: { me: string; online: ReadonlySet<string>; 
             <div className="max-h-28 overflow-y-auto space-y-1 pr-1">
               {activeSquad.messages.map((m, i) => (
                 <div key={i} className="text-xs bg-white/5 rounded-lg px-2.5 py-1.5">
-                  <span className="font-black text-amber-300">@{m.sender}: </span>
+                  <span className="font-black text-amber-300"><ProfileLink username={m.sender} />: </span>
                   <span className="text-white/90">{m.text}</span>
                 </div>
               ))}
@@ -366,11 +367,11 @@ function Chats({ me, online, open }: { me: string; online: ReadonlySet<string>; 
       )}
       {shown.map((c) => (
         <button key={c.with.id} onClick={() => open(c.with.id)} className="w-full flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-left transition-colors">
-          <Face c={c.with} online={online.has(c.with.username)} />
+          <ProfileLink username={c.with.username}><Face c={c.with} online={online.has(c.with.username)} /></ProfileLink>
           <span className="flex-1 min-w-0">
             <span className="flex items-baseline gap-2">
-              <span className="font-bold truncate">{c.with.name}</span>
-              <span className="text-[11px] text-sky-300 truncate">@{c.with.username}</span>
+              <ProfileLink username={c.with.username} className="font-bold truncate">{c.with.name}</ProfileLink>
+              <span className="text-[11px] text-sky-300 truncate"><ProfileLink username={c.with.username} /></span>
               <span className="ml-auto text-[11px] text-white/40 shrink-0">{when(c.last.created_at)}</span>
             </span>
             <span className="flex items-center gap-2">
@@ -474,10 +475,11 @@ function Thread({ me, other, online, onBack }: { me: string; other: string; onli
     <main className="fixed inset-0 h-[100dvh] bg-zinc-950 text-white flex flex-col">
       <header className="shrink-0 bg-zinc-950/95 border-b border-white/10 px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] flex items-center gap-3">
         <button onClick={onBack} className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center" aria-label="Back"><ArrowLeft className="w-4 h-4" /></button>
-        {who && <Face c={who} online={online.has(who.username)} size={40} />}
+        {/* Their face and name open their profile. */}
+        {who && <ProfileLink username={who.username}><Face c={who} online={online.has(who.username)} size={40} /></ProfileLink>}
         <div className="min-w-0">
-          <div className="font-bold truncate">{who?.name ?? "…"}</div>
-          <div className="text-[11px] text-sky-300">{who ? `@${who.username}` : ""}{who && online.has(who.username) ? " · online" : ""}{isBlocked ? " · blocked" : ""}</div>
+          <div className="font-bold truncate">{who ? <ProfileLink username={who.username}>{who.name}</ProfileLink> : "…"}</div>
+          <div className="text-[11px] text-sky-300">{who ? <ProfileLink username={who.username} /> : ""}{who && online.has(who.username) ? " · online" : ""}{isBlocked ? " · blocked" : ""}</div>
         </div>
         <div className="flex-1" />
         {who && (
@@ -671,10 +673,10 @@ function People({ me, online, open }: { me: string; online: ReadonlySet<string>;
 
   const row = (c: Contact | undefined, action: React.ReactNode, key: string) => c && (
     <div key={key} className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
-      <Face c={c} online={online.has(c.username)} size={44} />
+      <ProfileLink username={c.username}><Face c={c} online={online.has(c.username)} size={44} /></ProfileLink>
       <span className="flex-1 min-w-0">
-        <span className="block font-bold truncate">{c.name}</span>
-        <span className="block text-[11px] text-sky-300 truncate">@{c.username}{online.has(c.username) ? " · online" : ""}</span>
+        <ProfileLink username={c.username} className="block font-bold truncate">{c.name}</ProfileLink>
+        <span className="block text-[11px] text-sky-300 truncate"><ProfileLink username={c.username} />{online.has(c.username) ? " · online" : ""}</span>
       </span>
       {action}
     </div>

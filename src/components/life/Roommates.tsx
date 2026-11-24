@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // Your roommates (design spec 20.1): players sharing your bed space, matched by the server.
 
@@ -33,7 +34,7 @@ export function Roommates({ me, onClose }: { me: string; onClose: () => void }) 
       <div className="space-y-2">
         {mates.map((m) => (
           <div key={m.id} className="flex items-center gap-3 rounded-3xl bg-amber-50 p-3">
-            <div className="flex-1 min-w-0"><div className="font-bold truncate">{m.name}</div><div className="text-xs text-slate-500 truncate">@{m.username} · {seen(m.lastActive)}</div></div>
+            <div className="flex-1 min-w-0"><div className="font-bold truncate">{m.name}</div><div className="text-xs text-slate-500 truncate"><ProfileLink username={m.username} /> · {seen(m.lastActive)}</div></div>
             {m.friend ? <Link href="/phone" onClick={onClose} className="text-[11px] font-black px-3 py-1.5 rounded-full bg-white">Message</Link>
               : asked.has(m.id) ? <span className="text-[11px] font-bold text-emerald-700">Request sent</span>
               : <button onClick={() => add(m)} className="text-[11px] font-black px-3 py-1.5 rounded-full bg-slate-900 text-white">Add friend</button>}

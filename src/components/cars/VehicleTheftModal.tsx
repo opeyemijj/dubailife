@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 import React, { useState } from "react";
 import { X, Key, ShieldAlert, Sparkles, AlertTriangle, Flame } from "lucide-react";
@@ -121,7 +122,7 @@ export function VehicleTheftModal({
             <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10 text-xs">
               <div>
                 <span className="text-[10px] text-slate-400 block">Registered Owner</span>
-                <span className="font-bold text-emerald-400">@{parkedCar.ownerUsername}</span>
+                <span className="font-bold text-emerald-400"><ProfileLink username={parkedCar.ownerUsername} /></span>
               </div>
               <div>
                 <span className="text-[10px] text-slate-400 block">Estimated Value</span>

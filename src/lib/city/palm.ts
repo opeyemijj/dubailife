@@ -27,11 +27,26 @@ export const PALM_BRIDGE_END = { x: 900, y: PALM_ISLAND.cy + (400 - 220) * (PALM
 /** The causeway from the Jumeirah coast road (virtual y) out to the Palm's bridge. */
 export const PALM_CAUSEWAY = { x: 900, fromVirtualY: 1247, toVirtualY: Math.round(WORLD_HEIGHT - PALM_BRIDGE_END.y) + 4 };
 
-/** A point in the island picture (its 520×440 viewBox) to rendered map px. */
-export const islandXY = (lx: number, ly: number) => ({
-  x: PALM_ISLAND.cx + (lx - 260) * (PALM_ISLAND.width / 520),
-  y: PALM_ISLAND.cy + (ly - 220) * (PALM_ISLAND.height / 440),
-});
+/**
+ * The map's slant, so the island sits in the same 2.5D view as the rest of the city: going out to sea (up the
+ * picture) leans right by 0.2355 for each unit, as every plot's sides do, and across it drops 0.01667 to the
+ * right, as Sheikh Zayed Road does. Pivoted on the bridge (260, 400 in the picture), so the causeway still meets it.
+ * PalmCommunityBlock draws the island through the same matrix (PALM_SKEW).
+ */
+export const PALM_SLANT = 0.2355, PALM_TILT = 0.01667;
+const BRIDGE: [number, number] = [260, 400];
+/** The slant as an SVG matrix(a b c d e f) in the picture's own units. */
+export const PALM_SKEW = `matrix(1 ${-PALM_TILT} ${-PALM_SLANT} 1 ${(PALM_SLANT * BRIDGE[1]).toFixed(3)} ${(PALM_TILT * BRIDGE[0]).toFixed(3)})`;
+const slanted = (lx: number, ly: number): [number, number] => [lx - PALM_SLANT * (ly - BRIDGE[1]), ly - PALM_TILT * (lx - BRIDGE[0])];
+
+/** A point in the island picture (its 520×440 viewBox), slanted with the map, to rendered map px. */
+export const islandXY = (lx0: number, ly0: number) => {
+  const [lx, ly] = slanted(lx0, ly0);
+  return {
+    x: PALM_ISLAND.cx + (lx - 260) * (PALM_ISLAND.width / 520),
+    y: PALM_ISLAND.cy + (ly - 220) * (PALM_ISLAND.height / 440),
+  };
+};
 
 const at = (lx: number, ly: number) => {
   const p = islandXY(lx, ly);
@@ -102,7 +117,8 @@ const villa = (id: string, name: string, lx: number, ly: number, signature: bool
 
 const PALM_LAYOUT: PalmEntity[] = [
   // The island itself, enlarged and further out to sea (drawn under everything; not clickable).
-  { id: "palm", name: "Palm Jumeirah", type: "community-palm", ...at(260, 220), width: PALM_ISLAND.width, height: PALM_ISLAND.height, bare: true, layer: "ground", generated: true, interactive: false },
+  // Its box stays where it was: the picture inside is drawn through the slant (PALM_SKEW).
+  { id: "palm", name: "Palm Jumeirah", type: "community-palm", virtualX: PALM_ISLAND.cx, virtualY: WORLD_HEIGHT - PALM_ISLAND.cy, width: PALM_ISLAND.width, height: PALM_ISLAND.height, bare: true, layer: "ground", generated: true, interactive: false },
 
   // Crescent: Atlantis at the apex, Atlantis The Royal beside it to the west.
   { id: "atlantis-the-palm", name: "Atlantis, The Palm", type: "hotel-atlantis", ...at(260, 66), width: 180, height: 135, generated: true, interactive: true },

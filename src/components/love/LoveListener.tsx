@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // Runs on every page while signed in: a proposal arrives full screen, a date request as a note at the top,
 // and someone who signed up from a wedding invitation is taken back to that wedding.
@@ -52,7 +53,7 @@ export function LoveListener() {
             <div className="text-7xl">{ringOf(proposal.ring)?.icon ?? "💍"}</div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={rosterThumb(presetFor(proposal.from.look ?? { gender: "man" }))} alt="" className="w-28 h-28 mx-auto rounded-full object-cover object-top ring-4 ring-white/80" />
-            <h2 className="text-3xl font-black leading-tight">@{proposal.from.username} is asking you to marry them</h2>
+            <h2 className="text-3xl font-black leading-tight"><ProfileLink username={proposal.from.username} /> is asking you to marry them</h2>
             <p className="text-white/85">{ringOf(proposal.ring)?.name} · {datePlaceOf(proposal.place)?.label}</p>
             {proposal.message && <p className="text-xl italic">&ldquo;{proposal.message}&rdquo;</p>}
             <div className="grid grid-cols-2 gap-3 pt-2">

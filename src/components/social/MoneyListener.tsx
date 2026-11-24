@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // Tells citizens when someone sends them money, wherever they are in the app. Row-level security
 // only delivers transfers that involve this citizen.
@@ -66,7 +67,7 @@ export function MoneyListener() {
       {arrivals.map((a) => (
         <div key={a.id} className="flex items-center gap-2 bg-emerald-500 text-white rounded-2xl px-3 py-2 shadow-2xl">
           <span className="text-lg">💸</span>
-          <span className="text-xs font-black">@{a.from} sent you AED {a.amount.toLocaleString()}{a.place ? ` · at ${a.place}` : ""}</span>
+          <span className="text-xs font-black"><ProfileLink username={a.from} /> sent you AED {a.amount.toLocaleString()}{a.place ? ` · at ${a.place}` : ""}</span>
         </div>
       ))}
     </div>

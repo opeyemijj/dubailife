@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 import { onUserEvent } from "@/lib/userChannel";
 import { askForPush } from "@/lib/push/engage";
@@ -144,7 +145,7 @@ export function FriendRequestListener() {
               router.push("/phone?tab=alerts");
             }}
           >
-            <div className="text-xs font-black truncate">@{alert.username}</div>
+            <div className="text-xs font-black truncate"><ProfileLink username={alert.username} /></div>
             <div className="text-xs text-indigo-100 truncate">
               {alert.type === "request" ? "sent you a friend request" : "accepted your friend request!"}
             </div>

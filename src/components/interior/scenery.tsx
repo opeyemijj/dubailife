@@ -4,6 +4,7 @@
 // and the ice rink. Built from simple geometry at real-world scale (metres), like fixtures.tsx.
 
 import { Suspense, useEffect, useMemo, useRef } from "react";
+import { Superyacht } from "./yachtScene";
 import { CitizenAvatar } from "@/components/avatar/CitizenAvatar";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
@@ -1178,56 +1179,12 @@ export function WaxGallery() {
 // ---------------------------------------------------------------- yachts (Dubai Harbour Marina)
 
 /**
- * A yacht round its open deck (the venue floor, `width` × `depth`, bow towards -z): a white hull down to the sea,
- * chrome rails, the flybridge cabin at the bow, and the sea with the Marina skyline and Ain Dubai beyond.
+ * A yacht round its open deck (the venue floor, `width` × `depth`, bow towards -z): the superyacht cruising on a
+ * moving sea, with the coast turning round it (yachtScene.tsx).
  */
 export function YachtHull({ width, depth }: { width: number; depth: number }) {
-  const sea = useRef<THREE.Mesh>(null);
-  useFrame((s) => {
-    if (sea.current) (sea.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.16 + Math.sin(s.clock.elapsedTime * 0.8) * 0.05;
-  });
-  const hw = width / 2, hd = depth / 2;
-  const bow = useMemo(() => {
-    // The pointed bow beyond the deck's front edge.
-    const shape = new THREE.Shape();
-    shape.moveTo(-hw - 0.2, 0); shape.lineTo(0, -4.2); shape.lineTo(hw + 0.2, 0); shape.lineTo(-hw - 0.2, 0);
-    return new THREE.ExtrudeGeometry(shape, { depth: 1.7, bevelEnabled: false });
-  }, [hw]);
-  const rails = useMemo(() => {
-    const posts: Array<[number, number]> = [];
-    for (let z = -hd; z <= hd; z += 1.5) { posts.push([-hw, z]); posts.push([hw, z]); }
-    for (let x = -hw + 1.5; x < hw; x += 1.5) posts.push([x, hd]);
-    return posts;
-  }, [hw, hd]);
-  return (
-    <group>
-      {/* hull sides, stern and the bow, white with a navy stripe at the waterline */}
-      {[-1, 1].map((s) => (
-        <group key={s}>
-          <mesh position={[s * (hw + 0.1), -0.75, 0]}><boxGeometry args={[0.2, 1.7, depth]} /><meshStandardMaterial color="#f8fafc" roughness={0.3} /></mesh>
-          <mesh position={[s * (hw + 0.21), -1.35, 0]}><boxGeometry args={[0.02, 0.3, depth]} /><meshStandardMaterial color="#1e3a8a" /></mesh>
-        </group>
-      ))}
-      <mesh position={[0, -0.75, hd + 0.1]}><boxGeometry args={[width + 0.4, 1.7, 0.2]} /><meshStandardMaterial color="#f8fafc" roughness={0.3} /></mesh>
-      <mesh geometry={bow} position={[0, -1.6, -hd]} rotation={[-Math.PI / 2, 0, 0]} scale={[1, 1, 1]}><meshStandardMaterial color="#f8fafc" roughness={0.3} /></mesh>
-      {/* chrome rails round the deck */}
-      {rails.map(([x, z], i) => <mesh key={i} position={[x, 0.5, z]}><cylinderGeometry args={[0.03, 0.03, 1, 6]} /><meshStandardMaterial color="#e5e7eb" metalness={0.9} roughness={0.15} /></mesh>)}
-      {[-1, 1].map((s) => <mesh key={s} position={[s * hw, 1, 0]}><boxGeometry args={[0.05, 0.05, depth]} /><meshStandardMaterial color="#e5e7eb" metalness={0.9} roughness={0.15} /></mesh>)}
-      <mesh position={[0, 1, hd]}><boxGeometry args={[width, 0.05, 0.05]} /><meshStandardMaterial color="#e5e7eb" metalness={0.9} roughness={0.15} /></mesh>
-      {/* the flybridge cabin at the bow, with tinted glass all round */}
-      <group position={[0, 0, -hd + 1.6]}>
-        <mesh position={[0, 1.2, 0]}><boxGeometry args={[width - 1.4, 2.4, 2.6]} /><meshStandardMaterial color="#f1f5f9" roughness={0.3} /></mesh>
-        <mesh position={[0, 1.5, 1.31]}><planeGeometry args={[width - 1.8, 1.1]} /><meshStandardMaterial color="#0f172a" metalness={0.6} roughness={0.1} /></mesh>
-        <mesh position={[0, 2.5, -0.2]}><boxGeometry args={[width - 0.8, 0.12, 3.6]} /><meshStandardMaterial color="#e2e8f0" /></mesh>
-      </group>
-      {/* the sea all round, with a little wake off the stern */}
-      <mesh ref={sea} position={[0, -1.4, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
-        <planeGeometry args={[400, 400]} /><meshStandardMaterial color="#0369a1" emissive="#0ea5e9" emissiveIntensity={0.16} metalness={0.2} roughness={0.15} />
-      </mesh>
-      {[0, 1, 2].map((k) => <mesh key={k} position={[0, -1.38, hd + 2 + k * 3]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}><planeGeometry args={[1.4 + k * 1.6, 2.4]} /><meshBasicMaterial color="#e0f2fe" transparent opacity={0.5 - k * 0.14} /></mesh>)}
-      <MarinaSkyline />
-    </group>
-  );
+  // The superyacht under way on a living sea (components/interior/yachtScene).
+  return <Superyacht width={width} depth={depth} />;
 }
 
 /** Dubai Marina and JBR towers on the horizon, and Ain Dubai's wheel off to one side. */

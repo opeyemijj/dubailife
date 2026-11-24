@@ -1,4 +1,5 @@
 "use client";
+import { ProfileLink } from "@/components/social/ProfileLink";
 
 // Invite friends (US-7.2) + Contextual Viral Deep-Links:
 // Lets players share specific multiplayer invitations (Move to Dubai, 3D Pool Challenge,
@@ -150,7 +151,7 @@ export function InviteFriends({ username }: { username: string }) {
         <div className="flex flex-wrap gap-1.5 pt-0.5">
           {mine.invited.map((i) => (
             <span key={i.username} className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${i.rewarded ? "bg-emerald-100 text-emerald-700" : "bg-white text-slate-600"}`}>
-              @{i.username} {i.rewarded ? "✓ paid" : "· playing"}
+              <ProfileLink username={i.username} /> {i.rewarded ? "✓ paid" : "· playing"}
             </span>
           ))}
         </div>

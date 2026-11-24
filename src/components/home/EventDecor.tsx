@@ -6,6 +6,7 @@
 // the cake table, the DJ booth, a gilded gate and a fairy-light canopy. `tint` recolours the linens and accents.
 
 import { useRef } from "react";
+import { RoomLight } from "./partyLite";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { WALL_HEIGHT } from "@/lib/furniture";
@@ -126,7 +127,7 @@ export function Lantern({ ghost }: { ghost: Ghost }) {
     <group>
       <mesh position={[0, 0.3, 0]}><cylinderGeometry args={[0.13, 0.16, 0.5, 6]} /><M color="#fef3c7" ghost={ghost} emissive="#f59e0b" glow={1.4} opacity={0.85} /></mesh>
       <mesh position={[0, 0.6, 0]}><coneGeometry args={[0.17, 0.15, 6]} /><M color={GOLD} ghost={ghost} metal={0.8} /></mesh>
-      {!ghost && <pointLight position={[0, 0.35, 0]} intensity={0.8} distance={2.5} color="#fbbf24" />}
+      {!ghost && <RoomLight position={[0, 0.35, 0]} intensity={0.8} distance={2.5} color="#fbbf24" />}
     </group>
   );
 }
