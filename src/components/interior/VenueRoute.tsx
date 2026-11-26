@@ -11,7 +11,7 @@ import { SmallLoader } from "@/components/GameLoadingScreen";
 import { hopPending } from "@/lib/locals";
 import { TowerArrival } from "@/components/property/TowerArrival";
 import HIGHRISE from "@/data/venues/highrise.json";
-import { CITY_LIST, cityOfPlace, mapPathFor } from "@/lib/city/cities";
+import { cityOfPlace, mapPathFor } from "@/lib/city/cities";
 import { CityGate } from "@/components/city/CityGate";
 
 /** The floor a venue is on, when it's up a tower (src/data/venues/highrise.json). */
@@ -45,7 +45,7 @@ function PlaceInCity({ placeId, venueId }: { placeId: string; venueId?: string }
   }, [away, place, venueId]);
 
   // At an airport: straight into its terminal's check-in (an old link to its room). Away from it, the trip there first.
-  const isAirport = !!place?.route && CITY_LIST.some((c) => c.airport === place.id);
+  const isAirport = !!place?.route?.startsWith("/fly");
   useEffect(() => {
     if (isAirport && !away && place?.route) router.replace(place.route);
   }, [isAirport, away, place, router]);

@@ -1491,7 +1491,9 @@ export const PLACES: Place[] = [
       { id: "park:stretch", label: "Calisthenics & Stretching on the Green", icon: "🧘", animation: "clap", price: 0, reward: 20, need: { kind: "energy", amount: 20 }, desc: "Push-ups and core workout on the park lawn." },
     ],
   })),
-  single("dxb-terminal-1", "DXB Terminal 1 (Concourse D)", "attraction", venue("DXB Terminal 1 (Sheikh Rashid Concourse)", "Airport Terminal", "hotel", {
+  // The airport's buildings (Terminals 1, 2 and 3 and the airport itself) all take you straight to the Dubai Life
+  // Airways check-in counter (/fly): no entrance, no room of tickets first.
+  { ...single("dxb-terminal-1", "DXB Terminal 1 (Concourse D)", "attraction", venue("DXB Terminal 1 (Sheikh Rashid Concourse)", "Airport Terminal", "hotel", {
     palette: PALETTES.tech,
     blurb: "International gateway hosting 60+ global airlines including British Airways, Singapore Airlines, and Lufthansa.",
     products: [
@@ -1504,8 +1506,8 @@ export const PLACES: Place[] = [
       { id: "dxb:concourse-walk", label: "Stroll Concourse D Glass Walkway", icon: "🧳", animation: "clap", reward: 20 },
       { id: "dxb:plane-spot", label: "Plane Spotting on Apron", icon: "🔭", animation: "sit", reward: 25 },
     ],
-  })),
-  single("dxb-terminal-2", "DXB Terminal 2 (flydubai & Executive)", "attraction", venue("DXB Terminal 2 (flydubai & Executive)", "Airport Terminal", "hotel", {
+  })), route: "/fly?to=abu-dhabi" },
+  { ...single("dxb-terminal-2", "DXB Terminal 2 (flydubai & Executive)", "attraction", venue("DXB Terminal 2 (flydubai & Executive)", "Airport Terminal", "hotel", {
     palette: PALETTES.dining,
     blurb: "Regional flight hub for flydubai and VIP executive business jets with apron tarmac boarding.",
     products: [
@@ -1518,8 +1520,7 @@ export const PLACES: Place[] = [
       { id: "dxb:t2-tarmac", label: "Board via Tarmac Airstairs", icon: "🚶", animation: "clap", reward: 15 },
       { id: "dxb:exec-lounge", label: "Executive VIP Flight Lounge", icon: "🍸", animation: "sit", reward: 30 },
     ],
-  })),
-  // Going to the airport takes you straight into the terminal's check-in (/fly), not a room first.
+  })), route: "/fly?to=abu-dhabi" },
   { ...single("dxb-terminal-3", "DXB Terminal 3 (Dubai Life Airways)", "attraction", venue("DXB Terminal 3 (Dubai Life Airways)", "Airport Terminal", "hotel", {
     palette: PALETTES.luxury,
     blurb: "The world's largest airport terminal and the home of Dubai Life Airways: check in here to fly to Abu Dhabi.",
@@ -1537,6 +1538,8 @@ export const PLACES: Place[] = [
     id: "dxb-international-airport",
     name: "Dubai International Airport (DXB)",
     kind: "attraction",
+    // Every DXB building takes you straight to the Dubai Life Airways check-in counter (/fly), never a room first.
+    route: "/fly?to=abu-dhabi",
     blurb: "World's busiest international airport hub connecting 250+ global destinations across Terminals 1, 2 and 3.",
     venues: [
       venue("DXB Terminal 3 (Dubai Life Airways)", "Airport Terminal", "hotel", {

@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { CITIES, CITY_LIST, COMING_CITIES, type CityId } from "@/lib/city/cities";
 import { useCurrentCity } from "@/lib/city/presence";
 import { gameAudio } from "@/utils/gameAudio";
+import { ModalPortal } from "@/components/ui/modal-portal";
 
 type Picked = { kind: "fly"; to: CityId } | { kind: "soon"; name: string; icon: string; city: string } | null;
 
@@ -46,8 +47,10 @@ export function CitySwitcher() {
         ))}
       </nav>
 
-      {picked && (
-        <div className="fixed inset-0 z-[60] pointer-events-auto flex items-end sm:items-center justify-center sm:p-4 bg-slate-950/50" onClick={() => setPicked(null)}>
+      {/* At the top of the page (not inside the top bar), so it sits above the bottom menu, the map's chips and
+          every banner and notification. */}
+      {picked && <ModalPortal>
+        <div className="fixed inset-0 z-[300] pointer-events-auto flex items-end sm:items-center justify-center sm:p-4 bg-slate-950/50" onClick={() => setPicked(null)}>
           <div role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}
             className="w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl bg-white text-slate-900 px-5 pt-3 sm:pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-center shadow-2xl">
             <div className="sm:hidden mx-auto mb-3 w-10 h-1.5 rounded-full bg-slate-200" aria-hidden />
@@ -71,7 +74,7 @@ export function CitySwitcher() {
             <button onClick={() => setPicked(null)} className="mt-2 w-full h-12 rounded-full bg-slate-100 font-bold active:scale-95">{picked.kind === "fly" ? "Not now" : "OK"}</button>
           </div>
         </div>
-      )}
+      </ModalPortal>}
     </>
   );
 }

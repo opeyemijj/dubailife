@@ -5,6 +5,6 @@ import type { CityId } from "@/lib/city/cities";
 
 const InteractiveMap = dynamic(() => import("@/components/map/InteractiveMap").then((m) => m.InteractiveMap), { ssr: false });
 
-export function CityPreview({ city }: { city: CityId }) {
-  return <main className="fixed inset-0 bg-[#d6bc8a]"><InteractiveMap city={city} hideTopHUD onAttemptInteract={() => {}} /></main>;
+export function CityPreview({ city, open }: { city: CityId; open?: string }) {
+  return <main className="fixed inset-0 bg-[#d6bc8a]"><InteractiveMap city={city} hideTopHUD openPlaceId={open} onAttemptInteract={() => {}} /></main>;
 }

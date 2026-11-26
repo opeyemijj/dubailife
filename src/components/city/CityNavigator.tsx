@@ -61,8 +61,11 @@ const taxiMinutes = (metres: number) => Math.max(3, Math.round(3 + metres / 1000
 export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onClose }: Props) {
   const router = useRouter();
   const initial = journeyVenueId ? place.venues.find((v) => v.id === journeyVenueId) : undefined;
+  // An airport (its route is the check-in, /fly): straight to how you get there, and straight in if you're there.
+  const isAirport = !!place.route?.startsWith("/fly");
   const [destination, setDestination] = useState<Destination | null>(
-    initial ? { place, label: initial.name, route: `/place/${place.id}/${initial.id}` } : null,
+    initial ? { place, label: initial.name, route: `/place/${place.id}/${initial.id}` }
+      : isAirport ? { place, label: place.name, route: place.route! } : null,
   );
   const [travelling, setTravelling] = useState<TravelMode | null>(null);
   // A taxi ride is played out in 3D (TaxiJourney), then the citizen is moved there.
@@ -70,6 +73,13 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
   // A metro trip: walk to the station, ride (MetroJourney), walk on to the place.
   const [metro, setMetro] = useState<{ plan: NonNullable<ReturnType<typeof metroPlan>>; to: { x: number; y: number }; gold: boolean } | null>(null);
   const { citizen } = useCitizen();
+  // An airport: straight to the check-in counter. No trip to pick (taxi, metro), no entrance: you're at the airport.
+  useEffect(() => {
+    if (!isAirport || !place.route) return;
+    const at = entranceOf(place.id);
+    if (at) updateCitizen((c) => ({ ...c, location: { ...at, placeId: place.id, city: cityOfPlace(place.id) } }));
+    router.replace(place.route);
+  }, [isAirport, place.id, place.route, router]);
   const [dressCodeVenue, setDressCodeVenue] = useState<Venue | null>(null);
   // The last few metres in 3D before going in (venues; homes open straight away).
   const [arriving, setArriving] = useState<{ taxi: boolean; own?: ParkedCar } | null>(null);
@@ -126,6 +136,8 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
     setTravelling(null);
     enter(false);
   };
+  // An airport opens its check-in counter (the effect above): nothing to show here meanwhile.
+  if (isAirport) return null;
   if (arriving && destination) {
     return (
       <ModalPortal>
