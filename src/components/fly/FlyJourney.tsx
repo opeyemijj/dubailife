@@ -22,8 +22,10 @@ import { canvasQuality } from "@/lib/device";
 import { gameAudio } from "@/utils/gameAudio";
 import { FLOOR, SPOTS, Terminal } from "./Terminal";
 import { FLIGHT_SECONDS, FlightScene } from "./Flight";
+import { AirportWalk } from "./AirportWalk";
 
-export type Stage = "checkin" | "passport" | "dutyfree" | "gate" | "boarding" | "flight" | "arrived";
+// "walk": the airport walk (./AirportWalk), where you walk the terminal yourself from check-in to the gate.
+export type Stage = "checkin" | "walk" | "passport" | "dutyfree" | "gate" | "boarding" | "flight" | "arrived";
 const WALK = 1.9;
 
 /** Walks the avatar along waypoints at a steady pace, then calls back. */
@@ -155,9 +157,13 @@ export function FlyJourney({ from: fromCity, to: toCity, dev }: { from: CityId; 
     gameAudio.playCoinSound();
     void refreshCitizen();
     setBooking(r.data);
-    setStage("passport");
-    walker.walkTo([[0, 22], SPOTS.gatesFront]);
+    // Walk the terminal yourself (check-in, passport control, security, your gate), or skip it (walkSkipped).
+    setStage("walk");
   };
+  /** Skipped the airport walk: the terminal walks you to passport control as before. */
+  const walkSkipped = () => { setStage("passport"); walker.walkTo([[0, 22], SPOTS.gatesFront]); };
+  /** Walked it yourself to the gate: straight onto the plane. */
+  const walkDone = () => { walker.setPose({ x: SPOTS.gate[0], z: SPOTS.gate[1], yaw: 0 }); board(); };
   const scanPassport = () => {
     gameAudio.playClickSound();
     gatesOpen.current = 1;
@@ -185,6 +191,10 @@ export function FlyJourney({ from: fromCity, to: toCity, dev }: { from: CityId; 
   const cityName = CITIES[to].name;
   // Arrival: where to go in the city you've landed in (its hotels and homes; lib/city/cities prefixes).
   const hereHotels = hotelsIn(to).slice(0, 8);
+
+  if (stage === "walk" && booking) {
+    return <AirportWalk from={from} to={to} seat={booking.seat} seed={booking.id} look={look} onDone={walkDone} onSkip={walkSkipped} />;
+  }
 
   return (
     <main className="fixed inset-0 bg-slate-950 select-none touch-none">

@@ -1,0 +1,69 @@
+{
+  "_note": "The airport walk (components/fly/AirportWalk): you walk the departures terminal yourself, the way you would for real: find your flight on the departures board, drop your bag at your airline's check-in row, passport control's e-gates, security (what goes in the tray, your bag on the X-ray belt, through the arch), then find your gate from your boarding pass and board. Each airport has its own look, gate letter, landmark and real-life tips (general advice: always check your own airline and airport). parSeconds: the time for three stars. Scores are kept on the device only; nothing here pays money.",
+  "parSeconds": 210,
+  "airports": {
+    "dubai": {
+      "terminal": "Terminal 3",
+      "gateLetter": "B",
+      "row": 3,
+      "eGates": "Smart Gates",
+      "landmark": "palm",
+      "palette": { "floor": "#ece6da", "wall": "#f7f5f0", "accent": "#c9a24a", "pillar": "#d9d2c3", "glass": "#9fc7dd" },
+      "intro": "Dubai International is one of the world's busiest airports for international passengers. Terminal 3 has a giant duty-free hall under its arched roof.",
+      "tips": {
+        "board": "Arrive about 3 hours before an international flight. The departures screens show your flight's check-in row and, later, your gate.",
+        "checkin": "Check-in usually closes 60 minutes before departure. Many airlines let you check in online and just drop your bag at the counter.",
+        "passport": "UAE residents and many visitors can use the Smart Gates: scan your passport or Emirates ID, look at the camera, and the gate opens. No officer needed.",
+        "security": "Laptops, liquids and anything metal go in the tray. Liquids must be in containers of 100 ml or less, all in one clear bag.",
+        "gate": "Some Terminal 3 gates (the A gates) are reached by a short automated train. Boarding usually starts 45 to 60 minutes before departure, and gates close about 20 minutes before."
+      }
+    },
+    "abu-dhabi": {
+      "terminal": "Terminal A",
+      "gateLetter": "A",
+      "row": 2,
+      "eGates": "biometric e-gates",
+      "landmark": "arch",
+      "palette": { "floor": "#e6e9ec", "wall": "#f8fafc", "accent": "#0f766e", "pillar": "#cfd8dc", "glass": "#a7d3e0" },
+      "intro": "Abu Dhabi's Terminal A opened in 2023: one huge, bright hall under a curved roof, with the piers fanning out from the middle.",
+      "tips": {
+        "board": "Find your flight on the departures screens first: they show the check-in row for your flight and when check-in closes.",
+        "checkin": "Have your passport ready. Power banks and spare batteries must go in your cabin bag, never in the bag you check in.",
+        "passport": "Abu Dhabi uses biometric e-gates: your face is matched to your passport, so keep looking at the camera until the gate opens.",
+        "security": "Take your laptop and tablet out of your bag, and put your phone, keys, belt and coins in the tray. Big water bottles have to be emptied or thrown away.",
+        "gate": "Read your gate on your boarding pass, then follow the overhead signs. Gate numbers can change, so check the screens again on the way."
+      }
+    },
+    "doha": {
+      "terminal": "Main Terminal",
+      "gateLetter": "C",
+      "row": 4,
+      "eGates": "e-gates",
+      "landmark": "bear",
+      "palette": { "floor": "#ede9e3", "wall": "#faf8f5", "accent": "#8a1538", "pillar": "#ddd5cb", "glass": "#a9cfe0" },
+      "intro": "Hamad International is Qatar's hub. Its duty-free hall is famous for a giant yellow teddy bear sculpture, and it has an indoor tropical garden called the Orchard.",
+      "tips": {
+        "board": "Qatar is a different country from the UAE: you need the right visa or entry permit before you fly. The screens show your check-in row.",
+        "checkin": "Weigh your bag before you leave home: going over your allowance costs extra at the counter.",
+        "passport": "Many travellers can use the e-gates at passport control. If a gate won't read your passport, an officer at the desk will help.",
+        "security": "Anything metal sets off the arch: take off your belt and watch, and put your phone and keys in the tray.",
+        "gate": "Hamad's gates are spread over concourses A to E, with a train between some of them. Leave time to walk: some gates are a long way from the duty-free hall."
+      }
+    }
+  },
+  "checkinQuiz": {
+    "q": "Your power bank: where does it go?",
+    "options": [
+      { "text": "In my cabin bag, with me", "right": true },
+      { "text": "In the suitcase I check in", "right": false }
+    ],
+    "why": "Lithium batteries can overheat. In the cabin the crew can deal with it, so power banks and spare batteries always fly with you, never in the hold."
+  },
+  "securityItems": [
+    { "id": "laptop", "icon": "💻", "label": "Laptop", "answer": "tray", "why": "Laptops and tablets come out of the bag and go in a tray on their own." },
+    { "id": "liquids", "icon": "🧴", "label": "Liquids bag (all under 100 ml)", "answer": "tray", "why": "Your clear bag of small liquids goes in the tray so the officer can see it." },
+    { "id": "phone", "icon": "📱", "label": "Phone, keys & coins", "answer": "tray", "why": "Metal sets off the arch, so pockets go in the tray." },
+    { "id": "water", "icon": "🥤", "label": "Full 500 ml water bottle", "answer": "bin", "why": "Over 100 ml isn't allowed through security: empty it or bin it, and fill up after." },
+    { "id": "book", "icon": "📖", "label": "A book", "answer": "bag", "why": "Books can stay in your bag." }
+  ]
+}
