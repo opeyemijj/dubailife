@@ -711,6 +711,52 @@ export function AdResortSprite(p: P) {
   );
 }
 
+/** A driving school: the training centre, and its yard with a learner car, cones and parking bays. */
+export function AdDrivingSchoolSprite(p: P) {
+  return (
+    <Svg {...p}>
+      <Plinth x={16} y={182} w={244} d={60} fill="#cbd5e1" edge="#94a3b8" />
+      {/* The yard: tarmac with bay lines, cones and a learner car */}
+      <polygon points="150,180 250,180 272,160 172,160" fill="#475569" />
+      {[0, 1, 2, 3].map((i) => <line key={i} x1={176 + i * 22} y1={180} x2={190 + i * 22} y2={160} stroke="#f8fafc" strokeWidth="1.4" />)}
+      {[[164, 176], [214, 172], [244, 168]].map(([x, y], i) => <path key={`c${i}`} d={`M${x},${y} l3,-7 l3,7 z`} fill="#f97316" />)}
+      <rect x={188} y={164} width={22} height={9} rx="3" fill="#f8fafc" stroke="#334155" strokeWidth="0.6" />
+      <rect x={192} y={160} width={13} height={5} rx="2" fill="#7dd3fc" />
+      <rect x={195} y={153} width={8} height={6} fill="#dc2626" /><text x={199} y={158} textAnchor="middle" fontSize="5" fontWeight="900" fill="#fff">L</text>
+      {/* The training centre */}
+      <Box x={30} y={172} w={112} h={50} d={30} front="#f8fafc" side="#cbd5e1" top="#e2e8f0" />
+      {Array.from({ length: 6 }, (_, i) => <rect key={i} x={38 + i * 17} y={132} width={9} height={12} fill="#7dd3fc" opacity="0.85" />)}
+      <rect x={78} y={152} width={16} height={20} fill="#334155" />
+      <rect x={40} y={112} width={92} height={10} rx="2" fill="#f59e0b" />
+      <text x={86} y={120} textAnchor="middle" fontSize="7" fontWeight="900" fill="#111827">DRIVING SCHOOL</text>
+      <Palm x={22} y={184} /><Palm x={150} y={184} />
+      <NameBoard x={140} y={194} text={p.name ?? 'Driving School'} bg="#b45309" />
+    </Svg>
+  );
+}
+
+/** Game City: a neon arcade hall with a giant dice and chess piece on the roof. */
+export function AdGameCitySprite(p: P) {
+  return (
+    <Svg {...p}>
+      <Plinth x={16} y={182} w={244} d={60} fill="#c4b5fd" edge="#7c3aed" />
+      <Box x={40} y={172} w={186} h={58} d={36} front="#1e1b4b" side="#312e81" top="#4338ca" />
+      {/* Neon stripes and glowing windows */}
+      <rect x={40} y={122} width={186} height={4} fill="#f0abfc" />
+      <rect x={40} y={160} width={186} height={3} fill="#22d3ee" />
+      {Array.from({ length: 8 }, (_, i) => <rect key={i} x={50 + i * 22} y={132} width={12} height={20} rx="2" fill={['#f472b6', '#facc15', '#34d399', '#60a5fa'][i % 4]} opacity="0.9" />)}
+      <path d="M120,172 v-14 a13,12 0 0 1 26,0 v14 z" fill="#f0abfc" />
+      {/* The dice and the chess knight on the roof */}
+      <Box x={66} y={108} w={26} h={26} d={16} front="#ffffff" side="#e5e7eb" top="#f8fafc" />
+      {[[72, 96], [85, 89], [78, 92]].map(([x, y], i) => <circle key={i} cx={x} cy={y} r="2.2" fill="#dc2626" />)}
+      <path d="M170,108 h22 v-6 h-3 c0,-10 -2,-18 -10,-24 c-6,4 -8,10 -6,14 l-4,4 l3,4 l5,-2 c0,2 -1,4 -4,4 h-3 z" fill="#facc15" stroke="#a16207" strokeWidth="0.8" />
+      <text x={133} y={148} textAnchor="middle" fontSize="11" fontWeight="900" fill="#ffffff">GAME CITY</text>
+      <Palm x={26} y={184} /><Palm x={246} y={180} />
+      <NameBoard x={140} y={194} text={p.name ?? 'Game City'} bg="#6d28d9" />
+    </Svg>
+  );
+}
+
 /** The sprite for an Abu Dhabi type, or null to use the shared ones (towers, villas, malls, hotels, circuits). */
 export function abuDhabiSprite(type: string, loc: { id?: string; width?: number; height?: number; name?: string }) {
   const p = { width: loc.width, height: loc.height, name: loc.name };
@@ -733,6 +779,8 @@ export function abuDhabiSprite(type: string, loc: { id?: string; width?: number;
     case 'ad-dining': return <SmallVenueSprite {...p} />;
     case 'ad-camp': return <DesertCampSprite {...p} />;
     case 'ad-university': return <UniversitySprite {...p} />;
+    case 'ad-driving-school': return <AdDrivingSchoolSprite {...p} />;
+    case 'ad-game-city': return <AdGameCitySprite {...p} />;
     case 'ad-fort': return <FortSprite {...p} />;
     case 'ad-arena': return <ArenaSprite {...p} />;
     case 'ad-hotel-tower': return <HotelTowerSprite {...p} tint={(loc as { tint?: string }).tint} />;

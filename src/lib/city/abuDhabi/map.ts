@@ -273,6 +273,7 @@ export const AD_BUILDINGS: any[] = [
   home("ad-shakhbout-townhouse-3", "Shakhbout Townhouse", "small-house", "ad-tile-mussafah", 271, -150),
   home("ad-shakhbout-townhouse-4", "Shakhbout Townhouse", "small-house", "ad-tile-mussafah", 396, -150),
   home("ad-shakhbout-townhouse-5", "Shakhbout Townhouse", "small-house", "ad-tile-mussafah", 521, -150),
+  b("ad-driving-school", "Capital Driving School", "ad-driving-school", "ad-tile-mussafah", -149, -150, 190, 130),
   billboard("ad-bb-mussafah", "E30 Billboard", "ad-tile-mussafah", -329, -150, "classic-highway"),
   // Al Jubail Island: the mangrove park, the golf club, the beach club, the marina, jet skis and island villas.
   home("ad-jubail-villa-1", "Jubail Island Villa", "dubai-villa", "ad-tile-jubail", 250, 70),
@@ -339,6 +340,7 @@ export const AD_BUILDINGS: any[] = [
   home("ad-shahama-villa-4", "Al Shahama Villa", "dubai-villa", "ad-tile-shahama", 496, 70),
   home("ad-shahama-villa-5", "Al Shahama Villa", "dubai-villa", "ad-tile-shahama", 621, 70),
   b("ad-deerfields", "Deerfields Mall", "mall", "ad-tile-shahama", -329, 70, 220, 150),
+  b("ad-game-city", "Game City Abu Dhabi", "ad-game-city", "ad-tile-shahama", -79, 70, 220, 150),
   home("ad-shahama-villa-6", "Al Shahama Villa", "dubai-villa", "ad-tile-shahama", 121, -40),
   home("ad-shahama-villa-7", "Al Shahama Villa", "dubai-villa", "ad-tile-shahama", 246, -40),
   home("ad-shahama-villa-8", "Al Shahama Villa", "dubai-villa", "ad-tile-shahama", 371, -40),

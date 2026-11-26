@@ -5,6 +5,8 @@
 
 import { placeKit, registerCityPlaces } from "@/lib/city/places";
 import { quickCourseActivities } from "@/lib/academy/quickData";
+import { getCoursesByCampus } from "@/lib/city/academic";
+import { GAMES } from "@/lib/games/registry";
 import type { Place, Venue, VenueActivity } from "@/lib/city/types";
 
 const { venue, spa, pool, single, ticket, yacht, gymActivities, PALETTES } = placeKit;
@@ -505,6 +507,9 @@ export const AD_PLACES: Place[] = [
     { campus: "ud", label: "Study cybersecurity, healthcare, accounting & logistics", icon: "🔬" },
     { campus: "onebrain", label: "Take AI, data & programming", icon: "💻" },
   ]),
+  // ---------------------------------------------------------------- driving school and Game City
+  drivingSchool("ad-driving-school", "Capital Driving School", "Mussafah's driving school: the eye test, theory and the Smart Yard for your licence."),
+  gameCity("ad-game-city", "Game City Abu Dhabi", "Ludo, chess and all of Game City's games: play your friends live."),
   // ---------------------------------------------------------------- the wider city: everyday life
   neighbourhood("ad-khalidiyah-centre", "Khalidiyah Neighbourhood Centre", "Al Khalidiyah's shops for every day."),
   neighbourhood("ad-mbz-centre", "MBZ Neighbourhood Centre", "Mohammed Bin Zayed City's local shops."),
@@ -656,12 +661,47 @@ function university(id: string, name: string, blurb: string, courses: { campus: 
         activities: [
           // Quick courses taught on this campus (enrol, three lessons, a quiz, a certificate: lib/academy/quick).
           ...quickCourseActivities(id),
-          ...courses.map((c, i): VenueActivity => ({ id: `${id}:study-${i}`, label: c.label, icon: c.icon, href: `/academics/${c.campus}` })),
+          // Every course from its partner campuses, each opening straight to that course (lib/city/academic).
+          ...courses.flatMap((c) => campusCourses(id, c.campus)),
+          ...courses.map((c, i): VenueActivity => ({ id: `${id}:study-${i}`, label: `${c.label}: see all`, icon: c.icon, href: `/academics/${c.campus}` })),
           { id: `${id}:library`, label: "Study in the library", icon: "📖", animation: "sit", reward: 10, need: { kind: "energy", amount: 10 } },
         ],
       }),
       venue(`${name} Campus Café`, "Campus café", "cafe"),
     ],
+  };
+}
+
+/** A campus's courses (books left out), as activities opening each course. */
+function campusCourses(placeId: string, campus: string): VenueActivity[] {
+  return getCoursesByCampus(campus).filter((c) => !c.author)
+    .map((c) => ({ id: `${placeId}:course:${c.id}`, label: `Course: ${c.title} · AED ${c.tuitionFee.toLocaleString()}`, icon: c.icon, href: `/academics/course/${c.id}` }));
+}
+
+/** A driving school: the same licence as Dubai's Driving Academy (eye test, theory, Smart Yard: /driving). */
+function drivingSchool(id: string, name: string, blurb: string): Place {
+  return {
+    id, name, kind: "attraction", blurb,
+    venues: [venue(name, "Driving school", "hotel", {
+      layout: "lobby", palette: { floor: "#e2e8f0", wall: "#f8fafc", accent: "#f59e0b" }, role: "Driving instructor", noJob: true,
+      blurb: "Pass the eye test, the theory exam and the Smart Yard to get your licence. It's valid in every city.",
+      products: [],
+      activities: [
+        { id: `${id}:licence`, label: "Get your driving licence: eye test, theory, Smart Yard", icon: "🪪", href: "/driving" },
+        { id: `${id}:theory`, label: "Revise road rules in the classroom", icon: "📘", animation: "sit", reward: 10, need: { kind: "energy", amount: 10 } },
+      ],
+    })],
+  };
+}
+
+/** Game City: every game in Dubai's Game City, each opening its room (/games/<id>) to play friends live. */
+function gameCity(id: string, name: string, blurb: string): Place {
+  return {
+    id, name, kind: "attraction", blurb,
+    venues: [venue(name, "Game City", "electronics", {
+      role: "Game host", noJob: true, products: [], blurb: "Pick a game and play your friends live.",
+      activities: GAMES.map((g): VenueActivity => ({ id: `${id}:${g.id}`, label: `Play ${g.name}: ${g.tagline}`, icon: g.icon, href: `/games/${g.id}` })),
+    })],
   };
 }
 

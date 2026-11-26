@@ -7,6 +7,8 @@
 
 import { placeKit, registerCityPlaces } from "@/lib/city/places";
 import { quickCourseActivities } from "@/lib/academy/quickData";
+import { getCoursesByCampus } from "@/lib/city/academic";
+import { GAMES } from "@/lib/games/registry";
 import type { Place, Venue, VenueActivity } from "@/lib/city/types";
 
 const { venue, spa, pool, single, ticket, yacht, gymActivities, PALETTES } = placeKit;
@@ -433,15 +435,20 @@ export const DQ_PLACES: Place[] = [
         activities: [
           // Quick courses taught on this campus (lib/academy/quick).
           ...quickCourseActivities("dq-education-city"),
-          { id: "edu:business", label: "Study business, real estate & law", icon: "🎓", href: "/academics/aud" },
-          { id: "edu:tech", label: "Study cybersecurity, healthcare & logistics", icon: "🔬", href: "/academics/ud" },
-          { id: "edu:new", label: "Take AI, coding & marketing", icon: "💡", href: "/academics/onebrain" },
+          // Every course from its partner campuses, each opening straight to that course (lib/city/academic).
+          ...["aud", "ud", "dc", "onebrain"].flatMap((c) => campusCourses("dq-education-city", c)),
+          { id: "edu:business", label: "Study business, real estate & law: see all", icon: "🎓", href: "/academics/aud" },
+          { id: "edu:tech", label: "Study cybersecurity, healthcare & logistics: see all", icon: "🔬", href: "/academics/ud" },
+          { id: "edu:new", label: "Take AI, coding & marketing: see all", icon: "💡", href: "/academics/onebrain" },
           { id: "edu:library", label: "Study in the library", icon: "📖", animation: "sit", reward: 10, need: { kind: "energy", amount: 10 } },
         ],
       }),
       venue("Oxygen Park Café", "Campus café", "cafe"),
     ],
   },
+  // ---------------------------------------------------------------- driving school and Game City
+  drivingSchool("dq-driving-school", "Doha Driving School", "Al Gharrafa's driving school: the eye test, theory and the Smart Yard for your licence."),
+  gameCity("dq-game-city", "Game City Doha", "Ludo, chess and all of Game City's games: play your friends live."),
   {
     id: "dq-al-rayyan-racecourse", name: "Al Rayyan Racecourse", kind: "attraction", route: "/racing/horse",
     blurb: "The Qatar Racing & Equestrian Club's racecourse: pick a horse and race your friends, live.",
@@ -828,6 +835,39 @@ for (const p of DQ_PLACES) {
       shift: v.job.shift.map((x) => ({ ...x, customer: local(x.customer), wants: local(x.wants) })),
     },
   }));
+}
+
+/** A campus's courses (books left out), as activities opening each course. */
+function campusCourses(placeId: string, campus: string): VenueActivity[] {
+  return getCoursesByCampus(campus).filter((c) => !c.author)
+    .map((c) => ({ id: `${placeId}:course:${c.id}`, label: `Course: ${c.title} · AED ${c.tuitionFee.toLocaleString()}`, icon: c.icon, href: `/academics/course/${c.id}` }));
+}
+
+/** A driving school: the same licence as Dubai's Driving Academy (eye test, theory, Smart Yard: /driving). */
+function drivingSchool(id: string, name: string, blurb: string): Place {
+  return {
+    id, name, kind: "attraction", blurb,
+    venues: [venue(name, "Driving school", "hotel", {
+      layout: "lobby", palette: { floor: "#e2e8f0", wall: "#f8fafc", accent: "#f59e0b" }, role: "Driving instructor", noJob: true,
+      blurb: "Pass the eye test, the theory exam and the Smart Yard to get your licence. It's valid in every city.",
+      products: [],
+      activities: [
+        { id: `${id}:licence`, label: "Get your driving licence: eye test, theory, Smart Yard", icon: "🪪", href: "/driving" },
+        { id: `${id}:theory`, label: "Revise road rules in the classroom", icon: "📘", animation: "sit", reward: 10, need: { kind: "energy", amount: 10 } },
+      ],
+    })],
+  };
+}
+
+/** Game City: every game in Dubai's Game City, each opening its room (/games/<id>) to play friends live. */
+function gameCity(id: string, name: string, blurb: string): Place {
+  return {
+    id, name, kind: "attraction", blurb,
+    venues: [venue(name, "Game City", "electronics", {
+      role: "Game host", noJob: true, products: [], blurb: "Pick a game and play your friends live.",
+      activities: GAMES.map((g): VenueActivity => ({ id: `${id}:${g.id}`, label: `Play ${g.name}: ${g.tagline}`, icon: g.icon, href: `/games/${g.id}` })),
+    })],
+  };
 }
 
 registerCityPlaces(DQ_PLACES);

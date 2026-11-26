@@ -237,6 +237,7 @@ export const DQ_BUILDINGS: any[] = [
   home("dq-gharrafa-townhouse-2", "Al Gharrafa Townhouse", "small-house", "dq-tile-gharrafa", 271, -150),
   home("dq-gharrafa-townhouse-3", "Al Gharrafa Townhouse", "small-house", "dq-tile-gharrafa", 396, -150),
   home("dq-gharrafa-townhouse-4", "Al Gharrafa Townhouse", "small-house", "dq-tile-gharrafa", 521, -150),
+  b("dq-driving-school", "Doha Driving School", "dq-driving-school", "dq-tile-gharrafa", -55, -150, 190, 130),
   billboard("dq-bb-gharrafa", "Dukhan Highway Billboard", "dq-tile-gharrafa", -266, -150, "classic-highway"),
   // Al Khor & Purple Island: Al Bayt's tent stadium, the mangroves of Purple Island, the fishing harbour and the beach.
   home("dq-alkhor-villa-1", "Al Khor Villa", "dubai-villa", "dq-tile-alkhor", 375, 70),
@@ -457,6 +458,7 @@ export const DQ_BUILDINGS: any[] = [
   // Billboards: the same paid ads as Dubai's and Abu Dhabi's.
   billboard("dq-bb-pearl", "The Pearl Gateway Screen", "dq-tile-pearl", 80, -150, "luxury-curved", 1.2),
   billboard("dq-bb-lusail", "Lusail Expressway Billboard", "dq-tile-lusail", 88, -150, "classic-highway", 1.2),
+  b("dq-game-city", "Game City Doha", "dq-game-city", "dq-tile-westbay", 300, -40, 220, 150),
   billboard("dq-bb-westbay", "West Bay Mega Screen", "dq-tile-westbay", 60, -150),
   billboard("dq-bb-corniche", "Corniche LED Screen", "dq-tile-corniche", 120, -150, "luxury-curved"),
   billboard("dq-bb-souq", "Msheireb Billboard", "dq-tile-souq", 40, -150, "hoarding-banner"),
