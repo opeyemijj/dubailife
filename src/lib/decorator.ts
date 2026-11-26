@@ -45,7 +45,7 @@ const ERRORS: Record<string, string> = {
   not_a_decorator: "That player isn't a decorator any more. Choose someone else.",
   not_available: "The client cancelled that request.",
   not_cancellable: "Your decorator has your key. You can cancel if they haven't finished after 24 hours.",
-  bad_budget: "Choose a budget between AED 1,000 and AED 500,000.",
+  bad_budget: `Choose a budget between AED ${DECORATORS.budget.min.toLocaleString()} and AED ${DECORATORS.budget.max.toLocaleString()}.`,
   over_budget: "That's over the client's budget.",
   not_working: "This job is no longer open.",
 };

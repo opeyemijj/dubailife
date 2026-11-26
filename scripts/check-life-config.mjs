@@ -295,8 +295,10 @@ dneed("local minutes", `then now() + interval '${dec.minutes} minutes' end`);
 for (const s of dec.studios) dneed(`touches ${s.id}`, `when '${s.id}' then array[${s.touches.map((t) => `'${t}'`).join(", ")}]`);
 const decCallFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_decor_house_calls.sql")).sort().pop();
 const decCallSql = readFileSync(`supabase/migrations/${decCallFile}`, "utf8");
-for (const text of [`p_budget < ${dec.budget.min} or p_budget > ${dec.budget.max}`, `interval '${dec.abandonHours} hours'`]) {
-  if (!decCallSql.includes(text)) { bad++; console.error(`decorators: differs from SQL (${text})`); }
+if (!decCallSql.includes(`interval '${dec.abandonHours} hours'`)) { bad++; console.error(`decorators: differs from SQL (abandonHours)`); }
+// The budget limits live in the newest request_decorator / request_hall_decorator.
+for (const fn of ["request_decorator", "request_hall_decorator"]) {
+  if (!latestDef(fn).includes(`p_budget < ${dec.budget.min} or p_budget > ${dec.budget.max}`)) { bad++; console.error(`decorators: ${fn} budget differs from SQL`); }
 }
 // Parties (src/data/life/parties.json vs *_events.sql): decoration prices, arrival rewards, guest limit and reminders.
 const parties = JSON.parse(readFileSync("src/data/life/parties.json", "utf8"));

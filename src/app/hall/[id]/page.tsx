@@ -1,4 +1,5 @@
 "use client";
+import DECORATORS from "@/data/home/decorators.json";
 import { ProfileLink } from "@/components/social/ProfileLink";
 
 // An event hall, live (/hall/<booking>): a hotel ballroom you walk around in 3D, with the guests there now. The
@@ -365,7 +366,9 @@ function HireDecorator({ booking, busy, onDone }: { booking: number; busy: boole
           <span className="font-black text-sm"><ProfileLink username={p.username} /></span><span className="text-xs font-mono text-emerald-700">fee {aed(p.fee)}</span>
         </button>
       ))}
-      <div className="flex gap-1.5">{[10000, 25000, 50000, 100000].map((b) => <button key={b} onClick={() => setBudget(b)} className={`flex-1 rounded-xl py-2 text-xs font-black border ${budget === b ? "bg-slate-900 text-white" : "border-slate-200"}`}>{aed(b)}</button>)}</div>
+      <div className="flex gap-1.5">{DECORATORS.budget.presets.map((b) => <button key={b} onClick={() => setBudget(b)} className={`flex-1 rounded-xl py-2 text-xs font-black border ${budget === b ? "bg-slate-900 text-white" : "border-slate-200"}`}>{b >= 1e6 ? `AED ${b / 1e6}M` : aed(b)}</button>)}</div>
+      <input inputMode="numeric" aria-label="Budget in AED" value={budget || ""} onChange={(e) => setBudget(Math.min(DECORATORS.budget.max, Number(e.target.value.replace(/[^0-9]/g, ""))))}
+        className="w-full h-11 rounded-xl bg-slate-50 border border-slate-200 px-3 font-bold outline-none" placeholder={`Your own amount, up to AED ${DECORATORS.budget.max.toLocaleString()}`} />
       <button disabled={!pick} onClick={() => void hire()} className="w-full h-12 rounded-2xl bg-emerald-600 text-white font-black disabled:opacity-40">Hire with a {aed(budget)} budget</button>
       {msg && <p className="text-xs text-slate-600">{msg}</p>}
     </div>

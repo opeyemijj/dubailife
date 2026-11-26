@@ -81,7 +81,7 @@ export function DecoratorSheet({ tier, preselect, onClose, onHired }: { tier: Ho
                 <p className="text-xs font-black uppercase tracking-wider text-slate-400">Your budget</p>
                 <div className="grid grid-cols-4 gap-1.5">
                   {DECORATORS.budget.presets.map((b) => (
-                    <button key={b} onClick={() => setBudget(b)} className={`h-10 rounded-xl text-xs font-black ${budget === b ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-700"}`}>{(b / 1000)}k</button>
+                    <button key={b} onClick={() => setBudget(b)} className={`h-10 rounded-xl text-xs font-black ${budget === b ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-700"}`}>{b >= 1e6 ? `${b / 1e6}M` : `${b / 1000}k`}</button>
                   ))}
                 </div>
                 <input inputMode="numeric" aria-label="Budget in AED" value={budget || ""} onChange={(e) => setBudget(Math.min(DECORATORS.budget.max, Number(e.target.value.replace(/[^0-9]/g, ""))))}

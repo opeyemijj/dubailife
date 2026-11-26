@@ -1,6 +1,6 @@
 {
   "_note": "Interior decorators are real players. You send any of them a request with a budget (and their fee, both held); they accept, walk into your home, buy from the store with your budget and arrange things, and you see it when they finish. Each studio is an optional style brief. budget and abandonHours are mirrored in supabase/migrations/*_decor_house_calls.sql; the career, fee limits and interview in *_decorators.sql (scripts/check-life-config.mjs). minutes, touches and each studio's decorator only serve jobs from before this.",
-  "budget": { "min": 1000, "max": 500000, "presets": [5000, 10000, 25000, 50000] },
+  "budget": { "min": 1000, "max": 50000000, "presets": [25000, 100000, 1000000, 50000000] },
   "abandonHours": 24,
   "minutes": 20,
   "studios": [
