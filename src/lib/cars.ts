@@ -92,7 +92,9 @@ const ERRORS: Record<string, string> = {
   needs_licence: "You need a driving license. Pass your test at the Driving Academy first.",
   unknown_color: "That colour isn't available. Pick one from the paint chart.",
   same_color: "Your car is already that colour.",
-  car_impounded: "It's in the police impound. Release it first, then respray it.",
+  car_impounded: "It's in the police impound. Release it first.",
+  keep_one_car: "You need at least two cars to sell one: you always keep one.",
+  car_in_race: "It's entered in a race that hasn't finished. Sell it after the race.",
   car_stolen: "It's been stolen. Get it back first.",
   not_your_car: "That isn't your car.",
   max_stage: "That's already the top stage.",
@@ -130,6 +132,13 @@ export const returnCar = () => call<{ caught: boolean; caseId?: number }>("retur
 /** Renting on a fake license: usually spotted, and then the police are called. */
 export const rentCarFake = (company: string, car: string, days: number) => call<{ caught: boolean; caseId?: number; rentalId?: number }>("rent_car_fake", { p_company: company, p_car: car, p_days: days });
 export const buyCar = (dealer: string, car: string, color: string | null = null) => call<{ plate: string; total: number; insurance: number }>("buy_car", { p_dealer: dealer, p_car: car, p_color: color });
+/** Selling back to the dealer (cars.json → resale): what it's worth now, and the sale. */
+export const RESALE = CARS.resale;
+export const resaleValue = (price: number, boughtAt: string, now: number) => {
+  const months = Math.floor(Math.max(0, now - Date.parse(boughtAt)) / (30 * 86400000));
+  return Math.round((price * Math.max(RESALE.floorPercent, RESALE.newPercent - RESALE.monthlyDrop * months)) / 100 / 100) * 100;
+};
+export const sellCar = (carId: number) => call<{ id: number; car: string; value: number }>("sell_car", { p_car: carId });
 export const aed = (n: number) => `AED ${Math.round(n).toLocaleString()}`;
 
 /** A car you can drive: one of yours (not impounded or stolen), your rental, or a car you hotwired. */

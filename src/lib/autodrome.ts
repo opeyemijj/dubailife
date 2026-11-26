@@ -108,7 +108,7 @@ export function perfOf(carId: string, tune?: Tune | null): CarPerf {
   const c = carOf(carId) as (Car & { model3d?: string }) | undefined;
   const kind = c?.model3d ?? "sedan";
   const top = ((c?.top ?? 190) / 3.6) * 0.82;
-  const accel = kind === "supercar" ? 13.5 : (c?.top ?? 0) >= 290 ? 12 : kind === "sport-sedan" ? 9.5 : kind === "suv" ? 8.5 : 8;
+  const accel = kind === "supercar" ? 13.5 : (c?.top ?? 0) >= 290 ? 12 : kind === "sport-sedan" ? 9.5 : kind === "cybertruck" ? 10 : kind === "suv" ? 8.5 : 8;
   const grip = kind === "supercar" ? 1.25 : kind === "sport-sedan" ? 1.05 : kind === "suv" ? 0.85 : 0.95;
   const t = tune ?? NO_TUNE;
   return {

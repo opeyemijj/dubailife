@@ -31,6 +31,8 @@ const GAMES: Partial<Record<ArcadeGameId, ComponentType<ArcadeGameProps>>> = {
   bridal: dynamic(() => import("./games/bridal/BridalGame"), { ssr: false, loading }),
   nails: dynamic(() => import("./games/nails/NailGame"), { ssr: false, loading }),
   goldsouk: dynamic(() => import("./games/goldsouk/GoldSoukGame"), { ssr: false, loading }),
+  stadium: dynamic(() => import("./games/stadium/MatchGame"), { ssr: false, loading }),
+  penalty: dynamic(() => import("./games/stadium/PenaltyGame"), { ssr: false, loading }),
 };
 
 export function ArcadeHost() {

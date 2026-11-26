@@ -5,11 +5,11 @@
 // glide to the board, and the picker and card on screen.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { hasPlot, type HousingTier } from "@/lib/furniture";
+import { hasPlot, homeSizeOf, type HousingTier } from "@/lib/furniture";
 import { PARTY_GAMES, usePartyGames } from "@/lib/partyGames";
 import type { PlotZone } from "@/components/home/ApartmentRoom";
 import { isPhone } from "@/components/home/TwoFingerHint";
-import { PARTY_BOARD_AT, PartyGameBoard } from "./PartyGameBoard";
+import { PartyGameBoard, partyBoardSpot } from "./PartyGameBoard";
 import { PartyGameCard, PartyGamePicker, PartyGameResult } from "./PartyGamesUI";
 
 export function usePartyBoard({ active, meId, meName, isHost, present, tier, exterior, lightsOut, level, onWatch, clean = false, onGameStart }: {
@@ -40,10 +40,13 @@ export function usePartyBoard({ active, meId, meName, isHost, present, tier, ext
   const plot = hasPlot(tier);
   const grounds = plot && exterior.length > 0;
   const pool = plot && exterior.includes("pool");
+  // The board stands on this home's pool (or terrace), which moves out (and grows) with the house.
+  const spot = useMemo(() => partyBoardSpot(homeSizeOf(tier)), [tier]);
+  const AT = spot.at;
 
   const watch = () => {
     onWatch?.();
-    setFocus((f) => ({ n: (f?.n ?? 0) + 1, at: PARTY_BOARD_AT }));
+    setFocus((f) => ({ n: (f?.n ?? 0) + 1, at: AT }));
   };
 
   // Everyone at the party sees the game: the camera glides to the board when one starts, and again when it ends
@@ -68,15 +71,15 @@ export function usePartyBoard({ active, meId, meName, isHost, present, tier, ext
 
   const on = active && !!pg.snap;
   // The board's stop on the zone bar: the game when one's on, or "Let's play" (the idle board) when not.
-  const idleAt: [number, number] = pool ? [PARTY_BOARD_AT[0], PARTY_BOARD_AT[1] - 4.1] : PARTY_BOARD_AT;
+  const idleAt: [number, number] = pool ? [AT[0], AT[1] + spot.idleZ] : AT;
   const zones: PlotZone[] = on
-    ? [{ id: "party-game", label: PARTY_GAMES[pg.snap!.game].name, icon: "🎲", cam: PARTY_BOARD_AT, walk: plot ? [PARTY_BOARD_AT[0] - (pool ? 2.7 : 1.6), PARTY_BOARD_AT[1] + 2.2] : undefined }]
+    ? [{ id: "party-game", label: PARTY_GAMES[pg.snap!.game].name, icon: "🎲", cam: AT, walk: plot ? [AT[0] - (pool ? spot.w / 2 + 0.7 : 1.6), AT[1] + 2.2] : undefined }]
     : active ? [{ id: "party-game", label: "Let's play", icon: "🎲", cam: idleAt, walk: plot ? [idleAt[0] - 2.2, idleAt[1]] : undefined }]
     : [];
 
   // Always something outside during a party: the game, or the idle board inviting a game (tap it: the picker).
   const board = active && level === 0 ? (
-    <PartyGameBoard snap={pg.snap} mySeat={pg.mySeat} onMove={pg.move} pool={pool} grounds={grounds} lightsOut={lightsOut} onIdleTap={() => setPicker(true)} />
+    <PartyGameBoard snap={pg.snap} mySeat={pg.mySeat} onMove={pg.move} pool={pool} grounds={grounds} spot={spot} lightsOut={lightsOut} onIdleTap={() => setPicker(true)} />
   ) : null;
 
   const ui = active ? (

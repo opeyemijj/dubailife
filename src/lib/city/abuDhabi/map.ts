@@ -70,15 +70,17 @@ const home = (id: string, name: string, type: "tall-building" | "dubai-villa" | 
 const community = (prefix: string, name: string, type: "dubai-villa" | "small-house", plain: string, cols: number[], ups: number[], start = 1) =>
   ups.flatMap((up, r) => cols.map((dx, c) => home(`${prefix}-${start + r * cols.length + c}`, name, type, plain, dx, up)));
 
+/** Billboards stand half as big again as their footprint, like Dubai's giant screens (the layout gives them room). */
+export const BILLBOARD_SCALE = 1.5;
 /** The billboards: ads are booked on them like Dubai's (components/commerce/BillboardAds), by their ids. */
-const billboard = (id: string, name: string, plain: string, dx: number, up: number, billboardStyle = "mega-led") =>
-  ({ id, name, type: "giant-billboard", ...plainAt(plain, dx + up * SLANT, up), width: 140, height: 90, billboardStyle, interactive: true, plain });
+const billboard = (id: string, name: string, plain: string, dx: number, up: number, billboardStyle = "mega-led", scale = BILLBOARD_SCALE) =>
+  ({ id, name, type: "giant-billboard", ...plainAt(plain, dx + up * SLANT, up), width: 140, height: 90, billboardStyle, interactive: true, plain, scale });
 const AD_BILLBOARDS = [
-  billboard("ad-bb-corniche", "Corniche Road LED Screen", "ad-tile-corniche", -15, -150, "luxury-curved"),
+  billboard("ad-bb-corniche", "Corniche Road LED Screen", "ad-tile-corniche", -15, -150, "luxury-curved", 1.15),
   billboard("ad-bb-yas", "Yas Island Mega Screen", "ad-tile-yas", 41, -40),
   billboard("ad-bb-raha", "Al Raha Highway Billboard", "ad-tile-raha", -389, -40, "classic-highway"),
   billboard("ad-bb-mosque", "Sheikh Zayed Bridge Billboard", "ad-tile-mosque", 60, -150, "classic-highway"),
-  billboard("ad-bb-airport", "AUH Arrivals Screen", "ad-tile-auh", 480, -170),
+  billboard("ad-bb-airport", "AUH Arrivals Screen", "ad-tile-auh", 430, -170),
   billboard("ad-bb-e11", "E11 Dubai Road Billboard", "ad-tile-wathba", -569, -160, "classic-highway"),
   billboard("ad-bb-wathba", "Al Wathba Road Billboard", "ad-tile-wathba", -329, -160, "classic-highway"),
   billboard("ad-bb-shamkha", "Al Shamkha Gate Screen", "ad-tile-wathba", -89, -160),
@@ -422,7 +424,41 @@ export const AD_BUILDINGS: any[] = [
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const AD_ENTITIES: any[] = [...AD_TILES, ...AD_BUILDINGS.map((e) => ({ ...e, city: "abu-dhabi" }))];
+/** Ground ads: flat ad tiles on the empty ground in each district's rows (in the gaps between what stands there),
+ *  booked like Dubai's floor ads ("floor:<id>", priced per 18 px cell: the id ends in its size, …-w5h3). Worked out
+ *  from the layout, so they follow it. */
+const CELL = 18;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function groundAds(): any[] {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const out: any[] = [];
+  for (const p of AD_PLAINS) {
+    // Not on the airport (its own drawing covers its ground).
+    if (/airport/i.test(p.name)) continue;
+    const room = p.w / 2 - (p.h / 2) * SLANT - 12;
+    for (const up of [70, -40, -150]) {
+      const taken = AD_BUILDINGS.filter((e) => e.plain === p.id && Math.abs(e.virtualY - row(e.virtualX, p.y) - up) < 30).map((e) => {
+        const dx = e.virtualX - p.x - up * SLANT, half = ((e.width ?? 120) * (e.scale ?? 1)) / 2 + 10;
+        return [dx - half, dx + half] as [number, number];
+      }).sort((a, b) => a[0] - b[0]);
+      let x = -room, k = 0;
+      for (const [a, b2] of [...taken, [room, room] as [number, number]]) {
+        const gap = a - x;
+        if (gap >= 100) {
+          const cols = Math.min(9, Math.floor((gap - 20) / CELL)), w = cols * CELL, c = x + gap / 2;
+          out.push({ id: `ad-ga-${p.id.replace("ad-tile-", "")}-${up < 0 ? "m" + -up : up}-${k++}-w${cols}h3`, name: `Ground ad · ${cols * 3} cells`, type: "floor-ad",
+            ...plainAt(p.id, c + up * SLANT, up + 12), width: w, height: 3 * CELL, interactive: true });
+        }
+        x = Math.max(x, b2);
+      }
+    }
+  }
+  return out;
+}
+const GROUND_ADS = groundAds();
+
+export const AD_ENTITIES: any[] = [
+  ...GROUND_ADS.map((e) => ({ ...e, city: "abu-dhabi" })),...AD_TILES, ...AD_BUILDINGS.map((e) => ({ ...e, city: "abu-dhabi" }))];
 
 /** Buildings whose base runs past their plain's slanted sides or edges (should be none: each row has to fit). */
 export const adOutOfPlain = () => AD_BUILDINGS.filter((e) => {

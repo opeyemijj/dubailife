@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCitizen } from "@/lib/citizenStore";
 import { useNow } from "@/lib/dubaiClock";
-import { aed, carOf, CARS, myFines, paintName, releaseCar, reportStolenCar, RESPRAY_COST, setCarColor, shopOf, useGarage, type Fine } from "@/lib/cars";
+import { aed, carOf, CARS, myFines, paintName, releaseCar, reportStolenCar, RESALE, resaleValue, RESPRAY_COST, sellCar, setCarColor, shopOf, useGarage, type Fine } from "@/lib/cars";
 import { PaintPicker } from "@/components/cars/PaintPicker";
 import { gameAudio } from "@/utils/gameAudio";
 import { AppScreen, Card } from "./AppScreen";
@@ -42,6 +42,18 @@ export function CarsApp({ onBack, onClose }: { onBack: () => void; onClose: () =
     gameAudio.playCoinSound();
     window.dispatchEvent(new CustomEvent("dubai:toast", { detail: `🎨 Resprayed ${paintName(respray.color)}` }));
     setRespray(null);
+    void reload();
+  };
+  // Selling back to the dealer: allowed with two or more cars (you always keep one); asks to confirm first.
+  const [selling, setSelling] = useState<number | null>(null);
+  const canSell = (garage?.owned.filter((o) => !o.isStolen).length ?? 0) >= RESALE.minCars;
+  const doSell = async (id: number) => {
+    setBusy(id); setError(null);
+    const r = await sellCar(id);
+    setBusy(null); setSelling(null);
+    if (r.error || !r.data) return setError(r.error ?? null);
+    gameAudio.playCoinSound();
+    window.dispatchEvent(new CustomEvent("dubai:toast", { detail: `💰 Sold the ${carOf(r.data.car)?.model ?? "car"} for ${aed(r.data.value)}` }));
     void reload();
   };
   // To a showroom: on the map with its journey planner open, so you travel there first.
@@ -102,6 +114,18 @@ export function CarsApp({ onBack, onClose }: { onBack: () => void; onClose: () =
                   </div>
                 ))}
                 <FuelBar fuel={Number(o.fuel)} electric={!!c?.electric} />
+                {/* Sell it back to the dealer (with two cars or more). */}
+                {canSell && c && !o.isStolen && !impounded && (selling === o.id ? (
+                  <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 space-y-2">
+                    <p className="text-sm font-bold text-amber-900">Sell your {c.model} back to {shopOf(o.dealer)?.name ?? "the dealer"} for {aed(resaleValue(o.price, o.boughtAt, now))}? Its plate, paint and tuning go with it.</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button onClick={() => setSelling(null)} className="h-10 rounded-full bg-white border border-slate-200 text-sm font-bold">Keep it</button>
+                      <button onClick={() => doSell(o.id)} disabled={busy === o.id} className="h-10 rounded-full bg-amber-500 text-white text-sm font-black disabled:opacity-40">{busy === o.id ? "Selling…" : `Sell · ${aed(resaleValue(o.price, o.boughtAt, now))}`}</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => { gameAudio.playClickSound(); setError(null); setSelling(o.id); }} className="w-full h-10 rounded-full bg-white border border-slate-200 text-sm font-bold">💰 Sell it · worth {aed(resaleValue(o.price, o.boughtAt, now))}</button>
+                ))}
                 <p className="text-xs text-slate-500">Insured and registered until {date(o.insuredUntil)}</p>
 
                 {o.isStolen ? (

@@ -16,6 +16,7 @@ import { ludoRules, type LudoState } from "@/components/games/Ludo";
 import type { ChessState } from "@/components/games/ChessGame";
 import { pool as poolGame, type PoolState } from "@/components/games/Pool";
 import { PoolTable3D } from "./PoolTable3D";
+import { groundsFor } from "@/components/home/HomeGrounds";
 import { resultText, turnOf, turnText, type PartyGameId, type PartyGameSnap } from "@/lib/partyGames";
 
 /** Each side's colour on the board (the dot beside "Their turn"). */
@@ -23,14 +24,23 @@ const SIDE_COLOR: Record<PartyGameId, [string, string]> = { connect4: ["#dc2626"
 import { gameAudio } from "@/utils/gameAudio";
 import { isPhone } from "@/components/home/TwoFingerHint";
 
-/** Where the board stands: the pool's spot, east of the house (HomeGrounds GROUNDS.pool). */
+/** Where the board stands round a 10 m home: the pool's spot, east of the house (HomeGrounds GROUNDS.pool). */
 export const PARTY_BOARD_AT: [number, number] = [10.5, 1];
+/** The pool (or terrace) the board stands on, for a home S metres wide: its middle and size, from HomeGrounds. */
+export function partyBoardSpot(S = 10) {
+  const p = groundsFor(S).pool;
+  return { at: [p.x, p.z] as [number, number], w: p.w, l: p.l, /** The idle table waits at the pool's north end. */ idleZ: -(p.l / 2 + 0.1) };
+}
+export type BoardSpot = ReturnType<typeof partyBoardSpot>;
+const SPOT_10 = partyBoardSpot(10);
 
 type Tap = (e: ThreeEvent<MouseEvent>) => boolean;
 /** A tap, not the end of a drag; stops it reaching the floor (which would walk you there). */
 const tapped: Tap = (e) => { if (e.delta > 6) return false; e.stopPropagation(); return true; };
 
-export function PartyGameBoard({ snap, mySeat, onMove, pool, grounds, onIdleTap }: {
+export function PartyGameBoard({ snap, mySeat, onMove, pool, grounds, onIdleTap, spot = SPOT_10 }: {
+  /** Where the pool is round this home (partyBoardSpot). */
+  spot?: BoardSpot;
   snap: PartyGameSnap | null;
   mySeat: number;
   onMove: (state: unknown) => void;
@@ -43,13 +53,13 @@ export function PartyGameBoard({ snap, mySeat, onMove, pool, grounds, onIdleTap 
   /** No game on: an empty Connect Four frame stands outside as an invitation; tapping it opens the picker. */
   onIdleTap?: () => void;
 }) {
-  if (!snap) return onIdleTap ? <IdleBoard pool={pool} grounds={grounds} onTap={onIdleTap} /> : null;
+  if (!snap) return onIdleTap ? <IdleBoard pool={pool} grounds={grounds} onTap={onIdleTap} spot={spot} /> : null;
   const turn = turnOf(snap);
   const canMove = mySeat >= 0 && turn === mySeat && !!snap.players[1];
   const result = resultText(snap, mySeat);
   return (
-    <group position={[PARTY_BOARD_AT[0], 0, PARTY_BOARD_AT[1]]}>
-      <Deck pool={pool} grounds={grounds} />
+    <group position={[spot.at[0], 0, spot.at[1]]}>
+      <Deck pool={pool} grounds={grounds} spot={spot} />
       <group position={[0, pool ? 0.14 : 0.05, 0]}>
         {snap.game === "connect4" && <ConnectFour3D state={snap.state as C4State} canMove={canMove} onMove={onMove} />}
         {snap.game === "chess" && <Chess3D state={snap.state as ChessState} canMove={canMove} mySeat={mySeat} onMove={onMove} />}
@@ -82,18 +92,18 @@ const IDLE_POOL = poolGame.init(2, 0) as PoolState;
  * The invitation: a pool table outside, racked, with "Let's play" (any game can be picked). On a swimming pool
  * it stands crosswise on the far-end coping (the water stays free to swim in); otherwise on the lawn or terrace.
  */
-function IdleBoard({ pool, grounds, onTap }: { pool: boolean; grounds: boolean; onTap: () => void }) {
+function IdleBoard({ pool, grounds, onTap, spot }: { pool: boolean; grounds: boolean; onTap: () => void; spot: BoardSpot }) {
   const [hover, setHover] = useState(false);
   return (
-    <group position={[PARTY_BOARD_AT[0], 0, PARTY_BOARD_AT[1]]}>
-      {!pool && <Deck pool={false} grounds={grounds} />}
-      <group position={[0, 0.05, pool ? -4.1 : 0]} scale={hover ? 1.04 : 1}
+    <group position={[spot.at[0], 0, spot.at[1]]}>
+      {!pool && <Deck pool={false} grounds={grounds} spot={spot} />}
+      <group position={[0, 0.05, pool ? spot.idleZ : 0]} scale={hover ? 1.04 : 1}
         onClick={(e) => { if (!tapped(e)) return; gameAudio.playClickSound(); onTap(); }}
         onPointerOver={(e) => { e.stopPropagation(); setHover(true); document.body.style.cursor = "pointer"; }}
         onPointerOut={() => { setHover(false); document.body.style.cursor = ""; }}>
         <PoolTable3D state={IDLE_POOL} canMove={false} onMove={() => {}} crosswise={pool} />
       </group>
-      <Html position={[0, 2.9, pool ? -4.1 : 0]} center distanceFactor={14} zIndexRange={[10, 0]}>
+      <Html position={[0, 2.9, pool ? spot.idleZ : 0]} center distanceFactor={14} zIndexRange={[10, 0]}>
         {/* Its taps stop here: without this they'd also reach the 3D scene underneath and walk you to that spot. */}
         <button onClick={(e) => { e.stopPropagation(); onTap(); }} onPointerDown={stopDom} onPointerUp={stopDom}
           className="whitespace-nowrap rounded-full bg-fuchsia-600 px-4 py-1.5 text-[15px] font-black text-white shadow-2xl ring-2 ring-white/70 animate-bounce">
@@ -108,14 +118,15 @@ function IdleBoard({ pool, grounds, onTap }: { pool: boolean; grounds: boolean; 
 
 const glass = new THREE.MeshPhysicalMaterial({ color: "#e0f2fe", transparent: true, opacity: 0.32, roughness: 0.05, transmission: 0.6, thickness: 0.05 });
 
-function Deck({ pool, grounds }: { pool: boolean; grounds: boolean }) {
+function Deck({ pool, grounds, spot }: { pool: boolean; grounds: boolean; spot: BoardSpot }) {
   if (pool) {
-    // Glass over the pool (4 × 8 m), on a steel frame at the coping.
+    // Glass over the whole pool (4 × 8 m, or 6 × 14 m at a mansion), on a steel frame at the coping.
+    const W = spot.w + 0.5, L = spot.l + 0.5;
     return (
       <group>
-        <mesh position={[0, 0.1, 0]} material={glass} receiveShadow><boxGeometry args={[4.5, 0.06, 8.5]} /></mesh>
-        {[-2.25, 2.25].map((x) => <mesh key={x} position={[x, 0.08, 0]}><boxGeometry args={[0.08, 0.1, 8.5]} /><meshStandardMaterial color="#cbd5e1" metalness={0.7} roughness={0.3} /></mesh>)}
-        {[-4.25, 4.25].map((z) => <mesh key={z} position={[0, 0.08, z]}><boxGeometry args={[4.5, 0.1, 0.08]} /><meshStandardMaterial color="#cbd5e1" metalness={0.7} roughness={0.3} /></mesh>)}
+        <mesh position={[0, 0.1, 0]} material={glass} receiveShadow><boxGeometry args={[W, 0.06, L]} /></mesh>
+        {[-W / 2, W / 2].map((x) => <mesh key={x} position={[x, 0.08, 0]}><boxGeometry args={[0.08, 0.1, L]} /><meshStandardMaterial color="#cbd5e1" metalness={0.7} roughness={0.3} /></mesh>)}
+        {[-L / 2, L / 2].map((z) => <mesh key={z} position={[0, 0.08, z]}><boxGeometry args={[W, 0.1, 0.08]} /><meshStandardMaterial color="#cbd5e1" metalness={0.7} roughness={0.3} /></mesh>)}
       </group>
     );
   }

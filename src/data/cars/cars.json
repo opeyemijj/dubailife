@@ -141,9 +141,14 @@
       "icon": "⚡",
       "color": "#e31937",
       "x": 4020,
-      "blurb": "Tesla's showroom on Sheikh Zayed Road: the electric Model Y, charged at Superchargers across the city.",
+      "blurb": "Tesla's showroom on Sheikh Zayed Road: the whole electric line-up, from the Model 3 and Model Y to the Plaid Model S and Model X and the stainless-steel Cybertruck, charged at Superchargers across the city.",
       "stock": [
-        "tesla-model-y"
+        "tesla-model-3",
+        "tesla-model-y",
+        "tesla-model-s-plaid",
+        "tesla-model-x-plaid",
+        "tesla-cybertruck",
+        "tesla-cyberbeast"
       ]
     },
     {
@@ -363,6 +368,85 @@
       "per100": 17
     },
     {
+      "id": "tesla-model-3",
+      "make": "Tesla",
+      "model": "Model 3 Performance",
+      "kind": "Electric sports saloon",
+      "color": "#b91c1c",
+      "price": 230000,
+      "day": 550,
+      "seats": 5,
+      "top": 262,
+      "model3d": "sport-sedan",
+      "electric": true,
+      "tank": 79,
+      "per100": 15
+    },
+    {
+      "id": "tesla-model-s-plaid",
+      "make": "Tesla",
+      "model": "Model S Plaid",
+      "kind": "Electric luxury saloon",
+      "color": "#111827",
+      "price": 440000,
+      "day": 1300,
+      "seats": 5,
+      "top": 322,
+      "low": true,
+      "model3d": "sport-sedan",
+      "electric": true,
+      "tank": 100,
+      "per100": 19
+    },
+    {
+      "id": "tesla-model-x-plaid",
+      "make": "Tesla",
+      "model": "Model X Plaid",
+      "kind": "Electric luxury SUV",
+      "color": "#f8fafc",
+      "price": 470000,
+      "day": 1400,
+      "seats": 7,
+      "top": 262,
+      "suv": true,
+      "model3d": "suv",
+      "electric": true,
+      "tank": 100,
+      "per100": 22
+    },
+    {
+      "id": "tesla-cybertruck",
+      "make": "Tesla",
+      "model": "Cybertruck AWD",
+      "kind": "Electric pickup",
+      "color": "#c3c7cb",
+      "price": 345000,
+      "day": 1100,
+      "seats": 5,
+      "top": 180,
+      "suv": true,
+      "model3d": "cybertruck",
+      "electric": true,
+      "tank": 123,
+      "per100": 28
+    },
+    {
+      "id": "tesla-cyberbeast",
+      "make": "Tesla",
+      "model": "Cybertruck Cyberbeast",
+      "kind": "Electric performance pickup",
+      "color": "#9ca3af",
+      "price": 405000,
+      "day": 1400,
+      "seats": 5,
+      "top": 209,
+      "suv": true,
+      "model3d": "cybertruck",
+      "electric": true,
+      "tank": 123,
+      "per100": 30
+    },
+    {
       "id": "ferrari-roma",
       "make": "Ferrari",
       "model": "Roma",
@@ -518,20 +602,76 @@
     "_note": "Colours you can choose when you buy a car (free), or respray it later at the paint shop (Phone → Cars) for `respray` AED. Hex colours; the car's own catalogue colour is its factory colour. Mirrored in public.car_paint_rule() (supabase/migrations/*_car_paint.sql), checked by scripts/check-life-config.mjs.",
     "respray": 2500,
     "colors": [
-      { "id": "pearl-white", "name": "Pearl White", "hex": "#f8fafc" },
-      { "id": "silver", "name": "Silver", "hex": "#cbd5e1" },
-      { "id": "graphite", "name": "Graphite", "hex": "#4b5563" },
-      { "id": "black", "name": "Obsidian Black", "hex": "#0f172a" },
-      { "id": "desert-sand", "name": "Desert Sand", "hex": "#d6c3a1" },
-      { "id": "champagne", "name": "Champagne Gold", "hex": "#c8a96a" },
-      { "id": "racing-red", "name": "Racing Red", "hex": "#b91c1c" },
-      { "id": "sunset-orange", "name": "Sunset Orange", "hex": "#ea580c" },
-      { "id": "giallo", "name": "Giallo Yellow", "hex": "#facc15" },
-      { "id": "emerald", "name": "Emerald Green", "hex": "#15803d" },
-      { "id": "gulf-blue", "name": "Gulf Blue", "hex": "#2563eb" },
-      { "id": "midnight-blue", "name": "Midnight Blue", "hex": "#1e3a8a" },
-      { "id": "royal-purple", "name": "Royal Purple", "hex": "#6d28d9" },
-      { "id": "rose-gold", "name": "Rose Gold", "hex": "#e8a598" }
+      {
+        "id": "pearl-white",
+        "name": "Pearl White",
+        "hex": "#f8fafc"
+      },
+      {
+        "id": "silver",
+        "name": "Silver",
+        "hex": "#cbd5e1"
+      },
+      {
+        "id": "graphite",
+        "name": "Graphite",
+        "hex": "#4b5563"
+      },
+      {
+        "id": "black",
+        "name": "Obsidian Black",
+        "hex": "#0f172a"
+      },
+      {
+        "id": "desert-sand",
+        "name": "Desert Sand",
+        "hex": "#d6c3a1"
+      },
+      {
+        "id": "champagne",
+        "name": "Champagne Gold",
+        "hex": "#c8a96a"
+      },
+      {
+        "id": "racing-red",
+        "name": "Racing Red",
+        "hex": "#b91c1c"
+      },
+      {
+        "id": "sunset-orange",
+        "name": "Sunset Orange",
+        "hex": "#ea580c"
+      },
+      {
+        "id": "giallo",
+        "name": "Giallo Yellow",
+        "hex": "#facc15"
+      },
+      {
+        "id": "emerald",
+        "name": "Emerald Green",
+        "hex": "#15803d"
+      },
+      {
+        "id": "gulf-blue",
+        "name": "Gulf Blue",
+        "hex": "#2563eb"
+      },
+      {
+        "id": "midnight-blue",
+        "name": "Midnight Blue",
+        "hex": "#1e3a8a"
+      },
+      {
+        "id": "royal-purple",
+        "name": "Royal Purple",
+        "hex": "#6d28d9"
+      },
+      {
+        "id": "rose-gold",
+        "name": "Rose Gold",
+        "hex": "#e8a598"
+      }
     ]
   },
   "rentDays": [
@@ -589,5 +729,12 @@
       1,
       5
     ]
+  },
+  "resale": {
+    "_note": "Selling a car back to the dealer (sell_car in *_car_resale.sql): only when you own at least minCars (you always keep one), not stolen, impounded or entered in a race that hasn't finished. The dealer pays newPercent of what you paid, less monthlyDrop points for each month you've had it, never under floorPercent; rounded to AED 100.",
+    "minCars": 2,
+    "newPercent": 80,
+    "monthlyDrop": 2,
+    "floorPercent": 50
   }
 }

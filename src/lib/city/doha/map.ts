@@ -72,9 +72,11 @@ const home = (id: string, name: string, type: "tall-building" | "dubai-villa" | 
 /** A planned community: homes in straight rows (`ups` from the back), one per column; ids `<prefix>-<n>`. */
 const community = (prefix: string, name: string, type: "dubai-villa" | "small-house", plain: string, cols: number[], ups: number[], start = 1) =>
   ups.flatMap((up, r) => cols.map((dx, c) => home(`${prefix}-${start + r * cols.length + c}`, name, type, plain, dx, up)));
+/** Billboards stand half as big again as their footprint, like Dubai's giant screens (the layout gives them room). */
+export const BILLBOARD_SCALE = 1.5;
 /** A billboard: ads are booked on it like Dubai's (components/commerce/BillboardAds), by its id. */
-const billboard = (id: string, name: string, plain: string, dx: number, up: number, billboardStyle = "mega-led") =>
-  ({ id, name, type: "giant-billboard", ...plainAt(plain, dx + up * SLANT, up), width: 140, height: 90, billboardStyle, interactive: true, plain });
+const billboard = (id: string, name: string, plain: string, dx: number, up: number, billboardStyle = "mega-led", scale = BILLBOARD_SCALE) =>
+  ({ id, name, type: "giant-billboard", ...plainAt(plain, dx + up * SLANT, up), width: 140, height: 90, billboardStyle, interactive: true, plain, scale });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const DQ_BUILDINGS: any[] = [
@@ -103,7 +105,7 @@ export const DQ_BUILDINGS: any[] = [
   b("dq-lusail-marina", "Lusail Marina", "dq-marina", "dq-tile-lusail", -360, -40, 220, 110),
   b("dq-qetaifan-waterpark", "Qetaifan Island Waterpark", "wild-wadi", "dq-tile-lusail", -130, -40, 190, 130),
   { ...b("dq-lusail-circuit", "Lusail International Circuit", "race-circuit", "dq-tile-lusail", -420, -150, 400, 220), sign: "LUSAIL" },
-  b("dq-lusail-beach", "Lusail Beach", "dq-beach", "dq-tile-lusail", -50, -150, 200, 80),
+  b("dq-lusail-beach", "Lusail Beach", "dq-beach", "dq-tile-lusail", -118, -150, 200, 80),
   ...community("dq-foxhills-villa", "Fox Hills Villa", "dubai-villa", "dq-tile-lusail", [375, 500, 625], [-40]),
   ...community("dq-foxhills-townhouse", "Fox Hills Townhouse", "small-house", "dq-tile-lusail", [250, 375, 500, 625], [-150]),
 
@@ -453,19 +455,53 @@ export const DQ_BUILDINGS: any[] = [
   { id: "dq-lusail-party-marina", name: "Lusail Floating Party Marina", type: "dq-party-marina", virtualX: 2900, virtualY: row(2900, 380), width: 240, height: 130, interactive: true },
 
   // Billboards: the same paid ads as Dubai's and Abu Dhabi's.
-  billboard("dq-bb-pearl", "The Pearl Gateway Screen", "dq-tile-pearl", 80, -150, "luxury-curved"),
-  billboard("dq-bb-lusail", "Lusail Expressway Billboard", "dq-tile-lusail", 115, -150, "classic-highway"),
+  billboard("dq-bb-pearl", "The Pearl Gateway Screen", "dq-tile-pearl", 80, -150, "luxury-curved", 1.2),
+  billboard("dq-bb-lusail", "Lusail Expressway Billboard", "dq-tile-lusail", 88, -150, "classic-highway", 1.2),
   billboard("dq-bb-westbay", "West Bay Mega Screen", "dq-tile-westbay", 60, -150),
   billboard("dq-bb-corniche", "Corniche LED Screen", "dq-tile-corniche", 120, -150, "luxury-curved"),
   billboard("dq-bb-souq", "Msheireb Billboard", "dq-tile-souq", 40, -150, "hoarding-banner"),
   billboard("dq-bb-aspire", "Aspire Zone Screen", "dq-tile-aspire", 230, -150),
-  billboard("dq-bb-doh", "DOH Arrivals Screen", "dq-tile-doh", 470, -170),
+  billboard("dq-bb-doh", "DOH Arrivals Screen", "dq-tile-doh", 420, -170),
   billboard("dq-bb-salwa", "Salwa Road Billboard", "dq-tile-education", -60, -150, "classic-highway"),
   billboard("dq-bb-desert", "Desert Road Billboard", "dq-tile-desert", 450, -150, "classic-highway"),
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const DQ_ENTITIES: any[] = [...DQ_TILES, ...DQ_BUILDINGS.map((e) => ({ ...e, city: "doha" }))];
+/** Ground ads: flat ad tiles on the empty ground in each district's rows (in the gaps between what stands there),
+ *  booked like Dubai's floor ads ("floor:<id>", priced per 18 px cell: the id ends in its size, …-w5h3). Worked out
+ *  from the layout, so they follow it. */
+const CELL = 18;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function groundAds(): any[] {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const out: any[] = [];
+  for (const p of DQ_PLAINS) {
+    // Not on the airport (its own drawing covers its ground).
+    if (/airport/i.test(p.name)) continue;
+    const room = p.w / 2 - (p.h / 2) * SLANT - 12;
+    for (const up of [70, -40, -150]) {
+      const taken = DQ_BUILDINGS.filter((e) => e.plain === p.id && Math.abs(e.virtualY - row(e.virtualX, p.y) - up) < 30).map((e) => {
+        const dx = e.virtualX - p.x - up * SLANT, half = ((e.width ?? 120) * (e.scale ?? 1)) / 2 + 10;
+        return [dx - half, dx + half] as [number, number];
+      }).sort((a, b) => a[0] - b[0]);
+      let x = -room, k = 0;
+      for (const [a, b2] of [...taken, [room, room] as [number, number]]) {
+        const gap = a - x;
+        if (gap >= 100) {
+          const cols = Math.min(9, Math.floor((gap - 20) / CELL)), w = cols * CELL, c = x + gap / 2;
+          out.push({ id: `dq-ga-${p.id.replace("dq-tile-", "")}-${up < 0 ? "m" + -up : up}-${k++}-w${cols}h3`, name: `Ground ad · ${cols * 3} cells`, type: "floor-ad",
+            ...plainAt(p.id, c + up * SLANT, up + 12), width: w, height: 3 * CELL, interactive: true });
+        }
+        x = Math.max(x, b2);
+      }
+    }
+  }
+  return out;
+}
+const GROUND_ADS = groundAds();
+
+export const DQ_ENTITIES: any[] = [
+  ...GROUND_ADS.map((e) => ({ ...e, city: "doha" })),...DQ_TILES, ...DQ_BUILDINGS.map((e) => ({ ...e, city: "doha" }))];
 
 /** Shared types drawn in Doha's own style on its map (components/map/DohaSprites). */
 export const DQ_STYLED_TYPES = new Set(["tall-building", "dubai-villa", "small-house", "mall", "hotel"]);

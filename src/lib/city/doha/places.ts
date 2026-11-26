@@ -78,6 +78,10 @@ const plus = (v: Venue, more: VenueActivity[]): Venue => ({ ...v, activities: [.
 const show = (id: string, label: string, icon: string, reward = 30, kind: "fun" | "social" | "energy" = "fun", animation: VenueActivity["animation"] = "talk", desc?: string): VenueActivity =>
   ({ id, label, icon, animation, reward, need: { kind, amount: 25 }, desc });
 
+/** A match night at a stadium: the 3D Match Night game, from your seat in the stands. */
+const match = (id: string, stadium: string, theme: string, home: string, away: string): VenueActivity =>
+  ({ id, label: "Watch the match from the stands", icon: "⚽", arcade: "stadium", arcadeParams: { stadium, theme, home, away }, desc: `${home} v ${away}: chant, do the wave, roar your team on.` });
+
 export const DQ_PLACES: Place[] = [
   // ---------------------------------------------------------------- the airport
   {
@@ -130,7 +134,7 @@ export const DQ_PLACES: Place[] = [
     venues: [venue("Lusail Stadium", "Stadium", "hotel", {
       layout: "lobby", palette: { floor: "#3b2a12", wall: "#e9c46a", accent: MAROON }, role: "Stadium guide", noJob: true,
       products: [ticket("lusail:tour", "Stadium tour", 90, "The pitch, the dressing rooms and the trophy room.", "🏟️"), ticket("lusail:match", "Match night ticket", 300, "Tonight's game under the golden roof.", "⚽")],
-      activities: [show("lusail:tour", "Tour the stadium", "🏟️", 35), show("lusail:match", "Watch the match", "⚽", 40, "fun", "clap"), { id: "lusail:penalty", label: "Take a penalty on the pitch", icon: "🥅", animation: "clap", reward: 25, need: { kind: "fun", amount: 25 } }],
+      activities: [show("lusail:tour", "Tour the stadium", "🏟️", 35), match("lusail:match", "Lusail Stadium", "gold", "Al Sadd", "Al Duhail"), { id: "lusail:penalty", label: "Penalty shootout on the pitch", icon: "🥅", arcade: "penalty", arcadeParams: { stadium: "Lusail Stadium", theme: "gold" }, desc: "Five kicks, five saves, sudden death." }],
     })],
   },
   single("dq-katara-towers", "Katara Towers (Raffles & Fairmont)", "hotel", venue("Katara Towers", "Crescent towers hotel & suites", "hotel", {
@@ -371,7 +375,7 @@ export const DQ_PLACES: Place[] = [
     venues: [venue("Khalifa International Stadium", "Stadium", "hotel", {
       layout: "lobby", palette: { floor: "#1f3b2a", wall: "#e5e7eb", accent: MAROON }, role: "Stadium guide", noJob: true,
       products: [ticket("khalifa:match", "Match ticket", 150, "A league night under the arch.", "⚽")],
-      activities: [show("khalifa:match", "Watch the match", "⚽", 35, "fun", "clap")],
+      activities: [match("khalifa:match", "Khalifa International Stadium", "arch", "Al Arabi", "Al Gharafa")],
     })],
   },
   {
@@ -571,7 +575,7 @@ export const DQ_PLACES: Place[] = [
   {
     id: "dq-jassim-stadium", name: "Jassim bin Hamad Stadium", kind: "attraction",
     blurb: "Al Sadd club's home ground: league football nights.",
-    venues: [venue("Jassim bin Hamad Stadium", "Stadium", "hotel", { layout: "lobby", palette: { floor: "#1f3b2a", wall: "#e5e7eb", accent: MAROON }, role: "Stadium steward", noJob: true, products: [ticket("jassim:match", "Match ticket", 80, "Tonight's league game.", "⚽")], activities: [show("jassim:match", "Watch the match", "⚽", 30, "fun", "clap")] })],
+    venues: [venue("Jassim bin Hamad Stadium", "Stadium", "hotel", { layout: "lobby", palette: { floor: "#1f3b2a", wall: "#e5e7eb", accent: MAROON }, role: "Stadium steward", noJob: true, products: [ticket("jassim:match", "Match ticket", 80, "Tonight's league game.", "⚽")], activities: [match("jassim:match", "Jassim bin Hamad Stadium", "classic", "Al Sadd", "Qatar SC")] })],
   },
   {
     id: "dq-sadd-dining", name: "Al Sadd Street Restaurants", kind: "food-hall",
@@ -594,7 +598,7 @@ export const DQ_PLACES: Place[] = [
   {
     id: "dq-ahmad-stadium", name: "Ahmad bin Ali Stadium", kind: "attraction",
     blurb: "Al Rayyan's stadium, its façade patterned like the sand dunes and the desert's plants.",
-    venues: [venue("Ahmad bin Ali Stadium", "Stadium", "hotel", { layout: "lobby", palette: { floor: "#3b2a12", wall: "#e9d5b5", accent: MAROON }, role: "Stadium steward", noJob: true, products: [ticket("ahmad:match", "Match ticket", 90, "A league night.", "⚽")], activities: [show("ahmad:match", "Watch the match", "⚽", 30, "fun", "clap")] })],
+    venues: [venue("Ahmad bin Ali Stadium", "Stadium", "hotel", { layout: "lobby", palette: { floor: "#3b2a12", wall: "#e9d5b5", accent: MAROON }, role: "Stadium steward", noJob: true, products: [ticket("ahmad:match", "Match ticket", 90, "A league night.", "⚽")], activities: [match("ahmad:match", "Ahmad bin Ali Stadium", "dunes", "Al Rayyan", "Al Sadd")] })],
   },
   {
     id: "dq-gharrafa-park", name: "Al Gharrafa Park", kind: "park",
@@ -611,7 +615,7 @@ export const DQ_PLACES: Place[] = [
   {
     id: "dq-al-bayt", name: "Al Bayt Stadium", kind: "attraction",
     blurb: "The stadium made like a vast Bedouin tent, bayt al sha'ar, striped in black and white; it opened the 2022 World Cup.",
-    venues: [venue("Al Bayt Stadium", "Stadium", "hotel", { layout: "lobby", palette: { floor: "#1f2937", wall: "#f5f5f4", accent: MAROON }, role: "Stadium guide", noJob: true, products: [ticket("albayt:tour", "Stadium tour", 80, "Inside the great tent.", "⛺"), ticket("albayt:match", "Match ticket", 150, "A night under the tent.", "⚽")], activities: [show("albayt:tour", "Tour the great tent", "⛺", 30), show("albayt:match", "Watch the match", "⚽", 35, "fun", "clap")] })],
+    venues: [venue("Al Bayt Stadium", "Stadium", "hotel", { layout: "lobby", palette: { floor: "#1f2937", wall: "#f5f5f4", accent: MAROON }, role: "Stadium guide", noJob: true, products: [ticket("albayt:tour", "Stadium tour", 80, "Inside the great tent.", "⛺"), ticket("albayt:match", "Match ticket", 150, "A night under the tent.", "⚽")], activities: [show("albayt:tour", "Tour the great tent", "⛺", 30), match("albayt:match", "Al Bayt Stadium", "tent", "Al Duhail", "Al Rayyan")] })],
   },
   {
     id: "dq-alkhor-park", name: "Al Khor Corniche Park", kind: "park",
@@ -671,7 +675,7 @@ export const DQ_PLACES: Place[] = [
   {
     id: "dq-974-stadium", name: "Stadium 974", kind: "attraction",
     blurb: "The stadium built from 974 shipping containers on the waterfront, made to be taken apart.",
-    venues: [venue("Stadium 974", "Stadium", "hotel", { layout: "lobby", palette: { floor: "#1f2937", wall: "#e5e7eb", accent: "#ea580c" }, role: "Stadium guide", noJob: true, products: [ticket("974:tour", "Stadium tour", 60, "Through the containers.", "📦")], activities: [show("974:tour", "Walk through the containers", "📦", 25)] })],
+    venues: [venue("Stadium 974", "Stadium", "hotel", { layout: "lobby", palette: { floor: "#1f2937", wall: "#e5e7eb", accent: "#ea580c" }, role: "Stadium guide", noJob: true, products: [ticket("974:tour", "Stadium tour", 60, "Through the containers.", "📦")], activities: [show("974:tour", "Walk through the containers", "📦", 25), { id: "974:penalty", label: "Penalty shootout by the sea", icon: "🥅", arcade: "penalty", arcadeParams: { stadium: "Stadium 974", theme: "containers" } }] })],
   },
   {
     id: "dq-hilal-dining", name: "Old Airport Karak Street", kind: "food-hall",
@@ -683,7 +687,7 @@ export const DQ_PLACES: Place[] = [
   {
     id: "dq-al-janoub", name: "Al Janoub Stadium", kind: "attraction",
     blurb: "Zaha Hadid's stadium shaped like the sails of a dhow.",
-    venues: [venue("Al Janoub Stadium", "Stadium", "hotel", { layout: "lobby", palette: { floor: "#1f3b2a", wall: "#f5f5f4", accent: MAROON }, role: "Stadium guide", noJob: true, products: [ticket("janoub:match", "Match ticket", 90, "A league night under the sails.", "⚽")], activities: [show("janoub:match", "Watch the match", "⚽", 30, "fun", "clap")] })],
+    venues: [venue("Al Janoub Stadium", "Stadium", "hotel", { layout: "lobby", palette: { floor: "#1f3b2a", wall: "#f5f5f4", accent: MAROON }, role: "Stadium guide", noJob: true, products: [ticket("janoub:match", "Match ticket", 90, "A league night under the sails.", "⚽")], activities: [match("janoub:match", "Al Janoub Stadium", "sails", "Al Wakrah", "Al Arabi")] })],
   },
   {
     id: "dq-wakrah-souq", name: "Al Wakrah Souq", kind: "mall",
@@ -741,7 +745,7 @@ export const DQ_PLACES: Place[] = [
   {
     id: "dq-al-thumama", name: "Al Thumama Stadium", kind: "attraction",
     blurb: "The stadium shaped like the gahfiya, the woven cap worn under the ghutra.",
-    venues: [venue("Al Thumama Stadium", "Stadium", "hotel", { layout: "lobby", palette: { floor: "#1f3b2a", wall: "#f5f5f4", accent: MAROON }, role: "Stadium guide", noJob: true, products: [ticket("thumama:match", "Match ticket", 90, "A league night.", "⚽")], activities: [show("thumama:match", "Watch the match", "⚽", 30, "fun", "clap")] })],
+    venues: [venue("Al Thumama Stadium", "Stadium", "hotel", { layout: "lobby", palette: { floor: "#1f3b2a", wall: "#f5f5f4", accent: MAROON }, role: "Stadium guide", noJob: true, products: [ticket("thumama:match", "Match ticket", 90, "A league night.", "⚽")], activities: [match("thumama:match", "Al Thumama Stadium", "cap", "Qatar SC", "Umm Salal")] })],
   },
   {
     id: "dq-thumama-park", name: "Ain Khaled Park", kind: "park",

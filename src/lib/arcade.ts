@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabase/client";
 import { boostNeed, refreshCitizen } from "@/lib/citizenStore";
 import { gainSkill, type SkillId } from "@/lib/life";
 
-export type ArcadeGameId = "boxing" | "gym" | "scan" | "labour" | "court" | "hall" | "bridal" | "nails" | "goldsouk";
+export type ArcadeGameId = "boxing" | "gym" | "scan" | "labour" | "court" | "hall" | "bridal" | "nails" | "goldsouk" | "stadium" | "penalty";
 type NeedKind = "hunger" | "energy" | "fun" | "social" | "hygiene";
 
 export interface ArcadeGame {

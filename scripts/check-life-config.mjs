@@ -182,6 +182,12 @@ const priceSql = latestDef("car_price"), offerSql = latestDef("car_offered"), en
 for (const c of cars.cars) cneed(`price ${c.id}`, `when '${c.id}' then array[${c.price}, ${c.day}]`, priceSql);
 for (const r of cars.rentals) cneed(`fleet ${r.id}`, `when p_place = '${r.id}' and p_car in (${r.fleet.map((x) => `'${x}'`).join(", ")}) then 'rent'`, offerSql);
 for (const d of cars.dealers) cneed(`stock ${d.id}`, `when p_place = '${d.id}' and p_car in (${d.stock.map((x) => `'${x}'`).join(", ")}) then 'buy'`, offerSql);
+// Car resale (cars.json → resale vs car_resale_rule()).
+{
+  const m = latestDef("car_resale_rule").match(/select '(\{[^']+\})'::jsonb/)?.[1];
+  const { _note, ...want } = cars.resale;
+  if (!m || JSON.stringify(JSON.parse(m)) !== JSON.stringify(want)) { bad++; console.error("cars resale: differs from SQL"); }
+}
 // Car paint (cars.json → paints vs car_paint_rule()).
 {
   const paintSql = latestDef("car_paint_rule").match(/select '(\{[^']+\})'::jsonb/)?.[1];

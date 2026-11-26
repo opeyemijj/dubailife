@@ -8,6 +8,7 @@ import { useMemo } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import type { Car } from "@/lib/cars";
+import { CYBER_LENGTH, CyberModel } from "./CyberModel";
 
 function plateTexture(plate: string) {
   const c = document.createElement("canvas");
@@ -25,11 +26,21 @@ function plateTexture(plate: string) {
 
 const LENGTH: Record<string, number> = { sedan: 4.7, compact: 4.6, "sport-sedan": 4.85, suv: 5.0, supercar: 4.5 };
 /** How long a car is in the scene (metres). */
-export const carLength = (car: { model3d?: string }) => LENGTH[car.model3d ?? "sedan"] ?? 4.7;
+export const carLength = (car: { model3d?: string }) => (car.model3d === "cybertruck" ? CYBER_LENGTH : LENGTH[car.model3d ?? "sedan"] ?? 4.7);
 /** The paint: each model's body material (the rest is glass, tyres, trim and lights). */
 const BODY = /^(LightBlue|Blue|White|Main)$/;
 
 export function CarModel({ car, plate = "DUBAI" }: { car: Car & { model3d?: string }; plate?: string }) {
+  return car.model3d === "cybertruck" ? <BuiltCar color={car.color} plate={plate} /> : <GltfCar car={car} plate={plate} />;
+}
+
+/** A car with no model file (the Cybertruck), built from shapes. */
+function BuiltCar({ color, plate }: { color: string; plate: string }) {
+  const tex = useMemo(() => plateTexture(plate), [plate]);
+  return <CyberModel color={color} plateMap={tex} />;
+}
+
+function GltfCar({ car, plate }: { car: Car & { model3d?: string }; plate: string }) {
   const kind = car.model3d ?? "sedan";
   const { scene } = useGLTF(`/models/cars/${kind}.glb`);
   const tex = useMemo(() => plateTexture(plate), [plate]);
