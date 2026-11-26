@@ -2,7 +2,7 @@
 
 // Big Missions on screen: the sheet with the three missions (invite 5 friends on WhatsApp, a house party with 10 of
 // them, 3 of them each bringing a friend), each with its reward, progress and one big button to do it. It opens by
-// itself once a day on the map and at home until all three are paid, and from the 💰 button on the map's rail.
+// itself every time you open the app (on the map or at home) until all three are paid, and from the 💰 button on the map's rail.
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -17,11 +17,10 @@ import {
 import { gameAudio } from "@/utils/gameAudio";
 
 const SHOWN_KEY = "dl_big_missions_shown";
-const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Dubai" });
 /** Pages it opens by itself on: the city maps and home. */
 const AUTO = /^\/(explore|abu-dhabi|doha|home)\/?$/;
 
-/** Mounted once (app layout): opens on the rail's button, and by itself once a day. */
+/** Mounted once (app layout): opens on the rail's button, and by itself on every app visit. */
 export function BigMissionsHost() {
   const { citizen } = useCitizen();
   const me = citizen?.id;
@@ -33,17 +32,18 @@ export function BigMissionsHost() {
     window.addEventListener(BIG_MISSIONS_EVENT, f);
     return () => window.removeEventListener(BIG_MISSIONS_EVENT, f);
   }, []);
-  // Once a day, a few seconds after you're on the map or at home, while there's something left to earn.
+  // Every time you open the app: a few seconds after you're on the map or at home, while there's something left to
+  // earn. Once per visit (closing it doesn't bring it back until the app is opened again).
   const left = leftToEarn(data);
   useEffect(() => {
     if (!me || !data || left <= 0 || !AUTO.test(path)) return;
     let seen = "";
-    try { seen = localStorage.getItem(SHOWN_KEY) ?? ""; } catch { /* storage blocked */ }
-    if (seen === today()) return;
+    try { seen = sessionStorage.getItem(SHOWN_KEY) ?? ""; } catch { /* storage blocked */ }
+    if (seen === me) return;
     const t = setTimeout(() => {
       setOpen(true);
-      try { localStorage.setItem(SHOWN_KEY, today()); } catch { /* storage blocked */ }
-    }, 3500);
+      try { sessionStorage.setItem(SHOWN_KEY, me); } catch { /* storage blocked */ }
+    }, 2000);
     return () => clearTimeout(t);
   }, [me, !!data, left, path]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!open || !citizen) return null;

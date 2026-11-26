@@ -1,0 +1,11 @@
+{
+  "_note": "Inviting friends is how you get rich. Money the game creates pays `factor` of its amount (wages, games, bounties, the mystery box, season and goal rewards, the marathon, the passport, profit share, Locals' gifts, ...), except refs starting with one of `fullPay`: invites and Big Missions, house parties, new-player rewards, and money that comes from another player (services, tickets, race pots and bets, a car sold back). Social rewards pay in full only for `socialFullPay` kinds. Transfers between players and refunds are never touched. Enforced by coin_move / pay_social_reward (earn_rule() mirrors this file, checked by scripts/check-life-config.mjs).",
+  "factor": 0.1,
+  "fullPay": [
+    "referral:", "social:",
+    "party-guest:", "ticket-sale:", "promoter:",
+    "app_bonus:",
+    "decor-paid:", "treated:", "lawyer-fee:", "bet:", "race:", "car:"
+  ],
+  "socialFullPay": ["mission", "invite_join", "signup", "party", "follow_top"]
+}

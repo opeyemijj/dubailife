@@ -189,6 +189,13 @@ for (const d of cars.dealers) cneed(`stock ${d.id}`, `when p_place = '${d.id}' a
   const want = { joinMinutes: bm.joinMinutes, missions: bm.missions.map(({ id, target, aed }) => ({ id, target, aed })) };
   if (!m || JSON.stringify(JSON.parse(m)) !== JSON.stringify(want)) { bad++; console.error("big missions: differ from SQL"); }
 }
+// Earnings: what the game pays outside invites and parties (src/data/life/earnings.json → earn_rule()).
+{
+  const { _note, ...want } = JSON.parse(readFileSync("src/data/life/earnings.json", "utf8"));
+  const m = latestDef("earn_rule").match(/select '(\{.*?\})'::jsonb/)?.[1];
+  if (!m || JSON.stringify(JSON.parse(m)) !== JSON.stringify(want)) { bad++; console.error("earnings: differ from SQL"); }
+  if (!latestDef("coin_move").includes("earn_scaled(p_delta, p_ref)")) { bad++; console.error("earnings: coin_move doesn't scale payouts"); }
+}
 // Car resale (cars.json → resale vs car_resale_rule()).
 {
   const m = latestDef("car_resale_rule").match(/select '(\{[^']+\})'::jsonb/)?.[1];
