@@ -1,0 +1,15 @@
+{
+  "_note": "Visas for flying to another country (lib/visas, src/app/visa/[country]). You live in the UAE, so Dubai and Abu Dhabi need none; Doha needs a Qatar visa before you can book a flight there (public.book_flight). Fees (AED), validity and review time are charged and enforced by public.apply_visa() / public.my_visa(), mirrored exactly here and checked by scripts/check-life-config.mjs.",
+  "cityCountry": { "doha": "qatar" },
+  "countries": {
+    "qatar": {
+      "name": "Qatar", "flag": "🇶🇦", "city": "doha", "authority": "Qatar e-visa (Ministry of Interior)",
+      "reviewSeconds": 60,
+      "kinds": [
+        { "id": "tourist", "name": "Tourist e-visa", "entries": "Single entry", "days": 30, "fee": 100, "blurb": "A month in Qatar for tourism or visiting family and friends." },
+        { "id": "multiple", "name": "Multiple-entry visa", "entries": "Multiple entries", "days": 365, "fee": 1500, "blurb": "A year of trips to Qatar, in and out as often as you like." }
+      ],
+      "purposes": ["Tourism", "Visiting friends or family", "Business meetings", "Events & sport"]
+    }
+  }
+}

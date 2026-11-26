@@ -15,7 +15,7 @@ import { DailyMissions } from "./DailyMissions";
 import { WeekendCard } from "./FunGoals";
 import { useFun } from "@/lib/fun";
 import { collectable, useMissions } from "@/lib/missions";
-import { RailButton, railTop } from "@/components/layout/mapRail";
+import { goalSlot, RailButton, railTop } from "@/components/layout/mapRail";
 
 export function NextStep() {
   const { citizen } = useCitizen();
@@ -29,18 +29,19 @@ export function NextStep() {
   const [open, setOpen] = useState(false);
   const [won, setWon] = useState<{ aed: number; xp: number; next?: string } | null>(null);
   // On the maps only (Dubai's and Abu Dhabi's); at home your goal is in the Life panel's Goals tab.
-  if (!citizen?.id || !status?.order || !/^\/(explore|abu-dhabi)\/?$/.test(path)) return null;
+  if (!citizen?.id || !status?.order || !/^\/(explore|abu-dhabi|doha)\/?$/.test(path)) return null;
 
   const goal = currentGoal(status);
   const done = goal ? goal.steps.filter((s) => stepDone(status, s)).length : 0;
   const ready = !!goal && goalDone(status, goal);
-  // The first of the map's round buttons down the left (layout/mapRail); opened, the panel starts there.
-  const place = `fixed z-[59] w-[min(340px,calc(100vw-1.5rem))] flex flex-col left-3 items-start`;
+  // One of the map's round buttons down the right (layout/mapRail); opened, the panel starts there.
+  const slot = goalSlot(path);
+  const place = `fixed z-[59] w-[min(340px,calc(100vw-1.5rem))] flex flex-col right-3 items-end`;
 
-  if (!goal) return <Link href="/goals" aria-label="Every goal reached" style={{ top: railTop(0) }} className="fixed left-3 z-[58] w-12 h-12 rounded-full bg-white shadow-xl flex items-center justify-center text-2xl">🏆</Link>;
+  if (!goal) return <Link href="/goals" aria-label="Every goal reached" style={{ top: railTop(slot) }} className="fixed right-3 z-[58] w-12 h-12 rounded-full bg-white shadow-xl flex items-center justify-center text-2xl">🏆</Link>;
 
   return (
-    <div className={place} style={{ top: railTop(0) }}>
+    <div className={place} style={{ top: railTop(slot) }}>
       {open && (
         <div
           className="fixed inset-0 z-[-1]"
@@ -50,7 +51,7 @@ export function NextStep() {
       )}
       {!open ? (
         // One round icon with its progress as a badge ("1/4"); it glows when there's a reward to collect.
-        <RailButton n={0} icon={ready ? "🎁" : goal.icon} badge={ready ? "!" : `${done}/${goal.steps.length}`}
+        <RailButton n={slot} icon={ready ? "🎁" : goal.icon} badge={ready ? "!" : `${done}/${goal.steps.length}`}
           label={ready ? `${goal.title}: collect your reward` : `Your goal: ${goal.title}, ${done} of ${goal.steps.length} done${todo !== null ? `; daily missions ${3 - todo} of 3` : ""}`}
           tone={ready || collectable(missions) ? "bg-amber-400 text-slate-950" : "bg-white text-slate-900"} alert={ready || collectable(missions)}
           onClick={() => { gameAudio.playClickSound(); setOpen(true); }} />

@@ -23,7 +23,7 @@ export const AD_PLACES: Place[] = [
   // ---------------------------------------------------------------- the airport
   {
     // Going to the airport takes you straight into the terminal's check-in (/fly), not a room first.
-    id: "ad-auh-airport", name: "Abu Dhabi International Airport (AUH)", kind: "attraction", route: "/fly?to=dubai",
+    id: "ad-auh-airport", name: "Abu Dhabi International Airport (AUH)", kind: "attraction", route: "/fly",
     blurb: "Terminal A, with Dubai Life Airways flights back to Dubai. Taxis wait outside arrivals.",
     venues: [venue("AUH Terminal A", "Airport Terminal", "hotel", {
       palette: PALETTES.luxury, blurb: "Check in for your Dubai Life Airways flight, or grab a taxi into the city.", role: "Check-in agent", noJob: true,

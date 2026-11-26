@@ -1506,7 +1506,7 @@ export const PLACES: Place[] = [
       { id: "dxb:concourse-walk", label: "Stroll Concourse D Glass Walkway", icon: "🧳", animation: "clap", reward: 20 },
       { id: "dxb:plane-spot", label: "Plane Spotting on Apron", icon: "🔭", animation: "sit", reward: 25 },
     ],
-  })), route: "/fly?to=abu-dhabi" },
+  })), route: "/fly" },
   { ...single("dxb-terminal-2", "DXB Terminal 2 (flydubai & Executive)", "attraction", venue("DXB Terminal 2 (flydubai & Executive)", "Airport Terminal", "hotel", {
     palette: PALETTES.dining,
     blurb: "Regional flight hub for flydubai and VIP executive business jets with apron tarmac boarding.",
@@ -1520,7 +1520,7 @@ export const PLACES: Place[] = [
       { id: "dxb:t2-tarmac", label: "Board via Tarmac Airstairs", icon: "🚶", animation: "clap", reward: 15 },
       { id: "dxb:exec-lounge", label: "Executive VIP Flight Lounge", icon: "🍸", animation: "sit", reward: 30 },
     ],
-  })), route: "/fly?to=abu-dhabi" },
+  })), route: "/fly" },
   { ...single("dxb-terminal-3", "DXB Terminal 3 (Dubai Life Airways)", "attraction", venue("DXB Terminal 3 (Dubai Life Airways)", "Airport Terminal", "hotel", {
     palette: PALETTES.luxury,
     blurb: "The world's largest airport terminal and the home of Dubai Life Airways: check in here to fly to Abu Dhabi.",
@@ -1533,13 +1533,13 @@ export const PLACES: Place[] = [
       { id: "dxb:fly-auh", label: "Fly to Abu Dhabi: check in, board, take off", icon: "🛫", href: "/fly?from=dubai&to=abu-dhabi" },
       { id: "dxb:lounge-relax", label: "Relax in First Class Lounge", icon: "☕", animation: "sit", reward: 20 },
     ],
-  })), route: "/fly?to=abu-dhabi" },
+  })), route: "/fly" },
   {
     id: "dxb-international-airport",
     name: "Dubai International Airport (DXB)",
     kind: "attraction",
     // Every DXB building takes you straight to the Dubai Life Airways check-in counter (/fly), never a room first.
-    route: "/fly?to=abu-dhabi",
+    route: "/fly",
     blurb: "World's busiest international airport hub connecting 250+ global destinations across Terminals 1, 2 and 3.",
     venues: [
       venue("DXB Terminal 3 (Dubai Life Airways)", "Airport Terminal", "hotel", {

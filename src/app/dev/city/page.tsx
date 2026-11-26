@@ -5,5 +5,5 @@ import { CityPreview } from "./CityPreview";
 export default async function Page({ searchParams }: { searchParams: Promise<{ city?: string; open?: string }> }) {
   if (process.env.NODE_ENV === "production") notFound();
   const q = await searchParams;
-  return <CityPreview city={q.city === "dubai" ? "dubai" : "abu-dhabi"} open={q.open} />;
+  return <CityPreview city={q.city === "dubai" ? "dubai" : q.city === "doha" ? "doha" : "abu-dhabi"} open={q.open} />;
 }

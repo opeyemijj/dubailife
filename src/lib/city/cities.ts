@@ -5,8 +5,9 @@
 
 // Other cities' places register themselves with lib/city/places when loaded (kept out of Dubai's own lists).
 import "./abuDhabi/places";
+import "./doha/places";
 
-export type CityId = "dubai" | "abu-dhabi";
+export type CityId = "dubai" | "abu-dhabi" | "doha";
 
 export interface CityDef {
   id: CityId;
@@ -23,6 +24,7 @@ export interface CityDef {
 export const CITIES: Record<CityId, CityDef> = {
   dubai: { id: "dubai", name: "Dubai", path: "/explore", prefix: "", airport: "dxb-terminal-3", icon: "🏙️" },
   "abu-dhabi": { id: "abu-dhabi", name: "Abu Dhabi", path: "/abu-dhabi", prefix: "ad-", airport: "ad-auh-airport", icon: "🕌" },
+  doha: { id: "doha", name: "Doha", path: "/doha", prefix: "dq-", airport: "dq-hamad-airport", icon: "🇶🇦" },
 };
 
 export const CITY_LIST = Object.values(CITIES);
@@ -31,8 +33,6 @@ export const CITY_LIST = Object.values(CITIES);
  *  the name on a phone, where every city has to fit one row. */
 export const COMING_CITIES = [
   { id: "saudi-arabia", name: "Saudi Arabia", short: "Saudi", icon: "🇸🇦", city: "Riyadh" },
-  { id: "qatar", name: "Qatar", short: "Qatar", icon: "🇶🇦", city: "Doha" },
-  { id: "china", name: "China", short: "China", icon: "🇨🇳", city: "Shanghai" },
 ] as const;
 
 /** Which city a place (or building) is in, by its id. */

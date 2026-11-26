@@ -20,6 +20,7 @@ import ENTRY from "@/data/autodrome/entry.json";
 import { gameAudio } from "@/utils/gameAudio";
 import { useCurrentCity } from "@/lib/city/presence";
 import { AD_CIRCUIT } from "@/lib/city/abuDhabi/racing";
+import { DQ_CIRCUIT } from "@/lib/city/doha/racing";
 
 export default function AutodromePage() {
   useRequireCitizen();
@@ -70,9 +71,9 @@ export default function AutodromePage() {
         <header className="flex items-center gap-3">
           <Link href="/explore" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center" aria-label="Back to the map"><ArrowLeft className="w-4 h-4" /></Link>
           <div className="flex-1">
-            {/* Opened from Yas Marina Circuit in Abu Dhabi: the same races, under its name. */}
-            <h1 className="text-2xl font-black leading-tight">{cityHere === "abu-dhabi" ? AD_CIRCUIT.venue : "Dubai Autodrome"}</h1>
-            <p className="text-xs text-white/60">{cityHere === "abu-dhabi" ? AD_CIRCUIT.place : "Motor City"} · {TRACKS.length} tracks</p>
+            {/* Opened from Yas Marina Circuit or Lusail: the same races, under its name. */}
+            <h1 className="text-2xl font-black leading-tight">{cityHere === "abu-dhabi" ? AD_CIRCUIT.venue : cityHere === "doha" ? DQ_CIRCUIT.venue : "Dubai Autodrome"}</h1>
+            <p className="text-xs text-white/60">{cityHere === "abu-dhabi" ? AD_CIRCUIT.place : cityHere === "doha" ? DQ_CIRCUIT.place : "Motor City"} · {TRACKS.length} tracks</p>
           </div>
           <Link href="/garage" className="h-10 px-3 rounded-full bg-white/10 text-xs font-black flex items-center gap-1.5">🔧 Garage</Link>
         </header>

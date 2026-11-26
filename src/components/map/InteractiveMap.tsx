@@ -13,9 +13,11 @@ import { mapConfig } from '@/data/mapSeed';
 import { CITY_ENTITIES, savableEntities } from '@/lib/city/mapEntities';
 import dynamic from 'next/dynamic';
 import { AD_ENTITIES, AD_STYLED_TYPES } from '@/lib/city/abuDhabi/map';
+import { DQ_ENTITIES, DQ_STYLED_TYPES } from '@/lib/city/doha/map';
 import { CITIES, cityOfLocation, type CityId } from '@/lib/city/cities';
 // Other cities' ground loads only on their maps.
 const AbuDhabiBackground = dynamic(() => import('./AbuDhabiBackground').then((m) => m.AbuDhabiBackground), { ssr: false });
+const DohaBackground = dynamic(() => import('./DohaBackground').then((m) => m.DohaBackground), { ssr: false });
 import { PALM_VIEW, WORLD_TOP } from '@/lib/city/palm';
 import { GAME_CITY } from '@/lib/city/gameCity';
 import { MapSideBar, type MapFilter } from './MapSideBar';
@@ -32,9 +34,11 @@ const EntitySprite = memo(function EntitySprite({ loc }: { loc: any }) {
   // is drawn, and its towers, villas, townhouses, malls and resorts in its own style. Checked by city too: Dubai has
   // types that start "ad-" of its own (its "ad-billboard").
   if (loc.city === 'abu-dhabi' && typeof loc.type === 'string' && (loc.type.startsWith('ad-') || AD_STYLED_TYPES.has(loc.type))) return <Suspense fallback={null}><AdSprite type={loc.type} loc={loc} /></Suspense>;
+  if (loc.city === 'doha' && typeof loc.type === 'string' && (loc.type.startsWith('dq-') || DQ_STYLED_TYPES.has(loc.type))) return <Suspense fallback={null}><DqSprite type={loc.type} loc={loc} /></Suspense>;
   return getBuildingSprite(loc.id, loc.type, loc.seed, loc.name, loc);
 });
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const DqSprite = lazy(() => import('./DohaSprites').then((m) => ({ default: ({ type, loc }: { type: string; loc: any }) => m.dohaSprite(type, loc) })));
 const AdSprite = lazy(() => import('./AbuDhabiSprites').then((m) => ({ default: ({ type, loc }: { type: string; loc: any }) => m.abuDhabiSprite(type, loc) })));
 
 /** The map's background animations (traffic, boats) pause while the map moves, and resume once it stops. */
@@ -121,6 +125,14 @@ export const getEntityCategoryInfo = (entity: any) => {
   if (type === 'ad-beach-club' || type === 'ad-beach') return { icon: '🏖️', category: 'Beaches & Beach Clubs', key: 'beaches', color: 'from-cyan-400 to-blue-500', badgeBg: 'bg-cyan-900/60 border-cyan-500/40 text-cyan-200' };
   if (type === 'ad-fort' || type === 'ad-wetland' || type === 'ad-mangrove' || type === 'ad-dhow' || type === 'ad-falcon') return { icon: ({ 'ad-fort': '🏰', 'ad-wetland': '🦩', 'ad-mangrove': '🛶', 'ad-dhow': '⛵', 'ad-falcon': '🦅' } as Record<string, string>)[type], category: 'Attractions & Mosques', key: 'attractions', color: 'from-blue-500 to-indigo-600', badgeBg: 'bg-blue-900/60 border-blue-500/40 text-blue-200' };
   if (type === 'ad-hotel-tower') return { icon: '🏨', category: 'Hotels & Resorts', key: 'hotels', color: 'from-amber-400 to-yellow-600', badgeBg: 'bg-yellow-900/60 border-yellow-500/40 text-yellow-200' };
+  // Doha's own types (lib/city/doha/map.ts).
+  if (type === 'dq-university' || type === 'dq-library') return { icon: type === 'dq-library' ? '📚' : '🎓', category: 'Universities & Libraries', key: 'academics', color: 'from-amber-500 to-purple-600', badgeBg: 'bg-purple-900/60 border-purple-500/40 text-purple-200' };
+  if (type === 'dq-beach' || type === 'dq-beach-club') return { icon: '🏖️', category: 'Beaches & Beach Clubs', key: 'beaches', color: 'from-cyan-400 to-blue-500', badgeBg: 'bg-cyan-900/60 border-cyan-500/40 text-cyan-200' };
+  if (type === 'dq-hotel-tower' || type === 'dq-pyramid' || type === 'dq-katara-towers' || type === 'dq-torch' || type === 'dq-banana') return { icon: '🏨', category: 'Hotels & Resorts', key: 'hotels', color: 'from-amber-400 to-yellow-600', badgeBg: 'bg-yellow-900/60 border-yellow-500/40 text-yellow-200' };
+  if (type === 'dq-souq' || type === 'dq-souq-small' || type === 'dq-vendome' || type === 'dq-villaggio' || type === 'dq-msheireb') return { icon: '🛍️', category: 'Shopping Malls', key: 'malls', color: 'from-purple-500 to-pink-600', badgeBg: 'bg-purple-900/60 border-purple-500/40 text-purple-200' };
+  if (type === 'dq-dining') return { icon: '🍽️', category: 'Dining & Cafes', key: 'food', color: 'from-orange-500 to-amber-600', badgeBg: 'bg-amber-900/60 border-amber-500/40 text-amber-200' };
+  if (type === 'dq-marina' || type === 'dq-dhow') return { icon: '⛵', category: 'Transit & Infrastructure', key: 'infrastructure', color: 'from-blue-600 to-indigo-700', badgeBg: 'bg-blue-900/60 border-blue-500/40 text-blue-200' };
+  if (type.startsWith('dq-')) return { icon: ({ 'dq-mosque': '🕌', 'dq-blue-mosque': '🕌', 'dq-stadium': '🏟️', 'dq-falcon': '🦅', 'dq-camp': '🏜️', 'dq-fort': '🏰', 'dq-park': '🌴' } as Record<string, string>)[type] ?? '🏛️', category: 'Attractions & Mosques', key: 'attractions', color: 'from-blue-500 to-indigo-600', badgeBg: 'bg-blue-900/60 border-blue-500/40 text-blue-200' };
   if (type === 'game-tile') return { icon: '🎮', category: 'Game City', key: 'games', color: 'from-fuchsia-500 to-indigo-600', badgeBg: 'bg-indigo-900/60 border-indigo-500/40 text-indigo-200' };
   // Bur Dubai and Deira (lib/city/oldDubai.ts): by type, before the name checks below ("Heritage House" is not a home).
   if (type === 'od-courts') return { icon: '⚖️', category: 'Courts & Government', key: 'courts', color: 'from-amber-600 to-stone-700', badgeBg: 'bg-stone-900/60 border-amber-500/40 text-amber-200' };
@@ -280,7 +292,7 @@ export function InteractiveMap({
   const [navVenueId, setNavVenueId] = useState<string | undefined>(undefined);
   const [travel, setTravel] = useState<{ mode: TravelMode; ms: number } | null>(null);
   // This city's buildings and plains (Dubai's are editable in the map editor; the others are laid out in code).
-  const [venues, setVenues] = useState<any[]>(() => (city === "dubai" ? CITY_ENTITIES : AD_ENTITIES));
+  const [venues, setVenues] = useState<any[]>(() => (city === "dubai" ? CITY_ENTITIES : city === "doha" ? DQ_ENTITIES : AD_ENTITIES));
   // Where you start: where you were, if it was in this city; else just outside its airport.
   const cityStart = () => (cityOfLocation(citizen?.location) === city ? citizen?.location : null) ?? entranceOf(CITIES[city].airport);
   const [selectedVenue, setSelectedVenue] = useState<any | null>(null);
@@ -1292,7 +1304,7 @@ export function InteractiveMap({
             onClick={handleMapClick}
           >
             
-            {city === "abu-dhabi" ? <AbuDhabiBackground /> : <MapBackground trafficPreset={trafficPreset} onTrafficInfoChange={setTrafficInfo} />}
+            {city === "abu-dhabi" ? <AbuDhabiBackground /> : city === "doha" ? <DohaBackground /> : <MapBackground trafficPreset={trafficPreset} onTrafficInfoChange={setTrafficInfo} />}
 
             <div 
               className="absolute z-50 -translate-x-1/2 -translate-y-1/2 transition-all ease-in-out pointer-events-none"

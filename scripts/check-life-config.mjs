@@ -395,6 +395,16 @@ if (!hallSql.includes(`p_type not in (${halls.types.map((t) => `'${t.id}'`).join
   for (const it of hotels.roomService) if (!svcSql.includes(`when '${it.id}' then ${it.price}`)) { bad++; console.error(`room service ${it.id}: price differs from SQL`); }
   if (!latestDef("book_hotel").includes(`p_nights not in (${hotels.nights.join(", ")})`)) { bad++; console.error("hotel nights differ from SQL"); }
 }
+// Visas (src/data/flights/visas.json vs visa_rule() and visa_country()).
+{
+  const vz = JSON.parse(readFileSync("src/data/flights/visas.json", "utf8"));
+  const ruleSql = latestDef("visa_rule"), countrySql = latestDef("visa_country");
+  for (const [id, c] of Object.entries(vz.countries)) {
+    if (!ruleSql.includes(`when '${id}' then`)) { bad++; console.error(`visa ${id}: country missing in SQL`); }
+    for (const k of c.kinds) if (!ruleSql.includes(`when '${k.id}' then '{"fee": ${k.fee}, "days": ${k.days}, "review": ${c.reviewSeconds}}'`)) { bad++; console.error(`visa ${id}/${k.id}: fee, days or review differ from SQL`); }
+  }
+  for (const [city, country] of Object.entries(vz.cityCountry)) if (!countrySql.includes(`when '${city}' then '${country}'`)) { bad++; console.error(`visa: ${city} → ${country} missing in SQL`); }
+}
 // The Abu Dhabi Passport (src/data/abuDhabi/passport.json vs passport_stamp_ok(), passport_reward(), passport_size()).
 {
   const pp = JSON.parse(readFileSync("src/data/abuDhabi/passport.json", "utf8"));
@@ -407,5 +417,5 @@ if (!hallSql.includes(`p_type not in (${halls.types.map((t) => `'${t.id}'`).join
   if (top !== pp.stamps.length || !sizeSql.includes(`select ${pp.stamps.length} `)) { bad++; console.error("passport: size differs (last reward, stamps, passport_size)"); }
 }
 
-console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving, parking, goals, missions, fun, decorator, penalty, arcade, maternity, hall, social reward, hotel, flight, Abu Dhabi Passport and Autodrome prize config match the database.");
+console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving, parking, goals, missions, fun, decorator, penalty, arcade, maternity, hall, social reward, hotel, flight, visa, Abu Dhabi Passport and Autodrome prize config match the database.");
 process.exit(bad ? 1 : 0);

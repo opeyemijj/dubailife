@@ -21,6 +21,7 @@ import ENTRY from "@/data/autodrome/entry.json";
 import { gameAudio } from "@/utils/gameAudio";
 import { useCurrentCity } from "@/lib/city/presence";
 import { AD_RACE_VENUES } from "@/lib/city/abuDhabi/racing";
+import { DQ_RACE_VENUES } from "@/lib/city/doha/racing";
 
 /** A mount's strengths as bars, scaled across its stable (so the differences show). */
 function Stats({ sport, m }: { sport: SportDef; m: Mount }) {
@@ -104,8 +105,8 @@ export function SportLobby({ sport: sportId }: { sport: string }) {
   };
   const chosen = sport.mounts.find((m) => m.id === mount)!;
 
-  // Opened from Abu Dhabi's track (the Equestrian Club, Al Wathba): the same races, under its name.
-  const named = (cityHere === "abu-dhabi" ? AD_RACE_VENUES[sport.id] : null) ?? { venue: sport.venue, place: sport.place };
+  // Opened from Abu Dhabi's or Doha's track: the same races, under its name.
+  const named = (cityHere === "abu-dhabi" ? AD_RACE_VENUES[sport.id] : cityHere === "doha" ? DQ_RACE_VENUES[sport.id] : null) ?? { venue: sport.venue, place: sport.place };
   return (
     <main className="relative min-h-[100dvh] bg-slate-950 text-white pb-32">
       <div className={`absolute top-0 inset-x-0 h-80 bg-gradient-to-b ${sport.gradient} opacity-40 pointer-events-none`} />

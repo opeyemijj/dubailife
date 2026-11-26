@@ -31,7 +31,8 @@ export function MapSideBar({ districts, filters, activeFilter, onFilter }: {
   return (
     <>
       {open && <button aria-label="Close" className="fixed inset-0 z-30 cursor-default" onClick={() => setOpen(null)} />}
-      <div className="fixed right-3 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-2 pointer-events-auto">
+      {/* Bottom right, above the menu (the column of icons runs down from the top right: layout/mapRail). */}
+      <div className="fixed right-3 bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+5.75rem)] sm:bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+10.5rem)] z-40 flex flex-col gap-2 pointer-events-auto">
         <button onClick={() => toggle("places")} aria-label="Places" aria-expanded={open === "places"}
           className={`relative w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 ${open === "places" ? "bg-emerald-600 text-white" : "bg-white/95 text-emerald-700"}`}>
           <MapPin className="w-6 h-6" />

@@ -11,8 +11,6 @@ export default function Page() {
         <div className="max-w-4xl mx-auto h-[46px] rounded-full bg-white/95 shadow" />
         <CitySwitcher />
       </div>
-      <div className="absolute top-[max(7.9rem,calc(env(safe-area-inset-top)+7.3rem))] sm:top-[max(7.4rem,calc(env(safe-area-inset-top)+6.8rem))] left-3 sm:left-6 h-9 px-3.5 rounded-full bg-white flex items-center text-sm font-bold">🔍 Search</div>
-      <div className="absolute top-[max(7.9rem,calc(env(safe-area-inset-top)+7.3rem))] sm:top-[max(7.4rem,calc(env(safe-area-inset-top)+6.8rem))] left-[7.25rem] sm:left-[8.25rem] h-9 px-3.5 rounded-full bg-teal-800 text-white flex items-center text-sm font-black">🛂 Passport 3/16</div>
       <RailPreview />
       {/* Stand-in for the bottom menu (fixed, z-50, like BottomNav): the popups must cover it. */}
       <div id="fake-bottom-nav" className="fixed bottom-0 left-0 w-full z-50 px-3 pb-3"><div className="h-[60px] rounded-full bg-white shadow-xl" /></div>

@@ -1,9 +1,10 @@
 {
-  "_note": "Flights between the cities (lib/flights, src/app/fly): Dubai Life Airways (fictional) from DXB Terminal 3 and AUH. Fares (AED, one way) are charged by public.book_flight() from public.flight_fare(), mirrored exactly here and checked by scripts/check-life-config.mjs. minutes: how long the flight scene takes (a 45-minute flight, shortened).",
+  "_note": "Flights between the cities (lib/flights, src/app/fly): Dubai Life Airways (fictional) from DXB Terminal 3, AUH and DOH. Fares (AED, one way) are charged by public.book_flight() from public.flight_fare(), mirrored exactly here and checked by scripts/check-life-config.mjs. minutes: how long the flight scene takes (a 45-minute flight, shortened).",
   "airline": { "name": "Dubai Life Airways", "code": "DL", "colors": { "body": "#f8fafc", "tail": "#0f766e", "accent": "#c9a24a" } },
   "airports": {
     "dubai": { "code": "DXB", "name": "Dubai International", "terminal": "Terminal 3", "placeId": "dxb-terminal-3" },
-    "abu-dhabi": { "code": "AUH", "name": "Abu Dhabi International", "terminal": "Terminal A", "placeId": "ad-auh-airport" }
+    "abu-dhabi": { "code": "AUH", "name": "Abu Dhabi International", "terminal": "Terminal A", "placeId": "ad-auh-airport" },
+    "doha": { "code": "DOH", "name": "Hamad International", "terminal": "Main Terminal", "placeId": "dq-hamad-airport" }
   },
   "classes": [
     { "id": "economy", "name": "Economy", "icon": "💺", "perks": ["Seat with a screen", "Snack and a drink"] },
@@ -12,7 +13,11 @@
   ],
   "routes": [
     { "from": "dubai", "to": "abu-dhabi", "minutes": 45, "fares": { "economy": 450, "business": 1800, "first": 4500 } },
-    { "from": "abu-dhabi", "to": "dubai", "minutes": 45, "fares": { "economy": 450, "business": 1800, "first": 4500 } }
+    { "from": "abu-dhabi", "to": "dubai", "minutes": 45, "fares": { "economy": 450, "business": 1800, "first": 4500 } },
+    { "from": "dubai", "to": "doha", "minutes": 60, "fares": { "economy": 650, "business": 2600, "first": 6500 } },
+    { "from": "doha", "to": "dubai", "minutes": 60, "fares": { "economy": 650, "business": 2600, "first": 6500 } },
+    { "from": "abu-dhabi", "to": "doha", "minutes": 55, "fares": { "economy": 600, "business": 2400, "first": 6000 } },
+    { "from": "doha", "to": "abu-dhabi", "minutes": 55, "fares": { "economy": 600, "business": 2400, "first": 6000 } }
   ],
   "dutyFree": [
     { "id": "oud-perfume", "name": "Oud perfume", "icon": "🧴", "price": 650 },

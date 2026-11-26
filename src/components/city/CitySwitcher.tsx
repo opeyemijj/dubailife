@@ -9,6 +9,7 @@ import { CITIES, CITY_LIST, COMING_CITIES, type CityId } from "@/lib/city/cities
 import { useCurrentCity } from "@/lib/city/presence";
 import { gameAudio } from "@/utils/gameAudio";
 import { ModalPortal } from "@/components/ui/modal-portal";
+import { airportOf } from "@/lib/flights";
 
 type Picked = { kind: "fly"; to: CityId } | { kind: "soon"; name: string; icon: string; city: string } | null;
 
@@ -59,9 +60,9 @@ export function CitySwitcher() {
                 <div className="text-5xl">✈️</div>
                 <h2 className="mt-2 text-xl font-black">{CITIES[picked.to].name} is a flight away</h2>
                 <p className="mt-1 text-sm text-slate-600">
-                  Go to {from.id === "dubai" ? "DXB Terminal 3" : "AUH Terminal A"}, check in with Dubai Life Airways and fly to {CITIES[picked.to].name}.
+                  Go to {airportOf(from.id).code} {airportOf(from.id).terminal}, check in with Dubai Life Airways and fly to {CITIES[picked.to].name}.
                 </p>
-                <button onClick={() => { setPicked(null); router.push(`${from.path}?to=${from.airport}`); }}
+                <button onClick={() => { const to = picked.to; setPicked(null); try { sessionStorage.setItem("fly-to", to); } catch { /* storage blocked */ } router.push(`${from.path}?to=${from.airport}`); }}
                   className="mt-4 w-full h-14 rounded-full bg-amber-400 text-base text-slate-950 font-black active:scale-95">🛫 Go to the airport</button>
               </>
             ) : (

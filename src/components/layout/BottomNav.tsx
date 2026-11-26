@@ -18,7 +18,7 @@ import { usePhoneButtonHere } from "@/lib/phoneButtons";
 import { useMissions } from "@/lib/missions";
 import { dismissCityPulse, useCityPulse } from "@/lib/presence";
 import { useCityMapPath } from "@/lib/city/presence";
-import { RailButton, railTop } from "@/components/layout/mapRail";
+import { goalSlot, RailButton, railTop } from "@/components/layout/mapRail";
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -144,9 +144,10 @@ function LivePulseBanner() {
 }
 
 /** On the map: the daily Vault, an expiring visa, a health or police alert and a live event, each a round icon with
- *  a badge down the left (under the goal: layout/mapRail). A live event opens its banner beside the icon. */
+ *  a badge down the right (under the goal: layout/mapRail). A live event opens its banner beside the icon. */
 function MapRail() {
   const { citizen } = useCitizen();
+  const first = goalSlot(usePathname() ?? "") + 1;
   const life = useLifeLoop();
   const { missions } = useMissions(citizen?.id);
   const alert = useServiceAlert();
@@ -166,9 +167,9 @@ function MapRail() {
   const pulseAt = items.findIndex((it) => it.key === "pulse");
   return (
     <>
-      {items.map((it, i) => <RailButton key={it.key} n={i + 1} icon={it.icon} badge={it.badge} label={it.label} tone={it.tone} alert={it.alert} onClick={() => { gameAudio.playClickSound(); it.go(); }} />)}
+      {items.map((it, i) => <RailButton key={it.key} n={first + i} icon={it.icon} badge={it.badge} label={it.label} tone={it.tone} alert={it.alert} onClick={() => { gameAudio.playClickSound(); it.go(); }} />)}
       {pulse && pulseOpen && pulseAt >= 0 && (
-        <div className="fixed left-[4.25rem] right-3 z-[58] pointer-events-auto" style={{ top: railTop(pulseAt + 1) }} onClick={() => setPulseOpen(false)}>
+        <div className="fixed right-[4.25rem] left-3 z-[58] pointer-events-auto" style={{ top: railTop(first + pulseAt) }} onClick={() => setPulseOpen(false)}>
           <LivePulseBanner />
         </div>
       )}

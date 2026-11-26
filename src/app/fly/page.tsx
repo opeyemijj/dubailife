@@ -8,6 +8,7 @@ import { SmallLoader } from "@/components/GameLoadingScreen";
 import { FlyJourney } from "@/components/fly/FlyJourney";
 import { CITIES, type CityId } from "@/lib/city/cities";
 import { useCurrentCity } from "@/lib/city/presence";
+import { routeOf, routesFrom } from "@/lib/flights";
 
 export default function FlyPage() {
   return <Suspense fallback={<SmallLoader label="Opening the terminal" />}><Fly /></Suspense>;
@@ -26,8 +27,12 @@ function Fly() {
     // Always from the airport of the city you're in (a link from the other city's airport doesn't move you there),
     // to the other city unless the link says.
     const from = here.city;
-    const asked = params.get("to");
-    setTrip({ from, to: isCity(asked) && asked !== from ? asked : from === "dubai" ? "abu-dhabi" : "dubai" });
+    // Where to: the link's ?to=, else the city tapped on the cities strip (layout CitySwitcher), else the first
+    // route from here. It can still be changed at the check-in counter.
+    let picked: string | null = params.get("to");
+    if (!isCity(picked) || picked === from) { try { picked = sessionStorage.getItem("fly-to"); } catch { picked = null; } }
+    const to: CityId = isCity(picked) && picked !== from && routeOf(from, picked) ? picked : (routesFrom(from)[0]?.to as CityId) ?? "dubai";
+    setTrip({ from, to });
   }
   if (!hydrated || !isLoggedIn || !trip) return <SmallLoader label="Opening the terminal" />;
   return <FlyJourney from={trip.from} to={trip.to} />;

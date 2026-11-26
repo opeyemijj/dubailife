@@ -92,7 +92,7 @@ function Clouds() {
 
 /** The ground: desert along the west, the Gulf to the east, islands near the arrival, and both cities. */
 function World({ to }: { to: string }) {
-  const toAbuDhabi = to === "abu-dhabi";
+  const toAbuDhabi = to === "abu-dhabi", toDoha = to === "doha";
   return (
     <group>
       {/* The Gulf (east) and the desert coast (west), with a beach line between */}
@@ -106,7 +106,7 @@ function World({ to }: { to: string }) {
       <Runway z0={LAND} />
       {/* Departure city skyline off to the west of the runway, arrival city by the islands */}
       <Skyline x={-900} z={2600} spread={[900, 3000]} count={140} tallest={toAbuDhabi ? 820 : 320} seed={7} />
-      <Skyline x={-800} z={LAND - 1800} spread={[800, 2200]} count={90} tallest={toAbuDhabi ? 320 : 820} seed={19} />
+      <Skyline x={-800} z={LAND - 1800} spread={[800, 2200]} count={toDoha ? 110 : 90} tallest={toAbuDhabi ? 320 : toDoha ? 560 : 820} seed={toDoha ? 31 : 19} />
       {/* Islands in the Gulf off the arrival city */}
       {[[700, LAND - 2600, 900, 500], [1300, LAND - 1200, 700, 450], [600, LAND - 300, 500, 300]].map(([x, z, w, d], i) => (
         <group key={i} position={[x, -0.3, z]}>
@@ -124,6 +124,20 @@ function World({ to }: { to: string }) {
           {[[-125, -95], [125, -95], [-125, 95], [125, 95]].map(([x, z], i) => (
             <mesh key={`mn${i}`} position={[x, 55, z]}><cylinderGeometry args={[4, 5, 110, 10]} /><meshStandardMaterial color="#f8fafc" /></mesh>
           ))}
+        </group>
+      )}
+      {/* Into Doha: The Pearl's ring of islands offshore, and West Bay's towers with the cylindrical Doha Tower. */}
+      {toDoha && (
+        <group>
+          <group position={[1100, -0.2, LAND - 1500]}>
+            <mesh rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[260, 420, 48]} /><meshStandardMaterial color="#f3dfa6" /></mesh>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.1, 0]}><ringGeometry args={[290, 390, 48]} /><meshStandardMaterial color="#9ccc7a" /></mesh>
+          </group>
+          <group position={[-700, 0, LAND - 1500]}>
+            <mesh position={[0, 120, 0]}><cylinderGeometry args={[28, 30, 240, 20]} /><meshStandardMaterial color="#94a3b8" metalness={0.5} roughness={0.35} /></mesh>
+            <mesh position={[0, 250, 0]}><sphereGeometry args={[28, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color="#cbd5e1" metalness={0.5} /></mesh>
+            <mesh position={[80, 100, 60]}><cylinderGeometry args={[18, 26, 200, 16]} /><meshStandardMaterial color="#38bdf8" metalness={0.4} roughness={0.2} /></mesh>
+          </group>
         </group>
       )}
       <Clouds />

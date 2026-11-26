@@ -89,7 +89,7 @@ export interface Citizen {
   /** Body stats built at the gym: strength, stamina, flexibility (see lib/body). */
   body?: { strength: number; stamina: number; flexibility: number; lastTrained?: string };
   /** Last place on the city map (world units), so travel continues across pages. */
-  location?: { x: number; y: number; placeId?: string; /** Which city's map (absent: Dubai, see lib/city/cities). */ city?: "dubai" | "abu-dhabi" };
+  location?: { x: number; y: number; placeId?: string; /** Which city's map (absent: Dubai, see lib/city/cities). */ city?: "dubai" | "abu-dhabi" | "doha" };
   createdAt: string;
   /** Just signed up: making their home theirs comes first, then their goals. */
   decorFirst?: boolean;

@@ -23,12 +23,17 @@ export const routeOf = (from: CityId, to: CityId) => FLIGHTS.routes.find((r) => 
 export const routesFrom = (from: CityId) => FLIGHTS.routes.filter((r) => r.from === from);
 export const cabinOf = (id: CabinClass) => FLIGHTS.classes.find((c) => c.id === id)!;
 /** A flight number for the route (stable, so it reads the same every time). */
-export const flightNumber = (from: CityId, to: CityId) => `${AIRLINE.code} ${from === "dubai" ? 100 + to.length : 200 + to.length}`;
+export const flightNumber = (from: CityId, to: CityId) => {
+  const order = Object.keys(FLIGHTS.airports);
+  return `${AIRLINE.code} ${(order.indexOf(from) + 1) * 100 + (order.indexOf(to) + 1) * 7}`;
+};
 
 const ERRORS: Record<string, string> = {
   insufficient_funds: "You don't have enough AED for this ticket.",
   bad_route: "There's no flight on that route.",
   wrong_city: "Flights leave from the city you're in.",
+  visa_required: "You need a visa for this country first.",
+  not_in_city: "You can only do that in the city you're in.",
   not_signed_in: "Please log in first.",
   no_flight: "That booking isn't open any more.",
 };

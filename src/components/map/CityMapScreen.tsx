@@ -6,7 +6,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCurrentCity } from "@/lib/city/presence";
 import { PASSPORT_SIZE, usePassport } from "@/lib/city/abuDhabi/passport";
-import Link from "next/link";
+import { RailButton } from "@/components/layout/mapRail";
 import { CITIES, type CityId } from "@/lib/city/cities";
 import { useRequireCitizen } from "@/lib/citizenStore";
 import dynamic from "next/dynamic";
@@ -88,7 +88,7 @@ function Explore({ city }: { city: CityId }) {
   ];
 
   return (
-    <main className="fixed inset-0 h-[100dvh] w-screen bg-[#d6bc8a] overflow-hidden flex flex-col font-sans select-none touch-none overscroll-none">
+    <main className={`fixed inset-0 h-[100dvh] w-screen ${city === "doha" ? "bg-[#e2b48b]" : "bg-[#d6bc8a]"} overflow-hidden flex flex-col font-sans select-none touch-none overscroll-none`}>
       {/* 2D Isometric Interactive Map Background */}
       <InteractiveMap 
         hideTopHUD={true} 
@@ -105,23 +105,15 @@ function Explore({ city }: { city: CityId }) {
       {/* Top Navigation HUD with Safe Area Padding */}
       <TopBar cities />
 
-      {/* A search icon that slides the full search in (all screen sizes) */}
+      {/* Search and (in Abu Dhabi) the Passport: the first of the round icons down the right (layout/mapRail). */}
       {!searchOpen && (
-        <button
-          onClick={() => { setSearchOpen(true); setIsFilterExpanded(true); }}
-          className="absolute top-[max(7.9rem,calc(env(safe-area-inset-top)+7.3rem))] sm:top-[max(7.4rem,calc(env(safe-area-inset-top)+6.8rem))] left-3 sm:left-6 z-20 h-9 pl-2.5 pr-3.5 gap-1.5 rounded-full bg-white/95 hover:bg-white border border-white shadow-[0_4px_18px_rgba(15,23,42,0.18)] flex items-center justify-center text-slate-800 font-bold text-sm active:scale-95 transition-transform"
-          aria-label="Search places"
-        >
-          <Search className="w-4 h-4 text-emerald-700" /> Search
-          {(searchQuery || activeFilter !== "all") && <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />}
-        </button>
+        <RailButton n={0} icon="🔍" badge={searchQuery || activeFilter !== "all" ? "•" : null} label="Search places"
+          onClick={() => { setSearchOpen(true); setIsFilterExpanded(true); }} />
       )}
-
-      {/* Abu Dhabi: the Passport, beside the search (its stamps are collected at the landmarks). */}
       {city === "abu-dhabi" && !searchOpen && <PassportChip />}
 
       {/* Search & discovery: slides in when the search icon is tapped */}
-      <div className={`absolute top-[max(7.9rem,calc(env(safe-area-inset-top)+7.2rem))] sm:top-[max(7.4rem,calc(env(safe-area-inset-top)+6.7rem))] left-0 w-full z-20 pointer-events-none px-3 sm:px-6 transition-all duration-300 ${searchOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}`}>
+      <div className={`absolute top-[max(7.6rem,calc(env(safe-area-inset-top)+7rem))] left-0 w-full z-20 pointer-events-none px-3 sm:px-6 transition-all duration-300 ${searchOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}`}>
         <div className={`max-w-md mx-auto w-full space-y-2 ${searchOpen ? "pointer-events-auto" : "pointer-events-none"}`}>
           
           {/* Glass Search Input */}
@@ -206,11 +198,6 @@ function Explore({ city }: { city: CityId }) {
 /** The Abu Dhabi Passport's count, a tap from the book. */
 function PassportChip() {
   const mine = usePassport();
-  return (
-    <Link href="/abu-dhabi/passport"
-      className="absolute top-[max(7.9rem,calc(env(safe-area-inset-top)+7.3rem))] sm:top-[max(7.4rem,calc(env(safe-area-inset-top)+6.8rem))] left-[7.25rem] sm:left-[8.25rem] z-20 h-9 pl-2.5 pr-3.5 gap-1.5 rounded-full bg-teal-800/95 text-white border border-amber-300/40 shadow-[0_4px_18px_rgba(15,23,42,0.25)] flex items-center font-black text-sm active:scale-95 transition-transform"
-      aria-label="Abu Dhabi Passport">
-      🛂 Passport <span className="text-amber-300">{mine?.size ?? 0}/{PASSPORT_SIZE}</span>
-    </Link>
-  );
+  const router = useRouter();
+  return <RailButton n={1} icon="🛂" badge={`${mine?.size ?? 0}/${PASSPORT_SIZE}`} label="Abu Dhabi Passport" tone="bg-teal-800 text-white" onClick={() => router.push("/abu-dhabi/passport")} />;
 }

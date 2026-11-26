@@ -16,7 +16,7 @@ import type { AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 import { useCitizen, refreshCitizen } from "@/lib/citizenStore";
 import { CITIES, type CityId } from "@/lib/city/cities";
 import { hotelsIn } from "@/lib/hotels";
-import { AIRLINE, FLIGHTS, arriveIn, bookFlight, buyDutyFree, cabinOf, flightNumber, flightProgress, routeOf, airportOf, type Booking, type CabinClass } from "@/lib/flights";
+import { AIRLINE, FLIGHTS, arriveIn, bookFlight, buyDutyFree, cabinOf, flightNumber, flightProgress, routeOf, routesFrom, airportOf, type Booking, type CabinClass } from "@/lib/flights";
 import { canvasQuality } from "@/lib/device";
 import { gameAudio } from "@/utils/gameAudio";
 import { FLOOR, SPOTS, Terminal } from "./Terminal";
@@ -81,7 +81,10 @@ function TerminalStage({ walker, look, gatesOpen, bridge, spin, from, to }: {
 export function FlyJourney({ from: fromCity, to: toCity, dev }: { from: CityId; to: CityId; /** Development preview: start at this step. */ dev?: { stage: Stage; inside?: boolean; t?: number } }) {
   // This trip, fixed for the whole journey: landing moves you to the other city, and nothing that changes then
   // (where the game says you are) may turn the arrival screen into the other city's.
-  const [{ from, to }] = useState({ from: fromCity, to: toCity });
+  const [from] = useState(fromCity);
+  // Where to: picked at the check-in counter (it starts at the link's or the cities strip's choice), then fixed once
+  // you've checked in, whatever happens after (landing moves you to the other city).
+  const [to, setTo] = useState(toCity);
   const router = useRouter();
   const { citizen } = useCitizen();
   const route = routeOf(from, to);
@@ -204,7 +207,22 @@ export function FlyJourney({ from: fromCity, to: toCity, dev }: { from: CityId; 
           {error && <p className="mb-2 rounded-xl bg-rose-600 text-white text-sm font-bold px-3 py-2">{error}</p>}
 
           {stage === "checkin" && !walker.walking && (
-            <Panel title={`Check in · ${dep.code} to ${arr.code}`} sub={`${flightNumber(from, to)} · ${route.minutes} min · choose your cabin`}>
+            <Panel title={`Check in · ${dep.code} to ${arr.code}`} sub={`${flightNumber(from, to)} · ${route.minutes} min · choose where and your cabin`}>
+              {/* Where to: every city this airport flies to. */}
+              {routesFrom(from).length > 1 && (
+                <div className="flex gap-2">
+                  {routesFrom(from).map((r) => {
+                    const c = CITIES[r.to as CityId];
+                    return (
+                      <button key={r.to} onClick={() => { gameAudio.playClickSound(); setTo(r.to as CityId); try { sessionStorage.setItem("fly-to", r.to); } catch { /* storage blocked */ } }}
+                        className={`flex-1 min-w-0 h-14 rounded-2xl border-2 flex flex-col items-center justify-center font-black text-sm ${to === r.to ? "border-teal-500 bg-teal-50" : "border-slate-200 bg-white"}`}>
+                        <span className="text-lg leading-none">{c.icon}</span>
+                        <span className="truncate max-w-full px-1">{c.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               <div className="grid grid-cols-3 gap-2">
                 {FLIGHTS.classes.map((c) => (
                   <button key={c.id} onClick={() => setCabin(c.id as CabinClass)} className={`rounded-2xl p-2.5 text-left border-2 ${cabin === c.id ? "border-teal-500 bg-teal-50" : "border-slate-200 bg-white"}`}>

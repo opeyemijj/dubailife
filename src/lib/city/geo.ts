@@ -2,6 +2,7 @@
 
 import { CITY_ENTITIES } from "./mapEntities";
 import { AD_ENTITIES } from "./abuDhabi/map";
+import { DQ_ENTITIES } from "./doha/map";
 
 /** Matches WORLD_HEIGHT in components/map/Icons (map y is flipped for rendering). */
 export const WORLD_HEIGHT = 2600;
@@ -10,7 +11,7 @@ export const METRES_PER_UNIT = 1.25;
 
 type Entity = { id: string; type: string; name?: string; virtualX: number; virtualY: number };
 // Every city's buildings (ids don't clash: other cities' start with their prefix, lib/city/cities).
-const ENTITIES = new Map(([...CITY_ENTITIES, ...AD_ENTITIES] as Entity[]).map((e) => [e.id, e]));
+const ENTITIES = new Map(([...CITY_ENTITIES, ...AD_ENTITIES, ...DQ_ENTITIES] as Entity[]).map((e) => [e.id, e]));
 
 export const getEntity = (id: string) => ENTITIES.get(id) ?? null;
 
