@@ -586,6 +586,110 @@ export function DqFortSprite(p: P) {
   );
 }
 
+// ---------------------------------------------------------------- the stadiums, the water, the fun
+
+/** Al Bayt Stadium: a vast Bedouin tent, bayt al sha'ar, striped black, white and red, its sides lifted. */
+export function TentSprite(p: P) {
+  return (
+    <Svg {...p}>
+      <Plinth x={16} y={184} w={250} d={58} fill="#e2cfa8" edge="#b2976a" />
+      <path d="M30,172 L50,110 Q150,70 250,110 L270,172 Z" fill="#111827" />
+      {Array.from({ length: 12 }, (_, i) => <path key={i} d={`M${44 + i * 19},170 L${58 + i * 17},104`} stroke={i % 3 === 1 ? '#b91c1c' : '#f5f5f4'} strokeWidth="5" opacity="0.9" />)}
+      <path d="M50,110 Q150,70 250,110" fill="none" stroke="#f5f5f4" strokeWidth="3" />
+      {[60, 150, 240].map((x) => <line key={x} x1={x} y1={172} x2={x - 6} y2={186} stroke="#78350f" strokeWidth="2" />)}
+      <NameBoard x={150} y={194} text={p.name ?? 'Al Bayt Stadium'} bg="#111827" />
+    </Svg>
+  );
+}
+
+/** Stadium 974: a bowl of stacked shipping containers in red, blue, orange and yellow on the waterfront. */
+export function ContainerStadiumSprite(p: P) {
+  const c = ['#dc2626', '#2563eb', '#ea580c', '#facc15', '#16a34a', '#0f172a'];
+  return (
+    <Svg {...p}>
+      <polygon points="0,192 260,192 300,160 40,160" fill="#38bdf8" />
+      <Plinth x={24} y={176} w={230} d={50} fill="#9ca3af" edge="#4b5563" />
+      {Array.from({ length: 4 }, (_, r) => Array.from({ length: 11 - r }, (_, k) => (
+        <rect key={`${r}${k}`} x={40 + r * 10 + k * 19} y={160 - r * 14} width={17} height={12} fill={c[(r * 3 + k) % c.length]} stroke="#00000033" strokeWidth="0.6" />
+      )))}
+      {Array.from({ length: 10 }, (_, i) => <line key={i} x1={44 + i * 21} y1={108} x2={44 + i * 21} y2={172} stroke="#f8fafc" strokeWidth="0.8" opacity="0.5" />)}
+      <NameBoard x={150} y={194} text={p.name ?? 'Stadium 974'} bg="#ea580c" />
+    </Svg>
+  );
+}
+
+/** Al Thumama Stadium: the gahfiya, the white woven cap, its lattice of little openings. */
+export function GahfiyaSprite(p: P) {
+  return (
+    <Svg {...p}>
+      <Plinth x={20} y={184} w={240} d={58} fill="#d1d5db" edge="#6b7280" />
+      <path d="M40,168 L40,120 Q150,40 260,120 L260,168 Q150,150 40,168 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="1.2" />
+      {Array.from({ length: 6 }, (_, r) => Array.from({ length: 14 - r * 2 }, (_, k) => (
+        <circle key={`${r}${k}`} cx={60 + r * 16 + k * 14} cy={156 - r * 12 - Math.sin((k / (13 - r * 2)) * Math.PI) * 10} r={2.6} fill="#cbd5e1" />
+      )))}
+      <path d="M40,120 Q150,40 260,120" fill="none" stroke={MAROON} strokeWidth="3" />
+      <NameBoard x={150} y={194} text={p.name ?? 'Al Thumama Stadium'} />
+    </Svg>
+  );
+}
+
+/** Mangroves in the shallows, kayaks in the channels and a heron. */
+export function DqMangroveSprite(p: P) {
+  return (
+    <Svg {...p}>
+      <ellipse cx={150} cy={160} rx={140} ry={34} fill="#7dd3c8" opacity={0.85} />
+      {[[70, 150, 34], [125, 140, 26], [200, 146, 36], [250, 158, 24], [160, 168, 22]].map(([x, y, r], i) => (
+        <g key={i}>
+          {Array.from({ length: 5 }, (_, k) => <line key={k} x1={x - r * 0.6 + k * r * 0.3} y1={y + 2} x2={x - r * 0.5 + k * r * 0.25} y2={y - 6} stroke="#5b3a1e" strokeWidth={1.2} />)}
+          <ellipse cx={x} cy={y - 10} rx={r} ry={r * 0.45} fill="#166534" />
+          <ellipse cx={x - r * 0.3} cy={y - 14} rx={r * 0.55} ry={r * 0.3} fill="#22863a" />
+        </g>
+      ))}
+      {[[150, 156, '#f97316'], [225, 170, '#facc15']].map(([x, y, col], i) => (
+        <g key={`k${i}`} transform={`translate(${x},${y})`}><path d="M-12,0 Q0,-4 12,0 Q0,4 -12,0 Z" fill={col as string} /><circle cx={0} cy={-4} r={2.4} fill="#7c2d12" /></g>
+      ))}
+      <g transform="translate(96,168)"><line x1={0} y1={0} x2={0} y2={-10} stroke="#64748b" /><ellipse cx={2} cy={-13} rx={5} ry={3} fill="#e5e7eb" /><path d="M6,-14 q4,-6 2,-10" fill="none" stroke="#e5e7eb" strokeWidth="1.4" /></g>
+      <NameBoard x={150} y={194} text={p.name ?? 'Mangroves'} bg="#166534" />
+    </Svg>
+  );
+}
+
+/** A watersports beach: jet skis carving the water, a parasail in the sky and the rental hut. */
+export function JetSkiSprite(p: P) {
+  return (
+    <Svg {...p}>
+      <polygon points="0,186 250,186 300,110 50,110" fill="#38bdf8" />
+      <polygon points="0,186 250,186 270,162 20,162" fill="#fde68a" />
+      <Box x={30} y={180} w={46} h={20} d={16} front="#f8fafc" side="#e2e8f0" top={MAROON} />
+      {[[140, 140, 1], [210, 126, -1], [176, 150, 1]].map(([x, y, dir], i) => (
+        <g key={i} transform={`translate(${x},${y}) scale(${dir},1)`}>
+          <path d="M-14,0 L12,0 L16,-5 L-10,-5 Z" fill={['#ef4444', '#facc15', '#22c55e'][i]} />
+          <circle cx={0} cy={-9} r={3} fill="#1f2937" />
+          <path d={`M-16,2 Q-34,4 -48,0`} fill="none" stroke="#ffffff" strokeWidth="2" opacity="0.85" />
+        </g>
+      ))}
+      <path d="M230,40 Q250,28 270,40 Z" fill={MAROON} /><line x1={250} y1={40} x2={232} y2={110} stroke="#64748b" strokeWidth="0.8" />
+      <NameBoard x={150} y={194} text={p.name ?? 'Jet Ski & Watersports'} bg="#0369a1" />
+    </Svg>
+  );
+}
+
+/** A fun fair or theme park: a big wheel, a coaster loop and striped tents. */
+export function FunfairSprite(p: P) {
+  return (
+    <Svg {...p}>
+      <Plinth x={16} y={184} w={250} d={56} fill="#1e1b4b" edge="#0f0a2e" />
+      <circle cx={90} cy={110} r={52} fill="none" stroke="#f472b6" strokeWidth="3" />
+      {Array.from({ length: 10 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return <g key={i}><line x1={90} y1={110} x2={90 + Math.cos(a) * 52} y2={110 + Math.sin(a) * 52} stroke="#f9a8d4" strokeWidth="0.8" /><rect x={86 + Math.cos(a) * 52} y={106 + Math.sin(a) * 52} width={8} height={8} rx={2} fill={['#22d3ee', '#facc15', '#a78bfa'][i % 3]} /></g>; })}
+      <line x1={90} y1={110} x2={70} y2={176} stroke="#f9a8d4" strokeWidth="2" /><line x1={90} y1={110} x2={110} y2={176} stroke="#f9a8d4" strokeWidth="2" />
+      <path d="M150,176 C170,90 210,80 220,130 C230,170 250,120 262,96" fill="none" stroke="#facc15" strokeWidth="3" />
+      <circle cx={214} cy={120} r={16} fill="none" stroke="#facc15" strokeWidth="3" />
+      {[160, 196, 232].map((x, i) => <path key={x} d={`M${x - 14},178 L${x},156 L${x + 14},178 Z`} fill={i % 2 ? '#22d3ee' : '#f472b6'} />)}
+      <NameBoard x={150} y={194} text={p.name ?? 'Theme Park'} bg="#7c3aed" />
+    </Svg>
+  );
+}
+
 // ---------------------------------------------------------------- Doha's own look for the shared types
 
 /** A Qatari villa: white walls with maroon trim, a majlis wing, a shaded entrance, a palm and a pool. */
@@ -696,6 +800,12 @@ export function dohaSprite(type: string, loc: { id?: string; width?: number; hei
     case 'dq-university': return <DqUniversitySprite {...p} />;
     case 'dq-camp': return <DqCampSprite {...p} />;
     case 'dq-fort': return <DqFortSprite {...p} />;
+    case 'dq-tent': return <TentSprite {...p} />;
+    case 'dq-974': return <ContainerStadiumSprite {...p} />;
+    case 'dq-gahfiya': return <GahfiyaSprite {...p} />;
+    case 'dq-mangrove': return <DqMangroveSprite {...p} />;
+    case 'dq-jetski': return <JetSkiSprite {...p} />;
+    case 'dq-funfair': return <FunfairSprite {...p} />;
     default: return null;
   }
 }

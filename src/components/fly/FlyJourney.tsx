@@ -16,6 +16,7 @@ import type { AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 import { useCitizen, refreshCitizen } from "@/lib/citizenStore";
 import { CITIES, type CityId } from "@/lib/city/cities";
 import { hotelsIn } from "@/lib/hotels";
+import { countryOf, myVisa, visaCountryFor, type Visa } from "@/lib/visas";
 import { AIRLINE, FLIGHTS, arriveIn, bookFlight, buyDutyFree, cabinOf, flightNumber, flightProgress, routeOf, routesFrom, airportOf, type Booking, type CabinClass } from "@/lib/flights";
 import { canvasQuality } from "@/lib/device";
 import { gameAudio } from "@/utils/gameAudio";
@@ -85,6 +86,15 @@ export function FlyJourney({ from: fromCity, to: toCity, dev }: { from: CityId; 
   // Where to: picked at the check-in counter (it starts at the link's or the cities strip's choice), then fixed once
   // you've checked in, whatever happens after (landing moves you to the other city).
   const [to, setTo] = useState(toCity);
+  // Another country (Doha): a visa first (lib/visas). Looked up for the destination picked at the counter.
+  const needVisa = visaCountryFor(to);
+  const [visa, setVisa] = useState<Visa | null | undefined>(undefined);
+  useEffect(() => {
+    let live = true;
+    if (needVisa) void myVisa(needVisa).then((v) => { if (live) setVisa(v); });
+    return () => { live = false; };
+  }, [needVisa]);
+  const visaOk = !needVisa || visa?.status === "approved";
   const router = useRouter();
   const { citizen } = useCitizen();
   const route = routeOf(from, to);
@@ -233,9 +243,20 @@ export function FlyJourney({ from: fromCity, to: toCity, dev }: { from: CityId; 
                 ))}
               </div>
               <ul className="text-xs text-slate-500 list-disc pl-4">{cabinOf(cabin).perks.map((p) => <li key={p}>{p}</li>)}</ul>
-              <button disabled={busy} onClick={() => void checkIn()} className="w-full h-12 rounded-2xl bg-teal-700 text-white font-black disabled:opacity-50">
-                {busy ? "Checking in…" : `Pay AED ${route.fares[cabin].toLocaleString()} & check in`}
-              </button>
+              {visaOk ? (
+                <button disabled={busy} onClick={() => void checkIn()} className="w-full h-12 rounded-2xl bg-teal-700 text-white font-black disabled:opacity-50">
+                  {busy ? "Checking in…" : `Pay AED ${route.fares[cabin].toLocaleString()} & check in`}
+                </button>
+              ) : (
+                // No visa yet for this country: the application first (it comes back here when it's approved).
+                <div className="rounded-2xl bg-rose-50 border border-rose-200 p-3 space-y-2">
+                  <p className="text-sm font-black text-[#8a1538]">{countryOf(needVisa!).flag} You need a {countryOf(needVisa!).name} visa to fly to {CITIES[to].name}</p>
+                  <p className="text-xs text-slate-600">{visa?.status === "review" ? "Your application is under review: usually about a minute." : `You live in the UAE. Apply online: a tourist e-visa is AED ${countryOf(needVisa!).kinds[0].fee}.`}</p>
+                  <button onClick={() => router.push(`/visa/${needVisa}?then=${encodeURIComponent(`/fly?to=${to}`)}`)} className="w-full h-12 rounded-2xl bg-[#8a1538] text-white font-black">
+                    {visa?.status === "review" ? "🛂 See your application" : `🛂 Apply for a ${countryOf(needVisa!).name} visa`}
+                  </button>
+                </div>
+              )}
             </Panel>
           )}
 

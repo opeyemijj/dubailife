@@ -1,6 +1,16 @@
 {
   "items": [
     {
+      "id": "2026-11-29-doha",
+      "date": "2026-11-29",
+      "icon": "🇶🇦",
+      "title": "Fly to Doha: Qatar's capital, with a visa",
+      "text": "Doha is open: 21 districts in Qatar's own colours. West Bay's towers (Doha Tower, the Tornado Tower, the Sheraton pyramid), The Pearl's Porto Arabia marina and Qanat Quartier's pastel canals, Lusail's golden stadium, Katara Towers, Place Vendôme and the circuit, the Museum of Islamic Art and the National Museum on the Corniche, Souq Waqif's falcons, gold and spices, Katara's amphitheatre, Aspire's Torch and Villaggio's gondolas, Mall of Qatar, Doha Quest, Winter Wonderland, all the World Cup stadiums, jet skis, flyboards and parasailing at five watersports beaches, yachts at five marinas, dhow cruises, mangrove kayaking at Purple Island and Al Thakhira, horse racing at Al Rayyan, camel racing at Al Shahaniya, the Inland Sea desert, and 560 homes to rent or buy, from Pearl penthouses to lagoon villas and Al Waab compounds. You live in the UAE, so you'll need a Qatar visa first: apply at the check-in counter (a tourist e-visa is AED 100) and it's approved in about a minute.",
+      "how": "Tap Doha on the cities strip, or go to the airport and pick Doha at the counter.",
+      "cta": "Apply for a Qatar visa",
+      "href": "/visa/qatar"
+    },
+    {
       "id": "2026-11-28-abu-dhabi-passport",
       "date": "2026-11-28",
       "icon": "🛂",

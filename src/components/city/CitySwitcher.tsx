@@ -10,6 +10,7 @@ import { useCurrentCity } from "@/lib/city/presence";
 import { gameAudio } from "@/utils/gameAudio";
 import { ModalPortal } from "@/components/ui/modal-portal";
 import { airportOf } from "@/lib/flights";
+import { countryOf, visaCountryFor } from "@/lib/visas";
 
 type Picked = { kind: "fly"; to: CityId } | { kind: "soon"; name: string; icon: string; city: string } | null;
 
@@ -62,6 +63,13 @@ export function CitySwitcher() {
                 <p className="mt-1 text-sm text-slate-600">
                   Go to {airportOf(from.id).code} {airportOf(from.id).terminal}, check in with Dubai Life Airways and fly to {CITIES[picked.to].name}.
                 </p>
+                {visaCountryFor(picked.to) && (
+                  <p className="mt-2 text-sm font-bold text-[#8a1538]">{countryOf(visaCountryFor(picked.to)!).flag} {CITIES[picked.to].name} is in {countryOf(visaCountryFor(picked.to)!).name}: you&apos;ll need a visa. Apply at the check-in counter, or now.</p>
+                )}
+                {visaCountryFor(picked.to) && (
+                  <button onClick={() => { const c = visaCountryFor(picked.to)!; setPicked(null); router.push(`/visa/${c}`); }}
+                    className="mt-3 w-full h-12 rounded-full bg-[#8a1538] text-white font-black active:scale-95">🛂 Apply for the visa</button>
+                )}
                 <button onClick={() => { const to = picked.to; setPicked(null); try { sessionStorage.setItem("fly-to", to); } catch { /* storage blocked */ } router.push(`${from.path}?to=${from.airport}`); }}
                   className="mt-4 w-full h-14 rounded-full bg-amber-400 text-base text-slate-950 font-black active:scale-95">🛫 Go to the airport</button>
               </>

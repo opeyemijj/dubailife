@@ -32,7 +32,8 @@ export function DohaBackground() {
   const westbay = mid("dq-tile-westbay"), katara = mid("dq-tile-katara"), corniche = mid("dq-tile-corniche"), souq = mid("dq-tile-souq");
   const aspire = mid("dq-tile-aspire"), doh = mid("dq-tile-doh"), edu = mid("dq-tile-education"), desert = mid("dq-tile-desert");
   const pearl = mid("dq-tile-pearl"), lusail = mid("dq-tile-lusail");
-  const coast = 900;
+  // The coast: under The Pearl and Lusail, and further down in the east, where Gewan Island and Al Khor are offshore.
+  const coast = 900, eastCoast = 1370;
   const roadY = (id: string) => mid(id).y + plain(id).h / 2 + 38;
   return (
     <svg width={W} height={H} className="map-animated absolute inset-0 pointer-events-none overflow-visible">
@@ -43,9 +44,9 @@ export function DohaBackground() {
       {/* The desert all round. */}
       <rect x={-2000} y={-1500} width={W + 4000} height={H + 3000} fill="#e2b48b" />
       {/* The Gulf, down to the coast under The Pearl and Lusail. */}
-      <path d={`M -2000,-1500 L ${W + 2000},-1500 L ${W + 2000},${coast - 40} C ${W},${coast} 2600,${coast + 30} 2000,${coast + 20} C 1200,${coast + 10} 200,${coast + 30} -2000,${coast} Z`} fill="url(#dq-sea)" />
-      <path d={`M -2000,-1500 L ${W + 2000},-1500 L ${W + 2000},${coast - 40} C ${W},${coast} 2600,${coast + 30} 2000,${coast + 20} C 1200,${coast + 10} 200,${coast + 30} -2000,${coast} Z`} fill="url(#dq-ripples)" />
-      <path d={`M ${W + 2000},${coast - 40} C ${W},${coast} 2600,${coast + 30} 2000,${coast + 20} C 1200,${coast + 10} 200,${coast + 30} -2000,${coast}`} fill="none" stroke="#f7e6d2" strokeWidth="24" />
+      <path d={`M -2000,-1500 L ${W + 3000},-1500 L ${W + 3000},${eastCoast} L 3600,${eastCoast} C 3480,${eastCoast} 3460,${coast + 20} 3330,${coast + 20} C 2600,${coast + 30} 2000,${coast + 20} 1200,${coast + 10} C 200,${coast + 30} -800,${coast + 10} -2000,${coast} Z`} fill="url(#dq-sea)" />
+      <path d={`M -2000,-1500 L ${W + 3000},-1500 L ${W + 3000},${eastCoast} L 3600,${eastCoast} C 3480,${eastCoast} 3460,${coast + 20} 3330,${coast + 20} C 2600,${coast + 30} 2000,${coast + 20} 1200,${coast + 10} C 200,${coast + 30} -800,${coast + 10} -2000,${coast} Z`} fill="url(#dq-ripples)" />
+      <path d={`M ${W + 3000},${eastCoast} L 3600,${eastCoast} C 3480,${eastCoast} 3460,${coast + 20} 3330,${coast + 20} C 2600,${coast + 30} 2000,${coast + 20} 1200,${coast + 10} C 200,${coast + 30} -800,${coast + 10} -2000,${coast}`} fill="none" stroke="#f7e6d2" strokeWidth="24" />
       {/* Doha Bay: the crescent of water inside the Corniche, ringed by its palm-lined promenade. */}
       <path d={`M ${corniche.x - 700},${coast + 10} Q ${corniche.x - 120},${coast + 200} ${corniche.x + 520},${coast + 10} Z`} fill="url(#dq-sea)" />
       <path d={`M ${corniche.x - 700},${coast + 10} Q ${corniche.x - 120},${coast + 200} ${corniche.x + 520},${coast + 10}`} fill="none" stroke="#efe3c4" strokeWidth="14" />
@@ -65,8 +66,10 @@ export function DohaBackground() {
       {/* Highways: grey roadbeds with dashed lanes. */}
       <g fill="none" strokeLinecap="round" strokeLinejoin="round">
         {[
-          `M ${westbay.x - 700},${roadY("dq-tile-westbay")} L ${W + 1200},${roadY("dq-tile-westbay") + (W + 1200 - westbay.x + 700) * TILT}`,
-          `M ${souq.x - 700},${roadY("dq-tile-souq")} L ${W + 1200},${roadY("dq-tile-souq") + (W + 1200 - souq.x + 700) * TILT}`,
+          `M -1500,${roadY("dq-tile-westbay") - (westbay.x + 1500) * TILT} L ${W + 1700},${roadY("dq-tile-westbay") + (W + 1700 - westbay.x) * TILT}`,
+          `M -1500,${roadY("dq-tile-souq") - (souq.x + 1500) * TILT} L ${W + 1700},${roadY("dq-tile-souq") + (W + 1700 - souq.x) * TILT}`,
+          `M -1500,${roadY("dq-tile-education") - (edu.x + 1500) * TILT} L ${W + 1700},${roadY("dq-tile-education") + (W + 1700 - edu.x) * TILT}`,
+          `M -1500,${roadY("dq-tile-ummsalal") - (mid("dq-tile-ummsalal").x + 1500) * TILT} L ${W + 1700},${roadY("dq-tile-ummsalal") + (W + 1700 - mid("dq-tile-ummsalal").x) * TILT}`,
           `M ${katara.x + 360},${katara.y - 200} L ${lusail.x - 600},${lusail.y + 230}`,
           `M ${westbay.x + 200},${westbay.y - 200} L ${pearl.x + 300},${pearl.y + 220}`,
           `M ${aspire.x},${roadY("dq-tile-aspire")} L ${edu.x + 200},${roadY("dq-tile-education") - 180}`,
@@ -79,6 +82,7 @@ export function DohaBackground() {
       {[
         { x: (westbay.x + 200 + pearl.x + 300) / 2, y: (westbay.y - 200 + pearl.y + 220) / 2 },
         { x: (katara.x + 360 + lusail.x - 600) / 2, y: (katara.y - 200 + lusail.y + 230) / 2 },
+        { x: mid("dq-tile-gewan").x - 300, y: mid("dq-tile-gewan").y + 230 },
       ].map((b, i) => (
         <g key={`br${i}`} transform={`translate(${b.x},${b.y})`}>
           <path d="M -60,8 Q -30,-46 0,8 Q 30,-46 60,8" fill="none" stroke="#f8fafc" strokeWidth={7} />

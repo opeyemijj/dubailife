@@ -19,6 +19,22 @@ const daybeds = (id: string) => [
   { id: `${id}:karak`, name: "Iced karak", price: 25, icon: "🧋", station: "bar" as const, desc: "Doha's favourite: spiced milk tea, over ice.", consumable: { need: "energy" as const, amount: 10 } },
   { id: `${id}:lemon-mint`, name: "Lemon mint", price: 30, icon: "🍹", station: "bar" as const, desc: "Frozen lemon and mint.", consumable: { need: "social" as const, amount: 10 } },
 ];
+/** A watersports centre: jet skis (ridden in 3D on the beach), flyboards, banana boats and parasailing, and a beach. */
+function watersports(id: string, name: string, blurb: string): Place {
+  return {
+    id, name, kind: "club", blurb,
+    venues: [venue(name, "Watersports beach", "hotel", {
+      layout: "beach", palette: PALETTES.park, role: "Watersports instructor", noJob: true, blurb,
+      products: [
+        ticket(`${id}:jetski`, "Jet ski, 30 minutes", 250, "A jet ski with a safety briefing.", "🚤"),
+        ticket(`${id}:flyboard`, "Flyboard, 20 minutes", 350, "Fly over the water on the jet of a jet ski.", "🌊"),
+        ticket(`${id}:banana`, "Banana boat ride", 80, "Hang on, for up to six.", "🍌"),
+        ticket(`${id}:parasail`, "Parasailing", 300, "High over the water behind a speedboat.", "🪂"),
+      ],
+      activities: [...swim, show(`${id}:parasail`, "Parasail over the water", "🪂", 35, "fun", "wave"), show(`${id}:flyboard`, "Fly a flyboard", "🌊", 35, "fun", "clap")],
+    })],
+  };
+}
 const plus = (v: Venue, more: VenueActivity[]): Venue => ({ ...v, activities: [...(v.activities ?? []), ...more] });
 const show = (id: string, label: string, icon: string, reward = 30, kind: "fun" | "social" | "energy" = "fun", animation: VenueActivity["animation"] = "talk", desc?: string): VenueActivity =>
   ({ id, label, icon, animation, reward, need: { kind, amount: 25 }, desc });
@@ -429,6 +445,274 @@ export const DQ_PLACES: Place[] = [
     id: "dq-banana-island", name: "Banana Island Resort", kind: "hotel",
     blurb: "The resort island shaped like a banana in Doha Bay: villas over the water, a beach and a spa.",
     venues: [venue("Banana Island Resort", "Island resort & villas", "hotel", { palette: PALETTES.lobby, blurb: "Overwater villas and a lagoon beach in the bay." })],
+  },
+  // ---------------------------------------------------------------- watersports: jet skis, flyboards, parasailing
+  ...[
+    ["dq-lagoon-jetski", "Lagoon Jet Ski & Watersports", "Jet skis round the lagoon's canals and out past the towers."],
+    ["dq-dafna-jetski", "Dafna Jet Ski & Flyboard", "Jet skis and flyboards off Al Dafna, with West Bay's skyline behind you."],
+    ["dq-gewan-jetski", "Gewan Jet Ski, Flyboard & Parasail", "Race round Gewan Island, fly on a flyboard or parasail over the lagoon."],
+    ["dq-wakrah-jetski", "Al Wakrah Jet Ski Beach", "Jet skis and banana boats off Al Wakrah's family beach."],
+    ["dq-simaisma-jetski", "Simaisma Kitesurf & Jet Ski", "Kitesurfing in Simaisma's steady wind, and jet skis on the flat water."],
+  ].map(([id, name, blurb]): Place => watersports(id, name, blurb)),
+
+  // ---------------------------------------------------------------- West Bay Lagoon
+  {
+    id: "dq-lagoona-mall", name: "Lagoona Mall", kind: "mall",
+    blurb: "The lagoon's mall at the foot of the Zigzag Towers: shops, a hypermarket and cafés.",
+    venues: [venue("Lagoona Fashion", "Fashion", "fashion"), venue("Lagoona Hypermarket", "Supermarket", "supermarket"), venue("Lagoona Café", "Café", "cafe"), venue("Lagoona Electronics", "Electronics", "electronics")],
+  },
+  {
+    id: "dq-lagoon-marina", name: "West Bay Lagoon Marina", kind: "attraction",
+    blurb: "Motor yachts at the lagoon villas' own marina.",
+    venues: [yacht("Lagoon Riva 56", 2600, 10, "A fast day-cruiser out of the lagoon to the open Gulf."), yacht("Legtaifiya Explorer", 5200, 18, "A big flybridge yacht with a slide off the deck.")],
+  },
+  {
+    id: "dq-lagoon-beach", name: "Legtaifiya Beach", kind: "park",
+    blurb: "A calm lagoon beach for families.",
+    venues: [venue("Legtaifiya Beach", "Public beach", "hotel", { layout: "beach", products: [], palette: PALETTES.park, role: "Lifeguard", noJob: true, activities: swim })],
+  },
+
+  // ---------------------------------------------------------------- Al Dafna
+  single("dq-four-seasons", "Four Seasons Doha", "hotel", venue("Four Seasons Doha", "Beach hotel & suites", "hotel", { palette: PALETTES.luxury, blurb: "A marina, a private beach and a spa at the tip of West Bay." })),
+  single("dq-intercontinental", "InterContinental Doha Beach", "hotel", venue("InterContinental Doha Beach", "Beach resort & suites", "hotel", { palette: PALETTES.lobby, blurb: "Doha's longest private beach, with pools and watersports." })),
+  {
+    id: "dq-dafna-beach-club", name: "Dafna Beach Club", kind: "club",
+    blurb: "Daybeds, a pool and DJs on the beach at Al Dafna.",
+    venues: [venue("Dafna Beach", "Beach club", "hotel", { layout: "beach", products: daybeds("dafna-beach"), palette: PALETTES.park, role: "Beach host", noJob: true, activities: swim }), pool("Dafna Beach Club Pool")],
+  },
+  {
+    id: "dq-al-bidda-park", name: "Al Bidda Park", kind: "park",
+    blurb: "Doha's big central park on the Corniche: lawns, a lake and the fan zone of the World Cup.",
+    venues: [venue("Al Bidda Park", "Park", "hotel", { layout: "outdoor", palette: PALETTES.park, role: "Park ranger", noJob: true, products: [], activities: [show("bidda:walk", "Walk the park's lake", "🌳", 15, "energy", "wave"), show("bidda:picnic", "Picnic on the lawns", "🧺", 15, "social", "sit")] })],
+  },
+  {
+    id: "dq-dafna-marina", name: "Dafna Marina", kind: "attraction",
+    blurb: "The Four Seasons' marina: yachts for the bay and the open Gulf.",
+    venues: [yacht("Dafna Princess 70", 3600, 12, "Round the bay past the Museum of Islamic Art."), yacht("Diplomatic Superyacht", 9200, 28, "The marina's largest, for a party on the water.")],
+  },
+
+  // ---------------------------------------------------------------- Al Sadd
+  {
+    id: "dq-royal-plaza", name: "Royal Plaza", kind: "mall",
+    blurb: "Al Sadd's luxury mall.",
+    venues: [venue("Royal Plaza Luxury", "Luxury fashion", "luxury"), venue("Royal Plaza Jewellery", "Jewellery & watches", "jewellery"), venue("Royal Plaza Café", "Café", "cafe")],
+  },
+  {
+    id: "dq-hamad-hospital", name: "Hamad General Hospital", kind: "attraction",
+    blurb: "Doha's main hospital: the emergency department, clinics and a pharmacy.",
+    venues: [venue("Hamad Pharmacy", "Pharmacy", "pharmacy"), venue("Hamad Clinics", "Clinic", "hotel", { layout: "lobby", palette: { floor: "#f1f5f9", wall: "#ffffff", accent: "#0f766e" }, role: "Nurse", noJob: true, products: [ticket("hamad:checkup", "General check-up", 200, "A doctor's check-up and advice.", "🩺")], activities: [{ id: "hamad:checkup", label: "Get a check-up", icon: "🩺", animation: "sit", reward: 0, need: { kind: "energy", amount: 25 } }] })],
+  },
+  {
+    id: "dq-doha-quest", name: "Doha Quest (Doha Oasis)", kind: "attraction",
+    blurb: "A huge indoor theme park in Doha Oasis, with a record-breaking roller coaster and a drop tower.",
+    venues: [venue("Doha Quest", "Indoor theme park", "hotel", {
+      layout: "lobby", feature: "exhibits", palette: { floor: "#1e1b4b", wall: "#312e81", accent: "#f472b6" }, role: "Ride host", noJob: true,
+      products: [ticket("quest:day", "Day pass", 225, "Every ride, all day.", "🎢")],
+      activities: [show("quest:coaster", "Ride the giant indoor roller coaster", "🎢", 50, "fun", "clap"), show("quest:drop", "Brave the drop tower", "🗼", 40, "fun", "clap")],
+    })],
+  },
+  {
+    id: "dq-jassim-stadium", name: "Jassim bin Hamad Stadium", kind: "attraction",
+    blurb: "Al Sadd club's home ground: league football nights.",
+    venues: [venue("Jassim bin Hamad Stadium", "Stadium", "hotel", { layout: "lobby", palette: { floor: "#1f3b2a", wall: "#e5e7eb", accent: MAROON }, role: "Stadium steward", noJob: true, products: [ticket("jassim:match", "Match ticket", 80, "Tonight's league game.", "⚽")], activities: [show("jassim:match", "Watch the match", "⚽", 30, "fun", "clap")] })],
+  },
+  {
+    id: "dq-sadd-dining", name: "Al Sadd Street Restaurants", kind: "food-hall",
+    blurb: "Shawarma, biryani and grills on Al Sadd Street, open late.",
+    venues: [venue("Sadd Shawarma", "Shawarma", "restaurant"), venue("Biryani House", "Indian", "restaurant"), venue("Sadd Karak", "Karak & chapati", "cafe")],
+  },
+  single("dq-millennium-sadd", "Millennium Hotel Doha", "hotel", venue("Millennium Hotel Doha", "City hotel & suites", "hotel", { palette: PALETTES.lobby, blurb: "In Al Sadd, a short walk from Royal Plaza." })),
+
+  // ---------------------------------------------------------------- Al Gharrafa & Mall of Qatar
+  {
+    id: "dq-mall-of-qatar", name: "Mall of Qatar", kind: "mall",
+    blurb: "Qatar's biggest mall: hundreds of shops, the Oasis atrium with its stage and a cinema.",
+    venues: [
+      venue("Mall of Qatar Fashion", "Fashion", "fashion"), venue("Mall of Qatar Luxury", "Luxury fashion", "luxury"), venue("Mall of Qatar Sports", "Sportswear", "sports"),
+      venue("Mall of Qatar Electronics", "Electronics", "electronics"), venue("Mall of Qatar Hypermarket", "Supermarket", "supermarket"), venue("Mall of Qatar Toys", "Toys", "toys"),
+      venue("Mall of Qatar Food Court", "Food court", "restaurant"),
+      venue("Mall of Qatar Cinemas", "Cinema", "club", { role: "Cinema host", noJob: true, layout: "lobby", palette: PALETTES.night, feature: "stage", products: [ticket("moq-cinemas:ticket", "Movie ticket", 50, "Tonight's film."), ticket("moq-cinemas:vip", "VIP recliner", 140, "A recliner with service.", "🍿")] }),
+    ],
+  },
+  {
+    id: "dq-ahmad-stadium", name: "Ahmad bin Ali Stadium", kind: "attraction",
+    blurb: "Al Rayyan's stadium, its façade patterned like the sand dunes and the desert's plants.",
+    venues: [venue("Ahmad bin Ali Stadium", "Stadium", "hotel", { layout: "lobby", palette: { floor: "#3b2a12", wall: "#e9d5b5", accent: MAROON }, role: "Stadium steward", noJob: true, products: [ticket("ahmad:match", "Match ticket", 90, "A league night.", "⚽")], activities: [show("ahmad:match", "Watch the match", "⚽", 30, "fun", "clap")] })],
+  },
+  {
+    id: "dq-gharrafa-park", name: "Al Gharrafa Park", kind: "park",
+    blurb: "A neighbourhood park with a running track and playgrounds.",
+    venues: [venue("Al Gharrafa Park", "Park", "hotel", { layout: "outdoor", palette: PALETTES.park, role: "Park ranger", noJob: true, products: [], activities: [{ id: "gharrafa:run", label: "Run the track", icon: "🏃", animation: "clap", reward: 15, need: { kind: "fun", amount: 15 } }] })],
+  },
+  {
+    id: "dq-gharrafa-dining", name: "Gharrafa Family Restaurants", kind: "food-hall",
+    blurb: "Family restaurants for the compounds round Al Gharrafa.",
+    venues: [venue("Gharrafa Grill", "Grills", "restaurant"), venue("Gharrafa Bakery", "Bakery & café", "cafe")],
+  },
+
+  // ---------------------------------------------------------------- Al Khor & Purple Island
+  {
+    id: "dq-al-bayt", name: "Al Bayt Stadium", kind: "attraction",
+    blurb: "The stadium made like a vast Bedouin tent, bayt al sha'ar, striped in black and white; it opened the 2022 World Cup.",
+    venues: [venue("Al Bayt Stadium", "Stadium", "hotel", { layout: "lobby", palette: { floor: "#1f2937", wall: "#f5f5f4", accent: MAROON }, role: "Stadium guide", noJob: true, products: [ticket("albayt:tour", "Stadium tour", 80, "Inside the great tent.", "⛺"), ticket("albayt:match", "Match ticket", 150, "A night under the tent.", "⚽")], activities: [show("albayt:tour", "Tour the great tent", "⛺", 30), show("albayt:match", "Watch the match", "⚽", 35, "fun", "clap")] })],
+  },
+  {
+    id: "dq-alkhor-park", name: "Al Khor Corniche Park", kind: "park",
+    blurb: "Al Khor's seafront park, with a small zoo and the old watchtowers.",
+    venues: [venue("Al Khor Corniche Park", "Park", "hotel", { layout: "outdoor", palette: PALETTES.park, role: "Park ranger", noJob: true, products: [], activities: [show("alkhor:towers", "Climb to the old watchtowers", "🗼", 20, "fun", "wave")] })],
+  },
+  single("dq-alkhor-resort", "Al Khor Resort", "hotel", venue("Al Khor Resort", "Seaside resort & suites", "hotel", { palette: PALETTES.lobby, blurb: "A quiet resort on the bay in the north." })),
+  {
+    id: "dq-purple-island", name: "Purple Island Mangroves", kind: "park",
+    blurb: "Kayak through the mangroves of Jazirat Bin Ghanim, where flamingos and herons feed.",
+    venues: [venue("Purple Island Kayaks", "Mangrove kayaking", "hotel", { layout: "outdoor", palette: PALETTES.park, role: "Kayak guide", noJob: true, products: [ticket("purple:kayak", "Kayak tour", 120, "Ninety minutes through the mangroves.", "🛶")], activities: [show("purple:kayak", "Kayak through the mangroves", "🛶", 35, "fun", "wave"), show("purple:birds", "Watch the flamingos", "🦩", 20, "fun", "wave")] })],
+  },
+  {
+    id: "dq-alkhor-harbour", name: "Al Khor Fishing Harbour", kind: "attraction",
+    blurb: "Fishing dhows unloading the catch, and boat trips out to sea.",
+    venues: [{ ...venue("Al Khor Dhow Trip", "Dhow & fishing trip", "hotel", { layout: "yacht", feature: "skyline", palette: { floor: "#a16207", wall: "#fef3c7", accent: "#92400e" }, role: "Captain", noJob: true, products: [ticket("alkhor:fishing", "Fishing trip", 200, "Two hours out with lines and bait.", "🎣")], activities: [show("alkhor:fish", "Go fishing from the dhow", "🎣", 35, "fun", "sit")] }) }],
+  },
+  {
+    id: "dq-alkhor-beach", name: "Al Khor Beach", kind: "park",
+    blurb: "A long beach on Al Khor's bay.",
+    venues: [venue("Al Khor Beach", "Public beach", "hotel", { layout: "beach", products: [], palette: PALETTES.park, role: "Lifeguard", noJob: true, activities: swim })],
+  },
+
+  // ---------------------------------------------------------------- Gewan Island & Qetaifan North
+  single("dq-rixos-qetaifan", "Rixos Gulf Qetaifan", "hotel", venue("Rixos Gulf Qetaifan", "Island resort & suites", "hotel", { palette: PALETTES.luxury, blurb: "On Qetaifan Island North, next to the waterpark." })),
+  {
+    id: "dq-gewan-boulevard", name: "Gewan Island Boulevard", kind: "food-hall",
+    blurb: "Restaurants and cafés along Gewan's island boulevard.",
+    venues: [venue("Gewan Seafood", "Seafood", "restaurant"), venue("Gewan Café", "Café", "cafe"), venue("Gewan Burger Co.", "Burgers", "restaurant")],
+  },
+  {
+    id: "dq-gewan-beach-club", name: "Gewan Beach Club", kind: "club",
+    blurb: "Gewan Island's beach club: daybeds, a pool and the lagoon.",
+    venues: [venue("Gewan Beach", "Beach club", "hotel", { layout: "beach", products: daybeds("gewan-beach"), palette: PALETTES.park, role: "Beach host", noJob: true, activities: swim }), pool("Gewan Beach Club Pool")],
+  },
+  {
+    id: "dq-gewan-marina", name: "Gewan Marina", kind: "attraction",
+    blurb: "The island's marina, a short sail from The Pearl.",
+    venues: [yacht("Gewan Sunseeker 65", 3200, 12, "Round Gewan and The Pearl."), yacht("Crystal Lagoon Royale", 8600, 26, "A party yacht with a jacuzzi on the bow.")],
+  },
+  {
+    id: "dq-winter-wonderland", name: "Winter Wonderland (Al Maha Island)", kind: "attraction",
+    blurb: "The winter fun fair on Al Maha Island: rides, a big wheel, games and food stalls.",
+    venues: [venue("Winter Wonderland", "Fun fair", "hotel", {
+      layout: "outdoor", palette: { floor: "#1e1b4b", wall: "#312e81", accent: "#22d3ee" }, role: "Ride host", noJob: true,
+      products: [ticket("wonderland:entry", "Entry & ride credits", 150, "Into the park with credits for the rides.", "🎡")],
+      activities: [show("wonderland:wheel", "Ride the big wheel", "🎡", 30, "fun", "sit"), show("wonderland:coaster", "Ride the roller coaster", "🎢", 40, "fun", "clap"), show("wonderland:games", "Win a prize at the stalls", "🧸", 20, "fun", "clap")],
+    })],
+  },
+
+  // ---------------------------------------------------------------- Old Airport & Al Hilal
+  {
+    id: "dq-hilal-hypermarket", name: "Al Hilal Hypermarket", kind: "mall",
+    blurb: "The big neighbourhood hypermarket and its shops.",
+    venues: [venue("Al Hilal Hypermarket", "Supermarket", "supermarket"), venue("Al Hilal Pharmacy", "Pharmacy", "pharmacy"), venue("Al Hilal Mobile Shop", "Electronics", "electronics")],
+  },
+  {
+    id: "dq-974-stadium", name: "Stadium 974", kind: "attraction",
+    blurb: "The stadium built from 974 shipping containers on the waterfront, made to be taken apart.",
+    venues: [venue("Stadium 974", "Stadium", "hotel", { layout: "lobby", palette: { floor: "#1f2937", wall: "#e5e7eb", accent: "#ea580c" }, role: "Stadium guide", noJob: true, products: [ticket("974:tour", "Stadium tour", 60, "Through the containers.", "📦")], activities: [show("974:tour", "Walk through the containers", "📦", 25)] })],
+  },
+  {
+    id: "dq-hilal-dining", name: "Old Airport Karak Street", kind: "food-hall",
+    blurb: "Late-night karak, paratha and chapati stands that never close.",
+    venues: [venue("Karak Street", "Karak & paratha", "cafe"), venue("Old Airport Grill", "Grills", "restaurant")],
+  },
+
+  // ---------------------------------------------------------------- Al Wakrah
+  {
+    id: "dq-al-janoub", name: "Al Janoub Stadium", kind: "attraction",
+    blurb: "Zaha Hadid's stadium shaped like the sails of a dhow.",
+    venues: [venue("Al Janoub Stadium", "Stadium", "hotel", { layout: "lobby", palette: { floor: "#1f3b2a", wall: "#f5f5f4", accent: MAROON }, role: "Stadium guide", noJob: true, products: [ticket("janoub:match", "Match ticket", 90, "A league night under the sails.", "⚽")], activities: [show("janoub:match", "Watch the match", "⚽", 30, "fun", "clap")] })],
+  },
+  {
+    id: "dq-wakrah-souq", name: "Al Wakrah Souq", kind: "mall",
+    blurb: "The old souq on the sea: mud-plastered lanes, shops and restaurants on the beach.",
+    venues: [venue("Wakrah Spice Shop", "Spices & dates", "supermarket"), venue("Wakrah Perfumes", "Arabian fragrance", "fragrance"), venue("Wakrah Seafront Café", "Café", "cafe"), venue("Wakrah Machboos", "Qatari", "restaurant")],
+  },
+  single("dq-wakrah-resort", "Al Wakrah Beach Resort", "hotel", venue("Al Wakrah Beach Resort", "Beach resort & suites", "hotel", { palette: PALETTES.lobby, blurb: "On the sand beside Al Wakrah's souq." })),
+  {
+    id: "dq-wakrah-harbour", name: "Al Wakrah Dhow Harbour", kind: "attraction",
+    blurb: "Old dhows moored by the souq: sail along the coast.",
+    venues: [{ ...venue("Wakrah Dhow Cruise", "Dhow cruise", "hotel", { layout: "yacht", feature: "skyline", palette: { floor: "#a16207", wall: "#fef3c7", accent: "#92400e" }, role: "Captain", noJob: true, products: [ticket("wakrah:dhow", "Dhow cruise", 100, "An hour along the coast.", "⛵")], activities: [show("wakrah:sail", "Sail on a dhow", "⛵", 30, "fun", "sit")] }) }],
+  },
+  {
+    id: "dq-wakrah-beach", name: "Al Wakrah Family Beach", kind: "park",
+    blurb: "A shallow, calm family beach.",
+    venues: [venue("Al Wakrah Family Beach", "Public beach", "hotel", { layout: "beach", products: [], palette: PALETTES.park, role: "Lifeguard", noJob: true, activities: swim })],
+  },
+  {
+    id: "dq-wakrah-fish", name: "Al Wakrah Fish Market Grill", kind: "food-hall",
+    blurb: "Pick your fish at the market and have it grilled.",
+    venues: [venue("Fish Market Grill", "Seafood", "restaurant")],
+  },
+
+  // ---------------------------------------------------------------- Umm Salal & Doha Festival City
+  {
+    id: "dq-festival-city", name: "Doha Festival City", kind: "mall",
+    blurb: "The giant mall in the north, with an indoor snow park.",
+    venues: [
+      venue("Festival City Fashion", "Fashion", "fashion"), venue("Festival City Home", "Home", "home"), venue("Festival City Electronics", "Electronics", "electronics"),
+      venue("Festival City Hypermarket", "Supermarket", "supermarket"), venue("Festival City Food Court", "Food court", "restaurant"),
+      venue("Festival City Snow Park", "Indoor snow park", "club", { layout: "rink", role: "Snow host", noJob: true, blurb: "Snow, ice and sledges indoors in the desert." }),
+    ],
+  },
+  {
+    id: "dq-festival-park", name: "Festival City Theme Park", kind: "attraction",
+    blurb: "The indoor theme park at Doha Festival City: coasters, go-karts and games.",
+    venues: [venue("Festival City Theme Park", "Indoor theme park", "hotel", {
+      layout: "lobby", feature: "exhibits", palette: { floor: "#7f1d1d", wall: "#fee2e2", accent: "#f59e0b" }, role: "Ride host", noJob: true,
+      products: [ticket("festpark:day", "Day pass", 175, "Every ride.", "🎢")],
+      activities: [show("festpark:karts", "Race the go-karts", "🏎️", 35, "fun", "clap"), show("festpark:coaster", "Ride the coaster", "🎢", 35, "fun", "clap")],
+    })],
+  },
+  {
+    id: "dq-umm-salal-fort", name: "Umm Salal Mohammed Fort", kind: "attraction",
+    blurb: "A 19th-century fort of stone and mud with its tall watchtower.",
+    venues: [venue("Umm Salal Mohammed Fort", "Fort", "hotel", { layout: "lobby", palette: PALETTES.oud, role: "Heritage guide", noJob: true, products: [ticket("ummsalal:entry", "Fort entry", 0, "Free.", "🏰")], activities: [show("ummsalal:tour", "Climb the watchtower", "🏰", 25)] })],
+  },
+  {
+    id: "dq-ummsalal-dining", name: "Umm Salal Family Diner", kind: "food-hall",
+    blurb: "A family diner for the northern suburbs.",
+    venues: [venue("Umm Salal Diner", "Family diner", "restaurant")],
+  },
+
+  // ---------------------------------------------------------------- Al Thumama & Ain Khaled
+  {
+    id: "dq-al-thumama", name: "Al Thumama Stadium", kind: "attraction",
+    blurb: "The stadium shaped like the gahfiya, the woven cap worn under the ghutra.",
+    venues: [venue("Al Thumama Stadium", "Stadium", "hotel", { layout: "lobby", palette: { floor: "#1f3b2a", wall: "#f5f5f4", accent: MAROON }, role: "Stadium guide", noJob: true, products: [ticket("thumama:match", "Match ticket", 90, "A league night.", "⚽")], activities: [show("thumama:match", "Watch the match", "⚽", 30, "fun", "clap")] })],
+  },
+  {
+    id: "dq-thumama-park", name: "Ain Khaled Park", kind: "park",
+    blurb: "A green park for the villa compounds round it.",
+    venues: [venue("Ain Khaled Park", "Park", "hotel", { layout: "outdoor", palette: PALETTES.park, role: "Park ranger", noJob: true, products: [], activities: [show("ainkhaled:walk", "Walk the park", "🌳", 15, "energy", "wave")] })],
+  },
+
+  // ---------------------------------------------------------------- Simaisma & Al Thakhira
+  {
+    id: "dq-thakhira", name: "Al Thakhira Mangroves", kind: "park",
+    blurb: "Qatar's largest mangroves: kayak the channels at high tide.",
+    venues: [venue("Al Thakhira Kayaks", "Mangrove kayaking", "hotel", { layout: "outdoor", palette: PALETTES.park, role: "Kayak guide", noJob: true, products: [ticket("thakhira:kayak", "Kayak tour", 130, "Through the mangrove channels.", "🛶")], activities: [show("thakhira:kayak", "Kayak the mangrove channels", "🛶", 35, "fun", "wave")] })],
+  },
+  {
+    id: "dq-simaisma-beach", name: "Simaisma Beach", kind: "park",
+    blurb: "A family beach and corniche on the coast road north.",
+    venues: [venue("Simaisma Beach", "Public beach", "hotel", { layout: "beach", products: [], palette: PALETTES.park, role: "Lifeguard", noJob: true, activities: swim })],
+  },
+  single("dq-zulal-resort", "Zulal Wellness Resort", "hotel", venue("Zulal Wellness Resort", "Wellness resort & suites", "hotel", { palette: PALETTES.park, blurb: "A wellness retreat on the northern coast, with traditional Arabic and Islamic medicine." })),
+  {
+    id: "dq-simaisma-harbour", name: "Simaisma Dhow Harbour", kind: "attraction",
+    blurb: "Fishing dhows and boat trips out of Simaisma.",
+    venues: [{ ...venue("Simaisma Boat Trip", "Dhow trip", "hotel", { layout: "yacht", feature: "skyline", palette: { floor: "#a16207", wall: "#fef3c7", accent: "#92400e" }, role: "Captain", noJob: true, products: [ticket("simaisma:boat", "Boat trip", 90, "An hour up the coast.", "⛵")], activities: [show("simaisma:sail", "Sail up the coast", "⛵", 25, "fun", "sit")] }) }],
+  },
+  {
+    id: "dq-simaisma-camp", name: "Simaisma Desert Camp", kind: "attraction",
+    blurb: "A camp on the dunes behind the coast: a fire, camels and dinner under the stars.",
+    venues: [venue("Simaisma Desert Camp", "Desert camp", "hotel", { layout: "outdoor", palette: PALETTES.oud, role: "Camp host", noJob: true, products: [ticket("simcamp:night", "Desert night with dinner", 220, "Camels, a fire and a barbecue.", "🔥")], activities: [show("simcamp:camel", "Ride a camel", "🐪", 25, "fun", "wave"), { id: "simcamp:dinner", label: "Dinner by the fire", icon: "🔥", animation: "sit", reward: 15, need: { kind: "hunger", amount: 50 } }] })],
   },
 ];
 

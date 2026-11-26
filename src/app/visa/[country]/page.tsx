@@ -72,7 +72,7 @@ export default function VisaPage({ params }: { params: Promise<{ country: string
                 <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">Under review</p>
                 <p className="text-xl font-black">Your application is being checked</p>
                 <div className="h-2 rounded-full bg-slate-200 overflow-hidden"><div className="h-full bg-amber-500 transition-all" style={{ width: `${100 - (left / c.reviewSeconds) * 100}%` }} /></div>
-                <p className="text-sm text-slate-600">Usually about a minute{left ? `: ${left}s to go` : ": nearly done"}. You can leave this page; it'll be ready when you come back.</p>
+                <p className="text-sm text-slate-600">Usually about a minute{left ? `: ${left}s to go` : ": nearly done"}. You can leave this page; it&apos;ll be ready when you come back.</p>
               </>
             ) : (
               <>
