@@ -17,6 +17,7 @@ import {
   Mannequin, MenuCounter, Model, PROP, Palm, PastryCase, Plant, ProduceTable, Rack, Reception, SkylineWindow, Stage, StockedShelf,
   SweepingLights, TechTable, Till, TicketKiosk, WallDisplay, WallScreen, Water,
 } from "./fixtures";
+import { AD_SCENES } from "./abuDhabi/scenes";
 
 export interface StationDef {
   id: string;
@@ -158,6 +159,10 @@ const garments = (accent: string) => [accent, "#f5f5f4", "#1f2937", "#d6d3d1", "
 export function buildPlan(venue: Venue): Plan {
   const { accent, floor: floorColor, light } = venue.palette;
   const W = (n: number) => n;
+
+  // A one-off interior built for this venue (Abu Dhabi's landmarks), in place of its layout's room.
+  const custom = venue.scene ? AD_SCENES[venue.scene] : undefined;
+  if (custom) return custom(venue, plan);
 
   switch (venue.layout) {
     case "boutique": {

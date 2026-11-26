@@ -1,6 +1,6 @@
 "use client";
 
-// The goal you're on now, on the map: a small pill ("Get a job · 1/3") that opens to the goal's
+// The goal you're on now, on the map: a round icon with its progress ("1/3") that opens to the goal's
 // steps, each with a button to go and do it, and the reward to collect when they're done.
 
 import { useState } from "react";
@@ -15,6 +15,7 @@ import { DailyMissions } from "./DailyMissions";
 import { WeekendCard } from "./FunGoals";
 import { useFun } from "@/lib/fun";
 import { collectable, useMissions } from "@/lib/missions";
+import { RailButton, railTop } from "@/components/layout/mapRail";
 
 export function NextStep() {
   const { citizen } = useCitizen();
@@ -27,25 +28,19 @@ export function NextStep() {
   const weekend = fun?.weekend.now && !fun.weekend.claimed ? fun : null;
   const [open, setOpen] = useState(false);
   const [won, setWon] = useState<{ aed: number; xp: number; next?: string } | null>(null);
-  // On the map only; at home your goal is in the Life panel's Goals tab.
-  if (!citizen?.id || !status?.order || !/^\/explore\b/.test(path)) return null;
+  // On the maps only (Dubai's and Abu Dhabi's); at home your goal is in the Life panel's Goals tab.
+  if (!citizen?.id || !status?.order || !/^\/(explore|abu-dhabi)\/?$/.test(path)) return null;
 
   const goal = currentGoal(status);
   const done = goal ? goal.steps.filter((s) => stepDone(status, s)).length : 0;
   const ready = !!goal && goalDone(status, goal);
-  // It sits under the map's Search button.
-  const place = `fixed z-[59] w-[min(340px,calc(100vw-1.5rem))] flex flex-col left-3 items-start top-[calc(env(safe-area-inset-top)+7.5rem)]`;
+  // The first of the map's round buttons down the left (layout/mapRail); opened, the panel starts there.
+  const place = `fixed z-[59] w-[min(340px,calc(100vw-1.5rem))] flex flex-col left-3 items-start`;
 
-  if (!goal) {
-    return (
-      <div className={place}>
-        <Link href="/goals" className="flex items-center gap-2 h-11 pl-3 pr-4 rounded-full shadow-xl font-black text-sm bg-white text-slate-900">🏆 Every goal reached</Link>
-      </div>
-    );
-  }
+  if (!goal) return <Link href="/goals" aria-label="Every goal reached" style={{ top: railTop(0) }} className="fixed left-3 z-[58] w-12 h-12 rounded-full bg-white shadow-xl flex items-center justify-center text-2xl">🏆</Link>;
 
   return (
-    <div className={place}>
+    <div className={place} style={{ top: railTop(0) }}>
       {open && (
         <div
           className="fixed inset-0 z-[-1]"
@@ -54,13 +49,11 @@ export function NextStep() {
         />
       )}
       {!open ? (
-        <button onClick={() => { gameAudio.playClickSound(); setOpen(true); }}
-          className={`flex items-center gap-2 h-11 pl-3 pr-4 rounded-full shadow-xl font-black text-sm ${ready || collectable(missions) ? "bg-amber-400 text-slate-950 animate-bounce" : "bg-white text-slate-900"}`}>
-          <span>{ready ? "🎁" : goal.icon}</span>
-          {ready ? `${goal.title}: collect` : `${goal.title} · ${done}/${goal.steps.length}`}
-          {todo !== null && <span className="ml-1 rounded-full bg-violet-600 text-white text-[10px] px-1.5 py-0.5">☀️ {3 - todo}/3</span>}
-          {weekend && <span className="rounded-full bg-fuchsia-600 text-white text-[10px] px-1.5 py-0.5">🎉 {Math.min(weekend.weekend.done.length, 2)}/2</span>}
-        </button>
+        // One round icon with its progress as a badge ("1/4"); it glows when there's a reward to collect.
+        <RailButton n={0} icon={ready ? "🎁" : goal.icon} badge={ready ? "!" : `${done}/${goal.steps.length}`}
+          label={ready ? `${goal.title}: collect your reward` : `Your goal: ${goal.title}, ${done} of ${goal.steps.length} done${todo !== null ? `; daily missions ${3 - todo} of 3` : ""}`}
+          tone={ready || collectable(missions) ? "bg-amber-400 text-slate-950" : "bg-white text-slate-900"} alert={ready || collectable(missions)}
+          onClick={() => { gameAudio.playClickSound(); setOpen(true); }} />
       ) : (
         <div className="rounded-3xl bg-white text-slate-900 shadow-2xl p-4 space-y-2.5 w-full max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-9rem)] overflow-y-auto overscroll-contain">
           <div className="sticky top-0 bg-white/95 backdrop-blur-md z-10 -mx-4 -mt-4 px-4 pt-4 pb-2 border-b border-slate-100 flex items-start gap-2 rounded-t-3xl shadow-sm">

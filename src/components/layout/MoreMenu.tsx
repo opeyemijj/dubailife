@@ -6,6 +6,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
+import { SITE } from "@/lib/site";
 import { BedDouble, BookOpen, Briefcase, Flag, Flame, Gamepad2, LayoutGrid, ListChecks, MessageCircle, Mic, Target, Trophy, User, UserPlus, Wallet, X } from "lucide-react";
 import { openPhone } from "@/components/layout/PhoneOverlay";
 import { useCitizen } from "@/lib/citizenStore";
@@ -85,6 +87,11 @@ export function MoreSheet() {
             ))}
           </div>
           {note && <p className="px-1 pt-2 text-xs font-bold text-violet-700">{note}</p>}
+          {/* About and the socials (they were under the bar on the map). */}
+          <div className="mt-2 pt-2 border-t border-slate-100 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs font-bold text-slate-500">
+            <Link href="/about" onClick={() => setOpen(false)} className="hover:text-slate-800">About</Link>
+            {SITE.socials.map((n) => <a key={n.label} href={n.href} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800">{n.label}</a>)}
+          </div>
         </div>
       </div>
     </ModalPortal>

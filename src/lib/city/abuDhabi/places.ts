@@ -193,15 +193,32 @@ export const AD_PLACES: Place[] = [
   // ---------------------------------------------------------------- Grand Mosque & Al Maqtaa
   {
     id: "ad-grand-mosque", name: "Sheikh Zayed Grand Mosque", kind: "attraction",
-    blurb: "82 white marble domes, four minarets and the world's largest hand-knotted carpet. Modest dress, please.",
-    venues: [venue("Sheikh Zayed Grand Mosque", "Mosque", "hotel", {
-      palette: { floor: "#f8fafc", wall: "#f8fafc", accent: "#c9a24a" }, role: "Mosque guide", noJob: true, products: [],
-      blurb: "The prayer hall under the crystal chandeliers, and the courtyard of flowers in marble.",
-      activities: [
-        { id: "szgm:tour", label: "Take the guided tour", icon: "🕌", animation: "talk", reward: 40, need: { kind: "social", amount: 25 } },
-        { id: "szgm:reflect", label: "Sit and reflect", icon: "🤲", animation: "sit", reward: 20, need: { kind: "energy", amount: 20 } },
-      ],
-    })],
+    blurb: "82 white marble domes, four minarets, the world's largest hand-knotted carpet and a 12 m crystal chandelier. Modest dress, please.",
+    venues: [
+      // The main prayer hall, built as itself (components/interior/abuDhabi/scenes "szgm-prayer-hall").
+      { ...venue("Main Prayer Hall", "Mosque · the prayer hall", "hotel", {
+        layout: "mosque", palette: { floor: "#f8fafc", wall: "#f8fafc", accent: "#c9a24a" }, role: "Mosque guide", noJob: true,
+        blurb: "White Italian marble, 96 columns inlaid with mother-of-pearl vines under gilded palm capitals, the 99 Names of Allah on the qibla wall, the great carpet and the chandelier.",
+        products: [
+          { id: "szgm:abaya", name: "Abaya or kandura for your visit", price: 0, icon: "🧕", station: "reception", desc: "Free to borrow at the visitor centre: modest dress, shoulders and knees covered.", service: true },
+          { id: "szgm:tour-book", name: "Free guided tour", price: 0, icon: "🕌", station: "tickets", desc: "The architecture, the carpet, the chandeliers and the calligraphy with a guide.", service: true },
+        ],
+        activities: [
+          { id: "szgm:tour", label: "Take the guided tour", icon: "🕌", animation: "talk", reward: 40, need: { kind: "social", amount: 25 }, desc: "Under the chandelier, across the carpet, to the qibla wall and its 99 Names." },
+          { id: "szgm:reflect", label: "Sit and reflect", icon: "🤲", animation: "sit", reward: 20, need: { kind: "energy", amount: 20 } },
+        ],
+      }), scene: "szgm-prayer-hall" },
+      // The Sahn, the courtyard (scene "szgm-courtyard").
+      { ...venue("The Courtyard", "Mosque · the Sahn and its reflecting water", "hotel", {
+        layout: "outdoor", palette: { floor: "#f6f4ee", wall: "#fbfbf8", accent: "#c9a24a" }, role: "Mosque guide", noJob: true, products: [],
+        blurb: "The world's largest marble mosaic, flowers inlaid in coloured marble, between the arcades and their reflecting pools.",
+        activities: [
+          { id: "szgm:courtyard", label: "Walk the floral marble courtyard", icon: "🌸", animation: "talk", reward: 25, need: { kind: "fun", amount: 20 } },
+          { id: "szgm:pools", label: "Photograph the domes in the reflecting pools", icon: "📸", animation: "clap", reward: 20, need: { kind: "fun", amount: 20 } },
+          { id: "szgm:dusk", label: "Watch the domes light up at dusk", icon: "🌙", animation: "sit", reward: 20, need: { kind: "energy", amount: 15 }, desc: "The lights follow the moon: the domes glow brighter as it waxes." },
+        ],
+      }), scene: "szgm-courtyard" },
+    ],
   },
   {
     id: "ad-qaryat-al-beri", name: "Souk Qaryat Al Beri", kind: "mall",

@@ -5,6 +5,7 @@
 
 import { Ceiling } from "@/components/interior/Ceiling";
 import { YachtNight } from "./yachtScene";
+import { InteriorEye } from "./viewContext";
 import { Flies } from "@/components/avatar/Flies";
 import { VenueLuxury } from "./VenueLuxury";
 import { canvasQuality } from "@/lib/device";
@@ -1006,7 +1007,7 @@ export function InteriorScene({
       {/* The room appears at once; everything with a model streams in on its own as it arrives. */}
       <Room venue={venue} plan={plan} onFloor={onFloor} onWallAdClick={onWallAdClick} ceiling={eye} />
       {/* On a yacht, the lights going down make it night on the water. */}
-      <YachtNight.Provider value={!!dim}><Suspense fallback={null}>{plan.decor}</Suspense></YachtNight.Provider>
+      <YachtNight.Provider value={!!dim}><InteriorEye.Provider value={!!eye}><Suspense fallback={null}>{plan.decor}</Suspense></InteriorEye.Provider></YachtNight.Provider>
       {extras}
       {plan.stations.map((s) => (
         <Station key={s.id} s={s} active={highlight === s.id} hover={hovered === s.id} onHover={(on) => setHovered((h) => (on ? s.id : h === s.id ? null : h))} onClick={clickStation(s)} />

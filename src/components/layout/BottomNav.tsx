@@ -6,20 +6,19 @@ import { Flame, Home, LayoutGrid, Map, Smartphone, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { openMore, useMoreBadge } from "@/components/layout/MoreMenu";
-import { describePost, loadFeed, loadLiveParties } from "@/lib/cityFeed";
 import { useCitizen } from "@/lib/citizenStore";
 import { useUnreadTotal } from "@/lib/unread";
 import { useLifeLoop, visaInfo } from "@/lib/lifeLoop";
 import { openLife } from "@/components/life/LifeHub";
 import { openPhone } from "@/components/layout/PhoneOverlay";
 import { gameAudio } from "@/utils/gameAudio";
-import { SITE } from "@/lib/site";
 import { illnessOf, useServices } from "@/lib/cityServices";
 import { useEmbedded } from "@/components/layout/Embed";
 import { usePhoneButtonHere } from "@/lib/phoneButtons";
 import { useMissions } from "@/lib/missions";
 import { dismissCityPulse, useCityPulse } from "@/lib/presence";
 import { useCityMapPath } from "@/lib/city/presence";
+import { RailButton, railTop } from "@/components/layout/mapRail";
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -38,16 +37,10 @@ export function BottomNav() {
   return (
     <div className="fixed bottom-0 left-0 w-full z-50 px-3 sm:px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 pointer-events-none select-none">
       <div className="max-w-md mx-auto">
-        <LivePulseBanner />
-        <ServiceAlert />
-        {onMap && (
-          <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2">
-            <VisaChip />
-          </div>
-        )}
-        {onMap && <CityStrip />}
+        {/* On the map these are round icons down the left (MapRail), so the map stays clear; elsewhere, banners. */}
+        {onMap ? <MapRail /> : <><LivePulseBanner /><ServiceAlert /></>}
         {/* One white bar: the buttons and, on the map, the About and social links under them. */}
-        <div className={`bg-white/95 backdrop-blur-2xl border border-white pointer-events-auto shadow-[0_8px_28px_rgba(15,23,42,0.25)] ${onMap ? "rounded-[30px]" : "rounded-full"}`}>
+        <div className="bg-white/95 backdrop-blur-2xl border border-white pointer-events-auto shadow-[0_8px_28px_rgba(15,23,42,0.25)] rounded-full">
           <nav className="relative h-[60px] p-1.5 flex items-center">
             <NavItem href="/home" icon={<Home className="w-6 h-6" />} label="Home" active={isActive("/home")} />
             <NavItem href={mapPath} icon={<Map className="w-6 h-6" />} label="Map" active={isActive(mapPath)} />
@@ -55,38 +48,9 @@ export function BottomNav() {
             <PhoneButton unread={unread} />
             {citizen?.id && <MoreButton active={isActive("/top") || isActive("/wiki")} />}
           </nav>
-          {onMap && <MapFooter />}
         </div>
       </div>
     </div>
-  );
-}
-
-/** On the map: the newest thing happening in the City, one line, a tap away (requirements R4). */
-function CityStrip() {
-  const [line, setLine] = useState<{ icon: string; text: string } | null>(null);
-  useEffect(() => {
-    let live = true;
-    const load = async () => {
-      const [posts, parties] = await Promise.all([loadFeed("all"), loadLiveParties()]);
-      if (!live) return;
-      const p = parties[0];
-      if (p) { setLine({ icon: "🎉", text: `@${p.host} is hosting ${p.title ? `"${p.title}"` : "a party"} · ${p.arrived} there` }); return; }
-      const first = posts.find((x) => Date.now() - Date.parse(x.at) < 6 * 3_600_000);
-      setLine(first ? describePost(first) : null);
-    };
-    const first = setTimeout(() => void load(), 2500);
-    const every = setInterval(() => void load(), 120_000);
-    return () => { live = false; clearTimeout(first); clearInterval(every); };
-  }, []);
-  if (!line) return null;
-  return (
-    <Link href="/city" className="pointer-events-auto mb-2 flex items-center gap-2 rounded-full bg-slate-950/80 backdrop-blur text-white px-3.5 py-2 text-xs font-bold shadow-lg">
-      <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0" />
-      <span className="shrink-0">{line.icon}</span>
-      <span className="flex-1 min-w-0 truncate">{line.text}</span>
-      <span className="shrink-0 text-fuchsia-300">City ›</span>
-    </Link>
   );
 }
 
@@ -141,16 +105,6 @@ function MoreButton({ active }: { active: boolean }) {
   );
 }
 
-/** Under the bar on the map: the same About and social links as the signed-out landing page. */
-function MapFooter() {
-  return (
-    <div className="flex items-center justify-center gap-3 pb-2 -mt-0.5 text-xs font-bold text-slate-500">
-      <Link href="/about" className="hover:text-slate-800 transition-colors">About</Link>
-      {SITE.socials.map((n) => <a key={n.label} href={n.href} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 transition-colors">{n.label}</a>)}
-    </div>
-  );
-}
-
 /** Live city-wide multiplayer event banner (Open House, VIP Bottle Service, 3D Pool Challenge, Decorator Dispatch). */
 function LivePulseBanner() {
   const pulse = useCityPulse();
@@ -189,44 +143,41 @@ function LivePulseBanner() {
   );
 }
 
-/** On the map: a compact "Next Reward / Visa" micro-progress pill so players always see their closest goal. */
-function VisaChip() {
+/** On the map: the daily Vault, an expiring visa, a health or police alert and a live event, each a round icon with
+ *  a badge down the left (under the goal: layout/mapRail). A live event opens its banner beside the icon. */
+function MapRail() {
   const { citizen } = useCitizen();
   const life = useLifeLoop();
   const { missions } = useMissions(citizen?.id);
+  const alert = useServiceAlert();
+  const pulse = useCityPulse();
+  const [pulseOpen, setPulseOpen] = useState(false);
   const visa = life && life.visaTier !== "GOLDEN" ? visaInfo(life.visaTier) : null;
-
-  if (visa && life && life.visaDaysLeft <= 10) {
-    return (
-      <button
-        onClick={() => { gameAudio.playClickSound(); openLife("visa"); }}
-        aria-label={`${visa.label}: ${life.visaDaysLeft} days left`}
-        className={`pointer-events-auto h-9 px-3 rounded-full shadow-md flex items-center gap-1 font-bold text-xs sm:text-sm active:scale-95 ${life.visaDaysLeft <= 5 ? "bg-rose-500 text-white" : "bg-white/95 text-slate-800"}`}
-      >
-        {visa.icon} Visa: {life.visaDaysLeft}d left
-      </button>
-    );
+  const items: { key: string; icon: string; badge: string; label: string; tone?: string; alert?: boolean; go: () => void }[] = [];
+  if (missions && !missions.box.claimed) {
+    const done = missions.missions.filter((m) => m.done).length;
+    items.push({ key: "vault", icon: "🎁", badge: done >= 3 ? "!" : `${done}/3`, label: done >= 3 ? "Daily Vault: unlock it" : `Daily Vault: ${done} of 3 missions`, tone: "bg-slate-900 text-white", alert: done >= 3, go: () => openLife("goals") });
   }
-
-  if (!missions || missions.box.claimed) return null;
-  const doneCount = missions.missions.filter((m) => m.done).length;
-  const pct = Math.min(100, Math.round((doneCount / 3) * 100));
+  if (visa && life && life.visaDaysLeft <= 10) {
+    items.push({ key: "visa", icon: "🛂", badge: `${life.visaDaysLeft}d`, label: `${visa.label}: ${life.visaDaysLeft} days left`, tone: life.visaDaysLeft <= 5 ? "bg-rose-500 text-white" : undefined, alert: life.visaDaysLeft <= 5, go: () => openLife("visa") });
+  }
+  if (alert) items.push({ key: "alert", icon: alert.icon, badge: "!", label: `${alert.title}: ${alert.text}`, go: () => openPhone(alert.app) });
+  if (pulse) items.push({ key: "pulse", icon: pulse.icon, badge: "LIVE", label: pulse.title, alert: true, go: () => setPulseOpen((o) => !o) });
+  const pulseAt = items.findIndex((it) => it.key === "pulse");
   return (
-    <button
-      onClick={() => { gameAudio.playClickSound(); openLife("goals"); }}
-      aria-label={`Daily Mystery Vault: ${doneCount} of 3 missions complete`}
-      className="pointer-events-auto h-9 px-3 rounded-full bg-slate-900/95 text-white border border-white/15 shadow-lg flex items-center gap-1.5 font-bold text-xs active:scale-95"
-    >
-      <span>🎁</span>
-      <span className="truncate">{doneCount >= 3 ? "Unlock Vault!" : `${doneCount}/3 Vault`}</span>
-      <span className="w-8 sm:w-10 h-2 rounded-full bg-white/15 overflow-hidden shrink-0">
-        <span className="block h-full bg-amber-400 transition-all" style={{ width: `${Math.max(15, pct)}%` }} />
-      </span>
-    </button>
+    <>
+      {items.map((it, i) => <RailButton key={it.key} n={i + 1} icon={it.icon} badge={it.badge} label={it.label} tone={it.tone} alert={it.alert} onClick={() => { gameAudio.playClickSound(); it.go(); }} />)}
+      {pulse && pulseOpen && pulseAt >= 0 && (
+        <div className="fixed left-[4.25rem] right-3 z-[58] pointer-events-auto" style={{ top: railTop(pulseAt + 1) }} onClick={() => setPulseOpen(false)}>
+          <LivePulseBanner />
+        </div>
+      )}
+    </>
   );
 }
 
-function ServiceAlert() {
+/** What needs you at the doctor's or the police (being ill, arrested, a patient or a client waiting), if anything. */
+function useServiceAlert() {
   const { citizen } = useCitizen();
   const s = useServices(citizen?.id);
   if (!s) return null;
@@ -238,6 +189,11 @@ function ServiceAlert() {
     : s.patients.length ? { icon: "🩺", title: `${s.patients.length} patient${s.patients.length > 1 ? "s" : ""} waiting`, text: "They've paid; treat them to get it", cta: "Treat", app: "clinic" as const, tone: "bg-teal-600" }
     : s.clients.some((c) => c.status === "open" && c.defence === null) ? { icon: "⚖️", title: "A client needs you", text: "Prepare their defence before the hearing", cta: "Court", app: "court" as const, tone: "bg-amber-600" }
     : null;
+  return alert;
+}
+
+function ServiceAlert() {
+  const alert = useServiceAlert();
   if (!alert) return null;
   return (
     <div className="pointer-events-auto mb-2 flex items-center gap-3 p-2 pl-2.5 rounded-[26px] bg-white/95 shadow-[0_8px_28px_rgba(15,23,42,0.22)]">

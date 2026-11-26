@@ -1,0 +1,25 @@
+{
+  "_comment": "The Sheikh Zayed Grand Mosque's interiors (components/interior/abuDhabi/scenes): what the prayer hall and the courtyard are drawn from. Facts from the mosque centre (szgmc.gov.ae): the main prayer hall's walls in Italian white marble; 96 marble columns inlaid with mother-of-pearl vines and flowers, with gilded palm capitals; the qibla wall inscribed with the 99 Names of Allah in Kufic script, lit from behind by fibre optics; the world's largest hand-knotted carpet (about 5,400 m², 35 tonnes, mostly New Zealand wool); seven chandeliers, the largest 12 m across and 15.5 m tall, in gold-plated stainless steel and coloured crystal; 82 white domes; the Sahn, a courtyard of floral marble mosaic, with reflecting pools along the arcades.",
+  "names": [
+    "الرحمن", "الرحيم", "الملك", "القدوس", "السلام", "المؤمن", "المهيمن", "العزيز", "الجبار",
+    "المتكبر", "الخالق", "البارئ", "المصور", "الغفار", "القهار", "الوهاب", "الرزاق", "الفتاح",
+    "العليم", "القابض", "الباسط", "الخافض", "الرافع", "المعز", "المذل", "السميع", "البصير",
+    "الحكم", "العدل", "اللطيف", "الخبير", "الحليم", "العظيم", "الغفور", "الشكور", "العلي",
+    "الكبير", "الحفيظ", "المقيت", "الحسيب", "الجليل", "الكريم", "الرقيب", "المجيب", "الواسع",
+    "الحكيم", "الودود", "المجيد", "الباعث", "الشهيد", "الحق", "الوكيل", "القوي", "المتين",
+    "الولي", "الحميد", "المحصي", "المبدئ", "المعيد", "المحيي", "المميت", "الحي", "القيوم",
+    "الواجد", "الماجد", "الواحد", "الأحد", "الصمد", "القادر", "المقتدر", "المقدم", "المؤخر",
+    "الأول", "الآخر", "الظاهر", "الباطن", "الوالي", "المتعالي", "البر", "التواب", "المنتقم",
+    "العفو", "الرؤوف", "مالك الملك", "ذو الجلال والإكرام", "المقسط", "الجامع", "الغني", "المغني",
+    "المانع", "الضار", "النافع", "النور", "الهادي", "البديع", "الباقي", "الوارث", "الرشيد", "الصبور"
+  ],
+  "colours": {
+    "marble": "#f7f5f0",
+    "gold": "#c9a24a",
+    "carpetField": "#2f5d3a",
+    "carpetBorder": "#7a1f2b",
+    "carpetIvory": "#efe3c4",
+    "inlay": ["#3f7d4a", "#b23a48", "#d9a441", "#6b4c9a"],
+    "crystals": ["#f3d27a", "#3fa56b", "#c2413b", "#e9f2ff"]
+  }
+}

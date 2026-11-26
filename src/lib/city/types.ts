@@ -82,6 +82,9 @@ export interface Venue {
   feature?: "skyline" | "aquarium" | "exhibits" | "stage" | "pool" | "spa" | "frame";
   /** Extra things you can do here besides buying (dance, sit, explore exhibits, local rituals…). */
   activities?: VenueActivity[];
+  /** A one-off interior built for this venue alone (Abu Dhabi's landmarks: components/interior/abuDhabi/scenes),
+   *  in place of its layout's usual room. */
+  scene?: string;
 }
 
 export type PlaceKind = "mall" | "food-hall" | "hotel" | "club" | "attraction" | "park" | "residential" | "home";
