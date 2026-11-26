@@ -1,3 +1,4 @@
+import { BigMissionsHost } from "@/components/missions/BigMissions";
 import type { Metadata, Viewport } from "next";
 import { PhoneFab } from "@/components/layout/PhoneFab";
 import { MoreFab, MoreSheet } from "@/components/layout/MoreMenu";
@@ -324,6 +325,7 @@ export default function RootLayout({
           <CookieConsent />
           <ConnectionSaver />
           <PartySheetHost />
+          <BigMissionsHost />
           <TapLayer />
           <HudSheets />
           <LoveListener />

@@ -18,6 +18,7 @@ import { usePhoneButtonHere } from "@/lib/phoneButtons";
 import { useMissions } from "@/lib/missions";
 import { dismissCityPulse, useCityPulse } from "@/lib/presence";
 import { useCityMapPath } from "@/lib/city/presence";
+import { leftToEarn, millions, openBigMissions, useBigMissions } from "@/lib/bigMissions";
 import { goalSlot, RailButton, railTop } from "@/components/layout/mapRail";
 
 export function BottomNav() {
@@ -155,6 +156,10 @@ function MapRail() {
   const [pulseOpen, setPulseOpen] = useState(false);
   const visa = life && life.visaTier !== "GOLDEN" ? visaInfo(life.visaTier) : null;
   const items: { key: string; icon: string; badge: string; label: string; tone?: string; alert?: boolean; go: () => void }[] = [];
+  // Big Missions first: invite friends on WhatsApp for the biggest rewards in the game.
+  const big = useBigMissions(citizen?.id);
+  const bigLeft = leftToEarn(big);
+  if (citizen && big && bigLeft > 0) items.push({ key: "big", icon: "💰", badge: millions(bigLeft).replace("AED ", ""), label: `Big Missions: earn ${millions(bigLeft)}`, tone: "bg-gradient-to-br from-amber-300 to-yellow-500 text-slate-950", alert: true, go: openBigMissions });
   if (missions && !missions.box.claimed) {
     const done = missions.missions.filter((m) => m.done).length;
     items.push({ key: "vault", icon: "🎁", badge: done >= 3 ? "!" : `${done}/3`, label: done >= 3 ? "Daily Vault: unlock it" : `Daily Vault: ${done} of 3 missions`, tone: "bg-slate-900 text-white", alert: done >= 3, go: () => openLife("goals") });

@@ -1,0 +1,10 @@
+{
+  "_note": "Big Missions: three one-off rewards for bringing friends into the game from outside it (WhatsApp), shown to every player until done. Paid by the database (settle_big_missions in *_big_missions.sql, every 5 minutes; mission_config() mirrors this file, checked by scripts/check-life-config.mjs). A friend 'joined' when they signed up through your link (?ref=you), verified their email and played joinMinutes. The party counts friends who joined through your link and stayed at one house or pool party you hosted stayMinutes (social rewards' eligibility). The chain counts friends who joined through your link and have themselves brought in a friend who joined. You're paid once your own account can earn rewards (verified email, minAccountDays old).",
+  "joinMinutes": 10,
+  "missions": [
+    { "id": "invite5", "icon": "💬", "title": "Invite 5 friends on WhatsApp", "blurb": "5 friends join Dubai Life with your link", "target": 5, "aed": 10000000 },
+    { "id": "party10", "icon": "🎉", "title": "Host a house party with 10 friends you invited", "blurb": "10 friends who joined with your link come to your party", "target": 10, "aed": 20000000 },
+    { "id": "chain3", "icon": "🔗", "title": "Get 3 friends to invite a friend", "blurb": "3 friends you brought in each bring in a friend of their own", "target": 3, "aed": 30000000 }
+  ],
+  "message": "Join me on Dubai Life! 🌴 We live the Dubai life together: our own flats and villas, supercars, yachts, house parties and clubs. Sign up with my link and we both get rewards 👇"
+}
