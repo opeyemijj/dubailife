@@ -691,7 +691,14 @@ export function DriveJourney({ drivables, metres, destination, look, balance, ha
   useScreenBusy(true);
   const quality = useMemo(() => canvasQuality(), []);
   const sky = useMemo(() => dubaiSky(), []);
-  const [pick, setPick] = useState(0);
+  // Starts with the car you got into at home (DriveSheet), else the first.
+  const [pick, setPick] = useState(() => {
+    try {
+      const plate = sessionStorage.getItem("drive-car");
+      if (plate) { sessionStorage.removeItem("drive-car"); const i = drivables.findIndex((x) => x.plate === plate); if (i >= 0) return i; }
+    } catch { /* storage blocked */ }
+    return 0;
+  });
   const d = drivables[Math.min(pick, drivables.length - 1)];
   const length = Math.round(Math.min(DR.maxGameMetres, Math.max(DR.minGameMetres, metres * DR.gameScale)));
   const need = fuelFor(d.car, metres);

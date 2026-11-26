@@ -1,6 +1,36 @@
 {
   "items": [
     {
+      "id": "2026-11-28-abu-dhabi-passport",
+      "date": "2026-11-28",
+      "icon": "🛂",
+      "title": "The Abu Dhabi Passport, and things only Abu Dhabi has",
+      "text": "Collect 16 stamps around Abu Dhabi, one at each landmark: tour the Grand Mosque, ride Formula Rossa, kayak through the mangroves, dive for pearls at the Heritage Village or sail a dhow on the Corniche, watch the turtles nest on Saadiyat, hold a falcon at the Falcon Hospital, see the flamingos at Al Wathba and climb Moreeb Dune. Stamps pay AED 500, 1,500 and 3,000 at 4, 8 and 12, and the full book pays AED 10,000 with the Abu Dhabi Explorer title on your profile. Abu Dhabi's map has its own look too: honeycomb-screened towers, Arabian villas and townhouses with wind towers, souk-style malls and domed resorts.",
+      "how": "Fly to Abu Dhabi, then tap Passport on its map.",
+      "cta": "See the Passport",
+      "href": "/abu-dhabi/passport"
+    },
+    {
+      "id": "2026-11-27-abu-dhabi",
+      "date": "2026-11-27",
+      "icon": "✈️",
+      "title": "Fly to Abu Dhabi with Dubai Life Airways",
+      "text": "Check in at DXB Terminal 3 (Economy, Business or First), pass the smart gates, shop duty free and board down the jet bridge. Watch the take-off from outside or from your window seat, fly over the Gulf and land at AUH. Then take a taxi to a hotel, or rent or buy a home: towers on the Corniche and Al Reem, villas on Saadiyat, Al Raha and Khalifa City, and a Saadiyat mansion. Abu Dhabi has the Grand Mosque, the Louvre, Emirates Palace, Qasr Al Watan, Ferrari World, Yas Mall, the Yas Marina circuit, Yas Bay's clubs, yachts at Yas Marina, camel racing at Al Wathba and a desert safari.",
+      "how": "Map → DXB Terminal 3: you go straight in to check-in. Fly back from AUH.",
+      "cta": "Go to the airport",
+      "href": "/fly?from=dubai&to=abu-dhabi"
+    },
+    {
+      "id": "2026-11-26-mansions",
+      "date": "2026-11-26",
+      "icon": "🏰",
+      "title": "Mansions, and bigger villas and penthouses",
+      "text": "Eight Signature Mansions on the Palm fronds: 30 m wide over two floors, with a home gym, a cinema, a library, a games room with billiards and a bar, an indoor lap pool and jacuzzi, five en-suite bedrooms and a car gallery that parks every car you own. Villas and penthouses are now 18 m wide, with a gym, library, cinema and games room added. Everything you'd placed stays where it was. Train on the treadmill or the weights to build stamina and strength, read in the library, play billiards or watch a film.",
+      "how": "Map → Palm Jumeirah fronds → a Mansion; in your villa or penthouse, look round the new wings.",
+      "cta": "See your home",
+      "href": "/home"
+    },
+    {
       "id": "2026-11-20-race-days",
       "date": "2026-11-20",
       "icon": "🏇",

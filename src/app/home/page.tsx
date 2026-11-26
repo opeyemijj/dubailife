@@ -127,6 +127,9 @@ import {
   preparePartyHome,
   towerName,
 } from "@/lib/city/partyHome";
+import { CITIES, cityOfPlace } from "@/lib/city/cities";
+import { useCurrentCity } from "@/lib/city/presence";
+import { AwayFromHome } from "@/components/home/AwayFromHome";
 import { useSharedInterior, type SharedInterior } from "@/lib/city/sharedHome";
 import { getEntity } from "@/lib/city/geo";
 import { openLife } from "@/components/life/LifeHub";
@@ -256,6 +259,8 @@ export default function HomePage() {
   const searchParams = useSearchParams();
 
   const { citizen } = useRequireCitizen();
+  // The city you're in: you live in a home there (or, away from all your homes, see AwayFromHome).
+  const here = useCurrentCity();
   const walletBalance = citizen?.balance ?? 0;
   const onlineCount = useOnlineCount();
   const { visits } = useSiteStats();
@@ -308,7 +313,11 @@ export default function HomePage() {
     const d = drivables(garage, nowForCar)[0];
     return d ? { car: d.car, plate: d.plate } : null;
   }, [garage, nowForCar]);
+  // All of them, for the garage's bays.
+  const myFleet = React.useMemo(() => drivables(garage, nowForCar).map((d) => ({ car: d.car, plate: d.plate })), [garage, nowForCar]);
   const [driveOpen, setDriveOpen] = useState(false);
+  // Which car you got into (a car tapped in the garage), else the first one you can drive.
+  const [driveCar, setDriveCar] = useState<string | null>(null);
   // Back from the street to swim: straight out to the pool.
   const [groundsCall, setGroundsCall] = useState<
     { n: number; what: "pool" | "car" } | undefined
@@ -409,6 +418,7 @@ export default function HomePage() {
     townhouse: 7,
     penthouse: 8,
     villa: 9,
+    mansion: 10,
     ballroom: 0,
   };
   const sortedFlats = React.useMemo(() => {
@@ -425,15 +435,20 @@ export default function HomePage() {
 
   // The home I'm in: the one I last switched to (one I own, rent, or share at a partner's, or "starter" for the home
   // I started in), else a partner's home I moved into, else my best one.
+  // Only homes in the city you're in: a home in the other city is a flight away (the home I started in is Dubai's).
+  const homesHere = React.useMemo(() => sortedFlats.filter((f) => cityOfPlace(f.building_id) === here.city), [sortedFlats, here.city]);
+  const partnersHere = React.useMemo(() => partnerHomes.filter((p) => cityOfPlace(p.flat.building_id) === here.city), [partnerHomes, here.city]);
   const activeFlat = React.useMemo(() => {
     const id = citizen?.activeFlatId;
-    if (id === "starter") return null;
+    if (id === "starter" && here.city === "dubai") return null;
     if (id) {
-      const match = sortedFlats.find((f) => f.id === id) ?? partnerHomes.find((p) => p.flat.id === id)?.flat;
+      const match = homesHere.find((f) => f.id === id) ?? partnersHere.find((p) => p.flat.id === id)?.flat;
       if (match) return match;
     }
-    return partnerHomes[0]?.flat ?? sortedFlats[0] ?? null;
-  }, [sortedFlats, citizen?.activeFlatId, partnerHomes]);
+    return partnersHere[0]?.flat ?? homesHere[0] ?? null;
+  }, [homesHere, citizen?.activeFlatId, partnersHere, here.city]);
+  // Away from every home of mine (in a city where I have none): the room isn't shown, AwayFromHome is.
+  const awayFromHome = here.city !== "dubai" && flats !== null && !activeFlat;
   // The partner whose home I'm in now (if it's theirs), and the first partner who moved me in (the shortcut to theirs).
   const guestShare = guestShares.find((h) => h.flat === activeFlat?.id) ?? null;
   const firstGuestShare = guestShares[0] ?? null;
@@ -1171,6 +1186,12 @@ export default function HomePage() {
 
   /** Live in another of my homes: it opens here at once. null: the home I started in. */
   const switchHome = (f: FlatView | null, label: string, home: string) => {
+    // A home in the other city: fly there first.
+    const homeCity = f ? cityOfPlace(f.building_id) : "dubai";
+    if (homeCity !== here.city) {
+      showToast(`✈️ That home is in ${CITIES[homeCity].name}. Fly there to live in it.`);
+      return;
+    }
     updateCitizen((c) => ({ ...c, activeFlatId: f ? f.id : "starter", home }));
     if (f) {
       const t = housingTierFor(f.property_type, f.bedrooms);
@@ -1196,9 +1217,12 @@ export default function HomePage() {
   return (
     // Pinned to the screen so Safari never scrolls the page (which turns taps into scrolls).
     <main className="fixed inset-0 w-screen h-[100dvh] bg-[#788e6e] overflow-hidden overscroll-none select-none font-sans touch-none">
+      {/* In a city where I have no home: where to stay here, and the way back to my homes. */}
+      {awayFromHome && <AwayFromHome city={here.city} homes={[...partnerHomes.map((p) => p.flat), ...sortedFlats]} />}
       {/* 3D Isometric Apartment Interior */}
       <ApartmentRoom
         paused={
+          awayFromHome ||
           wardrobeModalOpen ||
           buyModalOpen ||
           tierModalOpen ||
@@ -1236,6 +1260,7 @@ export default function HomePage() {
         using={usingFixture}
         activity={running?.serve}
         ownCar={myCar}
+        ownFleet={myFleet}
         groundsCall={groundsCall}
         fixtureCall={fixtureCall}
         level={level}
@@ -2077,7 +2102,8 @@ export default function HomePage() {
       )}
       {driveOpen && (
         <DriveSheet
-          car={myCar?.car ?? null}
+          car={((driveCar && myFleet.find((c) => c.plate === driveCar)) || myCar)?.car ?? null}
+          plate={((driveCar && myFleet.find((c) => c.plate === driveCar)) || myCar)?.plate}
           onClose={() => setDriveOpen(false)}
         />
       )}
@@ -2340,11 +2366,13 @@ export default function HomePage() {
             gameAudio.playClickSound();
             // Getting into the car: where to? (the trip itself is on the map, by car).
             if (a.serve === "drive") {
+              const plate = fixture.id.startsWith("grounds-car:") ? fixture.id.slice("grounds-car:".length) : null;
               setFixture(null);
               if (!myCar) {
                 setToastMsg("🚨 Driveway is empty (your vehicle is in use or was stolen).");
                 return;
               }
+              setDriveCar(plate);
               setDriveOpen(true);
               return;
             }
@@ -2503,7 +2531,7 @@ export default function HomePage() {
                   title={unitLabel}
                   badge={isOwned ? { text: "Owned", tone: "bg-amber-100 text-amber-800" } : { text: "Rented", tone: "bg-sky-100 text-sky-800" }}
                   current={isCurrent}
-                  sub={`${bldgName}${f.size_sqft ? ` · ${f.size_sqft.toLocaleString()} sq ft` : ""}${sharedWith ? ` · shared with @${sharedWith}` : ""}`}
+                  sub={`${bldgName}${f.size_sqft ? ` · ${f.size_sqft.toLocaleString()} sq ft` : ""}${sharedWith ? ` · shared with @${sharedWith}` : ""}${cityOfPlace(f.building_id) !== here.city ? ` · ✈️ in ${CITIES[cityOfPlace(f.building_id)].name}` : ""}`}
                   right={isOwned ? (
                     <div className="text-[11px] font-black text-emerald-700">Deed owned</div>
                   ) : (
@@ -2595,7 +2623,7 @@ export default function HomePage() {
             })()}
 
             <Link
-              href="/explore"
+              href={CITIES[here.city].path}
               onClick={() => setTierModalOpen(false)}
               className="w-full mt-2 py-3 px-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs flex items-center justify-center gap-2 transition-colors"
             >

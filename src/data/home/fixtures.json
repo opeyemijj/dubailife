@@ -2,6 +2,72 @@
   "_note": "The kitchen and bathroom built into every home: what each fixture is, what you can do with it (time, needs, the pantry ingredients it uses) and where it sits in each home type. Cells are 0.5 m on the 14 × 14 floor (col 0 is the west wall, row 0 the north wall); rot 0 faces south, 1 west, 2 north, 3 east. Bathroom walls are [x, z] metres with an optional doorway [from, to] metres along the wall.",
 
   "kinds": {
+    "gym": {
+      "name": "Treadmill", "icon": "🏃", "size": [2, 4],
+      "desc": "Run in place.",
+      "actions": [
+        { "id": "run-5k", "label": "Run 5K", "icon": "🏃", "seconds": 12, "needs": { "energy": -20, "hygiene": -15, "fun": 10 }, "uses": {}, "skill": "fitness", "body": { "stat": "stamina", "gain": 3 }, "serve": "run" },
+        { "id": "hill-sprints", "label": "Hill sprints", "icon": "⛰️", "seconds": 10, "needs": { "energy": -25, "hygiene": -20, "fun": 5 }, "uses": {}, "skill": "fitness", "body": { "stat": "stamina", "gain": 4 }, "serve": "run" },
+        { "id": "brisk-walk", "label": "Brisk walk & podcast", "icon": "🎧", "seconds": 8, "needs": { "energy": -8, "fun": 12 }, "uses": {}, "body": { "stat": "stamina", "gain": 1 }, "serve": "walk" }
+      ]
+    },
+    "weights": {
+      "name": "Weights", "icon": "🏋️", "size": [5, 4],
+      "desc": "Barbell and dumbbells.",
+      "actions": [
+        { "id": "bench-press", "label": "Bench press", "icon": "🏋️", "seconds": 10, "needs": { "energy": -20, "hygiene": -15 }, "uses": {}, "skill": "fitness", "body": { "stat": "strength", "gain": 4 }, "serve": "lift" },
+        { "id": "dumbbell-curls", "label": "Dumbbell curls", "icon": "💪", "seconds": 8, "needs": { "energy": -12, "hygiene": -10 }, "uses": {}, "skill": "fitness", "body": { "stat": "strength", "gain": 2 }, "serve": "lift" },
+        { "id": "stretch", "label": "Stretch & mobility", "icon": "🧘", "seconds": 8, "needs": { "energy": 5, "fun": 5 }, "uses": {}, "body": { "stat": "flexibility", "gain": 3 }, "serve": "stretch" }
+      ]
+    },
+    "books": {
+      "name": "Library", "icon": "📚", "size": [4, 1],
+      "desc": "Shelves of books.",
+      "actions": [
+        { "id": "read-novel", "label": "Read a novel", "icon": "📖", "seconds": 10, "needs": { "fun": 20, "energy": 10 }, "uses": {}, "serve": "read" },
+        { "id": "read-history", "label": "Read about the Emirates' history", "icon": "🏛️", "seconds": 10, "needs": { "fun": 10 }, "uses": {}, "skill": "culture", "serve": "read" },
+        { "id": "study-business", "label": "Study a business book", "icon": "💼", "seconds": 12, "needs": { "fun": 5, "energy": -5 }, "uses": {}, "skill": "hustle", "serve": "read" }
+      ]
+    },
+    "billiards": {
+      "name": "Billiards table", "icon": "🎱", "size": [6, 4],
+      "desc": "Rack them up.",
+      "actions": [
+        { "id": "play-pool", "label": "Play a frame", "icon": "🎱", "seconds": 10, "needs": { "fun": 30, "social": 10 }, "uses": {}, "skill": "gaming", "serve": "play" },
+        { "id": "trick-shots", "label": "Practise trick shots", "icon": "✨", "seconds": 8, "needs": { "fun": 20 }, "uses": {}, "skill": "gaming", "serve": "play" }
+      ]
+    },
+    "cinema": {
+      "name": "Home cinema", "icon": "🎬", "size": [6, 2],
+      "desc": "Lights down, film on.",
+      "actions": [
+        { "id": "watch-blockbuster", "label": "Watch a blockbuster", "icon": "🍿", "seconds": 12, "needs": { "fun": 35, "energy": 10 }, "uses": {}, "serve": "film" },
+        { "id": "watch-classic", "label": "Watch an Arabic classic", "icon": "🎞️", "seconds": 12, "needs": { "fun": 25, "energy": 10 }, "uses": {}, "skill": "culture", "serve": "film" },
+        { "id": "watch-match", "label": "Watch the big match", "icon": "⚽", "seconds": 10, "needs": { "fun": 30, "social": 10 }, "uses": {}, "serve": "film" }
+      ]
+    },
+    "bar": {
+      "name": "Home bar", "icon": "🍹", "size": [6, 3],
+      "desc": "Mocktails and coffee.",
+      "actions": [
+        { "id": "mix-mocktail", "label": "Mix a mocktail", "icon": "🍹", "seconds": 8, "needs": { "fun": 15, "social": 10, "hunger": 5 }, "uses": {}, "skill": "charisma", "serve": "pour" },
+        { "id": "espresso", "label": "Pull an espresso", "icon": "☕", "seconds": 5, "needs": { "energy": 20 }, "uses": {}, "serve": "pour" }
+      ]
+    },
+    "arcade": {
+      "name": "Arcade cabinet", "icon": "🕹️", "size": [2, 2],
+      "desc": "Insert coin.",
+      "actions": [
+        { "id": "arcade-run", "label": "Go for the high score", "icon": "🕹️", "seconds": 8, "needs": { "fun": 30 }, "uses": {}, "skill": "gaming", "serve": "play" }
+      ]
+    },
+    "spa": {
+      "name": "Spa jacuzzi", "icon": "🫧", "size": [5, 5],
+      "desc": "Hot water and jets.",
+      "actions": [
+        { "id": "soak", "label": "Soak in the jets", "icon": "🫧", "seconds": 10, "needs": { "energy": 30, "fun": 15, "hygiene": 10 }, "uses": {}, "serve": "soak" }
+      ]
+    },
     "pool": {
       "name": "Your pool", "icon": "🏊", "size": [8, 16],
       "desc": "Out in the garden: swim, relax in the water or sunbathe.",

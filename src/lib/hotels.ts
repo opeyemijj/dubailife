@@ -4,7 +4,8 @@
 // check in, and stay in it (src/app/hotel/[stayId]) for the nights you paid for.
 
 import { supabase } from "@/lib/supabase/client";
-import { PLACES } from "@/lib/city/places";
+import { PLACES, placesWithPrefix } from "@/lib/city/places";
+import { CITIES, type CityId } from "@/lib/city/cities";
 import HOTELS from "@/data/hotels/suites.json";
 
 export { HOTELS };
@@ -19,9 +20,13 @@ export interface Stay {
 
 /** Every hotel on the map. */
 export const ALL_HOTELS = PLACES.filter((p) => p.kind === "hotel").sort((a, b) => a.name.localeCompare(b.name));
+/** A city's hotels: Dubai's (ALL_HOTELS), or another city's (its places, lib/city/cities). */
+export const hotelsIn = (city: CityId) => city === "dubai" ? ALL_HOTELS
+  : placesWithPrefix(CITIES[city].prefix).filter((p) => p.kind === "hotel").sort((a, b) => a.name.localeCompare(b.name));
 export const suiteOf = (id: string) => HOTELS.suites.find((s) => s.id === id);
 
 const ERR: Record<string, string> = {
+  not_in_city: "This hotel is in another city. Fly there first to book or check in.",
   insufficient_funds: "You don't have enough for that. Pick fewer nights or a different suite.",
   already_staying: "You're already staying in a hotel. Check out first.",
   stay_over: "This stay has ended.",

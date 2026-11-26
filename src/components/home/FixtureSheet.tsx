@@ -13,6 +13,7 @@ import { afterUsing, FIXTURES, kindOf, missingFor, pantryOf, type Fixture, type 
 import { HOUSING_CONFIGS, getHousingTierFromText, type HomeActivityDef, type HousingTier } from "@/lib/furniture";
 import { openPhone } from "@/components/layout/PhoneOverlay";
 import { gameAudio } from "@/utils/gameAudio";
+import { trainBody } from "@/lib/body";
 
 const NEED_LABEL: Record<string, string> = { hunger: "Hunger", energy: "Energy", fun: "Fun", social: "Social", hygiene: "Hygiene", bladder: "Bladder" };
 const PANTRY = FIXTURES.pantry as Record<string, { name: string; icon: string }>;
@@ -172,5 +173,6 @@ export function completeFixtureAction(a: FixtureAction) {
   });
   if (a.meal) lifeEvent("meal");
   if (a.skill) gainSkill(a.skill as SkillId, 10);
+  if (a.body) trainBody(a.body.stat, a.body.gain);
   gameAudio.playCoinSound();
 }

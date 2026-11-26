@@ -4363,9 +4363,9 @@ export const getBuildingSprite = (id: string, type: string, seed?: number, title
   if (type === 'coca-cola-arena') return <CocaColaArena width={loc?.width} height={loc?.height} name={title || loc?.name} />;
   if (type === 'szr-cars') return <SZRCarShowroom width={loc?.width} height={loc?.height} name={title || loc?.name} sign={loc?.marquee} color={loc?.colors?.[0]} rent={loc?.rent} cars={loc?.cars} />;
   // Meydan's horse racing and Al Marmoom's camel racing (lib/city/racing.ts)
-  if (type === 'racecourse') return <MeydanSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
-  if (type === 'camel-track') return <CamelTrackSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
-  if (type === 'race-circuit') return <CarCircuitSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
+  if (type === 'racecourse') return <MeydanSprite width={loc?.width} height={loc?.height} name={title || loc?.name} sign={loc?.sign} />;
+  if (type === 'camel-track') return <CamelTrackSprite width={loc?.width} height={loc?.height} name={title || loc?.name} sign={loc?.sign} />;
+  if (type === 'race-circuit') return <CarCircuitSprite width={loc?.width} height={loc?.height} name={title || loc?.name} sign={loc?.sign} />;
   if (type === 'bike-circuit') return <BikeCircuitSprite width={loc?.width} height={loc?.height} name={title || loc?.name} />;
   if (type === 'szr-club') return <SZRLounge width={loc?.width} height={loc?.height} name={title || loc?.name} sign={loc?.marquee} colors={loc?.colors} />;
   // Palm Jumeirah landmarks

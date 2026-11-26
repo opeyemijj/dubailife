@@ -7,13 +7,20 @@
 import { createContext, useContext } from "react";
 import type { ThreeElements } from "@react-three/fiber";
 import type { CatalogItem } from "@/lib/furniture";
+import type * as THREE from "three";
+import { PooledLamp, usePooledLamp } from "./sceneLite";
 
 /** A party is on in this room. */
 export const PartyOn = createContext(false);
 
-/** A lamp's light: off while a party is on (the lamp itself still glows). */
+/** A lamp's light: off while a party is on (the lamp itself still glows). In a room with a light pool (homes: see
+    sceneLite), one of a few shared lights comes to it when it's among the nearest lamps. */
 export function RoomLight(props: ThreeElements["pointLight"]) {
-  return useContext(PartyOn) ? null : <pointLight {...props} />;
+  const party = useContext(PartyOn);
+  const pool = usePooledLamp();
+  if (party) return null;
+  if (pool) return <PooledLamp pool={pool} position={props.position as THREE.Vector3Tuple} intensity={props.intensity} distance={props.distance} color={props.color as THREE.ColorRepresentation} />;
+  return <pointLight {...props} />;
 }
 
 /** Put away for a party, to clear a dance floor: the TV, coffee tables, rugs and the aquarium. Never a seat. */

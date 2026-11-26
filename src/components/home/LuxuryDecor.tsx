@@ -7,8 +7,9 @@
 
 import { CounterWork, TableMeal, TankActivity } from "./HomeActivityProps";
 import { RoomLight } from "./partyLite";
+import { ghostMat, sharedStd } from "./sceneLite";
 import { eventDecor } from "./EventDecor";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { CELL, WALL_HEIGHT } from "@/lib/furniture";
@@ -19,8 +20,9 @@ const GOLD = "#c9a24a", BRASS = "#b8892e", MARBLE = "#f2efe9", WALNUT = "#5b3a24
 
 /** A material, or the placement ghost's tint. */
 function M({ color, ghost, metal = 0, rough = 0.6, emissive, glow = 0, opacity }: { color: string; ghost: Ghost; metal?: number; rough?: number; emissive?: string; glow?: number; opacity?: number }) {
-  if (ghost) return <meshStandardMaterial color={ghost === "valid" ? "#34d399" : "#f87171"} transparent opacity={0.5} depthWrite={false} />;
-  return <meshStandardMaterial color={color} metalness={metal} roughness={rough} emissive={emissive ?? "#000000"} emissiveIntensity={glow} transparent={opacity !== undefined} opacity={opacity ?? 1} />;
+  // Shared by every mesh with the same look (sceneLite), so still pieces can be baked together.
+  if (ghost) return <primitive object={ghostMat(ghost)} attach="material" dispose={null} />;
+  return <primitive object={sharedStd({ color, metal, rough, emissive, glow, opacity })} attach="material" dispose={null} />;
 }
 
 function B({ s, p, c, ghost, metal, rough, r, glow, emissive }: { s: [number, number, number]; p: [number, number, number]; c: string; ghost: Ghost; metal?: number; rough?: number; r?: [number, number, number]; glow?: number; emissive?: string }) {
@@ -1032,7 +1034,272 @@ export function LuxuryDecor({ visual, size, ghost, tint, activity }: { visual: s
     case "staircase": return <Staircase w={w} d={d} ghost={ghost} />;
     case "stairwell": return <Stairwell w={w} d={d} ghost={ghost} />;
     case "home-lift": return <HomeLift w={w} d={d} ghost={ghost} />;
+    case "treadmill": return <Treadmill w={w} d={d} ghost={ghost} activity={activity} />;
+    case "power-rack": return <PowerRack w={w} d={d} ghost={ghost} />;
+    case "dumbbell-rack": return <DumbbellRack w={w} ghost={ghost} />;
+    case "pool-table": return <PoolTable w={w} d={d} ghost={ghost} tint={tint} />;
+    case "bookcase": return <Bookcase w={w} ghost={ghost} />;
+    case "cinema-screen": return <CinemaScreen w={w} ghost={ghost} on={!!activity} />;
+    case "recliners": return <Recliners w={w} d={d} ghost={ghost} tint={tint} />;
+    case "bar-counter": return <BarCounter w={w} d={d} ghost={ghost} />;
+    case "arcade-cabinet": return <ArcadeCabinet ghost={ghost} />;
+    case "spa-tub": return <SpaTub w={w} d={d} ghost={ghost} />;
   }
   // Event pieces (ballrooms and parties): EventDecor.
   return eventDecor(visual, w, d, ghost, tint);
+}
+
+// ---------------------------------------------------------------- mansion rooms: gym, library, games, cinema, bar
+
+/** A treadmill: deck and moving belt (it runs while someone's on it), side rails and a lit console. */
+function Treadmill({ w, d, ghost, activity }: { w: number; d: number; ghost: Ghost; activity?: string }) {
+  const belt = useRef<THREE.Mesh>(null);
+  useFrame((_, dt) => {
+    const m = belt.current?.material as THREE.MeshStandardMaterial | undefined;
+    if (m?.map && activity) m.map.offset.y -= dt * 1.6;
+  });
+  const tex = useCanvas(16, 64, (g) => { g.fillStyle = "#18181b"; g.fillRect(0, 0, 16, 64); g.fillStyle = "#3f3f46"; for (let y = 0; y < 64; y += 8) g.fillRect(0, y, 16, 2); }, "belt");
+  // eslint-disable-next-line react-hooks/immutability -- a canvas texture set up once
+  tex.wrapT = THREE.RepeatWrapping;
+  const L = d * 0.92, W = Math.min(w * 0.8, 0.85);
+  return (
+    <group>
+      <B s={[W, 0.16, L]} p={[0, 0.08, 0]} c="#27272a" ghost={ghost} rough={0.5} />
+      <mesh ref={belt} position={[0, 0.165, 0.05]} rotation={[-Math.PI / 2, 0, 0]} raycast={ghost ? () => null : undefined}>
+        <planeGeometry args={[W * 0.78, L * 0.84]} />
+        {ghost ? <M color="#000" ghost={ghost} /> : <meshStandardMaterial map={tex} roughness={0.9} />}
+      </mesh>
+      {[-1, 1].map((k) => <B key={k} s={[0.05, 1.15, 0.05]} p={[k * W * 0.45, 0.65, -L * 0.42]} c="#a1a1aa" ghost={ghost} metal={0.7} rough={0.3} />)}
+      {[-1, 1].map((k) => <B key={`r${k}`} s={[0.04, 0.04, L * 0.35]} p={[k * W * 0.45, 1.05, -L * 0.27]} c="#a1a1aa" ghost={ghost} metal={0.7} />)}
+      <B s={[W * 0.95, 0.32, 0.1]} p={[0, 1.28, -L * 0.44]} c="#18181b" ghost={ghost} r={[-0.5, 0, 0]} />
+      <B s={[W * 0.6, 0.18, 0.02]} p={[0, 1.3, -L * 0.41]} c="#0ea5e9" ghost={ghost} r={[-0.5, 0, 0]} emissive="#38bdf8" glow={0.9} />
+    </group>
+  );
+}
+
+/** A power rack with a loaded barbell and a flat bench under it. */
+function PowerRack({ w, d, ghost }: { w: number; d: number; ghost: Ghost }) {
+  const X = w * 0.42, Z = d * 0.34, BLACK = "#18181b", STEEL = "#9ca3af", RED = "#b91c1c";
+  return (
+    <group>
+      <B s={[w * 0.95, 0.03, d * 0.95]} p={[0, 0.015, 0]} c="#111827" ghost={ghost} rough={1} />
+      {[[-X, -Z], [X, -Z], [-X, Z], [X, Z]].map(([x, z], i) => <B key={i} s={[0.08, 2.3, 0.08]} p={[x, 1.15, z]} c={BLACK} ghost={ghost} metal={0.5} />)}
+      {[-Z, Z].map((z) => <B key={z} s={[X * 2 + 0.08, 0.08, 0.08]} p={[0, 2.28, z]} c={BLACK} ghost={ghost} metal={0.5} />)}
+      {[-X, X].map((x) => <B key={x} s={[0.08, 0.08, Z * 2]} p={[x, 2.28, 0]} c={BLACK} ghost={ghost} metal={0.5} />)}
+      {/* the bar on the hooks, plates either end */}
+      <Cyl r={0.018} h={w * 0.98} p={[0, 1.35, -Z]} rot={[0, 0, Math.PI / 2]} c={STEEL} ghost={ghost} metal={0.9} rough={0.2} />
+      {[-1, 1].map((k) => [0, 1].map((n) => <Cyl key={`${k}${n}`} r={0.22 - n * 0.05} h={0.05} p={[k * (X + 0.1 + n * 0.06), 1.35, -Z]} rot={[0, 0, Math.PI / 2]} c={n ? RED : BLACK} ghost={ghost} rough={0.5} seg={20} />))}
+      {/* the bench */}
+      <B s={[0.32, 0.1, 1.2]} p={[0, 0.45, 0.05]} c={RED} ghost={ghost} rough={0.4} />
+      {[-0.45, 0.5].map((z) => <B key={z} s={[0.25, 0.4, 0.06]} p={[0, 0.2, z]} c={BLACK} ghost={ghost} metal={0.4} />)}
+    </group>
+  );
+}
+
+/** A rack of dumbbells in pairs, lightest to heaviest, against a mirror. */
+function DumbbellRack({ w, ghost }: { w: number; ghost: Ghost }) {
+  const n = Math.max(3, Math.floor(w / 0.32));
+  return (
+    <group>
+      <B s={[w * 0.95, 1.8, 0.03]} p={[0, 1.35, -0.2]} c="#e0f2fe" ghost={ghost} metal={0.9} rough={0.05} />
+      <B s={[w * 0.95, 0.05, 0.38]} p={[0, 0.75, 0]} c="#27272a" ghost={ghost} metal={0.4} />
+      <B s={[w * 0.95, 0.05, 0.38]} p={[0, 0.4, 0]} c="#27272a" ghost={ghost} metal={0.4} />
+      {[-1, 1].map((k) => <B key={k} s={[0.05, 0.8, 0.36]} p={[k * w * 0.46, 0.4, 0]} c="#18181b" ghost={ghost} />)}
+      {[0.42, 0.77].map((y, row) => Array.from({ length: n }, (_, i) => {
+        const r = 0.05 + ((i + row * n) / (2 * n)) * 0.05;
+        return (
+          <group key={`${row}-${i}`} position={[-w * 0.42 + (i + 0.5) * (w * 0.84 / n), y + r, 0]}>
+            <Cyl r={0.014} h={0.3} p={[0, 0, 0]} rot={[Math.PI / 2, 0, 0]} c="#9ca3af" ghost={ghost} metal={0.9} seg={8} />
+            {[-1, 1].map((k) => <Cyl key={k} r={r} h={0.07} p={[0, 0, k * 0.13]} rot={[Math.PI / 2, 0, 0]} c="#111827" ghost={ghost} rough={0.4} seg={6} />)}
+          </group>
+        );
+      }))}
+    </group>
+  );
+}
+
+/** A billiards table: carved legs, walnut rails, green baize, the balls racked and two cues. */
+function PoolTable({ w, d, ghost, tint }: { w: number; d: number; ghost: Ghost; tint?: string }) {
+  const L = Math.max(w, d) * 0.9, W = Math.min(w, d) * 0.85, long = w >= d;
+  const BALLS = ["#facc15", "#1d4ed8", "#dc2626", "#7c3aed", "#ea580c", "#15803d", "#7f1d1d", "#111827", "#facc15", "#1d4ed8", "#dc2626", "#7c3aed", "#ea580c", "#15803d", "#7f1d1d"];
+  const balls = useMemo(() => {
+    const out: Array<[number, number]> = [];
+    for (let row = 0; row < 5; row++) for (let k = 0; k <= row; k++) out.push([L * 0.22 + row * 0.052, (k - row / 2) * 0.06]);
+    return out;
+  }, [L]);
+  return (
+    <group rotation={[0, long ? 0 : Math.PI / 2, 0]}>
+      {[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b], i) => <Cyl key={i} r={0.09} top={0.06} h={0.68} p={[a * L * 0.4, 0.34, b * W * 0.36]} c={WALNUT} ghost={ghost} rough={0.4} />)}
+      <B s={[L, 0.16, W]} p={[0, 0.74, 0]} c={WALNUT} ghost={ghost} rough={0.35} />
+      <B s={[L - 0.2, 0.02, W - 0.2]} p={[0, 0.83, 0]} c={tint ?? "#0f6b3a"} ghost={ghost} rough={1} />
+      {[[-1, 0], [1, 0]].map(([a]) => <B key={`e${a}`} s={[0.1, 0.06, W]} p={[a * (L / 2 - 0.05), 0.85, 0]} c={WALNUT} ghost={ghost} rough={0.35} />)}
+      {[-1, 1].map((b) => <B key={`s${b}`} s={[L, 0.06, 0.1]} p={[0, 0.85, b * (W / 2 - 0.05)]} c={WALNUT} ghost={ghost} rough={0.35} />)}
+      {!ghost && balls.map(([x, z], i) => (
+        <mesh key={i} position={[x, 0.865, z]}><sphereGeometry args={[0.028, 10, 8]} /><M color={BALLS[i]} ghost={ghost} rough={0.15} /></mesh>
+      ))}
+      {!ghost && <mesh position={[-L * 0.25, 0.865, 0]}><sphereGeometry args={[0.028, 10, 8]} /><M color="#fafaf9" ghost={ghost} rough={0.15} /></mesh>}
+      {[-0.05, 0.05].map((z) => <Cyl key={z} r={0.012} top={0.006} h={1.45} p={[-L * 0.05, 0.87, W * 0.25 + z]} rot={[0, 0, Math.PI / 2 - 0.02]} c="#d6b98c" ghost={ghost} seg={6} />)}
+      {/* the low lamp over the table */}
+      <B s={[L * 0.6, 0.12, 0.3]} p={[0, 1.95, 0]} c="#14532d" ghost={ghost} emissive="#fde68a" glow={0.15} />
+      <B s={[L * 0.55, 0.02, 0.25]} p={[0, 1.88, 0]} c="#fef3c7" ghost={ghost} emissive="#fde68a" glow={1.2} />
+      {[-1, 1].map((k) => <Cyl key={`c${k}`} r={0.006} h={WALL_HEIGHT - 2} p={[k * L * 0.25, 2 + (WALL_HEIGHT - 2) / 2, 0]} c={BRASS} ghost={ghost} seg={4} />)}
+    </group>
+  );
+}
+
+/** A tall library bookcase, floor to near the ceiling, its shelves full of books (one instanced mesh). */
+function Bookcase({ w, ghost }: { w: number; ghost: Ghost }) {
+  const H = WALL_HEIGHT - 0.25, shelves = 6, D = 0.38;
+  const books = useMemo(() => {
+    const out: Array<{ x: number; y: number; h: number; t: number; c: string }> = [];
+    const COLS = ["#7f1d1d", "#1e3a8a", "#14532d", "#78350f", "#334155", "#a16207", "#f5f5f4", "#0f172a", "#9f1239", "#365314"];
+    // A fixed pseudo-random run, so the shelves look the same every time.
+    const seed = { v: 7 };
+    const rnd = () => { seed.v = (seed.v * 9301 + 49297) % 233280; return seed.v / 233280; };
+    for (let s = 0; s < shelves; s++) {
+      const y0 = 0.12 + (s * (H - 0.15)) / shelves;
+      let x = -w * 0.44;
+      while (x < w * 0.44) {
+        const t = 0.03 + rnd() * 0.035, h = 0.22 + rnd() * 0.12;
+        // A gap now and then, for a vase or a lean.
+        if (rnd() < 0.06) { x += 0.12; continue; }
+        if (x + t > w * 0.44) break;
+        out.push({ x: x + t / 2, y: y0 + h / 2 + 0.02, h, t, c: COLS[Math.floor(rnd() * COLS.length)] });
+        x += t + 0.004;
+      }
+    }
+    return out;
+  }, [w, H]);
+  const inst = useRef<THREE.InstancedMesh>(null);
+  useEffect(() => {
+    const m = inst.current;
+    if (!m) return;
+    const o = new THREE.Object3D(), c = new THREE.Color();
+    books.forEach((b, i) => { o.position.set(b.x, b.y, 0.02); o.scale.set(b.t, b.h, D * 0.72); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, c.set(b.c)); });
+    m.instanceMatrix.needsUpdate = true;
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+  }, [books]);
+  return (
+    <group>
+      <B s={[w * 0.96, H, 0.04]} p={[0, H / 2, -D / 2]} c={WALNUT} ghost={ghost} rough={0.5} />
+      {[-1, 1].map((k) => <B key={k} s={[0.05, H, D]} p={[k * w * 0.47, H / 2, 0]} c={WALNUT} ghost={ghost} rough={0.5} />)}
+      {Array.from({ length: shelves + 1 }, (_, s) => <B key={s} s={[w * 0.94, 0.035, D]} p={[0, 0.1 + (s * (H - 0.15)) / shelves, 0]} c={WALNUT} ghost={ghost} rough={0.5} />)}
+      <B s={[w * 0.98, 0.1, D + 0.04]} p={[0, H, 0]} c={WALNUT} ghost={ghost} rough={0.5} />
+      {!ghost && (
+        <instancedMesh ref={inst} args={[undefined, undefined, books.length]} castShadow={false}>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial roughness={0.8} />
+        </instancedMesh>
+      )}
+    </group>
+  );
+}
+
+/** A cinema screen on its wall frame with tower speakers; it lights up with a film playing. */
+function CinemaScreen({ w, ghost, on }: { w: number; ghost: Ghost; on: boolean }) {
+  const SW = w * 0.82, SH = Math.min(SW * 0.45, WALL_HEIGHT - 1);
+  const glow = useRef<THREE.MeshStandardMaterial>(null);
+  useFrame(({ clock }) => {
+    const m = glow.current;
+    if (!m || !on) return;
+    const t = clock.elapsedTime;
+    m.emissive.setHSL((t * 0.03) % 1, 0.5, 0.45 + Math.sin(t * 2.3) * 0.06);
+  });
+  return (
+    <group>
+      <B s={[SW + 0.12, SH + 0.12, 0.06]} p={[0, 0.6 + SH / 2, -0.1]} c="#0a0a0a" ghost={ghost} rough={0.6} />
+      <mesh position={[0, 0.6 + SH / 2, -0.065]} raycast={ghost ? () => null : undefined}>
+        <planeGeometry args={[SW, SH]} />
+        {ghost ? <M color="#000" ghost={ghost} /> : <meshStandardMaterial ref={glow} color={on ? "#1f2937" : "#e5e7eb"} emissive={on ? "#6366f1" : "#000000"} emissiveIntensity={on ? 0.9 : 0} roughness={0.9} />}
+      </mesh>
+      {[-1, 1].map((k) => (
+        <group key={k} position={[k * (SW / 2 + 0.3), 0, 0]}>
+          <B s={[0.32, 1.25, 0.32]} p={[0, 0.63, 0]} c="#18181b" ghost={ghost} rough={0.5} />
+          {[0.35, 0.75, 1.05].map((y) => <Cyl key={y} r={0.09} h={0.02} p={[0, y, 0.165]} rot={[Math.PI / 2, 0, 0]} c="#3f3f46" ghost={ghost} />)}
+        </group>
+      ))}
+      <B s={[SW * 0.6, 0.12, 0.3]} p={[0, 0.3, 0.05]} c="#18181b" ghost={ghost} />
+    </group>
+  );
+}
+
+/** A row of leather cinema recliners with cup holders between. */
+function Recliners({ w, d, ghost, tint }: { w: number; d: number; ghost: Ghost; tint?: string }) {
+  const n = Math.max(2, Math.floor(w / 0.95)), sw = w / n, LEATHER = tint ?? "#3b0d0d";
+  return (
+    <group>
+      {Array.from({ length: n }, (_, i) => {
+        const x = -w / 2 + sw * (i + 0.5);
+        return (
+          <group key={i} position={[x, 0, 0]}>
+            <B s={[sw * 0.78, 0.42, d * 0.62]} p={[0, 0.21, 0.05]} c={LEATHER} ghost={ghost} rough={0.45} />
+            <B s={[sw * 0.78, 0.75, 0.22]} p={[0, 0.62, -d * 0.32]} c={LEATHER} ghost={ghost} rough={0.45} r={[-0.18, 0, 0]} />
+            <B s={[sw * 0.6, 0.12, 0.3]} p={[0, 0.45, 0.02]} c={LEATHER} ghost={ghost} rough={0.4} />
+            {[-1, 1].map((k) => <B key={k} s={[0.1, 0.24, d * 0.6]} p={[k * sw * 0.42, 0.55, 0.02]} c="#1c1917" ghost={ghost} rough={0.5} />)}
+            {i < n - 1 && <Cyl r={0.04} h={0.06} p={[sw / 2, 0.66, d * 0.15]} c="#a1a1aa" ghost={ghost} metal={0.8} seg={10} />}
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
+/** A home bar: marble counter on a lit fluted front, bottle shelves behind and stools in front. */
+function BarCounter({ w, d, ghost }: { w: number; d: number; ghost: Ghost }) {
+  const zc = d * 0.15;
+  return (
+    <group>
+      {/* the back bar */}
+      <B s={[w * 0.95, 2.2, 0.3]} p={[0, 1.1, -d / 2 + 0.15]} c="#1c1917" ghost={ghost} rough={0.4} />
+      {[0.95, 1.4, 1.85].map((y) => (
+        <group key={y}>
+          <B s={[w * 0.88, 0.02, 0.24]} p={[0, y, -d / 2 + 0.2]} c="#fbbf24" ghost={ghost} emissive="#fbbf24" glow={0.8} />
+          {!ghost && Array.from({ length: Math.floor(w / 0.16) }, (_, i) => (
+            <Cyl key={i} r={0.032} h={0.28} p={[-w * 0.42 + i * 0.16, y + 0.15, -d / 2 + 0.2]} c={["#166534", "#7f1d1d", "#d97706", "#e0f2fe"][i % 4]} ghost={ghost} rough={0.1} seg={8} />
+          ))}
+        </group>
+      ))}
+      {/* the counter */}
+      <B s={[w * 0.9, 1.0, 0.55]} p={[0, 0.5, zc]} c="#0f172a" ghost={ghost} rough={0.3} emissive="#f59e0b" glow={0.08} />
+      <B s={[w * 0.94, 0.06, 0.7]} p={[0, 1.03, zc]} c={MARBLE} ghost={ghost} rough={0.15} />
+      {Array.from({ length: Math.max(2, Math.floor(w / 0.8)) }, (_, i) => (
+        <group key={i} position={[-w * 0.38 + (i * w * 0.76) / Math.max(1, Math.max(2, Math.floor(w / 0.8)) - 1), 0, zc + 0.6]}>
+          <Cyl r={0.2} h={0.08} p={[0, 0.78, 0]} c="#7f1d1d" ghost={ghost} seg={16} />
+          <Cyl r={0.03} h={0.74} p={[0, 0.38, 0]} c={GOLD} ghost={ghost} metal={0.9} seg={8} />
+          <Cyl r={0.17} h={0.02} p={[0, 0.01, 0]} c={GOLD} ghost={ghost} metal={0.9} seg={16} />
+        </group>
+      ))}
+    </group>
+  );
+}
+
+/** A stand-up arcade cabinet with a glowing screen and marquee. */
+function ArcadeCabinet({ ghost }: { ghost: Ghost }) {
+  return (
+    <group>
+      <B s={[0.7, 1.8, 0.7]} p={[0, 0.9, -0.05]} c="#4c1d95" ghost={ghost} rough={0.5} />
+      <B s={[0.6, 0.45, 0.02]} p={[0, 1.35, 0.31]} c="#020617" ghost={ghost} emissive="#22d3ee" glow={0.9} r={[-0.2, 0, 0]} />
+      <B s={[0.7, 0.2, 0.05]} p={[0, 1.72, 0.3]} c="#f472b6" ghost={ghost} emissive="#f472b6" glow={1.1} />
+      <B s={[0.62, 0.08, 0.3]} p={[0, 1.0, 0.38]} c="#1e1b4b" ghost={ghost} />
+      <Cyl r={0.02} h={0.1} p={[-0.15, 1.08, 0.38]} c="#111" ghost={ghost} seg={6} />
+      {[0, 1, 2].map((i) => <Cyl key={i} r={0.03} h={0.02} p={[0.05 + i * 0.08, 1.05, 0.38]} c={["#ef4444", "#facc15", "#22c55e"][i]} ghost={ghost} seg={10} />)}
+    </group>
+  );
+}
+
+/** A spa tub (jacuzzi): a sunken round of warm water in a stone surround, with bubbles. */
+function SpaTub({ w, d, ghost }: { w: number; d: number; ghost: Ghost }) {
+  const r = Math.min(w, d) * 0.42;
+  const water = useRef<THREE.MeshStandardMaterial>(null);
+  useFrame(({ clock }) => { if (water.current) water.current.emissiveIntensity = 0.35 + Math.sin(clock.elapsedTime * 3) * 0.08; });
+  return (
+    <group>
+      <Cyl r={r + 0.25} h={0.55} p={[0, 0.275, 0]} c="#e7e5e4" ghost={ghost} rough={0.4} seg={32} />
+      <mesh position={[0, 0.52, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={ghost ? () => null : undefined}>
+        <circleGeometry args={[r, 32]} />
+        {ghost ? <M color="#000" ghost={ghost} /> : <meshStandardMaterial ref={water} color="#67e8f9" emissive="#0891b2" emissiveIntensity={0.35} transparent opacity={0.85} roughness={0.05} />}
+      </mesh>
+      {!ghost && Array.from({ length: 8 }, (_, i) => <mesh key={i} position={[Math.cos(i) * r * 0.6, 0.54, Math.sin(i * 1.7) * r * 0.6]}><sphereGeometry args={[0.05, 8, 6]} /><meshStandardMaterial color="#f0fdfa" transparent opacity={0.8} /></mesh>)}
+    </group>
+  );
 }

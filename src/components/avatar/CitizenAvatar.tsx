@@ -635,7 +635,11 @@ function Framed({ model, gender, placement, children }: { model: { height: numbe
   );
 }
 
-function usePlay(actions: Record<string, THREE.AnimationAction | null>, animation: AvatarAnimation) {
+/** How fast the walk clip carries a body at normal speed (metres a second, measured from the planted foot sliding
+    back under the body in f_walk / m_walk at the game's heights); the run clip covers about half as much again. */
+const WALK_PACE: Record<Gender, number> = { woman: 1.35, man: 1.07 };
+
+function usePlay(actions: Record<string, THREE.AnimationAction | null>, animation: AvatarAnimation, pace?: number, gender: Gender = "woman") {
   useEffect(() => {
     const action = actions[CLIP_FOR[animation] ?? animation] ?? actions.idle;
     if (!action) return;
@@ -645,6 +649,14 @@ function usePlay(actions: Record<string, THREE.AnimationAction | null>, animatio
       action.fadeOut(0.35);
     };
   }, [actions, animation]);
+  // Moving at a known speed: the steps keep up with it, so the feet don't slide or tread on the spot.
+  useEffect(() => {
+    if (!pace || (animation !== "walk" && animation !== "run")) return;
+    const action = actions[animation];
+    if (!action) return;
+    const natural = WALK_PACE[gender] * (animation === "run" ? 1.5 : 1);
+    action.setEffectiveTimeScale(THREE.MathUtils.clamp(pace / natural, 0.6, 2.4));
+  }, [actions, animation, pace, gender]);
 }
 
 export type CarryMode = "hold" | "raise" | "drink" | "eat";
@@ -1046,6 +1058,7 @@ function RosterAvatar({
   raiseHand = false,
   pose,
   rig,
+  pace,
 }: {
   look: AvatarLookProps;
   animation: AvatarAnimation;
@@ -1057,6 +1070,7 @@ function RosterAvatar({
   pose?: BodyPose;
   /** Arms driven live by a game (see ArmRig); wins over `pose`. */
   rig?: RefObject<ArmRig | null>;
+  pace?: number;
 }) {
   const gltf = useGLTF(rosterModel(presetFor(look)));
   // The chosen outfit: this face on another roster citizen's clothes.
@@ -1070,7 +1084,7 @@ function RosterAvatar({
   const clips = useRosterClips(look.gender);
   const root = useRef<THREE.Group>(null);
   const { actions } = useAnimations(clips, root);
-  usePlay(actions, animation);
+  usePlay(actions, animation, pace, look.gender);
   useRunArms(model, animation === "run");
   useSpecialAnimationPose(model, animation);
   const held = useRef<THREE.Group>(null);
@@ -1110,6 +1124,7 @@ function CustomAvatar({
   raiseHand = false,
   pose,
   rig,
+  pace,
 }: {
   look: AvatarLookProps;
   url: string;
@@ -1122,6 +1137,7 @@ function CustomAvatar({
   pose?: BodyPose;
   /** Arms driven live by a game (see ArmRig); wins over `pose`. */
   rig?: RefObject<ArmRig | null>;
+  pace?: number;
 }) {
   const gltf = useGLTF(url);
   const model = usePreparedModel(gltf.scene, false);
@@ -1139,7 +1155,7 @@ function CustomAvatar({
   }, [source]);
   const clips = useRosterClips(look.gender);
   const { actions } = useAnimations(clips, sourceRef);
-  usePlay(actions, animation);
+  usePlay(actions, animation, pace, look.gender);
 
   const held = useRef<THREE.Group>(null);
   const effectiveMode: CarryMode | false = carryMode ?? (raiseHand ? "raise" : !!holding ? "hold" : false);
@@ -1178,6 +1194,8 @@ interface CitizenAvatarProps {
   pose?: BodyPose;
   /** Arms driven live by a game (see ArmRig); wins over `pose`. */
   rig?: RefObject<ArmRig | null>;
+  /** How fast they're actually moving (m/s) while walking or running: the steps match it. */
+  pace?: number;
 }
 
 export function CitizenAvatar({
@@ -1191,6 +1209,7 @@ export function CitizenAvatar({
   carryMode,
   pose,
   rig,
+  pace,
 }: CitizenAvatarProps) {
   const customUrl = useAvatarUrl(look.custom?.url);
   const placement = { position, rotation };
@@ -1207,6 +1226,7 @@ export function CitizenAvatar({
       carryMode={carryMode}
       pose={pose}
       rig={rig}
+      pace={pace}
     />
   );
   if (!look.custom || !customUrl) return roster;
@@ -1224,6 +1244,7 @@ export function CitizenAvatar({
         carryMode={carryMode}
         pose={pose}
         rig={rig}
+        pace={pace}
       />
     </Suspense>
   );

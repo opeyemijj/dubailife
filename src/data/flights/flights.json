@@ -1,0 +1,25 @@
+{
+  "_note": "Flights between the cities (lib/flights, src/app/fly): Dubai Life Airways (fictional) from DXB Terminal 3 and AUH. Fares (AED, one way) are charged by public.book_flight() from public.flight_fare(), mirrored exactly here and checked by scripts/check-life-config.mjs. minutes: how long the flight scene takes (a 45-minute flight, shortened).",
+  "airline": { "name": "Dubai Life Airways", "code": "DL", "colors": { "body": "#f8fafc", "tail": "#0f766e", "accent": "#c9a24a" } },
+  "airports": {
+    "dubai": { "code": "DXB", "name": "Dubai International", "terminal": "Terminal 3", "placeId": "dxb-terminal-3" },
+    "abu-dhabi": { "code": "AUH", "name": "Abu Dhabi International", "terminal": "Terminal A", "placeId": "ad-auh-airport" }
+  },
+  "classes": [
+    { "id": "economy", "name": "Economy", "icon": "💺", "perks": ["Seat with a screen", "Snack and a drink"] },
+    { "id": "business", "name": "Business", "icon": "🛋️", "perks": ["Lie-flat seat", "Lounge before you fly", "Priority boarding", "Meal and champagne-free mocktails"] },
+    { "id": "first", "name": "First", "icon": "👑", "perks": ["Private suite with a door", "First lounge and spa", "Onboard shower and bar", "Chauffeur to the plane"] }
+  ],
+  "routes": [
+    { "from": "dubai", "to": "abu-dhabi", "minutes": 45, "fares": { "economy": 450, "business": 1800, "first": 4500 } },
+    { "from": "abu-dhabi", "to": "dubai", "minutes": 45, "fares": { "economy": 450, "business": 1800, "first": 4500 } }
+  ],
+  "dutyFree": [
+    { "id": "oud-perfume", "name": "Oud perfume", "icon": "🧴", "price": 650 },
+    { "id": "gold-watch", "name": "Gold watch", "icon": "⌚", "price": 12500 },
+    { "id": "aviators", "name": "Aviator sunglasses", "icon": "🕶️", "price": 890 },
+    { "id": "dates-box", "name": "Box of Medjool dates", "icon": "🌴", "price": 120 },
+    { "id": "chocolate", "name": "Camel-milk chocolate", "icon": "🍫", "price": 75 },
+    { "id": "headphones", "name": "Noise-cancelling headphones", "icon": "🎧", "price": 1499 }
+  ]
+}

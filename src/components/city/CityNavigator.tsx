@@ -30,6 +30,7 @@ import { openPhone } from "@/components/layout/PhoneOverlay";
 import Link from "next/link";
 import { BookSuite } from "@/components/hotel/BookSuite";
 import { myStay, type Stay } from "@/lib/hotels";
+import { CITIES, cityOfPlace, type CityId } from "@/lib/city/cities";
 
 export type TravelMode = "walk" | "taxi" | "metro" | "direct" | "drive";
 
@@ -220,7 +221,7 @@ export function CityNavigator({ place, journeyVenueId, playerPos, onTravel, onCl
         onClose={travelling ? undefined : onClose}
       >
         {destination ? (
-          <Journey destination={destination} playerPos={playerPos} travelling={travelling} onGo={go} gold={metroGold} onGold={setMetroGold} cars={myCars} licensed={licensed} />
+          <Journey destination={destination} playerPos={playerPos} travelling={travelling} onGo={go} gold={metroGold} onGold={setMetroGold} cars={myCars} licensed={licensed} city={cityOfPlace(place.id)} />
         ) : (
           <>
             <PlaceIntro place={place} onPick={(v) => setDressCodeVenue(v)} />
@@ -444,7 +445,7 @@ function FlatsDirectory({ place, onPick }: { place: Place; onPick: (f: FlatView)
         const mine = !!citizen && (f.owner_id === citizen.id || f.tenant_id === citizen.id);
         return (
           <button key={f.id} onClick={() => setSelected(f)} className={`w-full flex items-center gap-3 p-3 rounded-2xl border text-left ${mine ? "border-emerald-300 bg-emerald-50" : "border-slate-100 bg-slate-50 hover:bg-slate-100"}`}>
-            <span className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shrink-0">{f.property_type === "Villa" || f.property_type === "Townhouse" ? <Home className="w-4 h-4" /> : <Building2 className="w-4 h-4" />}</span>
+            <span className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shrink-0">{f.property_type === "Villa" || f.property_type === "Mansion" || f.property_type === "Townhouse" ? <Home className="w-4 h-4" /> : <Building2 className="w-4 h-4" />}</span>
             <div className="flex-1 min-w-0">
               <div className="font-black text-sm truncate">{flatTitle(f)}{mine ? " (yours)" : ""}</div>
               <div className="text-[11px] text-slate-500 truncate">{f.property_type} · {f.size_sqft.toLocaleString()} sq ft{f.view ? ` · ${f.view}` : ""}</div>
@@ -551,9 +552,11 @@ function Fact({ k, v }: { k: string; v: string }) {
 
 // ---------------------------------------------------------------- journey
 
-function Journey({ destination, playerPos, travelling, onGo, gold, onGold, cars, licensed }: {
+function Journey({ destination, playerPos, travelling, onGo, gold, onGold, cars: ownCars, licensed, city = "dubai" }: {
   destination: Destination; playerPos: { x: number; y: number }; travelling: TravelMode | null; onGo: (m: TravelMode) => void;
   gold: boolean; onGold: (g: boolean) => void; cars: Drivable[]; licensed: boolean | null;
+  /** The city you're in: away from Dubai your car and the Dubai Metro are back home (you flew), so it's a taxi or walk. */
+  city?: CityId;
 }) {
   const router = useRouter();
   const { citizen } = useCitizen();
@@ -562,7 +565,9 @@ function Journey({ destination, playerPos, travelling, onGo, gold, onGold, cars,
   const here = metres < 40;
   const fare = taxiFare(metres);
   const instant = instantFare(metres);
-  const plan = useMemo(() => metroPlan(playerPos, to), [playerPos, to]);
+  const away = city !== "dubai";
+  const cars = away ? [] : ownCars;
+  const plan = useMemo(() => (away ? null : metroPlan(playerPos, to)), [playerPos, to, away]);
   const metroCost = plan ? (gold ? plan.gold : plan.silver) : 0;
   const dist = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m / 10) * 10} m`);
   const metroMinutes = plan ? Math.round(walkMinutes(plan.walkTo) + plan.stops * 2.5 + 4 + walkMinutes(plan.walkFrom)) : 0;
@@ -594,7 +599,7 @@ function Journey({ destination, playerPos, travelling, onGo, gold, onGold, cars,
               primary
             />
           )}
-          {licensed === false && (
+          {licensed === false && !away && (
             // No license, no driving: the option is there but off, with the way to get one.
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 space-y-2">
               <div className="flex items-center gap-3 opacity-60">
@@ -605,7 +610,7 @@ function Journey({ destination, playerPos, travelling, onGo, gold, onGold, cars,
               <button onClick={() => router.push("/driving")} className="w-full h-11 rounded-full bg-amber-500 text-white font-black text-sm">🪪 Go to driving school &amp; get your license</button>
             </div>
           )}
-          <Option icon={<Car className="w-5 h-5" />} title="Dubai Taxi" note={`≈ ${taxiMinutes(metres)} min · ${aed(fare)} (12 minimum)`} onClick={() => onGo("taxi")} disabled={(citizen?.balance ?? 0) < fare} primary={metres >= 1200 && !cars.length} />
+          <Option icon={<Car className="w-5 h-5" />} title={`${CITIES[city].name} Taxi`} note={`≈ ${taxiMinutes(metres)} min · ${aed(fare)} (12 minimum)`} onClick={() => onGo("taxi")} disabled={(citizen?.balance ?? 0) < fare} primary={metres >= 1200 && !cars.length} />
           {plan ? (
             <>
               <Option

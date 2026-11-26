@@ -377,6 +377,16 @@ if (!hallSql.includes(`p_type not in (${halls.types.map((t) => `'${t.id}'`).join
   if (!tuneSql || JSON.stringify(JSON.parse(tuneSql)) !== JSON.stringify(wantTune)) { bad++; console.error("tuning garage: JSON differs from SQL"); }
   for (const p of tuning.parts) if (p.costPct.length !== 3 || p.boost.length !== 3 || p.stages.length !== 3) { bad++; console.error(`tuning ${p.id}: needs three stages`); }
 }
+// Flight fares and duty free (src/data/flights/flights.json vs flight_fare() and duty_free_price()).
+{
+  const fl = JSON.parse(readFileSync("src/data/flights/flights.json", "utf8"));
+  const fareSql = latestDef("flight_fare"), dfSql = latestDef("duty_free_price");
+  for (const r of fl.routes) {
+    if (!fareSql.includes(`('${r.from}', '${r.to}')`)) { bad++; console.error(`flight ${r.from}→${r.to}: route missing in SQL`); }
+    for (const [cls, fare] of Object.entries(r.fares)) if (!fareSql.includes(`when '${cls}' then ${fare}`)) { bad++; console.error(`flight ${r.from}→${r.to} ${cls}: fare differs from SQL`); }
+  }
+  for (const it of fl.dutyFree) if (!dfSql.includes(`when '${it.id}' then ${it.price}`)) { bad++; console.error(`duty free ${it.id}: price differs from SQL`); }
+}
 // Hotel suites and room service (src/data/hotels/suites.json vs hotel_suite_rule() and hotel_service_price()).
 {
   const hotels = JSON.parse(readFileSync("src/data/hotels/suites.json", "utf8"));
@@ -385,5 +395,17 @@ if (!hallSql.includes(`p_type not in (${halls.types.map((t) => `'${t.id}'`).join
   for (const it of hotels.roomService) if (!svcSql.includes(`when '${it.id}' then ${it.price}`)) { bad++; console.error(`room service ${it.id}: price differs from SQL`); }
   if (!latestDef("book_hotel").includes(`p_nights not in (${hotels.nights.join(", ")})`)) { bad++; console.error("hotel nights differ from SQL"); }
 }
-console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving, parking, goals, missions, fun, decorator, penalty, arcade, maternity, hall, social reward, hotel and Autodrome prize config match the database.");
+// The Abu Dhabi Passport (src/data/abuDhabi/passport.json vs passport_stamp_ok(), passport_reward(), passport_size()).
+{
+  const pp = JSON.parse(readFileSync("src/data/abuDhabi/passport.json", "utf8"));
+  const okSql = latestDef("passport_stamp_ok"), rewardSql = latestDef("passport_reward"), sizeSql = latestDef("passport_size");
+  const okList = [...(okSql.match(/p_id in \(([\s\S]*?)\)/)?.[1] ?? "").matchAll(/'([a-z-]+)'/g)].map((m) => m[1]);
+  for (const st of pp.stamps) if (!okList.includes(st.id)) { bad++; console.error(`passport ${st.id}: stamp missing in SQL`); }
+  if (okList.length !== pp.stamps.length) { bad++; console.error(`passport: ${okList.length} stamps in SQL, ${pp.stamps.length} in JSON`); }
+  for (const r of pp.rewards) if (!rewardSql.includes(`when ${r.at} then ${r.aed}`)) { bad++; console.error(`passport reward at ${r.at}: differs from SQL`); }
+  const top = Math.max(...pp.rewards.map((r) => r.at));
+  if (top !== pp.stamps.length || !sizeSql.includes(`select ${pp.stamps.length} `)) { bad++; console.error("passport: size differs (last reward, stamps, passport_size)"); }
+}
+
+console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving, parking, goals, missions, fun, decorator, penalty, arcade, maternity, hall, social reward, hotel, flight, Abu Dhabi Passport and Autodrome prize config match the database.");
 process.exit(bad ? 1 : 0);

@@ -11,7 +11,7 @@ import { refreshCitizen, updateCitizen } from "@/lib/citizenStore";
 import { supabase } from "@/lib/supabase/client";
 import type { AvatarLookProps } from "@/components/onboarding/AvatarCanvas";
 import {
-  CATALOG, findFreePlacement, WALL_PAINTS, withHomeItems,
+  CATALOG, findFreePlacement, HOUSING_CONFIGS, homeSizeOf, WALL_PAINTS, withHomeItems,
   type FloorFinish, type HomeStyle, type HousingTier, type OwnedFurniture,
 } from "@/lib/furniture";
 
@@ -113,7 +113,7 @@ export async function applyDecor(job: DecorJob): Promise<{ title: string; placed
     for (const id of [...s.items, ...(job.touch ? [job.touch] : [])]) {
       const item = CATALOG.find((x) => x.id === id);
       if (!item) continue;
-      const placement = findFreePlacement(item, furniture.filter((f) => f.placement));
+      const placement = findFreePlacement(item, furniture.filter((f) => f.placement), undefined, 0, homeSizeOf(job.tier), HOUSING_CONFIGS[job.tier]?.doorAt);
       if (placement) placed++; else stored++;
       furniture = [...furniture, { uid: `${id}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, itemId: id, placement }];
     }

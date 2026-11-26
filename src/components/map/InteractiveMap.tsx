@@ -1,7 +1,7 @@
 "use client";
 
 import { ACADEMIC_MAP_CENTER } from "@/lib/city/academic";
-import { memo, useCallback, useDeferredValue, useState, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { lazy, memo, Suspense, useCallback, useDeferredValue, useState, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { CampusCard } from "./CampusCard";
 import { TransformWrapper, TransformComponent, type ReactZoomPanPinchRef } from "react-zoom-pan-pinch";
@@ -11,6 +11,11 @@ import { saveMapSeed } from "@/app/actions/saveSeed";
 import { MapBackground } from './MapBackground';
 import { mapConfig } from '@/data/mapSeed';
 import { CITY_ENTITIES, savableEntities } from '@/lib/city/mapEntities';
+import dynamic from 'next/dynamic';
+import { AD_ENTITIES, AD_STYLED_TYPES } from '@/lib/city/abuDhabi/map';
+import { CITIES, cityOfLocation, type CityId } from '@/lib/city/cities';
+// Other cities' ground loads only on their maps.
+const AbuDhabiBackground = dynamic(() => import('./AbuDhabiBackground').then((m) => m.AbuDhabiBackground), { ssr: false });
 import { PALM_VIEW, WORLD_TOP } from '@/lib/city/palm';
 import { GAME_CITY } from '@/lib/city/gameCity';
 import { MapSideBar, type MapFilter } from './MapSideBar';
@@ -23,8 +28,14 @@ const noSubscribe = () => () => {};
 /** A building's drawing. Memoised on the entity object, so moving the map doesn't redraw every building. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const EntitySprite = memo(function EntitySprite({ loc }: { loc: any }) {
+  // Abu Dhabi's own landmarks (types "ad-…" on its entities) come from their own sprite file, loaded only when one
+  // is drawn, and its towers, villas, townhouses, malls and resorts in its own style. Checked by city too: Dubai has
+  // types that start "ad-" of its own (its "ad-billboard").
+  if (loc.city === 'abu-dhabi' && typeof loc.type === 'string' && (loc.type.startsWith('ad-') || AD_STYLED_TYPES.has(loc.type))) return <Suspense fallback={null}><AdSprite type={loc.type} loc={loc} /></Suspense>;
   return getBuildingSprite(loc.id, loc.type, loc.seed, loc.name, loc);
 });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const AdSprite = lazy(() => import('./AbuDhabiSprites').then((m) => ({ default: ({ type, loc }: { type: string; loc: any }) => m.abuDhabiSprite(type, loc) })));
 
 /** The map's background animations (traffic, boats) pause while the map moves, and resume once it stops. */
 const setMapAnimations = (on: boolean) => {
@@ -104,6 +115,12 @@ const isOverlayType = (type?: string) =>
 export const getEntityCategoryInfo = (entity: any) => {
   const type = (entity?.type || '').toLowerCase();
   if (type === 'academic-tile') return { icon: '🎓', category: 'Academic City', key: 'academics', color: 'from-amber-500 to-purple-600', badgeBg: 'bg-purple-900/60 border-purple-500/40 text-purple-200' };
+  // Abu Dhabi's own types (lib/city/abuDhabi/map.ts), by type before the name checks below.
+  if (type === 'ad-university') return { icon: '🎓', category: 'Universities', key: 'academics', color: 'from-amber-500 to-purple-600', badgeBg: 'bg-purple-900/60 border-purple-500/40 text-purple-200' };
+  if (type === 'ad-arena') return { icon: '🎤', category: 'Nightlife & Clubs', key: 'clubs', color: 'from-purple-600 to-pink-600', badgeBg: 'bg-purple-900/60 border-purple-500/40 text-purple-200' };
+  if (type === 'ad-beach-club' || type === 'ad-beach') return { icon: '🏖️', category: 'Beaches & Beach Clubs', key: 'beaches', color: 'from-cyan-400 to-blue-500', badgeBg: 'bg-cyan-900/60 border-cyan-500/40 text-cyan-200' };
+  if (type === 'ad-fort' || type === 'ad-wetland' || type === 'ad-mangrove' || type === 'ad-dhow' || type === 'ad-falcon') return { icon: ({ 'ad-fort': '🏰', 'ad-wetland': '🦩', 'ad-mangrove': '🛶', 'ad-dhow': '⛵', 'ad-falcon': '🦅' } as Record<string, string>)[type], category: 'Attractions & Mosques', key: 'attractions', color: 'from-blue-500 to-indigo-600', badgeBg: 'bg-blue-900/60 border-blue-500/40 text-blue-200' };
+  if (type === 'ad-hotel-tower') return { icon: '🏨', category: 'Hotels & Resorts', key: 'hotels', color: 'from-amber-400 to-yellow-600', badgeBg: 'bg-yellow-900/60 border-yellow-500/40 text-yellow-200' };
   if (type === 'game-tile') return { icon: '🎮', category: 'Game City', key: 'games', color: 'from-fuchsia-500 to-indigo-600', badgeBg: 'bg-indigo-900/60 border-indigo-500/40 text-indigo-200' };
   // Bur Dubai and Deira (lib/city/oldDubai.ts): by type, before the name checks below ("Heritage House" is not a home).
   if (type === 'od-courts') return { icon: '⚖️', category: 'Courts & Government', key: 'courts', color: 'from-amber-600 to-stone-700', badgeBg: 'bg-stone-900/60 border-amber-500/40 text-amber-200' };
@@ -238,6 +255,8 @@ export interface InteractiveMapProps {
   journeyTo?: { placeId: string; venueId?: string };
   /** Put the citizen outside this place and centre the camera there. */
   atPlaceId?: string;
+  /** Which city's map (lib/city/cities): Dubai, or another city's own map. */
+  city?: CityId;
 }
 
 export function InteractiveMap({
@@ -251,6 +270,7 @@ export function InteractiveMap({
   openPlaceId,
   journeyTo,
   atPlaceId,
+  city = "dubai",
 }: InteractiveMapProps = {}) {
   const router = useRouter();
   const { citizen } = useCitizen();
@@ -259,13 +279,17 @@ export function InteractiveMap({
   const [navPlace, setNavPlace] = useState<Place | null>(null);
   const [navVenueId, setNavVenueId] = useState<string | undefined>(undefined);
   const [travel, setTravel] = useState<{ mode: TravelMode; ms: number } | null>(null);
-  const [venues, setVenues] = useState<any[]>(CITY_ENTITIES);
+  // This city's buildings and plains (Dubai's are editable in the map editor; the others are laid out in code).
+  const [venues, setVenues] = useState<any[]>(() => (city === "dubai" ? CITY_ENTITIES : AD_ENTITIES));
+  // Where you start: where you were, if it was in this city; else just outside its airport.
+  const cityStart = () => (cityOfLocation(citizen?.location) === city ? citizen?.location : null) ?? entranceOf(CITIES[city].airport);
   const [selectedVenue, setSelectedVenue] = useState<any | null>(null);
   const [hoveredVenueId, setHoveredVenueId] = useState<string | null>(null);
   
   const [isEditMode, setIsEditMode] = useState(false);
   // Map editing, deleting and right-clicking are strictly for SUPER ADMINS only.
-  const isSuperAdmin = useIsSuperAdmin();
+  // Only Dubai's map is edited in the map editor.
+  const isSuperAdmin = useIsSuperAdmin() && city === "dubai";
   useEffect(() => {
     if (!isSuperAdmin && isEditMode) {
       setIsEditMode(false);
@@ -325,7 +349,7 @@ export function InteractiveMap({
     clickedId: null
   });
 
-  const [playerPos, setPlayerPos] = useState(() => (atPlaceId && entranceOf(atPlaceId)) || citizen?.location || HOME_SPOT);
+  const [playerPos, setPlayerPos] = useState(() => (atPlaceId && entranceOf(atPlaceId)) || cityStart() || HOME_SPOT);
   const [isTraveling, setIsTraveling] = useState(false);
   const walletBalance = useCitizen().citizen?.balance ?? 0;
   const [toastMsg, setToastMsg] = useState<{ text: string, type: 'credit' | 'debit' } | null>(null);
@@ -609,7 +633,7 @@ export function InteractiveMap({
     const at = atPlaceId ? entranceOf(atPlaceId) : null;
     if (at) {
       setPlayerPos(at);
-      updateCitizen((c) => ({ ...c, location: { ...at, placeId: undefined } }));
+      updateCitizen((c) => ({ ...c, location: { ...at, placeId: undefined, city } }));
     }
     // Arriving from a venue shows that place; otherwise the city opens on Burj Khalifa.
     settleOn(at ?? BURJ_VIEW);
@@ -954,7 +978,7 @@ export function InteractiveMap({
       <MapLoadProgress rootRef={mapRootRef} drawing={shownEntities !== visibleEntities} />
 
       {/* Top Left: Edit Mode Controls (Super Admin only; safe position below TopBar) */}
-      {isSuperAdmin && <div className="absolute top-20 sm:top-24 left-3 sm:left-6 z-30 flex items-center gap-2 pointer-events-auto">
+      {isSuperAdmin && <div className="absolute top-[8.5rem] sm:top-[8rem] left-3 sm:left-6 z-30 flex items-center gap-2 pointer-events-auto">
         <button
           onClick={() => {
             setIsEditMode(!isEditMode);
@@ -1032,8 +1056,8 @@ export function InteractiveMap({
         </div>
       )}
 
-      {/* Top Right: Dubai Live Traffic HUD (larger screens; phones keep that corner for search) */}
-      <div className="hidden sm:block absolute top-20 sm:top-24 right-3 sm:right-6 z-30 pointer-events-auto">
+      {/* Top Right: Dubai Live Traffic HUD (larger screens; phones keep that corner for search). Dubai's roads only. */}
+      <div className={`${city === "dubai" ? "hidden sm:block" : "hidden"} absolute top-20 sm:top-[7.75rem] right-3 sm:right-6 z-30 pointer-events-auto`}>
         <div className="relative">
           <button
             onClick={() => setTrafficMenuOpen(!trafficMenuOpen)}
@@ -1138,7 +1162,7 @@ export function InteractiveMap({
 
       {/* Dynamic Island Style Toast */}
       {toastMsg && (
-        <div className="absolute top-20 sm:top-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top fade-in duration-300 pointer-events-none max-w-[92vw]">
+        <div className="absolute top-[8.5rem] sm:top-[8rem] left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top fade-in duration-300 pointer-events-none max-w-[92vw]">
           <div className={`px-4 py-2.5 rounded-2xl font-bold border shadow-2xl backdrop-blur-xl text-xs sm:text-sm flex items-center gap-2 ${
             toastMsg.type === 'credit' ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500/40' : 'bg-red-950/90 text-red-300 border-red-500/40'
           }`}>
@@ -1268,7 +1292,7 @@ export function InteractiveMap({
             onClick={handleMapClick}
           >
             
-            <MapBackground trafficPreset={trafficPreset} onTrafficInfoChange={setTrafficInfo} />
+            {city === "abu-dhabi" ? <AbuDhabiBackground /> : <MapBackground trafficPreset={trafficPreset} onTrafficInfoChange={setTrafficInfo} />}
 
             <div 
               className="absolute z-50 -translate-x-1/2 -translate-y-1/2 transition-all ease-in-out pointer-events-none"

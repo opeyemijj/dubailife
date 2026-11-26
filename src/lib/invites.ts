@@ -11,6 +11,7 @@ import { updateCitizen, getCitizenState } from "@/lib/citizenStore";
 import { entranceOf } from "@/lib/city/geo";
 import PARTIES from "@/data/life/parties.json";
 import type { AvatarLookProps } from "@/components/avatar/roster";
+import { cityOfLocation, cityOfPlace } from "@/lib/city/cities";
 
 export { PARTIES };
 export type InviteKind = keyof typeof PARTIES.kinds;
@@ -257,13 +258,15 @@ export function faceNearest(at: [number, number, number], others: [number, numbe
 }
 
 /** Straight to a party you're invited to (or hosting): you're put at the door, so you don't travel across the city
-    again each time. Returns where to go. */
+    again each time (in the city you're in). Returns where to go. */
 export function partyDoor(route: string): string {
   const m = route.match(/^\/(?:property|place)\/([^/]+)\//);
   const placeId = m?.[1];
+  // Only within the city you're in: a party in the other city is a flight away (its page says so: CityGate).
   if (placeId) {
     const at = entranceOf(placeId);
-    updateCitizen((c) => ({ ...c, location: { ...(at ?? c.location ?? { x: 0, y: 0 }), placeId } }));
+    updateCitizen((c) => cityOfPlace(placeId) !== cityOfLocation(c.location) ? c
+      : { ...c, location: { ...(at ?? c.location ?? { x: 0, y: 0 }), placeId, city: cityOfPlace(placeId) } });
   }
   return route;
 }

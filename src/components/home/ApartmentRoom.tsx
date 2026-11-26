@@ -5,14 +5,15 @@ import { Flies } from "@/components/avatar/Flies";
 import { PartyDecor } from "@/components/invite/PartyDecor";
 import { PartyOn, clearedForParty } from "./partyLite";
 import { canvasQuality, isWebGLAvailable, resetWebGLCache, useDocumentVisible } from "@/lib/device";
-import React, { createContext, Suspense, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, Component } from "react";
+import React, { createContext, Suspense, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, Component } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import type { AvatarLookProps } from "../onboarding/AvatarCanvas";
 import { CLIP_SEAT_HEIGHT, restPose, type RestPose } from "./restPose";
-import { GROUNDS, HomeGrounds } from "./HomeGrounds";
+import { garagedCars, garageLayout, groundsFor, HomeGrounds } from "./HomeGrounds";
+import { LightPool, MergeStatic, Std } from "./sceneLite";
 import { TwoFingerHint, isCoarsePointer } from "./TwoFingerHint";
 import { useCradleRig, wanderFrom } from "./Baby";
 import { liftDoors } from "./homeLift";
@@ -27,7 +28,7 @@ import { adjustBalance, DEFAULT_NEEDS, updateCitizen } from "@/lib/citizenStore"
 import { gainSkill } from "@/lib/life";
 import { gameAudio } from "@/utils/gameAudio";
 import {
-  AVATAR_SPOT, BUILT_INS, CELL, DEFAULT_CEILING_COLOR, DOOR, GRID, LAYOUT_SCALE, ROOM_SIZE, WALL_HEIGHT, WINDOW,
+  BUILT_INS, CELL, DEFAULT_CEILING_COLOR, LAYOUT_SCALE, WALL_HEIGHT, homeGeom,
   findFreePlacement, floorCenter, floorPlacementAt, getCatalogItem, isPlacementValid, levelOf, rotatedSize, wallOffsetAt, wallTransform, withHomeItems,
   HOUSING_CONFIGS, hasPlot, homeObjectOf, type HomeObject, type HomeActivityDef, type FloorFinish, type HomeStyle, type HousingTier, type LevelDef, type RoomZone,
   type CatalogItem, type FloorPlacement, type Interaction, type OwnedFurniture, type Placement, type Rotation, type Wall,
@@ -38,12 +39,19 @@ import { SnapProbe } from "@/components/social/SnapProbe";
 // Only what every home has is fetched up front; shop items load when bought or shown.
 [...new Set(BUILT_INS.map((b) => b.model))].forEach((url) => url && useGLTF.preload(url));
 
-const HALF = ROOM_SIZE / 2;
+/** The home's size, door and window (lib/furniture homeGeom): 10 m flats, 18 m villas and penthouses, 30 m mansions. */
+const GeomContext = createContext(homeGeom());
+/** Walking and jogging speeds at home (m/s). */
+const HOME_WALK = 1.8, HOME_JOG = 3.6;
+/** Decor that moves on its own (fish swimming, the lift's doors): never baked with the still furniture. */
+const LIVE_VISUALS = new Set(["aquarium", "home-lift"]);
+const useGeom = () => useContext(GeomContext);
+const geomOfTier = (tier: HousingTier) => { const c = HOUSING_CONFIGS[tier] ?? HOUSING_CONFIGS.studio; return homeGeom(c.size, c.doorAt); };
 
 /** Where the citizen stands, and where they sit when using the chair or bed. */
 // While sitting or asleep the pose carries the spot to stand up at (RestPose.stand).
 type Pose = { position: [number, number, number]; yaw: number; lie?: boolean; stand?: [number, number] };
-const STAND: Pose = { position: [AVATAR_SPOT.x, 0, AVATAR_SPOT.z], yaw: Math.PI / 4 };
+const standAt = (g: ReturnType<typeof homeGeom>): Pose => ({ position: [g.avatar.x, 0, g.avatar.z], yaw: Math.PI / 4 });
 const WALL_THICKNESS = 0.16;
 const DRAG_THRESHOLD = 6; // px; anything more is a camera drag, not a tap
 const DEFAULT_ORBIT_TARGET: [number, number, number] = [0, 0.8, 0];
@@ -114,6 +122,8 @@ export interface ApartmentRoomProps {
   activity?: string;
   /** Your own car, parked outside a house with a driveway or garage (its model, colour and plate). */
   ownCar?: { car: Car; plate: string } | null;
+  /** Every car you own, parked in the garage's bays (villas and mansions show them all). */
+  ownFleet?: Array<{ car: Car; plate: string }>;
   /** Go straight out to the pool or the car (each ask is new). */
   groundsCall?: { n: number; what: "pool" | "car" };
   /** What you have in your hand (a drink at a party), and how you hold it. */
@@ -235,7 +245,7 @@ function PersonAvatar({ p, id, labels }: { p: Person; id: string; labels: LabelN
     >
       {/* Asleep: lying on the floor where they were. Crawling: pitched forward on hands and knees, limbs going. */}
       <group position={p.pose === "crawl" ? [0, 0.3 * (p.scale ?? 1), 0] : !moving && p.animation === "sleep" ? [0, 0.12, 0] : [0, 0, 0]} scale={p.scale ?? 1}>
-        <CitizenAvatar look={p.look} animation={p.pose === "crawl" ? "walk" : moving ? "walk" : p.animation ?? "idle"}
+        <CitizenAvatar look={p.look} animation={p.pose === "crawl" ? "walk" : moving ? "walk" : p.animation ?? "idle"} pace={moving && p.pose !== "crawl" ? p.pace ?? 2.4 : undefined}
           rotation={p.pose === "crawl" ? [1.32, 0, 0] : !moving && p.animation === "sleep" ? [-Math.PI / 2, 0, 0] : [0, 0, 0]}
           holding={p.cradle ? undefined : p.holding} carryMode={p.cradle ? undefined : p.holding ? (moving ? "hold" : p.carryMode ?? "hold") : undefined}
           rig={p.cradle ? cradleRig : undefined} />
@@ -325,6 +335,8 @@ function useFittedModel(url: string, size: [number, number], yaw = 0, ghost?: "v
     outer.traverse((o) => {
       const m = o as THREE.Mesh;
       if (!m.isMesh) return;
+      // A model's materials never change once loaded: it can be baked with the still furniture (sceneLite).
+      (Array.isArray(m.material) ? m.material : [m.material]).forEach((x) => { x.userData.shared = true; });
       if (sheet && bed) {
         const part = `${m.name} ${m.parent?.name ?? ""}`;
         if (/comforter|duvet|blanket/i.test(part) || /pillow/i.test(part)) {
@@ -815,7 +827,7 @@ const WALLS: Array<{ wall: Wall; normal: [number, number] }> = [
   { wall: "east", normal: [1, 0] },
 ];
 
-function wallFrame(wall: Wall) {
+function wallFrame(wall: Wall, HALF: number) {
   // Centre of the wall's inner face and the yaw that makes local +z point into the room.
   switch (wall) {
     case "north": return { position: [0, 0, -HALF] as const, yaw: 0 };
@@ -827,6 +839,7 @@ function wallFrame(wall: Wall) {
 
 /** One wall with optional door / window cut-outs, drawn as solid segments. Local x runs along the wall. */
 function WallSegments({ wall, color = "#f1e4cf", skirtingColor = "#e7d5b8", noDoor, panels, balcony }: { wall: Wall; color?: string; skirtingColor?: string; noDoor?: boolean; panels?: boolean; balcony?: boolean }) {
+  const { half: HALF, S: ROOM_SIZE, G: GRID, door: DOOR, window: WINDOW } = useGeom();
   const opening = wall === DOOR.wall && !noDoor ? { ...DOOR, bottom: 0, top: 2.2 }
     : wall === WINDOW.wall ? { ...WINDOW, bottom: 1.0, top: 2.3 }
     // Homes with a balcony: a glass door in the middle of the south wall.
@@ -855,7 +868,7 @@ function WallSegments({ wall, color = "#f1e4cf", skirtingColor = "#e7d5b8", noDo
       {/* Skirting board */}
       <mesh position={[0, 0.06, 0.01]}>
         <boxGeometry args={[ROOM_SIZE, 0.12, 0.03]} />
-        <meshStandardMaterial color={skirtingColor} roughness={0.7} />
+        <Std color={skirtingColor} rough={0.7} />
       </mesh>
       {panels && <Panelling pieces={pieces} color={color} trim={skirtingColor} />}
     </>
@@ -864,6 +877,7 @@ function WallSegments({ wall, color = "#f1e4cf", skirtingColor = "#e7d5b8", noDo
 
 /** Luxury walls: raised panels below a chair rail and above it, a crown moulding and a warm cove light. */
 function Panelling({ pieces, color, trim }: { pieces: Array<{ x0: number; x1: number; y0: number; y1: number }>; color: string; trim: string }) {
+  const { S: ROOM_SIZE } = useGeom();
   const raised = useMemo(() => {
     const c = new THREE.Color(color);
     const hsl = { h: 0, s: 0, l: 0 };
@@ -888,28 +902,29 @@ function Panelling({ pieces, color, trim }: { pieces: Array<{ x0: number; x1: nu
       {boxes.map((b, i) => (
         <mesh key={i} position={[b.x, b.y, 0.012]} raycast={() => null}>
           <boxGeometry args={[b.w, b.h, 0.025]} />
-          <meshStandardMaterial color={raised} roughness={0.75} />
+          <Std color={raised} rough={0.75} />
         </mesh>
       ))}
       {pieces.filter((p) => p.y0 === 0).map((p, i) => (
         <mesh key={`r${i}`} position={[(p.x0 + p.x1) / 2, 1.0, 0.02]} raycast={() => null}>
           <boxGeometry args={[p.x1 - p.x0, 0.05, 0.04]} />
-          <meshStandardMaterial color={trim} roughness={0.5} metalness={0.2} />
+          <Std color={trim} rough={0.5} metal={0.2} />
         </mesh>
       ))}
       <mesh position={[0, WALL_HEIGHT - 0.07, 0.05]} raycast={() => null}>
         <boxGeometry args={[ROOM_SIZE, 0.14, 0.1]} />
-        <meshStandardMaterial color={trim} roughness={0.5} metalness={0.2} />
+        <Std color={trim} rough={0.5} metal={0.2} />
       </mesh>
       <mesh position={[0, WALL_HEIGHT - 0.17, 0.08]} raycast={() => null}>
         <boxGeometry args={[ROOM_SIZE - 0.1, 0.025, 0.02]} />
-        <meshStandardMaterial color="#ffd9a0" emissive="#ffc777" emissiveIntensity={1.4} />
+        <Std color="#ffd9a0" emissive="#ffc777" glow={1.4} />
       </mesh>
     </group>
   );
 }
 
 function Door({ onOpen, interactive }: { onOpen?: () => void; interactive: boolean }) {
+  const { half: HALF, door: DOOR } = useGeom();
   const x = -HALF + (DOOR.offset + DOOR.width / 2) * CELL;
   return (
     <group
@@ -931,6 +946,7 @@ function Door({ onOpen, interactive }: { onOpen?: () => void; interactive: boole
 }
 
 function Window() {
+  const { half: HALF, window: WINDOW } = useGeom();
   const x = -HALF + (WINDOW.offset + WINDOW.width / 2) * CELL;
   const w = WINDOW.width * CELL;
   return (
@@ -971,10 +987,11 @@ interface ShellProps {
 }
 
 function RoomShell({ hiddenWalls, wallTargeting, interactive, onWallPointer, onDoor, wallColor, skirtingColor, upstairs, panels, balcony }: ShellProps) {
+  const { half, S: ROOM_SIZE, door: DOOR, window: WINDOW } = useGeom();
   return (
     <>
       {WALLS.map(({ wall }) => {
-        const f = wallFrame(wall);
+        const f = wallFrame(wall, half);
         const hidden = hiddenWalls.has(wall);
         return (
           <group key={wall} position={f.position as unknown as [number, number, number]} rotation={[0, f.yaw, 0]}>
@@ -1262,6 +1279,7 @@ function CameraRig({
   const controls = useThree((s) => s.controls) as unknown as OrbitControlsImpl | null;
   const camera = useThree((s) => s.camera);
   const size = useThree((s) => s.size);
+  const { half: HALF, S: homeS } = useGeom();
   const lastTurns = useRef(turns);
   const swing = useRef<{ from: number; to: number; t: number } | null>(null);
   const lastKey = useRef("");
@@ -1296,7 +1314,8 @@ function CameraRig({
     // Above: ALWAYS restore the proper isometric overview looking down into the room from above!
     const t = targetPos ?? DEFAULT_ORBIT_TARGET;
     controls.target.set(t[0], t[1], t[2]);
-    const dist = viewDistance ?? (size.width / size.height < 0.8 ? 19 : 14);
+    // Bigger homes (villas, mansions) are seen from further back, so the whole floor fits.
+    const dist = viewDistance ?? (size.width / size.height < 0.8 ? 19 : 14) * (1 + (homeS - 10) / 16);
     const angle = turns * (Math.PI / 2) + Math.PI / 4;
     const elev = upView ? 0.92 : 0.68;
     const horiz = Math.sqrt(Math.max(0.01, 1 - elev * elev));
@@ -1308,7 +1327,7 @@ function CameraRig({
     controls.update();
     // Re-aim only when the mode, turns, or screen changes, not every step.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [controls, camera, size.width, size.height, inside, eye, viewDistance, upView, turns]);
+  }, [controls, camera, size.width, size.height, inside, eye, viewDistance, upView, turns, homeS]);
   // Where the citizen was last frame, so the camera can move along with them.
   const lastFollow = useRef<[number, number, number] | null>(null);
   // Walls faded because they stand between the camera and the citizen (inside view).
@@ -1409,8 +1428,9 @@ function CameraRig({
       panNudgeRef.current.dx = 0;
       panNudgeRef.current.dz = 0;
       _scratchRight.copy(controls.target).sub(camera.position).setY(0).normalize().cross(_scratchUp);
-      const shiftX = THREE.MathUtils.clamp(controls.target.x + _scratchRight.x * stepX + stepZ * 0.5, -16, 16) - controls.target.x;
-      const shiftZ = THREE.MathUtils.clamp(controls.target.z + _scratchRight.z * stepX + stepZ * 0.5, -13, 16) - controls.target.z;
+      const reach = 11 + homeS / 2;
+      const shiftX = THREE.MathUtils.clamp(controls.target.x + _scratchRight.x * stepX + stepZ * 0.5, -reach, reach) - controls.target.x;
+      const shiftZ = THREE.MathUtils.clamp(controls.target.z + _scratchRight.z * stepX + stepZ * 0.5, -reach + 3, reach) - controls.target.z;
       controls.target.x += shiftX;
       controls.target.z += shiftZ;
       camera.position.x += shiftX;
@@ -1449,8 +1469,10 @@ function CameraRig({
       camera.position.z += dz;
     }
 
-    if (upView && Math.abs(camera.position.y - 15.0) > 0.05) {
-      camera.position.y += (15.0 - camera.position.y) * Math.min(1, dt * 3.5);
+    // The dollhouse view's height: higher over a villa or mansion, so the whole floor shows.
+    const upY = 15 * (1 + (homeS - 10) / 16);
+    if (upView && Math.abs(camera.position.y - upY) > 0.05) {
+      camera.position.y += (upY - camera.position.y) * Math.min(1, dt * 3.5);
     }
     controls.update();
 
@@ -1504,6 +1526,7 @@ function RoomScene({
   fixtureCall,
   activity,
   ownCar,
+  ownFleet,
   groundsCall,
   holding,
   dirty,
@@ -1547,6 +1570,16 @@ function RoomScene({
   setIsDraggingItem?: (dragging: boolean) => void;
 }) {
   const config = HOUSING_CONFIGS[housingTier] ?? HOUSING_CONFIGS.studio;
+  // How big the home is, where its door is, and the plot round it (villas and mansions are wider).
+  const geom = useMemo(() => geomOfTier(housingTier), [housingTier]);
+  const { half: HALF, S: ROOM_SIZE, G: GRID } = geom;
+  const GROUNDS = useMemo(() => groundsFor(ROOM_SIZE), [ROOM_SIZE]);
+  // The garage's cars and their bays (to walk to one and get in).
+  const garage = useMemo(() => {
+    const cars = hasPlot(housingTier) ? garagedCars(homeStyle?.exterior ?? config.finish.exterior ?? [], ownCar, ownFleet ?? (ownCar ? [ownCar] : [])) : [];
+    return { cars, layout: garageLayout(ROOM_SIZE, cars.length) };
+  }, [housingTier, homeStyle?.exterior, config.finish.exterior, ownCar, ownFleet, ROOM_SIZE]);
+  const STAND = useMemo(() => standAt(geom), [geom]);
   // Two-storey homes show one floor at a time; everything else is a single floor 0.
   const levelDef = config.levels ? config.levels[Math.min(level, config.levels.length - 1)] : undefined;
   const lvl = levelDef ? Math.min(level, config.levels!.length - 1) : 0;
@@ -1595,6 +1628,8 @@ function RoomScene({
   // Where the user last pointed the item being placed (cleared by switching items).
   const [moved, setMoved] = useState<{ uid: string; placement: Placement } | null>(null);
   const [animation, setAnimation] = useState<AvatarAnimation>("idle");
+  // How fast you're walking (m/s): the steps keep pace with it (CitizenAvatar).
+  const [pace, setPace] = useState(HOME_WALK);
   const handleLocomotionRef = useRef<((point: THREE.Vector3) => void) | null>(null);
   // Listen for interactive room actions (rocking dance, slap, brawl, gang beat, money spraying)
   useEffect(() => {
@@ -1687,6 +1722,7 @@ function RoomScene({
   // Walking, talking, interactive party/combat animations, or sitting / lying on a piece of furniture shows that; otherwise what the page asks for (dancing).
   const shown: AvatarAnimation =
     animation === "walk" ||
+    animation === "run" ||
     animation === "talk" ||
     animation === "sit" ||
     animation === "sleep" ||
@@ -1729,7 +1765,7 @@ function RoomScene({
   const lastSteerReport = useRef(0);
   const poseRef = useRef(pose);
   useEffect(() => { poseRef.current = pose; }, [pose]);
-  const walkingNow = animation === "walk";
+  const walkingNow = animation === "walk" || animation === "run";
   useEffect(() => {
     if (walkTarget) moveRef.current?.(walkTarget[0], walkTarget[1], poseRef.current.yaw, true);
   }, [walkTarget]);
@@ -1749,7 +1785,7 @@ function RoomScene({
     const roomRects: Rect[] = [
       { minX: -HALF, maxX: HALF, minZ: -HALF, maxZ: HALF },
       ...(rooms ?? []).filter((r) => r.id === "balcony").map((r) => r.bounds),
-      ...(plotGround ? [{ minX: -16.2, maxX: 16.2, minZ: -12.2, maxZ: 16.2 }] : []),
+      ...(plotGround ? [{ minX: Math.min(-GROUNDS.edge + 0.8, garage.layout.x - garage.layout.width / 2 - 0.5), maxX: GROUNDS.edge - 0.8, minZ: -GROUNDS.north + 0.8, maxZ: GROUNDS.south - 0.8 }] : []),
     ];
     const walls: Seg[] = [...(levelDef ? levelDef.walls : config.walls ?? [])];
     // The south wall, with its glass door out to the balcony or garden/pool.
@@ -1761,7 +1797,7 @@ function RoomScene({
       walls.push(
         { a: [-HALF, -HALF], b: [HALF, -HALF] },
         { a: [HALF, -HALF], b: [HALF, HALF] },
-        { a: [-HALF, -HALF], b: [-HALF, HALF], door: [HALF - 0.75, HALF + 0.75] },
+        { a: [-HALF, -HALF], b: [-HALF, HALF], door: [geom.avatar.z + HALF - 0.75, geom.avatar.z + HALF + 0.75] },
       );
     }
     walls.push(...fixtureWalls);
@@ -1773,6 +1809,11 @@ function RoomScene({
         ? [{ minX: GROUNDS.pool.x - GROUNDS.pool.w / 2, maxX: GROUNDS.pool.x + GROUNDS.pool.w / 2, minZ: GROUNDS.pool.z - GROUNDS.pool.l / 2, maxZ: GROUNDS.pool.z + GROUNDS.pool.l / 2 }]
         : []),
     ];
+    // The parked cars: walk round them.
+    if (plotGround) garage.cars.forEach((_, i) => {
+      const b = garage.layout.slots[i];
+      if (b) blocks.push({ minX: b.x - 1.05, maxX: b.x + 1.05, minZ: b.z - 2.4, maxZ: b.z + 2.4 });
+    });
     for (const f of withHomeItems(furniture, housingTier)) {
       if (f.placement?.kind !== "floor" || levelOf(f.placement) !== lvl) continue;
       const item = getCatalogItem(f.itemId);
@@ -1783,7 +1824,7 @@ function RoomScene({
       blocks.push({ minX: c.x - (w * CELL) / 2, maxX: c.x + (w * CELL) / 2, minZ: c.z - (d * CELL) / 2, maxZ: c.z + (d * CELL) / 2 });
     }
     return buildNav(roomRects, walls, blocks);
-  }, [rooms, levelDef, config, furniture, housingTier, lvl, fixtures, fixtureWalls, style.exterior]);
+  }, [rooms, levelDef, config, furniture, housingTier, lvl, fixtures, fixtureWalls, style.exterior, HALF, GROUNDS, geom, garage]);
   const [clickBeacon, setClickBeacon] = useState<{ x: number; z: number; time: number } | null>(null);
   const [pendingAction, setPendingAction] = useState<{ type: Interaction; rest?: RestPose; fixture?: Fixture } | null>(null);
   const avatarHeight = look?.gender === "man" ? 1.8 : 1.68;
@@ -1828,10 +1869,10 @@ function RoomScene({
     if (busy || climbRef.current || liftRef.current) return;
     const plotGround = hasPlot(housingTier) && lvl === 0;
     const clampedX = plotGround
-      ? Math.max(-15.8, Math.min(15.8, point.x))
+      ? Math.max(-GROUNDS.edge + 1.2, Math.min(GROUNDS.edge - 1.2, point.x))
       : Math.max(-HALF + 0.3, Math.min(HALF - 0.3, point.x));
     const clampedZ = plotGround
-      ? Math.max(-11.8, Math.min(15.8, point.z))
+      ? Math.max(-GROUNDS.north + 1.2, Math.min(GROUNDS.south - 1.2, point.z))
       : Math.max(-HALF + 0.3, Math.min(HALF + (rooms?.some((r) => r.id === "balcony") ? 1.6 : -0.3), point.z));
 
     if (animTimer.current) {
@@ -1881,8 +1922,8 @@ function RoomScene({
       camera.getWorldDirection(fwd);
       fwd.y = 0; fwd.normalize();
       const right = new THREE.Vector3(-fwd.z, 0, fwd.x).normalize();
-      // Inside a home: strictly walking speed.
-      const speed = 1.7 * mag;
+      // A brisk indoor walk (or a jog with Run on), scaled by how far the stick is pushed.
+      const speed = (stickRun ? HOME_JOG : HOME_WALK) * mag;
       targetVx = (right.x * normX + fwd.x * normY) * speed;
       targetVz = (right.z * normX + fwd.z * normY) * speed;
     }
@@ -1901,16 +1942,25 @@ function RoomScene({
       const vx = stickVel.current.x, vz = stickVel.current.z;
       // Sitting or lying: up first.
       const [cx, , cz] = pose.stand ? [pose.stand[0], 0, pose.stand[1]] : pose.position;
-      const nx = cx + vx * Math.min(dt, 0.05), nz = cz + vz * Math.min(dt, 0.05);
+      // The whole frame's distance, in short steps so a slow phone (long frames) still covers the ground at full
+      // speed without stepping through a wall; a long hitch (a tab switch) is cut short.
+      const span = Math.min(dt, 0.25), n = Math.max(1, Math.ceil(span / 0.04)), h = span / n;
       let px = cx, pz = cz;
-      if (walkable(nav, nx, nz)) { px = nx; pz = nz; }
-      else if (walkable(nav, nx, cz)) px = nx;
-      else if (walkable(nav, cx, nz)) pz = nz;
+      for (let k = 0; k < n; k++) {
+        const nx = px + vx * h, nz = pz + vz * h;
+        if (walkable(nav, nx, nz)) { px = nx; pz = nz; }
+        else if (walkable(nav, nx, pz)) px = nx;
+        else if (walkable(nav, px, nz)) pz = nz;
+        else break;
+      }
       const want = Math.atan2(vx, vz);
       const diff = Math.atan2(Math.sin(want - pose.yaw), Math.cos(want - pose.yaw));
       const yaw = pose.yaw + diff * Math.min(1, dt * 12);
       setPose({ position: [px, 0, pz], yaw });
-      if (animation !== "walk") setAnimation("walk");
+      const gait = stickRun && currentSpeed > HOME_WALK * 1.1 ? "run" : "walk";
+      if (animation !== gait) setAnimation(gait);
+      const p = Math.round(currentSpeed * 10) / 10;
+      if (p !== pace) setPace(p);
       steering.current = true;
       const now = performance.now();
       if (now - lastSteerReport.current > 800) { lastSteerReport.current = now; moveRef.current?.(px, pz, yaw, true); }
@@ -1985,13 +2035,19 @@ function RoomScene({
         while (diff > Math.PI) diff -= Math.PI * 2;
         const newYaw = pose.yaw + diff * Math.min(1, dt * 14);
 
-        const walkSpeed = 2.4;
-        const step = Math.min(dist, dt * walkSpeed);
+        // A brisk walk; across a big home (a long way still to go), a jog.
+        let left = dist;
+        for (let k = 1; k < route.length; k++) left += Math.hypot(route[k][0] - route[k - 1][0], route[k][1] - route[k - 1][1]);
+        const jog = left > 9;
+        const walkSpeed = jog ? HOME_JOG : HOME_WALK;
+        const step = Math.min(dist, Math.min(dt, 0.25) * walkSpeed);
         const nextX = curX + (dx / dist) * step;
         const nextZ = curZ + (dz / dist) * step;
 
         setPose({ position: [nextX, 0, nextZ], yaw: newYaw });
-        if (animation !== "walk") setAnimation("walk");
+        const gait = jog ? "run" : "walk";
+        if (animation !== gait) setAnimation(gait);
+        if (pace !== walkSpeed) setPace(walkSpeed);
       } else {
         // Where the route ends: the spot itself, or as near as it can be reached.
         const finalX = next[0];
@@ -2055,14 +2111,14 @@ function RoomScene({
     const layered = (p: Placement): Placement => (p.kind === "floor" ? { ...p, layer: placingLayer || undefined } : p);
     const base = moved?.uid === placing.uid ? moved.placement : furniture.find((f) => f.uid === placing.uid)?.placement;
     if (base && levelOf(base) === lvl && base.kind === (placingItem.kind === "wall" ? "wall" : "floor")) {
-      return layered(base.kind === "floor" ? floorPlacementAt(placingItem.size, placing.rot, floorCenter(placingItem.size, base), lvl) : base);
+      return layered(base.kind === "floor" ? floorPlacementAt(placingItem.size, placing.rot, floorCenter(placingItem.size, base), lvl, undefined, undefined, ROOM_SIZE) : base);
     }
     const others = furniture.filter((f) => f.uid !== placing.uid);
-    return layered(findFreePlacement(placingItem, others, placingItem.kind === "wall" ? undefined : placing.rot, lvl)
-      ?? (placingItem.kind === "wall" ? { kind: "wall", wall: "north", offset: 1, ...(lvl ? { level: lvl } : {}) } : floorPlacementAt(placingItem.size, placing.rot, { x: 0, z: 0.5 }, lvl)));
+    return layered(findFreePlacement(placingItem, others, placingItem.kind === "wall" ? undefined : placing.rot, lvl, ROOM_SIZE, config.doorAt)
+      ?? (placingItem.kind === "wall" ? { kind: "wall", wall: "north", offset: 1, ...(lvl ? { level: lvl } : {}), g: GRID } : floorPlacementAt(placingItem.size, placing.rot, { x: 0, z: 0.5 }, lvl, undefined, undefined, ROOM_SIZE)));
   }, [placing, placingItem, moved, furniture, lvl, placingLayer]);
 
-  const ghostValid = !!(ghost && placingItem && isPlacementValid(placingItem, ghost, furniture, placing?.uid, true));
+  const ghostValid = !!(ghost && placingItem && isPlacementValid(placingItem, ghost, furniture, placing?.uid, true, ROOM_SIZE, config.doorAt));
 
   // Reset moved placement and dragging status whenever placing finishes or changes item
   useEffect(() => {
@@ -2096,7 +2152,7 @@ function RoomScene({
       // Item should ONLY be moved to point dragged to or tapped, NOT on mouse hover!
       if (!isPointerDownRef.current && (e.buttons ?? 0) === 0) return;
       setIsDraggingItem?.(true);
-      const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl, furniture, placing.uid);
+      const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl, furniture, placing.uid, ROOM_SIZE);
       setMoved({ uid: placing.uid, placement: next });
     }
   };
@@ -2111,7 +2167,7 @@ function RoomScene({
       e.stopPropagation();
       // Tap lands on the floor: only move the item to this tapped point!
       // No immediate placement on tap; user clicks Done button to complete move.
-      const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl, furniture, placing.uid);
+      const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl, furniture, placing.uid, ROOM_SIZE);
       setMoved({ uid: placing.uid, placement: next });
       return;
     }
@@ -2130,7 +2186,7 @@ function RoomScene({
     if (!click && !isDrag) return;
 
     if (click && e.delta > DRAG_THRESHOLD) return;
-    const next = { kind: "wall" as const, wall, offset: wallOffsetAt(wall, e.point, placingItem.size[0]), ...(lvl ? { level: lvl } : {}) };
+    const next = { kind: "wall" as const, wall, offset: wallOffsetAt(wall, e.point, placingItem.size[0], ROOM_SIZE), ...(lvl ? { level: lvl } : {}), g: GRID };
     setMoved({ uid: placing.uid, placement: next });
     if (click) {
       e.stopPropagation();
@@ -2197,6 +2253,20 @@ function RoomScene({
     setObjectFx(f);
     onUseFixture?.(f);
   };
+  /** A car in the garage: walk to its door through the house and the garden, then choose (drive, wash, photo). */
+  const startCarUse = (plate: string) => {
+    if (climbRef.current || liftRef.current) return;
+    const i = garage.cars.findIndex((c) => c.plate === plate), b = garage.layout.slots[i];
+    if (!b) { startGroundsUse("car"); return; }
+    // A one-cell spot just west of where to stand, turned so its "front" is the door: fixtureSpot puts you there.
+    const [dx, dz] = b.door;
+    const f: Fixture = {
+      id: `grounds-car:${plate}`, kind: "car" as Fixture["kind"], size: [1, 1],
+      placement: { kind: "floor", col: (dx - 0.45 - CELL + HALF) / CELL, row: (dz - CELL / 2 + HALF) / CELL, rot: 3, g: GRID },
+    };
+    setObjectFx(f);
+    goUseFixture(f);
+  };
   const groundsN = groundsCall?.n ?? 0;
   useEffect(() => {
     if (groundsN && groundsCall) startGroundsUse(groundsCall.what);
@@ -2212,6 +2282,8 @@ function RoomScene({
     let lap: ReturnType<typeof setInterval> | null = null;
     const t = setTimeout(() => {
       if (objectInUse.kind === "car") {
+        // At a car in the garage: stay by its door. Otherwise at the one on the driveway.
+        if (objectInUse.id.startsWith("grounds-car:")) { setAnimation(activity === "photo" ? "wave" : "talk"); return; }
         const d = GROUNDS.driveway;
         setPose({ position: [d.x + 1.6, 0, d.z], yaw: -Math.PI / 2 });
         setAnimation(activity === "photo" ? "wave" : "talk");
@@ -2257,8 +2329,17 @@ function RoomScene({
         setAnimation("sit");
         return;
       }
+      // The mansion rooms: on the treadmill running, at the rack lifting, in a recliner or the hot tub.
+      const k = f.kind as string;
+      if (k === "gym") { setPose({ position: [c.x, 0.17, c.z], yaw: front.yaw }); setAnimation(activity === "walk" ? "walk" : "run"); return; }
+      if (k === "cinema" || k === "spa") {
+        const dx = front.x - c.x, dz = front.z - c.z, l = Math.hypot(dx, dz) || 1, reach = k === "spa" ? 0.3 : 0.1;
+        setPose({ position: [c.x + (dx / l) * reach, k === "spa" ? 0.05 : 0.1, c.z + (dz / l) * reach], yaw: k === "cinema" ? front.yaw + Math.PI : front.yaw });
+        setAnimation("sit");
+        return;
+      }
       setPose({ position: [front.x, 0, front.z], yaw: front.yaw });
-      setAnimation(f.kind === "tv" ? "idle" : "talk");
+      setAnimation(k === "weights" ? (activity === "stretch" ? "wave" : "box") : k === "arcade" ? "dance" : k === "tv" || k === "books" ? "idle" : "talk");
     }, 0);
     return () => {
       clearTimeout(t);
@@ -2428,7 +2509,75 @@ function RoomScene({
     };
   });
 
+  // What the baked furniture depends on: what's where on this floor, what's in use, the walls cut away, a party.
+  const mergeKey = useMemo(() => JSON.stringify([
+    lvl, partyDecor !== undefined, [...hiddenWalls].sort(), using ?? null,
+    furniture.filter((f) => f.placement && levelOf(f.placement) === lvl).map((f) => [f.uid, f.placement, f.customColor ?? null]),
+  ]), [lvl, partyDecor, hiddenWalls, using, furniture]);
+  // The furniture, built once per change rather than on every step you take (walking re-renders this scene each
+  // frame, and a mansion has a hundred pieces). Taps go through `act`, which always has the latest handlers.
+  const act = useRef({ interact, startObjectUse, onPickUp });
+  useLayoutEffect(() => { act.current = { interact, startObjectUse, onPickUp }; });
+  const furnitureLayer = useMemo(() => (
+      <MergeStatic version={mergeKey} enabled={!decorating && !placing}>
+        {furniture.map((f) => {
+          const item = getCatalogItem(f.itemId);
+          if (!item || !f.placement || f.uid === placing?.uid || levelOf(f.placement) !== lvl) return null;
+          if (!item.model && !item.visual && item.kind !== "wall" && !item.id.includes("tv")) return null;
+          // A party: what's in the way of the dance floor is put away (lib: partyLite).
+          if (partyDecor !== undefined && clearedForParty(item)) return null;
+          // Wall art disappears with its wall when that wall is cut away.
+          if (f.placement.kind === "wall" && hiddenWalls.has(f.placement.wall)) return null;
+          return (
+            <PlacedTransform key={f.uid} item={item} placement={f.placement}>
+              <Suspense fallback={null}>
+                <group
+                  // Moving parts (fish, lift doors) and anything in use stay out of the baked meshes.
+                  userData={LIVE_VISUALS.has(item.visual ?? "") || using === f.uid ? { live: true } : undefined}
+                  onClick={(e) => {
+                    if (placing || e.delta > DRAG_THRESHOLD) return;
+                    // Decorating: pick it up to move. Otherwise: use it (sit, sleep, open the fridge).
+                    if (decorating) { e.stopPropagation(); if (!item.fixed) act.current.onPickUp?.(f.uid); return; }
+                    if (item.interaction) { e.stopPropagation(); act.current.interact(item.interaction, item, f.placement); return; }
+                    // The TV, aquarium, dining table, kitchen counter: walk over and choose what to do.
+                    const obj = homeObjectOf(item);
+                    if (obj && f.placement?.kind === "floor" && !busy) { e.stopPropagation(); act.current.startObjectUse(f.uid, obj, item, f.placement); }
+                  }}
+                  onPointerOver={(decorating && !placing && !item.fixed) || ((item.interaction || homeObjectOf(item)) && !busy) ? hoverCursor(true) : undefined}
+                  onPointerOut={hoverCursor(false)}
+                >
+                  <ItemVisual item={item} activity={using === f.uid ? activity : undefined} customColor={f.customColor} />
+  
+                  {/* Tactile Decorate-mode hit plate and visual highlight for every movable item */}
+                  {decorating && !placing && !item.fixed && f.placement.kind === "floor" && (
+                    <group>
+                      <mesh
+                        rotation={[-Math.PI / 2, 0, 0]}
+                        position={[0, 0.015, 0]}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          act.current.onPickUp?.(f.uid);
+                        }}
+                      >
+                        <planeGeometry args={[item.size[0] * CELL - 0.02, item.size[1] * CELL - 0.02]} />
+                        <meshBasicMaterial color="#10b981" transparent opacity={0.35} depthWrite={false} />
+                      </mesh>
+                      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.018, 0]} raycast={() => null}>
+                        <ringGeometry args={[0.18, 0.24, 16]} />
+                        <meshBasicMaterial color="#34d399" transparent opacity={0.8} />
+                      </mesh>
+                    </group>
+                  )}
+                </group>
+              </Suspense>
+            </PlacedTransform>
+          );
+        })}
+        </MergeStatic>
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- handlers go through act; these are what it shows
+  ), [mergeKey, furniture, placing, decorating, busy, lvl, partyDecor, hiddenWalls, using, activity]);
   return (
+    <GeomContext.Provider value={geom}>
     <BeddingContext.Provider value={style.bedding}>
       <CameraRig
         turns={turns}
@@ -2483,6 +2632,7 @@ function RoomScene({
         </gridHelper>
       )}
 
+      <MergeStatic version={`shell|${[...hiddenWalls].sort()}|${style.wall}|${style.panels}|${lvl}|${placingItem?.kind === "wall"}`} enabled>
       <RoomShell
         hiddenWalls={hiddenWalls}
         wallTargeting={placingItem?.kind === "wall"}
@@ -2490,7 +2640,7 @@ function RoomScene({
         onWallPointer={onWallPointer}
         onDoor={() => {
           if (hasPlot(housingTier) && lvl === 0) {
-            handleFloorLocomotion(new THREE.Vector3(0, 0, pose.position[2] > 4.8 ? 2.5 : 6.8));
+            handleFloorLocomotion(new THREE.Vector3(0, 0, pose.position[2] > HALF - 0.2 ? HALF - 2.5 : HALF + 1.8));
           } else {
             interact("door");
           }
@@ -2501,8 +2651,10 @@ function RoomScene({
         panels={style.panels}
         balcony={!!rooms?.some((r) => r.id === "balcony") || (hasPlot(housingTier) && lvl === 0)}
       />
+      </MergeStatic>
 
       {/* The kitchen and bathroom */}
+      <MergeStatic version={`fx|${housingTier}|${lvl}|${using ?? ""}|${upView}|${roofed}|${style.wall}`} enabled>
       <HomeFixtures
         fixtures={fixtures}
         running={using}
@@ -2512,6 +2664,7 @@ function RoomScene({
         wallH={upView ? 1.15 : roofed ? WALL_HEIGHT : 2.6}
         onUse={busy ? undefined : goUseFixture}
       />
+      </MergeStatic>
 
       {/* Two-storey homes: the rooms of the floor on show */}
       {levelDef && (
@@ -2545,14 +2698,19 @@ function RoomScene({
       {rooms?.some((r) => r.id === "balcony") && <Balcony room={rooms.find((r) => r.id === "balcony")!} onFloorClick={handleFloorLocomotion} />}
       {/* Townhouses and villas: the pool, garage, garden… added outside (ground floor only). */}
       {hasPlot(housingTier) && lvl === 0 && (
+        <MergeStatic version={`grounds|${(style.exterior ?? []).join()}|${(ownFleet ?? []).map((c) => c.plate).join()}|${ownCar?.plate ?? ""}|${poolCovered}|${objectInUse?.kind ?? ""}`} enabled>
         <HomeGrounds
           items={style.exterior ?? []}
           car={ownCar}
+          fleet={ownFleet}
+          size={ROOM_SIZE}
           activity={objectInUse?.kind === "car" ? activity : undefined}
           poolCovered={poolCovered}
           onUse={busy ? undefined : (what) => startGroundsUse(what)}
+          onCar={busy ? undefined : startCarUse}
           onGroundClick={busy ? undefined : handleFloorLocomotion}
         />
+        </MergeStatic>
       )}
 
       {/* Visual Click-to-Walk Destination Beacon */}
@@ -2569,58 +2727,9 @@ function RoomScene({
         </group>
       )}
 
-      {/* Owned and built-in furniture (the one being moved is shown as a ghost instead) */}
-      {furniture.map((f) => {
-        const item = getCatalogItem(f.itemId);
-        if (!item || !f.placement || f.uid === placing?.uid || levelOf(f.placement) !== lvl) return null;
-        if (!item.model && !item.visual && item.kind !== "wall" && !item.id.includes("tv")) return null;
-        // A party: what's in the way of the dance floor is put away (lib: partyLite).
-        if (partyDecor !== undefined && clearedForParty(item)) return null;
-        // Wall art disappears with its wall when that wall is cut away.
-        if (f.placement.kind === "wall" && hiddenWalls.has(f.placement.wall)) return null;
-        return (
-          <PlacedTransform key={f.uid} item={item} placement={f.placement}>
-            <Suspense fallback={null}>
-              <group
-                onClick={(e) => {
-                  if (placing || e.delta > DRAG_THRESHOLD) return;
-                  // Decorating: pick it up to move. Otherwise: use it (sit, sleep, open the fridge).
-                  if (decorating) { e.stopPropagation(); if (!item.fixed) onPickUp?.(f.uid); return; }
-                  if (item.interaction) { e.stopPropagation(); interact(item.interaction, item, f.placement); return; }
-                  // The TV, aquarium, dining table, kitchen counter: walk over and choose what to do.
-                  const obj = homeObjectOf(item);
-                  if (obj && f.placement?.kind === "floor" && !busy) { e.stopPropagation(); startObjectUse(f.uid, obj, item, f.placement); }
-                }}
-                onPointerOver={(decorating && !placing && !item.fixed) || ((item.interaction || homeObjectOf(item)) && !busy) ? hoverCursor(true) : undefined}
-                onPointerOut={hoverCursor(false)}
-              >
-                <ItemVisual item={item} activity={using === f.uid ? activity : undefined} customColor={f.customColor} />
-
-                {/* Tactile Decorate-mode hit plate and visual highlight for every movable item */}
-                {decorating && !placing && !item.fixed && f.placement.kind === "floor" && (
-                  <group>
-                    <mesh
-                      rotation={[-Math.PI / 2, 0, 0]}
-                      position={[0, 0.015, 0]}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onPickUp?.(f.uid);
-                      }}
-                    >
-                      <planeGeometry args={[item.size[0] * CELL - 0.02, item.size[1] * CELL - 0.02]} />
-                      <meshBasicMaterial color="#10b981" transparent opacity={0.35} depthWrite={false} />
-                    </mesh>
-                    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.018, 0]} raycast={() => null}>
-                      <ringGeometry args={[0.18, 0.24, 16]} />
-                      <meshBasicMaterial color="#34d399" transparent opacity={0.8} />
-                    </mesh>
-                  </group>
-                )}
-              </group>
-            </Suspense>
-          </PlacedTransform>
-        );
-      })}
+      {/* Owned and built-in furniture (the one being moved is shown as a ghost instead). Outside decorating, the
+          parts that never move are baked into a few meshes (sceneLite), so big homes stay light on phones. */}
+      {furnitureLayer}
 
       {/* Placement ghost + footprint */}
       {placingItem && ghost && !(ghost.kind === "wall" && hiddenWalls.has(ghost.wall)) && (
@@ -2636,7 +2745,7 @@ function RoomScene({
                 if (!isPointerDownRef.current && (e.buttons ?? 0) === 0) return;
                 e.stopPropagation();
                 if (placing && placingItem.kind !== "wall") {
-                  const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl, furniture, placing.uid);
+                  const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl, furniture, placing.uid, ROOM_SIZE);
                   setMoved({ uid: placing.uid, placement: next });
                 }
               }}
@@ -2672,7 +2781,7 @@ function RoomScene({
                 if (!isPointerDownRef.current && (e.buttons ?? 0) === 0) return;
                 e.stopPropagation();
                 if (placing) {
-                  const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl, furniture, placing.uid);
+                  const next = floorPlacementAt(placingItem.size, placing.rot, e.point, lvl, furniture, placing.uid, ROOM_SIZE);
                   setMoved({ uid: placing.uid, placement: next });
                 }
               }}
@@ -2694,8 +2803,8 @@ function RoomScene({
           {/* Asleep: laid flat on the back, head along the bed. */}
           {/* Walking always shows walking (no sliding); what the page asks for (dancing, sitting) is when you stop. */}
           <group position={shownSleep && !pose.lie ? [0, 0.12, 0] : [0, 0, 0]}>
-            <CitizenAvatar look={look} animation={shown} rotation={pose.lie || shownSleep ? [-Math.PI / 2, 0, 0] : [0, 0, 0]}
-              holding={cradle ? undefined : holding?.prop} carryMode={!cradle && holding ? (animation === "walk" ? "hold" : holding.mode) : undefined}
+            <CitizenAvatar look={look} animation={shown} pace={pace} rotation={pose.lie || shownSleep ? [-Math.PI / 2, 0, 0] : [0, 0, 0]}
+              holding={cradle ? undefined : holding?.prop} carryMode={!cradle && holding ? (animation === "walk" || animation === "run" ? "hold" : holding.mode) : undefined}
               rig={cradle ? cradleRig : undefined} />
           </group>
           {/* Carrying the baby: in my arms. */}
@@ -2705,6 +2814,7 @@ function RoomScene({
         {people.map((p, i) => <PersonAvatar key={i} p={p} id={`p${i}`} labels={labels} />)}
       </Suspense>
     </BeddingContext.Provider>
+    </GeomContext.Provider>
   );
 }
 
@@ -2713,13 +2823,20 @@ export interface PlotZone { id: string; label: string; icon: string; cam: [numbe
 // north, the driveway north-west).
 const INSIDE_ZONE: PlotZone = { id: "inside", label: "Inside", icon: "🏠", cam: [0, 0], walk: [0, 1.5] };
 const noSubscribe = () => () => {};
-const PLOT_ZONES: PlotZone[] = [
-  INSIDE_ZONE,
-  { id: "pool", label: "Pool", icon: "🏊", cam: [10.5, 1], walk: [7.8, 1] },
-  { id: "garden", label: "Garden & BBQ", icon: "🌳", cam: [8.5, 10], walk: [8.5, 8.8] },
-  { id: "majlis", label: "Majlis", icon: "⛺", cam: [0, 12.5], walk: [0, 11.5] },
-  { id: "carpark", label: "Car Park", icon: "🚗", cam: [-10.5, 7], walk: [-8.5, 7] },
-];
+/** The plot's parts round a house S metres wide (lib HomeGrounds lays them out the same way). */
+const plotZones = (S: number): PlotZone[] => {
+  const g = groundsFor(S), e = g.e;
+  return [
+    INSIDE_ZONE,
+    { id: "pool", label: "Pool", icon: "🏊", cam: [g.pool.x, 1], walk: [g.pool.x - g.pool.w / 2 - 0.7, 1] },
+    { id: "garden", label: "Garden & BBQ", icon: "🌳", cam: [8.5 + e, 10 + e], walk: [8.5 + e, 8.8 + e] },
+    { id: "majlis", label: "Majlis", icon: "⛺", cam: [0, 12.5 + e], walk: [0, 11.5 + e] },
+    // Villas and mansions: the car gallery off the west wall; townhouses: the car park by the gate.
+    S >= 14
+      ? { id: "carpark", label: "Garage", icon: "🚗", cam: [-S / 2 - 8, -1], walk: [-S / 2 - 1.5, S / 2 - 3] }
+      : { id: "carpark", label: "Car Park", icon: "🚗", cam: [-10.5 - e, 7 + e], walk: [-8.5 - e, 7 + e] },
+  ];
+};
 
 interface WebGLErrorBoundaryState {
   hasError: boolean;
@@ -2788,7 +2905,10 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
   // The zone bar: the plot's parts, plus anything outside the page adds (a party game), for any home.
   const extraZones = (props.level ?? 0) === 0 ? props.extraZones ?? [] : [];
   // The page's own stops (the game) come straight after Inside, so they're in sight on a phone.
-  const zones = [INSIDE_ZONE, ...extraZones, ...(showPlotScroll ? PLOT_ZONES.slice(1) : [])];
+  const homeGeomNow = geomOfTier(props.housingTier ?? "studio");
+  const zones = [INSIDE_ZONE, ...extraZones, ...(showPlotScroll ? plotZones(homeGeomNow.S).slice(1) : [])];
+  // Bigger homes: the camera may pull further back.
+  const roomy = 1 + (homeGeomNow.S - 10) / 16;
   const showZoneBar = (showPlotScroll || extraZones.length > 0) && !props.clean;
   const coarse = useSyncExternalStore(noSubscribe, isCoarsePointer, () => false);
   const goZone = (z: PlotZone) => {
@@ -2928,15 +3048,17 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
               // No sun shadows at a party: that pass draws every guest and piece of furniture a second time.
               castShadow={props.partyDecor === undefined}
               shadow-mapSize={quality.shadowMapSize}
-              shadow-camera-left={-6}
-              shadow-camera-right={6}
-              shadow-camera-top={6}
-              shadow-camera-bottom={-6}
+              shadow-camera-left={-homeGeomNow.half - 1}
+              shadow-camera-right={homeGeomNow.half + 1}
+              shadow-camera-top={homeGeomNow.half + 1}
+              shadow-camera-bottom={-homeGeomNow.half - 1}
               shadow-bias={-0.0005}
             />
             <pointLight position={[0, 2.6, 0]} intensity={props.lightsOut ? 1.2 : 6} distance={9} color={props.lightsOut ? "#c084fc" : "#fde68a"} />
 
             <PartyOn.Provider value={props.partyDecor !== undefined}>
+            {/* The lamps share a few real lights, which go to the lamps nearest where you're looking (sceneLite). */}
+            <LightPool count={quality.shadows ? 4 : 2}>
             <Suspense fallback={null}>
               <RoomScene
                 {...props}
@@ -2948,9 +3070,10 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
                 setIsDraggingItem={setIsDraggingItem}
               />
             </Suspense>
+            </LightPool>
             </PartyOn.Provider>
             {props.extras}
-            {props.partyDecor && <PartyDecor decor={props.partyDecor} w={ROOM_SIZE} d={ROOM_SIZE} h={WALL_HEIGHT} />}
+            {props.partyDecor && <PartyDecor decor={props.partyDecor} w={homeGeomNow.S} d={homeGeomNow.S} h={WALL_HEIGHT} />}
 
             <OrbitControls
               makeDefault
@@ -2962,7 +3085,7 @@ export function ApartmentRoom(props: ApartmentRoomProps & { loadingLabel?: strin
               minPolarAngle={props.upView ? 0.2 : props.view === "eye" ? 0.35 : props.view === "inside" ? 0.95 : 0.35}
               maxPolarAngle={props.upView ? 1.15 : props.view === "eye" ? 2.4 : props.view === "inside" ? 1.75 : 1.25}
               minDistance={props.upView ? 6 : props.view === "eye" ? 0.05 : props.view === "inside" ? 1.8 : 6}
-              maxDistance={props.upView ? 38 : props.view === "eye" ? EYE_BACK + 0.15 : props.view === "inside" ? 7 : showZoneBar ? 38 : 30}
+              maxDistance={props.upView ? 38 * roomy : props.view === "eye" ? EYE_BACK + 0.15 : props.view === "inside" ? 7 : (showZoneBar ? 38 : 30) * roomy}
             />
             <SnapProbe />
           </Canvas>

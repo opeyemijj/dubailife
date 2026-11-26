@@ -20,6 +20,7 @@ import { gameAudio } from "@/utils/gameAudio";
 import { carOf, paintName } from "@/lib/cars";
 import { snapUrl, userPosts } from "@/lib/social";
 import { PostCard } from "@/components/social/PostCard";
+import { PASSPORT, PASSPORT_SIZE } from "@/lib/city/abuDhabi/passport";
 
 interface Profile {
   id: string; username: string; name: string | null; look: AvatarLookProps | null; joined: string; online: boolean; lastSeen: string | null;
@@ -49,9 +50,13 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
   const [p, setP] = useState<Profile | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
 
+  // Stamps in the Abu Dhabi Passport: a full book is the Abu Dhabi Explorer title.
+  const [stamps, setStamps] = useState(0);
   const load = useCallback(async () => {
     const { data } = await supabase().rpc("public_profile", { p_username: decodeURIComponent(username) });
-    setP((data as Profile | null) ?? null);
+    const prof = (data as Profile | null) ?? null;
+    setP(prof);
+    if (prof?.id) void supabase().rpc("passport_count", { p_user: prof.id }).then(({ data: n }) => setStamps(Number(n ?? 0)));
   }, [username]);
   useEffect(() => { const t = setTimeout(() => void load(), 0); return () => clearTimeout(t); }, [load]);
 
@@ -88,6 +93,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
         <div className="flex flex-wrap justify-center gap-1.5">
           {p.topRank && <Link href="/top" className="rounded-full bg-amber-400/20 text-amber-200 px-2.5 py-1 text-xs font-black">🏆 #{p.topRank} top user</Link>}
           {p.richRank && p.richRank <= 10 && <Link href="/top?tab=rich" className="rounded-full bg-sky-400/20 text-sky-200 px-2.5 py-1 text-xs font-black">💎 #{p.richRank} richest</Link>}
+          {stamps >= PASSPORT_SIZE && <span className="rounded-full bg-teal-400/20 text-teal-100 px-2.5 py-1 text-xs font-black">🏅 {PASSPORT.title}</span>}
           {p.generous && <Link href="/top?tab=givers" className="rounded-full bg-amber-100 text-amber-800 px-2.5 py-1 text-xs font-black">💛 Generous</Link>}
           {p.partner && <Link href={`/u/${p.partner.username}`} className="rounded-full bg-rose-400/20 text-rose-200 px-2.5 py-1 text-xs font-black">💍 {p.partner.status === "married" ? "Married to" : p.partner.status === "engaged" ? "Engaged to" : "Dating"} @{p.partner.username}</Link>}
         </div>

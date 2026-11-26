@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { VenueRoute } from "@/components/interior/VenueRoute";
 import { getPlace } from "@/lib/city/places";
+// The other cities' places (Abu Dhabi's "ad-…") register themselves when the city list loads.
+import "@/lib/city/cities";
 import { SITE } from "@/lib/site";
 
 type Params = { params: Promise<{ placeId: string }> };

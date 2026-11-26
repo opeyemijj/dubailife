@@ -60,6 +60,8 @@ export interface VenueActivity {
   /** Opens a 3D attraction game (src/components/arcade): its id, and what it starts with. */
   arcade?: string;
   arcadeParams?: Record<string, unknown>;
+  /** Opens a page instead (flying from the airport: /fly). */
+  href?: string;
 }
 
 export interface Venue {

@@ -27,6 +27,7 @@ import { ApartmentRoom, type PlacingState } from "@/components/home/ApartmentRoo
 import { CATALOG, getCatalogItem, housingTierFor, withHomeItems, HOUSING_CONFIGS, type CatalogItem, type OwnedFurniture, type Placement, type Rotation, type HousingTier, type HomeStyle } from "@/lib/furniture";
 import { adjustBalance, useCitizen, useRequireCitizen } from "@/lib/citizenStore";
 import { getEntity } from "@/lib/city/geo";
+import { CityGate } from "@/components/city/CityGate";
 import { isGenericHome, towerName } from "@/lib/city/partyHome";
 import { TowerArrival } from "./TowerArrival";
 import { HomeLookSheet } from "@/components/home/HomeLookSheet";
@@ -52,13 +53,19 @@ import { VehicleTheftModal } from "@/components/cars/VehicleTheftModal";
 import { DriveSheet } from "@/components/home/DriveSheet";
 import { DriveJourney } from "@/components/cars/DriveJourney";
 import { ModalPortal } from "@/components/ui/modal-portal";
+import { cityOfPlace, mapPathFor } from "@/lib/city/cities";
 
 /** Unique id for a newly bought piece of furniture. */
 const newUid = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
 type Door = { state: "checking" } | { state: "closed"; reason: string } | { state: "knocking"; requestId: string } | { state: "denied" } | { state: "open"; canEdit: boolean; reason: string };
 
+/** A home's page, in its own city only (from the other city it's a flight away: CityGate). */
 export function PropertyRoute({ buildingId, unit }: { buildingId: string; unit: string }) {
+  return <CityGate city={cityOfPlace(buildingId)} what={getEntity(buildingId)?.name ?? "This home"}><PropertyInCity buildingId={buildingId} unit={unit} /></CityGate>;
+}
+
+function PropertyInCity({ buildingId, unit }: { buildingId: string; unit: string }) {
   const router = useRouter();
   const { citizen, hydrated } = useRequireCitizen();
   const flatId = `${buildingId}:${unit}`;
@@ -107,7 +114,7 @@ export function PropertyRoute({ buildingId, unit }: { buildingId: string; unit: 
   }, [hydrated, citizen?.id, atBuilding, load]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (hydrated && citizen && building && !atBuilding && !generic) router.replace(`/explore?open=${buildingId}`);
+    if (hydrated && citizen && building && !atBuilding && !generic) router.replace(`${mapPathFor(buildingId)}?open=${buildingId}`);
   }, [hydrated, citizen, building, atBuilding, buildingId, router, generic]);
 
   if (!hydrated || !citizen) return <Blank />;
@@ -122,7 +129,7 @@ export function PropertyRoute({ buildingId, unit }: { buildingId: string; unit: 
   if (flat && (generic || (flat.floor ?? 0) >= 1) && !upstairs) {
     return <TowerArrival floor={flat.floor ?? 12} unit={flat.unit} tower={building.name ?? "Residences"} look={citizen.look} onDone={() => setUpstairs(true)} />;
   }
-  if (flat === null) return <Card><h1 className="text-xl font-black">That home isn&apos;t in this building</h1><Link href={`/explore?open=${buildingId}`} className="mt-4 inline-block px-4 py-2 rounded-xl bg-emerald-500 text-white font-black">See the homes here</Link></Card>;
+  if (flat === null) return <Card><h1 className="text-xl font-black">That home isn&apos;t in this building</h1><Link href={`${mapPathFor(buildingId)}?open=${buildingId}`} className="mt-4 inline-block px-4 py-2 rounded-xl bg-emerald-500 text-white font-black">See the homes here</Link></Card>;
 
   if (door.state !== "open") {
     return <DoorStep flat={flat} door={door} setDoor={setDoor} onEnter={load} buildingName={building.name ?? ""} />;
@@ -139,7 +146,7 @@ export function PropertyRoute({ buildingId, unit }: { buildingId: string; unit: 
       look={citizen.look}
       lookOfHome={style}
       setLookOfHome={setStyle}
-      onExit={() => router.push(generic ? "/explore" : `/explore?at=${buildingId}`)}
+      onExit={() => router.push(generic ? "/explore" : `${mapPathFor(buildingId)}?at=${buildingId}`)}
       onChanged={load}
     />
   );
@@ -196,7 +203,7 @@ function DoorStep({ flat, door, setDoor, onEnter, buildingName }: { flat: FlatVi
           <button onClick={knock} className="w-full py-3 rounded-xl bg-slate-900 text-white font-black">✊ Knock on the door</button>
         )}
         {error && <p className="text-xs font-bold text-rose-600">{error}</p>}
-        <Link href={isGenericHome(flat.building_id) ? "/explore" : `/explore?open=${flat.building_id}`} className="block w-full py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm">{isGenericHome(flat.building_id) ? "Back to the city" : "Back to the building"}</Link>
+        <Link href={isGenericHome(flat.building_id) ? "/explore" : `${mapPathFor(flat.building_id)}?open=${flat.building_id}`} className="block w-full py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm">{isGenericHome(flat.building_id) ? "Back to the city" : "Back to the building"}</Link>
       </div>
     </Card>
   );

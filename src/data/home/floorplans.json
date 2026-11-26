@@ -4399,15 +4399,15 @@
       "icon": "🚪",
       "desc": "Front door, console and the way to every room",
       "bounds": {
-       "minX": -5,
-       "maxX": 5,
-       "minZ": -1,
-       "maxZ": 1
+       "minX": -9,
+       "maxX": 1,
+       "minZ": -5,
+       "maxZ": -3
       },
       "center": [
-       -3.5,
+       -7.5,
        0,
-       0
+       -4
       ]
      },
      {
@@ -4416,15 +4416,15 @@
       "icon": "🍳",
       "desc": "Closed kitchen with island and laundry",
       "bounds": {
-       "minX": -5,
-       "maxX": -1,
-       "minZ": -5,
-       "maxZ": -1
+       "minX": -9,
+       "maxX": -5,
+       "minZ": -9,
+       "maxZ": -5
       },
       "center": [
-       -3.0,
+       -7.0,
        0,
-       -3.0
+       -7.0
       ]
      },
      {
@@ -4433,15 +4433,15 @@
       "icon": "🍽️",
       "desc": "Dining table for six",
       "bounds": {
-       "minX": -1,
-       "maxX": 3.5,
-       "minZ": -5,
-       "maxZ": -1
+       "minX": -5,
+       "maxX": -0.5,
+       "minZ": -9,
+       "maxZ": -5
       },
       "center": [
-       1.25,
+       -2.75,
        0,
-       -3.0
+       -7.0
       ]
      },
      {
@@ -4450,15 +4450,15 @@
       "icon": "🚽",
       "desc": "Off the dining room",
       "bounds": {
-       "minX": 3.5,
-       "maxX": 5,
-       "minZ": -5,
-       "maxZ": -3
+       "minX": -0.5,
+       "maxX": 1,
+       "minZ": -9,
+       "maxZ": -7
       },
       "center": [
-       4.25,
+       0.25,
        0,
-       -4.0
+       -8.0
       ]
      },
      {
@@ -4467,27 +4467,95 @@
       "icon": "🛋️",
       "desc": "Sofas, majlis and the TV wall",
       "bounds": {
-       "minX": -5,
-       "maxX": 5,
-       "minZ": 1,
-       "maxZ": 5
+       "minX": -9,
+       "maxX": 1,
+       "minZ": -3,
+       "maxZ": 1
       },
       "center": [
+       -4,
        0,
+       -1
+      ]
+     },
+     {
+      "id": "gym",
+      "label": "Sky gym",
+      "icon": "🏋️",
+      "desc": "Treadmills, a power rack and dumbbells",
+      "bounds": {
+       "minX": 1,
+       "maxX": 9,
+       "minZ": -9,
+       "maxZ": -4
+      },
+      "center": [
+       5.0,
        0,
-       3
+       -6.5
+      ]
+     },
+     {
+      "id": "library",
+      "label": "Library & study",
+      "icon": "📚",
+      "desc": "Shelves of books, reading chairs and a desk",
+      "bounds": {
+       "minX": 1,
+       "maxX": 9,
+       "minZ": -4,
+       "maxZ": 1
+      },
+      "center": [
+       5.0,
+       0,
+       -1.5
+      ]
+     },
+     {
+      "id": "cinema",
+      "label": "Home cinema",
+      "icon": "🎬",
+      "desc": "A big screen and leather recliners",
+      "bounds": {
+       "minX": -9,
+       "maxX": -1,
+       "minZ": 1,
+       "maxZ": 9
+      },
+      "center": [
+       -5.0,
+       0,
+       5.0
+      ]
+     },
+     {
+      "id": "games",
+      "label": "Sky bar & games",
+      "icon": "🎱",
+      "desc": "Billiards, the bar and arcade machines",
+      "bounds": {
+       "minX": -1,
+       "maxX": 9,
+       "minZ": 1,
+       "maxZ": 9
+      },
+      "center": [
+       4.0,
+       0,
+       5.0
       ]
      }
     ],
     "walls": [
      {
       "a": [
-       -5,
-       -1
+       -9,
+       -5
       ],
       "b": [
-       -1,
-       -1
+       -5,
+       -5
       ],
       "door": [
        2,
@@ -4496,22 +4564,22 @@
      },
      {
       "a": [
-       -1,
-       -5
+       -5,
+       -9
       ],
       "b": [
-       -1,
-       -1
+       -5,
+       -5
       ]
      },
      {
       "a": [
-       3.5,
-       -5
+       -0.5,
+       -9
       ],
       "b": [
-       3.5,
-       -3
+       -0.5,
+       -7
       ],
       "door": [
        0.6,
@@ -4520,12 +4588,82 @@
      },
      {
       "a": [
-       3.5,
-       -3
+       -0.5,
+       -7
       ],
       "b": [
+       1,
+       -7
+      ]
+     },
+     {
+      "a": [
+       1,
+       -9
+      ],
+      "b": [
+       1,
+       1
+      ],
+      "door": [
+       7,
+       8.4
+      ]
+     },
+     {
+      "a": [
+       -9,
+       1
+      ],
+      "b": [
+       1,
+       1
+      ],
+      "door": [
+       2.6,
+       3.9
+      ]
+     },
+     {
+      "a": [
+       1,
+       -4
+      ],
+      "b": [
+       9,
+       -4
+      ],
+      "door": [
+       4,
+       5.4
+      ]
+     },
+     {
+      "a": [
+       1,
+       1
+      ],
+      "b": [
+       9,
+       1
+      ],
+      "door": [
        5,
-       -3
+       6.4
+      ]
+     },
+     {
+      "a": [
+       -1,
+       1
+      ],
+      "b": [
+       -1,
+       9
+      ],
+      "door": [
+       3,
+       4.4
       ]
      }
     ]
@@ -4540,15 +4678,15 @@
       "icon": "🪜",
       "desc": "Top of the stairs",
       "bounds": {
-       "minX": -5,
-       "maxX": 5,
-       "minZ": -1,
-       "maxZ": 1
+       "minX": -9,
+       "maxX": 1,
+       "minZ": -5,
+       "maxZ": -3
       },
       "center": [
-       4,
        0,
-       0
+       0,
+       -4
       ]
      },
      {
@@ -4557,15 +4695,15 @@
       "icon": "🛁",
       "desc": "Shower and double vanity",
       "bounds": {
-       "minX": -5,
-       "maxX": -2,
-       "minZ": -5,
-       "maxZ": -1
+       "minX": -9,
+       "maxX": -6,
+       "minZ": -9,
+       "maxZ": -5
       },
       "center": [
-       -3.5,
+       -7.5,
        0,
-       -3.0
+       -7.0
       ]
      },
      {
@@ -4574,15 +4712,15 @@
       "icon": "🛏️",
       "desc": "Off the landing",
       "bounds": {
-       "minX": -2,
-       "maxX": 3.5,
-       "minZ": -5,
-       "maxZ": -1
+       "minX": -6,
+       "maxX": -0.5,
+       "minZ": -9,
+       "maxZ": -5
       },
       "center": [
-       0.75,
+       -3.25,
        0,
-       -3.0
+       -7.0
       ]
      },
      {
@@ -4591,15 +4729,15 @@
       "icon": "👑",
       "desc": "King bed, walk-in wardrobe and en-suite",
       "bounds": {
-       "minX": -5,
-       "maxX": 0,
-       "minZ": 1,
-       "maxZ": 5
+       "minX": -9,
+       "maxX": -4,
+       "minZ": -3,
+       "maxZ": 1
       },
       "center": [
-       -2,
+       -6,
        0,
-       2.5
+       -1.5
       ]
      },
      {
@@ -4608,15 +4746,15 @@
       "icon": "🛁",
       "desc": "Shower, vanity, toilet",
       "bounds": {
-       "minX": -5,
-       "maxX": -3,
-       "minZ": 3,
-       "maxZ": 5
+       "minX": -9,
+       "maxX": -7,
+       "minZ": -1,
+       "maxZ": 1
       },
       "center": [
-       -4.0,
+       -8.0,
        0,
-       4.0
+       0.0
       ]
      },
      {
@@ -4625,27 +4763,95 @@
       "icon": "🛏️",
       "desc": "Double bed and desk",
       "bounds": {
-       "minX": 0,
-       "maxX": 5,
-       "minZ": 1,
-       "maxZ": 5
+       "minX": -4,
+       "maxX": 1,
+       "minZ": -3,
+       "maxZ": 1
       },
       "center": [
-       2.5,
+       -1.5,
        0,
-       3.0
+       -1.0
+      ]
+     },
+     {
+      "id": "guest",
+      "label": "Guest suite",
+      "icon": "🛏️",
+      "desc": "A double bed and its own shower room",
+      "bounds": {
+       "minX": 1,
+       "maxX": 9,
+       "minZ": -9,
+       "maxZ": -5
+      },
+      "center": [
+       5.0,
+       0,
+       -7.0
+      ]
+     },
+     {
+      "id": "spa",
+      "label": "Upper lounge & spa",
+      "icon": "🫧",
+      "desc": "A jacuzzi and lounge chairs",
+      "bounds": {
+       "minX": 1,
+       "maxX": 9,
+       "minZ": -5,
+       "maxZ": 1
+      },
+      "center": [
+       5.0,
+       0,
+       -2.0
+      ]
+     },
+     {
+      "id": "family",
+      "label": "Family lounge",
+      "icon": "🛋️",
+      "desc": "Sofas and games for everyone",
+      "bounds": {
+       "minX": -1,
+       "maxX": 9,
+       "minZ": 1,
+       "maxZ": 9
+      },
+      "center": [
+       4.0,
+       0,
+       5.0
+      ]
+     },
+     {
+      "id": "bed5",
+      "label": "Bedroom 5",
+      "icon": "🛏️",
+      "desc": "Canopy bed and wardrobe",
+      "bounds": {
+       "minX": -9,
+       "maxX": -1,
+       "minZ": 1,
+       "maxZ": 9
+      },
+      "center": [
+       -5.0,
+       0,
+       5.0
       ]
      }
     ],
     "walls": [
      {
       "a": [
-       -5,
-       -1
+       -9,
+       -5
       ],
       "b": [
-       -2,
-       -1
+       -6,
+       -5
       ],
       "door": [
        1,
@@ -4654,12 +4860,12 @@
      },
      {
       "a": [
-       -2,
-       -1
+       -6,
+       -5
       ],
       "b": [
-       3.5,
-       -1
+       -0.5,
+       -5
       ],
       "door": [
        2,
@@ -4668,32 +4874,32 @@
      },
      {
       "a": [
-       -2,
-       -5
+       -6,
+       -9
       ],
       "b": [
-       -2,
-       -1
+       -6,
+       -5
       ]
      },
      {
       "a": [
-       3.5,
-       -5
+       -0.5,
+       -9
       ],
       "b": [
-       3.5,
-       -1
+       -0.5,
+       -5
       ]
      },
      {
       "a": [
-       -5,
-       1
+       -9,
+       -3
       ],
       "b": [
-       0,
-       1
+       -4,
+       -3
       ],
       "door": [
        3,
@@ -4702,12 +4908,12 @@
      },
      {
       "a": [
-       0,
-       1
+       -4,
+       -3
       ],
       "b": [
-       5,
-       1
+       1,
+       -3
       ],
       "door": [
        1,
@@ -4716,22 +4922,22 @@
      },
      {
       "a": [
-       0,
-       1
+       -4,
+       -3
       ],
       "b": [
-       0,
-       5
+       -4,
+       1
       ]
      },
      {
       "a": [
-       -5,
-       3
+       -9,
+       -1
       ],
       "b": [
-       -3,
-       3
+       -7,
+       -1
       ],
       "door": [
        0.5,
@@ -4740,12 +4946,102 @@
      },
      {
       "a": [
-       -3,
-       3
+       -7,
+       -1
       ],
       "b": [
-       -3,
-       5
+       -7,
+       1
+      ]
+     },
+     {
+      "a": [
+       1,
+       -9
+      ],
+      "b": [
+       1,
+       1
+      ],
+      "door": [
+       4.6,
+       5.9
+      ]
+     },
+     {
+      "a": [
+       -9,
+       1
+      ],
+      "b": [
+       1,
+       1
+      ]
+     },
+     {
+      "a": [
+       1,
+       -5
+      ],
+      "b": [
+       9,
+       -5
+      ],
+      "door": [
+       1.2,
+       2.6
+      ]
+     },
+     {
+      "a": [
+       1,
+       1
+      ],
+      "b": [
+       9,
+       1
+      ],
+      "door": [
+       5,
+       6.4
+      ]
+     },
+     {
+      "a": [
+       -1,
+       1
+      ],
+      "b": [
+       -1,
+       9
+      ],
+      "door": [
+       3,
+       4.4
+      ]
+     },
+     {
+      "a": [
+       6,
+       -9
+      ],
+      "b": [
+       6,
+       -7
+      ]
+     },
+     {
+      "a": [
+       6,
+       -7
+      ],
+      "b": [
+       9,
+       -7
+      ],
+      "door": [
+       0.8,
+       1.8
       ]
      }
     ]
@@ -5172,6 +5468,485 @@
     "rot": 0,
     "visual": "grand-piano",
     "interaction": "chair"
+   },
+   {
+    "id": "gym_treadmill_1",
+    "name": "Smart treadmill",
+    "icon": "🏃",
+    "size": [
+     2,
+     4
+    ],
+    "col": 21,
+    "row": 1,
+    "rot": 0,
+    "visual": "treadmill"
+   },
+   {
+    "id": "gym_treadmill_2",
+    "name": "Smart treadmill",
+    "icon": "🏃",
+    "size": [
+     2,
+     4
+    ],
+    "col": 24,
+    "row": 1,
+    "rot": 0,
+    "visual": "treadmill"
+   },
+   {
+    "id": "gym_rack",
+    "name": "Power rack & bench",
+    "icon": "🏋️",
+    "size": [
+     5,
+     4
+    ],
+    "col": 29,
+    "row": 1,
+    "rot": 0,
+    "visual": "power-rack"
+   },
+   {
+    "id": "gym_dumbbells",
+    "name": "Dumbbell rack & mirror",
+    "icon": "💪",
+    "size": [
+     4,
+     1
+    ],
+    "col": 35,
+    "row": 3,
+    "rot": 1,
+    "visual": "dumbbell-rack"
+   },
+   {
+    "id": "lib_shelf_1",
+    "name": "Library bookcase",
+    "icon": "📚",
+    "size": [
+     4,
+     1
+    ],
+    "col": 20,
+    "row": 10,
+    "rot": 0,
+    "visual": "bookcase"
+   },
+   {
+    "id": "lib_shelf_2",
+    "name": "Library bookcase",
+    "icon": "📚",
+    "size": [
+     4,
+     1
+    ],
+    "col": 24,
+    "row": 10,
+    "rot": 0,
+    "visual": "bookcase"
+   },
+   {
+    "id": "lib_shelf_3",
+    "name": "Library bookcase",
+    "icon": "📚",
+    "size": [
+     4,
+     1
+    ],
+    "col": 31,
+    "row": 10,
+    "rot": 0,
+    "visual": "bookcase"
+   },
+   {
+    "id": "lib_shelf_4",
+    "name": "Library bookcase",
+    "icon": "📚",
+    "size": [
+     4,
+     1
+    ],
+    "col": 35,
+    "row": 12,
+    "rot": 1,
+    "visual": "bookcase"
+   },
+   {
+    "id": "lib_rug",
+    "name": "Reading rug",
+    "icon": "⭕",
+    "size": [
+     4,
+     4
+    ],
+    "col": 24,
+    "row": 13,
+    "rot": 0,
+    "visual": "rug-round"
+   },
+   {
+    "id": "lib_chair_1",
+    "name": "Reading armchair",
+    "icon": "🪑",
+    "size": [
+     2,
+     2
+    ],
+    "col": 23,
+    "row": 14,
+    "rot": 0,
+    "visual": "armchair",
+    "interaction": "chair"
+   },
+   {
+    "id": "lib_chair_2",
+    "name": "Reading armchair",
+    "icon": "🪑",
+    "size": [
+     2,
+     2
+    ],
+    "col": 27,
+    "row": 14,
+    "rot": 0,
+    "visual": "armchair",
+    "interaction": "chair"
+   },
+   {
+    "id": "lib_desk",
+    "name": "Study desk",
+    "icon": "🖥️",
+    "size": [
+     3,
+     2
+    ],
+    "col": 30,
+    "row": 16,
+    "rot": 0,
+    "model": "/models/furniture/desk.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "cin_screen",
+    "name": "Cinema screen",
+    "icon": "🎬",
+    "size": [
+     9,
+     1
+    ],
+    "col": 3,
+    "row": 35,
+    "rot": 2,
+    "visual": "cinema-screen"
+   },
+   {
+    "id": "cin_row_1",
+    "name": "Cinema recliners",
+    "icon": "🍿",
+    "size": [
+     6,
+     2
+    ],
+    "col": 4,
+    "row": 25,
+    "rot": 0,
+    "visual": "recliners"
+   },
+   {
+    "id": "cin_row_2",
+    "name": "Cinema recliners",
+    "icon": "🍿",
+    "size": [
+     6,
+     2
+    ],
+    "col": 4,
+    "row": 29,
+    "rot": 0,
+    "visual": "recliners"
+   },
+   {
+    "id": "games_billiards",
+    "name": "Billiards table",
+    "icon": "🎱",
+    "size": [
+     6,
+     4
+    ],
+    "col": 21,
+    "row": 25,
+    "rot": 0,
+    "visual": "pool-table"
+   },
+   {
+    "id": "games_bar",
+    "name": "Home bar",
+    "icon": "🍹",
+    "size": [
+     6,
+     3
+    ],
+    "col": 33,
+    "row": 22,
+    "rot": 1,
+    "visual": "bar-counter"
+   },
+   {
+    "id": "games_arcade_1",
+    "name": "Arcade cabinet",
+    "icon": "🕹️",
+    "size": [
+     2,
+     2
+    ],
+    "col": 30,
+    "row": 33,
+    "rot": 2,
+    "visual": "arcade-cabinet"
+   },
+   {
+    "id": "games_arcade_2",
+    "name": "Arcade cabinet",
+    "icon": "🕹️",
+    "size": [
+     2,
+     2
+    ],
+    "col": 33,
+    "row": 33,
+    "rot": 2,
+    "visual": "arcade-cabinet"
+   },
+   {
+    "id": "games_palm",
+    "name": "Palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 17,
+    "row": 34,
+    "rot": 0,
+    "visual": "palm"
+   },
+   {
+    "id": "guest_bed",
+    "name": "Guest canopy bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 22,
+    "row": 0,
+    "rot": 0,
+    "visual": "canopy-bed",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "guest_side",
+    "name": "Bedside table",
+    "icon": "🕯️",
+    "size": [
+     1,
+     1
+    ],
+    "col": 26,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "spa_tub",
+    "name": "Spa jacuzzi",
+    "icon": "🫧",
+    "size": [
+     5,
+     5
+    ],
+    "col": 29,
+    "row": 9,
+    "rot": 0,
+    "visual": "spa-tub",
+    "level": 1
+   },
+   {
+    "id": "spa_chair_1",
+    "name": "Lounge chair",
+    "icon": "🪑",
+    "size": [
+     2,
+     2
+    ],
+    "col": 22,
+    "row": 12,
+    "rot": 0,
+    "visual": "armchair",
+    "interaction": "chair",
+    "level": 1
+   },
+   {
+    "id": "spa_chair_2",
+    "name": "Lounge chair",
+    "icon": "🪑",
+    "size": [
+     2,
+     2
+    ],
+    "col": 22,
+    "row": 15,
+    "rot": 0,
+    "visual": "armchair",
+    "interaction": "chair",
+    "level": 1
+   },
+   {
+    "id": "spa_palm",
+    "name": "Palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 35,
+    "row": 18,
+    "rot": 0,
+    "visual": "palm",
+    "level": 1
+   },
+   {
+    "id": "family_majlis",
+    "name": "Family majlis",
+    "icon": "🕌",
+    "size": [
+     4,
+     4
+    ],
+    "col": 18,
+    "row": 22,
+    "rot": 0,
+    "visual": "majlis",
+    "interaction": "chair",
+    "level": 1
+   },
+   {
+    "id": "family_sofa",
+    "name": "L-shaped lounge",
+    "icon": "🛋️",
+    "size": [
+     4,
+     4
+    ],
+    "col": 26,
+    "row": 24,
+    "rot": 0,
+    "model": "/models/furniture/l-couch.glb",
+    "interaction": "chair",
+    "level": 1
+   },
+   {
+    "id": "family_rug",
+    "name": "Round rug",
+    "icon": "⭕",
+    "size": [
+     5,
+     5
+    ],
+    "col": 24,
+    "row": 23,
+    "rot": 0,
+    "visual": "rug-round",
+    "level": 1
+   },
+   {
+    "id": "family_arcade",
+    "name": "Arcade cabinet",
+    "icon": "🕹️",
+    "size": [
+     2,
+     2
+    ],
+    "col": 33,
+    "row": 33,
+    "rot": 2,
+    "visual": "arcade-cabinet",
+    "level": 1
+   },
+   {
+    "id": "family_shelf",
+    "name": "Library bookcase",
+    "icon": "📚",
+    "size": [
+     4,
+     1
+    ],
+    "col": 18,
+    "row": 35,
+    "rot": 2,
+    "visual": "bookcase",
+    "level": 1
+   },
+   {
+    "id": "bed5_bed",
+    "name": "Canopy bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 5,
+    "row": 30,
+    "rot": 2,
+    "visual": "canopy-bed",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "bed5_side_l",
+    "name": "Bedside table",
+    "icon": "🕯️",
+    "size": [
+     1,
+     1
+    ],
+    "col": 4,
+    "row": 34,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "bed5_side_r",
+    "name": "Bedside table",
+    "icon": "🕯️",
+    "size": [
+     1,
+     1
+    ],
+    "col": 9,
+    "row": 34,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "bed5_wardrobe",
+    "name": "Wardrobe",
+    "icon": "👔",
+    "size": [
+     4,
+     1
+    ],
+    "col": 2,
+    "row": 20,
+    "rot": 0,
+    "visual": "wardrobe",
+    "level": 1
    }
   ],
   "fixtures": [
@@ -5240,8 +6015,30 @@
     "row": 17,
     "rot": 1,
     "level": 1
+   },
+   {
+    "kind": "shower",
+    "col": 30,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "basin",
+    "col": 32,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "toilet",
+    "col": 34,
+    "row": 0,
+    "rot": 0,
+    "level": 1
    }
-  ]
+  ],
+  "size": 18
  },
  "villa": {
   "levels": [
@@ -5255,15 +6052,15 @@
       "icon": "🚪",
       "desc": "Front door, console and the way to every room",
       "bounds": {
-       "minX": -5,
-       "maxX": 5,
-       "minZ": -1,
-       "maxZ": 1
+       "minX": -9,
+       "maxX": 1,
+       "minZ": -5,
+       "maxZ": -3
       },
       "center": [
-       -3.5,
+       -7.5,
        0,
-       0
+       -4
       ]
      },
      {
@@ -5272,15 +6069,15 @@
       "icon": "🍳",
       "desc": "Closed kitchen with island and laundry",
       "bounds": {
-       "minX": -5,
-       "maxX": -1,
-       "minZ": -5,
-       "maxZ": -1
+       "minX": -9,
+       "maxX": -5,
+       "minZ": -9,
+       "maxZ": -5
       },
       "center": [
-       -3.0,
+       -7.0,
        0,
-       -3.0
+       -7.0
       ]
      },
      {
@@ -5289,15 +6086,15 @@
       "icon": "🍽️",
       "desc": "Dining table for six",
       "bounds": {
-       "minX": -1,
-       "maxX": 3.5,
-       "minZ": -5,
-       "maxZ": -1
+       "minX": -5,
+       "maxX": -0.5,
+       "minZ": -9,
+       "maxZ": -5
       },
       "center": [
-       1.25,
+       -2.75,
        0,
-       -3.0
+       -7.0
       ]
      },
      {
@@ -5306,15 +6103,15 @@
       "icon": "🚽",
       "desc": "Off the dining room",
       "bounds": {
-       "minX": 3.5,
-       "maxX": 5,
-       "minZ": -5,
-       "maxZ": -3
+       "minX": -0.5,
+       "maxX": 1,
+       "minZ": -9,
+       "maxZ": -7
       },
       "center": [
-       4.25,
+       0.25,
        0,
-       -4.0
+       -8.0
       ]
      },
      {
@@ -5323,27 +6120,95 @@
       "icon": "🛋️",
       "desc": "Sofas, majlis and the TV wall",
       "bounds": {
-       "minX": -5,
-       "maxX": 5,
-       "minZ": 1,
-       "maxZ": 5
+       "minX": -9,
+       "maxX": 1,
+       "minZ": -3,
+       "maxZ": 1
       },
       "center": [
+       -4,
        0,
+       -1
+      ]
+     },
+     {
+      "id": "gym",
+      "label": "Home gym",
+      "icon": "🏋️",
+      "desc": "Treadmills, a power rack and dumbbells",
+      "bounds": {
+       "minX": 1,
+       "maxX": 9,
+       "minZ": -9,
+       "maxZ": -4
+      },
+      "center": [
+       5.0,
        0,
-       3
+       -6.5
+      ]
+     },
+     {
+      "id": "library",
+      "label": "Library & study",
+      "icon": "📚",
+      "desc": "Shelves of books, reading chairs and a desk",
+      "bounds": {
+       "minX": 1,
+       "maxX": 9,
+       "minZ": -4,
+       "maxZ": 1
+      },
+      "center": [
+       5.0,
+       0,
+       -1.5
+      ]
+     },
+     {
+      "id": "cinema",
+      "label": "Home cinema",
+      "icon": "🎬",
+      "desc": "A big screen and leather recliners",
+      "bounds": {
+       "minX": -9,
+       "maxX": -1,
+       "minZ": 1,
+       "maxZ": 9
+      },
+      "center": [
+       -5.0,
+       0,
+       5.0
+      ]
+     },
+     {
+      "id": "games",
+      "label": "Games room & bar",
+      "icon": "🎱",
+      "desc": "Billiards, the bar and arcade machines",
+      "bounds": {
+       "minX": -1,
+       "maxX": 9,
+       "minZ": 1,
+       "maxZ": 9
+      },
+      "center": [
+       4.0,
+       0,
+       5.0
       ]
      }
     ],
     "walls": [
      {
       "a": [
-       -5,
-       -1
+       -9,
+       -5
       ],
       "b": [
-       -1,
-       -1
+       -5,
+       -5
       ],
       "door": [
        2,
@@ -5352,22 +6217,22 @@
      },
      {
       "a": [
-       -1,
-       -5
+       -5,
+       -9
       ],
       "b": [
-       -1,
-       -1
+       -5,
+       -5
       ]
      },
      {
       "a": [
-       3.5,
-       -5
+       -0.5,
+       -9
       ],
       "b": [
-       3.5,
-       -3
+       -0.5,
+       -7
       ],
       "door": [
        0.6,
@@ -5376,12 +6241,82 @@
      },
      {
       "a": [
-       3.5,
-       -3
+       -0.5,
+       -7
       ],
       "b": [
+       1,
+       -7
+      ]
+     },
+     {
+      "a": [
+       1,
+       -9
+      ],
+      "b": [
+       1,
+       1
+      ],
+      "door": [
+       7,
+       8.4
+      ]
+     },
+     {
+      "a": [
+       -9,
+       1
+      ],
+      "b": [
+       1,
+       1
+      ],
+      "door": [
+       2.6,
+       3.9
+      ]
+     },
+     {
+      "a": [
+       1,
+       -4
+      ],
+      "b": [
+       9,
+       -4
+      ],
+      "door": [
+       4,
+       5.4
+      ]
+     },
+     {
+      "a": [
+       1,
+       1
+      ],
+      "b": [
+       9,
+       1
+      ],
+      "door": [
        5,
-       -3
+       6.4
+      ]
+     },
+     {
+      "a": [
+       -1,
+       1
+      ],
+      "b": [
+       -1,
+       9
+      ],
+      "door": [
+       3,
+       4.4
       ]
      }
     ]
@@ -5396,15 +6331,15 @@
       "icon": "🪜",
       "desc": "Top of the stairs",
       "bounds": {
-       "minX": -5,
-       "maxX": 5,
-       "minZ": -1,
-       "maxZ": 1
+       "minX": -9,
+       "maxX": 1,
+       "minZ": -5,
+       "maxZ": -3
       },
       "center": [
-       4,
        0,
-       0
+       0,
+       -4
       ]
      },
      {
@@ -5413,15 +6348,15 @@
       "icon": "🛁",
       "desc": "Shower and double vanity",
       "bounds": {
-       "minX": -5,
-       "maxX": -2,
-       "minZ": -5,
-       "maxZ": -1
+       "minX": -9,
+       "maxX": -6,
+       "minZ": -9,
+       "maxZ": -5
       },
       "center": [
-       -3.5,
+       -7.5,
        0,
-       -3.0
+       -7.0
       ]
      },
      {
@@ -5430,15 +6365,15 @@
       "icon": "🛏️",
       "desc": "Off the landing",
       "bounds": {
-       "minX": -2,
-       "maxX": 3.5,
-       "minZ": -5,
-       "maxZ": -1
+       "minX": -6,
+       "maxX": -0.5,
+       "minZ": -9,
+       "maxZ": -5
       },
       "center": [
-       0.75,
+       -3.25,
        0,
-       -3.0
+       -7.0
       ]
      },
      {
@@ -5447,15 +6382,15 @@
       "icon": "👑",
       "desc": "King bed, walk-in wardrobe and en-suite",
       "bounds": {
-       "minX": -5,
-       "maxX": 0,
-       "minZ": 1,
-       "maxZ": 5
+       "minX": -9,
+       "maxX": -4,
+       "minZ": -3,
+       "maxZ": 1
       },
       "center": [
-       -2,
+       -6,
        0,
-       2.5
+       -1.5
       ]
      },
      {
@@ -5464,15 +6399,15 @@
       "icon": "🛁",
       "desc": "Shower, vanity, toilet",
       "bounds": {
-       "minX": -5,
-       "maxX": -3,
-       "minZ": 3,
-       "maxZ": 5
+       "minX": -9,
+       "maxX": -7,
+       "minZ": -1,
+       "maxZ": 1
       },
       "center": [
-       -4.0,
+       -8.0,
        0,
-       4.0
+       0.0
       ]
      },
      {
@@ -5481,27 +6416,95 @@
       "icon": "🛏️",
       "desc": "Double bed and desk",
       "bounds": {
-       "minX": 0,
-       "maxX": 5,
-       "minZ": 1,
-       "maxZ": 5
+       "minX": -4,
+       "maxX": 1,
+       "minZ": -3,
+       "maxZ": 1
       },
       "center": [
-       2.5,
+       -1.5,
        0,
-       3.0
+       -1.0
+      ]
+     },
+     {
+      "id": "guest",
+      "label": "Guest suite",
+      "icon": "🛏️",
+      "desc": "A double bed and its own shower room",
+      "bounds": {
+       "minX": 1,
+       "maxX": 9,
+       "minZ": -9,
+       "maxZ": -5
+      },
+      "center": [
+       5.0,
+       0,
+       -7.0
+      ]
+     },
+     {
+      "id": "spa",
+      "label": "Upper lounge & spa",
+      "icon": "🫧",
+      "desc": "A jacuzzi and lounge chairs",
+      "bounds": {
+       "minX": 1,
+       "maxX": 9,
+       "minZ": -5,
+       "maxZ": 1
+      },
+      "center": [
+       5.0,
+       0,
+       -2.0
+      ]
+     },
+     {
+      "id": "family",
+      "label": "Family lounge",
+      "icon": "🛋️",
+      "desc": "Sofas and games for everyone",
+      "bounds": {
+       "minX": -1,
+       "maxX": 9,
+       "minZ": 1,
+       "maxZ": 9
+      },
+      "center": [
+       4.0,
+       0,
+       5.0
+      ]
+     },
+     {
+      "id": "bed5",
+      "label": "Bedroom 5",
+      "icon": "🛏️",
+      "desc": "Canopy bed and wardrobe",
+      "bounds": {
+       "minX": -9,
+       "maxX": -1,
+       "minZ": 1,
+       "maxZ": 9
+      },
+      "center": [
+       -5.0,
+       0,
+       5.0
       ]
      }
     ],
     "walls": [
      {
       "a": [
-       -5,
-       -1
+       -9,
+       -5
       ],
       "b": [
-       -2,
-       -1
+       -6,
+       -5
       ],
       "door": [
        1,
@@ -5510,12 +6513,12 @@
      },
      {
       "a": [
-       -2,
-       -1
+       -6,
+       -5
       ],
       "b": [
-       3.5,
-       -1
+       -0.5,
+       -5
       ],
       "door": [
        2,
@@ -5524,32 +6527,32 @@
      },
      {
       "a": [
-       -2,
-       -5
+       -6,
+       -9
       ],
       "b": [
-       -2,
-       -1
+       -6,
+       -5
       ]
      },
      {
       "a": [
-       3.5,
-       -5
+       -0.5,
+       -9
       ],
       "b": [
-       3.5,
-       -1
+       -0.5,
+       -5
       ]
      },
      {
       "a": [
-       -5,
-       1
+       -9,
+       -3
       ],
       "b": [
-       0,
-       1
+       -4,
+       -3
       ],
       "door": [
        3,
@@ -5558,12 +6561,12 @@
      },
      {
       "a": [
-       0,
-       1
+       -4,
+       -3
       ],
       "b": [
-       5,
-       1
+       1,
+       -3
       ],
       "door": [
        1,
@@ -5572,22 +6575,22 @@
      },
      {
       "a": [
-       0,
-       1
+       -4,
+       -3
       ],
       "b": [
-       0,
-       5
+       -4,
+       1
       ]
      },
      {
       "a": [
-       -5,
-       3
+       -9,
+       -1
       ],
       "b": [
-       -3,
-       3
+       -7,
+       -1
       ],
       "door": [
        0.5,
@@ -5596,12 +6599,102 @@
      },
      {
       "a": [
-       -3,
-       3
+       -7,
+       -1
       ],
       "b": [
-       -3,
-       5
+       -7,
+       1
+      ]
+     },
+     {
+      "a": [
+       1,
+       -9
+      ],
+      "b": [
+       1,
+       1
+      ],
+      "door": [
+       4.6,
+       5.9
+      ]
+     },
+     {
+      "a": [
+       -9,
+       1
+      ],
+      "b": [
+       1,
+       1
+      ]
+     },
+     {
+      "a": [
+       1,
+       -5
+      ],
+      "b": [
+       9,
+       -5
+      ],
+      "door": [
+       1.2,
+       2.6
+      ]
+     },
+     {
+      "a": [
+       1,
+       1
+      ],
+      "b": [
+       9,
+       1
+      ],
+      "door": [
+       5,
+       6.4
+      ]
+     },
+     {
+      "a": [
+       -1,
+       1
+      ],
+      "b": [
+       -1,
+       9
+      ],
+      "door": [
+       3,
+       4.4
+      ]
+     },
+     {
+      "a": [
+       6,
+       -9
+      ],
+      "b": [
+       6,
+       -7
+      ]
+     },
+     {
+      "a": [
+       6,
+       -7
+      ],
+      "b": [
+       9,
+       -7
+      ],
+      "door": [
+       0.8,
+       1.8
       ]
      }
     ]
@@ -6041,6 +7134,485 @@
     "rot": 0,
     "visual": "grand-piano",
     "interaction": "chair"
+   },
+   {
+    "id": "gym_treadmill_1",
+    "name": "Smart treadmill",
+    "icon": "🏃",
+    "size": [
+     2,
+     4
+    ],
+    "col": 21,
+    "row": 1,
+    "rot": 0,
+    "visual": "treadmill"
+   },
+   {
+    "id": "gym_treadmill_2",
+    "name": "Smart treadmill",
+    "icon": "🏃",
+    "size": [
+     2,
+     4
+    ],
+    "col": 24,
+    "row": 1,
+    "rot": 0,
+    "visual": "treadmill"
+   },
+   {
+    "id": "gym_rack",
+    "name": "Power rack & bench",
+    "icon": "🏋️",
+    "size": [
+     5,
+     4
+    ],
+    "col": 29,
+    "row": 1,
+    "rot": 0,
+    "visual": "power-rack"
+   },
+   {
+    "id": "gym_dumbbells",
+    "name": "Dumbbell rack & mirror",
+    "icon": "💪",
+    "size": [
+     4,
+     1
+    ],
+    "col": 35,
+    "row": 3,
+    "rot": 1,
+    "visual": "dumbbell-rack"
+   },
+   {
+    "id": "lib_shelf_1",
+    "name": "Library bookcase",
+    "icon": "📚",
+    "size": [
+     4,
+     1
+    ],
+    "col": 20,
+    "row": 10,
+    "rot": 0,
+    "visual": "bookcase"
+   },
+   {
+    "id": "lib_shelf_2",
+    "name": "Library bookcase",
+    "icon": "📚",
+    "size": [
+     4,
+     1
+    ],
+    "col": 24,
+    "row": 10,
+    "rot": 0,
+    "visual": "bookcase"
+   },
+   {
+    "id": "lib_shelf_3",
+    "name": "Library bookcase",
+    "icon": "📚",
+    "size": [
+     4,
+     1
+    ],
+    "col": 31,
+    "row": 10,
+    "rot": 0,
+    "visual": "bookcase"
+   },
+   {
+    "id": "lib_shelf_4",
+    "name": "Library bookcase",
+    "icon": "📚",
+    "size": [
+     4,
+     1
+    ],
+    "col": 35,
+    "row": 12,
+    "rot": 1,
+    "visual": "bookcase"
+   },
+   {
+    "id": "lib_rug",
+    "name": "Reading rug",
+    "icon": "⭕",
+    "size": [
+     4,
+     4
+    ],
+    "col": 24,
+    "row": 13,
+    "rot": 0,
+    "visual": "rug-round"
+   },
+   {
+    "id": "lib_chair_1",
+    "name": "Reading armchair",
+    "icon": "🪑",
+    "size": [
+     2,
+     2
+    ],
+    "col": 23,
+    "row": 14,
+    "rot": 0,
+    "visual": "armchair",
+    "interaction": "chair"
+   },
+   {
+    "id": "lib_chair_2",
+    "name": "Reading armchair",
+    "icon": "🪑",
+    "size": [
+     2,
+     2
+    ],
+    "col": 27,
+    "row": 14,
+    "rot": 0,
+    "visual": "armchair",
+    "interaction": "chair"
+   },
+   {
+    "id": "lib_desk",
+    "name": "Study desk",
+    "icon": "🖥️",
+    "size": [
+     3,
+     2
+    ],
+    "col": 30,
+    "row": 16,
+    "rot": 0,
+    "model": "/models/furniture/desk.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "cin_screen",
+    "name": "Cinema screen",
+    "icon": "🎬",
+    "size": [
+     9,
+     1
+    ],
+    "col": 3,
+    "row": 35,
+    "rot": 2,
+    "visual": "cinema-screen"
+   },
+   {
+    "id": "cin_row_1",
+    "name": "Cinema recliners",
+    "icon": "🍿",
+    "size": [
+     6,
+     2
+    ],
+    "col": 4,
+    "row": 25,
+    "rot": 0,
+    "visual": "recliners"
+   },
+   {
+    "id": "cin_row_2",
+    "name": "Cinema recliners",
+    "icon": "🍿",
+    "size": [
+     6,
+     2
+    ],
+    "col": 4,
+    "row": 29,
+    "rot": 0,
+    "visual": "recliners"
+   },
+   {
+    "id": "games_billiards",
+    "name": "Billiards table",
+    "icon": "🎱",
+    "size": [
+     6,
+     4
+    ],
+    "col": 21,
+    "row": 25,
+    "rot": 0,
+    "visual": "pool-table"
+   },
+   {
+    "id": "games_bar",
+    "name": "Home bar",
+    "icon": "🍹",
+    "size": [
+     6,
+     3
+    ],
+    "col": 33,
+    "row": 22,
+    "rot": 1,
+    "visual": "bar-counter"
+   },
+   {
+    "id": "games_arcade_1",
+    "name": "Arcade cabinet",
+    "icon": "🕹️",
+    "size": [
+     2,
+     2
+    ],
+    "col": 30,
+    "row": 33,
+    "rot": 2,
+    "visual": "arcade-cabinet"
+   },
+   {
+    "id": "games_arcade_2",
+    "name": "Arcade cabinet",
+    "icon": "🕹️",
+    "size": [
+     2,
+     2
+    ],
+    "col": 33,
+    "row": 33,
+    "rot": 2,
+    "visual": "arcade-cabinet"
+   },
+   {
+    "id": "games_palm",
+    "name": "Palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 17,
+    "row": 34,
+    "rot": 0,
+    "visual": "palm"
+   },
+   {
+    "id": "guest_bed",
+    "name": "Guest canopy bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 22,
+    "row": 0,
+    "rot": 0,
+    "visual": "canopy-bed",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "guest_side",
+    "name": "Bedside table",
+    "icon": "🕯️",
+    "size": [
+     1,
+     1
+    ],
+    "col": 26,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "spa_tub",
+    "name": "Spa jacuzzi",
+    "icon": "🫧",
+    "size": [
+     5,
+     5
+    ],
+    "col": 29,
+    "row": 9,
+    "rot": 0,
+    "visual": "spa-tub",
+    "level": 1
+   },
+   {
+    "id": "spa_chair_1",
+    "name": "Lounge chair",
+    "icon": "🪑",
+    "size": [
+     2,
+     2
+    ],
+    "col": 22,
+    "row": 12,
+    "rot": 0,
+    "visual": "armchair",
+    "interaction": "chair",
+    "level": 1
+   },
+   {
+    "id": "spa_chair_2",
+    "name": "Lounge chair",
+    "icon": "🪑",
+    "size": [
+     2,
+     2
+    ],
+    "col": 22,
+    "row": 15,
+    "rot": 0,
+    "visual": "armchair",
+    "interaction": "chair",
+    "level": 1
+   },
+   {
+    "id": "spa_palm",
+    "name": "Palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 35,
+    "row": 18,
+    "rot": 0,
+    "visual": "palm",
+    "level": 1
+   },
+   {
+    "id": "family_majlis",
+    "name": "Family majlis",
+    "icon": "🕌",
+    "size": [
+     4,
+     4
+    ],
+    "col": 18,
+    "row": 22,
+    "rot": 0,
+    "visual": "majlis",
+    "interaction": "chair",
+    "level": 1
+   },
+   {
+    "id": "family_sofa",
+    "name": "L-shaped lounge",
+    "icon": "🛋️",
+    "size": [
+     4,
+     4
+    ],
+    "col": 26,
+    "row": 24,
+    "rot": 0,
+    "model": "/models/furniture/l-couch.glb",
+    "interaction": "chair",
+    "level": 1
+   },
+   {
+    "id": "family_rug",
+    "name": "Round rug",
+    "icon": "⭕",
+    "size": [
+     5,
+     5
+    ],
+    "col": 24,
+    "row": 23,
+    "rot": 0,
+    "visual": "rug-round",
+    "level": 1
+   },
+   {
+    "id": "family_arcade",
+    "name": "Arcade cabinet",
+    "icon": "🕹️",
+    "size": [
+     2,
+     2
+    ],
+    "col": 33,
+    "row": 33,
+    "rot": 2,
+    "visual": "arcade-cabinet",
+    "level": 1
+   },
+   {
+    "id": "family_shelf",
+    "name": "Library bookcase",
+    "icon": "📚",
+    "size": [
+     4,
+     1
+    ],
+    "col": 18,
+    "row": 35,
+    "rot": 2,
+    "visual": "bookcase",
+    "level": 1
+   },
+   {
+    "id": "bed5_bed",
+    "name": "Canopy bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 5,
+    "row": 30,
+    "rot": 2,
+    "visual": "canopy-bed",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "bed5_side_l",
+    "name": "Bedside table",
+    "icon": "🕯️",
+    "size": [
+     1,
+     1
+    ],
+    "col": 4,
+    "row": 34,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "bed5_side_r",
+    "name": "Bedside table",
+    "icon": "🕯️",
+    "size": [
+     1,
+     1
+    ],
+    "col": 9,
+    "row": 34,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "bed5_wardrobe",
+    "name": "Wardrobe",
+    "icon": "👔",
+    "size": [
+     4,
+     1
+    ],
+    "col": 2,
+    "row": 20,
+    "rot": 0,
+    "visual": "wardrobe",
+    "level": 1
    }
   ],
   "fixtures": [
@@ -6108,6 +7680,2240 @@
     "col": 3,
     "row": 17,
     "rot": 1,
+    "level": 1
+   },
+   {
+    "kind": "shower",
+    "col": 30,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "basin",
+    "col": 32,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "toilet",
+    "col": 34,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   }
+  ],
+  "size": 18
+ },
+ "mansion": {
+  "size": 30,
+  "door": 15,
+  "levels": [
+   {
+    "label": "Ground floor",
+    "icon": "⬇️",
+    "rooms": [
+     {
+      "id": "hall",
+      "label": "Grand gallery",
+      "icon": "🏛️",
+      "desc": "The front door, the grand staircase and the way to every room",
+      "bounds": {
+       "minX": -15,
+       "maxX": 15,
+       "minZ": -3,
+       "maxZ": 3
+      },
+      "center": [
+       -11,
+       0,
+       0
+      ]
+     },
+     {
+      "id": "kitchen",
+      "label": "Show kitchen",
+      "icon": "🍳",
+      "desc": "A long island and the chef's kitchen",
+      "bounds": {
+       "minX": -15,
+       "maxX": -8,
+       "minZ": -15,
+       "maxZ": -3
+      },
+      "center": [
+       -11.5,
+       0,
+       -9.0
+      ]
+     },
+     {
+      "id": "dining",
+      "label": "Dining room",
+      "icon": "🍽️",
+      "desc": "A table for twelve under pendant lights",
+      "bounds": {
+       "minX": -8,
+       "maxX": -3,
+       "minZ": -15,
+       "maxZ": -3
+      },
+      "center": [
+       -5.5,
+       0,
+       -9.0
+      ]
+     },
+     {
+      "id": "guest_wc",
+      "label": "Guest toilet",
+      "icon": "🚽",
+      "desc": "Off the laundry",
+      "bounds": {
+       "minX": -3,
+       "maxX": 0,
+       "minZ": -15,
+       "maxZ": -9
+      },
+      "center": [
+       -1.5,
+       0,
+       -12.0
+      ]
+     },
+     {
+      "id": "laundry",
+      "label": "Laundry",
+      "icon": "🧺",
+      "desc": "Washer and storage",
+      "bounds": {
+       "minX": -3,
+       "maxX": 0,
+       "minZ": -9,
+       "maxZ": -3
+      },
+      "center": [
+       -1.5,
+       0,
+       -6.0
+      ]
+     },
+     {
+      "id": "cinema",
+      "label": "Home cinema",
+      "icon": "🎬",
+      "desc": "A 4 m screen and two rows of recliners",
+      "bounds": {
+       "minX": 0,
+       "maxX": 7,
+       "minZ": -15,
+       "maxZ": -3
+      },
+      "center": [
+       3.5,
+       0,
+       -9.0
+      ]
+     },
+     {
+      "id": "gym",
+      "label": "Home gym",
+      "icon": "🏋️",
+      "desc": "Treadmills, a power rack and a dumbbell wall",
+      "bounds": {
+       "minX": 7,
+       "maxX": 15,
+       "minZ": -15,
+       "maxZ": -3
+      },
+      "center": [
+       11.0,
+       0,
+       -9.0
+      ]
+     },
+     {
+      "id": "living",
+      "label": "Grand living & majlis",
+      "icon": "🛋️",
+      "desc": "Sofas, the majlis and the piano",
+      "bounds": {
+       "minX": -15,
+       "maxX": -3,
+       "minZ": 3,
+       "maxZ": 15
+      },
+      "center": [
+       -9.0,
+       0,
+       9.0
+      ]
+     },
+     {
+      "id": "pool",
+      "label": "Indoor pool",
+      "icon": "🏊",
+      "desc": "A lap pool and a jacuzzi, opening onto the garden",
+      "bounds": {
+       "minX": -3,
+       "maxX": 7,
+       "minZ": 3,
+       "maxZ": 15
+      },
+      "center": [
+       2.0,
+       0,
+       9.0
+      ]
+     },
+     {
+      "id": "library",
+      "label": "Library",
+      "icon": "📚",
+      "desc": "Floor-to-ceiling shelves and reading chairs",
+      "bounds": {
+       "minX": 7,
+       "maxX": 15,
+       "minZ": 3,
+       "maxZ": 9
+      },
+      "center": [
+       11.0,
+       0,
+       6.0
+      ]
+     },
+     {
+      "id": "games",
+      "label": "Games room & bar",
+      "icon": "🎱",
+      "desc": "Billiards, the bar and arcade machines",
+      "bounds": {
+       "minX": 7,
+       "maxX": 15,
+       "minZ": 9,
+       "maxZ": 15
+      },
+      "center": [
+       11.0,
+       0,
+       12.0
+      ]
+     }
+    ],
+    "walls": [
+     {
+      "a": [
+       -15,
+       -3
+      ],
+      "b": [
+       -8,
+       -3
+      ],
+      "door": [
+       3,
+       4.6
+      ]
+     },
+     {
+      "a": [
+       -8,
+       -3
+      ],
+      "b": [
+       -3,
+       -3
+      ],
+      "door": [
+       1.5,
+       3.1
+      ]
+     },
+     {
+      "a": [
+       -3,
+       -3
+      ],
+      "b": [
+       0,
+       -3
+      ],
+      "door": [
+       1,
+       2.2
+      ]
+     },
+     {
+      "a": [
+       0,
+       -3
+      ],
+      "b": [
+       7,
+       -3
+      ],
+      "door": [
+       2.5,
+       4
+      ]
+     },
+     {
+      "a": [
+       7,
+       -3
+      ],
+      "b": [
+       15,
+       -3
+      ],
+      "door": [
+       1,
+       2.5
+      ]
+     },
+     {
+      "a": [
+       -15,
+       3
+      ],
+      "b": [
+       -3,
+       3
+      ],
+      "door": [
+       4,
+       7.5
+      ]
+     },
+     {
+      "a": [
+       -3,
+       3
+      ],
+      "b": [
+       7,
+       3
+      ],
+      "door": [
+       4,
+       6
+      ]
+     },
+     {
+      "a": [
+       7,
+       3
+      ],
+      "b": [
+       15,
+       3
+      ],
+      "door": [
+       2,
+       3.5
+      ]
+     },
+     {
+      "a": [
+       -8,
+       -15
+      ],
+      "b": [
+       -8,
+       -3
+      ],
+      "door": [
+       4,
+       8
+      ]
+     },
+     {
+      "a": [
+       -3,
+       -15
+      ],
+      "b": [
+       -3,
+       -3
+      ]
+     },
+     {
+      "a": [
+       0,
+       -15
+      ],
+      "b": [
+       0,
+       -3
+      ]
+     },
+     {
+      "a": [
+       7,
+       -15
+      ],
+      "b": [
+       7,
+       -3
+      ]
+     },
+     {
+      "a": [
+       -3,
+       -9
+      ],
+      "b": [
+       0,
+       -9
+      ],
+      "door": [
+       1,
+       2
+      ]
+     },
+     {
+      "a": [
+       -3,
+       3
+      ],
+      "b": [
+       -3,
+       15
+      ],
+      "door": [
+       4,
+       7
+      ]
+     },
+     {
+      "a": [
+       7,
+       3
+      ],
+      "b": [
+       7,
+       9
+      ]
+     },
+     {
+      "a": [
+       7,
+       9
+      ],
+      "b": [
+       7,
+       15
+      ],
+      "door": [
+       2,
+       3.5
+      ]
+     },
+     {
+      "a": [
+       7,
+       9
+      ],
+      "b": [
+       15,
+       9
+      ],
+      "door": [
+       4,
+       5.5
+      ]
+     }
+    ]
+   },
+   {
+    "label": "Upstairs",
+    "icon": "⬆️",
+    "rooms": [
+     {
+      "id": "landing",
+      "label": "Gallery landing",
+      "icon": "🪜",
+      "desc": "The top of the grand staircase",
+      "bounds": {
+       "minX": -15,
+       "maxX": 15,
+       "minZ": -3,
+       "maxZ": 3
+      },
+      "center": [
+       11,
+       0,
+       0
+      ]
+     },
+     {
+      "id": "master",
+      "label": "Master bedroom",
+      "icon": "👑",
+      "desc": "A king canopy bed with a view",
+      "bounds": {
+       "minX": -15,
+       "maxX": -6,
+       "minZ": -15,
+       "maxZ": -3
+      },
+      "center": [
+       -10.5,
+       0,
+       -9.0
+      ]
+     },
+     {
+      "id": "dressing",
+      "label": "Dressing room",
+      "icon": "👔",
+      "desc": "Walk-in wardrobes and a vanity",
+      "bounds": {
+       "minX": -6,
+       "maxX": -1,
+       "minZ": -15,
+       "maxZ": -9
+      },
+      "center": [
+       -3.5,
+       0,
+       -12.0
+      ]
+     },
+     {
+      "id": "master_bath",
+      "label": "Master bathroom",
+      "icon": "🛁",
+      "desc": "Rain shower and double vanity",
+      "bounds": {
+       "minX": -6,
+       "maxX": -1,
+       "minZ": -9,
+       "maxZ": -3
+      },
+      "center": [
+       -3.5,
+       0,
+       -6.0
+      ]
+     },
+     {
+      "id": "bed2",
+      "label": "Bedroom 2",
+      "icon": "🛏️",
+      "desc": "With its own shower room",
+      "bounds": {
+       "minX": -1,
+       "maxX": 7,
+       "minZ": -15,
+       "maxZ": -3
+      },
+      "center": [
+       3.0,
+       0,
+       -9.0
+      ]
+     },
+     {
+      "id": "bed3",
+      "label": "Bedroom 3",
+      "icon": "🛏️",
+      "desc": "With its own shower room",
+      "bounds": {
+       "minX": 7,
+       "maxX": 15,
+       "minZ": -15,
+       "maxZ": -3
+      },
+      "center": [
+       11.0,
+       0,
+       -9.0
+      ]
+     },
+     {
+      "id": "family",
+      "label": "Family lounge",
+      "icon": "🛋️",
+      "desc": "Sofas, games and a bookcase",
+      "bounds": {
+       "minX": -15,
+       "maxX": -5,
+       "minZ": 3,
+       "maxZ": 15
+      },
+      "center": [
+       -10.0,
+       0,
+       9.0
+      ]
+     },
+     {
+      "id": "bed4",
+      "label": "Bedroom 4",
+      "icon": "🛏️",
+      "desc": "With its own shower room",
+      "bounds": {
+       "minX": -5,
+       "maxX": 5,
+       "minZ": 3,
+       "maxZ": 15
+      },
+      "center": [
+       0.0,
+       0,
+       9.0
+      ]
+     },
+     {
+      "id": "bed5",
+      "label": "Bedroom 5",
+      "icon": "🛏️",
+      "desc": "With its own shower room",
+      "bounds": {
+       "minX": 5,
+       "maxX": 15,
+       "minZ": 3,
+       "maxZ": 15
+      },
+      "center": [
+       10.0,
+       0,
+       9.0
+      ]
+     }
+    ],
+    "walls": [
+     {
+      "a": [
+       -15,
+       -3
+      ],
+      "b": [
+       -6,
+       -3
+      ],
+      "door": [
+       3,
+       4.5
+      ]
+     },
+     {
+      "a": [
+       -6,
+       -3
+      ],
+      "b": [
+       -1,
+       -3
+      ]
+     },
+     {
+      "a": [
+       -1,
+       -3
+      ],
+      "b": [
+       7,
+       -3
+      ],
+      "door": [
+       2,
+       3.5
+      ]
+     },
+     {
+      "a": [
+       7,
+       -3
+      ],
+      "b": [
+       15,
+       -3
+      ],
+      "door": [
+       1,
+       2.5
+      ]
+     },
+     {
+      "a": [
+       -15,
+       3
+      ],
+      "b": [
+       -5,
+       3
+      ],
+      "door": [
+       3,
+       6
+      ]
+     },
+     {
+      "a": [
+       -5,
+       3
+      ],
+      "b": [
+       5,
+       3
+      ],
+      "door": [
+       3,
+       4.5
+      ]
+     },
+     {
+      "a": [
+       5,
+       3
+      ],
+      "b": [
+       15,
+       3
+      ],
+      "door": [
+       2,
+       3.5
+      ]
+     },
+     {
+      "a": [
+       -6,
+       -15
+      ],
+      "b": [
+       -6,
+       -9
+      ],
+      "door": [
+       2,
+       3
+      ]
+     },
+     {
+      "a": [
+       -6,
+       -9
+      ],
+      "b": [
+       -6,
+       -3
+      ],
+      "door": [
+       2,
+       3
+      ]
+     },
+     {
+      "a": [
+       -6,
+       -9
+      ],
+      "b": [
+       -1,
+       -9
+      ]
+     },
+     {
+      "a": [
+       -1,
+       -15
+      ],
+      "b": [
+       -1,
+       -3
+      ]
+     },
+     {
+      "a": [
+       7,
+       -15
+      ],
+      "b": [
+       7,
+       -3
+      ]
+     },
+     {
+      "a": [
+       -5,
+       3
+      ],
+      "b": [
+       -5,
+       15
+      ]
+     },
+     {
+      "a": [
+       5,
+       3
+      ],
+      "b": [
+       5,
+       15
+      ]
+     },
+     {
+      "a": [
+       4,
+       -15
+      ],
+      "b": [
+       4,
+       -12.5
+      ]
+     },
+     {
+      "a": [
+       4,
+       -12.5
+      ],
+      "b": [
+       7,
+       -12.5
+      ],
+      "door": [
+       0.8,
+       1.8
+      ]
+     },
+     {
+      "a": [
+       12,
+       -15
+      ],
+      "b": [
+       12,
+       -12.5
+      ]
+     },
+     {
+      "a": [
+       12,
+       -12.5
+      ],
+      "b": [
+       15,
+       -12.5
+      ],
+      "door": [
+       0.8,
+       1.8
+      ]
+     },
+     {
+      "a": [
+       2,
+       12.5
+      ],
+      "b": [
+       2,
+       15
+      ]
+     },
+     {
+      "a": [
+       2,
+       12.5
+      ],
+      "b": [
+       5,
+       12.5
+      ],
+      "door": [
+       0.8,
+       1.8
+      ]
+     },
+     {
+      "a": [
+       12,
+       12.5
+      ],
+      "b": [
+       12,
+       15
+      ]
+     },
+     {
+      "a": [
+       12,
+       12.5
+      ],
+      "b": [
+       15,
+       12.5
+      ],
+      "door": [
+       0.8,
+       1.8
+      ]
+     }
+    ]
+   }
+  ],
+  "furniture": [
+   {
+    "id": "stairs",
+    "name": "Grand staircase",
+    "icon": "🪜",
+    "size": [
+     4,
+     8
+    ],
+    "col": 40,
+    "row": 25,
+    "rot": 0,
+    "visual": "staircase",
+    "interaction": "stairs",
+    "fixed": true
+   },
+   {
+    "id": "stairwell",
+    "name": "Stairs down",
+    "icon": "🪜",
+    "size": [
+     4,
+     8
+    ],
+    "col": 40,
+    "row": 25,
+    "rot": 0,
+    "visual": "stairwell",
+    "interaction": "stairs",
+    "level": 1,
+    "fixed": true
+   },
+   {
+    "id": "lift",
+    "name": "Home lift",
+    "icon": "🛗",
+    "size": [
+     2,
+     2
+    ],
+    "col": 57,
+    "row": 25,
+    "rot": 1,
+    "visual": "home-lift",
+    "interaction": "lift",
+    "fixed": true
+   },
+   {
+    "id": "lift_up",
+    "name": "Home lift",
+    "icon": "🛗",
+    "size": [
+     2,
+     2
+    ],
+    "col": 57,
+    "row": 25,
+    "rot": 1,
+    "visual": "home-lift",
+    "interaction": "lift",
+    "level": 1,
+    "fixed": true
+   },
+   {
+    "id": "hall_console",
+    "name": "Marble console",
+    "icon": "🕰️",
+    "size": [
+     3,
+     1
+    ],
+    "col": 2,
+    "row": 24,
+    "rot": 0,
+    "visual": "console"
+   },
+   {
+    "id": "hall_chandelier",
+    "name": "Crystal chandelier",
+    "icon": "💎",
+    "size": [
+     2,
+     2
+    ],
+    "col": 14,
+    "row": 29,
+    "rot": 0,
+    "visual": "chandelier-crystal"
+   },
+   {
+    "id": "hall_chandelier_2",
+    "name": "Crystal chandelier",
+    "icon": "💎",
+    "size": [
+     2,
+     2
+    ],
+    "col": 28,
+    "row": 29,
+    "rot": 0,
+    "visual": "chandelier-crystal"
+   },
+   {
+    "id": "hall_runner",
+    "name": "Gallery runner",
+    "icon": "〰️",
+    "size": [
+     16,
+     2
+    ],
+    "col": 10,
+    "row": 29,
+    "rot": 0,
+    "visual": "rug-runner"
+   },
+   {
+    "id": "hall_palm_1",
+    "name": "Palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 0,
+    "row": 25,
+    "rot": 0,
+    "visual": "palm"
+   },
+   {
+    "id": "hall_palm_2",
+    "name": "Palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 4,
+    "row": 34,
+    "rot": 0,
+    "visual": "palm"
+   },
+   {
+    "id": "hall_sculpture",
+    "name": "Sculpture",
+    "icon": "🗿",
+    "size": [
+     1,
+     1
+    ],
+    "col": 22,
+    "row": 34,
+    "rot": 0,
+    "visual": "sculpture"
+   },
+   {
+    "id": "kitchen_island",
+    "name": "Kitchen island",
+    "icon": "🍳",
+    "size": [
+     6,
+     3
+    ],
+    "col": 3,
+    "row": 8,
+    "rot": 0,
+    "visual": "kitchen-island"
+   },
+   {
+    "id": "kitchen_fridge",
+    "name": "Fridge",
+    "icon": "🧊",
+    "size": [
+     2,
+     2
+    ],
+    "col": 11,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/fridge.glb",
+    "interaction": "cooler"
+   },
+   {
+    "id": "kitchen_bar",
+    "name": "Coffee bar",
+    "icon": "☕",
+    "size": [
+     2,
+     1
+    ],
+    "col": 0,
+    "row": 16,
+    "rot": 3,
+    "visual": "coffee-bar"
+   },
+   {
+    "id": "dining",
+    "name": "Dining table for twelve",
+    "icon": "🍽️",
+    "size": [
+     6,
+     4
+    ],
+    "col": 16,
+    "row": 9,
+    "rot": 1,
+    "visual": "dining-set"
+   },
+   {
+    "id": "dining_light",
+    "name": "Pendant lights",
+    "icon": "💡",
+    "size": [
+     3,
+     1
+    ],
+    "col": 17,
+    "row": 10,
+    "rot": 1,
+    "visual": "pendant-trio"
+   },
+   {
+    "id": "dining_cabinet",
+    "name": "Drinks cabinet",
+    "icon": "🍷",
+    "size": [
+     4,
+     1
+    ],
+    "col": 16,
+    "row": 0,
+    "rot": 0,
+    "visual": "drinks-cabinet"
+   },
+   {
+    "id": "cin_screen",
+    "name": "Cinema screen",
+    "icon": "🎬",
+    "size": [
+     9,
+     1
+    ],
+    "col": 32,
+    "row": 0,
+    "rot": 0,
+    "visual": "cinema-screen"
+   },
+   {
+    "id": "cin_row_1",
+    "name": "Cinema recliners",
+    "icon": "🍿",
+    "size": [
+     6,
+     2
+    ],
+    "col": 33,
+    "row": 11,
+    "rot": 2,
+    "visual": "recliners"
+   },
+   {
+    "id": "cin_row_2",
+    "name": "Cinema recliners",
+    "icon": "🍿",
+    "size": [
+     6,
+     2
+    ],
+    "col": 33,
+    "row": 16,
+    "rot": 2,
+    "visual": "recliners"
+   },
+   {
+    "id": "gym_treadmill_1",
+    "name": "Smart treadmill",
+    "icon": "🏃",
+    "size": [
+     2,
+     4
+    ],
+    "col": 45,
+    "row": 1,
+    "rot": 0,
+    "visual": "treadmill"
+   },
+   {
+    "id": "gym_treadmill_2",
+    "name": "Smart treadmill",
+    "icon": "🏃",
+    "size": [
+     2,
+     4
+    ],
+    "col": 48,
+    "row": 1,
+    "rot": 0,
+    "visual": "treadmill"
+   },
+   {
+    "id": "gym_treadmill_3",
+    "name": "Smart treadmill",
+    "icon": "🏃",
+    "size": [
+     2,
+     4
+    ],
+    "col": 51,
+    "row": 1,
+    "rot": 0,
+    "visual": "treadmill"
+   },
+   {
+    "id": "gym_rack",
+    "name": "Power rack & bench",
+    "icon": "🏋️",
+    "size": [
+     5,
+     4
+    ],
+    "col": 54,
+    "row": 9,
+    "rot": 0,
+    "visual": "power-rack"
+   },
+   {
+    "id": "gym_dumbbells",
+    "name": "Dumbbell rack & mirror",
+    "icon": "💪",
+    "size": [
+     4,
+     1
+    ],
+    "col": 59,
+    "row": 1,
+    "rot": 1,
+    "visual": "dumbbell-rack"
+   },
+   {
+    "id": "gym_dumbbells_2",
+    "name": "Dumbbell rack & mirror",
+    "icon": "💪",
+    "size": [
+     4,
+     1
+    ],
+    "col": 46,
+    "row": 17,
+    "rot": 2,
+    "visual": "dumbbell-rack"
+   },
+   {
+    "id": "living_sofa",
+    "name": "L-shaped lounge",
+    "icon": "🛋️",
+    "size": [
+     4,
+     4
+    ],
+    "col": 10,
+    "row": 46,
+    "rot": 0,
+    "model": "/models/furniture/l-couch.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "living_sofa_2",
+    "name": "L-shaped lounge",
+    "icon": "🛋️",
+    "size": [
+     4,
+     4
+    ],
+    "col": 15,
+    "row": 46,
+    "rot": 3,
+    "model": "/models/furniture/l-couch.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "living_table",
+    "name": "Coffee table",
+    "icon": "☕",
+    "size": [
+     3,
+     2
+    ],
+    "col": 12,
+    "row": 51,
+    "rot": 0,
+    "model": "/models/furniture/coffee-table.glb"
+   },
+   {
+    "id": "living_rug",
+    "name": "Round rug",
+    "icon": "⭕",
+    "size": [
+     7,
+     7
+    ],
+    "col": 9,
+    "row": 45,
+    "rot": 0,
+    "visual": "rug-round"
+   },
+   {
+    "id": "living_chandelier",
+    "name": "Crystal chandelier",
+    "icon": "💎",
+    "size": [
+     2,
+     2
+    ],
+    "col": 12,
+    "row": 47,
+    "rot": 0,
+    "visual": "chandelier-crystal"
+   },
+   {
+    "id": "living_tv",
+    "name": "OLED TV",
+    "icon": "📺",
+    "size": [
+     4,
+     1
+    ],
+    "col": 11,
+    "row": 59,
+    "rot": 2,
+    "model": "/models/furniture/tv.glb"
+   },
+   {
+    "id": "majlis",
+    "name": "Majlis seating",
+    "icon": "🕌",
+    "size": [
+     4,
+     4
+    ],
+    "col": 1,
+    "row": 38,
+    "rot": 0,
+    "visual": "majlis",
+    "interaction": "chair"
+   },
+   {
+    "id": "majlis_2",
+    "name": "Majlis seating",
+    "icon": "🕌",
+    "size": [
+     4,
+     4
+    ],
+    "col": 1,
+    "row": 43,
+    "rot": 0,
+    "visual": "majlis",
+    "interaction": "chair"
+   },
+   {
+    "id": "piano",
+    "name": "Grand piano",
+    "icon": "🎹",
+    "size": [
+     3,
+     4
+    ],
+    "col": 19,
+    "row": 38,
+    "rot": 0,
+    "visual": "grand-piano"
+   },
+   {
+    "id": "aquarium",
+    "name": "Aquarium wall",
+    "icon": "🐠",
+    "size": [
+     4,
+     1
+    ],
+    "col": 1,
+    "row": 59,
+    "rot": 2,
+    "visual": "aquarium"
+   },
+   {
+    "id": "living_fireplace",
+    "name": "Fireplace",
+    "icon": "🔥",
+    "size": [
+     4,
+     1
+    ],
+    "col": 0,
+    "row": 50,
+    "rot": 3,
+    "visual": "fireplace"
+   },
+   {
+    "id": "pool_lap",
+    "name": "Indoor lap pool",
+    "icon": "🏊",
+    "size": [
+     16,
+     6
+    ],
+    "col": 26,
+    "row": 44,
+    "rot": 0,
+    "visual": "pool-lap"
+   },
+   {
+    "id": "pool_spa",
+    "name": "Spa jacuzzi",
+    "icon": "🫧",
+    "size": [
+     5,
+     5
+    ],
+    "col": 37,
+    "row": 37,
+    "rot": 0,
+    "visual": "spa-tub"
+   },
+   {
+    "id": "pool_chair_1",
+    "name": "Pool lounger",
+    "icon": "🪑",
+    "size": [
+     2,
+     2
+    ],
+    "col": 27,
+    "row": 53,
+    "rot": 0,
+    "visual": "armchair",
+    "interaction": "chair"
+   },
+   {
+    "id": "pool_chair_2",
+    "name": "Pool lounger",
+    "icon": "🪑",
+    "size": [
+     2,
+     2
+    ],
+    "col": 30,
+    "row": 53,
+    "rot": 0,
+    "visual": "armchair",
+    "interaction": "chair"
+   },
+   {
+    "id": "pool_palm_1",
+    "name": "Palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 24,
+    "row": 37,
+    "rot": 0,
+    "visual": "palm"
+   },
+   {
+    "id": "pool_palm_2",
+    "name": "Palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 43,
+    "row": 58,
+    "rot": 0,
+    "visual": "palm"
+   },
+   {
+    "id": "lib_shelf_1",
+    "name": "Library bookcase",
+    "icon": "📚",
+    "size": [
+     4,
+     1
+    ],
+    "col": 44,
+    "row": 36,
+    "rot": 0,
+    "visual": "bookcase"
+   },
+   {
+    "id": "lib_shelf_2",
+    "name": "Library bookcase",
+    "icon": "📚",
+    "size": [
+     4,
+     1
+    ],
+    "col": 52,
+    "row": 36,
+    "rot": 0,
+    "visual": "bookcase"
+   },
+   {
+    "id": "lib_shelf_3",
+    "name": "Library bookcase",
+    "icon": "📚",
+    "size": [
+     4,
+     1
+    ],
+    "col": 56,
+    "row": 36,
+    "rot": 0,
+    "visual": "bookcase"
+   },
+   {
+    "id": "lib_shelf_4",
+    "name": "Library bookcase",
+    "icon": "📚",
+    "size": [
+     4,
+     1
+    ],
+    "col": 59,
+    "row": 40,
+    "rot": 1,
+    "visual": "bookcase"
+   },
+   {
+    "id": "lib_rug",
+    "name": "Reading rug",
+    "icon": "⭕",
+    "size": [
+     4,
+     4
+    ],
+    "col": 48,
+    "row": 40,
+    "rot": 0,
+    "visual": "rug-round"
+   },
+   {
+    "id": "lib_chair_1",
+    "name": "Reading armchair",
+    "icon": "🪑",
+    "size": [
+     2,
+     2
+    ],
+    "col": 47,
+    "row": 41,
+    "rot": 0,
+    "visual": "armchair",
+    "interaction": "chair"
+   },
+   {
+    "id": "lib_chair_2",
+    "name": "Reading armchair",
+    "icon": "🪑",
+    "size": [
+     2,
+     2
+    ],
+    "col": 51,
+    "row": 41,
+    "rot": 0,
+    "visual": "armchair",
+    "interaction": "chair"
+   },
+   {
+    "id": "lib_desk",
+    "name": "Study desk",
+    "icon": "🖥️",
+    "size": [
+     3,
+     2
+    ],
+    "col": 54,
+    "row": 44,
+    "rot": 0,
+    "model": "/models/furniture/desk.glb",
+    "interaction": "chair"
+   },
+   {
+    "id": "games_billiards",
+    "name": "Billiards table",
+    "icon": "🎱",
+    "size": [
+     6,
+     4
+    ],
+    "col": 46,
+    "row": 52,
+    "rot": 0,
+    "visual": "pool-table"
+   },
+   {
+    "id": "games_bar",
+    "name": "Home bar",
+    "icon": "🍹",
+    "size": [
+     6,
+     3
+    ],
+    "col": 57,
+    "row": 49,
+    "rot": 1,
+    "visual": "bar-counter"
+   },
+   {
+    "id": "games_arcade_1",
+    "name": "Arcade cabinet",
+    "icon": "🕹️",
+    "size": [
+     2,
+     2
+    ],
+    "col": 44,
+    "row": 57,
+    "rot": 2,
+    "visual": "arcade-cabinet"
+   },
+   {
+    "id": "games_arcade_2",
+    "name": "Arcade cabinet",
+    "icon": "🕹️",
+    "size": [
+     2,
+     2
+    ],
+    "col": 54,
+    "row": 57,
+    "rot": 2,
+    "visual": "arcade-cabinet"
+   },
+   {
+    "id": "master_bed",
+    "name": "King canopy bed",
+    "icon": "👑",
+    "size": [
+     4,
+     5
+    ],
+    "col": 8,
+    "row": 0,
+    "rot": 0,
+    "visual": "canopy-bed",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "master_side_l",
+    "name": "Bedside table",
+    "icon": "🕯️",
+    "size": [
+     1,
+     1
+    ],
+    "col": 7,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "master_side_r",
+    "name": "Bedside table",
+    "icon": "🕯️",
+    "size": [
+     1,
+     1
+    ],
+    "col": 12,
+    "row": 0,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "master_light",
+    "name": "Ring chandelier",
+    "icon": "💫",
+    "size": [
+     2,
+     2
+    ],
+    "col": 9,
+    "row": 7,
+    "rot": 0,
+    "visual": "chandelier-ring",
+    "level": 1
+   },
+   {
+    "id": "master_rug",
+    "name": "Round rug",
+    "icon": "⭕",
+    "size": [
+     5,
+     5
+    ],
+    "col": 7,
+    "row": 10,
+    "rot": 0,
+    "visual": "rug-round",
+    "level": 1
+   },
+   {
+    "id": "master_chair",
+    "name": "Velvet armchair",
+    "icon": "🪑",
+    "size": [
+     2,
+     2
+    ],
+    "col": 2,
+    "row": 16,
+    "rot": 0,
+    "visual": "armchair",
+    "interaction": "chair",
+    "level": 1
+   },
+   {
+    "id": "master_tv",
+    "name": "Media wall",
+    "icon": "📺",
+    "size": [
+     4,
+     1
+    ],
+    "col": 12,
+    "row": 22,
+    "rot": 2,
+    "model": "/models/furniture/tv.glb",
+    "level": 1
+   },
+   {
+    "id": "dress_wardrobe_1",
+    "name": "Walk-in wardrobe",
+    "icon": "👔",
+    "size": [
+     4,
+     1
+    ],
+    "col": 19,
+    "row": 0,
+    "rot": 0,
+    "visual": "wardrobe",
+    "level": 1
+   },
+   {
+    "id": "dress_wardrobe_2",
+    "name": "Walk-in wardrobe",
+    "icon": "👔",
+    "size": [
+     4,
+     1
+    ],
+    "col": 23,
+    "row": 0,
+    "rot": 0,
+    "visual": "wardrobe",
+    "level": 1
+   },
+   {
+    "id": "dress_wardrobe_3",
+    "name": "Walk-in wardrobe",
+    "icon": "👔",
+    "size": [
+     4,
+     1
+    ],
+    "col": 27,
+    "row": 2,
+    "rot": 1,
+    "visual": "wardrobe",
+    "level": 1
+   },
+   {
+    "id": "dress_vanity",
+    "name": "Vanity",
+    "icon": "💄",
+    "size": [
+     2,
+     1
+    ],
+    "col": 20,
+    "row": 10,
+    "rot": 2,
+    "visual": "vanity",
+    "level": 1
+   },
+   {
+    "id": "dress_ottoman",
+    "name": "Ottoman",
+    "icon": "🟫",
+    "size": [
+     1,
+     1
+    ],
+    "col": 22,
+    "row": 6,
+    "rot": 0,
+    "visual": "ottoman",
+    "level": 1
+   },
+   {
+    "id": "bath_tub",
+    "name": "Spa jacuzzi",
+    "icon": "🫧",
+    "size": [
+     5,
+     5
+    ],
+    "col": 22,
+    "row": 17,
+    "rot": 0,
+    "visual": "spa-tub",
+    "level": 1
+   },
+   {
+    "id": "bed2_bed",
+    "name": "Canopy bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 31,
+    "row": 1,
+    "rot": 0,
+    "visual": "canopy-bed",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "bed2_side",
+    "name": "Bedside table",
+    "icon": "🕯️",
+    "size": [
+     1,
+     1
+    ],
+    "col": 35,
+    "row": 1,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "bed2_desk",
+    "name": "Desk",
+    "icon": "🖥️",
+    "size": [
+     3,
+     2
+    ],
+    "col": 39,
+    "row": 16,
+    "rot": 1,
+    "model": "/models/furniture/desk.glb",
+    "interaction": "chair",
+    "level": 1
+   },
+   {
+    "id": "bed3_bed",
+    "name": "Canopy bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 46,
+    "row": 1,
+    "rot": 0,
+    "visual": "canopy-bed",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "bed3_side",
+    "name": "Bedside table",
+    "icon": "🕯️",
+    "size": [
+     1,
+     1
+    ],
+    "col": 50,
+    "row": 1,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "bed3_wardrobe",
+    "name": "Wardrobe",
+    "icon": "👔",
+    "size": [
+     4,
+     1
+    ],
+    "col": 59,
+    "row": 14,
+    "rot": 1,
+    "visual": "wardrobe",
+    "level": 1
+   },
+   {
+    "id": "bed4_bed",
+    "name": "Canopy bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 22,
+    "row": 51,
+    "rot": 2,
+    "visual": "canopy-bed",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "bed4_side",
+    "name": "Bedside table",
+    "icon": "🕯️",
+    "size": [
+     1,
+     1
+    ],
+    "col": 21,
+    "row": 58,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "bed4_wardrobe",
+    "name": "Wardrobe",
+    "icon": "👔",
+    "size": [
+     4,
+     1
+    ],
+    "col": 11,
+    "row": 44,
+    "rot": 3,
+    "visual": "wardrobe",
+    "level": 1
+   },
+   {
+    "id": "bed5_bed",
+    "name": "Canopy bed",
+    "icon": "🛏️",
+    "size": [
+     4,
+     5
+    ],
+    "col": 44,
+    "row": 51,
+    "rot": 2,
+    "visual": "canopy-bed",
+    "interaction": "bed",
+    "level": 1
+   },
+   {
+    "id": "bed5_side",
+    "name": "Bedside table",
+    "icon": "🕯️",
+    "size": [
+     1,
+     1
+    ],
+    "col": 43,
+    "row": 58,
+    "rot": 0,
+    "model": "/models/furniture/side-table.glb",
+    "level": 1
+   },
+   {
+    "id": "bed5_desk",
+    "name": "Desk",
+    "icon": "🖥️",
+    "size": [
+     3,
+     2
+    ],
+    "col": 50,
+    "row": 40,
+    "rot": 0,
+    "model": "/models/furniture/desk.glb",
+    "interaction": "chair",
+    "level": 1
+   },
+   {
+    "id": "family_majlis",
+    "name": "Family majlis",
+    "icon": "🕌",
+    "size": [
+     4,
+     4
+    ],
+    "col": 2,
+    "row": 40,
+    "rot": 0,
+    "visual": "majlis",
+    "interaction": "chair",
+    "level": 1
+   },
+   {
+    "id": "family_sofa",
+    "name": "L-shaped lounge",
+    "icon": "🛋️",
+    "size": [
+     4,
+     4
+    ],
+    "col": 9,
+    "row": 48,
+    "rot": 0,
+    "model": "/models/furniture/l-couch.glb",
+    "interaction": "chair",
+    "level": 1
+   },
+   {
+    "id": "family_rug",
+    "name": "Round rug",
+    "icon": "⭕",
+    "size": [
+     5,
+     5
+    ],
+    "col": 8,
+    "row": 47,
+    "rot": 0,
+    "visual": "rug-round",
+    "level": 1
+   },
+   {
+    "id": "family_tv",
+    "name": "OLED TV",
+    "icon": "📺",
+    "size": [
+     4,
+     1
+    ],
+    "col": 8,
+    "row": 59,
+    "rot": 2,
+    "model": "/models/furniture/tv.glb",
+    "level": 1
+   },
+   {
+    "id": "family_arcade",
+    "name": "Arcade cabinet",
+    "icon": "🕹️",
+    "size": [
+     2,
+     2
+    ],
+    "col": 1,
+    "row": 56,
+    "rot": 1,
+    "visual": "arcade-cabinet",
+    "level": 1
+   },
+   {
+    "id": "family_shelf",
+    "name": "Library bookcase",
+    "icon": "📚",
+    "size": [
+     4,
+     1
+    ],
+    "col": 14,
+    "row": 36,
+    "rot": 0,
+    "visual": "bookcase",
+    "level": 1
+   },
+   {
+    "id": "landing_palm",
+    "name": "Palm",
+    "icon": "🌴",
+    "size": [
+     1,
+     1
+    ],
+    "col": 2,
+    "row": 25,
+    "rot": 0,
+    "visual": "palm",
+    "level": 1
+   },
+   {
+    "id": "landing_console",
+    "name": "Marble console",
+    "icon": "🕰️",
+    "size": [
+     3,
+     1
+    ],
+    "col": 20,
+    "row": 24,
+    "rot": 0,
+    "visual": "console",
+    "level": 1
+   },
+   {
+    "id": "landing_chandelier",
+    "name": "Crystal chandelier",
+    "icon": "💎",
+    "size": [
+     2,
+     2
+    ],
+    "col": 24,
+    "row": 29,
+    "rot": 0,
+    "visual": "chandelier-crystal",
+    "level": 1
+   }
+  ],
+  "fixtures": [
+   {
+    "kind": "kitchen-run",
+    "col": 1,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "kitchen-run",
+    "col": 5,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "washer",
+    "col": 24,
+    "row": 16,
+    "rot": 3
+   },
+   {
+    "kind": "toilet",
+    "col": 25,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "basin",
+    "col": 27,
+    "row": 0,
+    "rot": 0
+   },
+   {
+    "kind": "shower",
+    "col": 18,
+    "row": 12,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "basin-double",
+    "col": 21,
+    "row": 12,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "toilet",
+    "col": 26,
+    "row": 13,
+    "rot": 1,
+    "level": 1
+   },
+   {
+    "kind": "shower",
+    "col": 38,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "basin",
+    "col": 40,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "toilet",
+    "col": 42,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "shower",
+    "col": 54,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "basin",
+    "col": 56,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "toilet",
+    "col": 58,
+    "row": 0,
+    "rot": 0,
+    "level": 1
+   },
+   {
+    "kind": "shower",
+    "col": 34,
+    "row": 58,
+    "rot": 2,
+    "level": 1
+   },
+   {
+    "kind": "basin",
+    "col": 36,
+    "row": 59,
+    "rot": 2,
+    "level": 1
+   },
+   {
+    "kind": "toilet",
+    "col": 38,
+    "row": 59,
+    "rot": 2,
+    "level": 1
+   },
+   {
+    "kind": "shower",
+    "col": 54,
+    "row": 58,
+    "rot": 2,
+    "level": 1
+   },
+   {
+    "kind": "basin",
+    "col": 56,
+    "row": 59,
+    "rot": 2,
+    "level": 1
+   },
+   {
+    "kind": "toilet",
+    "col": 58,
+    "row": 59,
+    "rot": 2,
     "level": 1
    }
   ]

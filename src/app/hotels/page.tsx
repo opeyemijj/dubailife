@@ -8,7 +8,9 @@ import { ArrowLeft, Search } from "lucide-react";
 import { useRequireCitizen } from "@/lib/citizenStore";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { BookSuite } from "@/components/hotel/BookSuite";
-import { ALL_HOTELS, HOTELS, myStay, suiteOf, timeLeft, type Stay } from "@/lib/hotels";
+import { hotelsIn, HOTELS, myStay, suiteOf, timeLeft, type Stay } from "@/lib/hotels";
+import { CITIES } from "@/lib/city/cities";
+import { useCurrentCity } from "@/lib/city/presence";
 
 export default function HotelsPage() {
   useRequireCitizen();
@@ -16,7 +18,9 @@ export default function HotelsPage() {
   const [q, setQ] = useState("");
   const [booking, setBooking] = useState<{ id: string; name: string } | null>(null);
   useEffect(() => { void myStay().then((r) => setStay(r.data ?? null)); }, []);
-  const shown = ALL_HOTELS.filter((h) => !q.trim() || `${h.name} ${h.blurb}`.toLowerCase().includes(q.trim().toLowerCase()));
+  // The hotels of the city you're in (you book a hotel where it is: public.hotel_stay_in_city).
+  const { city } = useCurrentCity();
+  const shown = hotelsIn(city).filter((h) => !q.trim() || `${h.name} ${h.blurb}`.toLowerCase().includes(q.trim().toLowerCase()));
   const from = Math.min(...HOTELS.suites.map((s) => s.perNight));
 
   return (
@@ -24,7 +28,7 @@ export default function HotelsPage() {
       <div className="absolute top-0 inset-x-0 h-72 bg-gradient-to-b from-amber-500/25 to-transparent pointer-events-none" />
       <div className="relative max-w-md mx-auto px-4 pt-[max(1.25rem,env(safe-area-inset-top))] space-y-4">
         <header className="flex items-center gap-3">
-          <Link href="/explore" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center" aria-label="Back to the map"><ArrowLeft className="w-4 h-4" /></Link>
+          <Link href={CITIES[city].path} className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center" aria-label="Back to the map"><ArrowLeft className="w-4 h-4" /></Link>
           <div className="flex-1">
             <h1 className="text-2xl font-black leading-tight">Hotels</h1>
             <p className="text-xs text-white/60">Luxury suites from AED {from.toLocaleString()} a night</p>

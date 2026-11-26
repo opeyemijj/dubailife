@@ -5,18 +5,22 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { ApartmentRoom, type Person } from "@/components/home/ApartmentRoom";
 import { HOUSING_CONFIGS, type HousingTier } from "@/lib/furniture";
+import CARS from "@/data/cars/cars.json";
+import type { Car } from "@/lib/cars";
 
 const ALL = ["balloons", "bunting", "lights", "flowers", "neon", "discoball"];
 
-export function PartyPreview({ tier, guests, decor }: { tier: string; guests: number; decor: string }) {
+export function PartyPreview({ tier, guests, decor, level = 0, up = false, view, room, dist, cars = 0, anim }: { tier: string; guests: number; decor: string; level?: number; up?: boolean; view?: string; room?: string; dist?: number; cars?: number; anim?: string }) {
   const housingTier = (tier in HOUSING_CONFIGS ? tier : "villa") as HousingTier;
   const people = useMemo<Person[]>(() => Array.from({ length: guests }, (_, i) => {
     const a = (i / Math.max(1, guests)) * Math.PI * 2;
-    return { look: { gender: i % 2 ? "man" : "woman", outfit: "party" }, position: [Math.cos(a) * 2.6, 0, Math.sin(a) * 2.6], rotation: -a, animation: "dance", label: `@guest${i + 1}` } as Person;
-  }), [guests]);
+    return { look: { gender: i % 2 ? "man" : "woman", outfit: "party" }, position: [Math.cos(a) * 2.6, 0, Math.sin(a) * 2.6], rotation: -a, animation: (anim ?? "dance") as Person["animation"], label: `@guest${i + 1}` } as Person;
+  }), [guests, anim]);
   return (
     <main className="fixed inset-0">
-      <ApartmentRoom housingTier={housingTier} view="above" homeStyle={{ ...HOUSING_CONFIGS[housingTier].finish, exterior: ["pool", "garden"] }}
+      <ApartmentRoom housingTier={housingTier} view={(view as "above" | "inside" | "eye" | undefined) ?? "above"} level={level} upView={up} activeRoomId={room} viewDistance={dist}
+        ownFleet={CARS.cars.slice(0, cars).map((c, i) => ({ car: c as Car, plate: `DXB ${100 + i}` }))}
+        homeStyle={{ ...HOUSING_CONFIGS[housingTier].finish, exterior: HOUSING_CONFIGS[housingTier].finish.exterior ?? ["pool", "garden"] }}
         partyDecor={decor === "none" ? undefined : decor === "all" ? ALL : decor.split(",")} people={people} extras={<SceneCount />} />
     </main>
   );
@@ -24,8 +28,12 @@ export function PartyPreview({ tier, guests, decor }: { tier: string; guests: nu
 
 /** Counts everything in the scene every 2 s onto window.__scene (meshes, skinned avatars, lights, materials, triangles). */
 function SceneCount() {
-  useFrame(({ scene, clock }) => {
-    if (Math.floor(clock.elapsedTime * 10) % 20) return;
+  useFrame(({ scene, clock, camera }) => {
+    (window as unknown as { __cam: number[]; __threeScene: THREE.Scene }).__cam = camera.position.toArray();
+    (window as unknown as { __threeScene: THREE.Scene }).__threeScene = scene;
+    const w = window as unknown as { __sceneAt?: number };
+    if (clock.elapsedTime - (w.__sceneAt ?? -9) < 2) return;
+    w.__sceneAt = clock.elapsedTime;
     let meshes = 0, skinned = 0, tris = 0, shadowCasters = 0, points = 0, otherLights = 0, instanced = 0;
     const mats = new Set<string>();
     scene.traverseVisible((o) => {

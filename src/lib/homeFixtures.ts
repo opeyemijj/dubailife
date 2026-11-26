@@ -4,7 +4,7 @@
 
 import FIXTURES from "@/data/home/fixtures.json";
 import FLOORPLANS from "@/data/home/floorplans.json";
-import { CELL, GRID, LAYOUT_SCALE, migratePlacement, ROOM_SIZE, type FloorPlacement, type HousingTier, type Rotation } from "@/lib/furniture";
+import { CELL, gridOf, homeSizeOf, LAYOUT_SCALE, migratePlacement, sizeOfPlacement, type FloorPlacement, type HousingTier, type Rotation } from "@/lib/furniture";
 import type { Citizen, NeedKey } from "@/lib/citizenStore";
 
 export { FIXTURES };
@@ -16,6 +16,8 @@ export interface FixtureAction {
   produces?: Partial<Record<PantryItem, number>>;
   /** What the 3D shows while it's done (the meal on the table, flakes in the tank, the TV on…). */
   serve?: string;
+  /** Training: which body stat it builds and by how much (lib/body, like the gym). */
+  body?: { stat: "strength" | "stamina" | "flexibility"; gain: number };
 }
 export interface Fixture { id: string; kind: FixtureKind; size: [number, number]; placement: FloorPlacement }
 export interface FixtureWall { a: [number, number]; b: [number, number]; door?: [number, number] }
@@ -39,7 +41,7 @@ export function fixturesFor(tier: HousingTier, level = 0): Fixture[] {
       id: `${tier}:${level}:${i}`,
       kind: f.kind as FixtureKind,
       size: kindOf(f.kind as FixtureKind).size as [number, number],
-      placement: { kind: "floor", col: f.col, row: f.row, rot: f.rot as Rotation, level, g: GRID },
+      placement: { kind: "floor", col: f.col, row: f.row, rot: f.rot as Rotation, level, g: gridOf(homeSizeOf(tier)) },
     }));
   }
   return layoutOf(tier).fixtures
@@ -63,7 +65,8 @@ export const fixtureWallsFor = (tier: HousingTier, level = 0): FixtureWall[] => 
 /** Footprint of a fixture in metres. */
 export function fixtureRect(f: Fixture) {
   const [w, d] = f.placement.rot % 2 === 0 ? f.size : [f.size[1], f.size[0]];
-  const minX = -ROOM_SIZE / 2 + f.placement.col * CELL, minZ = -ROOM_SIZE / 2 + f.placement.row * CELL;
+  const S = sizeOfPlacement(f.placement);
+  const minX = -S / 2 + f.placement.col * CELL, minZ = -S / 2 + f.placement.row * CELL;
   return { minX, maxX: minX + w * CELL, minZ, maxZ: minZ + d * CELL };
 }
 

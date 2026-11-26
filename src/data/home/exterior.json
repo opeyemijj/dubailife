@@ -1,6 +1,6 @@
 {
   "_how": "Outside a house (townhouses and villas, which have a plot): optional pieces the owner, or a decorator they hire, can add. Each is bought once for that home and drawn round the house in 3D (components/home/HomeGrounds.tsx). Saved in the home's style (citizen.homeStyle[tier].exterior), so a decorator's work carries over like the floor and paint.",
-  "tiers": ["townhouse", "villa"],
+  "tiers": ["townhouse", "villa", "mansion"],
   "items": [
     { "id": "garden", "name": "Garden", "icon": "🌳", "price": 15000, "desc": "A lawn all round, hedges, flower beds and date palms." },
     { "id": "pool", "name": "Swimming pool", "icon": "🏊", "price": 85000, "desc": "An 8 m pool with a stone deck and two loungers." },

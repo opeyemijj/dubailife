@@ -19,13 +19,16 @@ import { useEmbedded } from "@/components/layout/Embed";
 import { usePhoneButtonHere } from "@/lib/phoneButtons";
 import { useMissions } from "@/lib/missions";
 import { dismissCityPulse, useCityPulse } from "@/lib/presence";
+import { useCityMapPath } from "@/lib/city/presence";
 
 export function BottomNav() {
   const pathname = usePathname();
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
   const { citizen } = useCitizen();
   const unread = useUnreadTotal(citizen?.id);
-  const onMap = isActive("/explore") && !!citizen?.id;
+  // Map is the map of the city you're in (Dubai's /explore, Abu Dhabi's /abu-dhabi: lib/city/presence).
+  const mapPath = useCityMapPath();
+  const onMap = isActive(mapPath) && !!citizen?.id;
   const embedded = useEmbedded();
   // This bar has the phone, so the floating phone button isn't needed.
   usePhoneButtonHere(!embedded);
@@ -47,7 +50,7 @@ export function BottomNav() {
         <div className={`bg-white/95 backdrop-blur-2xl border border-white pointer-events-auto shadow-[0_8px_28px_rgba(15,23,42,0.25)] ${onMap ? "rounded-[30px]" : "rounded-full"}`}>
           <nav className="relative h-[60px] p-1.5 flex items-center">
             <NavItem href="/home" icon={<Home className="w-6 h-6" />} label="Home" active={isActive("/home")} />
-            <NavItem href="/explore" icon={<Map className="w-6 h-6" />} label="Map" active={isActive("/explore")} />
+            <NavItem href={mapPath} icon={<Map className="w-6 h-6" />} label="Map" active={isActive(mapPath)} />
             {citizen?.id && <CityButton active={isActive("/city")} />}
             <PhoneButton unread={unread} />
             {citizen?.id && <MoreButton active={isActive("/top") || isActive("/wiki")} />}

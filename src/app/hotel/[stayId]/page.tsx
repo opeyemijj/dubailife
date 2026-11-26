@@ -11,6 +11,9 @@ import { boostNeed, refreshCitizen, useRequireCitizen, type NeedKey } from "@/li
 import { HOTELS, checkIn, checkOut, roomService, stayById, suiteOf, timeLeft, type Stay } from "@/lib/hotels";
 import { SuiteRoom } from "@/components/hotel/SuiteRoom";
 import { gameAudio } from "@/utils/gameAudio";
+import { cityOfPlace } from "@/lib/city/cities";
+import { useCurrentCity } from "@/lib/city/presence";
+import { AwayCard } from "@/components/city/CityGate";
 
 export default function StayPage({ params }: { params: Promise<{ stayId: string }> }) {
   const { stayId } = use(params);
@@ -22,12 +25,15 @@ export default function StayPage({ params }: { params: Promise<{ stayId: string 
   const [toast, setToast] = useState<string | null>(null);
   const [menu, setMenu] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  const here = useCurrentCity();
 
   const load = useCallback(async () => { const r = await stayById(id); setStay(r.data ?? null); }, [id]);
   useEffect(() => { const t = setTimeout(() => void load(), 0); const tick = setInterval(() => setNow(Date.now()), 60_000); return () => { clearTimeout(t); clearInterval(tick); }; }, [load]);
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(null), 3500); return () => clearTimeout(t); }, [toast]);
 
   if (stay === undefined) return <Lobby><p className="text-white/70">One moment…</p></Lobby>;
+  // A stay in the other city: you check in (and sleep) where the hotel is.
+  if (stay && here.ready && cityOfPlace(stay.place_id) !== here.city) return <AwayCard here={here.city} there={cityOfPlace(stay.place_id)} what={stay.hotel_name} />;
   if (stay === null) return <Lobby><p className="font-black">We couldn&apos;t find that booking.</p><Link href="/hotels" className="inline-block mt-3 h-11 leading-[2.75rem] px-5 rounded-full bg-amber-400 text-slate-950 font-black">Book a suite</Link></Lobby>;
   const suite = suiteOf(stay.suite);
   const over = stay.status === "checked_out" || Date.parse(stay.check_out_by) <= now;

@@ -1,0 +1,28 @@
+{
+  "_comment": "The Abu Dhabi Passport: a stamp for each landmark's signature thing (an activity done there, or the one thing bought there). Stamps and rewards are mirrored in passport_stamp_ok() and passport_reward() (supabase *_abu_dhabi_passport.sql), checked by scripts/check-life-config.mjs.",
+  "title": "Abu Dhabi Explorer",
+  "stamps": [
+    { "id": "grand-mosque", "place": "ad-grand-mosque", "name": "Sheikh Zayed Grand Mosque", "icon": "🕌", "how": "Take the guided tour", "activities": ["szgm:tour"] },
+    { "id": "qasr-al-watan", "place": "ad-qasr-al-watan", "name": "Qasr Al Watan", "icon": "🏛️", "how": "Tour the Great Hall or watch the light show", "activities": ["qaw:tour", "qaw:lights"] },
+    { "id": "louvre", "place": "ad-louvre", "name": "Louvre Abu Dhabi", "icon": "🖼️", "how": "Walk the galleries", "activities": ["louvre:tour"] },
+    { "id": "emirates-palace", "place": "ad-emirates-palace", "name": "Emirates Palace", "icon": "☕", "how": "Order the gold-flake cappuccino", "products": ["ep:gold-cappuccino"] },
+    { "id": "al-hosn", "place": "ad-al-hosn", "name": "Qasr Al Hosn", "icon": "🏰", "how": "Tour the fort", "activities": ["hosn:tour"] },
+    { "id": "heritage", "place": "ad-dhow-harbour", "name": "Heritage Village & Dhows", "icon": "⛵", "how": "Sail on a dhow or dive for pearls", "activities": ["dhow:cruise", "dhow:pearl"] },
+    { "id": "mangroves", "place": "ad-mangroves", "name": "Mangrove National Park", "icon": "🛶", "how": "Kayak through the mangroves", "activities": ["mangrove:kayak"] },
+    { "id": "turtles", "place": "ad-saadiyat-beach-club", "name": "Saadiyat's turtles", "icon": "🐢", "how": "Watch the hawksbill turtles nest", "activities": ["saadiyat:turtles"] },
+    { "id": "formula-rossa", "place": "ad-ferrari-world", "name": "Formula Rossa", "icon": "🎢", "how": "Ride the fastest roller coaster", "activities": ["fw:formula-rossa"] },
+    { "id": "waterworld", "place": "ad-yas-waterworld", "name": "Yas Waterworld", "icon": "🌊", "how": "Ride any slide or the wave pool", "activities": ["ride:jumeirah-sceirah", "ride:tantrum-alley", "ride:burj-surj", "ride:wipeout-flowrider", "ride:juhas-journey", "ride:breakers-bay"] },
+    { "id": "grand-prix", "place": "ad-w-yas", "name": "Yas Grand Prix", "icon": "🏁", "how": "Watch the race from the W's roof", "activities": ["wyas:gp"] },
+    { "id": "etihad-arena", "place": "ad-etihad-arena", "name": "Etihad Arena", "icon": "🎤", "how": "Watch the show", "activities": ["arena:show"] },
+    { "id": "falcons", "place": "ad-falcon-hospital", "name": "Falcon Hospital", "icon": "🦅", "how": "Watch the falconry show or hold a falcon", "activities": ["falcon:show", "falcon:hold"] },
+    { "id": "flamingos", "place": "ad-wathba-wetland", "name": "Al Wathba's flamingos", "icon": "🦩", "how": "Watch the flamingos", "activities": ["wetland:birds"] },
+    { "id": "desert-safari", "place": "ad-desert-safari", "name": "Liwa desert safari", "icon": "🚙", "how": "Go dune bashing or ride a camel", "activities": ["safari:dunes", "safari:camel"] },
+    { "id": "moreeb", "place": "ad-moreeb-camp", "name": "Moreeb Dune", "icon": "🏜️", "how": "Climb the dune", "activities": ["moreeb:climb"] }
+  ],
+  "rewards": [
+    { "at": 4, "aed": 500 },
+    { "at": 8, "aed": 1500 },
+    { "at": 12, "aed": 3000 },
+    { "at": 16, "aed": 10000, "title": true }
+  ]
+}

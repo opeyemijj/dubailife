@@ -17,9 +17,12 @@ import { openSheet } from "@/components/layout/HudSheets";
 import { gameAudio } from "@/utils/gameAudio";
 import { useServices } from "@/lib/cityServices";
 import { useEmbedded } from "@/components/layout/Embed";
+import { CitySwitcher } from "@/components/city/CitySwitcher";
 
 export interface TopBarProps {
   walletBalance?: number;
+  /** On the maps: the cities strip under the bar (Dubai, Abu Dhabi, and the ones coming). */
+  cities?: boolean;
 }
 
 /** Big amounts shortened for the pill: 10,863,950 → 10.8M. */
@@ -32,7 +35,7 @@ export function MoodFace({ mood, className = "w-5 h-5" }: { mood: Mood; classNam
   return <Icon className={`${className} ${mood.tone}`} aria-label={mood.label} />;
 }
 
-export function TopBar({ walletBalance: walletOverride }: TopBarProps) {
+export function TopBar({ walletBalance: walletOverride, cities = false }: TopBarProps) {
   const { citizen } = useCitizen();
   const walletBalance = walletOverride ?? citizen?.balance ?? 0;
   const now = useNow();
@@ -118,6 +121,7 @@ export function TopBar({ walletBalance: walletOverride }: TopBarProps) {
         </div>
       </div>
 
+      {cities && citizen?.id && <CitySwitcher />}
       {open && <StatusPanel onClose={() => setOpen(false)} mood={mood} balance={walletBalance} />}
     </div>
   );

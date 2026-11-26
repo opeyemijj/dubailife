@@ -9,7 +9,8 @@
 import React from 'react';
 import TRACKS from '@/data/autodrome/tracks.json';
 
-type SpriteProps = { width?: number; height?: number; name?: string };
+/** `sign`: the word on the grandstand (each track's own; another city's track can say its own name). */
+type SpriteProps = { width?: number; height?: number; name?: string; sign?: string };
 const SVG_CLASS = 'drop-shadow-xl cursor-pointer hover:scale-105 transition-transform origin-bottom select-none overflow-visible';
 
 /** The map's projection: ground point (u across, v deep) from the plinth's front-left corner (x0, y0). */
@@ -79,7 +80,7 @@ function Runner({ x, y, coat, silk, camel }: { x: number; y: number; coat: strin
 
 // ---------------------------------------------------------------- Meydan Racecourse
 
-export const MeydanSprite = ({ width = 420, height = 230, name = 'Meydan Racecourse' }: SpriteProps) => {
+export const MeydanSprite = ({ width = 420, height = 230, name = 'Meydan Racecourse', sign = 'MEYDAN' }: SpriteProps) => {
   const P = ground(10, 212);
   const pt = (u: number, v: number) => P(u, v).join(',');
   return (
@@ -114,7 +115,7 @@ export const MeydanSprite = ({ width = 420, height = 230, name = 'Meydan Racecou
         );
       })()}
       <rect x={P(110, 128)[0]} y={P(110, 128)[1] - 20} width={100} height={12} rx="2" fill="#0f3b2e" />
-      <text x={P(160, 128)[0]} y={P(160, 128)[1] - 11} textAnchor="middle" fontSize="8.5" fontWeight="900" fill="#d4af37" fontFamily="system-ui, sans-serif" letterSpacing="2">MEYDAN</text>
+      <text x={P(160, 128)[0]} y={P(160, 128)[1] - 11} textAnchor="middle" fontSize="8.5" fontWeight="900" fill="#d4af37" fontFamily="system-ui, sans-serif" letterSpacing="2">{sign}</text>
       {/* Horses on the home straight in front of the stands, and the winning post. */}
       {[0, 1, 2, 3, 4].map((i) => {
         const [x, y] = P(90 + i * 24 - (i % 2) * 8, 108 + (i % 2) * 4);
@@ -128,7 +129,7 @@ export const MeydanSprite = ({ width = 420, height = 230, name = 'Meydan Racecou
 
 // ---------------------------------------------------------------- Al Marmoom Camel Racetrack
 
-export const CamelTrackSprite = ({ width = 400, height = 230, name = 'Al Marmoom Camel Racetrack' }: SpriteProps) => {
+export const CamelTrackSprite = ({ width = 400, height = 230, name = 'Al Marmoom Camel Racetrack', sign = 'AL MARMOOM' }: SpriteProps) => {
   const P = ground(10, 212);
   return (
     <svg viewBox="0 0 400 230" preserveAspectRatio="none" style={{ width, height }} className={SVG_CLASS} aria-label={name}>
@@ -148,7 +149,7 @@ export const CamelTrackSprite = ({ width = 400, height = 230, name = 'Al Marmoom
       {[0, 1, 2, 3, 4].map((i) => <rect key={i} x={P(84 + i * 33, 126)[0]} y={P(84 + i * 33, 126)[1] - 30} width={1.6} height={14} fill="#a8a29e" />)}
       <Box x={P(74, 126)[0]} y={P(74, 126)[1] - 30} w={152} h={3} d={16} front="#b45309" side="#92400e" top="#c2620e" />
       <rect x={P(110, 126)[0]} y={P(110, 126)[1] - 13} width={80} height={10} rx="2" fill="#7c2d12" />
-      <text x={P(150, 126)[0]} y={P(150, 126)[1] - 5.5} textAnchor="middle" fontSize="7" fontWeight="900" fill="#ffffff" fontFamily="system-ui, sans-serif" letterSpacing="1.4">AL MARMOOM</text>
+      <text x={P(150, 126)[0]} y={P(150, 126)[1] - 5.5} textAnchor="middle" fontSize="7" fontWeight="900" fill="#ffffff" fontFamily="system-ui, sans-serif" letterSpacing="1.4">{sign}</text>
       {/* Camels on the near straight, and the owners' 4x4s on the road alongside. */}
       {[0, 1, 2, 3].map((i) => {
         const [x, y] = P(96 + i * 30, 26 + (i % 2) * 5);
@@ -232,8 +233,8 @@ function CircuitSprite({ width, height, name, track, sign, signColor, bike, race
   );
 }
 
-export const CarCircuitSprite = ({ width = 420, height = 230, name = 'Dubai Autodrome Circuit' }: SpriteProps) => (
-  <CircuitSprite width={width} height={height} name={name} track="grand-prix" sign="AUTODROME" signColor="#dc2626" racers={['#dc2626', '#facc15', '#0f172a', '#f8fafc']} />
+export const CarCircuitSprite = ({ width = 420, height = 230, name = 'Dubai Autodrome Circuit', sign = 'AUTODROME' }: SpriteProps) => (
+  <CircuitSprite width={width} height={height} name={name} track="grand-prix" sign={sign} signColor="#dc2626" racers={['#dc2626', '#facc15', '#0f172a', '#f8fafc']} />
 );
 
 export const BikeCircuitSprite = ({ width = 420, height = 230, name = 'Superbike Circuit' }: SpriteProps) => (

@@ -15,6 +15,17 @@ export const OLD_GRID = 14;
 export const LAYOUT_SCALE = ROOM_SIZE / (OLD_GRID * CELL);
 export const WALL_HEIGHT = 3;
 
+/** How wide a home is (metres, square): 10 m for flats; villas and penthouses 18 m; mansions 30 m. Set by the
+    floor plan's "size" (src/data/home/floorplans.json). The bigger homes keep the 10 m home's layout in their
+    north-west corner, so pieces placed before they grew stay exactly where they were (see fitPlacement). */
+export function homeSizeOf(tier?: string | null): number {
+  const plan = tier ? (FLOORPLANS as unknown as Record<string, { size?: number }>)[tier] : undefined;
+  return plan?.size ?? ROOM_SIZE;
+}
+export const gridOf = (size: number) => Math.round(size / CELL);
+/** The width of the home a placement was made in (placements carry their grid). */
+export const sizeOfPlacement = (p?: { g?: number } | null) => (p?.g && p.g > GRID ? p.g * CELL : ROOM_SIZE);
+
 export type Wall = "north" | "south" | "east" | "west";
 export type Rotation = 0 | 1 | 2 | 3; // quarter turns
 
@@ -39,6 +50,20 @@ export interface WallPlacement {
   g?: number;
 }
 
+/**
+ * A placement on a home `g` cells wide. Placements from before a home grew (on the 20-cell grid) keep their spot:
+ * the old home is the new one's north-west corner, so floor cells are unchanged; wall offsets on the west and south
+ * walls (measured from their far ends) move along by the growth so the piece stays on the same side.
+ */
+export function fitPlacement<P extends Placement | null | undefined>(p: P, size: [number, number], g: number): P {
+  if (!p) return p;
+  const q = migratePlacement(p, size) as Placement;
+  if (q.g === g || g <= GRID) return q as P;
+  const from = q.g ?? GRID;
+  if (q.kind === "wall") return { ...q, offset: q.wall === "west" || q.wall === "south" ? q.offset + (g - from) : q.offset, g } as P;
+  return { ...q, g } as P;
+}
+
 /** One coordinate of an old 14-cell placement on the 20-cell grid: things against a wall stay against it. */
 function spreadCell(v: number, span: number) {
   if (v <= 0) return 0;
@@ -48,7 +73,7 @@ function spreadCell(v: number, span: number) {
 
 /** Moves a placement made in the old, smaller home to the same spot in today's home. */
 export function migratePlacement<P extends Placement | null | undefined>(p: P, size: [number, number]): P {
-  if (!p || p.g === GRID) return p;
+  if (!p || (p.g ?? 0) >= GRID) return p;
   if (p.kind === "wall") return { ...p, offset: spreadCell(p.offset, size[0]), g: GRID };
   const [w, d] = p.rot % 2 === 0 ? size : [size[1], size[0]];
   return { ...p, col: spreadCell(p.col, w), row: spreadCell(p.row, d), g: GRID };
@@ -419,6 +444,17 @@ export const CATALOG: CatalogItem[] = [
   // --- Sleep Collection ---
   { id: "mattress-floor", name: "Mattress on Floor", desc: "Simple foam mattress on floor for resting.", icon: "🛏️", price: 1200, kind: "floor", size: [2, 1], model: "/models/furniture/bed.glb", category: "sleep", stars: 1, statBadge: "+Energy", placementTag: "2×1", interaction: "bed" },
   { id: "bed-single", name: "Single Wooden Bed", desc: "Compact single bed frame with comfortable mattress.", icon: "🛏️", price: 3500, kind: "floor", size: [2, 2], model: "/models/furniture/bed.glb", category: "sleep", stars: 1, statBadge: "+Energy", placementTag: "2×2", interaction: "bed" },
+  // Mansion rooms: the home gym, library, games room, cinema and bar (they come with mansions and villas, and can be bought for any home).
+  { id: "smart-treadmill", name: "Smart Treadmill", desc: "Run in place: builds stamina.", icon: "🏃", price: 14500, kind: "floor", size: [2, 4], visual: "treadmill", category: "skills", statBadge: "+Stamina", isNew: true },
+  { id: "power-rack", name: "Power Rack & Bench", desc: "Barbell, plates and a bench: builds strength.", icon: "🏋️", price: 22000, kind: "floor", size: [5, 4], visual: "power-rack", category: "skills", statBadge: "+Strength", isNew: true },
+  { id: "dumbbell-rack", name: "Dumbbell Rack & Mirror", desc: "Ten pairs, light to heavy, before a gym mirror.", icon: "💪", price: 8800, kind: "floor", size: [4, 1], visual: "dumbbell-rack", category: "skills", statBadge: "+Strength", isNew: true },
+  { id: "library-bookcase", name: "Library Bookcase", desc: "Walnut shelves to the ceiling, full of books.", icon: "📚", price: 9600, kind: "floor", size: [4, 1], visual: "bookcase", category: "skills", statBadge: "+Culture", isNew: true },
+  { id: "billiards-table", name: "Billiards Table", desc: "Walnut and green baize, with a lamp overhead.", icon: "🎱", price: 38000, kind: "floor", size: [6, 4], visual: "pool-table", category: "fun", statBadge: "+Fun", isNew: true },
+  { id: "cinema-screen", name: "Home Cinema Screen", desc: "A 4 m screen with tower speakers.", icon: "🎬", price: 46000, kind: "floor", size: [9, 1], visual: "cinema-screen", category: "fun", isNew: true },
+  { id: "cinema-recliners", name: "Cinema Recliners", desc: "A row of leather recliners with cup holders.", icon: "🍿", price: 21000, kind: "floor", size: [6, 2], visual: "recliners", category: "fun", statBadge: "+Fun", isNew: true },
+  { id: "home-bar", name: "Home Bar", desc: "Marble counter, lit bottle shelves and stools.", icon: "🍹", price: 32000, kind: "floor", size: [6, 3], visual: "bar-counter", category: "luxury", statBadge: "+Social", isNew: true },
+  { id: "arcade-cabinet", name: "Arcade Cabinet", desc: "A classic stand-up arcade machine.", icon: "🕹️", price: 7500, kind: "floor", size: [2, 2], visual: "arcade-cabinet", category: "fun", statBadge: "+Fun", isNew: true },
+  { id: "spa-tub", name: "Spa Jacuzzi", desc: "A round hot tub with jets.", icon: "🫧", price: 48000, kind: "floor", size: [5, 5], visual: "spa-tub", category: "luxury", statBadge: "+Energy", isNew: true },
 ];
 
 export const getCatalogItem = (id: string) => CATALOG.find((c) => c.id === id) ?? HOME_ITEMS.find((c) => c.id === id);
@@ -427,8 +463,13 @@ export type Interaction = "cooler" | "bed" | "chair" | "door" | "stairs" | "lift
 
 /** Things in the home you use rather than sit or lie on: the TV, the aquarium, the dining table, the kitchen counter.
     Each opens its actions (src/data/home/fixtures.json, kinds "tv", "aquarium", "dining", "island"). */
-export type HomeObject = "tv" | "aquarium" | "dining" | "island";
+export type HomeObject = "tv" | "aquarium" | "dining" | "island" | "gym" | "weights" | "books" | "billiards" | "cinema" | "bar" | "arcade" | "spa";
+const OBJECT_OF_VISUAL: Record<string, HomeObject> = {
+  treadmill: "gym", "power-rack": "weights", "dumbbell-rack": "weights", bookcase: "books", "pool-table": "billiards",
+  "cinema-screen": "cinema", recliners: "cinema", "bar-counter": "bar", "arcade-cabinet": "arcade", "spa-tub": "spa",
+};
 export function homeObjectOf(item: { id: string; visual?: string; model?: string }): HomeObject | null {
+  if (item.visual && OBJECT_OF_VISUAL[item.visual]) return OBJECT_OF_VISUAL[item.visual];
   if (item.visual === "aquarium") return "aquarium";
   if (item.visual === "dining-set") return "dining";
   if (item.visual === "kitchen-island") return "island";
@@ -451,12 +492,13 @@ export interface BuiltIn {
 }
 
 /** A home layout, or (ballroom) a hotel event hall: an open room decorated with the same tools (lib/halls). */
-export type HousingTier = "bed_space" | "studio" | "one_bedroom" | "two_bedroom" | "three_bedroom" | "duplex" | "townhouse" | "penthouse" | "villa" | "ballroom";
+export type HousingTier = "bed_space" | "studio" | "one_bedroom" | "two_bedroom" | "three_bedroom" | "duplex" | "townhouse" | "penthouse" | "villa" | "mansion" | "ballroom";
 
 /** The home layout for a listing: its property type decides first (townhouses, villas and penthouses are
     two-storey whatever their bedrooms), then the number of bedrooms. */
 export function housingTierFor(propertyType?: string | null, bedrooms?: number | null): HousingTier {
   const t = (propertyType ?? "").toLowerCase();
+  if (t.includes("mansion")) return "mansion";
   if (t.includes("townhouse")) return "townhouse";
   if (t.includes("villa")) return "villa";
   if (t.includes("penthouse")) return "penthouse";
@@ -468,6 +510,7 @@ export function housingTierFor(propertyType?: string | null, bedrooms?: number |
 export function getHousingTierFromText(text?: string | null): HousingTier {
   const raw = (text || "studio").toLowerCase();
   if (raw.includes("bed_space") || raw.includes("bed space") || raw.includes("shared")) return "bed_space";
+  if (raw.includes("mansion")) return "mansion";
   if (raw.includes("townhouse")) return "townhouse";
   if (raw.includes("duplex")) return "duplex";
   if (raw.includes("three_bedroom") || raw.includes("3-bedroom") || raw.includes("3 bedroom")) return "three_bedroom";
@@ -521,6 +564,10 @@ export interface HousingConfig {
   finish: HomeStyle;
   /** Panelled walls, crown moulding and cove lighting. */
   luxury?: boolean;
+  /** How wide the home is (metres, from its floor plan; 10 when unset). */
+  size?: number;
+  /** Where the front door is on the west wall: its centre, metres south of the north-west corner (5 when unset). */
+  doorAt?: number;
 }
 
 /** One floor of a two-storey home. */
@@ -857,6 +904,25 @@ const RAW_HOUSING_CONFIGS: Record<HousingTier, HousingConfig> = {
       { id: "butler_service", label: "Private Butler Dining", icon: "🛎️", desc: "Order 5-star room service straight from Downtown chefs.", animation: "eat", need: { kind: "hunger", amount: 60 } },
     ],
   },
+  // The 30 m two-storey mansion (src/data/home/floorplans.json "mansion"): gym, cinema, library, games room and
+  // bar, indoor pool, five en-suite bedrooms and a car gallery outside.
+  mansion: {
+    id: "mansion",
+    label: "Signature Mansion",
+    area: "Emirates Hills & Palm Jumeirah",
+    monthly: 250000,
+    icon: "🏰",
+    wallColor: "#faf8f5",
+    skirtingColor: "#c9a24a",
+    finish: { floor: "white-marble", wall: "#f7f3ec", panels: true, ceiling: "coffered", exterior: ["garden", "pool", "garage", "carpark"] },
+    luxury: true,
+    hasDollhouseUpView: true,
+    activities: [
+      { id: "mansion_gym", label: "Morning Workout", icon: "🏋️", desc: "Treadmill and weights in your own gym.", animation: "wave", need: { kind: "fun", amount: 35 } },
+      { id: "mansion_cinema", label: "Private Screening", icon: "🎬", desc: "Lights down in your home cinema.", animation: "sit", need: { kind: "fun", amount: 60 } },
+      { id: "mansion_host", label: "Host a Gala Dinner", icon: "🥂", desc: "Twelve guests at the dining table.", animation: "talk", need: { kind: "social", amount: 70 } },
+    ],
+  },
   villa: {
     id: "villa",
     label: "Palm Jumeirah Signature Villa",
@@ -885,6 +951,8 @@ const RAW_BUILT_INS: BuiltIn[] = [
 ];
 
 const RAW_BUILT_INS_BY_TIER: Record<HousingTier, BuiltIn[]> = {
+  // Its furniture comes from its floor plan (src/data/home/floorplans.json).
+  mansion: [],
   // The hall as it comes: tables round a dance floor under chandeliers (all movable). On the 20-cell grid.
   ballroom: [
     { id: "hall_dance_floor", visual: "dance-floor", size: [8, 8], placement: { kind: "floor", col: 6, row: 6, rot: 0, g: GRID } },
@@ -1073,7 +1141,7 @@ const spreadRooms = (rooms: RoomZone[]): RoomZone[] => rooms.map((r) => ({
 // Standard Dubai floor plans (src/data/home/floorplans.json), drawn for the 10 m home: these replace the
 // older layouts' rooms, walls and furniture wherever a plan exists.
 type PlanFurniture = { id: string; name: string; icon: string; size: number[]; col: number; row: number; rot: number; model?: string; visual?: string; interaction?: string; level?: number; fixed?: boolean };
-type Plan = { rooms?: RoomZone[]; walls?: LevelDef["walls"]; levels?: LevelDef[]; furniture: PlanFurniture[] };
+type Plan = { rooms?: RoomZone[]; walls?: LevelDef["walls"]; levels?: LevelDef[]; furniture: PlanFurniture[]; size?: number; door?: number };
 const PLANS = FLOORPLANS as unknown as Record<string, Plan>;
 const planIdOf = (tier: string, id: string) => `fp_${tier}_${id}`;
 
@@ -1083,6 +1151,8 @@ export const HOUSING_CONFIGS = Object.fromEntries(Object.entries(RAW_HOUSING_CON
   walls: PLANS[id].walls,
   blocks: undefined,
   levels: PLANS[id].levels,
+  size: PLANS[id].size,
+  doorAt: PLANS[id].door,
 } : {
   ...c,
   rooms: c.rooms && spreadRooms(c.rooms),
@@ -1096,7 +1166,7 @@ export const BUILT_INS: BuiltIn[] = RAW_BUILT_INS.map(spreadBuiltIn);
 export const BUILT_INS_BY_TIER = Object.fromEntries(Object.entries(RAW_BUILT_INS_BY_TIER).map(([id, list]) => [id, PLANS[id]
   ? PLANS[id].furniture.map((p): BuiltIn => ({
       id: planIdOf(id, p.id), model: p.model, visual: p.visual, size: p.size as [number, number],
-      placement: { kind: "floor", col: p.col, row: p.row, rot: p.rot as Rotation, ...(p.level ? { level: p.level } : {}), g: GRID },
+      placement: { kind: "floor", col: p.col, row: p.row, rot: p.rot as Rotation, ...(p.level ? { level: p.level } : {}), g: gridOf(homeSizeOf(id)) },
       interaction: p.interaction as Interaction | undefined, fixed: p.fixed,
     }))
   : list.map(spreadBuiltIn)])) as Record<HousingTier, BuiltIn[]>;
@@ -1131,11 +1201,12 @@ export const HOME_ITEMS: CatalogItem[] = DEDUPED_BUILT_INS.map((b) => ({
 
 /** A home's furniture including the built-ins for that tier (in their starting place until they're moved). */
 export function withHomeItems(furniture: OwnedFurniture[], tier: HousingTier = "studio"): OwnedFurniture[] {
-  // Pieces placed in the old, smaller home move to the same spot in today's.
+  // Pieces placed in the old, smaller home (or before this home grew) move to the same spot in today's.
+  const g = gridOf(homeSizeOf(tier));
   furniture = furniture.map((f) => {
-    if (!f.placement || f.placement.g === GRID) return f;
+    if (!f.placement || f.placement.g === g) return f;
     const item = getCatalogItem(f.itemId);
-    return item ? { ...f, placement: migratePlacement(f.placement, item.size) } : f;
+    return item ? { ...f, placement: fitPlacement(f.placement, item.size, g) } : f;
   });
   const tierBuiltIns = BUILT_INS_BY_TIER[tier] ?? BUILT_INS;
   const validBuiltInUids = new Set(tierBuiltIns.map((b) => `builtin:${b.id}`));
@@ -1150,18 +1221,28 @@ export function withHomeItems(furniture: OwnedFurniture[], tier: HousingTier = "
   return [...cleanedFurniture, ...missing];
 }
 
-/** Door and window spans on the walls, in cells. */
+/** Door and window spans on the walls, in cells (the 10 m home). */
 export const DOOR = { wall: "west" as Wall, offset: 9, width: 2, height: 4.4 };
 export const WINDOW = { wall: "north" as Wall, offset: 11, width: 6 };
 
-/** Cells kept clear: in front of the door, and where the citizen stands. */
-const RESERVED_CELLS: Array<[number, number]> = [
-  [0, 9], [0, 10], [1, 9], [1, 10],
-  [3, 9], [3, 10],
-];
+/** A home's front door, window, the cells kept clear inside the door and where you arrive, for a home S metres
+    wide. Grown homes keep the 10 m home's door (it's in their north-west corner); a plan can put it elsewhere
+    along the west wall ("door": its centre, metres from the north-west corner). */
+export function homeGeom(S: number = ROOM_SIZE, doorAt?: number) {
+  const G = gridOf(S), half = S / 2;
+  // The door's centre, metres south of the north-west corner (5 m in the 10 m home and the corner of a grown one).
+  const dz = doorAt ?? 5;
+  // West-wall offsets run from the south end.
+  const door = { ...DOOR, offset: Math.round((S - dz) / CELL) - DOOR.width / 2 };
+  const row = Math.round(dz / CELL);
+  const reserved: Array<[number, number]> = [[0, row - 1], [0, row], [1, row - 1], [1, row], [3, row - 1], [3, row]];
+  return { S, G, half, door, window: WINDOW, reserved, avatar: { x: -half + 3.5 * CELL, z: -half + dz } };
+}
+const GEOM10 = homeGeom();
+const RESERVED_CELLS = GEOM10.reserved;
 
 // Just inside the front door, in the entrance hall.
-export const AVATAR_SPOT = { x: -ROOM_SIZE / 2 + 3.5 * CELL, z: 0 };
+export const AVATAR_SPOT = GEOM10.avatar;
 
 /** Footprint size after rotation. */
 export function rotatedSize(size: [number, number], rot: Rotation): [number, number] {
@@ -1169,17 +1250,17 @@ export function rotatedSize(size: [number, number], rot: Rotation): [number, num
 }
 
 /** World-space centre of a floor footprint. */
-export function floorCenter(size: [number, number], p: FloorPlacement) {
+export function floorCenter(size: [number, number], p: FloorPlacement, S: number = sizeOfPlacement(p)) {
   const [w, d] = rotatedSize(size, p.rot);
   return {
-    x: -ROOM_SIZE / 2 + (p.col + w / 2) * CELL,
-    z: -ROOM_SIZE / 2 + (p.row + d / 2) * CELL,
+    x: -S / 2 + (p.col + w / 2) * CELL,
+    z: -S / 2 + (p.row + d / 2) * CELL,
   };
 }
 
 /** World position (centre) and facing yaw of a wall item. */
-export function wallTransform(size: [number, number], p: WallPlacement) {
-  const half = ROOM_SIZE / 2;
+export function wallTransform(size: [number, number], p: WallPlacement, S: number = sizeOfPlacement(p)) {
+  const half = S / 2;
   const along = -half + (p.offset + size[0] / 2) * CELL;
   const y = 1.7;
   const inset = 0.08;
@@ -1192,12 +1273,12 @@ export function wallTransform(size: [number, number], p: WallPlacement) {
 }
 
 /** Converts a hit point on a wall into the offset of a wall item centred there. */
-export function wallOffsetAt(wall: Wall, point: { x: number; z: number }, width: number) {
-  const half = ROOM_SIZE / 2;
+export function wallOffsetAt(wall: Wall, point: { x: number; z: number }, width: number, S: number = ROOM_SIZE) {
+  const half = S / 2;
   const along = wall === "north" ? point.x : wall === "south" ? -point.x : wall === "west" ? -point.z : point.z;
   // Sub-grid quarter-step (12.5 cm) allows fine wall positioning without big jumps
   const offset = Math.round(((along + half) / CELL - width / 2) * 4) / 4;
-  return Math.max(0, Math.min(GRID - width, offset));
+  return Math.max(0, Math.min(gridOf(S) - width, offset));
 }
 
 /** Converts a hit point on the floor into the placement of an item centred there, aligning to fine grid and snapping to nearby items. */
@@ -1207,11 +1288,13 @@ export function floorPlacementAt(
   point: { x: number; z: number },
   level = 0,
   others?: OwnedFurniture[],
-  ignoreUid?: string
+  ignoreUid?: string,
+  S: number = ROOM_SIZE,
 ): FloorPlacement {
+  const G = gridOf(S);
   const [w, d] = rotatedSize(size, rot);
-  const rawCol = (point.x + ROOM_SIZE / 2) / CELL - w / 2;
-  const rawRow = (point.z + ROOM_SIZE / 2) / CELL - d / 2;
+  const rawCol = (point.x + S / 2) / CELL - w / 2;
+  const rawRow = (point.z + S / 2) / CELL - d / 2;
 
   // Fine sub-grid resolution (0.25 CELL = 12.5 cm) enables small, delicate movements without giant leaps
   const GRID_STEP = 0.25;
@@ -1292,8 +1375,8 @@ export function floorPlacementAt(
   }
 
   // Clamp within bounds and round to 2 decimal places
-  const finalCol = Math.round(Math.max(0, Math.min(GRID - w, col)) * 100) / 100;
-  const finalRow = Math.round(Math.max(0, Math.min(GRID - d, row)) * 100) / 100;
+  const finalCol = Math.round(Math.max(0, Math.min(G - w, col)) * 100) / 100;
+  const finalRow = Math.round(Math.max(0, Math.min(G - d, row)) * 100) / 100;
 
   return {
     kind: "floor",
@@ -1301,7 +1384,7 @@ export function floorPlacementAt(
     col: finalCol,
     row: finalRow,
     ...(level ? { level } : {}),
-    g: GRID,
+    g: G,
   };
 }
 
@@ -1329,7 +1412,9 @@ function spansOverlap(a: number, aw: number, b: number, bw: number) {
  * the sofa; the layer decides which shows on top): only the room's bounds, the doorway and the window count. Placing
  * automatically keeps everything apart.
  */
-export function isPlacementValid(item: CatalogItem, placement: Placement, others: OwnedFurniture[], ignoreUid?: string, loose = false): boolean {
+export function isPlacementValid(item: CatalogItem, placement: Placement, others: OwnedFurniture[], ignoreUid?: string, loose = false, S: number = sizeOfPlacement(placement), doorAt?: number): boolean {
+  const geom = S === ROOM_SIZE && doorAt === undefined ? GEOM10 : homeGeom(S, doorAt);
+  const G = geom.G, DOOR = geom.door;
   // Only what's on the same floor matters.
   const level = levelOf(placement);
   const placed = others.filter((o) => o.uid !== ignoreUid && o.placement && levelOf(o.placement) === level);
@@ -1337,7 +1422,7 @@ export function isPlacementValid(item: CatalogItem, placement: Placement, others
   if (placement.kind === "wall") {
     if (item.kind !== "wall") return false;
     const w = item.size[0];
-    if (placement.offset < 0 || placement.offset + w > GRID) return false;
+    if (placement.offset < 0 || placement.offset + w > G) return false;
     // The front door is downstairs only.
     if (level === 0 && placement.wall === DOOR.wall && spansOverlap(placement.offset, w, DOOR.offset, DOOR.width)) return false;
     if (placement.wall === WINDOW.wall && spansOverlap(placement.offset, w, WINDOW.offset, WINDOW.width)) return false;
@@ -1351,14 +1436,14 @@ export function isPlacementValid(item: CatalogItem, placement: Placement, others
 
   if (item.kind === "wall") return false;
   const [w, d] = rotatedSize(item.size, placement.rot);
-  if (placement.col < 0 || placement.row < 0 || placement.col + w > GRID || placement.row + d > GRID) return false;
+  if (placement.col < 0 || placement.row < 0 || placement.col + w > G || placement.row + d > G) return false;
 
   const mine = new Set(floorCells(item.size, placement));
   const layer = layerOf(item.kind);
 
   // Solid furniture keeps clear of the doorway and where the citizen stands (downstairs).
   if (layer === "solid" && level === 0) {
-    for (const [c, r] of RESERVED_CELLS) if (mine.has(`${c},${r}`)) return false;
+    for (const [c, r] of geom.reserved) if (mine.has(`${c},${r}`)) return false;
   }
   if (loose) return true;
   return !placed.some((o) => {
@@ -1370,13 +1455,14 @@ export function isPlacementValid(item: CatalogItem, placement: Placement, others
 }
 
 /** First free spot for an item, scanning from the room centre outwards (optionally at a fixed rotation). */
-export function findFreePlacement(item: CatalogItem, others: OwnedFurniture[], rot?: Rotation, level = 0): Placement | null {
+export function findFreePlacement(item: CatalogItem, others: OwnedFurniture[], rot?: Rotation, level = 0, S: number = ROOM_SIZE, doorAt?: number): Placement | null {
   const lv = level ? { level } : {};
+  const GRID = gridOf(S);
   if (item.kind === "wall") {
     for (const wall of ["north", "east", "south", "west"] as Wall[]) {
       for (let offset = 0; offset <= GRID - item.size[0]; offset++) {
         const p: WallPlacement = { kind: "wall", wall, offset, ...lv, g: GRID };
-        if (isPlacementValid(item, p, others)) return p;
+        if (isPlacementValid(item, p, others, undefined, false, S, doorAt)) return p;
       }
     }
     return null;
@@ -1387,9 +1473,9 @@ export function findFreePlacement(item: CatalogItem, others: OwnedFurniture[], r
     for (let col = 0; col <= GRID - w; col++) for (let row = 0; row <= GRID - d; row++) candidates.push({ kind: "floor", col, row, rot: r, ...lv, g: GRID });
   }
   const dist = (p: FloorPlacement) => {
-    const c = floorCenter(item.size, p);
+    const c = floorCenter(item.size, p, S);
     return Math.hypot(c.x, c.z - 1);
   };
   candidates.sort((a, b) => dist(a) - dist(b));
-  return candidates.find((p) => isPlacementValid(item, p, others)) ?? null;
+  return candidates.find((p) => isPlacementValid(item, p, others, undefined, false, S, doorAt)) ?? null;
 }

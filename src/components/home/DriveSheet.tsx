@@ -8,7 +8,10 @@ import { Search, X } from "lucide-react";
 import { PLACES } from "@/lib/city/places";
 import type { Car } from "@/lib/cars";
 
-export function DriveSheet({ car, onClose }: { car: Car | null; onClose: () => void }) {
+/** The car you'll set off in (its plate), for the drive itself to start with it (components/cars/DriveJourney). */
+export const DRIVE_CAR_KEY = "drive-car";
+
+export function DriveSheet({ car, plate, onClose }: { car: Car | null; /** The car's plate, to set off in it. */ plate?: string; onClose: () => void }) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const list = useMemo(() => {
@@ -30,7 +33,10 @@ export function DriveSheet({ car, onClose }: { car: Car | null; onClose: () => v
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search Dubai" className="flex-1 min-w-0 bg-transparent outline-none text-sm font-bold" autoFocus />
         </label>
         {list.map((p) => (
-          <button key={p.id} onClick={() => router.push(`/explore?to=${encodeURIComponent(p.id)}`)} className="w-full flex items-center gap-3 rounded-2xl bg-slate-50 hover:bg-slate-100 px-3 py-2.5 text-left">
+          <button key={p.id} onClick={() => {
+            try { if (plate) sessionStorage.setItem(DRIVE_CAR_KEY, plate); } catch { /* storage blocked: the first car */ }
+            router.push(`/explore?to=${encodeURIComponent(p.id)}`);
+          }} className="w-full flex items-center gap-3 rounded-2xl bg-slate-50 hover:bg-slate-100 px-3 py-2.5 text-left">
             <span className="text-xl">📍</span>
             <span className="flex-1 min-w-0 font-black text-sm truncate">{p.name}</span>
             <span className="text-xs font-black text-emerald-700">Drive ›</span>

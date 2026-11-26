@@ -65,6 +65,8 @@ import { trackFor } from "./rides/tracks";
 import { resetRideIO, type RideResult } from "./rides/rideIO";
 import { SandCastle } from "./scenery";
 import type { ActiveRide } from "./rides/RideRig";
+import { CITIES, cityOfPlace } from "@/lib/city/cities";
+import { collectStamp, stampLine } from "@/lib/city/abuDhabi/passport";
 
 // The ride controls load with the ride, not with every venue.
 const RideHUD = dynamic(() => import("./rides/RideHUD").then((m) => m.RideHUD), { ssr: false });
@@ -217,6 +219,14 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     setToast(msg);
     setTimeout(() => setToast((t) => (t === msg ? null : t)), 3200);
   };
+  // The Abu Dhabi Passport: a landmark's signature thing, done here, stamps it (lib/city/abuDhabi/passport).
+  const passportStamp = (done: { activity?: string; product?: string }) => {
+    void collectStamp(place.id, done).then((r) => {
+      if (!r?.isNew) return;
+      if (r.reward) gameAudio.playCoinSound();
+      say(stampLine(r));
+    });
+  };
 
   // Products sold at a station. The first pay point also sells anything without a station of its own.
   const stationKinds = useMemo(() => new Set(plan.stations.map((s) => s.kind)), [plan]);
@@ -278,6 +288,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     for (const id of r.ate ?? []) { const p = venue.products.find((x) => x.id === id); if (p?.consumable) boostNeed(p.consumable.need, p.consumable.amount); }
     if (r.ate?.length) lifeEvent("meal");
     if (["swim", "flowrider"].includes(def.kind)) { lifeEvent("workout"); gainSkill("fitness", 20); } else gainSkill("culture", 10);
+    if (activity) passportStamp({ activity: activity.id });
     // Personal bests live in this browser (a convenience; nothing depends on them).
     let isBest = false;
     if (r.best) {
@@ -932,6 +943,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
       return;
     }
     gameAudio.playCoinSound();
+    passportStamp({ product: product.id });
     // A hotel room or suite is a staycation (Life & Fun).
     if (isStaycation(product.id)) logFun("staycation", place.id, venue.id, product.id);
     const item: InventoryItem = {
@@ -1100,6 +1112,8 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
     if (a.id === "sail" && venue.layout === "yacht") { setSailing(true); return; }
     // The 3D attraction games (boxing, the courts, the souk…) open full screen; their result is said here.
     if (a.arcade) { openArcade({ game: a.arcade as ArcadeGameId, params: a.arcadeParams, onShare: (text) => say(text) }); return; }
+    // Some activities are journeys of their own (the flight from the airport).
+    if (a.href) { router.push(a.href); return; }
     // Rides and water activities are acted out in 3D (hire paid above).
     const def = rideFor(a);
     if (def && !ride && beginRide(def, a, at)) return;
@@ -1190,6 +1204,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
 
     setActivityFX((prev) => ({ ...prev, burstKey: prev.burstKey + 1 }));
     gameAudio.playCoinSound();
+    passportStamp({ activity: a.id });
   };
 
   const handleActivityClose = () => {
@@ -1677,7 +1692,7 @@ export function VenueExperience({ place, venue: baseVenue }: { place: Place; ven
 
       {/* Header */}
       <header className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 z-30 flex items-center gap-2 pointer-events-none">
-        <button onClick={() => router.push(place.venues.length > 1 ? `/explore?open=${place.id}` : `/explore?at=${place.id}`)} className="pointer-events-auto w-10 h-10 shrink-0 rounded-full bg-white/95 shadow-lg flex items-center justify-center" aria-label={place.venues.length > 1 ? `Back to ${place.name} directory` : "Leave"}>
+        <button onClick={() => router.push(`${CITIES[cityOfPlace(place.id)].path}?${place.venues.length > 1 ? "open" : "at"}=${place.id}`)} className="pointer-events-auto w-10 h-10 shrink-0 rounded-full bg-white/95 shadow-lg flex items-center justify-center" aria-label={place.venues.length > 1 ? `Back to ${place.name} directory` : "Leave"}>
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="pointer-events-auto bg-white/95 rounded-2xl shadow-lg px-3 py-1.5 min-w-0">

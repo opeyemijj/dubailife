@@ -19,6 +19,8 @@ import {
 } from "@/lib/autodrome";
 import ENTRY from "@/data/autodrome/entry.json";
 import { gameAudio } from "@/utils/gameAudio";
+import { useCurrentCity } from "@/lib/city/presence";
+import { AD_RACE_VENUES } from "@/lib/city/abuDhabi/racing";
 
 /** A mount's strengths as bars, scaled across its stable (so the differences show). */
 function Stats({ sport, m }: { sport: SportDef; m: Mount }) {
@@ -62,6 +64,7 @@ const TIPS: Record<string, string[]> = {
 
 export function SportLobby({ sport: sportId }: { sport: string }) {
   useRequireCitizen();
+  const cityHere = useCurrentCity().city;
   const router = useRouter();
   const sport = sportDef(sportId)!;
   const tracks = tracksFor(sport.id);
@@ -101,6 +104,8 @@ export function SportLobby({ sport: sportId }: { sport: string }) {
   };
   const chosen = sport.mounts.find((m) => m.id === mount)!;
 
+  // Opened from Abu Dhabi's track (the Equestrian Club, Al Wathba): the same races, under its name.
+  const named = (cityHere === "abu-dhabi" ? AD_RACE_VENUES[sport.id] : null) ?? { venue: sport.venue, place: sport.place };
   return (
     <main className="relative min-h-[100dvh] bg-slate-950 text-white pb-32">
       <div className={`absolute top-0 inset-x-0 h-80 bg-gradient-to-b ${sport.gradient} opacity-40 pointer-events-none`} />
@@ -108,8 +113,8 @@ export function SportLobby({ sport: sportId }: { sport: string }) {
         <header className="flex items-center gap-3">
           <Link href="/explore" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center" aria-label="Back to the map"><ArrowLeft className="w-4 h-4" /></Link>
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-black leading-tight truncate">{sport.venue}</h1>
-            <p className="text-xs text-white/60">{sport.place} · {sport.name}</p>
+            <h1 className="text-2xl font-black leading-tight truncate">{named.venue}</h1>
+            <p className="text-xs text-white/60">{named.place} · {sport.name}</p>
           </div>
         </header>
 
@@ -124,8 +129,8 @@ export function SportLobby({ sport: sportId }: { sport: string }) {
 
         <section className={`rounded-3xl bg-gradient-to-br ${sport.gradient} p-5 space-y-3 shadow-xl`}>
           <p className="text-4xl">{sport.icon}</p>
-          <h2 className="text-xl font-black leading-tight">{sport.tagline}</h2>
-          <p className="text-sm text-white/85">{sport.blurb}</p>
+          <h2 className="text-xl font-black leading-tight">{named.tagline ?? sport.tagline}</h2>
+          <p className="text-sm text-white/85">{named.blurb ?? sport.blurb}</p>
 
           <div>
             <p className="text-[11px] font-black uppercase tracking-wider text-white/70 mb-1">{sport.pick} (from the {sport.id === "bike" ? "paddock" : "stable"})</p>

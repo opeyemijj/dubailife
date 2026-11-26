@@ -10,6 +10,7 @@ import { useMemo, useRef } from "react";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { CELL, floorCenter } from "@/lib/furniture";
 import { fixtureRect, type Fixture, type FixtureWall } from "@/lib/homeFixtures";
+import { Std } from "./sceneLite";
 
 const WHITE = "#f5f5f4", STEEL = "#cbd5e1", DARK = "#1f2937", GRANITE = "#334155", TILE = "#e7ebee", GLASS = "#bae6fd";
 
@@ -17,7 +18,7 @@ function Box({ p, s, c, r = 0.6, m = 0, o }: { p: [number, number, number]; s: [
   return (
     <mesh position={p} castShadow receiveShadow>
       <boxGeometry args={s} />
-      <meshStandardMaterial color={c} roughness={r} metalness={m} transparent={o !== undefined} opacity={o ?? 1} />
+      <Std color={c} rough={r} metal={m} opacity={o} />
     </mesh>
   );
 }

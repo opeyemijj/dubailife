@@ -11,12 +11,19 @@ import { SmallLoader } from "@/components/GameLoadingScreen";
 import { hopPending } from "@/lib/locals";
 import { TowerArrival } from "@/components/property/TowerArrival";
 import HIGHRISE from "@/data/venues/highrise.json";
+import { CITY_LIST, cityOfPlace, mapPathFor } from "@/lib/city/cities";
+import { CityGate } from "@/components/city/CityGate";
 
 /** The floor a venue is on, when it's up a tower (src/data/venues/highrise.json). */
 const venueFloor = (name: string): number | undefined => (HIGHRISE.floors as Record<string, number>)[name];
 
 /** Resolves a place/venue URL, and opens the interior once the citizen has travelled there. */
+/** A place's page, in its own city only (from the other city it's a flight away: CityGate). */
 export function VenueRoute({ placeId, venueId }: { placeId: string; venueId?: string }) {
+  return <CityGate city={cityOfPlace(placeId)} what={getPlace(placeId)?.name}><PlaceInCity placeId={placeId} venueId={venueId} /></CityGate>;
+}
+
+function PlaceInCity({ placeId, venueId }: { placeId: string; venueId?: string }) {
   const router = useRouter();
   const { citizen, hydrated } = useRequireCitizen();
   const place = getPlace(placeId);
@@ -26,7 +33,7 @@ export function VenueRoute({ placeId, venueId }: { placeId: string; venueId?: st
 
   // A multi-venue place without a venue picked: show its directory on the map.
   useEffect(() => {
-    if (place && !venueId && place.venues.length > 1) router.replace(`/explore?open=${place.id}`);
+    if (place && !venueId && place.venues.length > 1) router.replace(`${mapPathFor(place.id)}?open=${place.id}`);
   }, [place, venueId, router]);
 
   // Going along with a Local: no need to travel there first.
@@ -37,11 +44,17 @@ export function VenueRoute({ placeId, venueId }: { placeId: string; venueId?: st
     updateCitizen((c) => ({ ...c, location: { ...(at ?? c.location ?? { x: 0, y: 0 }), placeId: place.id } }));
   }, [away, place, venueId]);
 
+  // At an airport: straight into its terminal's check-in (an old link to its room). Away from it, the trip there first.
+  const isAirport = !!place?.route && CITY_LIST.some((c) => c.airport === place.id);
+  useEffect(() => {
+    if (isAirport && !away && place?.route) router.replace(place.route);
+  }, [isAirport, away, place, router]);
+
   // Otherwise travel is part of the world: the place's description on the map, with its Go button.
   const canVisit = !!venue && !venue.comingSoon;
   useEffect(() => {
     if (!away || !place || !canVisit || hopPending(`${place.id}/${venueId ?? place.venues[0]?.id}`)) return;
-    router.replace(`/explore?open=${place.id}`);
+    router.replace(`${mapPathFor(place.id)}?open=${place.id}`);
   }, [away, place, venueId, canVisit, router]);
 
   if (!hydrated || !citizen) return <SmallLoader label="Getting you there…" />;
@@ -62,7 +75,7 @@ export function VenueRoute({ placeId, venueId }: { placeId: string; venueId?: st
         <div className="text-4xl">🚧</div>
         <h1 className="text-xl font-black mt-2">{venue.name} isn&apos;t open in the game yet</h1>
         <p className="text-sm text-slate-500 mt-1">{venue.blurb} We&apos;re still building this one.</p>
-        <Link href={`/explore?open=${place.id}`} className="mt-4 inline-block px-4 py-2 rounded-xl bg-emerald-500 text-white font-black">Back to {place.name}</Link>
+        <Link href={`${mapPathFor(place.id)}?open=${place.id}`} className="mt-4 inline-block px-4 py-2 rounded-xl bg-emerald-500 text-white font-black">Back to {place.name}</Link>
       </Shell>
     );
   }

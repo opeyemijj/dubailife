@@ -6,7 +6,7 @@ import { getBuildingSprite, IsometricDubaiVilla, VillaLite } from "@/components/
 
 export function Plains({ scale = 0.16 }: { scale?: number }) {
   const tiles = CITY_ENTITIES.filter((e) => e.type === "floor-tile" && !/bur-dubai|deira/.test(e.id));
-  const racing = CITY_ENTITIES.filter((e) => ["racecourse", "camel-track", "race-circuit", "bike-circuit"].includes(e.type));
+  const racing = CITY_ENTITIES.filter((e) => ["racecourse", "camel-track", "race-circuit", "bike-circuit", "airport"].includes(e.type));
   const X0 = -2200, Y0 = 1500;
   return (
     <div style={{ position: "relative", width: 9000 * scale, height: 4200 * scale, background: "#d8c49a", transform: `scale(1)`, overflow: "hidden" }}>

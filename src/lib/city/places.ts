@@ -1519,39 +1519,36 @@ export const PLACES: Place[] = [
       { id: "dxb:exec-lounge", label: "Executive VIP Flight Lounge", icon: "🍸", animation: "sit", reward: 30 },
     ],
   })),
-  single("dxb-terminal-3", "DXB Terminal 3 (Emirates Megahub)", "attraction", venue("DXB Terminal 3 (Emirates Megahub)", "Airport Terminal", "hotel", {
+  // Going to the airport takes you straight into the terminal's check-in (/fly), not a room first.
+  { ...single("dxb-terminal-3", "DXB Terminal 3 (Dubai Life Airways)", "attraction", venue("DXB Terminal 3 (Dubai Life Airways)", "Airport Terminal", "hotel", {
     palette: PALETTES.luxury,
-    blurb: "World's largest airport terminal, home of Emirates Airbus A380 superjumbos and luxury first-class lounges.",
+    blurb: "The world's largest airport terminal and the home of Dubai Life Airways: check in here to fly to Abu Dhabi.",
     products: [
-      ticket("dxb:a380-london", "Emirates First Class to London Heathrow (A380)", 8500, "Private suite with sliding doors, onboard shower spa & lounge bar.", "✈️"),
-      ticket("dxb:a380-jfk", "Emirates Business Class to New York JFK", 5200, "Lie-flat bed, multi-course dining & Dom Pérignon.", "🗽"),
-      ticket("dxb:lounge-t3", "Emirates First Class Lounge Day Pass", 650, "Full buffet, private quiet room, sommelier tasting & spa treatment.", "🥂"),
+      ticket("dxb:lounge-t3", "Dubai Life Airways First Lounge Day Pass", 650, "Full buffet, private quiet room, sommelier tasting & spa treatment.", "🥂"),
       { id: "dxb:duty-free-gold", name: "Dubai Duty Free 24K Gold Bar (10g)", price: 3200, icon: "🪙", station: "reception", desc: "Certified 999.9 pure Swiss gold bullion.", service: false },
       { id: "dxb:duty-free-oud", name: "Royal Arabian Oud & Amber Perfume", price: 420, icon: "✨", station: "reception", desc: "Signature DXB Duty Free luxury fragrance.", consumable: { need: "fun", amount: 40 } },
     ],
     activities: [
-      { id: "dxb:board-a380", label: "Board the A380 Upper Deck", icon: "🛫", animation: "clap", reward: 50 },
+      { id: "dxb:fly-auh", label: "Fly to Abu Dhabi: check in, board, take off", icon: "🛫", href: "/fly?from=dubai&to=abu-dhabi" },
       { id: "dxb:lounge-relax", label: "Relax in First Class Lounge", icon: "☕", animation: "sit", reward: 20 },
     ],
-  })),
+  })), route: "/fly?to=abu-dhabi" },
   {
     id: "dxb-international-airport",
     name: "Dubai International Airport (DXB)",
     kind: "attraction",
     blurb: "World's busiest international airport hub connecting 250+ global destinations across Terminals 1, 2 and 3.",
     venues: [
-      venue("DXB Terminal 3 (Emirates Megahub)", "Airport Terminal", "hotel", {
+      venue("DXB Terminal 3 (Dubai Life Airways)", "Airport Terminal", "hotel", {
         palette: PALETTES.luxury,
-        blurb: "World's largest airport terminal, home of Emirates Airbus A380 superjumbos and luxury first-class lounges.",
+        blurb: "The world's largest airport terminal and the home of Dubai Life Airways: check in here to fly to Abu Dhabi.",
         products: [
-          ticket("dxb:a380-london", "Emirates First Class to London Heathrow (A380)", 8500, "Private suite with sliding doors, onboard shower spa & lounge bar.", "✈️"),
-          ticket("dxb:a380-jfk", "Emirates Business Class to New York JFK", 5200, "Lie-flat bed, multi-course dining & Dom Pérignon.", "🗽"),
-          ticket("dxb:lounge-t3", "Emirates First Class Lounge Day Pass", 650, "Full buffet, private quiet room, sommelier tasting & spa treatment.", "🥂"),
+                  ticket("dxb:lounge-t3", "Dubai Life Airways First Lounge Day Pass", 650, "Full buffet, private quiet room, sommelier tasting & spa treatment.", "🥂"),
           { id: "dxb:duty-free-gold", name: "Dubai Duty Free 24K Gold Bar (10g)", price: 3200, icon: "🪙", station: "reception", desc: "Certified 999.9 pure Swiss gold bullion.", service: false },
           { id: "dxb:duty-free-oud", name: "Royal Arabian Oud & Amber Perfume", price: 420, icon: "✨", station: "reception", desc: "Signature DXB Duty Free luxury fragrance.", consumable: { need: "fun", amount: 40 } },
         ],
         activities: [
-          { id: "dxb:board-a380", label: "Board the A380 Upper Deck", icon: "🛫", animation: "clap", reward: 50 },
+          { id: "dxb:fly-auh", label: "Fly to Abu Dhabi: check in, board, take off", icon: "🛫", href: "/fly?from=dubai&to=abu-dhabi" },
           { id: "dxb:lounge-relax", label: "Relax in First Class Lounge", icon: "☕", animation: "sit", reward: 20 },
         ],
       }),
@@ -1614,14 +1611,24 @@ for (const h of HALLS.halls) {
 
 const BY_ID = new Map(PLACES.map((p) => [p.id, p]));
 
+// Other cities' places (lib/city/abuDhabi/places…) register here, so getPlace finds them while PLACES, which the
+// Dubai lists and searches read, stays Dubai's alone.
+const OTHER_CITIES = new Map<string, Place>();
+export function registerCityPlaces(list: Place[]) { for (const p of list) OTHER_CITIES.set(p.id, p); }
+/** Every place in a city other than Dubai (by its id prefix, lib/city/cities). */
+export const placesWithPrefix = (prefix: string) => [...OTHER_CITIES.values()].filter((p) => p.id.startsWith(prefix));
+
+/** What the other cities' place lists are built from (the same shops, menus, staff and jobs as Dubai's). */
+export const placeKit = { venue, hotel, spa, pool, single, ticket, yacht, gymActivities, PALETTES };
+
 /** The place a map entity represents, if it can be visited. */
 export function placeForEntity(entity: { id: string; type: string; name?: string }): Place | null {
-  const named = BY_ID.get(entity.id);
+  const named = BY_ID.get(entity.id) ?? OTHER_CITIES.get(entity.id);
   if (named) return named;
   if (entity.type === "tall-building") return { id: entity.id, name: entity.name ?? "Residential tower", kind: "residential", blurb: "Residential tower — browse its flats.", venues: [] };
   if (entity.type === "dubai-villa" || entity.type === "small-house") return { id: entity.id, name: entity.name ?? "Home", kind: "home", blurb: "Private home.", venues: [] };
   return null;
 }
 
-export const getPlace = (id: string) => BY_ID.get(id) ?? null;
+export const getPlace = (id: string) => BY_ID.get(id) ?? OTHER_CITIES.get(id) ?? null;
 export const getVenue = (placeId: string, venueId: string) => getPlace(placeId)?.venues.find((v) => v.id === venueId) ?? null;
