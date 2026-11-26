@@ -395,6 +395,17 @@ if (!hallSql.includes(`p_type not in (${halls.types.map((t) => `'${t.id}'`).join
   for (const it of hotels.roomService) if (!svcSql.includes(`when '${it.id}' then ${it.price}`)) { bad++; console.error(`room service ${it.id}: price differs from SQL`); }
   if (!latestDef("book_hotel").includes(`p_nights not in (${hotels.nights.join(", ")})`)) { bad++; console.error("hotel nights differ from SQL"); }
 }
+// Quick courses (src/data/academy/quick-courses.json vs quick_course_rule() and quick_course_min_seconds()).
+{
+  const qc = JSON.parse(readFileSync("src/data/academy/quick-courses.json", "utf8"));
+  const ruleSql = latestDef("quick_course_rule"), minSql = latestDef("quick_course_min_seconds");
+  for (const c of qc.courses) {
+    const want = `when '${c.id}' then '{"fee": ${c.fee}, "city": "${c.city}", "key": [${c.quiz.map((x) => x.answer).join(", ")}]}'`;
+    if (!ruleSql.includes(want)) { bad++; console.error(`quick course ${c.id}: fee, city or answers differ from SQL`); }
+    if (c.quiz.some((x) => x.answer < 0 || x.answer >= x.options.length)) { bad++; console.error(`quick course ${c.id}: an answer is out of range`); }
+  }
+  if (!minSql.includes(`select ${qc.minSeconds} `)) { bad++; console.error("quick courses: shortest study time differs from SQL"); }
+}
 // Visas (src/data/flights/visas.json vs visa_rule() and visa_country()).
 {
   const vz = JSON.parse(readFileSync("src/data/flights/visas.json", "utf8"));
@@ -417,5 +428,5 @@ if (!hallSql.includes(`p_type not in (${halls.types.map((t) => `'${t.id}'`).join
   if (top !== pp.stamps.length || !sizeSql.includes(`select ${pp.stamps.length} `)) { bad++; console.error("passport: size differs (last reward, stamps, passport_size)"); }
 }
 
-console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving, parking, goals, missions, fun, decorator, penalty, arcade, maternity, hall, social reward, hotel, flight, visa, Abu Dhabi Passport and Autodrome prize config match the database.");
+console.log(bad ? `${bad} mismatch(es)` : "Life, scam, venture, season, system-job, city-service, love, marathon, car, driving, parking, goals, missions, fun, decorator, penalty, arcade, maternity, hall, social reward, hotel, flight, visa, quick course, Abu Dhabi Passport and Autodrome prize config match the database.");
 process.exit(bad ? 1 : 0);

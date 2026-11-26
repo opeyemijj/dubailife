@@ -1,0 +1,162 @@
+{
+  "_note": "Quick courses at the universities of Abu Dhabi and Doha (lib/academy/quick, src/app/academy/quick/[id]): enrol and pay, three short lessons, a three-question quiz (two right to pass), a certificate and a skill. Fees, the city, the shortest study time and the answer key are checked by public.enroll_quick_course() / complete_quick_course() from public.quick_course_rule(), mirrored exactly here and checked by scripts/check-life-config.mjs. answer: the index of the right option.",
+  "minSeconds": 90,
+  "courses": [
+    {
+      "id": "qc-emirati-arabic", "city": "abu-dhabi", "place": "ad-nyuad", "title": "Emirati Arabic for everyday life", "icon": "🗣️", "minutes": 15, "fee": 150, "skill": "charisma", "xp": 80,
+      "lessons": [
+        { "title": "Greetings", "points": ["As-salamu alaykum: peace be upon you, the greeting everyone uses.", "The reply is wa alaykum as-salam: and upon you, peace.", "Marhaba: hello. Ahlan wa sahlan: welcome."] },
+        { "title": "Being polite", "points": ["Shukran: thank you. Afwan: you're welcome.", "Min fadlak (to a man) or min fadlik (to a woman): please.", "Inshallah: God willing, said of anything in the future."] },
+        { "title": "Gulf words you'll hear", "points": ["Shlonak? (to a man) or shlonich? (to a woman): how are you?", "Zain: good, fine. Yalla: let's go, come on.", "Mashallah: said to admire something, a new car, a baby, a view."] }
+      ],
+      "quiz": [
+        { "q": "Someone says \"As-salamu alaykum\". You reply…", "options": ["Wa alaykum as-salam", "Shukran", "Yalla"], "answer": 0 },
+        { "q": "\"Shukran\" means…", "options": ["Please", "Thank you", "Hello"], "answer": 1 },
+        { "q": "Your friend says \"Yalla!\". They mean…", "options": ["Be careful", "Let's go", "Good night"], "answer": 1 }
+      ]
+    },
+    {
+      "id": "qc-gulf-hospitality", "city": "abu-dhabi", "place": "ad-nyuad", "title": "Gulf hospitality and the majlis", "icon": "☕", "minutes": 12, "fee": 120, "skill": "culture", "xp": 80,
+      "lessons": [
+        { "title": "Gahwa, Arabic coffee", "points": ["Light, cardamom-spiced coffee poured into small cups called finjan, a little at a time.", "It's offered and taken with the right hand, usually with dates.", "When you've had enough, gently shake the cup from side to side as you hand it back."] },
+        { "title": "In the majlis", "points": ["The majlis is the sitting room where guests are received.", "Take your shoes off at the door if your hosts do, and stand when an elder comes in.", "Greet the most senior person first, and use your right hand to give and receive."] },
+        { "title": "Respect in public", "points": ["Dress modestly in mosques, government buildings and traditional places.", "In Ramadan, don't eat, drink or smoke openly in public during fasting hours.", "Ask before you photograph people, especially women and families."] }
+      ],
+      "quiz": [
+        { "q": "You've had enough gahwa. You…", "options": ["Put the cup upside down", "Gently shake the cup as you hand it back", "Leave it full"], "answer": 1 },
+        { "q": "Gahwa is usually served with…", "options": ["Dates", "Cake", "Ice"], "answer": 0 },
+        { "q": "When giving or receiving, use…", "options": ["Your left hand", "Either hand", "Your right hand"], "answer": 2 }
+      ]
+    },
+    {
+      "id": "qc-ad-heritage", "city": "abu-dhabi", "place": "ad-sorbonne", "title": "Abu Dhabi: from pearls to a capital", "icon": "🏰", "minutes": 15, "fee": 150, "skill": "culture", "xp": 90,
+      "lessons": [
+        { "title": "A pearling town", "points": ["For centuries Abu Dhabi lived from the sea: fishing and diving for natural pearls.", "Qasr Al Hosn, a watchtower built in the 1760s and later a fort, is the city's oldest stone building.", "Pearling collapsed in the 1930s when cheaper cultured pearls from Japan took the market."] },
+        { "title": "Oil", "points": ["Oil was found offshore at Umm Shaif in 1958.", "Exports began in 1962 and paid for roads, schools, hospitals and homes.", "Sheikh Zayed bin Sultan Al Nahyan became ruler of Abu Dhabi in 1966."] },
+        { "title": "The UAE", "points": ["On 2 December 1971 the emirates joined to form the United Arab Emirates (Ras Al Khaimah joined in early 1972).", "Sheikh Zayed was its first president, and Abu Dhabi its capital.", "2 December is National Day, celebrated with flags, parades and fireworks."] }
+      ],
+      "quiz": [
+        { "q": "Abu Dhabi's oldest stone building is…", "options": ["Qasr Al Hosn", "Emirates Palace", "The Grand Mosque"], "answer": 0 },
+        { "q": "Before oil, Abu Dhabi lived mainly from…", "options": ["Gold mining", "Pearling and fishing", "Car making"], "answer": 1 },
+        { "q": "The UAE was formed in…", "options": ["1958", "1966", "1971"], "answer": 2 }
+      ]
+    },
+    {
+      "id": "qc-french-basics", "city": "abu-dhabi", "place": "ad-sorbonne", "title": "French for travellers", "icon": "🇫🇷", "minutes": 12, "fee": 120, "skill": "charisma", "xp": 70,
+      "lessons": [
+        { "title": "Hello and goodbye", "points": ["Bonjour: hello (by day). Bonsoir: good evening.", "Au revoir: goodbye. À bientôt: see you soon.", "Always start with bonjour before you ask anything in a shop."] },
+        { "title": "Please and thank you", "points": ["S'il vous plaît: please. Merci: thank you. De rien: you're welcome.", "Excusez-moi: excuse me. Pardon: sorry.", "Je ne comprends pas: I don't understand."] },
+        { "title": "At a café", "points": ["Un café, s'il vous plaît: a coffee, please.", "L'addition, s'il vous plaît: the bill, please.", "Un, deux, trois: one, two, three."] }
+      ],
+      "quiz": [
+        { "q": "\"Merci\" means…", "options": ["Please", "Thank you", "Goodbye"], "answer": 1 },
+        { "q": "To ask for the bill you say…", "options": ["L'addition, s'il vous plaît", "Bonjour", "De rien"], "answer": 0 },
+        { "q": "\"Au revoir\" means…", "options": ["Hello", "Goodbye", "Sorry"], "answer": 1 }
+      ]
+    },
+    {
+      "id": "qc-clean-energy", "city": "abu-dhabi", "place": "ad-khalifa-university", "title": "Solar and clean energy basics", "icon": "☀️", "minutes": 15, "fee": 180, "skill": "coding", "xp": 90,
+      "lessons": [
+        { "title": "How solar panels work", "points": ["Photovoltaic (PV) cells turn sunlight straight into electricity.", "Energy is measured in kilowatt-hours (kWh): a 1,000-watt heater running for an hour uses 1 kWh.", "The Gulf's strong sun makes solar one of the cheapest ways to make power there."] },
+        { "title": "The UAE's solar parks", "points": ["Noor Abu Dhabi at Sweihan was one of the world's largest single solar plants when it opened in 2019.", "Al Dhafra, south of the city, is bigger still, about 2 gigawatts.", "Big plants are cleaned often: dust on the panels cuts their output."] },
+        { "title": "Masdar City", "points": ["Masdar City near the airport is built to use less energy and water.", "Narrow shaded streets and a wind tower cool it, as in old Gulf towns.", "Khalifa University's Masdar campus studies clean energy there."] }
+      ],
+      "quiz": [
+        { "q": "Solar PV cells turn sunlight into…", "options": ["Heat only", "Electricity", "Water"], "answer": 1 },
+        { "q": "Energy use is measured in…", "options": ["Kilowatt-hours", "Kilograms", "Litres"], "answer": 0 },
+        { "q": "Why are desert solar panels cleaned often?", "options": ["To make them shine", "Dust cuts their output", "Rules say so"], "answer": 1 }
+      ]
+    },
+    {
+      "id": "qc-ai-prompts", "city": "abu-dhabi", "place": "ad-khalifa-university", "title": "AI prompts in 15 minutes", "icon": "🤖", "minutes": 15, "fee": 200, "skill": "coding", "xp": 100,
+      "lessons": [
+        { "title": "Say exactly what you want", "points": ["Vague prompts get vague answers: say the task, the audience and the length.", "\"Write a 3-line welcome for hotel guests in Abu Dhabi\" beats \"write a welcome\".", "Give the AI the facts it needs: names, dates, prices."] },
+        { "title": "Show and shape", "points": ["Give an example of what good looks like.", "Ask for a format: a list, a table, short paragraphs.", "Ask it to ask you questions if anything is missing."] },
+        { "title": "Check it", "points": ["AI can sound sure and still be wrong: check facts, numbers and names.", "Never paste passwords or private details into a chatbot.", "Edit the result: it's a first draft, not the final word."] }
+      ],
+      "quiz": [
+        { "q": "Which prompt is better?", "options": ["Write something", "Write a 3-line welcome for hotel guests in Abu Dhabi", "Welcome"], "answer": 1 },
+        { "q": "AI answers should be…", "options": ["Trusted completely", "Checked for facts", "Ignored"], "answer": 1 },
+        { "q": "You should never paste into a chatbot…", "options": ["A recipe", "Your passwords", "A poem"], "answer": 1 }
+      ]
+    },
+    {
+      "id": "qc-qatar-history", "city": "doha", "place": "dq-education-city", "title": "Qatar's story: pearls, forts and independence", "icon": "🦪", "minutes": 15, "fee": 150, "skill": "culture", "xp": 90,
+      "lessons": [
+        { "title": "The pearling coast", "points": ["Qatar's towns lived from pearl diving and fishing for centuries.", "Al Zubarah in the north was a great pearling and trading town; it became a UNESCO World Heritage Site in 2013.", "Cultured pearls in the 1930s ended the pearl trade."] },
+        { "title": "Oil and gas", "points": ["Oil was found at Dukhan on the west coast in 1939–1940.", "The North Field, found offshore in 1971, is one of the world's largest natural gas fields.", "Gas turned Qatar into one of the richest countries in the world."] },
+        { "title": "A nation", "points": ["Qatar became independent on 3 September 1971.", "National Day is 18 December, marking the founding of the state in 1878.", "Doha hosted the 2006 Asian Games and the 2022 FIFA World Cup."] }
+      ],
+      "quiz": [
+        { "q": "Al Zubarah was…", "options": ["A pearling town, now UNESCO-listed", "A modern mall", "A football stadium"], "answer": 0 },
+        { "q": "Qatar's National Day is…", "options": ["2 December", "18 December", "1 January"], "answer": 1 },
+        { "q": "Qatar's North Field holds huge amounts of…", "options": ["Natural gas", "Gold", "Fresh water"], "answer": 0 }
+      ]
+    },
+    {
+      "id": "qc-event-management", "city": "doha", "place": "dq-education-city", "title": "Event management basics", "icon": "🎪", "minutes": 15, "fee": 180, "skill": "hustle", "xp": 90,
+      "lessons": [
+        { "title": "Plan", "points": ["Start with the goal: who it's for and what they should feel or learn.", "Fix the budget, the date and the venue before anything else.", "Book suppliers (sound, catering, staff) early and in writing."] },
+        { "title": "Guests and safety", "points": ["Plan how people arrive, queue, move and leave.", "In Gulf heat: shade, water and first aid at every outdoor event.", "Know the exits, the capacity and who is in charge if something goes wrong."] },
+        { "title": "On the day, and after", "points": ["A run-of-show lists every minute: who does what, and when.", "Have a plan B for weather, no-shows and tech failures.", "Afterwards: thank everyone, pay suppliers, ask guests what to improve."] }
+      ],
+      "quiz": [
+        { "q": "The first thing to decide is…", "options": ["The music", "The goal and the audience", "The colours"], "answer": 1 },
+        { "q": "A run-of-show is…", "options": ["A minute-by-minute plan of the day", "A guest list", "A ticket"], "answer": 0 },
+        { "q": "At an outdoor summer event in Doha you must plan…", "options": ["Shade, water and first aid", "Snow", "Nothing extra"], "answer": 0 }
+      ]
+    },
+    {
+      "id": "qc-football-coaching", "city": "doha", "place": "dq-education-city", "title": "Football coaching level 1", "icon": "⚽", "minutes": 12, "fee": 150, "skill": "fitness", "xp": 90,
+      "lessons": [
+        { "title": "The session", "points": ["Warm up for about 10 minutes: jogging, stretching, passing.", "Small-sided games (4 v 4) give every player more touches of the ball.", "Finish with a cool-down and a quick talk about what went well."] },
+        { "title": "Coaching people", "points": ["Praise effort, not just goals.", "Keep instructions short: one idea at a time, then let them play.", "Ask questions: \"Where was the space?\" teaches more than shouting."] },
+        { "title": "Safety", "points": ["Water breaks often, more in the heat; train in the evening in summer.", "Check the pitch and the goals are safe and fixed down.", "Stop at once for a head knock and get help."] }
+      ],
+      "quiz": [
+        { "q": "Small-sided games are good because…", "options": ["Players get more touches", "They're shorter", "Nobody runs"], "answer": 0 },
+        { "q": "Good feedback praises…", "options": ["Only goals", "Effort", "Nothing"], "answer": 1 },
+        { "q": "After a head knock you…", "options": ["Play on", "Stop and get help", "Run it off"], "answer": 1 }
+      ]
+    },
+    {
+      "id": "qc-gulf-cuisine", "city": "doha", "place": "dq-education-city", "title": "Gulf cuisine: machboos to luqaimat", "icon": "🍛", "minutes": 12, "fee": 140, "skill": "cooking", "xp": 90,
+      "lessons": [
+        { "title": "Machboos", "points": ["Qatar's best-loved dish: spiced rice cooked with chicken, lamb or fish.", "Loomi, dried black lime, gives it its sour, smoky taste.", "Baharat, a spice mix of cardamom, cinnamon, cloves and pepper, flavours the rice."] },
+        { "title": "Harees and thareed", "points": ["Harees: wheat and meat cooked for hours and beaten smooth, eaten in Ramadan and at Eid.", "Thareed: thin bread soaked in a meat and vegetable stew.", "Both are shared from one big dish."] },
+        { "title": "Sweets and karak", "points": ["Luqaimat: crisp fried dough balls drizzled with date syrup.", "Karak: strong black tea boiled with milk, sugar and cardamom.", "Dates and gahwa welcome every guest."] }
+      ],
+      "quiz": [
+        { "q": "Loomi is…", "options": ["Dried black lime", "A sweet", "A bread"], "answer": 0 },
+        { "q": "Luqaimat are served with…", "options": ["Date syrup", "Ketchup", "Salt"], "answer": 0 },
+        { "q": "Karak is…", "options": ["Coffee with cream", "Tea boiled with milk and cardamom", "Juice"], "answer": 1 }
+      ]
+    },
+    {
+      "id": "qc-arabic-calligraphy", "city": "doha", "place": "dq-qnl", "title": "Arabic calligraphy's scripts", "icon": "🖋️", "minutes": 12, "fee": 140, "skill": "culture", "xp": 90,
+      "lessons": [
+        { "title": "Tools and direction", "points": ["Arabic is written from right to left.", "Calligraphers write with a qalam, a pen cut from reed or bamboo.", "Letter sizes are measured in dots made by the pen's nib."] },
+        { "title": "Kufic and Naskh", "points": ["Kufic is angular and bold: the script of the earliest Qurans and of many building inscriptions.", "Naskh is rounded and easy to read: used for books and most printing.", "The Grand Mosque's qibla wall carries the 99 Names in Kufic."] },
+        { "title": "Thuluth and Diwani", "points": ["Thuluth is large and flowing, used for titles and on mosque walls.", "Diwani, from the Ottoman court, curls and overlaps elegantly.", "Look for them on Doha's buildings, coins and the Museum of Islamic Art's objects."] }
+      ],
+      "quiz": [
+        { "q": "Arabic is written…", "options": ["Left to right", "Right to left", "Top to bottom"], "answer": 1 },
+        { "q": "The angular, earliest script is…", "options": ["Kufic", "Diwani", "Naskh"], "answer": 0 },
+        { "q": "A calligrapher's reed pen is a…", "options": ["Qalam", "Finjan", "Dallah"], "answer": 0 }
+      ]
+    },
+    {
+      "id": "qc-phone-photography", "city": "doha", "place": "dq-qnl", "title": "Phone photography: city and desert", "icon": "📸", "minutes": 10, "fee": 100, "skill": "culture", "xp": 70,
+      "lessons": [
+        { "title": "Light", "points": ["The golden hour, just after sunrise and before sunset, gives soft, warm light.", "Midday sun is harsh: look for shade or shoot indoors.", "West Bay's skyline glows at the blue hour, just after sunset."] },
+        { "title": "Composition", "points": ["Turn on the grid and put your subject on a third, not in the middle.", "Use leading lines, like the Corniche or a road, to draw the eye in.", "Get low or high for a fresh angle."] },
+        { "title": "Simple habits", "points": ["Wipe the lens: a smudge blurs everything.", "Tap the screen to focus, and slide to adjust the brightness.", "Ask before you photograph people."] }
+      ],
+      "quiz": [
+        { "q": "The softest, warmest light is…", "options": ["At midday", "At the golden hour", "At midnight"], "answer": 1 },
+        { "q": "The rule of thirds puts your subject…", "options": ["On a third of the frame", "Dead centre", "Out of frame"], "answer": 0 },
+        { "q": "Before shooting, always…", "options": ["Wipe the lens", "Zoom all the way", "Turn off focus"], "answer": 0 }
+      ]
+    }
+  ]
+}

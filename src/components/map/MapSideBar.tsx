@@ -11,19 +11,22 @@ import { MapPin, X } from "lucide-react";
 import { gameAudio } from "@/utils/gameAudio";
 import { usePresentCitizens } from "@/lib/presence";
 import { gatherings, SLOT_MS } from "@/lib/locals";
-import { PLACES } from "@/lib/city/places";
+import { getPlace, placesWithPrefix } from "@/lib/city/places";
+import { CITIES, cityOfPlace, type CityId } from "@/lib/city/cities";
 
 export interface District { id: string; icon: string; label: string; go: () => void }
 export interface MapFilter { id: string; label: string; icon: ReactNode }
 
-export function MapSideBar({ districts, filters, activeFilter, onFilter }: {
+export function MapSideBar({ city = "dubai", districts, filters, activeFilter, onFilter }: {
+  /** The city whose map this is: its districts, and its hotspot. */
+  city?: CityId;
   districts: District[];
   filters?: MapFilter[];
   activeFilter?: string;
   onFilter?: (id: string) => void;
 }) {
   const [open, setOpen] = useState<"places" | "hotspot" | null>(null);
-  const hot = useHotspot();
+  const hot = useHotspot(city);
   const router = useRouter();
   const toggle = (k: "places" | "hotspot") => { gameAudio.playClickSound(); setOpen((o) => (o === k ? null : k)); };
   const filtered = !!activeFilter && activeFilter !== "all";
@@ -94,7 +97,7 @@ export function MapSideBar({ districts, filters, activeFilter, onFilter }: {
 }
 
 /** The busiest venue right now: where real players are, or the Locals' happy-hour hotspot. */
-export function useHotspot() {
+export function useHotspot(city: CityId = "dubai") {
   const present = usePresentCitizens();
   // The Locals' hotspot changes every slot.
   const [slot, setSlot] = useState(() => Math.floor(Date.now() / SLOT_MS));
@@ -102,26 +105,32 @@ export function useHotspot() {
     const id = setInterval(() => setSlot(Math.floor(Date.now() / SLOT_MS)), 30_000);
     return () => clearInterval(id);
   }, []);
-  const top = gatherings(slot)[0];
+  // In another city: its own busiest club, beach club or attraction this slot (the Locals' gatherings are Dubai's).
+  const cityPlaces = city === "dubai" ? null : placesWithPrefix(CITIES[city].prefix).filter((p) => (p.kind === "club" || p.kind === "attraction") && !p.route && p.venues.length);
+  const cityPick = cityPlaces?.length ? cityPlaces[slot % cityPlaces.length] : null;
+  const top = city === "dubai" ? gatherings(slot)[0] : cityPick ? { place: cityPick, venue: cityPick.venues[0] } : undefined;
   const counts: Record<string, number> = {};
   for (const p of present) {
+    // Only people in this city count towards its hotspot.
+    const where = p.venuePath?.split("/")[2] ?? p.placeId;
+    if (where && cityOfPlace(where) !== city) continue;
     if (p.venuePath && p.venuePath.startsWith("/place/")) {
       counts[p.venuePath] = (counts[p.venuePath] ?? 0) + 1;
     } else if (p.placeId) {
-      const place = PLACES.find((x) => x.id === p.placeId);
+      const place = getPlace(p.placeId);
       const first = place?.venues.find((v) => !v.comingSoon);
       if (place && first) counts[`/place/${place.id}/${first.id}`] = (counts[`/place/${place.id}/${first.id}`] ?? 0) + 1;
     }
   }
-  let href = top ? `/place/${top.place.id}/${top.venue.id}` : "/explore";
-  let name = top?.venue.name ?? "Dubai Mall";
+  let href = top ? `/place/${top.place.id}/${top.venue.id}` : CITIES[city].path;
+  let name = top?.venue.name ?? (city === "dubai" ? "Dubai Mall" : CITIES[city].name);
   let live = 0;
   for (const [vp, c] of Object.entries(counts)) {
     if (c > live) {
       live = c;
       href = vp;
       const [, , pid, vid] = vp.split("/");
-      const vn = PLACES.find((x) => x.id === pid)?.venues.find((v) => v.id === vid);
+      const vn = getPlace(pid)?.venues.find((v) => v.id === vid);
       if (vn) name = vn.name;
     }
   }

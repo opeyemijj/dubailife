@@ -27,6 +27,16 @@ import { MapLoadProgress } from './MapLoadProgress';
 
 const noSubscribe = () => () => {};
 
+/** Another city's districts for the Places panel ("Go to an area"): its plains, each with an icon from what it is. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const cityDistricts = (entities: any[]) => entities.filter((e) => e.type === 'floor-tile').map((t) => {
+  const n = String(t.name).toLowerCase();
+  const icon = /airport/.test(n) ? '✈️' : /desert|liwa|inland/.test(n) ? '🏜️' : /island|pearl|gewan|jubail|hudayriyat/.test(n) ? '🏝️'
+    : /marina|bay|lagoon|corniche|beach|wakrah|khor/.test(n) ? '⛵' : /villa|city|reef|samha|shahama|duhail|wukair|thumama|waab|gharrafa/.test(n) ? '🏡'
+    : /souq|katara|mosque|heritage|culture/.test(n) ? '🕌' : '🏙️';
+  return { id: t.id as string, icon, label: String(t.name).replace(/ \((AUH|DOH)\)$/, '').replace(/^.*International Airport$/, 'Airport'), x: t.virtualX as number, y: t.virtualY as number };
+});
+
 /** A building's drawing. Memoised on the entity object, so moving the map doesn't redraw every building. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const EntitySprite = memo(function EntitySprite({ loc }: { loc: any }) {
@@ -122,7 +132,10 @@ export const getEntityCategoryInfo = (entity: any) => {
   // Abu Dhabi's own types (lib/city/abuDhabi/map.ts), by type before the name checks below.
   if (type === 'ad-university') return { icon: '🎓', category: 'Universities', key: 'academics', color: 'from-amber-500 to-purple-600', badgeBg: 'bg-purple-900/60 border-purple-500/40 text-purple-200' };
   if (type === 'ad-arena') return { icon: '🎤', category: 'Nightlife & Clubs', key: 'clubs', color: 'from-purple-600 to-pink-600', badgeBg: 'bg-purple-900/60 border-purple-500/40 text-purple-200' };
-  if (type === 'ad-beach-club' || type === 'ad-beach') return { icon: '🏖️', category: 'Beaches & Beach Clubs', key: 'beaches', color: 'from-cyan-400 to-blue-500', badgeBg: 'bg-cyan-900/60 border-cyan-500/40 text-cyan-200' };
+  if (type === 'ad-party-marina' || type === 'dq-party-marina') return { icon: '🛥️', category: 'Nightlife & Clubs', key: 'clubs', color: 'from-purple-600 to-pink-600', badgeBg: 'bg-purple-900/60 border-purple-500/40 text-purple-200' };
+  if (type === 'ad-souq') return { icon: '🛍️', category: 'Shopping Malls', key: 'malls', color: 'from-purple-500 to-pink-600', badgeBg: 'bg-purple-900/60 border-purple-500/40 text-purple-200' };
+  if (type === 'ad-park' || type === 'ad-surf' || type === 'ad-masdar') return { icon: ({ 'ad-park': '🌳', 'ad-surf': '🏄', 'ad-masdar': '🌱' } as Record<string, string>)[type], category: 'Attractions & Mosques', key: 'attractions', color: 'from-blue-500 to-indigo-600', badgeBg: 'bg-blue-900/60 border-blue-500/40 text-blue-200' };
+  if (type === 'ad-beach-club' || type === 'ad-beach' || type === 'ad-jetski') return { icon: '🏖️', category: 'Beaches & Beach Clubs', key: 'beaches', color: 'from-cyan-400 to-blue-500', badgeBg: 'bg-cyan-900/60 border-cyan-500/40 text-cyan-200' };
   if (type === 'ad-fort' || type === 'ad-wetland' || type === 'ad-mangrove' || type === 'ad-dhow' || type === 'ad-falcon') return { icon: ({ 'ad-fort': '🏰', 'ad-wetland': '🦩', 'ad-mangrove': '🛶', 'ad-dhow': '⛵', 'ad-falcon': '🦅' } as Record<string, string>)[type], category: 'Attractions & Mosques', key: 'attractions', color: 'from-blue-500 to-indigo-600', badgeBg: 'bg-blue-900/60 border-blue-500/40 text-blue-200' };
   if (type === 'ad-hotel-tower') return { icon: '🏨', category: 'Hotels & Resorts', key: 'hotels', color: 'from-amber-400 to-yellow-600', badgeBg: 'bg-yellow-900/60 border-yellow-500/40 text-yellow-200' };
   // Doha's own types (lib/city/doha/map.ts).
@@ -1187,7 +1200,8 @@ export function InteractiveMap({
       {/* Middle right: 📍 Places (areas to fly to, kinds of place to show) and 🔥 where people are. */}
       {!interactionDisabled && (
         <MapSideBar
-          districts={[
+          city={city}
+          districts={city !== 'dubai' ? cityDistricts(city === 'doha' ? DQ_ENTITIES : AD_ENTITIES).map((d) => ({ ...d, go: () => jumpToDistrict(d.x, d.y, d.label) })) : [
             { id: 'downtown', icon: '🗼', label: 'Downtown', go: () => jumpToDistrict(1871, 743, 'Downtown Dubai') },
             { id: 'palm', icon: '🌴', label: 'Palm', go: () => jumpToDistrict(PALM_VIEW.x, PALM_VIEW.y, 'Palm Jumeirah') },
             { id: 'marina', icon: '⛵', label: 'Marina', go: () => jumpToDistrict(720, 2280, 'Dubai Marina') },

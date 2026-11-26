@@ -4,11 +4,59 @@
 // are rows in the flats table like Dubai's (supabase *_abu_dhabi.sql), so renting, buying and decorating just work.
 
 import { placeKit, registerCityPlaces } from "@/lib/city/places";
+import { quickCourseActivities } from "@/lib/academy/quickData";
 import type { Place, Venue, VenueActivity } from "@/lib/city/types";
 
 const { venue, spa, pool, single, ticket, yacht, gymActivities, PALETTES } = placeKit;
 
 const swim: VenueActivity[] = [{ id: "swim", label: "Swim in the Gulf", icon: "🏊", animation: "wave", need: { kind: "fun", amount: 25 } }];
+/** A neighbourhood centre: the everyday shops a family needs near home (a supermarket, a pharmacy, a salon, a café). */
+function neighbourhood(id: string, name: string, blurb: string): Place {
+  const short = name.replace(/ Neighbourhood Centre$/, "");
+  return { id, name, kind: "mall", blurb, venues: [venue(`${short} Supermarket`, "Supermarket", "supermarket"), venue(`${short} Pharmacy`, "Pharmacy", "pharmacy"), venue(`${short} Salon & Barber`, "Salon & barber", "beauty"), venue(`${short} Café`, "Café", "cafe")] };
+}
+/** A clinic or hospital: a check-up with a doctor and the pharmacy. */
+function clinic(id: string, name: string, blurb: string): Place {
+  return {
+    id, name, kind: "attraction", blurb,
+    venues: [
+      venue(`${name} Clinics`, "Clinic", "hotel", { layout: "lobby", palette: { floor: "#f1f5f9", wall: "#ffffff", accent: "#0f766e" }, role: "Nurse", noJob: true,
+        products: [ticket(`${id}:checkup`, "General check-up", 200, "A doctor's check-up and advice.", "🩺"), ticket(`${id}:dental`, "Dental check-up", 250, "A clean and a check.", "🦷")],
+        activities: [{ id: `${id}:checkup`, label: "See a doctor for a check-up", icon: "🩺", animation: "sit", reward: 0, need: { kind: "energy", amount: 25 } }] }),
+      venue(`${name} Pharmacy`, "Pharmacy", "pharmacy"),
+    ],
+  };
+}
+/** A park: lawns, paths, a playground; walk, run or picnic. */
+function park(id: string, name: string, blurb: string, extra: VenueActivity[] = []): Place {
+  return { id, name, kind: "park", blurb, venues: [venue(name, "Park", "hotel", { layout: "outdoor", palette: PALETTES.park, role: "Park ranger", noJob: true, products: [],
+    activities: [{ id: `${id}:walk`, label: "Walk in the park", icon: "🌳", animation: "wave", reward: 10, need: { kind: "energy", amount: 15 } }, { id: `${id}:run`, label: "Go for a run", icon: "🏃", animation: "clap", reward: 15, need: { kind: "fun", amount: 15 } }, { id: `${id}:picnic`, label: "Picnic with friends", icon: "🧺", animation: "sit", reward: 10, need: { kind: "social", amount: 20 } }, ...extra] })] };
+}
+/** A party yacht: the yacht for the evening, its party package (DJ, lights, catering) and the deck to dance on. */
+function partyYacht(name: string, perHour: number, guests: number, blurb: string): Venue {
+  const v = yacht(name, perHour, guests, blurb);
+  const id = v.id;
+  return {
+    ...v,
+    products: [
+      ticket(`${id}:party`, `Host a yacht party: 3 hours, up to ${guests} guests`, perHour * 3, "The yacht, the crew, the sound system and the deck for your party.", "🎉"),
+      ticket(`${id}:dj`, "DJ & party lights", 1500, "A DJ on deck and lights round the yacht.", "🎧"),
+      ticket(`${id}:catering`, "Party platters & mocktails", 900, "Food and drinks for your guests.", "🍢"),
+      ...v.products,
+    ],
+    activities: [...(v.activities ?? []), { id: `${id}:party`, label: "Party on deck", icon: "🎉", animation: "dance", reward: 30, need: { kind: "social", amount: 35 } }],
+  };
+}
+
+/** A watersports beach: jet skis (ridden in 3D on the beach), flyboards, banana boats and parasailing. */
+function watersports(id: string, name: string, blurb: string): Place {
+  return { id, name, kind: "club", blurb, venues: [venue(name, "Watersports beach", "hotel", {
+    layout: "beach", palette: PALETTES.park, role: "Watersports instructor", noJob: true, blurb,
+    products: [ticket(`${id}:jetski`, "Jet ski, 30 minutes", 250, "A jet ski with a safety briefing.", "🚤"), ticket(`${id}:flyboard`, "Flyboard, 20 minutes", 350, "Fly over the water.", "🌊"), ticket(`${id}:banana`, "Banana boat ride", 80, "Hang on, for up to six.", "🍌"), ticket(`${id}:parasail`, "Parasailing", 300, "High over the water behind a speedboat.", "🪂")],
+    activities: [...swim, { id: `${id}:parasail`, label: "Parasail over the water", icon: "🪂", animation: "wave", reward: 35, need: { kind: "fun", amount: 30 } }],
+  })] };
+}
+
 /** A venue from the kit with activities of Abu Dhabi's own added. */
 const plus = (v: Venue, more: VenueActivity[]): Venue => ({ ...v, activities: [...(v.activities ?? []), ...more] });
 /** A beach club's daybeds and drinks (a public beach sells nothing: products []). */
@@ -457,6 +505,89 @@ export const AD_PLACES: Place[] = [
     { campus: "ud", label: "Study cybersecurity, healthcare, accounting & logistics", icon: "🔬" },
     { campus: "onebrain", label: "Take AI, data & programming", icon: "💻" },
   ]),
+  // ---------------------------------------------------------------- the wider city: everyday life
+  neighbourhood("ad-khalidiyah-centre", "Khalidiyah Neighbourhood Centre", "Al Khalidiyah's shops for every day."),
+  neighbourhood("ad-mbz-centre", "MBZ Neighbourhood Centre", "Mohammed Bin Zayed City's local shops."),
+  neighbourhood("ad-shakhbout-centre", "Shakhbout Neighbourhood Centre", "Shakhbout City's local shops."),
+  neighbourhood("ad-maryah-centre", "Maryah Neighbourhood Centre", "The everyday shops under Al Maryah's towers."),
+  neighbourhood("ad-masdar-centre", "Masdar Neighbourhood Centre", "Masdar City's local shops."),
+  neighbourhood("ad-zahiyah-centre", "Zahiyah Neighbourhood Centre", "Al Zahiyah's shops for every day."),
+  neighbourhood("ad-shams-centre", "Shams Neighbourhood Centre", "The shops at the foot of the Shams towers."),
+  neighbourhood("ad-falah-centre", "Al Falah Neighbourhood Centre", "Al Falah's local shops."),
+  clinic("ad-mbz-clinic", "MBZ Family Clinic", "The family clinic for MBZ City."),
+  clinic("ad-cleveland-clinic", "Cleveland Clinic Abu Dhabi", "The island's big hospital, on Al Maryah."),
+  clinic("ad-rahba-hospital", "Al Rahba Hospital", "The hospital for the northern suburbs."),
+  clinic("ad-shams-clinic", "Shams Medical Centre", "The medical centre among the Shams towers."),
+  park("ad-hudayriyat-bike", "Hudayriyat Bike Park", "Cycle tracks, a pump track and a skate park on Hudayriyat.", [{ id: "hudayriyat:cycle", label: "Ride the cycle tracks", icon: "🚴", animation: "clap", reward: 25, need: { kind: "fun", amount: 25 } }]),
+  park("ad-mbz-park", "MBZ Central Park", "Lawns and a playground for MBZ City's families."),
+  park("ad-shakhbout-park", "Shakhbout Park", "A neighbourhood park with a running track."),
+  park("ad-jubail-golf", "Jubail Island Golf Club", "Fairways between the mangroves.", [{ id: "jubail:golf", label: "Play nine holes", icon: "⛳", animation: "clap", reward: 30, need: { kind: "fun", amount: 30 } }]),
+  park("ad-masdar-park", "Masdar Park", "Shaded gardens cooled by Masdar's wind tower."),
+  park("ad-reem-central-park", "Reem Central Park", "The green heart of Al Reem, between the towers."),
+  park("ad-falah-park", "Al Falah Park", "A big family park."),
+  watersports("ad-hudayriyat-jetski", "Hudayriyat Jet Ski & Watersports", "Jet skis and flyboards off Hudayriyat's beach."),
+  watersports("ad-khalidiyah-jetski", "Khalidiyah Jet Ski", "Jet skis along the Corniche, the skyline behind you."),
+  watersports("ad-jubail-jetski", "Jubail Island Jet Ski", "Jet skis through the channels round Jubail Island."),
+
+  // ---------------------------------------------------------------- the wider city: places to go
+  {
+    id: "ad-surf-abu-dhabi", name: "Surf Abu Dhabi", kind: "attraction",
+    blurb: "One of the world's biggest wave pools, on Hudayriyat Island: the same wave, every time.",
+    venues: [venue("Surf Abu Dhabi", "Wave pool", "hotel", {
+      layout: "lobby", palette: { floor: "#0e7490", wall: "#cffafe", accent: "#0891b2" }, role: "Surf coach", noJob: true,
+      products: [ticket("surf:lesson", "Beginner surf lesson", 450, "A coach, a board and the gentle waves.", "🏄"), ticket("surf:session", "Surf session", 650, "An hour on the big waves.", "🌊")],
+      activities: [{ id: "surf:ride", label: "Catch a wave", icon: "🏄", animation: "clap", reward: 45, need: { kind: "fun", amount: 45 } }, { id: "surf:watch", label: "Watch the surfers from the deck", icon: "🍹", animation: "sit", reward: 10, need: { kind: "energy", amount: 10 } }],
+    })],
+  },
+  {
+    id: "ad-marsana", name: "Marsana Beach Dining", kind: "food-hall",
+    blurb: "Hudayriyat's waterfront of restaurants and cafés on the sand.",
+    venues: [venue("Marsana Seafood", "Seafood", "restaurant"), venue("Marsana Burgers", "Burgers", "restaurant"), venue("Marsana Coffee", "Café", "cafe")],
+  },
+  { id: "ad-hudayriyat-beach", name: "Hudayriyat Beach", kind: "park", blurb: "A long, calm public beach on Hudayriyat.", venues: [venue("Hudayriyat Beach", "Public beach", "hotel", { layout: "beach", products: [], palette: PALETTES.park, role: "Lifeguard", noJob: true, activities: swim })] },
+  { id: "ad-hudayriyat-marina", name: "Hudayriyat Marina", kind: "attraction", blurb: "Yachts for a party round the island.", venues: [partyYacht("Hudayriyat Party Cruiser", 3000, 25, "A party deck and a slide into the sea.")] },
+  {
+    id: "ad-khalidiyah-mall", name: "Khalidiyah Mall", kind: "mall", blurb: "The west island's family mall.",
+    venues: [venue("Khalidiyah Fashion", "Fashion", "fashion"), venue("Khalidiyah Hypermarket", "Supermarket", "supermarket"), venue("Khalidiyah Toys", "Toys", "toys"), venue("Khalidiyah Food Court", "Food court", "restaurant")],
+  },
+  { id: "ad-bateen-marina", name: "Al Bateen Marina", kind: "attraction", blurb: "The yacht marina of Al Bateen, for parties on the water.", venues: [partyYacht("Bateen Sunset Party Yacht", 3400, 30, "Sunset along the Corniche with your guests."), yacht("Bateen Riva 50", 2400, 8, "A fast day-cruiser.")] },
+  { id: "ad-bateen-wharf", name: "Bateen Wharf", kind: "food-hall", blurb: "Restaurants on the old boatyard wharf.", venues: [venue("Wharf Grill", "Grill", "restaurant"), venue("Wharf Café", "Café", "cafe")] },
+  { id: "ad-khalidiyah-beach", name: "Khalidiyah Beach", kind: "park", blurb: "A public beach at the west end of the Corniche.", venues: [venue("Khalidiyah Beach", "Public beach", "hotel", { layout: "beach", products: [], palette: PALETTES.park, role: "Lifeguard", noJob: true, activities: swim })] },
+  {
+    id: "ad-mazyad-mall", name: "Mazyad Mall", kind: "mall", blurb: "MBZ City's big mall.",
+    venues: [venue("Mazyad Fashion", "Fashion", "fashion"), venue("Mazyad Electronics", "Electronics", "electronics"), venue("Mazyad Hypermarket", "Supermarket", "supermarket"), venue("Mazyad Food Court", "Food court", "restaurant")],
+  },
+  { id: "ad-mussafah-hyper", name: "Mussafah Hypermarket", kind: "mall", blurb: "The big hypermarket for Mussafah's homes.", venues: [venue("Mussafah Hypermarket", "Supermarket", "supermarket"), venue("Mussafah Mobile & Electronics", "Electronics", "electronics")] },
+  { id: "ad-jubail-mangroves", name: "Jubail Mangrove Park", kind: "park", blurb: "Boardwalks and kayaks through Jubail's mangroves.", venues: [venue("Jubail Mangrove Park", "Mangroves", "hotel", { layout: "outdoor", palette: PALETTES.park, role: "Ranger", noJob: true, products: [ticket("jubail:kayak", "Kayak tour", 140, "Through the mangrove channels.", "🛶")], activities: [{ id: "jubail:boardwalk", label: "Walk the mangrove boardwalk", icon: "🌿", animation: "wave", reward: 15, need: { kind: "energy", amount: 15 } }, { id: "jubail:kayak", label: "Kayak the channels", icon: "🛶", animation: "wave", reward: 30, need: { kind: "fun", amount: 30 } }] })] },
+  { id: "ad-jubail-beach-club", name: "Jubail Beach Club", kind: "club", blurb: "An island beach club.", venues: [venue("Jubail Beach", "Beach club", "hotel", { layout: "beach", products: daybeds("jubail-beach"), palette: PALETTES.park, role: "Beach host", noJob: true, activities: swim }), pool("Jubail Beach Club Pool")] },
+  { id: "ad-jubail-marina", name: "Jubail Marina", kind: "attraction", blurb: "Yachts and parties off Jubail Island.", venues: [partyYacht("Jubail Island Party Yacht", 3200, 25, "A party round the island at sunset.")] },
+  single("ad-four-seasons-ad", "Four Seasons Abu Dhabi", "hotel", venue("Four Seasons Abu Dhabi", "Hotel tower & suites", "hotel", { palette: PALETTES.luxury, blurb: "On Al Maryah Island, over the promenade and the water." })),
+  { id: "ad-maryah-plaza", name: "Maryah Plaza", kind: "mall", blurb: "Al Maryah's mall and dining plaza.", venues: [venue("Maryah Plaza Fashion", "Fashion", "fashion"), venue("Maryah Plaza Beauty", "Beauty", "beauty"), venue("Maryah Plaza Café", "Café", "cafe")] },
+  { id: "ad-maryah-promenade", name: "Maryah Promenade Dining", kind: "food-hall", blurb: "Terraces along Al Maryah's waterfront promenade.", venues: [venue("Promenade Steakhouse", "Steakhouse", "restaurant"), venue("Promenade Sushi", "Japanese", "restaurant"), venue("Promenade Gelato", "Gelato", "cafe")] },
+  { id: "ad-maryah-pier", name: "Maryah Yacht Pier", kind: "attraction", blurb: "Yacht parties from the heart of the city.", venues: [partyYacht("Maryah Skyline Party Yacht", 3600, 30, "Past the towers with the lights on.")] },
+  { id: "ad-maryah-beach-club", name: "Maryah Island Beach Club", kind: "club", blurb: "A city beach club under the towers.", venues: [venue("Maryah Beach", "Beach club", "hotel", { layout: "beach", products: daybeds("maryah-beach"), palette: PALETTES.park, role: "Beach host", noJob: true, activities: swim }), pool("Maryah Beach Club Pool")] },
+  {
+    id: "ad-masdar-city", name: "Masdar City", kind: "attraction",
+    blurb: "The low-carbon city by the airport: shaded lanes, solar roofs, a wind tower and Khalifa University's research campus.",
+    venues: [venue("Masdar City", "Sustainable city", "hotel", {
+      layout: "lobby", feature: "exhibits", palette: { floor: "#e7e2d4", wall: "#f5efe3", accent: "#15803d" }, role: "City guide", noJob: true,
+      products: [ticket("masdar:tour", "Masdar City tour", 60, "The wind tower, the solar roofs and the driverless pods.", "🌱")],
+      activities: [{ id: "masdar:tour", label: "Tour the low-carbon city", icon: "🌱", animation: "talk", reward: 25, need: { kind: "fun", amount: 20 } }, ...quickCourseActivities("ad-khalifa-university").slice(0, 1)],
+    })],
+  },
+  { id: "ad-deerfields", name: "Deerfields Mall", kind: "mall", blurb: "The northern suburbs' mall.", venues: [venue("Deerfields Fashion", "Fashion", "fashion"), venue("Deerfields Hypermarket", "Supermarket", "supermarket"), venue("Deerfields Food Court", "Food court", "restaurant")] },
+  {
+    id: "ad-abu-dhabi-mall", name: "Abu Dhabi Mall", kind: "mall", blurb: "The Tourist Club Area's big mall, by the Beach Rotana.",
+    venues: [venue("Abu Dhabi Mall Fashion", "Fashion", "fashion"), venue("Abu Dhabi Mall Luxury", "Luxury fashion", "luxury"), venue("Abu Dhabi Mall Electronics", "Electronics", "electronics"), venue("Abu Dhabi Mall Toys", "Toys", "toys"), venue("Abu Dhabi Mall Food Court", "Food court", "restaurant")],
+  },
+  single("ad-beach-rotana", "Beach Rotana", "hotel", venue("Beach Rotana", "Beach hotel & suites", "hotel", { palette: PALETTES.lobby, blurb: "A city beach hotel joined to Abu Dhabi Mall." })),
+  { id: "ad-mina-fish-market", name: "Mina Zayed Fish Market", kind: "food-hall", blurb: "Pick the morning's catch and have it cooked next door.", venues: [venue("Mina Fish Market", "Fresh fish", "supermarket"), venue("Mina Fish Grill", "Seafood", "restaurant")] },
+  { id: "ad-iranian-souq", name: "Iranian Souq", kind: "mall", blurb: "Pots, carpets, spices and plants by the port.", venues: [venue("Iranian Souq Housewares", "Home & carpets", "home"), venue("Iranian Souq Spices", "Spices & dates", "supermarket")] },
+  { id: "ad-mina-dhows", name: "Mina Zayed Dhow Harbour", kind: "attraction", blurb: "Trading dhows moored at the port: sail the harbour.", venues: [{ ...venue("Mina Dhow Cruise", "Dhow cruise", "hotel", { layout: "yacht", feature: "skyline", palette: { floor: "#a16207", wall: "#fef3c7", accent: "#92400e" }, role: "Captain", noJob: true, products: [ticket("mina:dhow", "Dhow dinner cruise", 160, "Two hours with dinner on deck.", "⛵")], activities: [{ id: "mina:sail", label: "Sail the harbour on a dhow", icon: "⛵", animation: "sit", reward: 25, need: { kind: "fun", amount: 25 } }] }) }] },
+  { id: "ad-mina-yachts", name: "Mina Zayed Yacht Club", kind: "attraction", blurb: "Party yachts from the port.", venues: [partyYacht("Mina Superyacht Royale", 9000, 40, "The port's biggest: a party for forty."), partyYacht("Mina Party Catamaran", 2600, 20, "A wide deck for dancing.")] },
+  { id: "ad-boutik-mall", name: "Boutik Mall", kind: "mall", blurb: "Al Reem's neighbourhood mall.", venues: [venue("Boutik Fashion", "Fashion", "fashion"), venue("Boutik Supermarket", "Supermarket", "supermarket"), venue("Boutik Café", "Café", "cafe")] },
+  { id: "ad-saadiyat-party-marina", name: "Saadiyat Superyacht Party Marina", kind: "club", blurb: "A floating marina out on the Gulf: superyachts for parties under the stars.", venues: [partyYacht("Saadiyat Superyacht Celeste", 11000, 50, "Three decks, a pool on the top deck and the lights of Saadiyat."), partyYacht("Saadiyat Party Catamaran", 2800, 20, "Dancing on a wide deck.")] },
+  { id: "ad-yas-party-marina", name: "Yas Floating Party Marina", kind: "club", blurb: "Floating on the Gulf off Yas: party yachts with the circuit lit up behind.", venues: [partyYacht("Yas Party Superyacht", 9800, 40, "DJs, lights and Yas on the horizon."), partyYacht("Yas Sunset Party Yacht", 3400, 25, "A sunset party on the water.")] },
   // ---------------------------------------------------------------- only in Abu Dhabi
   {
     id: "ad-mangroves", name: "Mangrove National Park", kind: "park",
@@ -523,6 +654,8 @@ function university(id: string, name: string, blurb: string, courses: { campus: 
         ],
         blurb: "Enrol, attend lectures and sit your exams.",
         activities: [
+          // Quick courses taught on this campus (enrol, three lessons, a quiz, a certificate: lib/academy/quick).
+          ...quickCourseActivities(id),
           ...courses.map((c, i): VenueActivity => ({ id: `${id}:study-${i}`, label: c.label, icon: c.icon, href: `/academics/${c.campus}` })),
           { id: `${id}:library`, label: "Study in the library", icon: "📖", animation: "sit", reward: 10, need: { kind: "energy", amount: 10 } },
         ],

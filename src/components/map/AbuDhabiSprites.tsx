@@ -476,6 +476,108 @@ export function FalconHospitalSprite(p: P) {
   );
 }
 
+/** A watersports beach: jet skis carving the water, a parasail and the rental hut. */
+export function AdJetSkiSprite(p: P) {
+  return (
+    <Svg {...p}>
+      <polygon points="0,186 250,186 300,110 50,110" fill="#38bdf8" />
+      <polygon points="0,186 250,186 270,162 20,162" fill="#fde68a" />
+      <Box x={30} y={180} w={46} h={20} d={16} front="#f8fafc" side="#e2e8f0" top="#0e7490" />
+      {[[140, 140, 1], [210, 126, -1], [176, 150, 1]].map(([x, y, dir], i) => (
+        <g key={i} transform={`translate(${x},${y}) scale(${dir},1)`}>
+          <path d="M-14,0 L12,0 L16,-5 L-10,-5 Z" fill={['#ef4444', '#facc15', '#22c55e'][i]} /><circle cx={0} cy={-9} r={3} fill="#1f2937" />
+          <path d="M-16,2 Q-34,4 -48,0" fill="none" stroke="#ffffff" strokeWidth="2" opacity="0.85" />
+        </g>
+      ))}
+      <path d="M230,40 Q250,28 270,40 Z" fill="#f97316" /><line x1={250} y1={40} x2={232} y2={110} stroke="#64748b" strokeWidth="0.8" />
+      <NameBoard x={150} y={194} text={p.name ?? 'Jet Ski & Watersports'} bg="#0369a1" />
+    </Svg>
+  );
+}
+
+/** Surf Abu Dhabi: the long wave pool with a wave rolling down it and surfers. */
+export function SurfSprite(p: P) {
+  return (
+    <Svg {...p}>
+      <Plinth x={16} y={184} w={250} d={58} fill="#e7e5e4" edge="#a8a29e" />
+      <polygon points="30,176 250,176 270,150 50,150" fill="#06b6d4" />
+      <path d="M70,170 Q90,140 120,150 Q150,158 170,150" fill="none" stroke="#ecfeff" strokeWidth="5" />
+      <path d="M60,168 Q86,132 118,146" fill="#67e8f9" opacity="0.8" />
+      {[[100, 148], [180, 160]].map(([x, y], i) => <g key={i} transform={`translate(${x},${y})`}><path d="M-8,2 L8,2 L6,4 L-6,4 Z" fill="#f97316" /><circle cx={0} cy={-6} r={2.6} fill="#1f2937" /><line x1={0} y1={-4} x2={0} y2={2} stroke="#1f2937" strokeWidth="1.6" /></g>)}
+      <Box x={240} y={150} w={30} h={22} d={14} front="#f8fafc" side="#e2e8f0" top="#ffffff" />
+      <Palm x={24} y={184} /><Palm x={262} y={182} />
+      <NameBoard x={150} y={194} text={p.name ?? 'Surf Abu Dhabi'} bg="#0891b2" />
+    </Svg>
+  );
+}
+
+/** A park: lawns, palms, a path and a playground. */
+export function AdParkSprite(p: P) {
+  return (
+    <Svg {...p}>
+      <Plinth x={16} y={182} w={240} d={56} fill="#86c06c" edge="#5d8f47" />
+      <path d="M30,178 Q120,150 250,158" fill="none" stroke="#efe6d3" strokeWidth="7" />
+      {Array.from({ length: 7 }, (_, i) => <Palm key={i} x={34 + i * 32} y={176 - (i % 2) * 14} s={1.1} />)}
+      <g transform="translate(200,150)"><rect x={-12} y={-14} width={24} height={14} fill="none" stroke="#f97316" strokeWidth="2" /><line x1={-12} y1={0} x2={-18} y2={8} stroke="#f97316" strokeWidth="2" /><line x1={12} y1={0} x2={18} y2={8} stroke="#f97316" strokeWidth="2" /></g>
+      <NameBoard x={150} y={194} text={p.name ?? 'Park'} bg="#15803d" />
+    </Svg>
+  );
+}
+
+/** A souq or market hall: arcaded sand walls, awnings and crates of goods. */
+export function AdSouqSprite(p: P) {
+  return (
+    <Svg {...p}>
+      <Plinth x={16} y={182} w={240} d={56} fill="#e2cfa8" edge="#b2976a" />
+      <Box x={36} y={170} w={200} h={44} d={36} front="#e9d8b4" side="#cdb486" top="#f3e6c8" />
+      {Array.from({ length: 8 }, (_, i) => <path key={i} d={`M${44 + i * 24},170 v-18 a8,9 0 0 1 16,0 v18`} fill="#7c5a2e" opacity="0.7" />)}
+      {Array.from({ length: 8 }, (_, i) => <polygon key={`a${i}`} points={`${42 + i * 24},${150} ${62 + i * 24},${150} ${66 + i * 24},${158} ${38 + i * 24},${158}`} fill={['#0e7490', '#b91c1c', '#ca8a04'][i % 3]} />)}
+      {Array.from({ length: 6 }, (_, i) => <rect key={`c${i}`} x={50 + i * 32} y={174} width={14} height={8} fill={['#f97316', '#84cc16', '#eab308'][i % 3]} />)}
+      <NameBoard x={150} y={194} text={p.name ?? 'Souq'} bg="#7c4a21" />
+    </Svg>
+  );
+}
+
+/** Masdar City: low terracotta-latticed blocks under solar roofs, round the wind tower. */
+export function MasdarSprite(p: P) {
+  return (
+    <Svg {...p}>
+      <Plinth x={16} y={184} w={250} d={58} fill="#e7e2d4" edge="#b9ae94" />
+      {[[36, 172, 60, 40], [102, 166, 70, 50], [178, 172, 64, 38]].map(([x, y, w, h], i) => (
+        <g key={i}>
+          <Box x={x} y={y} w={w} h={h} d={30} front="#c9875a" side="#a8693f" top="#1e3a8a" />
+          {Array.from({ length: Math.floor(w / 8) }, (_, k) => <line key={k} x1={x + 4 + k * 8} y1={y - h + 6} x2={x + 4 + k * 8} y2={y - 4} stroke="#8b5a35" strokeWidth="1.4" />)}
+          {Array.from({ length: Math.floor(w / 12) }, (_, k) => <rect key={`s${k}`} x={x + 16 + k * 12} y={y - h - 26} width={10} height={4} fill="#60a5fa" transform={`skewX(-30)`} />)}
+        </g>
+      ))}
+      <rect x={248} y={70} width={12} height={110} fill="#d6d3d1" stroke="#a8a29e" /><path d="M244,70 L254,56 L264,70 Z" fill="#a8a29e" />
+      <NameBoard x={150} y={194} text={p.name ?? 'Masdar City'} bg="#15803d" />
+    </Svg>
+  );
+}
+
+/** A floating party marina out on the Gulf: a ring of pontoons, superyachts moored round it, lights strung over. */
+export function PartyMarinaSprite(p: P & { accent?: string }) {
+  const a = p.accent ?? '#c084fc';
+  return (
+    <Svg {...p}>
+      <ellipse cx={150} cy={160} rx={146} ry={36} fill="#7dd3fc" opacity={0.5} />
+      <ellipse cx={150} cy={160} rx={110} ry={24} fill="none" stroke="#e7e5e4" strokeWidth="8" />
+      <ellipse cx={150} cy={160} rx={110} ry={24} fill="none" stroke="#a8a29e" strokeWidth="1" strokeDasharray="6 5" />
+      {[[70, 140, 1.2], [150, 132, 1.5], [230, 142, 1.1], [110, 178, 1], [195, 180, 1.1]].map(([x, y, sc], i) => (
+        <g key={i} transform={`translate(${x},${y}) scale(${sc})`}>
+          <path d="M-22,0 L22,0 L28,-6 L-18,-6 Z" fill="#ffffff" stroke="#94a3b8" strokeWidth="0.6" />
+          <rect x={-12} y={-13} width={24} height={7} rx={2} fill="#e2e8f0" /><rect x={-6} y={-18} width={12} height={5} rx={1.5} fill="#f8fafc" />
+          <line x1={0} y1={-18} x2={0} y2={-30} stroke="#64748b" strokeWidth="1" />
+        </g>
+      ))}
+      {Array.from({ length: 14 }, (_, i) => <circle key={`l${i}`} cx={44 + i * 16} cy={112 + Math.sin(i / 13 * Math.PI) * -14} r={2.2} fill={i % 2 ? '#facc15' : a} />)}
+      <path d="M44,112 Q150,84 256,112" fill="none" stroke="#fde68a" strokeWidth="0.6" />
+      <NameBoard x={150} y={194} text={p.name ?? 'Party Marina'} bg="#7c3aed" />
+    </Svg>
+  );
+}
+
 // ---------------------------------------------------------------- Abu Dhabi's own look for the shared types
 // Towers, villas, townhouses, malls and resort hotels keep their shared types (homes are found by them), but on
 // Abu Dhabi's map they're drawn in its own style: sandstone and white, mashrabiya lattices, wind towers, domes.
@@ -639,6 +741,12 @@ export function abuDhabiSprite(type: string, loc: { id?: string; width?: number;
     case 'ad-mangrove': return <MangroveSprite {...p} />;
     case 'ad-dhow': return <DhowHarbourSprite {...p} />;
     case 'ad-falcon': return <FalconHospitalSprite {...p} />;
+    case 'ad-jetski': return <AdJetSkiSprite {...p} />;
+    case 'ad-surf': return <SurfSprite {...p} />;
+    case 'ad-park': return <AdParkSprite {...p} />;
+    case 'ad-souq': return <AdSouqSprite {...p} />;
+    case 'ad-masdar': return <MasdarSprite {...p} />;
+    case 'ad-party-marina': return <PartyMarinaSprite {...p} />;
     default: return null;
   }
 }

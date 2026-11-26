@@ -690,6 +690,25 @@ export function FunfairSprite(p: P) {
   );
 }
 
+/** A floating party marina out on the Gulf: a ring of pontoons, superyachts moored round it, maroon and gold lights. */
+export function DqPartyMarinaSprite(p: P) {
+  return (
+    <Svg {...p}>
+      <ellipse cx={150} cy={160} rx={146} ry={36} fill="#7dd3fc" opacity={0.5} />
+      <ellipse cx={150} cy={160} rx={110} ry={24} fill="none" stroke="#f4e8e1" strokeWidth="8" />
+      {[[70, 140, 1.2], [150, 132, 1.5], [230, 142, 1.1], [110, 178, 1], [195, 180, 1.1]].map(([x, y, sc], i) => (
+        <g key={i} transform={`translate(${x},${y}) scale(${sc})`}>
+          <path d="M-22,0 L22,0 L28,-6 L-18,-6 Z" fill="#ffffff" stroke="#94a3b8" strokeWidth="0.6" />
+          <rect x={-12} y={-13} width={24} height={7} rx={2} fill="#e2e8f0" /><rect x={-6} y={-18} width={12} height={5} rx={1.5} fill="#f8fafc" />
+          <rect x={-22} y={-2} width={44} height={2} fill={MAROON} />
+        </g>
+      ))}
+      {Array.from({ length: 14 }, (_, i) => <circle key={`l${i}`} cx={44 + i * 16} cy={112 + Math.sin(i / 13 * Math.PI) * -14} r={2.2} fill={i % 2 ? '#facc15' : MAROON} />)}
+      <NameBoard x={150} y={194} text={p.name ?? 'Party Marina'} />
+    </Svg>
+  );
+}
+
 // ---------------------------------------------------------------- Doha's own look for the shared types
 
 /** A Qatari villa: white walls with maroon trim, a majlis wing, a shaded entrance, a palm and a pool. */
@@ -806,6 +825,7 @@ export function dohaSprite(type: string, loc: { id?: string; width?: number; hei
     case 'dq-mangrove': return <DqMangroveSprite {...p} />;
     case 'dq-jetski': return <JetSkiSprite {...p} />;
     case 'dq-funfair': return <FunfairSprite {...p} />;
+    case 'dq-party-marina': return <DqPartyMarinaSprite {...p} />;
     default: return null;
   }
 }

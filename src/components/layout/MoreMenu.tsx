@@ -18,13 +18,16 @@ import { usePhoneButtonsShown } from "@/lib/phoneButtons";
 import { useScreenBusy } from "@/lib/popups";
 import { gameAudio } from "@/utils/gameAudio";
 import { ModalPortal } from "@/components/ui/modal-portal";
+import { useCurrentCity } from "@/lib/city/presence";
 
 export const openMore = () => window.dispatchEvent(new CustomEvent("dubai:open-more"));
 
 /** The count shown on any More button: things still to try. */
 export function useMoreBadge(): number {
   useDiscover();
-  return toTryCount();
+  // Things to try in the city you're in (lib/guide/cityGuide).
+  const city = useCurrentCity().city;
+  return toTryCount(city);
 }
 
 /** The menu itself: mounted once, near the root. */

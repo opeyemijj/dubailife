@@ -19,8 +19,9 @@ import type { LifeTab } from "@/components/life/LifePanel";
 import { prizeText } from "@/components/guide/HowItWorks";
 import { GAMES } from "@/lib/games/registry";
 import { getPlace } from "@/lib/city/places";
-import ACTIVITIES from "@/data/guide/activities.json";
-import VISIT from "@/data/guide/places-to-visit.json";
+import { guideFor, type Spot } from "@/lib/guide/cityGuide";
+import { useCurrentCity } from "@/lib/city/presence";
+import { CITIES } from "@/lib/city/cities";
 import PICKS from "@/data/guide/city-picks.json";
 import { DEFAULT_ORDER, goalClaimed, goalDone, goalOf, stepDone, useGoals } from "@/lib/goals";
 import { gameAudio } from "@/utils/gameAudio";
@@ -50,7 +51,6 @@ function contrasted(items: ActivityView[], seed: number): ActivityView[] {
   return out;
 }
 const newSeed = () => Math.floor(Math.random() * 4294967295) + 1;
-type Spot = (typeof VISIT.places)[number];
 
 /** "What / Where / Why" lines shared by both lists. */
 function Lines({ where, why, what, points }: { where?: string; why?: string; what?: string; points?: string }) {
@@ -137,6 +137,9 @@ const Chips = ({ items, value, onChange, tone }: { items: string[]; value: strin
 
 export function DiscoverHost() {
   const { citizen } = useCitizen();
+  // The city you're in: its own things to do and places to visit (lib/guide/cityGuide).
+  const city = useCurrentCity().city;
+  const guide = guideFor(city);
   const path = usePathname();
   const router = useRouter();
   useDiscover();
@@ -181,9 +184,9 @@ export function DiscoverHost() {
         // Just had the tour: the suggestions keep for the next visit.
         if (sessionStorage.getItem(TOUR_NOW) === "1") { clearInterval(t); return; }
       } catch { /* storage blocked */ }
-      if (toTryCount() === 0) return;   // still loading, or nothing left to suggest
+      if (toTryCount(city) === 0) return;   // still loading, or nothing left to suggest
       clearInterval(t);
-      if (shown.count === 1 && activities().filter((x) => x.item.core && !x.done && !x.hidden).length < 3) return;
+      if (shown.count === 1 && activities(city).filter((x) => x.item.core && !x.done && !x.hidden).length < 3) return;
       try { localStorage.setItem(INTRO, JSON.stringify({ count: shown.count + 1, at: Date.now() })); } catch { /* storage blocked */ }
       setSeed(newSeed()); setIntro(true);
     }, 5000);
@@ -196,13 +199,13 @@ export function DiscoverHost() {
   if (!signedIn || (!sheet && !intro)) return null;
   if (!sheet && intro && !popupTurn) return null;
   // Mixed up on every visit, with different kinds of thing side by side; things still to try stay above finished ones.
-  const list = shuffled(activities(), seed);
+  const list = shuffled(activities(city), seed);
   const todo = contrasted(list.filter((a) => !a.done && !a.hidden), seed);
   const done = list.filter((a) => a.done);
   const hidden = list.filter((a) => !a.done && a.hidden);
   const close = () => { setSheet(false); setIntro(false); };
   const visited = (id: string) => (citizen?.visited ?? []).some((k) => (id.includes("/") ? k === id : k === id || k.startsWith(`${id}/`)));
-  const allSpots = shuffled(VISIT.places, seed ^ 0x5bd1e995);
+  const allSpots = shuffled(guide.visit.places, seed ^ 0x5bd1e995);
   const placesLeft = allSpots.filter((sp) => !visited(sp.id)).length;
   // Search: by name, where it is, what you do there, or its category ("race", "pool", "afrobeats"…).
   const q = placeQuery.trim().toLowerCase();
@@ -224,8 +227,8 @@ export function DiscoverHost() {
         <div className="relative w-full sm:max-w-lg bg-slate-50 text-slate-900 rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl max-h-[88dvh] flex flex-col animate-in slide-in-from-bottom-8 duration-300 pb-[env(safe-area-inset-bottom)]">
           <button onClick={close} className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white flex items-center justify-center text-slate-600 shadow" aria-label="Close"><X className="w-4 h-4" /></button>
           <header className="px-5 pt-5 pb-3 pr-14">
-            <h2 className="text-xl font-black">{showIntro ? (welcome ? `Welcome to the city, @${citizen?.username}` : "Things you can do in Dubai") : tab === "do" ? "Things to do" : "Places to visit"}</h2>
-            <p className="text-sm text-slate-500">{showIntro ? (welcome ? "Work on your goals and enjoy the town. Here's what we'd do first." : "A few ideas to start.") + " Find them all under To do and Places in your phone, or the arrow at the top." : tab === "do" ? `${todo.length} to try · ${done.length} done` : `${VISIT.places.length - placesLeft} of ${VISIT.places.length} visited`}</p>
+            <h2 className="text-xl font-black">{showIntro ? (welcome ? `Welcome to the city, @${citizen?.username}` : `Things you can do in ${CITIES[city].name}`) : tab === "do" ? "Things to do" : "Places to visit"}</h2>
+            <p className="text-sm text-slate-500">{showIntro ? (welcome ? "Work on your goals and enjoy the town. Here's what we'd do first." : "A few ideas to start.") + " Find them all under To do and Places in your phone, or the arrow at the top." : tab === "do" ? `${todo.length} to try · ${done.length} done` : `${guide.visit.places.length - placesLeft} of ${guide.visit.places.length} visited`}</p>
             {!showIntro && (
               <div className="flex gap-1.5 mt-3 bg-white rounded-full p-1 border border-slate-200">
                 {([["do", `✅ To do · ${todo.length}`], ["places", `📍 Places · ${placesLeft}`]] as const).map(([id, label]) => (
@@ -262,13 +265,13 @@ export function DiscoverHost() {
               <>
                 <input value={placeQuery} onChange={(e) => setPlaceQuery(e.target.value)} placeholder="Search places: car race, pool, Afrobeats, brunch…" aria-label="Search places"
                   className="w-full h-11 rounded-2xl bg-white border border-slate-200 px-4 text-sm font-semibold outline-none focus:ring-2 focus:ring-sky-500" />
-                <Chips items={VISIT.categories} value={placeCat} onChange={setPlaceCat} tone="bg-sky-600" />
+                <Chips items={guide.visit.categories} value={placeCat} onChange={setPlaceCat} tone="bg-sky-600" />
                 {spots.length === 0 && <p className="text-sm text-slate-500 text-center py-4">No place matches “{placeQuery}”. Try another word or category.</p>}
                 {[...spots.filter((sp) => !visited(sp.id)), ...spots.filter((sp) => visited(sp.id))].map((sp) => <PlaceRow key={sp.id} spot={sp} visited={visited(sp.id)} onGo={close} />)}
               </>
             ) : (
               <>
-                <Chips items={ACTIVITIES.categories} value={todoCat} onChange={setTodoCat} tone="bg-emerald-600" />
+                <Chips items={guide.todo.categories} value={todoCat} onChange={setTodoCat} tone="bg-emerald-600" />
                 {todoShown.map((a) => <TodoRow key={a.item.id} a={a} now={now} onGo={close} onHide={() => setHidden(a.item.id, true)} />)}
                 {todoShown.length === 0 && <p className="text-sm text-slate-500 text-center py-4">All done here. Pick another category.</p>}
                 {done.length > 0 && !todoCat && (

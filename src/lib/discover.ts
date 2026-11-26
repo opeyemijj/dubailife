@@ -1,15 +1,16 @@
 "use client";
 
-// Discover: everything a player can do (src/data/guide/activities.json). Items tick themselves off from what
+// Discover: everything a player can do, in the city they're in (lib/guide/cityGuide: Dubai's src/data/guide lists,
+// or another city's own). Items tick themselves off from what
 // the server knows (my_activity_status) or once the player taps Go ("seen"). The bottom-nav badge counts
 // everything still to try, minus anything the player hid; the Places badge counts places not yet visited.
 
 import { useSyncExternalStore } from "react";
 import { supabase } from "@/lib/supabase/client";
-import ACTIVITIES from "@/data/guide/activities.json";
-import VISIT from "@/data/guide/places-to-visit.json";
+import { guideFor, type Activity } from "@/lib/guide/cityGuide";
+import type { CityId } from "@/lib/city/cities";
 
-export type Activity = (typeof ACTIVITIES.items)[number];
+export type { Activity };
 export interface ActivityView { item: Activity; done: boolean; hidden: boolean }
 
 const SEEN = "dl_discover_seen";
@@ -36,9 +37,10 @@ export function refreshDiscover(force = false) {
   })());
 }
 
-export function activities(): ActivityView[] {
+/** What there is to do in this city (Dubai's list, or the city's own then the game-wide ones: lib/guide/cityGuide). */
+export function activities(city: CityId = "dubai"): ActivityView[] {
   const seen = new Set(read(SEEN)), hidden = new Set(read(HIDDEN));
-  return ACTIVITIES.items.map((item) => ({
+  return guideFor(city).todo.items.map((item) => ({
     item,
     done: item.done === "seen" ? seen.has(item.id)
       : item.done.startsWith("enrolled:") ? enrolled.has(item.done.slice("enrolled:".length))
@@ -49,15 +51,15 @@ export function activities(): ActivityView[] {
 
 /** Things still to try (shown on the badge). 0 until the first refresh, so the badge never flashes wrong. */
 /** The "To do" badge: everything still to try (not hidden). 0 until loaded, so it never flashes wrong. */
-export function toTryCount() {
+export function toTryCount(city: CityId = "dubai") {
   if (!facts) return 0;
-  return activities().filter((a) => !a.done && !a.hidden).length;
+  return activities(city).filter((a) => !a.done && !a.hidden).length;
 }
 
 /** The "Places" badge: places to visit you haven't been inside yet. */
-export function placesLeftCount(visited: string[] | undefined) {
+export function placesLeftCount(visited: string[] | undefined, city: CityId = "dubai") {
   const v = visited ?? [];
-  return VISIT.places.filter((sp) => !v.some((k) => (sp.id.includes("/") ? k === sp.id : k === sp.id || k.startsWith(`${sp.id}/`)))).length;
+  return guideFor(city).visit.places.filter((sp) => !v.some((k) => (sp.id.includes("/") ? k === sp.id : k === sp.id || k.startsWith(`${sp.id}/`)))).length;
 }
 
 export function useDiscover() {

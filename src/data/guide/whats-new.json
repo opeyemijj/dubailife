@@ -1,6 +1,16 @@
 {
   "items": [
     {
+      "id": "2026-11-30-busy-cities",
+      "date": "2026-11-30",
+      "icon": "🛥️",
+      "title": "Busier Abu Dhabi and Doha: yacht parties, quick courses and 2,000 homes",
+      "text": "Abu Dhabi grows to 21 districts (Hudayriyat's Surf Abu Dhabi, Al Maryah's towers, Al Reem's Shams, Mina Zayed's fish market and Iranian souq, Masdar City, MBZ City, Al Jubail Island…) and Doha to 25 (Al Mansoura, the Lusail Marina District, Al Duhail, Al Wukair). Between them: over 2,000 homes to rent or buy, neighbourhood centres with a supermarket, pharmacy, salon and café, clinics, parks, jet skis, and four floating superyacht marinas where you host a yacht party for up to 50 guests with a DJ and lights. The universities now teach quick courses: 15 minutes, three lessons and a quiz, then a certificate and skill experience. And To do and Places now show what there is in the city you're in.",
+      "how": "Fly to Abu Dhabi or Doha, then open To do, or a university on the map.",
+      "cta": "See what to do",
+      "href": "/explore"
+    },
+    {
       "id": "2026-11-29-doha",
       "date": "2026-11-29",
       "icon": "🇶🇦",

@@ -6,6 +6,7 @@
 // universities and the library, and the desert.
 
 import { placeKit, registerCityPlaces } from "@/lib/city/places";
+import { quickCourseActivities } from "@/lib/academy/quickData";
 import type { Place, Venue, VenueActivity } from "@/lib/city/types";
 
 const { venue, spa, pool, single, ticket, yacht, gymActivities, PALETTES } = placeKit;
@@ -19,6 +20,44 @@ const daybeds = (id: string) => [
   { id: `${id}:karak`, name: "Iced karak", price: 25, icon: "🧋", station: "bar" as const, desc: "Doha's favourite: spiced milk tea, over ice.", consumable: { need: "energy" as const, amount: 10 } },
   { id: `${id}:lemon-mint`, name: "Lemon mint", price: 30, icon: "🍹", station: "bar" as const, desc: "Frozen lemon and mint.", consumable: { need: "social" as const, amount: 10 } },
 ];
+/** A neighbourhood centre: the everyday shops a family needs near home (a supermarket, a pharmacy, a salon, a café). */
+function neighbourhood(id: string, name: string, blurb: string): Place {
+  const short = name.replace(/ Neighbourhood Centre$/, "");
+  return { id, name, kind: "mall", blurb, venues: [venue(`${short} Supermarket`, "Supermarket", "supermarket"), venue(`${short} Pharmacy`, "Pharmacy", "pharmacy"), venue(`${short} Salon & Barber`, "Salon & barber", "beauty"), venue(`${short} Café`, "Café", "cafe")] };
+}
+/** A clinic or hospital: a check-up with a doctor and the pharmacy. */
+function clinic(id: string, name: string, blurb: string): Place {
+  return {
+    id, name, kind: "attraction", blurb,
+    venues: [
+      venue(`${name} Clinics`, "Clinic", "hotel", { layout: "lobby", palette: { floor: "#f1f5f9", wall: "#ffffff", accent: "#0f766e" }, role: "Nurse", noJob: true,
+        products: [ticket(`${id}:checkup`, "General check-up", 200, "A doctor's check-up and advice.", "🩺"), ticket(`${id}:dental`, "Dental check-up", 250, "A clean and a check.", "🦷")],
+        activities: [{ id: `${id}:checkup`, label: "See a doctor for a check-up", icon: "🩺", animation: "sit", reward: 0, need: { kind: "energy", amount: 25 } }] }),
+      venue(`${name} Pharmacy`, "Pharmacy", "pharmacy"),
+    ],
+  };
+}
+/** A park: lawns, paths, a playground; walk, run or picnic. */
+function park(id: string, name: string, blurb: string, extra: VenueActivity[] = []): Place {
+  return { id, name, kind: "park", blurb, venues: [venue(name, "Park", "hotel", { layout: "outdoor", palette: PALETTES.park, role: "Park ranger", noJob: true, products: [],
+    activities: [{ id: `${id}:walk`, label: "Walk in the park", icon: "🌳", animation: "wave", reward: 10, need: { kind: "energy", amount: 15 } }, { id: `${id}:run`, label: "Go for a run", icon: "🏃", animation: "clap", reward: 15, need: { kind: "fun", amount: 15 } }, { id: `${id}:picnic`, label: "Picnic with friends", icon: "🧺", animation: "sit", reward: 10, need: { kind: "social", amount: 20 } }, ...extra] })] };
+}
+/** A party yacht: the yacht for the evening, its party package (DJ, lights, catering) and the deck to dance on. */
+function partyYacht(name: string, perHour: number, guests: number, blurb: string): Venue {
+  const v = yacht(name, perHour, guests, blurb);
+  const id = v.id;
+  return {
+    ...v,
+    products: [
+      ticket(`${id}:party`, `Host a yacht party: 3 hours, up to ${guests} guests`, perHour * 3, "The yacht, the crew, the sound system and the deck for your party.", "🎉"),
+      ticket(`${id}:dj`, "DJ & party lights", 1500, "A DJ on deck and lights round the yacht.", "🎧"),
+      ticket(`${id}:catering`, "Party platters & mocktails", 900, "Food and drinks for your guests.", "🍢"),
+      ...v.products,
+    ],
+    activities: [...(v.activities ?? []), { id: `${id}:party`, label: "Party on deck", icon: "🎉", animation: "dance", reward: 30, need: { kind: "social", amount: 35 } }],
+  };
+}
+
 /** A watersports centre: jet skis (ridden in 3D on the beach), flyboards, banana boats and parasailing, and a beach. */
 function watersports(id: string, name: string, blurb: string): Place {
   return {
@@ -377,7 +416,7 @@ export const DQ_PLACES: Place[] = [
     venues: [venue("Qatar National Library", "Library", "hotel", {
       layout: "lobby", feature: "exhibits", palette: { floor: "#f1f5f9", wall: "#ffffff", accent: "#0f766e" }, role: "Librarian", noJob: true,
       products: [{ id: "qnl:card", name: "Library card", price: 0, icon: "🪪", station: "reception", desc: "Free for everyone.", service: true }],
-      activities: [{ id: "qnl:read", label: "Read in the great hall", icon: "📖", animation: "sit", reward: 15, need: { kind: "energy", amount: 15 } }, show("qnl:heritage", "See the heritage manuscripts", "📜", 25), { id: "qnl:study", label: "Study a course", icon: "🎓", href: "/academics/onebrain" }],
+      activities: [...quickCourseActivities("dq-qnl"), { id: "qnl:read", label: "Read in the great hall", icon: "📖", animation: "sit", reward: 15, need: { kind: "energy", amount: 15 } }, show("qnl:heritage", "See the heritage manuscripts", "📜", 25), { id: "qnl:study", label: "Study a course", icon: "🎓", href: "/academics/onebrain" }],
     })],
   },
   {
@@ -388,6 +427,8 @@ export const DQ_PLACES: Place[] = [
         layout: "lobby", palette: { floor: "#e7e5e4", wall: "#f8fafc", accent: MAROON }, role: "Lecturer", noJob: true,
         products: [{ id: "edu:hoodie", name: "Education City hoodie", price: 140, icon: "🧥", station: "counter", desc: "From the campus shop." }],
         activities: [
+          // Quick courses taught on this campus (lib/academy/quick).
+          ...quickCourseActivities("dq-education-city"),
           { id: "edu:business", label: "Study business, real estate & law", icon: "🎓", href: "/academics/aud" },
           { id: "edu:tech", label: "Study cybersecurity, healthcare & logistics", icon: "🔬", href: "/academics/ud" },
           { id: "edu:new", label: "Take AI, coding & marketing", icon: "💡", href: "/academics/onebrain" },
@@ -446,6 +487,22 @@ export const DQ_PLACES: Place[] = [
     blurb: "The resort island shaped like a banana in Doha Bay: villas over the water, a beach and a spa.",
     venues: [venue("Banana Island Resort", "Island resort & villas", "hotel", { palette: PALETTES.lobby, blurb: "Overwater villas and a lagoon beach in the bay." })],
   },
+  // ---------------------------------------------------------------- the wider city: everyday life and parties
+  neighbourhood("dq-mansoura-centre", "Mansoura Neighbourhood Centre", "Al Mansoura's shops for every day."),
+  neighbourhood("dq-duhail-centre", "Al Duhail Neighbourhood Centre", "Al Duhail's local shops."),
+  { id: "dq-wukair-mall", name: "Al Wukair Mall", kind: "mall", blurb: "The southern town's mall.", venues: [venue("Wukair Fashion", "Fashion", "fashion"), venue("Wukair Hypermarket", "Supermarket", "supermarket"), venue("Wukair Pharmacy", "Pharmacy", "pharmacy"), venue("Wukair Food Court", "Food court", "restaurant")] },
+  clinic("dq-mansoura-clinic", "Al Mansoura Health Centre", "The health centre for the apartment quarter."),
+  clinic("dq-wukair-clinic", "Al Wukair Health Centre", "The health centre for Al Wukair's families."),
+  park("dq-mansoura-park", "Fereej Bin Mahmoud Park", "A green square among the apartment blocks."),
+  park("dq-markhiya-park", "Al Markhiya Park", "A family park with a running track."),
+  { id: "dq-mansoura-dining", name: "Mansoura Night Market", kind: "food-hall", blurb: "Street food stalls open late: shawarma, karak and sweets.", venues: [venue("Night Market Shawarma", "Shawarma", "restaurant"), venue("Night Market Karak", "Karak & sweets", "cafe")] },
+  { id: "dq-lusail-marina-centre", name: "Lusail Marina Promenade", kind: "mall", blurb: "Shops and cafés along Lusail's marina.", venues: [venue("Marina Promenade Fashion", "Fashion", "fashion"), venue("Marina Promenade Supermarket", "Supermarket", "supermarket"), venue("Marina Promenade Café", "Café", "cafe")] },
+  { id: "dq-lusail-yacht-club", name: "Lusail Yacht Club", kind: "attraction", blurb: "Yachts for parties on Lusail's waters.", venues: [partyYacht("Lusail Marina Party Yacht", 3600, 30, "A party past the Katara Towers."), yacht("Lusail Riva 56", 2600, 10, "A fast cruiser.")] },
+  { id: "dq-lusail-marina-dining", name: "Marina Promenade Dining", kind: "food-hall", blurb: "Restaurants on the marina's boardwalk.", venues: [venue("Marina Seafood House", "Seafood", "restaurant"), venue("Marina Lebanese", "Lebanese", "restaurant")] },
+  watersports("dq-lusail-jetski", "Lusail Marina Jet Ski", "Jet skis out of Lusail Marina, past Qetaifan Island."),
+  { id: "dq-pearl-party-marina", name: "Pearl Superyacht Party Marina", kind: "club", blurb: "A floating marina on the Gulf off The Pearl: superyachts for parties under the stars.", venues: [partyYacht("Pearl Superyacht Celeste", 11000, 50, "Three decks, a pool on top and The Pearl's lights."), partyYacht("Pearl Party Catamaran", 2800, 20, "Dancing on a wide deck.")] },
+  { id: "dq-lusail-party-marina", name: "Lusail Floating Party Marina", kind: "club", blurb: "Floating off Lusail: party yachts with the Katara Towers glowing behind.", venues: [partyYacht("Lusail Party Superyacht", 9800, 40, "DJs, lights and the Lusail skyline."), partyYacht("Lusail Sunset Party Yacht", 3400, 25, "A sunset party on the water.")] },
+
   // ---------------------------------------------------------------- watersports: jet skis, flyboards, parasailing
   ...[
     ["dq-lagoon-jetski", "Lagoon Jet Ski & Watersports", "Jet skis round the lagoon's canals and out past the towers."],

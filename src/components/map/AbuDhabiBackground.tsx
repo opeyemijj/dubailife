@@ -77,6 +77,11 @@ export function AbuDhabiBackground() {
           `M ${raha.x + 300},${raha.y - 160} L ${yas.x + 260},${yas.y + 220}`,
           // Saadiyat bridge from the island.
           `M ${corniche.x + 560},${corniche.y - 200} L ${saadiyat.x + 420},${saadiyat.y + 210}`,
+          // The wider city's ring roads: under the mainland's rows, west to MBZ City and Mussafah, east to Masdar and
+          // Al Shahama, and south past Mina Zayed, Shams and Al Samha.
+          `M -1500,${roadY("ad-tile-mbz")} L ${W + 1700},${roadY("ad-tile-mbz") + (W + 3200) * TILT}`,
+          `M -1500,${roadY("ad-tile-mussafah")} L ${W + 1700},${roadY("ad-tile-mussafah") + (W + 3200) * TILT}`,
+          `M -1500,${roadY("ad-tile-mina")} L ${W + 1700},${roadY("ad-tile-mina") + (W + 3200) * TILT}`,
           // Al Wathba road south from Khalifa City.
           `M ${khalifa.x},${roadY("ad-tile-khalifa")} L ${khalifa.x - 420},${roadY("ad-tile-wathba") - 180}`,
         ].map((d, i) => (
