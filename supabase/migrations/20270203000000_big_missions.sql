@@ -61,8 +61,8 @@ begin
 end $$;
 revoke all on function public.settle_big_missions() from public, anon, authenticated;
 
-/** My missions: progress, what's been paid, and whether my account can be paid yet. */
-create or replace function public.my_missions() returns jsonb
+/** My Big Missions: progress, what's been paid, and whether my account can be paid yet. */
+create or replace function public.my_big_missions() returns jsonb
 language sql stable security definer set search_path = public as $$
   select jsonb_build_object(
     'progress', mission_progress(auth.uid()),
@@ -71,8 +71,8 @@ language sql stable security definer set search_path = public as $$
     'verified', email_verified(auth.uid()))
   where auth.uid() is not null
 $$;
-revoke all on function public.my_missions() from public, anon;
-grant execute on function public.my_missions() to authenticated;
+revoke all on function public.my_big_missions() from public, anon;
+grant execute on function public.my_big_missions() to authenticated;
 
 do $$ begin
   perform cron.unschedule('big-missions');

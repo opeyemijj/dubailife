@@ -253,7 +253,7 @@ gneed("save target", `select ${goals.save.months} * public.blueprint_monthly(p_u
 gneed("save fallback", `, ${goals.save.fallback})::bigint`);
 // Daily missions, the mystery box and savings (src/data/life/missions.json vs *_missions.sql).
 const mis = JSON.parse(readFileSync("src/data/life/missions.json", "utf8"));
-const misFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_missions.sql")).sort().pop();
+const misFile = readdirSync("supabase/migrations").filter((f) => f.endsWith("_missions.sql") && !f.endsWith("_big_missions.sql")).sort().pop();
 const misSql = readFileSync(`supabase/migrations/${misFile}`, "utf8");
 const mneed2 = (label, text) => { if (!misSql.includes(text)) { bad++; console.error(`missions ${label}: differs from SQL (${text})`); } };
 for (const id of Object.keys(mis.missions)) mneed2(`check ${id}`, `when '${id}' then `);
