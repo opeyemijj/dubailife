@@ -40,7 +40,7 @@ let cache: { user: string; data: MyBigMissions } | null = null;
 const listeners = new Set<() => void>();
 export async function refreshBigMissions(user: string) {
   const { data } = await supabase().rpc("my_big_missions");
-  if (data) { cache = { user, data: data as MyBigMissions }; listeners.forEach((f) => f()); }
+  if (data && data.progress && Array.isArray(data.paid)) { cache = { user, data: data as MyBigMissions }; listeners.forEach((f) => f()); }
 }
 /** My progress on the Big Missions (refreshed every minute while shown). */
 export function useBigMissions(user: string | null | undefined): MyBigMissions | null {

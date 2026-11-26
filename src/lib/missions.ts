@@ -29,7 +29,8 @@ let inflight: Promise<void> | null = null;
 export function reloadMissions() {
   inflight ??= (async () => {
     const { data } = await supabase().rpc("my_missions");
-    if (data) { cache = data as Missions; subs.forEach((f) => f()); }
+    // Only take the daily shape: a wrong reply (e.g. another RPC's data) must never crash the map rail.
+    if (data && Array.isArray(data.missions) && data.box) { cache = data as Missions; subs.forEach((f) => f()); }
     inflight = null;
   })();
   return inflight;
