@@ -12,7 +12,7 @@ import { openPartySheet } from "@/components/invite/PartySheetHost";
 import { useCitizen } from "@/lib/citizenStore";
 import {
   BIG_MISSIONS, BIG_MISSIONS_EVENT, BIG_TOTAL, DEFAULT_MESSAGE, inviteLink, leftToEarn, millions, openWhatsApp, saveMessage, savedMessage,
-  useBigMissions, type BigMissionId, type MyBigMissions,
+  PER_FRIEND, useBigMissions, type BigMissionId, type MyBigMissions,
 } from "@/lib/bigMissions";
 import { gameAudio } from "@/utils/gameAudio";
 
@@ -59,6 +59,8 @@ function BigMissionsSheet({ data, username, onClose }: { data: MyBigMissions | n
   const copy = async () => {
     try { await navigator.clipboard.writeText(`${msg.trim()}\n${inviteLink(username)}`); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch { /* not allowed */ }
   };
+  const inv = BIG_MISSIONS.find((m) => m.id === "invite5")!;
+  const invite = { target: inv.target, total: inv.aed, n: Math.min(inv.target, data?.progress.invite5 ?? 0), earned: data?.inviteEarned ?? 0, paid: !!data?.paid.includes("invite5") };
   const status = (id: BigMissionId, target: number) => {
     const n = Math.min(target, data?.progress[id] ?? 0);
     return { n, paid: !!data?.paid.includes(id), reached: n >= target };
@@ -72,9 +74,27 @@ function BigMissionsSheet({ data, username, onClose }: { data: MyBigMissions | n
           <div className="relative px-5 pt-6 pb-4 text-center">
             <button onClick={onClose} aria-label="Close" className="absolute right-4 top-4 w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"><X className="w-4 h-4" /></button>
             <p className="text-5xl">💰</p>
-            <p className="mt-1 text-xs font-black tracking-[0.25em] text-amber-300">BIG MISSIONS</p>
-            <h2 className="mt-1 text-3xl font-black leading-tight">Earn <span className="text-amber-300">{millions(left > 0 ? left : BIG_TOTAL)}</span></h2>
-            <p className="mt-1 text-sm text-slate-300">{left > 0 ? "Bring your friends to Dubai Life. Three missions, paid straight into your account." : "All three done. You're a Dubai Life legend! 🏆"}</p>
+            {!invite.paid ? (
+              <>
+                {/* The headline offer: invite 5 friends on WhatsApp, AED 2M as each one joins, AED 10M for five. */}
+                <p className="mt-1 text-xs font-black tracking-[0.25em] text-amber-300">INVITE 5 FRIENDS</p>
+                <h2 className="mt-1 text-3xl font-black leading-tight">Get <span className="text-amber-300">{millions(invite.total)}</span></h2>
+                <p className="mt-1 text-sm text-slate-300">Invite 5 friends on WhatsApp. You get <b className="text-white">{millions(PER_FRIEND)}</b> for each friend who joins with your link.</p>
+                <div className="mt-3 flex justify-center gap-1.5">
+                  {Array.from({ length: invite.target }, (_, i) => (
+                    <span key={i} className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-black ${i < invite.n ? "bg-emerald-400 text-slate-950" : "bg-white/10 text-white/40"}`}>{i < invite.n ? "✓" : i + 1}</span>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs font-bold text-slate-400">{invite.n} of {invite.target} friends joined · earned {millions(invite.earned)} so far</p>
+                <div className="mt-3"><WhatsAppButton onClick={() => send()} label="Invite friends on WhatsApp" /></div>
+              </>
+            ) : (
+              <>
+                <p className="mt-1 text-xs font-black tracking-[0.25em] text-amber-300">BIG MISSIONS</p>
+                <h2 className="mt-1 text-3xl font-black leading-tight">Earn <span className="text-amber-300">{millions(left > 0 ? left : BIG_TOTAL)}</span></h2>
+                <p className="mt-1 text-sm text-slate-300">{left > 0 ? "You brought in 5 friends! Keep going: two more missions, paid straight into your account." : "All three done. You're a Dubai Life legend! 🏆"}</p>
+              </>
+            )}
             {data && !data.verified && <p className="mt-3 text-xs font-bold rounded-xl bg-amber-400/15 text-amber-200 px-3 py-2">Verify your email so you can be paid.</p>}
             {data && data.verified && !data.eligible && <p className="mt-3 text-xs font-bold rounded-xl bg-amber-400/15 text-amber-200 px-3 py-2">Your rewards are paid once your account is 3 days old. Start inviting now!</p>}
           </div>
@@ -100,7 +120,8 @@ function BigMissionsSheet({ data, username, onClose }: { data: MyBigMissions | n
                     <div className="flex-1 h-2.5 rounded-full bg-white/10 overflow-hidden"><div className={`h-full rounded-full ${s.paid ? "bg-emerald-400" : "bg-amber-400"}`} style={{ width: `${(s.n / m.target) * 100}%` }} /></div>
                     <span className="text-xs font-black tabular-nums text-slate-300">{s.n}/{m.target}</span>
                   </div>
-                  {s.paid ? <p className="mt-2 text-sm font-black text-emerald-300">Paid · {millions(m.aed)} 🎉</p>
+                  {m.id === "invite5" && !s.paid && s.n > 0 && <p className="mt-2 text-sm font-black text-emerald-300">Earned {millions(invite.earned)} of {millions(m.aed)} so far 🎉</p>}
+                  {s.paid ? <p className="mt-2 text-sm font-black text-emerald-300">Paid · {millions(m.id === "invite5" ? Math.max(invite.earned, m.aed) : m.aed)} 🎉</p>
                     : s.reached ? <p className="mt-2 text-sm font-black text-amber-200">Done! Your {millions(m.aed)} is on its way (within 5 minutes).</p>
                     : m.id === "invite5" ? (
                       <div className="mt-3 space-y-2">
@@ -136,7 +157,7 @@ function BigMissionsSheet({ data, username, onClose }: { data: MyBigMissions | n
               );
             })}
           </div>
-          <p className="px-6 pt-4 text-center text-[11px] text-slate-500">A friend counts once they sign up with your link, verify their email and play for 10 minutes. Each mission pays once.</p>
+          <p className="px-6 pt-4 text-center text-[11px] text-slate-500">A friend counts once they sign up with your link and play for 10 minutes: you&apos;re paid {millions(PER_FRIEND)} within 5 minutes. The party and chain missions each pay once.</p>
         </div>
       </div>
     </ModalPortal>

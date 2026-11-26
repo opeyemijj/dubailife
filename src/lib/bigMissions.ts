@@ -6,13 +6,16 @@
 
 import { useEffect, useState } from "react";
 import CONFIG from "@/data/social/missions.json";
+import REWARDS from "@/data/social/rewards.json";
 import { supabase } from "@/lib/supabase/client";
 import { SITE } from "@/lib/site";
 
 export const BIG_MISSIONS = CONFIG.missions;
 export type BigMissionId = "invite5" | "party10" | "chain3";
 export const BIG_TOTAL = BIG_MISSIONS.reduce((s, m) => s + m.aed, 0);
-export interface MyBigMissions { progress: Record<BigMissionId, number>; paid: BigMissionId[]; eligible: boolean; verified: boolean }
+export interface MyBigMissions { progress: Record<BigMissionId, number>; paid: BigMissionId[]; inviteEarned?: number; eligible: boolean; verified: boolean }
+/** Invite 5 friends: paid per friend as each joins (the signup reward, src/data/social/rewards.json), five make the 10M. */
+export const PER_FRIEND = REWARDS.signup.aed;
 
 /** "AED 10M". */
 export const millions = (n: number) => `AED ${n >= 1e6 ? `${Math.round(n / 1e5) / 10}M` : n.toLocaleString()}`;
@@ -57,7 +60,8 @@ export function useBigMissions(user: string | null | undefined): MyBigMissions |
 }
 
 /** What's still to earn. */
-export const leftToEarn = (m: MyBigMissions | null) => BIG_MISSIONS.filter((x) => !m?.paid.includes(x.id as BigMissionId)).reduce((s, x) => s + x.aed, 0);
+export const leftToEarn = (m: MyBigMissions | null) => BIG_MISSIONS.filter((x) => !m?.paid.includes(x.id as BigMissionId))
+  .reduce((s, x) => s + (x.id === "invite5" ? Math.max(0, x.aed - (m?.inviteEarned ?? 0)) : x.aed), 0);
 
 const OPEN = "dubai:big-missions";
 export const openBigMissions = () => window.dispatchEvent(new CustomEvent(OPEN));
