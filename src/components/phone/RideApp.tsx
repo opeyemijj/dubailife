@@ -9,12 +9,8 @@ import { useRouter } from "next/navigation";
 import { TaxiJourney } from "@/components/transit/TaxiJourney";
 import { Search } from "lucide-react";
 import { useCitizen, adjustBalance, updateCitizen } from "@/lib/citizenStore";
-import { PLACES, placesWithPrefix } from "@/lib/city/places";
-import { CITIES } from "@/lib/city/cities";
+import { placesIn } from "@/lib/city/cityPlaces";
 import { useCurrentCity } from "@/lib/city/presence";
-// The other cities' places register themselves when loaded (placesWithPrefix lists them).
-import "@/lib/city/abuDhabi/places";
-import "@/lib/city/doha/places";
 import { distanceMetres, entranceOf, HOME_SPOT } from "@/lib/city/geo";
 import { metroPlan, taxiQuote } from "@/lib/transit";
 import { gameAudio } from "@/utils/gameAudio";
@@ -42,7 +38,9 @@ export function RideApp({ onBack, onClose, onMetro }: { onBack: () => void; onCl
 
   // Only the city you're in: Dubai's places, or Abu Dhabi's or Doha's (and no Salik tolls outside Dubai).
   const { city } = useCurrentCity();
-  const cityPlaces = useMemo(() => (city === "dubai" ? PLACES : placesWithPrefix(CITIES[city].prefix!)), [city]);
+  const cityPlaces = useMemo(() => placesIn(city), [city]);
+  // Outside Dubai there's no Metro: always a car.
+  const travel = city === "dubai" ? mode : "car";
   const places = useMemo(() => cityPlaces.filter((p) => p.kind !== "home" && entranceOf(p.id))
     .map((p) => ({ p, metres: distanceMetres(from, entranceOf(p.id)!) }))
     .filter(({ p }) => !q.trim() || p.name.toLowerCase().includes(q.trim().toLowerCase()))
@@ -103,7 +101,7 @@ export function RideApp({ onBack, onClose, onMetro }: { onBack: () => void; onCl
         <button key={p.id} onClick={() => setTo(p.id)} className="w-full flex items-center gap-3 p-3 rounded-[22px] bg-slate-100/80 text-left">
           <span className="w-11 h-11 rounded-full bg-white flex items-center justify-center text-xl">{KIND_ICON[p.kind]}</span>
           <span className="flex-1 min-w-0"><span className="block font-semibold truncate">{p.name}</span><span className="block text-sm text-slate-500">{(metres / 1000).toFixed(1)} km</span></span>
-          {mode === "car" && <span className="font-semibold text-slate-600">{aed(fare(metres, 1))}</span>}
+          {travel === "car" && <span className="font-semibold text-slate-600">{aed(fare(metres, 1))}</span>}
         </button>
       ))}
       {shown < places.length ? <div ref={more} className="py-4 text-center text-sm text-slate-400">Loading more places…</div>
@@ -113,7 +111,8 @@ export function RideApp({ onBack, onClose, onMetro }: { onBack: () => void; onCl
 
   return (
     <AppScreen title={APPS.rides.app.name} onBack={dest && !riding ? () => setTo(null) : onBack} accent="text-emerald-600">
-      {!riding && (
+      {/* The Metro is Dubai's only: elsewhere it's a car. */}
+      {!riding && city === "dubai" && (
         <div className="grid grid-cols-2 gap-1 p-1 rounded-full bg-slate-100">
           {(["car", "metro"] as const).map((m) => (
             <button key={m} onClick={() => setMode(m)} className={`h-10 rounded-full font-semibold ${mode === m ? "bg-white shadow" : "text-slate-500"}`}>{m === "car" ? "🚗 Car" : "🚇 Metro"}</button>
@@ -126,7 +125,7 @@ export function RideApp({ onBack, onClose, onMetro }: { onBack: () => void; onCl
           <div className="text-6xl animate-bounce">🚗</div>
           <p className="font-semibold text-lg">{riding}</p>
         </Card>
-      ) : !dest ? list : mode === "car" ? (
+      ) : !dest ? list : travel === "car" ? (
         <>
           <Card className="bg-emerald-50">
             <p className="text-slate-500">To</p>

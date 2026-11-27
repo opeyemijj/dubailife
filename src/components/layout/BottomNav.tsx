@@ -19,7 +19,8 @@ import { useMissions } from "@/lib/missions";
 import { dismissCityPulse, useCityPulse } from "@/lib/presence";
 import { useCityMapPath } from "@/lib/city/presence";
 import { leftToEarn, millions, openBigMissions, useBigMissions } from "@/lib/bigMissions";
-import { goalSlot, RailButton, railTop } from "@/components/layout/mapRail";
+import { DRAW, drawOpen, isReturning, openDraw, useDraw } from "@/lib/draw";
+import { goalSlot, RailButton } from "@/components/layout/mapRail";
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -159,6 +160,9 @@ function MapRail() {
   // Big Missions first: invite friends on WhatsApp for the biggest rewards in the game.
   const big = useBigMissions(citizen?.id);
   const bigLeft = leftToEarn(big);
+  // The invite draw (returning players): its progress to the next entry, first on the rail.
+  const draw = useDraw(citizen && isReturning(citizen.createdAt) ? citizen.id : null);
+  if (citizen && draw && drawOpen()) items.push({ key: "draw", icon: "🎟️", badge: `${draw.joined % DRAW.target}/${DRAW.target}`, label: `${DRAW.title}: invite ${DRAW.target} friends, win AED ${DRAW.prizeAed.toLocaleString()}`, tone: "bg-gradient-to-br from-emerald-400 to-green-600 text-white", alert: true, go: openDraw });
   if (citizen && big && bigLeft > 0) items.push({ key: "big", icon: "💰", badge: millions(bigLeft).replace("AED ", ""), label: `Big Missions: earn ${millions(bigLeft)}`, tone: "bg-gradient-to-br from-amber-300 to-yellow-500 text-slate-950", alert: true, go: openBigMissions });
   if (missions && !missions.box.claimed) {
     const done = missions.missions.filter((m) => m.done).length;
@@ -174,7 +178,7 @@ function MapRail() {
     <>
       {items.map((it, i) => <RailButton key={it.key} n={first + i} icon={it.icon} badge={it.badge} label={it.label} tone={it.tone} alert={it.alert} onClick={() => { gameAudio.playClickSound(); it.go(); }} />)}
       {pulse && pulseOpen && pulseAt >= 0 && (
-        <div className="fixed right-[4.25rem] left-3 z-[58] pointer-events-auto" style={{ top: railTop(first + pulseAt) }} onClick={() => setPulseOpen(false)}>
+        <div className="fixed right-[4.25rem] left-3 top-1/2 -translate-y-1/2 z-[58] pointer-events-auto" onClick={() => setPulseOpen(false)}>
           <LivePulseBanner />
         </div>
       )}

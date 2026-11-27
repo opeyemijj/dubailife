@@ -189,6 +189,20 @@ for (const d of cars.dealers) cneed(`stock ${d.id}`, `when p_place = '${d.id}' a
   const want = { joinMinutes: bm.joinMinutes, missions: bm.missions.map(({ id, target, aed }) => ({ id, target, aed })) };
   if (!m || JSON.stringify(JSON.parse(m)) !== JSON.stringify(want)) { bad++; console.error("big missions: differ from SQL"); }
 }
+// Family trips (src/data/flights/trips.json → trip_rule()).
+{
+  const t = JSON.parse(readFileSync("src/data/flights/trips.json", "utf8"));
+  const m = latestDef("trip_rule").match(/select '(\{.*?\})'::jsonb/)?.[1];
+  if (!m || JSON.stringify(JSON.parse(m)) !== JSON.stringify({ kidFare: t.kidFare, inviteHours: t.inviteHours })) { bad++; console.error("family trips: differ from SQL"); }
+  for (const p of t.purposes) if (!latestDef("book_family_trip").includes(`'${p.id}'`)) { bad++; console.error(`family trips: purpose ${p.id} not in SQL`); }
+}
+// The invite draw (src/data/social/draw.json → draw_config()).
+{
+  const d = JSON.parse(readFileSync("src/data/social/draw.json", "utf8"));
+  const m = latestDef("draw_config").match(/select '(\{.*?\})'::jsonb/)?.[1];
+  const want = { id: d.id, prizeAed: d.prizeAed, target: d.target, joinMinutes: d.joinMinutes, startsAt: d.startsAt, endsAt: d.endsAt };
+  if (!m || JSON.stringify(JSON.parse(m)) !== JSON.stringify(want)) { bad++; console.error("invite draw: differs from SQL"); }
+}
 // Earnings: what the game pays outside invites and parties (src/data/life/earnings.json → earn_rule()).
 {
   const { _note, ...want } = JSON.parse(readFileSync("src/data/life/earnings.json", "utf8"));

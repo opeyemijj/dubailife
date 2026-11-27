@@ -5,6 +5,7 @@
 //  🔥 Hotspot: where people are right now (it used to be the orange pill above the bottom bar), with Go.
 // One popup open at a time; tapping the map or the icon again closes it.
 
+import { RailSlot, RAIL_LAST } from "@/components/layout/mapRail";
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { MapPin, X } from "lucide-react";
@@ -34,8 +35,9 @@ export function MapSideBar({ city = "dubai", districts, filters, activeFilter, o
   return (
     <>
       {open && <button aria-label="Close" className="fixed inset-0 z-30 cursor-default" onClick={() => setOpen(null)} />}
-      {/* Bottom right, above the menu (the column of icons runs down from the top right: layout/mapRail). */}
-      <div className="fixed right-3 bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+5.75rem)] sm:bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+10.5rem)] z-40 flex flex-col gap-2 pointer-events-auto">
+      {/* Last in the column of icons on the right (layout/mapRail), with the rest. */}
+      <RailSlot order={RAIL_LAST}>
+      <div className="flex flex-col gap-2 pointer-events-auto">
         <button onClick={() => toggle("places")} aria-label="Places" aria-expanded={open === "places"}
           className={`relative w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 ${open === "places" ? "bg-emerald-600 text-white" : "bg-white/95 text-emerald-700"}`}>
           <MapPin className="w-6 h-6" />
@@ -47,6 +49,7 @@ export function MapSideBar({ city = "dubai", districts, filters, activeFilter, o
           <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-slate-900 text-white text-[10px] font-black flex items-center justify-center ring-2 ring-white">{hot.count}</span>
         </button>
       </div>
+      </RailSlot>
 
       {open === "places" && (
         <div role="dialog" aria-label="Places" className="fixed right-[4.25rem] top-1/2 -translate-y-1/2 z-40 w-[min(17rem,calc(100vw-5.5rem))] max-h-[min(70dvh,32rem)] overflow-y-auto rounded-3xl bg-white/97 shadow-2xl p-3 text-slate-900 pointer-events-auto">

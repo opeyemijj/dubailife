@@ -4,7 +4,7 @@ import { askLogout } from "@/components/layout/LogoutConfirm";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { BarChart3, TrendingUp, CreditCard, Building2, Megaphone, Users, Settings, ScrollText, Map, LogOut, Menu, X, Lightbulb, Flag, Trophy, ShieldCheck, KeyRound, Mail } from "lucide-react";
+import { BarChart3, TrendingUp, CreditCard, Building2, Megaphone, Users, Settings, ScrollText, Map, LogOut, Menu, X, Lightbulb, Flag, Trophy, ShieldCheck, KeyRound, Mail, Ticket } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 
 const NAV = [
@@ -16,6 +16,7 @@ const NAV = [
   { href: "/admin/ads", label: "Advertising", icon: Megaphone },
   { href: "/admin/citizens", label: "Citizens", icon: Users },
   { href: "/admin/reports", label: "Reports", icon: Flag },
+  { href: "/admin/draw", label: "Invite Draw", icon: Ticket },
   { href: "/admin/tournament", label: "Tournament", icon: Trophy },
   { href: "/admin/ideas", label: "Community ideas", icon: Lightbulb },
   { href: "/admin/settings", label: "Prices & features", icon: Settings },

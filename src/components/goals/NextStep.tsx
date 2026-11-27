@@ -15,7 +15,7 @@ import { DailyMissions } from "./DailyMissions";
 import { WeekendCard } from "./FunGoals";
 import { useFun } from "@/lib/fun";
 import { collectable, useMissions } from "@/lib/missions";
-import { goalSlot, RailButton, railTop } from "@/components/layout/mapRail";
+import { goalSlot, RailButton, RailSlot } from "@/components/layout/mapRail";
 
 export function NextStep() {
   const { citizen } = useCitizen();
@@ -36,12 +36,13 @@ export function NextStep() {
   const ready = !!goal && goalDone(status, goal);
   // One of the map's round buttons down the right (layout/mapRail); opened, the panel starts there.
   const slot = goalSlot(path);
-  const place = `fixed z-[59] w-[min(340px,calc(100vw-1.5rem))] flex flex-col right-3 items-end`;
+  // Open, the panel sits beside the column, centred like it.
+  const place = `fixed z-[59] w-[min(340px,calc(100vw-1.5rem))] flex flex-col right-3 items-end top-1/2 -translate-y-1/2`;
 
-  if (!goal) return <Link href="/goals" aria-label="Every goal reached" style={{ top: railTop(slot) }} className="fixed right-3 z-[58] w-12 h-12 rounded-full bg-white shadow-xl flex items-center justify-center text-2xl">🏆</Link>;
+  if (!goal) return <RailSlot order={slot}><Link href="/goals" aria-label="Every goal reached" className="relative w-12 h-12 rounded-full bg-white shadow-xl flex items-center justify-center text-2xl">🏆</Link></RailSlot>;
 
   return (
-    <div className={place} style={{ top: railTop(slot) }}>
+    <div className={open ? place : "contents"}>
       {open && (
         <div
           className="fixed inset-0 z-[-1]"

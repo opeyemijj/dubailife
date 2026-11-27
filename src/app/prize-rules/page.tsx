@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage, OPERATOR, SUPPORT_EMAIL, type Section } from "@/components/legal/LegalPage";
 import { MIN_AGE } from "@/lib/age";
+import DRAW from "@/data/social/draw.json";
 
 const TITLE = "Prize & Tournament Rules";
 const DESCRIPTION = "Official rules of the Dubai Life monthly tournament and its prizes, and how in-game prizes work.";
@@ -34,6 +35,24 @@ const sections: Section[] = [
   {
     id: "prize", title: "The prize",
     body: <p>The prize for each month is shown on the <Link href="/tournament">Tournament</Link> page. Before January 2027 it is a real-world experience (a Dubai experience for two: dinner and an attraction, arranged by the Dubai Life team); from January 2027 it is AED 5,000 in cash. Prizes can&apos;t be swapped, except that we may replace an experience with one of equal or greater value if it&apos;s unavailable.</p>,
+  },
+  {
+    id: "draw", title: `The ${DRAW.title} (invite friends)`,
+    body: (
+      <>
+        <p>
+          The {DRAW.title} is a free prize draw for one cash prize of <strong>AED {DRAW.prizeAed.toLocaleString()}</strong>. No purchase or payment
+          is needed to enter or to win. It runs from {new Date(DRAW.startsAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Dubai" })} to
+          {" "}{DRAW.drawDate} (23:59:59 GST), and the winner is drawn after it closes.
+        </p>
+        <ul>
+          <li>Share your own invite link (on WhatsApp or anywhere else). A friend counts when they sign up with your link during the draw, verify their email and play for {DRAW.joinMinutes} minutes.</li>
+          <li>Every {DRAW.target} friends who count is one entry; there&apos;s no limit on entries. The winner is picked at random, each entry one chance.</li>
+          <li>Friends must be real, different people with their own accounts. Accounts made by you or for you, bought or fake sign-ups, and any attempt to cheat the count disqualify you and every entry you have.</li>
+          <li>Who can take part, checking the winner&apos;s ID and paying the prize follow the rules above and below, as for the tournament. If the winner can&apos;t be verified within 14 days, another winner is drawn.</li>
+        </ul>
+      </>
+    ),
   },
   {
     id: "winner", title: "Checking the winner",

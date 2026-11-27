@@ -1,4 +1,6 @@
 import { BigMissionsHost } from "@/components/missions/BigMissions";
+import { DrawPopupHost } from "@/components/draw/DrawPopup";
+import { TripInviteHost } from "@/components/trips/TripInviteHost";
 import type { Metadata, Viewport } from "next";
 import { PhoneFab } from "@/components/layout/PhoneFab";
 import { MoreFab, MoreSheet } from "@/components/layout/MoreMenu";
@@ -326,6 +328,8 @@ export default function RootLayout({
           <ConnectionSaver />
           <PartySheetHost />
           <BigMissionsHost />
+          <DrawPopupHost />
+          <TripInviteHost />
           <TapLayer />
           <HudSheets />
           <LoveListener />

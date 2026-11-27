@@ -29,7 +29,9 @@ import {
   buyPerk, claimWish, feelingsOf, gainSkill, isRusty, lifeEvent, lifeOf, moodOf, PERKS, refreshWishes, rerollWish, REROLLS_PER_DAY, skillLevel, SKILLS, skillXp,
   wishDone, MAX_LEVEL, type WishVenue,
 } from "@/lib/life";
-import { PLACES } from "@/lib/city/places";
+import { placesIn } from "@/lib/city/cityPlaces";
+import { useCurrentCity } from "@/lib/city/presence";
+import type { CityId } from "@/lib/city/cities";
 import { ACADEMIC_COURSES } from "@/lib/city/academic";
 import { supabase } from "@/lib/supabase/client";
 import { contacts, listConversations, type Contact } from "@/lib/messages";
@@ -46,7 +48,7 @@ const TABS: Array<{ id: LifeTab; label: string }> = [
 ];
 
 /** Venues worth a "visit X" wish: clubs, restaurants, beaches, shows, rinks and waterparks that are open. */
-const WISH_VENUES: WishVenue[] = PLACES.flatMap((p) =>
+const wishVenues = (city: CityId): WishVenue[] => placesIn(city).flatMap((p) =>
   ["mall", "hotel", "club", "attraction", "food-hall", "park"].includes(p.kind)
     ? p.venues.filter((v) => !v.comingSoon && ["club", "dining", "theatre", "beach", "waterpark", "rink", "bowling", "bar", "pooldeck"].includes(v.layout)).map((v) => ({ key: `${p.id}/${v.id}`, name: v.name, placeId: p.id }))
     : []);
@@ -57,7 +59,10 @@ export function LifePanel({ open, tab, onTab, onClose, inline = false }: { open:
   const tabs = useRef<HTMLDivElement>(null);
 
   // Today's wishes are ready whenever the panel opens.
-  useEffect(() => { if (open && citizen) refreshWishes(WISH_VENUES); }, [open, citizen?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Wishes are for places in the city you're in.
+  const { city } = useCurrentCity();
+  const WISH_VENUES = wishVenues(city);
+  useEffect(() => { if (open && citizen) refreshWishes(WISH_VENUES); }, [open, citizen?.id, city]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keep the chosen tab in view in the scrolling tab bar.
   useEffect(() => {
@@ -399,6 +404,9 @@ function LifeGoalNow({ me, onClose }: { me: string; onClose: () => void }) {
 }
 
 function GoalsTab({ c, onClose }: { c: Citizen; onClose: () => void }) {
+  // Wishes are for places in the city you're in.
+  const { city } = useCurrentCity();
+  const WISH_VENUES = wishVenues(city);
   const l = lifeOf(c);
   const [flash, setFlash] = useState<string | null>(null);
   const say = (m: string) => { setFlash(m); setTimeout(() => setFlash(null), 2500); };

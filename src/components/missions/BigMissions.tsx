@@ -11,10 +11,12 @@ import { ModalPortal } from "@/components/ui/modal-portal";
 import { openPartySheet } from "@/components/invite/PartySheetHost";
 import { useCitizen } from "@/lib/citizenStore";
 import {
-  BIG_MISSIONS, BIG_MISSIONS_EVENT, BIG_TOTAL, DEFAULT_MESSAGE, inviteLink, leftToEarn, millions, openWhatsApp, saveMessage, savedMessage,
+  BIG_MISSIONS, BIG_MISSIONS_EVENT, BIG_TOTAL, DEFAULT_MESSAGE, leftToEarn, millions, openWhatsApp, saveMessage, savedMessage,
   PER_FRIEND, useBigMissions, type BigMissionId, type MyBigMissions,
 } from "@/lib/bigMissions";
 import { gameAudio } from "@/utils/gameAudio";
+import { DRAW_SESSION_KEY } from "@/lib/draw";
+import { InviteCodeCard } from "@/components/invite/InviteCodeCard";
 
 const SHOWN_KEY = "dl_big_missions_shown";
 /** Pages it opens by itself on: the city maps and home. */
@@ -40,6 +42,8 @@ export function BigMissionsHost() {
     let seen = "";
     try { seen = sessionStorage.getItem(SHOWN_KEY) ?? ""; } catch { /* storage blocked */ }
     if (seen === me) return;
+    // The invite draw has this visit's popup (it shows on its own): Big Missions waits for the next visit.
+    try { if (sessionStorage.getItem(DRAW_SESSION_KEY)) return; } catch { /* storage blocked */ }
     const t = setTimeout(() => {
       setOpen(true);
       try { sessionStorage.setItem(SHOWN_KEY, me); } catch { /* storage blocked */ }
@@ -53,12 +57,8 @@ export function BigMissionsHost() {
 function BigMissionsSheet({ data, username, onClose }: { data: MyBigMissions | null; username: string; onClose: () => void }) {
   const [msg, setMsg] = useState(savedMessage);
   const [editing, setEditing] = useState(false);
-  const [copied, setCopied] = useState(false);
   const left = leftToEarn(data);
   const send = (text = msg) => { gameAudio.playClickSound(); saveMessage(msg); openWhatsApp(text, username); };
-  const copy = async () => {
-    try { await navigator.clipboard.writeText(`${msg.trim()}\n${inviteLink(username)}`); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch { /* not allowed */ }
-  };
   const inv = BIG_MISSIONS.find((m) => m.id === "invite5")!;
   const invite = { target: inv.target, total: inv.aed, n: Math.min(inv.target, data?.progress.invite5 ?? 0), earned: data?.inviteEarned ?? 0, paid: !!data?.paid.includes("invite5") };
   const status = (id: BigMissionId, target: number) => {
@@ -141,7 +141,7 @@ function BigMissionsSheet({ data, username, onClose }: { data: MyBigMissions | n
                           </button>
                         )}
                         <WhatsAppButton onClick={() => send()} label="Invite on WhatsApp" />
-                        <button onClick={copy} className="w-full h-10 rounded-full bg-white/10 text-sm font-bold">{copied ? "Copied ✓" : "🔗 Copy my invite link"}</button>
+                        <InviteCodeCard username={username} message={msg} />
                       </div>
                     ) : m.id === "party10" ? (
                       <div className="mt-3 grid grid-cols-2 gap-2">

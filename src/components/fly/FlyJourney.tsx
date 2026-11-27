@@ -24,9 +24,14 @@ import { gameAudio } from "@/utils/gameAudio";
 import { FLOOR, SPOTS, Terminal } from "./Terminal";
 import { FLIGHT_SECONDS, FlightScene } from "./Flight";
 import { AirportWalk } from "./AirportWalk";
+import { useFamily, useLove } from "@/lib/love";
+import { bookFamilyTrip, kidLook, purposeOf, refreshTrips, tripFlight, tripTotal, TRIPS, useTrips, type Purpose } from "@/lib/trips";
+import type { Companion } from "./Flight";
+import { ArrivalWalk } from "./ArrivalWalk";
 
 // "walk": the airport walk (./AirportWalk), where you walk the terminal yourself from check-in to the gate.
-export type Stage = "checkin" | "walk" | "passport" | "dutyfree" | "gate" | "boarding" | "flight" | "arrived";
+// "arrival": the arrivals walk after landing (./ArrivalWalk): passport control, baggage claim and customs.
+export type Stage = "checkin" | "walk" | "passport" | "dutyfree" | "gate" | "boarding" | "flight" | "arrival" | "arrived";
 const WALK = 1.9;
 
 /** Walks the avatar along waypoints at a steady pace, then calls back. */
@@ -123,7 +128,9 @@ function Travellers() {
   );
 }
 
-export function FlyJourney({ from: fromCity, to: toCity, dev }: { from: CityId; to: CityId; /** Development preview: start at this step. */ dev?: { stage: Stage; inside?: boolean; t?: number } }) {
+export function FlyJourney({ from: fromCity, to: toCity, dev, trip }: { from: CityId; to: CityId; /** Development preview: start at this step. */ dev?: { stage: Stage; inside?: boolean; t?: number };
+  /** A family trip I accepted (or booked): its seat is already paid for, so the journey starts past the counter. */
+  trip?: number }) {
   // This trip, fixed for the whole journey: landing moves you to the other city, and nothing that changes then
   // (where the game says you are) may turn the arrival screen into the other city's.
   const [from] = useState(fromCity);
@@ -145,9 +152,38 @@ export function FlyJourney({ from: fromCity, to: toCity, dev }: { from: CityId; 
   const walker = useWalker();
   const [stage, setStage] = useState<Stage>(dev?.stage ?? "checkin");
   const [cabin, setCabin] = useState<CabinClass>("economy");
+  // A family trip: partners (they get an invite) and children (with you), and what it's for (lib/trips).
+  const love = useLove(citizen?.id);
+  const family = useFamily(citizen?.id);
+  const partners = love?.relationships ?? [];
+  const kids = (family?.children ?? []).filter((c) => c.born);
+  const expecting = (family?.children ?? []).some((c) => !c.born);
+  const [withPartners, setWithPartners] = useState<string[]>([]);
+  const [withKids, setWithKids] = useState<number[]>([]);
+  const [purpose, setPurpose] = useState<Purpose>("vacation");
+  const married = partners.some((r) => r.status === "married" && withPartners.includes(r.partner.id));
+  const purposeOk = (id: string) => { const n = purposeOf(id).needs; return n === "married" ? married : n === "expecting" ? expecting : true; };
+  const trips = useTrips(citizen?.id);
+  const [revealSeen, setRevealSeen] = useState(false);
+  const reveal = !revealSeen && trips?.current?.purpose === "gender_reveal" ? trips.current.reveal : null;
+  // Who's with me on this trip: the booker (if it's theirs), partners who accepted, and the children.
+  const companions = useMemo<Companion[]>(() => {
+    const cur = trips?.current;
+    if (!cur) return kids.filter((c) => withKids.includes(c.id)).map((c) => ({ ...kidLook(c.gender), child: true }));
+    const people = [...(cur.mine ? [] : [cur.booker]), ...cur.guests.filter((g) => g.status === "accepted" && g.id !== citizen?.id)];
+    return [...people.map((p) => ({ ...(p.look ?? { gender: "man" as const }) })), ...cur.kids.map((k) => ({ ...kidLook(k.gender), child: true }))];
+  }, [trips, kids, withKids, citizen?.id]);
   const [booking, setBooking] = useState<Booking | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A family trip already booked: straight to the airport walk with my seat.
+  useEffect(() => {
+    if (!trip) return;
+    void tripFlight(trip).then((r) => {
+      if (!r.data) { setError(r.error ?? "This trip's flight isn't open any more."); return; }
+      setTo(r.data.to); setBooking(r.data); setStage("walk");
+    });
+  }, [trip]);
   const [bag, setBag] = useState<string[]>([]);
   const [inside, setInside] = useState(!!dev?.inside);
   const [phase, setPhase] = useState("Take-off roll");
@@ -174,7 +210,8 @@ export function FlyJourney({ from: fromCity, to: toCity, dev }: { from: CityId; 
     }
     await arriveIn(to);
     gameAudio.sfx?.("chime");
-    setStage("arrived");
+    // Off the plane: through passport control, baggage claim and customs yourself (or skip), then arrivals.
+    setStage("arrival");
   };
   // The flight's progress bar.
   useEffect(() => {
@@ -193,12 +230,14 @@ export function FlyJourney({ from: fromCity, to: toCity, dev }: { from: CityId; 
 
   const checkIn = async () => {
     setBusy(true); setError(null);
-    const r = await bookFlight(from, to, cabin);
+    const family = withPartners.length > 0 || withKids.length > 0 || purpose !== "vacation";
+    const r = family ? await bookFamilyTrip(from, to, cabin, purposeOk(purpose) ? purpose : "vacation", withPartners, withKids) : await bookFlight(from, to, cabin);
     setBusy(false);
     if (r.error || !r.data) { setError(r.error ?? "Couldn't book that."); return; }
     gameAudio.playCoinSound();
     void refreshCitizen();
     setBooking(r.data);
+    if (citizen?.id) void refreshTrips(citizen.id);
     // Walk the terminal yourself (check-in, passport control, security, your gate), or skip it (walkSkipped).
     setStage("walk");
   };
@@ -236,15 +275,18 @@ export function FlyJourney({ from: fromCity, to: toCity, dev }: { from: CityId; 
   // Arrival: where to go in the city you've landed in (its hotels and homes; lib/city/cities prefixes).
   const hereHotels = hotelsIn(to).slice(0, 8);
 
+  if (stage === "arrival") {
+    return <ArrivalWalk companions={companions} city={to} look={look} seed={booking?.id ?? 7} onDone={() => setStage("arrived")} onSkip={() => setStage("arrived")} />;
+  }
   if (stage === "walk" && booking) {
-    return <AirportWalk from={from} to={to} seat={booking.seat} seed={booking.id} look={look} onDone={walkDone} onSkip={walkSkipped} />;
+    return <AirportWalk companions={companions} from={from} to={to} seat={booking.seat} seed={booking.id} cabin={booking.class} look={look} onDone={walkDone} onSkip={walkSkipped} />;
   }
 
   return (
     <main className="fixed inset-0 bg-slate-950 select-none touch-none">
       <Canvas dpr={quality.dpr} camera={{ position: [-7, FLOOR + 6, -6], fov: 50, near: 0.1, far: 60000 }} gl={{ powerPreference: quality.powerPreference }}>
         {stage === "flight" || stage === "arrived"
-          ? <FlightScene to={to} cabin={booking?.class ?? cabin} view={{ inside }} timeRef={flightTime} onPhase={(p) => setPhase(p)} />
+          ? <FlightScene companions={companions} to={to} cabin={booking?.class ?? cabin} view={{ inside }} timeRef={flightTime} onPhase={(p) => setPhase(p)} />
           : <TerminalStage walker={walker} look={look} gatesOpen={gatesOpen} bridge={bridge} spin={spin} from={dep.code} to={cityName} />}
         {/* Inside the cabin the seat camera is yours (drag to look); everywhere else the camera circles you or the jet. */}
         {!(stage === "flight" && inside) && (
@@ -297,9 +339,33 @@ export function FlyJourney({ from: fromCity, to: toCity, dev }: { from: CityId; 
                 ))}
               </div>
               <ul className="text-xs text-slate-500 list-disc pl-4">{cabinOf(cabin).perks.map((p) => <li key={p}>{p}</li>)}</ul>
+              {(partners.length > 0 || kids.length > 0) && (
+                <div className="space-y-1.5">
+                  <p className="text-xs font-black text-slate-500 uppercase tracking-wider">👨‍👩‍👧 Who&apos;s coming?</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {partners.map((r) => {
+                      const on = withPartners.includes(r.partner.id);
+                      return <button key={r.partner.id} onClick={() => { gameAudio.playClickSound(); setWithPartners((w) => (on ? w.filter((x) => x !== r.partner.id) : [...w, r.partner.id])); }}
+                        className={`h-9 px-3 rounded-full text-xs font-black border-2 ${on ? "border-rose-500 bg-rose-50 text-rose-700" : "border-slate-200 bg-white text-slate-700"}`}>{on ? "✓ " : "+ "}@{r.partner.username}{r.status === "married" ? " 💍" : " ❤️"}</button>;
+                    })}
+                    {kids.map((c) => {
+                      const on = withKids.includes(c.id);
+                      return <button key={c.id} onClick={() => { gameAudio.playClickSound(); setWithKids((w) => (on ? w.filter((x) => x !== c.id) : [...w, c.id])); }}
+                        className={`h-9 px-3 rounded-full text-xs font-black border-2 ${on ? "border-sky-500 bg-sky-50 text-sky-700" : "border-slate-200 bg-white text-slate-700"}`}>{on ? "✓ " : "+ "}{c.gender === "boy" ? "👦" : "👧"} {c.name ?? (c.gender === "boy" ? "Baby boy" : "Baby girl")}</button>;
+                    })}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {TRIPS.purposes.filter((p) => purposeOk(p.id)).map((p) => (
+                      <button key={p.id} onClick={() => { gameAudio.playClickSound(); setPurpose(p.id as Purpose); }}
+                        className={`h-9 px-3 rounded-full text-xs font-black ${purpose === p.id ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"}`}>{p.icon} {p.label}</button>
+                    ))}
+                  </div>
+                  {withPartners.length > 0 && <p className="text-[11px] text-slate-500">You pay for everyone (children half price). Your partner gets an invite to accept, then flies in the seat next to yours. If they say no, their fare comes back to you.</p>}
+                </div>
+              )}
               {visaOk ? (
                 <button disabled={busy} onClick={() => void checkIn()} className="w-full h-12 rounded-2xl bg-teal-700 text-white font-black disabled:opacity-50">
-                  {busy ? "Checking in…" : `Pay AED ${route.fares[cabin].toLocaleString()} & check in`}
+                  {busy ? "Checking in…" : `Pay AED ${tripTotal(route.fares[cabin], withPartners.length, withKids.length).toLocaleString()} & check in${withPartners.length + withKids.length ? ` (${1 + withPartners.length + withKids.length} travellers)` : ""}`}
                 </button>
               ) : (
                 // No visa yet for this country: the application first (it comes back here when it's approved).
@@ -361,8 +427,19 @@ export function FlyJourney({ from: fromCity, to: toCity, dev }: { from: CityId; 
             </div>
           )}
 
+          {stage === "arrived" && reveal && (
+            // A gender-reveal trip: the news, once, as you land.
+            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-6" onClick={() => setRevealSeen(true)}>
+              <div className={`w-full max-w-sm rounded-[2rem] p-6 text-center text-white shadow-2xl ${reveal === "girl" ? "bg-gradient-to-b from-pink-400 to-rose-500" : "bg-gradient-to-b from-sky-400 to-blue-600"}`}>
+                <p className="text-6xl">{reveal === "girl" ? "🎀" : "🎈"}</p>
+                <p className="mt-2 text-xs font-black tracking-[0.25em]">GENDER REVEAL · {cityName.toUpperCase()}</p>
+                <h2 className="mt-1 text-4xl font-black">It&apos;s a {reveal}! {reveal === "girl" ? "💗" : "💙"}</h2>
+                <p className="mt-2 text-sm text-white/90">Congratulations! Tap to carry on.</p>
+              </div>
+            </div>
+          )}
           {stage === "arrived" && (
-            <Panel title={`Welcome to ${cityName} 🎉`} sub={`${arr.name}. Grab a taxi: to a hotel, or to find a home to rent or buy.`}>
+            <Panel title={trips?.current && trips.current.purpose !== "vacation" ? purposeOf(trips.current.purpose).welcome.replace("{city}", cityName) : `Welcome to ${cityName} 🎉`} sub={`${arr.name}. Grab a taxi: to a hotel, or to find a home to rent or buy.`}>
               {hereHotels.length > 0 && (
                 <div className="space-y-1.5">
                   <p className="text-xs font-black text-slate-500 uppercase tracking-wider">🏨 Taxi to a hotel</p>

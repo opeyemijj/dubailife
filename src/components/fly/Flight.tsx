@@ -203,7 +203,9 @@ function nearSeats(cabin: CabinClass): Array<[number, number]> {
 
 /** Real passengers in the seats round yours (your family first, if they're flying with you) and the cabin crew
  *  walking the aisles. */
-function CabinPeople({ cabin, companions }: { cabin: CabinClass; companions: AvatarLookProps[] }) {
+/** Someone flying with you: their look, and whether they're a child (drawn smaller). */
+export type Companion = AvatarLookProps & { child?: boolean };
+function CabinPeople({ cabin, companions }: { cabin: CabinClass; companions: Companion[] }) {
   const seats = useMemo(() => nearSeats(cabin), [cabin]);
   const looks = useMemo(() => seats.map((_, i) => companions[i] ?? ({ gender: ROSTER[(i * 5 + 3) % ROSTER.length].gender, preset: ROSTER[(i * 5 + 3) % ROSTER.length].id } as AvatarLookProps)), [seats, companions]);
   const crew = useRef<Array<THREE.Group | null>>([]);
@@ -221,7 +223,9 @@ function CabinPeople({ cabin, companions }: { cabin: CabinClass; companions: Ava
   });
   return (
     <Suspense fallback={null}>
-      {seats.map(([x, z], i) => <CitizenAvatar key={`p${i}`} look={looks[i]} animation="sit" position={[x, 0, z - 0.1]} rotation={[0, 0, 0]} />)}
+      {seats.map(([x, z], i) => (
+        <group key={`p${i}`} position={[x, companions[i]?.child ? 0.18 : 0, z - 0.1]} scale={companions[i]?.child ? 0.62 : 1}><CitizenAvatar look={looks[i]} animation="sit" /></group>
+      ))}
       {[0, 1].map((i) => (
         <group key={`crew${i}`} ref={(g) => { crew.current[i] = g; }}>
           <CitizenAvatar look={{ gender: "woman", preset: "Female_Adult_05" }} animation="walk" pace={0.45} />
@@ -236,7 +240,7 @@ function CabinPeople({ cabin, companions }: { cabin: CabinClass; companions: Ava
  * going by), overhead bins with reading lights, the arched ceiling and its mood lighting, carpeted aisles, and every
  * row of seats (economy 3-3-3, business 1-2-1, first suites), some with passengers.
  */
-function Cabin({ cabin, companions = [] }: { cabin: CabinClass; companions?: AvatarLookProps[] }) {
+function Cabin({ cabin, companions = [] }: { cabin: CabinClass; companions?: Companion[] }) {
   const R = 3.1, L = 64, LEN = 50;
   const windows = useMemo(() => Array.from({ length: 46 }, (_, i) => -L / 2 + 14 + i * 0.95), []);
   const mood = cabin === "economy" ? "#a78bfa" : "#fbbf24";
@@ -381,7 +385,7 @@ export interface FlightView { inside: boolean }
 export function FlightScene({ to, cabin, view, timeRef, onPhase, companions }: {
   to: string; cabin: CabinClass; view: FlightView;
   /** Who's flying with you, in the seats beside yours (family trips). */
-  companions?: AvatarLookProps[];
+  companions?: Companion[];
   timeRef: React.MutableRefObject<number>;
   onPhase?: (phase: string, t: number) => void;
 }) {

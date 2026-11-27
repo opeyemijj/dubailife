@@ -1,0 +1,11 @@
+{
+  "_note": "Family trips (lib/trips; the database: *_family_trips.sql): at the check-in counter you add your partner(s) and children and pick what the trip is for. You pay for everyone (children at kidFare of the fare); each partner gets an invite to accept within inviteHours (declined or expired: their fare comes back to you), then flies in the seat beside yours. needs: who can pick it (married: with a partner you're married to; expecting: while you're expecting a baby). kidFare and inviteHours are mirrored by trip_rule() in SQL, checked by scripts/check-life-config.mjs.",
+  "kidFare": 0.5,
+  "inviteHours": 24,
+  "purposes": [
+    { "id": "vacation", "icon": "🌴", "label": "Vacation", "needs": null, "welcome": "Welcome to {city}! Enjoy the trip together." },
+    { "id": "honeymoon", "icon": "💍", "label": "Honeymoon", "needs": "married", "welcome": "Welcome to {city}, honeymooners! 💍 The suite's waiting." },
+    { "id": "babymoon", "icon": "🤰", "label": "Babymoon", "needs": "expecting", "welcome": "Welcome to {city}! A babymoon before the little one arrives. 🤰" },
+    { "id": "gender_reveal", "icon": "🎀", "label": "Gender reveal", "needs": "expecting", "welcome": "Welcome to {city}! Time for the big reveal…" }
+  ]
+}

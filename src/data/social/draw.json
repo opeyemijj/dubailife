@@ -1,0 +1,13 @@
+{
+  "_note": "The invite draw for returning players (components/draw/DrawPopup, admin: /admin/draw). Invite friends on WhatsApp with your link (?ref=you); a friend counts once they sign up with it during the campaign, verify their email and play joinMinutes. Every `target` friends is one entry; the winner is drawn at random by entries after endsAt (admin_draw_pick). The prize is real money (AED, paid by bank transfer after ID checks: /prize-rules#draw). returningAfterHours: who sees the popup (accounts older than this). Mirrored exactly by draw_config() in *_invite_draw.sql, checked by scripts/check-life-config.mjs.",
+  "id": "jan-2027",
+  "title": "January Draw",
+  "prizeAed": 5000,
+  "target": 10,
+  "joinMinutes": 10,
+  "startsAt": "2026-11-27T00:00:00+04:00",
+  "endsAt": "2027-01-31T23:59:59+04:00",
+  "drawDate": "31 January 2027",
+  "returningAfterHours": 24,
+  "message": "Join me on Dubai Life! 🌴 Free game where we live the Dubai life together: flats, supercars, yachts, house parties. Sign up with my link and play with me:"
+}

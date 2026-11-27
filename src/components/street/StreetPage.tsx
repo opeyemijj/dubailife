@@ -8,12 +8,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, MapPin, Search, X } from "lucide-react";
 import { useCitizen } from "@/lib/citizenStore";
 import { useRoom } from "@/lib/room";
-import { PLACES, getPlace, placesWithPrefix } from "@/lib/city/places";
+import { getPlace } from "@/lib/city/places";
+import { placesIn } from "@/lib/city/cityPlaces";
 import { CITIES, cityOfLocation, cityOfPlace, mapPathFor, type CityId } from "@/lib/city/cities";
 import { useCurrentCity } from "@/lib/city/presence";
-// The other cities' places register themselves when loaded (placesWithPrefix lists them).
-import "@/lib/city/abuDhabi/places";
-import "@/lib/city/doha/places";
 import { distanceMetres, entranceOf, getEntity, HOME_SPOT } from "@/lib/city/geo";
 import { isDirty } from "@/components/avatar/Flies";
 import { openPhone } from "@/components/layout/PhoneOverlay";
@@ -50,7 +48,7 @@ export function StreetPage() {
   // The city this street is in: the place you stepped out of, else where you are (a home in Doha is in Doha).
   const { city: here } = useCurrentCity();
   const city: CityId = from && cityOfPlace(from) !== "dubai" ? cityOfPlace(from) : here;
-  const cityPlaces = useMemo(() => (city === "dubai" ? PLACES : placesWithPrefix(CITIES[city].prefix)), [city]);
+  const cityPlaces = useMemo(() => placesIn(city), [city]);
 
   // Homes not on the map (or a starter home) step out at the generic home spot: in Dubai by The Dubai Mall, in
   // another city where you are there (or by its airport).

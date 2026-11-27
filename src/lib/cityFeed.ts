@@ -11,7 +11,7 @@ import TRACKS from "@/data/autodrome/tracks.json";
 import SPORTS from "@/data/racing/sports.json";
 import type { AvatarLookProps } from "@/components/avatar/roster";
 
-export type FeedKind = "party" | "win" | "arrived" | "home" | "car" | "gift" | "married" | "hired" | "reward" | "rain" | "race" | "hotel" | "post";
+export type FeedKind = "party" | "win" | "arrived" | "home" | "car" | "gift" | "married" | "hired" | "reward" | "rain" | "race" | "hotel" | "post" | "trip";
 /** Everyone, people I follow and my friends, or players' own posts only. */
 export type FeedScope = "all" | "following" | "posts";
 
@@ -170,6 +170,14 @@ export function describePost(p: FeedPost, now = Date.now()): PostView {
         text: `${who} made it rain AED ${shortAed(Number(d.total ?? 0))} at ${p.other ? `@${p.other.username}'s` : "a"} party${d.title ? ` "${String(d.title)}"` : ""}`,
         action: d.code ? { label: "Go to the party", href: `/i/${String(d.code)}` } : { label: "Congratulate", like: true },
       };
+    case "trip": {
+      // A family trip: who's going where, and what for (lib/trips).
+      const city = ({ dubai: "Dubai", "abu-dhabi": "Abu Dhabi", doha: "Doha" } as Record<string, string>)[String(d.to)] ?? "a trip";
+      const withWho = p.other ? ` and @${p.other.username}` : "";
+      const kids = Number(d.kids ?? 0) > 0 ? ` with ${Number(d.kids) === 1 ? "their little one" : `their ${Number(d.kids)} kids`}` : "";
+      const why = ({ honeymoon: "for their honeymoon 💍", babymoon: "for a babymoon 🤰", gender_reveal: "for a gender reveal 🎀" } as Record<string, string>)[String(d.purpose)] ?? "on vacation 🌴";
+      return { icon: "✈️", text: `${who}${withWho} are off to ${city}${kids} ${why}`, action: { label: "Wish them well", like: true } };
+    }
     case "reward":
       return { icon: "💰", text: `${who} earned AED ${shortAed(Number(d.amount ?? 0))}: ${String(d.why ?? "a reward")}`, action: { label: "How?", href: "/wiki/top-users" } };
     default:

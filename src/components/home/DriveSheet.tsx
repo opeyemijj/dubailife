@@ -5,7 +5,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
-import { PLACES, placesWithPrefix } from "@/lib/city/places";
+import { placesIn } from "@/lib/city/cityPlaces";
 import { CITIES } from "@/lib/city/cities";
 import { useCurrentCity } from "@/lib/city/presence";
 import type { Car } from "@/lib/cars";
@@ -20,7 +20,7 @@ export function DriveSheet({ car, plate, onClose }: { car: Car | null; /** The c
   const { city } = useCurrentCity();
   const list = useMemo(() => {
     const t = q.trim().toLowerCase();
-    return (city === "dubai" ? PLACES : placesWithPrefix(CITIES[city].prefix)).filter((p) => !t || p.name.toLowerCase().includes(t)).slice(0, 40);
+    return placesIn(city).filter((p) => !t || p.name.toLowerCase().includes(t)).slice(0, 40);
   }, [q, city]);
   return (
     <div className="fixed inset-0 z-[210] bg-black/40 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-label="Drive somewhere" onClick={onClose}>

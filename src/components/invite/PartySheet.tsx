@@ -9,7 +9,9 @@ import { X } from "lucide-react";
 import { useServices } from "@/lib/cityServices";
 import { useCitizen } from "@/lib/citizenStore";
 import { broadcastCityPulse } from "@/lib/presence";
-import { PLACES } from "@/lib/city/places";
+import { placesIn } from "@/lib/city/cityPlaces";
+import { useCurrentCity } from "@/lib/city/presence";
+import type { CityId } from "@/lib/city/cities";
 import {
   cancelInvite, createEvent, inviteUrl, invitePlayer, kindOf, myParties, PARTIES, shareInvite, whatsappLink,
   type EventKind, type MyParty,
@@ -32,19 +34,22 @@ const localInput = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 6
 const scheduleRange = () => ({ min: localInput(new Date()), max: localInput(new Date(Date.now() + 7 * 86_400_000 - 60_000)) });
 const inNextWeek = (d: Date) => !Number.isNaN(d.getTime()) && d.getTime() >= Date.now() - 600_000 && d.getTime() <= Date.now() + 7 * 86_400_000;
 
-// Venues a party can be at: clubs for club nights, pools and beach clubs for pool parties, restaurants for dinners.
-const VENUES = PLACES.flatMap((p) => p.venues.filter((v) => !v.comingSoon).map((v) => ({ place: p, venue: v })));
-// Yachts at Dubai Harbour take club nights and pool parties too (a yacht party).
-const YACHTS = VENUES.filter((x) => x.venue.layout === "yacht");
-const CLUBS = [...YACHTS, ...VENUES.filter((x) => x.place.kind === "club" || (x.venue.layout === "club" && !/entertainment/i.test(x.venue.category)))];
-const POOLS = [...YACHTS, ...VENUES.filter((x) => x.venue.feature === "pool" && x.venue.layout !== "waterpark")];
-const RESTAURANTS = VENUES.filter((x) => x.venue.layout === "dining" && /restaurant|dining|grill|steak|lounge|bistro|brasserie|kitchen/i.test(`${x.venue.category} ${x.venue.name}`));
+// Venues a party can be at, in the city you're in: clubs for club nights, pools and beach clubs for pool parties,
+// restaurants for dinners; yachts take club nights and pool parties too (a yacht party).
+function venuesIn(city: CityId) {
+  const VENUES = placesIn(city).flatMap((p) => p.venues.filter((v) => !v.comingSoon).map((v) => ({ place: p, venue: v })));
+  const YACHTS = VENUES.filter((x) => x.venue.layout === "yacht");
+  const CLUBS = [...YACHTS, ...VENUES.filter((x) => x.place.kind === "club" || (x.venue.layout === "club" && !/entertainment/i.test(x.venue.category)))];
+  const POOLS = [...YACHTS, ...VENUES.filter((x) => x.venue.feature === "pool" && x.venue.layout !== "waterpark")];
+  const RESTAURANTS = VENUES.filter((x) => x.venue.layout === "dining" && /restaurant|dining|grill|steak|lounge|bistro|brasserie|kitchen/i.test(`${x.venue.category} ${x.venue.name}`));
+  return { VENUES, CLUBS, POOLS, RESTAURANTS };
+}
 
 /** Where to start: a kind of party, and a venue already picked (opened from the venue itself). */
 export interface PartyStart { kind?: EventKind; placeId?: string; venueId?: string }
 
 // Seminars can be anywhere (a hotel hall, a café, a co-working space…).
-const listFor = (k: EventKind, promoter: boolean) => (promoter || k === "seminar" ? VENUES : k === "club_night" ? CLUBS : k === "pool_party" ? POOLS : RESTAURANTS);
+const listFor = (v: ReturnType<typeof venuesIn>, k: EventKind, promoter: boolean) => (promoter || k === "seminar" ? v.VENUES : k === "club_night" ? v.CLUBS : k === "pool_party" ? v.POOLS : v.RESTAURANTS);
 const atVenue = (k: EventKind) => k === "club_night" || k === "pool_party" || k === "seminar";
 const SIZES = [20, 50, 100, 200];
 
@@ -87,7 +92,10 @@ export function PartySheet({ flat, start, onClose, noRoom }: {
   useEffect(() => { void myParties().then(setParties); }, [made]);
 
   const home = kind === "house_party" || (kind === "dinner" && atHome);
-  const list = listFor(kind, promoter);
+  const { city } = useCurrentCity();
+  const venues = useMemo(() => venuesIn(city), [city]);
+  const { VENUES } = venues;
+  const list = listFor(venues, kind, promoter);
   // The venue it was opened from heads the list (even if it isn't the usual kind of place for this party).
   const picked = VENUES.find((x) => `${x.place.id}/${x.venue.id}` === venueKey) ?? null;
   const shown = useMemo(() => {

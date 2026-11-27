@@ -35,5 +35,7 @@ function Fly() {
     setTrip({ from, to });
   }
   if (!hydrated || !isLoggedIn || !trip) return <SmallLoader label="Opening the terminal" />;
-  return <FlyJourney from={trip.from} to={trip.to} />;
+  // A family trip's link (?trip=…): its seat is already booked (lib/trips).
+  const tripId = Number(params.get("trip")) || undefined;
+  return <FlyJourney from={trip.from} to={trip.to} trip={tripId} />;
 }

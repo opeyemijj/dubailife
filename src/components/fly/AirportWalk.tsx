@@ -23,9 +23,11 @@ import * as THREE from "three";
 import WALK from "@/data/flights/airport-walk.json";
 import { CitizenAvatar, type AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 import { ROSTER } from "@/components/avatar/roster";
+import type { Companion } from "./Flight";
 import { MoveStick, type Controls } from "@/components/street/StreetWorld";
 import { CITIES, type CityId } from "@/lib/city/cities";
-import { airportOf, AIRLINE } from "@/lib/flights";
+import { airportOf, AIRLINE, type CabinClass } from "@/lib/flights";
+import { adjustBalance, useCitizen } from "@/lib/citizenStore";
 import { canvasQuality } from "@/lib/device";
 import { gameAudio } from "@/utils/gameAudio";
 
@@ -121,7 +123,7 @@ function moverAt(m: { a: readonly number[]; b: readonly number[]; speed: number 
 }
 
 /** A canvas texture with lines of text, for signs and screens. */
-function useText(lines: Array<{ t: string; c?: string; s?: number }>, w = 1024, h = 256, bg = "#0b1220") {
+export function useText(lines: Array<{ t: string; c?: string; s?: number }>, w = 1024, h = 256, bg = "#0b1220") {
   const key = JSON.stringify(lines);
   return useMemo(() => {
     if (typeof document === "undefined") return null;
@@ -140,15 +142,15 @@ function useText(lines: Array<{ t: string; c?: string; s?: number }>, w = 1024, 
   }, [key, w, h, bg]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 /** Signs fade like walls when they come between the camera and you (the scene collects them in FadeContext). */
-const FadeContext = createContext<((m: THREE.Mesh | null) => void) | null>(null);
-function Sign({ lines, at, size, bg, rotY = 0 }: { lines: Array<{ t: string; c?: string; s?: number }>; at: [number, number, number]; size: [number, number]; bg?: string; rotY?: number }) {
+export const FadeContext = createContext<((m: THREE.Mesh | null) => void) | null>(null);
+export function Sign({ lines, at, size, bg, rotY = 0 }: { lines: Array<{ t: string; c?: string; s?: number }>; at: [number, number, number]; size: [number, number]; bg?: string; rotY?: number }) {
   const tex = useText(lines, 1024, Math.round(1024 * size[1] / size[0]), bg);
   const fade = useContext(FadeContext);
   if (!tex) return null;
   return <mesh ref={fade ?? undefined} position={at} rotation={[0, rotY, 0]}><planeGeometry args={size} /><meshBasicMaterial map={tex} toneMapped={false} side={THREE.DoubleSide} transparent /></mesh>;
 }
 
-function Suitcase({ big, color }: { big: boolean; color: string }) {
+export function Suitcase({ big, color }: { big: boolean; color: string }) {
   const [w, h, d] = big ? [0.5, 0.7, 0.28] : [0.36, 0.48, 0.22];
   return (
     <group>
@@ -158,6 +160,87 @@ function Suitcase({ big, color }: { big: boolean; color: string }) {
     </group>
   );
 }
+
+/** Your family walking behind you, in your footsteps (family trips): each a little further back along the way you
+ *  came, children drawn smaller. */
+export function Followers({ companions, live, walking }: { companions: Companion[]; live: React.RefObject<{ x: number; z: number }>; walking: boolean }) {
+  const trail = useRef<Array<[number, number]>>([]);
+  const groups = useRef<Array<THREE.Group | null>>([]);
+  useFrame(() => {
+    const s = live.current, t = trail.current;
+    const last = t[t.length - 1];
+    if (!last || Math.hypot(s.x - last[0], s.z - last[1]) > 0.2) { t.push([s.x, s.z]); if (t.length > 80) t.shift(); }
+    companions.forEach((_, i) => {
+      const g = groups.current[i];
+      if (!g || !t.length) return;
+      // About 1.1 m apart: 5–6 trail points each.
+      const k = Math.max(0, t.length - 1 - (i + 1) * 6), p = t[k], q = t[Math.min(t.length - 1, k + 1)];
+      g.position.set(p[0], 0, p[1]);
+      if (q[0] !== p[0] || q[1] !== p[1]) g.rotation.y = Math.atan2(q[0] - p[0], q[1] - p[1]);
+    });
+  });
+  if (!companions.length) return null;
+  return (
+    <Suspense fallback={null}>
+      {companions.map((c, i) => (
+        <group key={i} ref={(g) => { groups.current[i] = g; }}>
+          <group scale={c.child ? 0.62 : 1}><CitizenAvatar look={c} animation={walking ? "walk" : "idle"} pace={walking ? WALK_SPEED * (c.child ? 0.62 : 1) : undefined} /></group>
+        </group>
+      ))}
+    </Suspense>
+  );
+}
+
+/** Directions painted on the floor, like a real terminal's wayfinding: a coloured line along each route with arrows
+ *  every couple of metres pointing the way, and the name of where it leads painted at its start. */
+export interface Route { pts: Array<[number, number]>; color: string; label?: string }
+export function FloorGuide({ routes }: { routes: Route[] }) {
+  const parts = useMemo(() => routes.flatMap((r) => r.pts.slice(1).map((b, i) => {
+    const a = r.pts[i], dx = b[0] - a[0], dz = b[1] - a[1], len = Math.hypot(dx, dz), yaw = Math.atan2(dx, dz);
+    const arrows = Array.from({ length: Math.max(1, Math.floor(len / 2.4)) }, (_, k) => (k + 0.5) / Math.max(1, Math.floor(len / 2.4)));
+    return { a, dx, dz, len, yaw, arrows, color: r.color };
+  })), [routes]);
+  return (
+    <group>
+      {parts.map((p, i) => (
+        <group key={i}>
+          <mesh position={[p.a[0] + p.dx / 2, 0.012, p.a[1] + p.dz / 2]} rotation={[-Math.PI / 2, 0, p.yaw]}>
+            <planeGeometry args={[0.16, p.len]} /><meshBasicMaterial color={p.color} transparent opacity={0.85} />
+          </mesh>
+          {p.arrows.map((f, k) => (
+            <mesh key={k} position={[p.a[0] + p.dx * f, 0.014, p.a[1] + p.dz * f]} rotation={[-Math.PI / 2, 0, p.yaw - Math.PI / 2]}>
+              <circleGeometry args={[0.32, 3]} /><meshBasicMaterial color={p.color} />
+            </mesh>
+          ))}
+        </group>
+      ))}
+      {routes.filter((r) => r.label).map((r, i) => <FloorLabel key={`l${i}`} text={r.label!} color={r.color} at={r.pts[0]} toward={r.pts[1]} />)}
+    </group>
+  );
+}
+/** Words painted on the floor, reading the way you walk. */
+function FloorLabel({ text, color, at, toward }: { text: string; color: string; at: [number, number]; toward: [number, number] }) {
+  // Sized to fit: long names in smaller letters.
+  const tex = useText([{ t: text, c: color, s: Math.min(120, Math.floor(1300 / Math.max(1, text.length))) }], 1024, 192, "rgba(0,0,0,0)");
+  if (!tex) return null;
+  const yaw = Math.atan2(toward[0] - at[0], toward[1] - at[1]);
+  return (
+    <mesh position={[at[0] + Math.sin(yaw) * 1.2, 0.016, at[1] + Math.cos(yaw) * 1.2]} rotation={[-Math.PI / 2, 0, yaw + Math.PI]}>
+      <planeGeometry args={[4, 0.75]} /><meshBasicMaterial map={tex} transparent toneMapped={false} />
+    </mesh>
+  );
+}
+
+/** The departures routes: round the board to the check-in rows, through an e-gate, down a security lane and its
+ *  arch, round the duty-free landmark to the concourse, then left and right to the gates. */
+const DEPARTURE_ROUTES: Route[] = [
+  { pts: [[0, 2.2], [-3.6, 3.8], [-3.6, 7.6], [0, 8.6], [0, 25.4]], color: "#0d9488", label: "CHECK-IN" },
+  { pts: [[0, 25.4], [-1.5, 27.2], [-1.5, 30.4]], color: "#2563eb", label: "PASSPORT CONTROL" },
+  { pts: [[-1.5, 30.4], [-0.5, 32.6], [-0.5, 44.2]], color: "#d97706", label: "SECURITY" },
+  { pts: [[-0.5, 44.2], [-3.4, 48.5], [-3.4, 64.5], [0, 69], [0, 71.4]], color: "#7c3aed", label: "GATES" },
+  { pts: [[0, 71.4], [-5, 72.6], [-14, 74.6]], color: "#7c3aed" },
+  { pts: [[0, 71.4], [5, 72.6], [14, 74.6]], color: "#7c3aed" },
+];
 
 function Landmark({ kind, p }: { kind: string; p: Cfg["palette"] }) {
   if (kind === "bear") return (
@@ -216,8 +299,8 @@ function targetOf(s: Live, cfg: Cfg, gate: number): [number, number] {
   }
 }
 
-function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, onEvent }: {
-  look: Look; cfg: Cfg; code: string; gate: number; gateDest: Record<number, string>; to: string; live: React.RefObject<Live>; controls: React.RefObject<Controls>;
+function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, onEvent, companions }: {
+  look: Look; cfg: Cfg; code: string; companions: Companion[]; gate: number; gateDest: Record<number, string>; to: string; live: React.RefObject<Live>; controls: React.RefObject<Controls>;
   onNear: (id: string | null) => void; onEvent: (e: { kind: "bump" | "beep" | "clear" | "board" | "pass"; text?: string }) => void;
 }) {
   const p = cfg.palette;
@@ -421,6 +504,7 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
         </group>
       ))}
       <Landmark kind={cfg.landmark} p={p} />
+      <FloorGuide routes={DEPARTURE_ROUTES} />
       {[[-10.5, 53.2, "Perfume"], [10.5, 53.2, "Chocolates"], [-10.5, 61.2, "Electronics"], [10.5, 61.2, "Gold & watches"]].map(([x, z, t]) => (
         <Sign key={t as string} at={[x as number, 3, z as number]} size={[3, 0.7]} lines={[{ t: `Duty free · ${t}`, s: 90 }]} bg="#111827" rotY={Math.PI} />
       ))}
@@ -465,6 +549,7 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
       <group ref={me}>
         <Suspense fallback={null}><CitizenAvatar look={look} animation={anim} pace={anim === "walk" ? WALK_SPEED : undefined} /></Suspense>
       </group>
+      <Followers companions={companions} live={live} walking={anim === "walk"} />
       <OrbitControls makeDefault enablePan={false} enableDamping minDistance={3.5} maxDistance={16} minPolarAngle={0.4} maxPolarAngle={1.35} />
     </FadeContext.Provider>
   );
@@ -472,8 +557,12 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
 
 const DESTS = ["London", "Mumbai", "Cairo", "Istanbul", "Riyadh", "Karachi", "Manila", "Paris", "Nairobi", "Colombo", "Muscat", "Bangkok", "Lagos", "Delhi", "Amman", "Kuwait", "Bahrain", "Dhaka", "Tbilisi", "Baku"];
 
-export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip }: {
+export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin = "economy", companions = [] }: {
+  /** Who's travelling with you (family trips): they walk behind you. */
+  companions?: Companion[];
   from: CityId; to: CityId; seat: string; seed: number; look: Look; onDone: () => void; onSkip: () => void;
+  /** Your cabin: its baggage allowance at the scale. */
+  cabin?: CabinClass;
 }) {
   const cfg = WALK.airports[from] as Cfg;
   const gate = (Math.abs(seed) % 20) + 1;
@@ -487,7 +576,14 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip }: {
   const [toast, setToast] = useState<{ text: string; tone: "info" | "bad" | "good" } | null>(null);
   const [hint, setHint] = useState(false);
   const [hintUsed, setHintUsed] = useState(false);
-  const [quiz, setQuiz] = useState<"checkin" | "security" | null>(null);
+  const [quiz, setQuiz] = useState<"checkin" | "scale" | "security" | null>(null);
+  // Check-in's scale: your suitcase (seeded, so the same trip weighs the same) against your cabin's allowance, and the
+  // cabin bag you can repack into.
+  const BAG = WALK.baggage;
+  const allowance = BAG.allowance[cabin];
+  const [bagKg, setBagKg] = useState(() => 18 + ((Math.abs(seed) * 7) % 13));
+  const [cabinKg, setCabinKg] = useState<number>(BAG.cabinStart);
+  const { citizen } = useCitizen();
   const [sorted, setSorted] = useState<Record<string, string>>({});
   const [mistakes, setMistakes] = useState(0);
   const [boardingPass, setBoardingPass] = useState(false);
@@ -566,6 +662,22 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip }: {
   const answerCheckin = (right: boolean) => {
     const s = live.current;
     if (!right) { setMistakes((m) => m + 1); gameAudio.sfx?.("error"); say(WALK.checkinQuiz.why, "bad", 5200); return; }
+    gameAudio.playClickSound();
+    setQuiz("scale");
+  };
+  /** Over the allowance: pay for each kg over, or move some into your cabin bag (up to its limit). */
+  const over = Math.max(0, bagKg - allowance);
+  const fee = over * BAG.excessPerKg;
+  const canMove = Math.min(over, BAG.cabinLimit - cabinKg);
+  const repack = () => { gameAudio.playClickSound(); setBagKg((k) => k - canMove); setCabinKg((k) => k + canMove); say(`Moved ${canMove} kg into your cabin bag (now ${cabinKg + canMove} kg of ${BAG.cabinLimit}).`, "info", 3200); };
+  const payExcess = () => {
+    if (!adjustBalance(-fee)) { gameAudio.sfx?.("error"); say(`You need AED ${fee.toLocaleString()} for the excess. Try repacking.`, "bad"); return; }
+    gameAudio.playCoinSound();
+    say(`Paid AED ${fee.toLocaleString()} for ${over} kg excess.`, "info", 2600);
+    bagAccepted();
+  };
+  const bagAccepted = () => {
+    const s = live.current;
     setQuiz(null);
     s.carryBig = false; s.bigOnBelt = s.t;
     setBoardingPass(true);
@@ -606,7 +718,7 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip }: {
   return (
     <main className="fixed inset-0 z-[60] bg-slate-950 select-none touch-none">
       <Canvas dpr={quality.dpr} camera={{ position: [0, 6.5, -7], fov: 60, near: 0.1, far: 600 }} gl={{ powerPreference: quality.powerPreference }}>
-        <World look={look} cfg={cfg} code={airportOf(from).code} gate={gate} gateDest={gateDest} to={toName} live={live} controls={controls} onNear={setNear} onEvent={onEvent} />
+        <World companions={companions} look={look} cfg={cfg} code={airportOf(from).code} gate={gate} gateDest={gateDest} to={toName} live={live} controls={controls} onNear={setNear} onEvent={onEvent} />
       </Canvas>
 
       {/* Top: the step, the timer and the tip. */}
@@ -657,6 +769,25 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip }: {
           ))}
         </Sheet>
       )}
+      {quiz === "scale" && (
+        <Sheet title="⚖️ On the scale" sub={`${AIRLINE.name} · ${cabin === "economy" ? "Economy" : cabin === "business" ? "Business" : "First"} allowance: ${allowance} kg`}>
+          <div className={`rounded-2xl p-3 text-center ${over ? "bg-rose-50" : "bg-emerald-50"}`}>
+            <p className={`font-mono text-4xl font-black tabular-nums ${over ? "text-rose-600" : "text-emerald-700"}`}>{bagKg}.0 kg</p>
+            <p className="text-xs font-bold text-slate-600">{over ? `${over} kg over your ${allowance} kg allowance` : `Within your ${allowance} kg allowance ✓`}</p>
+          </div>
+          {over === 0 ? (
+            <button onClick={bagAccepted} className="w-full h-12 rounded-2xl bg-teal-700 text-white font-black">🧳 Tag it and send it down the belt</button>
+          ) : (
+            <>
+              <button onClick={payExcess} disabled={(citizen?.balance ?? 0) < fee} className="w-full h-12 rounded-2xl bg-rose-600 text-white font-black disabled:opacity-50">💳 Pay excess: AED {fee.toLocaleString()} ({over} kg × AED {BAG.excessPerKg})</button>
+              {canMove > 0
+                ? <button onClick={repack} className="w-full h-12 rounded-2xl bg-slate-100 text-slate-900 font-black">🎒 Repack {canMove} kg into your cabin bag ({cabinKg} → {cabinKg + canMove} kg of {BAG.cabinLimit})</button>
+                : <p className="text-xs text-slate-500 text-center">Your cabin bag is full ({cabinKg} of {BAG.cabinLimit} kg): the rest has to be paid for.</p>}
+            </>
+          )}
+          <p className="text-[11px] text-slate-500">💡 {BAG.tip}</p>
+        </Sheet>
+      )}
       {quiz === "security" && (
         <Sheet title="🛡️ Get ready for security" sub="Tap where each thing goes: in the tray, in the bin, or left in your bag.">
           <SecurityTray sorted={sorted} onSort={sortItem} />
@@ -698,7 +829,7 @@ function SecurityTray({ sorted, onSort }: { sorted: Record<string, string>; onSo
   );
 }
 
-function Sheet({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
+export function Sheet({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
   return (
     <div className="absolute inset-x-3 bottom-[max(1rem,env(safe-area-inset-bottom))] flex justify-center">
       <div className="w-full max-w-md rounded-3xl bg-white p-4 space-y-2.5 shadow-2xl max-h-[70dvh] overflow-y-auto">
