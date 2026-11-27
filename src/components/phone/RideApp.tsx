@@ -9,7 +9,12 @@ import { useRouter } from "next/navigation";
 import { TaxiJourney } from "@/components/transit/TaxiJourney";
 import { Search } from "lucide-react";
 import { useCitizen, adjustBalance, updateCitizen } from "@/lib/citizenStore";
-import { PLACES } from "@/lib/city/places";
+import { PLACES, placesWithPrefix } from "@/lib/city/places";
+import { CITIES } from "@/lib/city/cities";
+import { useCurrentCity } from "@/lib/city/presence";
+// The other cities' places register themselves when loaded (placesWithPrefix lists them).
+import "@/lib/city/abuDhabi/places";
+import "@/lib/city/doha/places";
 import { distanceMetres, entranceOf, HOME_SPOT } from "@/lib/city/geo";
 import { metroPlan, taxiQuote } from "@/lib/transit";
 import { gameAudio } from "@/utils/gameAudio";
@@ -35,10 +40,13 @@ export function RideApp({ onBack, onClose, onMetro }: { onBack: () => void; onCl
   const [shown, setShown] = useState(PAGE);
   const more = useRef<HTMLDivElement>(null);
 
-  const places = useMemo(() => PLACES.filter((p) => p.kind !== "home" && entranceOf(p.id))
+  // Only the city you're in: Dubai's places, or Abu Dhabi's or Doha's (and no Salik tolls outside Dubai).
+  const { city } = useCurrentCity();
+  const cityPlaces = useMemo(() => (city === "dubai" ? PLACES : placesWithPrefix(CITIES[city].prefix!)), [city]);
+  const places = useMemo(() => cityPlaces.filter((p) => p.kind !== "home" && entranceOf(p.id))
     .map((p) => ({ p, metres: distanceMetres(from, entranceOf(p.id)!) }))
     .filter(({ p }) => !q.trim() || p.name.toLowerCase().includes(q.trim().toLowerCase()))
-    .sort((a, b) => a.metres - b.metres), [from, q]);
+    .sort((a, b) => a.metres - b.metres), [from, q, cityPlaces]);
 
   // Load the next page of places when the end of the list scrolls into view.
   useEffect(() => {
@@ -50,9 +58,10 @@ export function RideApp({ onBack, onClose, onMetro }: { onBack: () => void; onCl
   }, [to, mode, places.length]);
 
   const dest = to ? places.find((x) => x.p.id === to) ?? null : null;
-  const fare = (metres: number, mult: number) => Math.round(taxiQuote(metres).total * mult);
+  const fare = (metres: number, mult: number) => Math.round(taxiQuote(metres, new Date(), city === "dubai").total * mult);
   const mins = (metres: number) => Math.max(3, Math.round(3 + metres / 1000 / 35 * 60));
-  const plan = useMemo(() => (dest ? metroPlan(from, entranceOf(dest.p.id)!) : null), [dest, from]);
+  // The Metro is Dubai's only.
+  const plan = useMemo(() => (dest && city === "dubai" ? metroPlan(from, entranceOf(dest.p.id)!) : null), [dest, from, city]);
 
   const bookCar = () => {
     if (!dest) return;

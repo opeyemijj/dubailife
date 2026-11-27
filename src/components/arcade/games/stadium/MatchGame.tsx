@@ -6,10 +6,11 @@
 // on at a big chance (the louder the roar, the better the chance: a quiet crowd lets the chance go). Points for
 // every chant, wave and roar, your team's goals, and a correct prediction.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { CitizenAvatar } from "@/components/avatar/CitizenAvatar";
+import { ROSTER } from "@/components/avatar/roster";
 import { useCitizen } from "@/lib/citizenStore";
 import { starsFor } from "@/lib/arcade";
 import { haptic, sfx } from "@/utils/gameAudio";
@@ -17,7 +18,7 @@ import type { ArcadeGameProps } from "../../ArcadeHost";
 import { GameShell, type ShellApi } from "../../GameShell";
 import { GameStage } from "../../GameStage";
 import { Pill, useCallouts } from "../../hud";
-import { applyShake, shake, slowMo, useGameFrame } from "../../stage";
+import { applyShake, shake, slowMo, stageFx, useGameFrame } from "../../stage";
 import { Ball, PITCH, Player, StadiumScene, useCrowd, type CrowdState, type StadiumTheme } from "./StadiumScene";
 
 const REAL_SECONDS = 120;
@@ -312,6 +313,28 @@ const { s, crowd, dt, t, playing, shapes, pos, players, ball, look, camera } = f
   applyShake(camera);
 }
 
+/** The fans in the seats beside and in front of yours: real people, who stand and wave when the crowd celebrates. */
+const NEAR_FANS: Array<[number, number, number]> = [[0, 9.6, 2.75], [0, 9.6, 1.25], [0, 9.6, 3.5], [0, 9.6, 0.5], [-1.6, 8.55, 1.6], [-1.6, 8.55, 2.4], [-1.6, 8.55, 3.2]];
+function Neighbours({ crowd }: { crowd: React.MutableRefObject<CrowdState> }) {
+  const [cheering, setCheering] = useState(false);
+  useEffect(() => {
+    const t = setInterval(() => setCheering(stageFx.clock < crowd.current.jumpUntil), 250);
+    return () => clearInterval(t);
+  }, [crowd]);
+  return (
+    <Suspense fallback={null}>
+      {NEAR_FANS.map(([dx, y, z], i) => {
+        const r = ROSTER[(i * 5 + 2) % ROSTER.length];
+        return (
+          <group key={i} position={[PITCH.w / 2 + 19 + dx, y, z]} rotation={[0, -Math.PI / 2, 0]}>
+            <CitizenAvatar look={{ gender: r.gender, preset: r.id }} animation={cheering ? (i % 2 ? "wave" : "clap") : "sit"} />
+          </group>
+        );
+      })}
+    </Suspense>
+  );
+}
+
 /** Plays the match in 3D: the players hold their shape and follow the ball, which is passed, dribbled and shot. */
 function MatchWorld({ sim, crowd, playing, home, away }: { sim: React.MutableRefObject<Sim>; crowd: React.MutableRefObject<CrowdState>; playing: boolean; home: string; away: string }) {
   const camera = useThree((s) => s.camera);
@@ -332,10 +355,11 @@ function MatchWorld({ sim, crowd, playing, home, away }: { sim: React.MutableRef
         return <group key={k} ref={(g) => { players.current[k] = g; }}><Player kit={kit.kit} shorts={kit.shorts} keeper={i === 0} skin={["#c58c5a", "#8d5524", "#e0ac69", "#f1c27d"][k % 4]} /></group>;
       })}
       <Ball at={ballRef} />
-      {/* You, in your seat in the stand. */}
+      {/* You, in your seat in the stand, with real fans round you. */}
       <group position={[PITCH.w / 2 + 19, 9.6, 2]} rotation={[0, -Math.PI / 2, 0]}>
         <CitizenAvatar look={citizen?.look ?? { gender: "man" }} animation="sit" />
       </group>
+      <Neighbours crowd={crowd} />
     </group>
   );
 }

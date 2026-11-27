@@ -110,6 +110,8 @@
       "actions": [
         { "id": "cook-roast", "label": "Roast a whole chicken (with rice)", "icon": "🍗", "seconds": 9, "needs": {}, "uses": { "chicken": 1, "rice": 1 }, "produces": { "roast": 1 }, "skill": "cooking", "serve": "cook" },
         { "id": "cook-stew", "label": "Cook beef stew (with rice)", "icon": "🍲", "seconds": 9, "needs": {}, "uses": { "beef": 1, "rice": 1 }, "produces": { "stew": 1 }, "skill": "cooking", "serve": "cook" },
+        { "id": "cook-jollof", "label": "Cook party jollof rice (with chicken)", "icon": "🍛", "seconds": 10, "needs": {}, "uses": { "rice": 1, "jollof-kit": 1, "chicken": 1 }, "produces": { "jollof": 1 }, "skill": "cooking", "serve": "cook" },
+        { "id": "cook-egusi", "label": "Cook egusi soup (with assorted meat)", "icon": "🍲", "seconds": 10, "needs": {}, "uses": { "egusi": 1, "meat": 1 }, "produces": { "egusi-soup": 1 }, "skill": "cooking", "serve": "cook" },
         { "id": "clean-counter", "label": "Clean the counter", "icon": "🧽", "seconds": 5, "needs": { "fun": 5 }, "uses": {}, "serve": "clean" }
       ]
     },
@@ -119,7 +121,9 @@
       "actions": [
         { "id": "eat-roast", "label": "Roast chicken dinner", "icon": "🍗", "seconds": 8, "needs": { "hunger": 75, "fun": 10 }, "uses": { "roast": 1 }, "meal": true, "serve": "roast" },
         { "id": "eat-stew", "label": "Beef stew and rice", "icon": "🍲", "seconds": 8, "needs": { "hunger": 70, "energy": 10 }, "uses": { "stew": 1 }, "meal": true, "serve": "stew" },
-        { "id": "eat-breakfast", "label": "Eggs, toast and tea", "icon": "🍳", "seconds": 6, "needs": { "hunger": 35, "energy": 15 }, "uses": { "eggs": 1, "bread": 1, "tea": 1 }, "meal": true, "serve": "breakfast" }
+        { "id": "eat-breakfast", "label": "Eggs, toast and tea", "icon": "🍳", "seconds": 6, "needs": { "hunger": 35, "energy": 15 }, "uses": { "eggs": 1, "bread": 1, "tea": 1 }, "meal": true, "serve": "breakfast" },
+        { "id": "eat-jollof", "label": "Party jollof rice and chicken", "icon": "🍛", "seconds": 8, "needs": { "hunger": 80, "fun": 15 }, "uses": { "jollof": 1 }, "meal": true, "serve": "stew" },
+        { "id": "eat-egusi", "label": "Egusi soup and eba (made with garri)", "icon": "🍲", "seconds": 9, "needs": { "hunger": 85, "energy": 10 }, "uses": { "egusi-soup": 1, "garri": 1 }, "meal": true, "serve": "stew" }
       ]
     },
     "kitchen-run": {
@@ -131,6 +135,10 @@
         { "id": "blend-smoothie", "label": "Blend a smoothie", "icon": "🥤", "seconds": 5, "needs": { "hunger": 15, "energy": 15 }, "uses": { "fruit": 1, "milk": 1 }, "meal": true },
         { "id": "make-karak", "label": "Make karak chai", "icon": "☕", "seconds": 4, "needs": { "energy": 20 }, "uses": { "tea": 1, "milk": 1 } },
         { "id": "microwave-noodles", "label": "Microwave noodles", "icon": "🍜", "seconds": 3, "needs": { "hunger": 20 }, "uses": { "noodles": 1 }, "meal": true },
+        { "id": "cook-jollof-run", "label": "Cook jollof rice and chicken", "icon": "🍛", "seconds": 9, "needs": { "hunger": 70, "fun": 10 }, "uses": { "rice": 1, "jollof-kit": 1, "chicken": 1 }, "meal": true, "skill": "cooking" },
+        { "id": "cook-egusi-run", "label": "Cook egusi soup and eba", "icon": "🍲", "seconds": 9, "needs": { "hunger": 80 }, "uses": { "egusi": 1, "meat": 1, "garri": 1 }, "meal": true, "skill": "cooking" },
+        { "id": "fry-potatoes", "label": "Fry potatoes and eggs", "icon": "🥔", "seconds": 6, "needs": { "hunger": 40 }, "uses": { "potatoes": 1, "eggs": 1 }, "meal": true, "skill": "cooking" },
+        { "id": "soak-garri", "label": "Soak garri (with milk and sugar)", "icon": "🥣", "seconds": 3, "needs": { "hunger": 25, "fun": 5 }, "uses": { "garri": 1, "milk": 1 }, "meal": true },
         { "id": "wash-dishes", "label": "Wash the dishes", "icon": "🧽", "seconds": 6, "needs": { "hygiene": 5, "fun": -5 }, "uses": {} }
       ]
     },
@@ -192,7 +200,14 @@
     "dates": { "name": "Khalas dates", "icon": "🌴" },
     "detergent": { "name": "Laundry detergent", "icon": "🧴" },
     "soap": { "name": "Shower gel", "icon": "🧼" },
-    "toothpaste": { "name": "Toothpaste", "icon": "🪥" }
+    "toothpaste": { "name": "Toothpaste", "icon": "🪥" },
+    "egusi": { "name": "Ground egusi", "icon": "🥣" },
+    "garri": { "name": "Garri", "icon": "🌾" },
+    "potatoes": { "name": "Potatoes", "icon": "🥔" },
+    "meat": { "name": "Assorted meat", "icon": "🥩" },
+    "jollof-kit": { "name": "Jollof kit (tomatoes, pepper, onions)", "icon": "🍅" },
+    "jollof": { "name": "Party jollof rice (cooked)", "icon": "🍛" },
+    "egusi-soup": { "name": "Egusi soup (cooked)", "icon": "🍲" }
   },
   "starterPantry": { "beef": 1, "rice": 2, "chicken": 2, "eggs": 4, "bread": 4, "fruit": 3, "milk": 3, "tea": 6, "noodles": 2, "detergent": 3, "soap": 4, "toothpaste": 6 },
 

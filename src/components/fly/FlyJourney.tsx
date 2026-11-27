@@ -12,6 +12,7 @@ import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { Plane, Plane as PlaneIcon, Eye, Armchair } from "lucide-react";
 import { CitizenAvatar } from "@/components/avatar/CitizenAvatar";
+import { ROSTER } from "@/components/avatar/roster";
 import type { AvatarAnimation } from "@/components/avatar/CitizenAvatar";
 import { useCitizen, refreshCitizen } from "@/lib/citizenStore";
 import { CITIES, type CityId } from "@/lib/city/cities";
@@ -77,7 +78,48 @@ function TerminalStage({ walker, look, gatesOpen, bridge, spin, from, to }: {
         <CitizenAvatar look={look} animation={(walker.walking ? "walk" : "idle") as AvatarAnimation} pace={walker.walking ? WALK : undefined}
           position={[walker.pose.x, FLOOR, walker.pose.z]} rotation={[0, walker.pose.yaw, 0]} />
       </Suspense>
+      <Travellers />
+      {/* Your cabin bag, rolling along at your side. */}
+      <group position={[walker.pose.x + Math.cos(walker.pose.yaw) * 0.45 - Math.sin(walker.pose.yaw) * 0.15, FLOOR, walker.pose.z - Math.sin(walker.pose.yaw) * 0.45 - Math.cos(walker.pose.yaw) * 0.15]} rotation={[0, walker.pose.yaw, 0]}>
+        <mesh position={[0, 0.29, 0]}><boxGeometry args={[0.36, 0.48, 0.22]} /><meshStandardMaterial color="#1e293b" roughness={0.5} /></mesh>
+        <mesh position={[0, 0.68, 0]}><boxGeometry args={[0.05, 0.3, 0.05]} /><meshStandardMaterial color="#334155" /></mesh>
+        <mesh position={[0, 0.84, 0]}><boxGeometry args={[0.22, 0.04, 0.05]} /><meshStandardMaterial color="#334155" /></mesh>
+      </group>
     </>
+  );
+}
+
+/** Other travellers in the terminal: walking through duty free with their bags, and waiting in the gate's seats. */
+const T_WALKS: Array<{ a: [number, number]; b: [number, number]; speed: number }> = [
+  { a: [12, 40], b: [12, 62], speed: 1.2 }, { a: [-12, 62], b: [-12, 40], speed: 1.3 }, { a: [4, 41], b: [4, 61], speed: 1.1 },
+  { a: [-4, 61], b: [-4, 41], speed: 1.25 }, { a: [-13, 44], b: [13, 44], speed: 1.15 },
+];
+/** Gate seats (the rows of chairs at x -12 + r·3.6, z 70 + k·1.1, facing the glass). */
+const T_SEATED: Array<[number, number]> = [[-12, 71.1], [-8.4, 73.3], [-4.8, 70], [-1.2, 75.5], [2.4, 72.2], [-8.4, 76.6]];
+function Travellers() {
+  const groups = useRef<Array<THREE.Group | null>>([]);
+  useFrame(({ clock }) => {
+    T_WALKS.forEach((w, i) => {
+      const g = groups.current[i];
+      if (!g) return;
+      const len = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]), d = (clock.elapsedTime * w.speed + i * 9) % (2 * len), f = (d < len ? d : 2 * len - d) / len;
+      g.position.set(w.a[0] + (w.b[0] - w.a[0]) * f, FLOOR, w.a[1] + (w.b[1] - w.a[1]) * f);
+      g.rotation.y = Math.atan2(w.b[0] - w.a[0], w.b[1] - w.a[1]) + (d < len ? 0 : Math.PI);
+    });
+  });
+  const lookOf = (i: number) => { const r = ROSTER[(i * 7 + 3) % ROSTER.length]; return { gender: r.gender, preset: r.id }; };
+  return (
+    <Suspense fallback={null}>
+      {T_WALKS.map((w, i) => (
+        <group key={i} ref={(g) => { groups.current[i] = g; }}>
+          <CitizenAvatar look={lookOf(i)} animation="walk" pace={w.speed} />
+          <mesh position={[0.4, 0.3, -0.2]}><boxGeometry args={[0.38, 0.5, 0.24]} /><meshStandardMaterial color={["#1e293b", "#b91c1c", "#0f766e", "#7c3aed"][i % 4]} /></mesh>
+        </group>
+      ))}
+      {T_SEATED.map(([x, z], i) => (
+        <group key={`s${i}`} position={[x, FLOOR, z]} rotation={[0, -Math.PI / 2, 0]}><CitizenAvatar look={lookOf(i + 10)} animation="sit" /></group>
+      ))}
+    </Suspense>
   );
 }
 
@@ -178,12 +220,14 @@ export function FlyJourney({ from: fromCity, to: toCity, dev }: { from: CityId; 
     void refreshCitizen();
     setBag((b) => [...b, id]);
   };
-  const toGate = () => { setStage("gate"); walker.walkTo([[0, 62], [4, 72], SPOTS.gate]); };
+  // Round the tree column by the gate (x 8, z 78) and the seats, not through them.
+  const toGate = () => { setStage("gate"); walker.walkTo([[0, 62], [4, 72], [9.6, 74], SPOTS.gate]); };
   const board = () => {
     gameAudio.playClickSound();
     if (booking) void flightProgress(booking.id, "boarded");
     setStage("boarding");
     bridge.current = 1;
+    // Past the gate desk (x 10.5–11.5, z 78.5–81.5), through the doorway in the glass and down the jet bridge.
     walker.walkTo([[13, 84], SPOTS.bridge, [SPOTS.bridge[0] + 8, 84]], () => { flightTime.current = 0; spin.current = 40; setStage("flight"); });
   };
 

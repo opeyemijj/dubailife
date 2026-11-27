@@ -43,10 +43,11 @@ export const phrase = (key: keyof typeof METRO.phrases, vars: Record<string, str
 export const taxiNight = (now = new Date()) => { const h = (now.getUTCHours() + 4) % 24; return h >= 22 || h < 6; };
 
 /** A street-hail taxi fare: flag-fall, per km, the minimum, and Salik when the trip is long enough to cross a gate. */
-export function taxiQuote(metres: number, now = new Date()) {
+/** A taxi fare: flag-fall, per km, and Salik on longer trips where the city has toll gates (Dubai). */
+export function taxiQuote(metres: number, now = new Date(), tolls = true) {
   const km = metres / 1000;
   const flag = taxiNight(now) ? TAXI.flagNight : TAXI.flagDay;
-  const salik = km >= TAXI.salikOverKm ? TAXI.salik : 0;
+  const salik = tolls && km >= TAXI.salikOverKm ? TAXI.salik : 0;
   const meter = Math.max(TAXI.minimum, Math.round((flag + TAXI.perKm * km) * 2) / 2);
   return { flag, km, salik, meter, total: meter + salik };
 }

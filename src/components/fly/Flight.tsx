@@ -6,7 +6,9 @@
 // drag round the jet) and inside (your seat at the window, look around by dragging). The world runs along +z:
 // departure runway at z = 0, arrival runway at z = LAND; sea to the east (+x), the desert coast to the west.
 
-import { useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
+import { CitizenAvatar } from "@/components/avatar/CitizenAvatar";
+import { ROSTER, type AvatarLookProps } from "@/components/avatar/roster";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Sky } from "@react-three/drei";
 import * as THREE from "three";
@@ -159,20 +161,73 @@ export function mySeat(cabin: CabinClass): [number, number] {
 }
 
 /** One instanced mesh for a part of every seat (cushions, backs, headrests, screens…): hundreds of seats, a few draws. */
-function SeatPart({ items, geo, color, emissive, map }: { items: Array<{ p: THREE.Vector3Tuple; s: THREE.Vector3Tuple; r?: number }>; geo: "box" | "sphere"; color: string; emissive?: string; map?: THREE.Texture | null }) {
+function SeatPart({ items, geo, color, emissive, map }: { items: Array<{ p: THREE.Vector3Tuple; s: THREE.Vector3Tuple; r?: number; c?: string }>; geo: "box" | "sphere"; color: string; emissive?: string; map?: THREE.Texture | null }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   useEffect(() => {
     const m = ref.current;
     if (!m) return;
     const o = new THREE.Object3D();
-    items.forEach((it, i) => { o.position.set(...it.p); o.rotation.set(it.r ?? 0, 0, 0); o.scale.set(...it.s); o.updateMatrix(); m.setMatrixAt(i, o.matrix); });
+    const tint = new THREE.Color();
+    items.forEach((it, i) => {
+      o.position.set(...it.p); o.rotation.set(it.r ?? 0, 0, 0); o.scale.set(...it.s); o.updateMatrix(); m.setMatrixAt(i, o.matrix);
+      if (it.c) m.setColorAt(i, tint.set(it.c));
+    });
     m.instanceMatrix.needsUpdate = true;
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
   }, [items]);
   return (
     <instancedMesh ref={ref} args={[undefined, undefined, items.length]}>
       {geo === "box" ? <boxGeometry args={[1, 1, 1]} /> : <sphereGeometry args={[1, 14, 10]} />}
-      {map ? <meshBasicMaterial map={map} toneMapped={false} /> : <meshStandardMaterial color={color} roughness={0.7} emissive={emissive ?? color} emissiveIntensity={emissive ? 0.9 : 0.12} />}
+      {map ? <meshBasicMaterial map={map} toneMapped={false} />
+        : items.some((it) => it.c) ? <meshStandardMaterial color="#ffffff" roughness={0.75} />
+        : <meshStandardMaterial color={color} roughness={0.7} emissive={emissive ?? color} emissiveIntensity={emissive ? 0.9 : 0.12} />}
     </instancedMesh>
+  );
+}
+
+const SHIRTS = ["#1d4ed8", "#b91c1c", "#f8fafc", "#0f766e", "#7c3aed", "#ea580c", "#111827", "#be185d", "#a16207", "#475569"];
+const SKINS = ["#f1c27d", "#e0ac69", "#c68642", "#8d5524", "#5c3a1e", "#ffdbac"];
+const HAIR = ["#1c1917", "#3b2a1e", "#78350f", "#111827", "#a16207"];
+
+/** The seats round yours (cabin coordinates), nearest first: the two beside you, then the row ahead and across the aisle. */
+function nearSeats(cabin: CabinClass): Array<[number, number]> {
+  const c = CABIN_LAYOUT[cabin], [mx, mz] = mySeat(cabin);
+  const i = (c.xs as readonly number[]).indexOf(mx);
+  const out: Array<[number, number]> = [];
+  for (const k of [i + 1, i + 2]) if (k < c.xs.length && (cabin === "economy" || k < 2)) out.push([c.xs[k], mz]);
+  out.push([c.xs[i], mz + c.pitch]);
+  if (c.xs.length > 1) out.push([c.xs[Math.min(c.xs.length - 1, i + 1)], mz + c.pitch]);
+  out.push([c.xs[Math.floor(c.xs.length / 2)], mz]);
+  return out.filter(([x, z], n, all) => z <= c.to && all.findIndex(([x2, z2]) => x2 === x && z2 === z) === n);
+}
+
+/** Real passengers in the seats round yours (your family first, if they're flying with you) and the cabin crew
+ *  walking the aisles. */
+function CabinPeople({ cabin, companions }: { cabin: CabinClass; companions: AvatarLookProps[] }) {
+  const seats = useMemo(() => nearSeats(cabin), [cabin]);
+  const looks = useMemo(() => seats.map((_, i) => companions[i] ?? ({ gender: ROSTER[(i * 5 + 3) % ROSTER.length].gender, preset: ROSTER[(i * 5 + 3) % ROSTER.length].id } as AvatarLookProps)), [seats, companions]);
+  const crew = useRef<Array<THREE.Group | null>>([]);
+  const c = CABIN_LAYOUT[cabin];
+  // The aisles: between the window and middle blocks (economy), or either side of the centre seats.
+  const aisles = cabin === "economy" ? [-1.0, 1.0] : [-1.3, 1.3];
+  useFrame(({ clock }) => {
+    crew.current.forEach((g, i) => {
+      if (!g) return;
+      const span = c.to - c.from, t = clock.elapsedTime * 0.45 + i * span * 0.6;
+      const d = t % (2 * span), f = d < span ? d / span : 2 - d / span;
+      g.position.set(aisles[i], 0, c.from + f * span);
+      g.rotation.y = d < span ? 0 : Math.PI;
+    });
+  });
+  return (
+    <Suspense fallback={null}>
+      {seats.map(([x, z], i) => <CitizenAvatar key={`p${i}`} look={looks[i]} animation="sit" position={[x, 0, z - 0.1]} rotation={[0, 0, 0]} />)}
+      {[0, 1].map((i) => (
+        <group key={`crew${i}`} ref={(g) => { crew.current[i] = g; }}>
+          <CitizenAvatar look={{ gender: "woman", preset: "Female_Adult_05" }} animation="walk" pace={0.45} />
+        </group>
+      ))}
+    </Suspense>
   );
 }
 
@@ -181,7 +236,7 @@ function SeatPart({ items, geo, color, emissive, map }: { items: Array<{ p: THRE
  * going by), overhead bins with reading lights, the arched ceiling and its mood lighting, carpeted aisles, and every
  * row of seats (economy 3-3-3, business 1-2-1, first suites), some with passengers.
  */
-function Cabin({ cabin }: { cabin: CabinClass }) {
+function Cabin({ cabin, companions = [] }: { cabin: CabinClass; companions?: AvatarLookProps[] }) {
   const R = 3.1, L = 64, LEN = 50;
   const windows = useMemo(() => Array.from({ length: 46 }, (_, i) => -L / 2 + 14 + i * 0.95), []);
   const mood = cabin === "economy" ? "#a78bfa" : "#fbbf24";
@@ -207,9 +262,10 @@ function Cabin({ cabin }: { cabin: CabinClass }) {
   };
   const pieces = [strip([2.62, 0], [2.82, 0.72]), strip([2.82, 1.6], [2.45, 2.0]), strip([2.45, 2.0], [1.45, 2.05])];
   const seats = useMemo(() => {
-    type Part = Array<{ p: THREE.Vector3Tuple; s: THREE.Vector3Tuple; r?: number }>;
-    const out: Record<"cushion" | "back" | "head" | "screen" | "arm" | "pod" | "people" | "hair", Part> = { cushion: [], back: [], head: [], screen: [], arm: [], pod: [], people: [], hair: [] };
+    type Part = Array<{ p: THREE.Vector3Tuple; s: THREE.Vector3Tuple; r?: number; c?: string }>;
+    const out: Record<"cushion" | "back" | "head" | "screen" | "arm" | "pod" | "people" | "skin" | "hair", Part> = { cushion: [], back: [], head: [], screen: [], arm: [], pod: [], people: [], skin: [], hair: [] };
     const me = mySeat(cabin);
+    const near = new Set(nearSeats(cabin).map(([x, z]) => `${x.toFixed(2)}:${z.toFixed(2)}`));
     for (const [cls, c] of Object.entries(CABIN_LAYOUT) as Array<[CabinClass, (typeof CABIN_LAYOUT)[CabinClass]]>) {
       let row = 0;
       for (let z = c.from; z <= c.to; z += c.pitch, row++) {
@@ -226,9 +282,19 @@ function Cabin({ cabin }: { cabin: CabinClass }) {
           if (big) out.pod.push({ p: [x + (x < 0 ? w * 0.62 : -w * 0.62), 0.7, z], s: [0.06, cls === "first" ? 1.4 : 1.05, 1.5] });
           // Passengers in about half the seats (never yours).
           const mine = cls === cabin && Math.abs(x - me[0]) < 0.01 && Math.abs(z - me[1]) < 0.01;
-          if (!mine && ((row * 7 + k * 3) % 5) < 3) {
-            out.people.push({ p: [x, 1.2, z - 0.05], s: [w * 0.32, 0.36, 0.17] });
-            out.hair.push({ p: [x, 1.6, z - 0.08], s: [0.11, 0.12, 0.12] });
+          // (The seats round yours have real passengers: CabinPeople.)
+          if (!mine && !near.has(`${x.toFixed(2)}:${z.toFixed(2)}`) && ((row * 7 + k * 3) % 5) < 4) {
+            const n = row * 13 + k * 7, shirt = SHIRTS[n % SHIRTS.length], skin = SKINS[(n >> 1) % SKINS.length], wear = n % 6;
+            // Torso and shoulders, arms on the armrests, the neck and head above the headrest.
+            out.people.push({ p: [x, 1.05, z - 0.12], s: [0.4, 0.55, 0.22], c: shirt });
+            out.people.push({ p: [x - 0.2, 0.78, z + 0.05], s: [0.08, 0.08, 0.34], c: shirt });
+            out.people.push({ p: [x + 0.2, 0.78, z + 0.05], s: [0.08, 0.08, 0.34], c: shirt });
+            out.skin.push({ p: [x, 1.45, z - 0.1], s: [0.05, 0.08, 0.05], c: skin });
+            out.skin.push({ p: [x, 1.62, z - 0.1], s: [0.115, 0.135, 0.12], c: skin });
+            // Hair, a hijab or a ghutra.
+            if (wear === 0) out.hair.push({ p: [x, 1.63, z - 0.13], s: [0.14, 0.16, 0.14], c: n % 2 ? "#111827" : "#1e3a8a" });
+            else if (wear === 1) out.hair.push({ p: [x, 1.66, z - 0.13], s: [0.14, 0.12, 0.15], c: "#f8fafc" });
+            else out.hair.push({ p: [x, 1.7, z - 0.12], s: [0.118, 0.07, 0.122], c: HAIR[n % HAIR.length] });
           }
         });
       }
@@ -301,7 +367,9 @@ function Cabin({ cabin }: { cabin: CabinClass }) {
       <SeatPart items={seats.arm} geo="box" color="#64748b" />
       {seats.pod.length > 0 && <SeatPart items={seats.pod} geo="box" color="#c9a24a" />}
       <SeatPart items={seats.people} geo="box" color="#475569" />
+      <SeatPart items={seats.skin} geo="sphere" color="#c68642" />
       <SeatPart items={seats.hair} geo="sphere" color="#3b2a1e" />
+      <CabinPeople cabin={cabin} companions={companions} />
       <pointLight position={[0, 2.0, mySeat(cabin)[1] + 2]} intensity={6} distance={12} color="#fff7e6" />
     </group>
   );
@@ -310,8 +378,10 @@ function Cabin({ cabin }: { cabin: CabinClass }) {
 export interface FlightView { inside: boolean }
 
 /** The flight scene; `t` (seconds since push-back) is advanced here and reported. */
-export function FlightScene({ to, cabin, view, timeRef, onPhase }: {
+export function FlightScene({ to, cabin, view, timeRef, onPhase, companions }: {
   to: string; cabin: CabinClass; view: FlightView;
+  /** Who's flying with you, in the seats beside yours (family trips). */
+  companions?: AvatarLookProps[];
   timeRef: React.MutableRefObject<number>;
   onPhase?: (phase: string, t: number) => void;
 }) {
@@ -392,7 +462,7 @@ export function FlightScene({ to, cabin, view, timeRef, onPhase }: {
       <group ref={plane}>
         <GearScale gear={gear}>
           <Airliner spin={spin} gear={1} inside={view.inside}>
-            {view.inside && <Cabin cabin={cabin} />}
+            {view.inside && <Cabin cabin={cabin} companions={companions} />}
           </Airliner>
         </GearScale>
       </group>

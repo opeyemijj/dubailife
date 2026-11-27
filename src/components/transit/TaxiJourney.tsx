@@ -1,6 +1,6 @@
 "use client";
 
-// A Dubai Taxi ride in 3D: wait at the kerb while a cream taxi pulls in, climb into the back as the door
+// A taxi ride in 3D (the city's own: Dubai Taxi, or Abu Dhabi's or Doha's, transit.json taxi.cities): wait at the kerb while a cream taxi pulls in, climb into the back as the door
 // opens, the driver greets you, buckle up, and the meter starts at the flag-fall. Then Sheikh Zayed Road:
 // the meter ticking, lane changes with the indicator, a Salik gate's beep on longer trips, small talk from
 // the driver. Watch from the back seat, the side window or outside. At the end, pull over, pay (card or
@@ -18,6 +18,8 @@ import { BurjKhalifa, CityBlocks, dubaiSky, laneX, Road, ROAD, SalikGate, Sedan,
 import { announce, doorThud, indicatorTick, isTransitMuted, meterTick, nolTap, salikBeep, setLoopSpeed, setTransitMuted, startLoop, stopLoops, stopSpeech, warmUpVoices } from "./transitAudio";
 import { PerfProbe } from "@/components/perf/PerfProbe";
 import { useScreenBusy } from "@/lib/popups";
+import { useCurrentCity } from "@/lib/city/presence";
+import type { CityId } from "@/lib/city/cities";
 
 type Stage = "kerb" | "pullup" | "board" | "ride" | "arrive" | "pay" | "done";
 type View = "seat" | "window" | "outside";
@@ -36,12 +38,9 @@ interface DriverQuiz {
   answer: number;
 }
 
-const DRIVER_QUIZZES: DriverQuiz[] = [
-  { q: "Habibi, quick Dubai quiz for AED 25 cashback! How many floors does Burj Khalifa have?", options: ["163 floors", "102 floors", "210 floors"], answer: 0 },
-  { q: "Tell me my friend — what highway are we driving on right now?", options: ["E11 Sheikh Zayed Rd", "Route 66", "M25 Orbital"], answer: 0 },
-  { q: "Win AED 25 off your ride! Which island is shaped like a palm tree?", options: ["Palm Jumeirah", "Bluewaters", "Al Maryah"], answer: 0 },
-  { q: "Quick one! What is the toll gate system in Dubai called?", options: ["Salik", "Darb", "Nol Pass"], answer: 0 },
-];
+/** The city's own taxi: its name, what the driver says, the driver's quiz and whether there are tolls (transit.json). */
+type CityTaxi = { company: string; tolls: boolean; skyline: string | null; quizzes: DriverQuiz[]; greetings?: string[]; smallTalk?: string[] };
+const cityTaxi = (city: CityId): CityTaxi => (TAXI.cities as unknown as Record<string, CityTaxi>)[city] ?? (TAXI.cities as unknown as Record<string, CityTaxi>).dubai;
 
 /** A ride booked in an app (Yalla Ride): your class of car and driver instead of a taxi, already paid. */
 export interface BookedRide { app: string; name: string; icon: string; color: string; model3d: string; paid: number }
@@ -56,7 +55,11 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
 }) {
   // On screen: popups that open by themselves wait until it's over (lib/popups).
   useScreenBusy(true);
-  const quote = useMemo(() => taxiQuote(metres), [metres]);
+  // The city you're in: its taxi, small talk and quiz, and Dubai's Burj and Salik tolls only in Dubai.
+  const { city } = useCurrentCity();
+  const local = cityTaxi(city);
+  const quote = useMemo(() => taxiQuote(metres, new Date(), local.tolls), [metres, local.tolls]);
+  const DRIVER_QUIZZES = local.quizzes;
   const sky = useMemo(() => dubaiSky(), []);
   // Dubai's taxi firms each have their own roof colour; which one turns up depends on the trip.
   const roof = TAXI.roofs[Math.round(metres) % TAXI.roofs.length];
@@ -171,11 +174,11 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
           <Road travel={travel} sky={sky} />
           <Traffic travel={travel} avoid={taxiRef} />
           <CityBlocks travel={travel} sky={sky} districtAt={districtAt} />
-          <BurjKhalifa travel={travel} p={120} x={-150} />
+          {local.skyline === "burj" && <BurjKhalifa travel={travel} p={120} x={-150} />}
           {quote.salik > 0 && <SalikGate travel={travel} p={salikAt} />}
           <TheTaxi taxiRef={taxiRef} roof={roof} inside={view !== "outside" && ["ride", "arrive", "pay"].includes(shown.stage)} meter={shown.meter} ride={ride} />
           <Rider look={look} taxiRef={taxiRef} directorRef={directorRef} />
-          <Director travelRef={travel} taxiRef={taxiRef} directorRef={directorRef} hudRef={hudRef} quote={quote} length={length} salikAt={salikAt} view={view} booked={!!ride} steerCmdRef={steerCmdRef} />
+          <Director travelRef={travel} taxiRef={taxiRef} directorRef={directorRef} hudRef={hudRef} quote={quote} length={length} salikAt={salikAt} view={view} booked={!!ride} steerCmdRef={steerCmdRef} lines={local} />
         </Canvas>
 
         {/* Top: where you're going, the meter, the speed */}
@@ -184,7 +187,7 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
             <div className="flex items-center gap-2">
               <span className="text-xl">{ride ? ride.icon : "🚕"}</span>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-black truncate">{ride ? `${ride.app} ${ride.name}` : "Dubai Taxi"} · to {destination}</div>
+                <div className="text-sm font-black truncate">{ride ? `${ride.app} ${ride.name}` : local.company} · to {destination}</div>
                 <div className="text-[11px] text-slate-300 truncate">{ride ? `≈ ${quote.km.toFixed(1)} km · paid AED ${ride.paid.toLocaleString()} in the app` : `≈ ${quote.km.toFixed(1)} km · AED ${quote.flag.toFixed(2)} flag-fall · AED ${TAXI.perKm.toFixed(2)}/km${quote.salik ? ` · Salik AED ${quote.salik}` : ""}`}</div>
               </div>
               {discount > 0 && (
@@ -248,7 +251,7 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
           {(shown.stage === "kerb" || shown.stage === "pullup") && (
             <div className="flex items-center gap-2">
               <div className="rounded-2xl bg-white/95 px-4 py-2.5 text-sm font-black text-slate-900 shadow-xl">
-                {ride ? `${ride.icon} Your ${ride.name} is pulling up now…` : "🚕 Dubai Taxi is pulling up to the kerb…"}
+                {ride ? `${ride.icon} Your ${ride.name} is pulling up now…` : `🚕 ${local.company} is pulling up to the kerb…`}
               </div>
               {shown.stage === "kerb" && (
                 <button onClick={hail} className="h-10 px-4 rounded-2xl bg-amber-400 text-slate-950 font-black text-xs shadow-xl active:scale-95">✋ Wave</button>
@@ -342,7 +345,7 @@ export function TaxiJourney({ metres, destination, look, onPay, onArrive, onCanc
           {shown.stage === "done" && (
             <div className="w-full max-w-sm rounded-[1.75rem] bg-white text-slate-900 shadow-2xl p-5 space-y-3 text-center">
               <div className="text-4xl">🚕</div>
-              <h2 className="text-lg font-black">Thanks for riding with Dubai Taxi</h2>
+              <h2 className="text-lg font-black">Thanks for riding with {local.company}</h2>
               <p className="text-sm text-slate-500">{quote.km.toFixed(1)} km · paid AED {finalFare.toFixed(2)}</p>
               <button onClick={onArrive} className="w-full h-12 rounded-2xl bg-amber-400 text-slate-950 font-black">Step out at {destination}</button>
             </div>
@@ -444,7 +447,9 @@ function Rider({ look, taxiRef, directorRef }: { look?: AvatarLookProps; taxiRef
 }
 
 /** Runs the ride: pulling in, boarding, the drive with its meter and events, pulling over. Moves the camera. */
-function Director({ travelRef, taxiRef, directorRef, hudRef, quote, length, salikAt, view, booked = false, steerCmdRef }: {
+function Director({ travelRef, taxiRef, directorRef, hudRef, quote, length, salikAt, view, booked = false, steerCmdRef, lines }: {
+  /** The city's own greetings and small talk (Dubai's are taxi.greetings / taxi.smallTalk). */
+  lines: { greetings?: string[]; smallTalk?: string[] };
   /** A ride booked and paid in an app: no meter. */
   booked?: boolean;
   travelRef: Travel; taxiRef: React.RefObject<{ z: number; x: number; door: number; lane: number }>;
@@ -456,7 +461,7 @@ function Director({ travelRef, taxiRef, directorRef, hudRef, quote, length, sali
   const camPos = useRef(new THREE.Vector3(PAVE_X + 3, 2.2, 10));
   const look = useRef(new THREE.Vector3());
   const lane = useRef({ from: KERB_LANE, to: KERB_LANE, t: 1, nextChange: 9 });
-  const talk = useRef<string[]>([...TAXI.smallTalk]);
+  const talk = useRef<string[]>([...(lines.smallTalk ?? TAXI.smallTalk)]);
   // A different order of chat each ride.
   useEffect(() => { talk.current.sort(() => Math.random() - 0.5); }, []);
 
@@ -483,7 +488,7 @@ function Director({ travelRef, taxiRef, directorRef, hudRef, quote, length, sali
       }
       case "board":
         tx.door = d.t < 1.1 ? Math.min(1, d.t / 0.35) : Math.max(0, 1 - (d.t - 1.1) / 0.3);
-        if (d.t > 1.2 && d.said < 0) { d.said = 0; doorThud(); say(TAXI.greetings[Math.floor(Math.random() * TAXI.greetings.length)]); h.message = booked ? "🔒 Seatbelt on · enjoy the ride" : "🔒 Seatbelt on · the meter starts"; }
+        if (d.t > 1.2 && d.said < 0) { d.said = 0; doorThud(); say((lines.greetings ?? TAXI.greetings)[Math.floor(Math.random() * (lines.greetings ?? TAXI.greetings).length)]); h.message = booked ? "🔒 Seatbelt on · enjoy the ride" : "🔒 Seatbelt on · the meter starts"; }
         if (d.t > 2.2) { h.message = ""; startLoop("road", 0.08); meterTick(); go("ride"); }
         break;
       case "ride": {

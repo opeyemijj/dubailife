@@ -22,6 +22,7 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import * as THREE from "three";
 import WALK from "@/data/flights/airport-walk.json";
 import { CitizenAvatar, type AvatarAnimation } from "@/components/avatar/CitizenAvatar";
+import { ROSTER } from "@/components/avatar/roster";
 import { MoveStick, type Controls } from "@/components/street/StreetWorld";
 import { CITIES, type CityId } from "@/lib/city/cities";
 import { airportOf, AIRLINE } from "@/lib/flights";
@@ -66,7 +67,7 @@ function layout(p: Cfg["palette"]) {
   for (const x of ISLANDS) add(x - 0.8, 9, x + 0.8, 21, 1.1, "#e2e8f0");
   add(-3, 5.6, 3, 6, 3.4, "#0b1220");
   // People queueing at the other counters.
-  for (const [x, z] of [[-13.6, 10.5], [-13.6, 11.4], [-5.6, 19.6], [2.4, 10.5], [10.4, 19.6], [10.4, 20.5]] as const) add(x - 0.25, z - 0.25, x + 0.25, z + 0.25, 1.7, "#64748b");
+  for (const [x, z] of QUEUE) add(x - 0.25, z - 0.25, x + 0.25, z + 0.25, 0, "#64748b", { id: "person" });
   // Passport control: officers' booths, and the e-gates (cabinets between the gates; each gate's barrier opens).
   add(-7.2, 26.6, -6, 27.8, 2.2, "#cbd5e1"); add(6, 26.6, 7.2, 27.8, 2.2, "#cbd5e1");
   let from = -8.1;
@@ -86,9 +87,23 @@ function layout(p: Cfg["palette"]) {
   // The pillars (round, but solid as squares).
   const pillars: Array<[number, number]> = [[-8, 5], [8, 5], [-8, 24], [8, 24], [-16, 15], [16, 15], [-7, 49], [7, 49], [-15, 49], [15, 49], [-7, 65], [7, 65], [-15, 65], [15, 65], [-15, 57], [15, 57]];
   for (const x of [12, 30, 48, 64]) pillars.push([x, 73.2], [-x, 73.2]);
+  for (const [x, z] of SEATED) add(x - 0.3, z - 0.3, x + 0.3, z + 0.3, 0, "#64748b", { id: "person" });
   for (const [x, z] of pillars) boxes.push({ x1: x - 0.45, z1: z - 0.45, x2: x + 0.45, z2: z + 0.45, h: WALL_H, c: p.pillar, id: "pillar" });
   return { boxes, pillars };
 }
+
+/** People queueing at the other counters, and travellers waiting at the gates (solid; drawn as real people). */
+const QUEUE: Array<[number, number]> = [[-13.6, 10.5], [-13.6, 11.4], [-5.6, 19.6], [2.4, 10.5], [10.4, 19.6], [10.4, 20.5]];
+const SEATED: Array<[number, number]> = [[-9.6, 77.25], [-14.2, 77.25], [9.6, 77.25], [21.2, 77.25], [-33.6, 77.25], [39.2, 77.25]];
+/** Travellers walking to and fro along the open walkways (each line keeps clear of the walls, pillars and counters),
+ *  pulling their bags: the terminal's busy, and you have to dodge them too. */
+const WALKERS: Array<{ a: [number, number]; b: [number, number]; speed: number }> = [
+  { a: [-9.5, 2], b: [-9.5, 25], speed: 1.3 }, { a: [0, 25], b: [0, 7.2], speed: 1.2 }, { a: [9.5, 3], b: [9.5, 25], speed: 1.4 },
+  { a: [-15, 25], b: [-15, 2], speed: 1.1 }, { a: [18, 3], b: [-18, 3], speed: 1.25 },
+  { a: [-20, 51], b: [20, 51], speed: 1.3 }, { a: [20, 63.5], b: [-20, 63.5], speed: 1.2 }, { a: [-4, 45.5], b: [-4, 68.5], speed: 1.35 }, { a: [4.5, 68.5], b: [4.5, 45.5], speed: 1.2 },
+  { a: [-66, 74.2], b: [66, 74.2], speed: 1.4 }, { a: [40, 74.2], b: [-40, 74.2], speed: 1.25 }, { a: [-30, 72.35], b: [30, 72.35], speed: 1.3 },
+];
+const lookOf = (i: number) => { const r = ROSTER[(i * 7 + 1) % ROSTER.length]; return { gender: r.gender, preset: r.id }; };
 
 /** Luggage carts and a floor cleaner going back and forth: dodge them. */
 const MOVERS = [
@@ -97,9 +112,9 @@ const MOVERS = [
   { a: [-20, 47], b: [20, 47], speed: 2.2, kind: "cart" },
   { a: [20, 67], b: [-20, 67], speed: 2.6, kind: "cleaner" },
   { a: [-60, 75.4], b: [60, 75.4], speed: 3, kind: "cleaner" },
-  { a: [50, 71.6], b: [-50, 71.6], speed: 2.2, kind: "cart" },
+  { a: [50, 71.3], b: [-50, 71.3], speed: 2.2, kind: "cart" },
 ] as const;
-function moverAt(m: (typeof MOVERS)[number], t: number) {
+function moverAt(m: { a: readonly number[]; b: readonly number[]; speed: number }, t: number) {
   const len = Math.hypot(m.b[0] - m.a[0], m.b[1] - m.a[1]);
   const d = (t * m.speed) % (2 * len), f = (d < len ? d : 2 * len - d) / len;
   return { x: m.a[0] + (m.b[0] - m.a[0]) * f, z: m.a[1] + (m.b[1] - m.a[1]) * f, dir: d < len ? 1 : -1 };
@@ -213,6 +228,7 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
   const big = useRef<THREE.Group>(null), small = useRef<THREE.Group>(null);
   const arrow = useRef<THREE.Group>(null), ring = useRef<THREE.Mesh>(null);
   const movers = useRef<Array<THREE.Group | null>>([]);
+  const walkers = useRef<Array<THREE.Group | null>>([]);
   const barriers = useRef<Record<string, THREE.Mesh | null>>({});
   const tall = useRef<Array<THREE.Mesh | null>>([]);
   const signs = useRef(new Set<THREE.Mesh>());
@@ -286,6 +302,18 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
       }
     });
 
+    // The travellers walking about: their places, and bumping into one.
+    WALKERS.forEach((w, i) => {
+      const at = moverAt(w, s.t + i * 7), g = walkers.current[i];
+      if (g) { g.position.set(at.x, 0, at.z); g.rotation.y = Math.atan2(w.b[0] - w.a[0], w.b[1] - w.a[1]) + (at.dir < 0 ? Math.PI : 0); }
+      const dx = s.x - at.x, dz = s.z - at.z, d = Math.hypot(dx, dz), min = 0.35 + R;
+      if (d < min && d > 0.001) {
+        const px = at.x + (dx / d) * min, pz = at.z + (dz / d) * min;
+        if (!solid(px, pz)) { s.x = px; s.z = pz; }
+        if (s.bumpCool <= 0) { s.bumpCool = 1.2; s.bumps++; onEvent({ kind: "bump", text: "Oops! “Excuse me!” Watch where you're walking." }); }
+      }
+    });
+
     // You, your bags and the camera following you.
     me.current?.position.set(s.x, 0, s.z);
     if (me.current) me.current.rotation.y = s.yaw;
@@ -356,7 +384,7 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
       {/* The floor, and the apron outside the glass. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 41]}><planeGeometry args={[142, 84]} /><meshStandardMaterial color={p.floor} roughness={0.35} metalness={0.05} /></mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 110]}><planeGeometry args={[300, 56]} /><meshStandardMaterial color="#9ca3af" /></mesh>
-      {boxes.filter((b) => b.id !== "pillar").map((b, i) => {
+      {boxes.filter((b) => b.id !== "pillar" && b.id !== "person").map((b, i) => {
         const isBarrier = b.id?.startsWith("egate:");
         return (
           <mesh key={i} ref={isBarrier ? (m) => { barriers.current[b.id!] = m; } : b.h >= 2.2 ? (m) => { tall.current[i] = m; } : undefined} position={[(b.x1 + b.x2) / 2, b.h / 2, (b.z1 + b.z2) / 2]}>
@@ -412,6 +440,24 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
         </group>
       ))}
 
+      {/* The people: travellers walking with their bags, queues at the other counters, and passengers at the gates. */}
+      <Suspense fallback={null}>
+        {WALKERS.map((_, i) => (
+          <group key={`w${i}`} ref={(g) => { walkers.current[i] = g; }}>
+            <CitizenAvatar look={lookOf(i)} animation="walk" pace={WALKERS[i].speed} />
+            <group position={[0.4, 0, -0.2]}><Suitcase big={i % 3 === 0} color={["#1e293b", "#b91c1c", "#0f766e", "#7c3aed"][i % 4]} /></group>
+          </group>
+        ))}
+        {QUEUE.map(([x, z], i) => (
+          <group key={`q${i}`} position={[x, 0, z]} rotation={[0, Math.PI / 2, 0]}>
+            <CitizenAvatar look={lookOf(i + 20)} animation={i % 3 === 0 ? "talk" : "idle"} />
+            <group position={[0.4, 0, 0]}><Suitcase big color={["#334155", "#be185d", "#a16207"][i % 3]} /></group>
+          </group>
+        ))}
+        {SEATED.map(([x, z], i) => (
+          <group key={`s${i}`} position={[x, 0, z - 0.1]} rotation={[0, 0, 0]}><CitizenAvatar look={lookOf(i + 40)} animation="sit" /></group>
+        ))}
+      </Suspense>
       <group ref={big}><Suitcase big color={AIRLINE.colors.tail} /></group>
       <group ref={small}><Suitcase big={false} color="#1e293b" /></group>
       <group ref={arrow}><mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 1.2]}><circleGeometry args={[0.45, 3]} /><meshBasicMaterial color="#10b981" /></mesh></group>

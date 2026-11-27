@@ -22,7 +22,8 @@ export const SPOTS = {
   gatesFront: [0, 29.5] as [number, number],
   gatesThrough: [0, 34.5] as [number, number],
   dutyFree: [0, 50] as [number, number],
-  gate: [9, 80] as [number, number],
+  // Clear of the tree column at (8, 78), so it never stands between the camera and you.
+  gate: [9, 83] as [number, number],
   bridge: [W + 0.5, 84] as [number, number],
 };
 /** The jet on the apron beside the gate: its door lines up with the jet bridge. */
@@ -103,10 +104,16 @@ function Shell() {
       <mesh position={[-W, FLOOR + H / 2, END / 2]}><boxGeometry args={[0.3, H, END]} /><meshStandardMaterial color="#efe9df" roughness={0.8} /></mesh>
       {/* Airside wall (x = +W): solid up to the gate, then floor-to-ceiling glass looking out at the jet */}
       <mesh position={[W, FLOOR + H / 2, 32]}><boxGeometry args={[0.3, H, 64]} /><meshStandardMaterial color="#efe9df" roughness={0.8} /></mesh>
-      <mesh position={[W, FLOOR + H / 2, 78]}><boxGeometry args={[0.06, H, 28]} /><meshStandardMaterial color="#bae6fd" transparent opacity={0.18} roughness={0.05} metalness={0.3} depthWrite={false} /></mesh>
-      {Array.from({ length: 8 }, (_, i) => (
-        <mesh key={`m${i}`} position={[W, FLOOR + H / 2, 64 + i * 4]}><boxGeometry args={[0.2, H, 0.15]} /><meshStandardMaterial color="#94a3b8" metalness={0.6} /></mesh>
+      {/* The glass either side of the jet bridge's doorway (z 82.6–85.4), and over it. */}
+      {[[64, 82.6], [85.4, END]].map(([a, b]) => (
+        <mesh key={a} position={[W, FLOOR + H / 2, (a + b) / 2]}><boxGeometry args={[0.06, H, b - a]} /><meshStandardMaterial color="#bae6fd" transparent opacity={0.18} roughness={0.05} metalness={0.3} depthWrite={false} /></mesh>
       ))}
+      <mesh position={[W, FLOOR + 2.7 + (H - 2.7) / 2, 84]}><boxGeometry args={[0.06, H - 2.7, 2.8]} /><meshStandardMaterial color="#bae6fd" transparent opacity={0.18} roughness={0.05} metalness={0.3} depthWrite={false} /></mesh>
+      {/* Mullions, with the doorway's frame instead of the one at z = 84 */}
+      {Array.from({ length: 8 }, (_, i) => 64 + i * 4).filter((z) => z !== 84).concat([82.6, 85.4]).map((z) => (
+        <mesh key={`m${z}`} position={[W, FLOOR + H / 2, z]}><boxGeometry args={[0.2, H, 0.15]} /><meshStandardMaterial color="#94a3b8" metalness={0.6} /></mesh>
+      ))}
+      <mesh position={[W, FLOOR + 2.7, 84]}><boxGeometry args={[0.2, 0.15, 2.95]} /><meshStandardMaterial color="#94a3b8" metalness={0.6} /></mesh>
       {/* The roof: a gentle wave of white slats over the whole hall, with skylight strips */}
       <mesh position={[0, FLOOR + H + 0.2, END / 2]}><boxGeometry args={[W * 2 + 0.4, 0.4, END + 0.4]} /><meshStandardMaterial color="#f8fafc" roughness={0.6} side={THREE.DoubleSide} /></mesh>
       {Array.from({ length: 22 }, (_, i) => (

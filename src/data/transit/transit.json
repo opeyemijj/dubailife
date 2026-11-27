@@ -215,7 +215,145 @@
       "Sheikh Zayed Road is busy in the evening, but now is fine.",
       "Have you been to the Dubai Frame? Very nice view.",
       "First time in Dubai? You must try karak chai."
-    ]
+    ],
+    "cities": {
+      "_comment": "Each city's own taxi (components/transit/TaxiJourney): its name, what the driver says, the driver's quiz, and whether there are toll gates (Salik is Dubai's only). Dubai's greetings and small talk are taxi.greetings / taxi.smallTalk above.",
+      "dubai": {
+        "company": "Dubai Taxi",
+        "tolls": true,
+        "skyline": "burj",
+        "quizzes": [
+          {
+            "q": "Habibi, quick Dubai quiz for AED 25 cashback! How many floors does Burj Khalifa have?",
+            "options": [
+              "163 floors",
+              "102 floors",
+              "210 floors"
+            ],
+            "answer": 0
+          },
+          {
+            "q": "Tell me my friend — what highway are we driving on right now?",
+            "options": [
+              "E11 Sheikh Zayed Rd",
+              "Route 66",
+              "M25 Orbital"
+            ],
+            "answer": 0
+          },
+          {
+            "q": "Win AED 25 off your ride! Which island is shaped like a palm tree?",
+            "options": [
+              "Palm Jumeirah",
+              "Bluewaters",
+              "Al Maryah"
+            ],
+            "answer": 0
+          },
+          {
+            "q": "Quick one! What is the toll gate system in Dubai called?",
+            "options": [
+              "Salik",
+              "Darb",
+              "Nol Pass"
+            ],
+            "answer": 0
+          }
+        ]
+      },
+      "abu-dhabi": {
+        "company": "Abu Dhabi Taxi",
+        "tolls": false,
+        "skyline": null,
+        "greetings": [
+          "Salam alaikum! Welcome to Abu Dhabi. Where to?",
+          "Marhaba! Seatbelt on, please, my friend.",
+          "Hello, welcome to the capital! Where are we going?"
+        ],
+        "smallTalk": [
+          "You visited the Grand Mosque? Most beautiful in the world, I think.",
+          "The Corniche is very nice in the evening, a good walk.",
+          "Abu Dhabi is calmer than Dubai. Families like it here.",
+          "Yas Island has Ferrari World, very fast roller coaster!",
+          "First time in Abu Dhabi? Try the Louvre on Saadiyat."
+        ],
+        "quizzes": [
+          {
+            "q": "Quick Abu Dhabi quiz for AED 25 cashback! What is the big white mosque here called?",
+            "options": [
+              "Sheikh Zayed Grand Mosque",
+              "Blue Mosque",
+              "Jumeirah Mosque"
+            ],
+            "answer": 0
+          },
+          {
+            "q": "Win AED 25 off! Which island has Ferrari World?",
+            "options": [
+              "Yas Island",
+              "Saadiyat Island",
+              "Palm Jumeirah"
+            ],
+            "answer": 0
+          },
+          {
+            "q": "Tell me — Abu Dhabi is the capital of which country?",
+            "options": [
+              "United Arab Emirates",
+              "Qatar",
+              "Oman"
+            ],
+            "answer": 0
+          }
+        ]
+      },
+      "doha": {
+        "company": "Doha Taxi",
+        "tolls": false,
+        "skyline": null,
+        "greetings": [
+          "Salam alaikum! Welcome to Doha. Where to?",
+          "Marhaba! Welcome to Qatar, seatbelt please.",
+          "Hello my friend, welcome to Doha! Where are we going?"
+        ],
+        "smallTalk": [
+          "You saw the Corniche? Very beautiful at night, all the towers lit up.",
+          "Souq Waqif is the old market, good food, try the karak.",
+          "The World Cup was here in 2022, the stadiums are amazing.",
+          "The Pearl is an island, many nice cafés by the marina.",
+          "First time in Doha? The Museum of Islamic Art is a must."
+        ],
+        "quizzes": [
+          {
+            "q": "Quick Doha quiz for AED 25 cashback! Doha is the capital of which country?",
+            "options": [
+              "Qatar",
+              "Bahrain",
+              "Kuwait"
+            ],
+            "answer": 0
+          },
+          {
+            "q": "Win AED 25 off! What is Doha's old market called?",
+            "options": [
+              "Souq Waqif",
+              "Gold Souk",
+              "Mutrah Souq"
+            ],
+            "answer": 0
+          },
+          {
+            "q": "Tell me — which year did Qatar host the football World Cup?",
+            "options": [
+              "2022",
+              "2018",
+              "2010"
+            ],
+            "answer": 0
+          }
+        ]
+      }
+    }
   },
   "instant": {
     "_comment": "'Go directly' skips the trip: a premium on top of what a taxi would cost. Only walking is free.",

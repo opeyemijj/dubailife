@@ -8,7 +8,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, MapPin, Search, X } from "lucide-react";
 import { useCitizen } from "@/lib/citizenStore";
 import { useRoom } from "@/lib/room";
-import { PLACES, getPlace } from "@/lib/city/places";
+import { PLACES, getPlace, placesWithPrefix } from "@/lib/city/places";
+import { CITIES, cityOfLocation, cityOfPlace, mapPathFor, type CityId } from "@/lib/city/cities";
+import { useCurrentCity } from "@/lib/city/presence";
+// The other cities' places register themselves when loaded (placesWithPrefix lists them).
+import "@/lib/city/abuDhabi/places";
+import "@/lib/city/doha/places";
 import { distanceMetres, entranceOf, getEntity, HOME_SPOT } from "@/lib/city/geo";
 import { isDirty } from "@/components/avatar/Flies";
 import { openPhone } from "@/components/layout/PhoneOverlay";
@@ -17,6 +22,7 @@ import { areaLabel, buyAtShop, shopKind, streetArea, streetShops, type ShopKind 
 import { genericArea, isGenericHome } from "@/lib/city/partyHome";
 import { getHousingTierFromText, HOUSING_CONFIGS } from "@/lib/furniture";
 import { DriveSheet } from "@/components/home/DriveSheet";
+import { GoHome } from "@/components/city/GoHome";
 import { drivables, useGarage } from "@/lib/cars";
 import { useNow } from "@/lib/dubaiClock";
 import { StreetScene, MoveStick, STREET_LIMIT_X, type AutoWalk, type Controls, type StreetDoor } from "./StreetWorld";
@@ -29,7 +35,7 @@ const WALK_M_PER_MIN = 80;
 const placeHref = (id: string) => {
   const p = getPlace(id);
   if (!p) return "/explore";
-  return p.route ?? (p.venues.length > 1 ? `/explore?open=${p.id}` : `/place/${p.id}/${p.venues[0].id}`);
+  return p.route ?? (p.venues.length > 1 ? `${mapPathFor(p.id)}?open=${p.id}` : `/place/${p.id}/${p.venues[0].id}`);
 };
 const KIND_ICON: Record<string, string> = { mall: "🛍️", "food-hall": "🍽️", hotel: "🏨", club: "🪩", attraction: "🎡", park: "🌴", residential: "🏢", home: "🏠" };
 const placeIcon = (id: string) => KIND_ICON[getPlace(id)?.kind ?? ""] ?? "📍";
@@ -41,9 +47,20 @@ export function StreetPage() {
   const venue = sp.get("v");
   const fromHome = sp.get("home") === "1";
   const { citizen } = useCitizen();
+  // The city this street is in: the place you stepped out of, else where you are (a home in Doha is in Doha).
+  const { city: here } = useCurrentCity();
+  const city: CityId = from && cityOfPlace(from) !== "dubai" ? cityOfPlace(from) : here;
+  const cityPlaces = useMemo(() => (city === "dubai" ? PLACES : placesWithPrefix(CITIES[city].prefix)), [city]);
 
-  // Homes not on the map (or a starter home) step out at the generic home spot.
-  const origin = useMemo(() => entranceOf(from) ?? (fromHome ? HOME_SPOT : null), [from, fromHome]);
+  // Homes not on the map (or a starter home) step out at the generic home spot: in Dubai by The Dubai Mall, in
+  // another city where you are there (or by its airport).
+  const origin = useMemo(() => {
+    const at = entranceOf(from);
+    if (at || !fromHome) return at;
+    if (city === "dubai") return HOME_SPOT;
+    const loc = citizen?.location;
+    return (loc && cityOfLocation(loc) === city ? { x: loc.x, y: loc.y } : null) ?? entranceOf(CITIES[city].airport) ?? HOME_SPOT;
+  }, [from, fromHome, city, citizen?.location]);
   const originName = getPlace(from)?.name ?? (fromHome ? "Home" : getEntity(from)?.name ?? "Where you were");
   // Which part of Dubai this is: the home's area (a starter home in Deira) or where on the map.
   const homeArea = fromHome ? (sp.get("area") ?? (isGenericHome(from) ? genericArea(from) : HOUSING_CONFIGS[getHousingTierFromText(citizen?.home ?? "studio")]?.area)) : undefined;
@@ -63,7 +80,7 @@ export function StreetPage() {
     const mine: StreetDoor = { id: "mine", name: fromHome ? "Home" : originName, icon: fromHome ? "🏠" : placeIcon(from), metres: 0,
       href: fromHome ? "/home" : venue ? `/place/${from}/${venue}` : placeHref(from), x: 15, z: 6, mine: true };
     if (!origin) return [mine];
-    const near = PLACES.filter((p) => p.id !== from)
+    const near = cityPlaces.filter((p) => p.id !== from)
       .map((p) => ({ p, at: entranceOf(p.id) }))
       .filter((x): x is { p: typeof x.p; at: { x: number; y: number } } => !!x.at)
       .map((x) => ({ ...x, m: distanceMetres(origin, x.at) }))
@@ -77,10 +94,11 @@ export function StreetPage() {
     });
     // Your own villa's plot: walk up to your car (and drive off) or your pool.
     const extras: StreetDoor[] = [];
-    if (villas && fromHome && myCar) extras.push({ id: "my-car", name: `Your ${myCar.car.make} ${myCar.car.model}`, icon: "🚗", metres: 0, href: "", x: 15, z: mine.z - 8.5, prop: "car" });
+    // Your car stays in Dubai when you fly (the map says so too: CityNavigator).
+    if (villas && fromHome && myCar && city === "dubai") extras.push({ id: "my-car", name: `Your ${myCar.car.make} ${myCar.car.model}`, icon: "🚗", metres: 0, href: "", x: 15, z: mine.z - 8.5, prop: "car" });
     if (villas && fromHome && homeExt.includes("pool")) extras.push({ id: "my-pool", name: "Your pool", icon: "🏊", metres: 0, href: "/home?use=pool", x: 15, z: mine.z + 8.5, prop: "pool" });
     return [mine, ...extras, ...places, ...locals];
-  }, [from, venue, fromHome, origin, originName, area, villas, myCar, homeExt]);
+  }, [from, venue, fromHome, origin, originName, area, villas, myCar, homeExt, cityPlaces, city]);
 
   const controls = useRef<Controls>({ x: 0, y: 0 });
   const auto = useRef<AutoWalk | null>(null);
@@ -108,12 +126,12 @@ export function StreetPage() {
   const far = useMemo(() => {
     if (!origin) return [];
     const term = q.trim().toLowerCase();
-    return PLACES.filter((p) => p.id !== from && !doors.some((d) => d.id === p.id) && (!term || p.name.toLowerCase().includes(term)))
+    return cityPlaces.filter((p) => p.id !== from && !doors.some((d) => d.id === p.id) && (!term || p.name.toLowerCase().includes(term)))
       .map((p) => ({ p, at: entranceOf(p.id) }))
       .filter((x): x is { p: typeof x.p; at: { x: number; y: number } } => !!x.at)
       .map((x) => ({ id: x.p.id, name: x.p.name, m: distanceMetres(origin, x.at) }))
       .sort((a, b) => a.m - b.m).slice(0, 25);
-  }, [origin, q, from, doors]);
+  }, [origin, q, from, doors, cityPlaces]);
   const walkFar = (name: string, m: number, href: string) => {
     setWhere(false);
     const minutes = Math.max(1, Math.round(m / WALK_M_PER_MIN));
@@ -130,7 +148,7 @@ export function StreetPage() {
         <button onClick={() => go(doors[0].href)} className="pointer-events-auto w-10 h-10 rounded-full bg-white/95 shadow-lg flex items-center justify-center" aria-label={`Back inside ${doors[0].name}`}><ArrowLeft className="w-4 h-4" /></button>
         <div className="pointer-events-auto bg-white/95 rounded-2xl shadow-lg px-3 py-1.5 min-w-0">
           <div className="font-black text-sm truncate">🚶 Outside {originName}</div>
-          <div className="text-[11px] text-slate-500 truncate">{villas ? "Villa community" : areaLabel(area)} · {room.peers.length ? `${room.peers.length} out here with you` : "walk anywhere or tap Where to?"}</div>
+          <div className="text-[11px] text-slate-500 truncate">{villas ? "Villa community" : city === "dubai" ? areaLabel(area) : CITIES[city].name} · {room.peers.length ? `${room.peers.length} out here with you` : "walk anywhere or tap Where to?"}</div>
         </div>
         <div className="flex-1" />
         <button onClick={() => setWhere(true)} className="pointer-events-auto h-10 px-4 rounded-full bg-slate-900 text-white shadow-lg flex items-center gap-1.5 text-xs font-black"><MapPin className="w-4 h-4" /> Where to?</button>
@@ -174,6 +192,7 @@ export function StreetPage() {
               <p className="text-lg font-black">📍 Where to?</p>
               <button onClick={() => setWhere(false)} aria-label="Close" className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"><X className="w-4 h-4" /></button>
             </div>
+            {!fromHome && <GoHome onGo={() => setWhere(false)} />}
             <p className="text-xs font-black uppercase tracking-wider text-slate-400">On this street: walk there yourself</p>
             {doors.filter((d) => !d.mine).sort((a, b) => b.z - a.z).map((d) => (
               <button key={d.id} onClick={() => walkTo(d)} className="w-full flex items-center gap-3 rounded-2xl bg-slate-50 hover:bg-slate-100 px-3 py-2.5 text-left">
@@ -185,7 +204,7 @@ export function StreetPage() {
             <p className="text-xs font-black uppercase tracking-wider text-slate-400 pt-2">Further away</p>
             <label className="flex items-center gap-2 h-11 rounded-xl bg-slate-50 border border-slate-200 px-3">
               <Search className="w-4 h-4 text-slate-400" />
-              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search Dubai" className="flex-1 min-w-0 bg-transparent outline-none text-sm font-bold" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${CITIES[city].name}`} className="flex-1 min-w-0 bg-transparent outline-none text-sm font-bold" />
             </label>
             {far.map((f) => (
               <div key={f.id} className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2">
@@ -204,7 +223,7 @@ export function StreetPage() {
           <div className="bg-white rounded-[28px] p-6 max-w-sm w-full text-center space-y-3">
             <div className="text-5xl animate-bounce">🚶</div>
             <p className="text-xl font-black">Walking to {trip.name}</p>
-            <p className="text-slate-500">About {trip.minutes} min on foot through Dubai…</p>
+            <p className="text-slate-500">About {trip.minutes} min on foot through {CITIES[city].name}…</p>
             <div className="h-2 rounded-full bg-slate-100 overflow-hidden"><div className="h-full bg-emerald-500 animate-[grow_6s_linear_forwards]" style={{ width: "100%" }} /></div>
           </div>
         </div>

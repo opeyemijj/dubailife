@@ -54,7 +54,7 @@ const aed = (n: number) => `AED ${n.toLocaleString()}`;
 
 /** Dubai taxi: flag-fall (AED 5, 5.50 at night), ~AED 2.20/km, AED 12 minimum, plus Salik on longer trips
     (the tariff lives in src/data/transit/transit.json). */
-export const taxiFare = (metres: number) => taxiQuote(metres).total;
+export const taxiFare = (metres: number, city: CityId = "dubai") => taxiQuote(metres, new Date(), city === "dubai").total;
 const walkMinutes = (metres: number) => Math.max(1, Math.round(metres / 1.35 / 60));
 const taxiMinutes = (metres: number) => Math.max(3, Math.round(3 + metres / 1000 / 30 * 60));
 
@@ -575,7 +575,7 @@ function Journey({ destination, playerPos, travelling, onGo, gold, onGold, cars:
   const to = entranceOf(destination.place.id) ?? playerPos;
   const metres = useMemo(() => distanceMetres(playerPos, to), [playerPos, to]);
   const here = metres < 40;
-  const fare = taxiFare(metres);
+  const fare = taxiFare(metres, city ?? "dubai");
   const instant = instantFare(metres);
   const away = city !== "dubai";
   const cars = away ? [] : ownCars;

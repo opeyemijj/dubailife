@@ -348,6 +348,46 @@
         "qty": 6
       },
       {
+        "id": "egusi",
+        "name": "Ground egusi (melon seed), 500 g",
+        "icon": "🥣",
+        "price": 16,
+        "stock": "egusi",
+        "qty": 3
+      },
+      {
+        "id": "garri",
+        "name": "Garri (Ijebu), 2 kg",
+        "icon": "🌾",
+        "price": 14,
+        "stock": "garri",
+        "qty": 6
+      },
+      {
+        "id": "potatoes",
+        "name": "Potatoes, 2 kg",
+        "icon": "🥔",
+        "price": 9,
+        "stock": "potatoes",
+        "qty": 4
+      },
+      {
+        "id": "meat",
+        "name": "Assorted meat (beef, goat, shaki), 1 kg",
+        "icon": "🥩",
+        "price": 38,
+        "stock": "meat",
+        "qty": 4
+      },
+      {
+        "id": "jollof-kit",
+        "name": "Jollof kit: tomatoes, pepper, onions & stock",
+        "icon": "🍅",
+        "price": 15,
+        "stock": "jollof-kit",
+        "qty": 3
+      },
+      {
         "id": "soap",
         "name": "Shower gel",
         "icon": "🧼",

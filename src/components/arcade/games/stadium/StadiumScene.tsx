@@ -50,27 +50,50 @@ export function Goal({ z, facing }: { z: number; facing: 1 | -1 }) {
   );
 }
 
-/** The bowl's seats and the crowd in them. Each fan's place is fixed; the wave and the celebrations move them. */
+/** The bowl's seats and the crowd in them: each fan a person (body in a shirt or team colours, head, hair or a
+ *  headscarf, arms that go up to cheer), drawn as a few instanced meshes so thousands stay light. Each fan's place is
+ *  fixed; the wave and the celebrations move them. */
+const SKINS = ["#f1c27d", "#e0ac69", "#c68642", "#8d5524", "#5c3a1e", "#ffdbac"];
+const HAIRS = ["#1c1917", "#3b2a1e", "#111827", "#78350f"];
 function Crowd({ state, theme }: { state: React.MutableRefObject<CrowdState>; theme: StadiumTheme }) {
   const quality = useQuality();
-  const { mesh, seats } = useMemo(() => {
+  const { body, head, hair, arms, seats } = useMemo(() => {
     const per = quality === 2 ? 1 : quality === 1 ? 0.65 : 0.4;
-    const seats: Array<{ x: number; y: number; z: number; a: number; phase: number }> = [];
+    const seats: Array<{ x: number; y: number; z: number; a: number; phase: number; hair: boolean }> = [];
     for (let tier = 0; tier < 14; tier++) {
       const rx = PITCH.w / 2 + 9 + tier * 1.6, rz = PITCH.l / 2 + 9 + tier * 1.6, y = 1.2 + tier * 1.05;
       const n = Math.round((150 + tier * 10) * per);
       for (let k = 0; k < n; k++) {
         const a = (k / n) * Math.PI * 2;
-        seats.push({ x: Math.cos(a) * rx, y, z: Math.sin(a) * rz, a, phase: (k * 7.3 + tier) % 6.28 });
+        const x = Math.cos(a) * rx, z = Math.sin(a) * rz;
+        // The seats round yours at Match Night are real fans (MatchGame's Neighbours), so none here.
+        if (Math.hypot(x - (PITCH.w / 2 + 19), z - 2) < 3.2 && y > 7 && y < 11) continue;
+        seats.push({ x, y, z, a, phase: (k * 7.3 + tier) % 6.28, hair: (k + tier) % 4 !== 0 });
       }
     }
-    const geo = new THREE.BoxGeometry(0.55, 0.9, 0.4);
-    const mat = new THREE.MeshStandardMaterial({ roughness: 0.9 });
-    const m = new THREE.InstancedMesh(geo, mat, seats.length);
+    const make = (geo: THREE.BufferGeometry) => new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ roughness: 0.85 }), seats.length);
+    // A rounded torso (shoulders to hips), the head on top, a cap of hair or a headscarf, and both arms in one mesh
+    // (scaled up from the shoulders when cheering).
+    const body = make(new THREE.CapsuleGeometry(0.2, 0.42, 3, 8));
+    const head = make(new THREE.SphereGeometry(0.15, 10, 8));
+    const hair = make(new THREE.SphereGeometry(0.16, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2));
+    const armGeo = new THREE.BoxGeometry(0.08, 0.5, 0.08);
+    const left = armGeo.clone().translate(-0.25, 0.25, 0), right = armGeo.clone().translate(0.25, 0.25, 0);
+    const armsGeo = new THREE.BufferGeometry();
+    armsGeo.setAttribute("position", new THREE.Float32BufferAttribute([...left.attributes.position.array, ...right.attributes.position.array], 3));
+    armsGeo.setAttribute("normal", new THREE.Float32BufferAttribute([...left.attributes.normal.array, ...right.attributes.normal.array], 3));
+    const li = left.index!.array, n0 = left.attributes.position.count;
+    armsGeo.setIndex([...li, ...Array.from(right.index!.array, (v) => v + n0)]);
+    const arms = make(armsGeo);
     const palette = theme === "containers" ? ["#dc2626", "#2563eb", "#f8fafc", "#facc15"] : ["#8a1538", "#f8fafc", "#8a1538", "#e5e7eb", "#1f2937"];
     const col = new THREE.Color();
-    seats.forEach((_, i) => { col.set(palette[i % palette.length]); m.setColorAt(i, col); });
-    return { mesh: m, seats };
+    seats.forEach((p, i) => {
+      const shirt = palette[i % palette.length];
+      body.setColorAt(i, col.set(shirt)); arms.setColorAt(i, col.set(shirt));
+      head.setColorAt(i, col.set(SKINS[(i * 7) % SKINS.length]));
+      hair.setColorAt(i, col.set(p.hair ? HAIRS[i % HAIRS.length] : (i % 2 ? "#f8fafc" : "#111827")));
+    });
+    return { body, head, hair, arms, seats };
   }, [quality, theme]);
   const o = useMemo(() => new THREE.Object3D(), []);
   useGameFrame((_, t) => {
@@ -78,20 +101,23 @@ function Crowd({ state, theme }: { state: React.MutableRefObject<CrowdState>; th
     const jumping = t < s.jumpUntil;
     for (let i = 0; i < seats.length; i++) {
       const p = seats[i];
-      let lift = Math.sin(t * 3 + p.phase) * 0.04;
-      if (jumping) lift += Math.abs(Math.sin(t * 9 + p.phase)) * 0.45;
+      let lift = Math.sin(t * 3 + p.phase) * 0.03, up = 0.15;
+      if (jumping) { const j = Math.abs(Math.sin(t * 9 + p.phase)); lift += j * 0.4; up = 0.6 + j * 0.4; }
       if (s.waveAt !== null) {
         const d = Math.abs(((p.a - s.waveAt + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
-        if (d < 0.25) lift += (0.25 - d) * 3.2;
+        if (d < 0.25) { lift += (0.25 - d) * 3.2; up = Math.max(up, 1); }
       }
-      o.position.set(p.x, p.y + 0.45 + lift, p.z);
-      o.rotation.set(0, -p.a + Math.PI / 2, 0);
-      o.updateMatrix();
-      mesh.setMatrixAt(i, o.matrix);
+      const yaw = -p.a + Math.PI / 2, base = p.y + lift;
+      o.rotation.set(0, yaw, 0); o.scale.set(1, 1, 1);
+      o.position.set(p.x, base + 0.42, p.z); o.updateMatrix(); body.setMatrixAt(i, o.matrix);
+      o.position.set(p.x, base + 0.92, p.z); o.updateMatrix(); head.setMatrixAt(i, o.matrix);
+      o.position.set(p.x, base + 0.95, p.z); o.updateMatrix(); hair.setMatrixAt(i, o.matrix);
+      // Arms from the shoulders: down at their sides, up in the air when they cheer or do the wave.
+      o.position.set(p.x, base + 0.62, p.z); o.scale.set(1, up < 0.3 ? -0.8 : up, 1); o.updateMatrix(); arms.setMatrixAt(i, o.matrix);
     }
-    markDirty(mesh);
+    markDirty(body); markDirty(head); markDirty(hair); markDirty(arms);
   });
-  return <primitive object={mesh} />;
+  return <group><primitive object={body} /><primitive object={head} /><primitive object={hair} /><primitive object={arms} /></group>;
 }
 
 /** The roof, in the stadium's own style. */
