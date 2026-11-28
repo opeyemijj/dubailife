@@ -40,6 +40,8 @@ const STEPS: { id: StepId; title: string; icon: string }[] = [
 
 const R = 0.35, WALK_SPEED = 3.2, RUN_SPEED = 5.6, WALL_H = 6;
 const EGATES = [-4.5, -1.5, 1.5, 4.5];
+/** Half the width of an e-gate's way through: wide enough to walk through without lining up exactly. */
+const GAP = 0.75;
 /** The three carousels (x of each; they run z 22–34), and the belt numbers on their screens. */
 const BELTS = [-12, 0, 12];
 const BELT = { z1: 22, z2: 34, half: 1.5 };
@@ -59,7 +61,7 @@ function layout() {
   // Passport control (z 9–16): the e-gates across the middle and officers' desks either side (the gates' barriers open).
   add(-14, 9, -6, 9.4); add(6, 9, 14, 9.4); add(-14.4, 9, -14, 16); add(14, 9, 14.4, 16);
   let from = -8.1;
-  for (const g of EGATES) { add(from, 12.8, g - 0.5, 13.2, 1.3, "#94a3b8"); add(g - 0.5, 12.9, g + 0.5, 13.1, 1.0, "#7dd3fc", { id: `egate:${g}`, glass: true }); from = g + 0.5; }
+  for (const g of EGATES) { add(from, 12.8, g - GAP, 13.2, 1.3, "#94a3b8"); add(g - GAP, 12.9, g + GAP, 13.1, 1.0, "#7dd3fc", { id: `egate:${g}`, glass: true }); from = g + GAP; }
   add(from, 12.8, 8.1, 13.2, 1.3, "#94a3b8");
   add(-14, 12.6, -8.1, 13.4, 1.2, "#cbd5e1"); add(8.1, 12.6, 14, 13.4, 1.2, "#cbd5e1");
   // The baggage hall (z 16–40) and its carousels.
@@ -160,6 +162,9 @@ function World({ look, mine, myBag, code, beltNo, to, live, controls, onNear, on
       const prevZ = s.z;
       if (!solid(s.x + vx * dt, s.z)) s.x += vx * dt;
       if (!solid(s.x, s.z + vz * dt)) s.z += vz * dt;
+      // Close to an open e-gate: you're steered into the gap, so you don't snag on its edge.
+      const open = EGATES.find((g) => s.open.has(`egate:${g}`) && Math.abs(s.x - g) < 1.3 && s.z > 11.7 && s.z < 14.1);
+      if (open !== undefined) { const fx = s.x + (open - s.x) * Math.min(1, dt * 9); if (!solid(fx, s.z)) s.x = fx; }
       s.yaw = Math.atan2(vx, vz); moving = true;
       const id = STEPS[s.step]?.id;
       if (id === "immigration" && s.z > 13.6) onEvent({ kind: "pass" });
@@ -227,7 +232,7 @@ function World({ look, mine, myBag, code, beltNo, to, live, controls, onNear, on
 
     let near: string | null = null;
     const id = STEPS[s.step]?.id;
-    if (id === "immigration") { const g = EGATES.find((g) => Math.abs(s.x - g) < 0.7 && s.z > 11.6 && s.z < 12.8); if (g !== undefined && !s.open.has(`egate:${g}`)) near = `egate:${g}`; }
+    if (id === "immigration") { const g = EGATES.find((g) => Math.abs(s.x - g) < 1 && s.z > 11.6 && s.z < 12.8); if (g !== undefined && !s.open.has(`egate:${g}`)) near = `egate:${g}`; }
     else if (id === "baggage" && nearBag !== null) near = `bag:${nearBag}`;
     else if (id === "customs" && !s.quizDone && Math.hypot(s.x, s.z - 41.5) < 2.2) near = "customs-sign";
     else if (id === "exit" && Math.hypot(s.x, s.z - 60.5) < 2) near = "exit";

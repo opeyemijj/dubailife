@@ -49,6 +49,8 @@ const EGATES = [-4.5, -1.5, 1.5, 4.5];
 const LANES = [-5.4, 0, 5.4];
 const gateX = (n: number) => (n <= 10 ? -9 - (n - 1) * 6 : 9 + (n - 11) * 6);
 const BELT_SECONDS = 5;
+/** Half the width of an e-gate's (and the arch's) way through: wide enough to walk through without lining up exactly. */
+const GAP = 0.75;
 
 /** A solid box on the floor: you can't walk into it. `id` marks the e-gate barriers, which open. */
 interface Box { x1: number; z1: number; x2: number; z2: number; h: number; c: string; id?: string; glass?: boolean }
@@ -73,13 +75,13 @@ function layout(p: Cfg["palette"]) {
   // Passport control: officers' booths, and the e-gates (cabinets between the gates; each gate's barrier opens).
   add(-7.2, 26.6, -6, 27.8, 2.2, "#cbd5e1"); add(6, 26.6, 7.2, 27.8, 2.2, "#cbd5e1");
   let from = -8.1;
-  for (const g of EGATES) { add(from, 28.4, g - 0.5, 28.8, 1.3, "#94a3b8"); add(g - 0.5, 28.5, g + 0.5, 28.7, 1.0, "#7dd3fc", { id: `egate:${g}`, glass: true }); from = g + 0.5; }
+  for (const g of EGATES) { add(from, 28.4, g - GAP, 28.8, 1.3, "#94a3b8"); add(g - GAP, 28.5, g + GAP, 28.7, 1.0, "#7dd3fc", { id: `egate:${g}`, glass: true }); from = g + GAP; }
   add(from, 28.4, 8.1, 28.8, 1.3, "#94a3b8");
   // Security: three lanes, each with its X-ray belt and the walk-through arch (only the arch's gap lets you past).
   add(-2.8, 32, -2.6, 44, 1.2, "#cbd5e1"); add(2.6, 32, 2.8, 44, 1.2, "#cbd5e1");
   for (const L of LANES) {
     add(L + 0.8, 33.4, L + 1.8, 43, 0.85, "#1f2937");
-    add(L - 2.6, 37.8, L - 1.0, 38.2, 2.2, "#cbd5e1"); add(L, 37.8, L + 0.8, 38.2, 2.2, "#cbd5e1"); add(L + 1.8, 37.8, L + 2.6, 38.2, 2.2, "#cbd5e1");
+    add(L - 2.6, 37.8, L - 0.5 - GAP, 38.2, 2.2, "#cbd5e1"); add(L - 0.5 + GAP, 37.8, L + 0.8, 38.2, 2.2, "#cbd5e1"); add(L + 1.8, 37.8, L + 2.6, 38.2, 2.2, "#cbd5e1");
   }
   // Duty free: shops, and the landmark in the middle of the hall.
   for (const [x1, z1, x2, z2] of [[-12, 52, -9, 54.5], [9, 52, 12, 54.5], [-12, 60, -9, 62.5], [9, 60, 12, 62.5]]) add(x1, z1, x2, z2, 2.4, p.accent);
@@ -358,6 +360,11 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
       const prevZ = s.z;
       if (!solid(nx, s.z)) s.x = nx;
       if (!solid(s.x, nz)) s.z = nz;
+      // Close to an open e-gate or an arch: you're steered into the gap, so you don't snag on its edge.
+      const open = EGATES.find((g) => s.open.has(`egate:${g}`) && Math.abs(s.x - g) < 1.3 && s.z > 27.3 && s.z < 29.6);
+      const arch = LANES.find((L) => Math.abs(s.x - (L - 0.5)) < 1.1 && s.z > 37.1 && s.z < 38.9);
+      const mid = open ?? (arch !== undefined ? arch - 0.5 : undefined);
+      if (mid !== undefined) { const fx = s.x + (mid - s.x) * Math.min(1, dt * 9); if (!solid(fx, s.z)) s.x = fx; }
       s.yaw = Math.atan2(vx, vz);
       moving = true;
       // Security's arch: carrying your bag through beeps you back.
@@ -447,7 +454,7 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
     const close = (x: number, z: number, r = NEAR) => Math.hypot(s.x - x, s.z - z) < r;
     if (id === "board" && close(0, 4.6, 1.8)) near = "board";
     else if (id === "checkin" && close(ix - 1.6, 15)) near = "checkin";
-    else if (id === "passport") { const g = EGATES.find((g) => Math.abs(s.x - g) < 0.7 && s.z > 27.2 && s.z < 28.4); if (g !== undefined && !s.open.has(`egate:${g}`)) near = `egate:${g}`; }
+    else if (id === "passport") { const g = EGATES.find((g) => Math.abs(s.x - g) < 1 && s.z > 27.2 && s.z < 28.4); if (g !== undefined && !s.open.has(`egate:${g}`)) near = `egate:${g}`; }
     else if (id === "security") {
       const lane = LANES.find((L) => close(L + 0.25, 34.4, 1.2));
       if ((s.sec === "sort" || s.sec === "drop") && lane !== undefined) near = `${s.sec}:${lane}`;
@@ -496,9 +503,9 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
       {LANES.map((x) => (
         <group key={x}>
           {/* The arch's frame round its gap. */}
-          <mesh position={[x - 1.05, 1.1, 38]}><boxGeometry args={[0.12, 2.2, 0.5]} /><meshStandardMaterial color="#64748b" /></mesh>
-          <mesh position={[x + 0.05, 1.1, 38]}><boxGeometry args={[0.12, 2.2, 0.5]} /><meshStandardMaterial color="#64748b" /></mesh>
-          <mesh position={[x - 0.5, 2.25, 38]}><boxGeometry args={[1.25, 0.15, 0.5]} /><meshStandardMaterial color="#64748b" /></mesh>
+          <mesh position={[x - 0.5 - GAP - 0.05, 1.1, 38]}><boxGeometry args={[0.12, 2.2, 0.5]} /><meshStandardMaterial color="#64748b" /></mesh>
+          <mesh position={[x - 0.5 + GAP + 0.05, 1.1, 38]}><boxGeometry args={[0.12, 2.2, 0.5]} /><meshStandardMaterial color="#64748b" /></mesh>
+          <mesh position={[x - 0.5, 2.25, 38]}><boxGeometry args={[GAP * 2 + 0.25, 0.15, 0.5]} /><meshStandardMaterial color="#64748b" /></mesh>
           {/* The X-ray tunnel over the belt. */}
           <mesh position={[x + 1.3, 1.4, 38]}><boxGeometry args={[1.2, 1.2, 2.4]} /><meshStandardMaterial color="#e2e8f0" /></mesh>
         </group>
@@ -660,7 +667,6 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
     }
   };
   const answerCheckin = (right: boolean) => {
-    const s = live.current;
     if (!right) { setMistakes((m) => m + 1); gameAudio.sfx?.("error"); say(WALK.checkinQuiz.why, "bad", 5200); return; }
     gameAudio.playClickSound();
     setQuiz("scale");
