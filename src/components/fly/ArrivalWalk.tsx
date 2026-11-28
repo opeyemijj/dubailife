@@ -188,6 +188,8 @@ function World({ look, mine, myBag, code, beltNo, to, live, controls, onNear, on
       s.yaw = Math.atan2(vx, vz); moving = true;
       const id = STEPS[s.step]?.id;
       if (id === "immigration" && s.z > 13.6) onEvent({ kind: "pass" });
+      // No going on to customs without your bag.
+      if (id === "baggage" && s.z > 39.4) { s.z = 39.4; if (s.bumpCool <= 0) { s.bumpCool = 2; onEvent({ kind: "channel", text: `Collect your bag first: it's on belt ${beltNo[mine]}, the ${AIRLINE.name} teal case with the yellow tag.` }); } }
       // Customs: through a channel (green on the left, red on the right) once you've read the sign.
       if (id === "customs" && prevZ < 47 && s.z >= 47) {
         if (!s.quizDone) { s.z = 46.5; onEvent({ kind: "channel", text: "Read the customs sign first: it tells you what has to be declared." }); }

@@ -417,7 +417,7 @@ function targetOf(s: Live, cfg: Cfg, gate: number, desk: boolean): [number, numb
 function spotsOf(s: Live, cfg: Cfg, gate: number, desk: boolean): Array<[number, number]> {
   const ix = ISLANDS[cfg.row - 1];
   switch (STEPS[s.step]?.id) {
-    case "board": return [[0, 4.6]];
+    case "board": return [[0, 4.6], ...DESK_Z.map((z) => [ix - 1.6, z] as [number, number])];
     case "checkin": return s.carryBig ? DESK_Z.map((z) => [ix - 1.6, z]) : [];
     case "passport": {
       const opened = PASSAGES.find((g) => s.open.has(g.id));
@@ -644,7 +644,8 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
     const atEgate = PASSAGES.some((g) => !s.open.has(g.id) && Math.abs(s.x - g.x) < 1 && s.z > 26.6 && s.z < 28.4);
     if ((id === "board" || id === "checkin") && atEgate) near = "egate-early";
     else if (id === "board" && close(0, 4.6, 1.8)) near = "board";
-    else if (id === "checkin") {
+    else if (id === "board" || id === "checkin") {
+      // (Reading the departures screen first is optional: going straight to your desk works too.)
       // In front of any desk along a row's counter side (x within 1.8 m of the desks, the row's length): yours takes
       // your bag at the nearest desk; another airline's row says it isn't yours.
       const r = ISLANDS.findIndex((x) => s.x > x - 2.6 && s.x < x - 0.8 && s.z > 8.4 && s.z < 21.6);
@@ -813,7 +814,7 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
   const toName = CITIES[to].name;
   const quality = useMemo(() => canvasQuality(), []);
   const controls = useRef<Controls>({ x: 0, y: 0 });
-  const live = useRef<Live>({ x: 0, z: 1.4, yaw: 0, moving: false, t: 0, step: 0, sec: "sort", carryBig: true, carrySmall: true, bigOnBelt: null, smallOnBelt: null, bigOnScale: false, deskZ: 15, beepAt: -99, clearAt: -99, open: new Set(domestic ? PASSAGES.map((g) => g.id) : []), bumpCool: 0, bumps: 0, hint: false });
+  const live = useRef<Live>({ x: 0, z: 1.4, yaw: 0, moving: false, t: 0, step: 0, sec: "sort", carryBig: true, carrySmall: true, bigOnBelt: null, smallOnBelt: null, bigOnScale: false, deskZ: 15, beepAt: -99, clearAt: -99, open: new Set(), bumpCool: 0, bumps: 0, hint: false });
   const [step, setStep] = useState(0);
   const [near, setNear] = useState<string | null>(null);
   const [toast, setToast] = useState<{ text: string; tone: "info" | "bad" | "good" } | null>(null);
@@ -887,6 +888,10 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
       say(`This is row ${near.split(":")[1]}, another airline's counters. ${AIRLINE.name} is at row ${cfg.row}: follow the green line on the floor.`, "bad", 4800);
       return;
     }
+    if (near === "checkin" && STEPS[s.step]?.id === "board") {
+      // Came straight to the desk without reading the screen: that's fine, it counts.
+      s.step = 1; setStep(1);
+    }
     if (near === "checkin") { s.carryBig = false; s.bigOnScale = true; setOnScale(true); setQuiz("checkin"); return; }
     if (near === "egate-early") {
       gameAudio.sfx?.("error");
@@ -958,6 +963,8 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
     const s = live.current;
     setQuiz(null);
     s.carryBig = false; s.bigOnScale = false; s.bigOnBelt = s.t;
+    // A domestic flight has no passport control: with your boarding pass, the gates just open.
+    if (domestic) for (const g of PASSAGES) s.open.add(g.id);
     setBoardingPass(true);
     say(`Bag tagged to ${airportOf(to).code} ✓ Boarding pass: gate ${cfg.gateLetter}${gate}, seat ${seat}.`, "good", 4200);
     next();

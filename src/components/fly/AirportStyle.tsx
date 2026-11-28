@@ -19,10 +19,20 @@ export interface Planter { x1: number; z1: number; x2: number; z2: number }
 
 const WALL_H = 6;
 
+/** The roof is up where the camera flies (it looks down at you from behind), so any part of it within a few metres of
+ *  the camera isn't drawn: a rib or the trim can never sit across your view. */
+const NEAR_FADE = 5;
+export function hideNearCamera(shader: { fragmentShader: string }) {
+  shader.fragmentShader = shader.fragmentShader.replace(
+    "#include <clipping_planes_fragment>",
+    `#include <clipping_planes_fragment>\n  if (length(vViewPosition) < ${NEAR_FADE.toFixed(1)}) discard;`,
+  );
+}
+
 /** One rib: a tube through points. */
 function Rib({ pts, r, color, metal }: { pts: THREE.Vector3[]; r: number; color: string; metal: number }) {
   const geo = useMemo(() => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, r, 6, false), [pts, r]);
-  return <mesh geometry={geo}><meshStandardMaterial color={color} metalness={metal} roughness={0.35} /></mesh>;
+  return <mesh geometry={geo}><meshStandardMaterial color={color} metalness={metal} roughness={0.35} onBeforeCompile={hideNearCamera} /></mesh>;
 }
 
 /** The ribs across a hall's short side, every `step` metres along its long side; `y(t, u)` is the height at t (0–1
@@ -85,8 +95,8 @@ export function Roof({ style, halls, accent }: { style: AirportStyleId; halls: H
       {/* Dubai's gold trim along the tops of the walls. */}
       {style === "dxb" && halls.map((h, i) => (
         <group key={`g${i}`}>
-          <mesh position={[(h.x1 + h.x2) / 2, WALL_H + 0.05, h.z1]}><boxGeometry args={[h.x2 - h.x1, 0.12, 0.12]} /><meshStandardMaterial color={accent} metalness={0.8} roughness={0.3} /></mesh>
-          <mesh position={[(h.x1 + h.x2) / 2, WALL_H + 0.05, h.z2]}><boxGeometry args={[h.x2 - h.x1, 0.12, 0.12]} /><meshStandardMaterial color={accent} metalness={0.8} roughness={0.3} /></mesh>
+          <mesh position={[(h.x1 + h.x2) / 2, WALL_H + 0.05, h.z1]}><boxGeometry args={[h.x2 - h.x1, 0.12, 0.12]} /><meshStandardMaterial color={accent} metalness={0.8} roughness={0.3} onBeforeCompile={hideNearCamera} /></mesh>
+          <mesh position={[(h.x1 + h.x2) / 2, WALL_H + 0.05, h.z2]}><boxGeometry args={[h.x2 - h.x1, 0.12, 0.12]} /><meshStandardMaterial color={accent} metalness={0.8} roughness={0.3} onBeforeCompile={hideNearCamera} /></mesh>
         </group>
       ))}
     </group>
