@@ -650,6 +650,8 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
   const quality = useMemo(() => canvasQuality(), []);
   const controls = useRef<Controls>({ x: 0, y: 0 });
   const live = useRef<Live>({ x: 0, z: 1.4, yaw: 0, moving: false, t: 0, step: 0, sec: "sort", carryBig: true, carrySmall: true, bigOnBelt: null, smallOnBelt: null, open: new Set(domestic ? PASSAGES.map((g) => g.id) : []), bumpCool: 0, bumps: 0, hint: false });
+  // TEMP-TEST-HOOK
+  useEffect(() => { (window as unknown as { __AW: unknown }).__AW = { live, gate }; }, [gate]);
   const [step, setStep] = useState(0);
   const [near, setNear] = useState<string | null>(null);
   const [toast, setToast] = useState<{ text: string; tone: "info" | "bad" | "good" } | null>(null);
