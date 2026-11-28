@@ -94,7 +94,7 @@ function layout(p: Palette, style: AirportStyleId) {
   for (const b of beds) boxes.push({ ...b, h: 0, c: "#000", id: "bed" });
   return { boxes, pillars, beds };
 }
-const WAITING: Array<[number, number]> = [[-14.3, 25], [-14.3, 30], [2.3, 24], [-2.3, 31], [14.3, 27], [9.7, 32]];
+const WAITING: Array<[number, number]> = [[-9.7, 25], [-9.7, 30], [2.3, 24], [2.3, 31], [14.3, 27], [14.3, 32]];
 const WALKERS: Array<{ a: [number, number]; b: [number, number]; speed: number }> = [
   { a: [-19, 18], b: [-19, 38], speed: 1.2 }, { a: [19, 38], b: [19, 18], speed: 1.3 }, { a: [-20, 38.5], b: [20, 38.5], speed: 1.15 },
   { a: [-16, 53], b: [16, 53], speed: 1.25 }, { a: [16, 59], b: [-16, 59], speed: 1.1 },
@@ -267,8 +267,8 @@ function World({ look, mine, myBag, code, beltNo, to, live, controls, onNear, on
   const routes: Route[] = [
     { pts: [[0, 2], [0, 10.5], [px, desk ? 11.4 : 12], [px, 15.2]], color: "#2563eb", label: desk ? "PASSPORT CONTROL · VISITORS" : "PASSPORT CONTROL" },
     { pts: [[px, 15.2], [BELTS[mine] - LOOP.x - 1.1, 19.5], [BELTS[mine] - LOOP.x - 1.1, 28]], color: "#d97706", label: `BAGGAGE · BELT ${beltNo[mine]}` },
-    { pts: [[BELTS[mine] - LOOP.x - 1.1, 35.5], [-4, 39.5], [-4, 49]], color: "#16a34a", label: "CUSTOMS" },
-    { pts: [[-4, 50.5], [0, 54], [0, 60.5]], color: "#7c3aed", label: "EXIT · TAXIS" },
+    { pts: [[BELTS[mine] - LOOP.x - 1.1, 28], [BELTS[mine] - LOOP.x - 1.1, 35.5], [-4, 39.5], [-4, 49]], color: "#16a34a", label: "CUSTOMS" },
+    { pts: [[-4, 49], [-4, 50.5], [0, 54], [0, 60.5]], color: "#7c3aed", label: "EXIT · TAXIS" },
   ];
 
   return (

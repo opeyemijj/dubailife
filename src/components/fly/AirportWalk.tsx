@@ -266,18 +266,25 @@ function FloorLabel({ text, color, at, toward }: { text: string; color: string; 
 /** The departures routes, in the order you do them: up to the departures screen, round it to your airline's check-in
  *  row (down the aisle beside it, clear of the other counters' queues), then to an e-gate, down a security lane and its
  *  arch, round the duty-free landmark to the concourse, then left and right to the gates. */
-function departureRoutes(row: number, desk: boolean): Route[] {
+function departureRoutes(row: number, desk: boolean, L: string): Route[] {
   const ix = ISLANDS[row - 1], aisle = ix - 4, side = ix > 0 ? 3.6 : -3.6;
   // A visitor goes to the officer's desk on the left; a resident through an e-gate.
   const px = desk ? DESKS[0].x : -1.5;
+  // Security: the lane straight ahead of where you came through (the left lane from the officer's desk), down to its
+  // arch's gap; then round the duty-free landmark.
+  const sx = desk ? LANES[0] - 0.5 : -0.5;
   return [
     { pts: [[0, 1.6], [0, 4.4]], color: "#0f172a", label: "DEPARTURES SCREEN" },
     { pts: [[0, 4.4], [side, 4.6], [side, 7.8], [aisle, 8.4], [aisle, 13.2], [ix - 1.6, 15]], color: "#0d9488", label: `CHECK-IN ROW ${row}` },
     { pts: [[ix - 1.6, 15], [aisle, 16.8], [aisle, 22.2], [-1.5, 22.2], ...(desk ? [[px, 25.4]] as Array<[number, number]> : []), [px, 27.2], [px, 30.4]], color: "#2563eb", label: desk ? "PASSPORT CONTROL · OFFICER" : "PASSPORT CONTROL" },
-    { pts: [[px, 30.4], [-0.5, 32.6], [-0.5, 44.2]], color: "#d97706", label: "SECURITY" },
-    { pts: [[-0.5, 44.2], [-3.4, 48.5], [-3.4, 64.5], [0, 69], [0, 71.4]], color: "#7c3aed", label: "GATES" },
-    { pts: [[0, 71.4], [-5, 72.6], [-14, 74.6]], color: "#7c3aed" },
-    { pts: [[0, 71.4], [5, 72.6], [14, 74.6]], color: "#7c3aed" },
+    { pts: [[px, 30.4], [sx, 31.4], [sx, 44.2]], color: "#d97706", label: "SECURITY" },
+    { pts: [[sx, 44.2], [-3.4, 48.5], [-3.4, 64.5], [0, 69], [0, 73.4]], color: "#7c3aed", label: "GATES" },
+    // Along the concourse between its pillars (z 73.2) and the gates' seats (z 77), left and right to every gate;
+    // each side's label where its line sets off, so they don't print over each other.
+    { pts: [[0, 73.4], [-5, 75.3]], color: "#7c3aed" },
+    { pts: [[0, 73.4], [5, 75.3]], color: "#7c3aed" },
+    { pts: [[-5, 75.3], [-64, 75.3]], color: "#7c3aed", label: `${L}1–${L}10` },
+    { pts: [[5, 75.3], [64, 75.3]], color: "#7c3aed", label: `${L}11–${L}20` },
   ];
 }
 
@@ -364,7 +371,7 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
   const nearId = useRef<string | null>(null);
   const [anim, setAnim] = useState<AvatarAnimation>("idle");
   const ix = ISLANDS[cfg.row - 1];
-  const routes = useMemo(() => departureRoutes(cfg.row, desk), [cfg.row, desk]);
+  const routes = useMemo(() => departureRoutes(cfg.row, desk, cfg.gateLetter), [cfg.row, desk, cfg.gateLetter]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => keys.current.add(e.key.toLowerCase());
