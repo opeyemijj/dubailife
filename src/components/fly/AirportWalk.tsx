@@ -329,6 +329,8 @@ interface Live {
   bigOnBelt: number | null; smallOnBelt: { lane: number; at: number } | null;
   /** Your suitcase is on the check-in scale (until it's tagged and goes down the belt at bigOnBelt). */
   bigOnScale: boolean;
+  /** Which of your row's desks you checked in at (its z: DESK_Z). */
+  deskZ: number;
   /** When the arch last beeped / cleared you (its light flashes red / green). */
   beepAt: number; clearAt: number;
   open: Set<string>; bumpCool: number; bumps: number; hint: boolean;
@@ -384,7 +386,7 @@ function CheckInRow({ x, mine, accent, scaleText }: { x: number; mine: boolean; 
           <mesh position={[x - 0.81, 0.55, zc - 0.45]}><boxGeometry args={[0.02, 0.5, 1.1]} /><meshStandardMaterial color={mine ? accent : "#64748b"} /></mesh>
           {/* The scale, and its little screen. */}
           <mesh position={[x + (SCALE.x1 + SCALE.x2) / 2, SCALE.h / 2, zc + (SCALE.dz1 + SCALE.dz2) / 2]}><boxGeometry args={[SCALE.x2 - SCALE.x1, SCALE.h, SCALE.dz2 - SCALE.dz1]} /><meshStandardMaterial color="#9ca3af" metalness={0.6} roughness={0.3} /></mesh>
-          {mine && zc === 15 && <Sign at={[x - 0.9, 1.25, zc + 0.65]} size={[0.02 + 0.6, 0.3]} rotY={-Math.PI / 2} bg="#052e16" lines={[{ t: scaleText, c: "#4ade80", s: 150 }]} />}
+          {mine && <Sign at={[x - 0.9, 1.25, zc + 0.65]} size={[0.02 + 0.6, 0.3]} rotY={-Math.PI / 2} bg="#052e16" lines={[{ t: scaleText, c: "#4ade80", s: 150 }]} />}
         </group>
       ))}
     </group>
@@ -527,11 +529,11 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
       if (s.carryBig) { const [bx, bz] = side(-0.45, 0.3); big.current.position.set(bx, 0, bz); big.current.rotation.y = s.yaw; }
       else if (s.bigOnBelt !== null) {
         // Tagged: off the scale onto the belt behind the desks, then along it and through the flaps.
-        const e = s.t - s.bigOnBelt, sz = 15 + (SCALE.dz1 + SCALE.dz2) / 2;
+        const e = s.t - s.bigOnBelt, sz = s.deskZ + (SCALE.dz1 + SCALE.dz2) / 2;
         const bx = ix + (MAIN_BELT.x1 + MAIN_BELT.x2) / 2;
         if (e < 1.2) { const f = e / 1.2; big.current.position.set(ix - 0.35 + (bx - ix + 0.35) * f, SCALE.h + (MAIN_BELT.h - SCALE.h) * f, sz); big.current.rotation.y = Math.PI / 2; }
         else { const z = sz - (e - 1.2) * MAIN_BELT.speed; big.current.position.set(bx, MAIN_BELT.h, z); big.current.rotation.y = Math.PI; big.current.visible = z > 8.9; }
-      } else if (s.bigOnScale) { big.current.position.set(ix - 0.35, SCALE.h, 15 + (SCALE.dz1 + SCALE.dz2) / 2); big.current.rotation.y = Math.PI / 2; }
+      } else if (s.bigOnScale) { big.current.position.set(ix - 0.35, SCALE.h, s.deskZ + (SCALE.dz1 + SCALE.dz2) / 2); big.current.rotation.y = Math.PI / 2; }
     }
     // The arches' lights: red when one beeps, green when it clears you.
     for (const m of archLights.current) {
@@ -574,7 +576,8 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
     // Show the way: an arrow at your feet, and a ring where you're going.
     const [tx, tz] = targetOf(s, cfg, gate, desk);
     if (arrow.current) { arrow.current.visible = s.hint; arrow.current.position.set(s.x, 0.06, s.z); arrow.current.rotation.y = Math.atan2(tx - s.x, tz - s.z); }
-    if (ring.current) { ring.current.visible = s.hint; ring.current.position.set(tx, 0.05, tz); const sc = 1 + Math.sin(s.t * 4) * 0.12; ring.current.scale.set(sc, sc, sc); }
+    // The ring where you're going is always shown (the arrow at your feet is the "Show me the way" help).
+    if (ring.current) { ring.current.visible = s.step < STEPS.length; ring.current.position.set(tx, 0.05, tz); const sc = 1 + Math.sin(s.t * 4) * 0.12; ring.current.scale.set(sc, sc, sc); }
 
     // What you're next to: the action button for it.
     let near: string | null = null;
@@ -583,7 +586,13 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
     const atEgate = PASSAGES.some((g) => !s.open.has(g.id) && Math.abs(s.x - g.x) < 1 && s.z > 26.6 && s.z < 28.4);
     if ((id === "board" || id === "checkin") && atEgate) near = "egate-early";
     else if (id === "board" && close(0, 4.6, 1.8)) near = "board";
-    else if (id === "checkin" && close(ix - 1.6, 15)) near = "checkin";
+    else if (id === "checkin") {
+      // In front of any desk along a row's counter side (x within 1.8 m of the desks, the row's length): yours takes
+      // your bag at the nearest desk; another airline's row says it isn't yours.
+      const r = ISLANDS.findIndex((x) => s.x > x - 2.6 && s.x < x - 0.8 && s.z > 8.4 && s.z < 21.6);
+      if (r === cfg.row - 1) { near = "checkin"; s.deskZ = DESK_Z.reduce((a, z) => (Math.abs(z - s.z) < Math.abs(a - s.z) ? z : a), DESK_Z[0]); }
+      else if (r >= 0) near = `wrongrow:${r + 1}`;
+    }
     else if (id === "passport") {
       // The officer's desks (anyone), and the e-gates (residents: a visitor is sent to the desk).
       const d = DESKS.find((d) => Math.abs(s.x - d.x) < 0.75 && s.z > 26.6 && s.z < 28.4);
@@ -745,7 +754,7 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
   const toName = CITIES[to].name;
   const quality = useMemo(() => canvasQuality(), []);
   const controls = useRef<Controls>({ x: 0, y: 0 });
-  const live = useRef<Live>({ x: 0, z: 1.4, yaw: 0, moving: false, t: 0, step: 0, sec: "sort", carryBig: true, carrySmall: true, bigOnBelt: null, smallOnBelt: null, bigOnScale: false, beepAt: -99, clearAt: -99, open: new Set(domestic ? PASSAGES.map((g) => g.id) : []), bumpCool: 0, bumps: 0, hint: false });
+  const live = useRef<Live>({ x: 0, z: 1.4, yaw: 0, moving: false, t: 0, step: 0, sec: "sort", carryBig: true, carrySmall: true, bigOnBelt: null, smallOnBelt: null, bigOnScale: false, deskZ: 15, beepAt: -99, clearAt: -99, open: new Set(domestic ? PASSAGES.map((g) => g.id) : []), bumpCool: 0, bumps: 0, hint: false });
   const [step, setStep] = useState(0);
   const [near, setNear] = useState<string | null>(null);
   const [toast, setToast] = useState<{ text: string; tone: "info" | "bad" | "good" } | null>(null);
@@ -814,6 +823,11 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
     if (!near) return;
     gameAudio.playClickSound();
     if (near === "board") { say(`Your flight: ${AIRLINE.code} 107 to ${toName}, check-in row ${cfg.row}.`, "good"); next(); return; }
+    if (near.startsWith("wrongrow:")) {
+      gameAudio.sfx?.("error"); setMistakes((m) => m + 1);
+      say(`This is row ${near.split(":")[1]}, another airline's counters. ${AIRLINE.name} is at row ${cfg.row}: follow the green line on the floor.`, "bad", 4800);
+      return;
+    }
     if (near === "checkin") { s.carryBig = false; s.bigOnScale = true; setOnScale(true); setQuiz("checkin"); return; }
     if (near === "egate-early") {
       gameAudio.sfx?.("error");
@@ -916,6 +930,7 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
   const actionLabel = !near ? null
     : near === "board" ? "🖥️ Read the departures screen"
     : near === "checkin" ? "🧳 Put your suitcase on the scale"
+    : near.startsWith("wrongrow:") ? "🧳 Check in here"
     : near === "egate-early" ? "🛂 Why won't the gate open?"
     : near === "egate-visitor" ? "🛂 Scan your passport"
     : near.startsWith("desk:") ? "🛂 Hand your passport to the officer"
