@@ -87,7 +87,8 @@ function layout(p: Cfg["palette"], style: AirportStyleId) {
   add(-70, 70, -6, 70.4); add(6, 70, 70, 70.4); add(-70.4, 70, -70, 82); add(70, 70, 70.4, 82);
   add(-70, 82, 70, 82.4, WALL_H, p.glass, { glass: true });
   // Check-in islands (one per row) and the departures board.
-  for (const x of ISLANDS) add(x - 0.8, 9, x + 0.8, 21, 1.1, "#e2e8f0");
+  // (Drawn as desks, scales and a belt by CheckInRow; solid as one block, with the belt's flaps at its far end.)
+  for (const x of ISLANDS) add(x - 0.8, 8.7, x + 0.8, 21, 1.1, "#e2e8f0", { id: "island" });
   add(-3, 5.6, 3, 6, 3.4, "#0b1220");
   // People queueing at the other counters.
   for (const [x, z] of QUEUE) add(x - 0.25, z - 0.25, x + 0.25, z + 0.25, 0, "#64748b", { id: "person" });
@@ -102,7 +103,9 @@ function layout(p: Cfg["palette"], style: AirportStyleId) {
   // Security: three lanes, each with its X-ray belt and the walk-through arch (only the arch's gap lets you past).
   add(-2.8, 32, -2.6, 44, 1.2, "#cbd5e1"); add(2.6, 32, 2.8, 44, 1.2, "#cbd5e1");
   for (const L of LANES) {
-    add(L + 0.8, 33.4, L + 1.8, 43, 0.85, "#1f2937");
+    add(L + 0.8, 33.4, L + 1.8, 43, 0.85, "#1f2937", { id: "xray" });
+    // The officer watching the X-ray screen beside the belt.
+    add(L + 1.95, 34.75, L + 2.45, 35.25, 0, "#64748b", { id: "person" });
     add(L - 2.6, 37.8, L - 0.5 - GAP, 38.2, 2.2, "#cbd5e1"); add(L - 0.5 + GAP, 37.8, L + 0.8, 38.2, 2.2, "#cbd5e1"); add(L + 1.8, 37.8, L + 2.6, 38.2, 2.2, "#cbd5e1");
   }
   // Duty free: shops, and the landmark in the middle of the hall.
@@ -275,7 +278,7 @@ function departureRoutes(row: number, desk: boolean, L: string): Route[] {
   const sx = desk ? LANES[0] - 0.5 : -0.5;
   return [
     { pts: [[0, 1.6], [0, 4.4]], color: "#0f172a", label: "DEPARTURES SCREEN" },
-    { pts: [[0, 4.4], [side, 4.6], [side, 7.8], [aisle, 8.4], [aisle, 13.2], [ix - 1.6, 15]], color: "#0d9488", label: `CHECK-IN ROW ${row}` },
+    { pts: [[0, 4.4], [side, 4.6], [side, 7.4], [aisle, 7.9], [aisle, 13.2], [ix - 1.6, 15]], color: "#0d9488", label: `CHECK-IN ROW ${row}` },
     { pts: [[ix - 1.6, 15], [aisle, 16.8], [aisle, 22.2], [-1.5, 22.2], ...(desk ? [[px, 25.4]] as Array<[number, number]> : []), [px, 27.2], [px, 30.4]], color: "#2563eb", label: desk ? "PASSPORT CONTROL · OFFICER" : "PASSPORT CONTROL" },
     { pts: [[px, 30.4], [sx, 31.4], [sx, 44.2]], color: "#d97706", label: "SECURITY" },
     { pts: [[sx, 44.2], [-3.4, 48.5], [-3.4, 64.5], [0, 69], [0, 73.4]], color: "#7c3aed", label: "GATES" },
@@ -324,7 +327,68 @@ interface Live {
   x: number; z: number; yaw: number; moving: boolean; /** The scene's clock (seconds), for the belts. */ t: number;
   step: number; sec: Sec; carryBig: boolean; carrySmall: boolean;
   bigOnBelt: number | null; smallOnBelt: { lane: number; at: number } | null;
+  /** Your suitcase is on the check-in scale (until it's tagged and goes down the belt at bigOnBelt). */
+  bigOnScale: boolean;
+  /** When the arch last beeped / cleared you (its light flashes red / green). */
+  beepAt: number; clearAt: number;
   open: Set<string>; bumpCool: number; bumps: number; hint: boolean;
+}
+
+/** Where check-in's desks are along each row (z of each desk; yours is the middle one, z 15). */
+const DESK_Z = [11, 15, 19];
+/** The check-in scale beside a desk at z `zc`, and the belt behind the agents (x offsets from the row's middle). */
+const SCALE = { x1: -0.8, x2: 0.3, dz1: 0.2, dz2: 1.1, h: 0.32 };
+const MAIN_BELT = { x1: 0.3, x2: 0.8, z1: 8.9, z2: 21, h: 0.55, speed: 1.4 };
+const XRAY_SPEED = 8.8 / BELT_SECONDS;
+
+/** A conveyor belt along z: its frame, and slats sliding along it (dir +1 or -1), so you can see it running. */
+function Belt({ x1, x2, z1, z2, h, speed, dir }: { x1: number; x2: number; z1: number; z2: number; h: number; speed: number; dir: 1 | -1 }) {
+  const len = z2 - z1, gap = 0.32, n = Math.floor(len / gap);
+  const slats = useRef<Array<THREE.Mesh | null>>([]);
+  const t = useRef(0);
+  useFrame((_, dt) => {
+    t.current += Math.min(dt, 0.05);
+    slats.current.forEach((m, i) => {
+      if (!m) return;
+      const d = (((t.current * speed * dir + i * gap) % len) + len) % len;
+      m.position.z = z1 + d;
+    });
+  });
+  return (
+    <group>
+      <mesh position={[(x1 + x2) / 2, (h - 0.04) / 2, (z1 + z2) / 2]}><boxGeometry args={[x2 - x1, h - 0.04, len]} /><meshStandardMaterial color="#475569" metalness={0.5} roughness={0.4} /></mesh>
+      <mesh position={[(x1 + x2) / 2, h - 0.02, (z1 + z2) / 2]}><boxGeometry args={[x2 - x1 - 0.06, 0.03, len]} /><meshStandardMaterial color="#111827" roughness={0.9} /></mesh>
+      {Array.from({ length: n }, (_, i) => (
+        <mesh key={i} ref={(m) => { slats.current[i] = m; }} position={[(x1 + x2) / 2, h + 0.002, z1 + i * gap]}>
+          <boxGeometry args={[x2 - x1 - 0.08, 0.012, 0.05]} /><meshStandardMaterial color="#374151" />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+/** A check-in row: desks with their agents and scales on your side, and the belt behind them that takes the bags
+ *  away through rubber flaps at the end. Your airline's row has the screen over your desk showing your bag's weight. */
+function CheckInRow({ x, mine, accent, scaleText }: { x: number; mine: boolean; accent: string; scaleText: string }) {
+  return (
+    <group>
+      <Belt x1={x + MAIN_BELT.x1} x2={x + MAIN_BELT.x2} z1={MAIN_BELT.z1} z2={MAIN_BELT.z2} h={MAIN_BELT.h} speed={MAIN_BELT.speed} dir={-1} />
+      {/* The flaps where the bags go through to the baggage hall. */}
+      <mesh position={[x + 0.55, 1.05, 8.75]}><boxGeometry args={[0.8, 0.12, 0.3]} /><meshStandardMaterial color="#334155" /></mesh>
+      {[0.2, 0.9].map((dx) => <mesh key={dx} position={[x + dx, 0.55, 8.75]}><boxGeometry args={[0.1, 1.1, 0.3]} /><meshStandardMaterial color="#334155" /></mesh>)}
+      {Array.from({ length: 5 }, (_, k) => <mesh key={k} position={[x + 0.3 + k * 0.1, 0.8, 8.72]}><boxGeometry args={[0.08, 0.5, 0.02]} /><meshStandardMaterial color="#0f172a" /></mesh>)}
+      {DESK_Z.map((zc) => (
+        <group key={zc}>
+          {/* The desk, in the row's colour. */}
+          <mesh position={[x - 0.575, 0.55, zc - 0.45]}><boxGeometry args={[0.45, 1.1, 1.1]} /><meshStandardMaterial color="#f8fafc" /></mesh>
+          <mesh position={[x - 0.81, 0.55, zc - 0.45]}><boxGeometry args={[0.02, 0.5, 1.1]} /><meshStandardMaterial color={mine ? accent : "#64748b"} /></mesh>
+          {/* The scale, and its little screen. */}
+          <mesh position={[x + (SCALE.x1 + SCALE.x2) / 2, SCALE.h / 2, zc + (SCALE.dz1 + SCALE.dz2) / 2]}><boxGeometry args={[SCALE.x2 - SCALE.x1, SCALE.h, SCALE.dz2 - SCALE.dz1]} /><meshStandardMaterial color="#9ca3af" metalness={0.6} roughness={0.3} /></mesh>
+          {mine && zc === 15 && <Sign at={[x - 0.9, 1.25, zc + 0.65]} size={[0.02 + 0.6, 0.3]} rotY={-Math.PI / 2} bg="#052e16" lines={[{ t: scaleText, c: "#4ade80", s: 150 }]} />}
+        </group>
+      ))}
+    </group>
+  );
 }
 
 /** Where the next thing to do is. */
@@ -345,7 +409,9 @@ function targetOf(s: Live, cfg: Cfg, gate: number, desk: boolean): [number, numb
   }
 }
 
-function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, onEvent, companions, desk }: {
+function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, onEvent, companions, desk, scaleText }: {
+  /** What your check-in scale's screen shows. */
+  scaleText: string;
   /** A visitor here: passport control is at the officer's desk (the e-gates are for residents). */
   desk: boolean;
   look: Look; cfg: Cfg; code: string; companions: Companion[]; gate: number; gateDest: Record<number, string>; to: string; live: React.RefObject<Live>; controls: React.RefObject<Controls>;
@@ -362,6 +428,7 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
   const movers = useRef<Array<THREE.Group | null>>([]);
   const walkers = useRef<Array<THREE.Group | null>>([]);
   const barriers = useRef<Record<string, THREE.Mesh | null>>({});
+  const archLights = useRef<Array<THREE.Mesh | null>>([]);
   const tall = useRef<Array<THREE.Mesh | null>>([]);
   const signs = useRef(new Set<THREE.Mesh>());
   const addSign = useCallback((m: THREE.Mesh | null) => { if (m) signs.current.add(m); }, []);
@@ -419,8 +486,8 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
       if (STEPS[s.step]?.id === "security") {
         const lane = LANES.find((L) => Math.abs(s.x - (L - 0.5)) < 0.7);
         if (lane !== undefined && prevZ < 38 && s.z >= 38) {
-          if (s.carrySmall) { s.z = 37; onEvent({ kind: "beep", text: "Beep! 🚨 Your bag goes on the X-ray belt first, not through the arch with you." }); }
-          else if (s.sec === "arch") { s.sec = "pickup"; onEvent({ kind: "clear", text: "No beep ✓ Now pick up your bag at the end of the belt." }); }
+          if (s.carrySmall) { s.z = 37; s.beepAt = s.t; onEvent({ kind: "beep", text: "Beep! 🚨 Your bag goes on the X-ray belt first, not through the arch with you." }); }
+          else if (s.sec === "arch") { s.sec = "pickup"; s.clearAt = s.t; onEvent({ kind: "clear", text: "No beep ✓ Now pick up your bag at the end of the belt." }); }
         }
       }
       // Passport control done once you're through the e-gate.
@@ -458,7 +525,20 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
     const side = (off: number, back: number) => [s.x + Math.cos(s.yaw) * off - Math.sin(s.yaw) * back, s.z - Math.sin(s.yaw) * off - Math.cos(s.yaw) * back] as const;
     if (big.current) {
       if (s.carryBig) { const [bx, bz] = side(-0.45, 0.3); big.current.position.set(bx, 0, bz); big.current.rotation.y = s.yaw; }
-      else if (s.bigOnBelt !== null) { const t = Math.min(1, (s.t - s.bigOnBelt) / 3); big.current.position.set(ix + 0.2 - t * 0.2, 1.1 - t * 0.6, 15 + t * 0.3); big.current.visible = t < 1; }
+      else if (s.bigOnBelt !== null) {
+        // Tagged: off the scale onto the belt behind the desks, then along it and through the flaps.
+        const e = s.t - s.bigOnBelt, sz = 15 + (SCALE.dz1 + SCALE.dz2) / 2;
+        const bx = ix + (MAIN_BELT.x1 + MAIN_BELT.x2) / 2;
+        if (e < 1.2) { const f = e / 1.2; big.current.position.set(ix - 0.35 + (bx - ix + 0.35) * f, SCALE.h + (MAIN_BELT.h - SCALE.h) * f, sz); big.current.rotation.y = Math.PI / 2; }
+        else { const z = sz - (e - 1.2) * MAIN_BELT.speed; big.current.position.set(bx, MAIN_BELT.h, z); big.current.rotation.y = Math.PI; big.current.visible = z > 8.9; }
+      } else if (s.bigOnScale) { big.current.position.set(ix - 0.35, SCALE.h, 15 + (SCALE.dz1 + SCALE.dz2) / 2); big.current.rotation.y = Math.PI / 2; }
+    }
+    // The arches' lights: red when one beeps, green when it clears you.
+    for (const m of archLights.current) {
+      if (!m) continue;
+      const mat = m.material as THREE.MeshStandardMaterial;
+      const c = s.t - s.beepAt < 1.2 ? (Math.floor((s.t - s.beepAt) * 6) % 2 ? "#7f1d1d" : "#ef4444") : s.t - s.clearAt < 1.8 ? "#22c55e" : "#64748b";
+      mat.color.set(c); mat.emissive.set(c === "#64748b" ? "#000000" : c);
     }
     if (small.current) {
       if (s.carrySmall) { small.current.visible = true; const [bx, bz] = side(0.45, 0.15); small.current.position.set(bx, 0, bz); small.current.rotation.y = s.yaw; }
@@ -530,7 +610,7 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
       {/* The floor, and the apron outside the glass. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 41]}><planeGeometry args={[142, 84]} /><meshStandardMaterial color={p.floor} roughness={0.35} metalness={0.05} /></mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 110]}><planeGeometry args={[300, 56]} /><meshStandardMaterial color="#9ca3af" /></mesh>
-      {boxes.filter((b) => b.id !== "pillar" && b.id !== "person" && b.id !== "bed").map((b, i) => {
+      {boxes.filter((b) => b.id !== "pillar" && b.id !== "person" && b.id !== "bed" && b.id !== "island" && b.id !== "xray").map((b, i) => {
         const isBarrier = b.id?.startsWith("egate:");
         return (
           <mesh key={i} ref={isBarrier ? (m) => { barriers.current[b.id!] = m; } : b.h >= 2.2 ? (m) => { tall.current[i] = m; } : undefined} position={[(b.x1 + b.x2) / 2, b.h / 2, (b.z1 + b.z2) / 2]}>
@@ -558,6 +638,14 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
         { t: "GW 220  LONDON  ROW 1   ·   SO 451  MUMBAI  ROW 2", c: "#94a3b8", s: 34 },
         { t: "FA 902  CAIRO  ROW 4   ·   GW 318  ISTANBUL  ROW 1", c: "#94a3b8", s: 34 },
       ]} />
+      {ISLANDS.map((x, i) => <CheckInRow key={`row${x}`} x={x} mine={i + 1 === cfg.row} accent={AIRLINE.colors.tail} scaleText={scaleText} />)}
+      <Suspense fallback={null}>
+        {/* The check-in agents behind their desks, and the officers at the X-ray screens. */}
+        {ISLANDS.flatMap((x, i) => DESK_Z.filter((z) => i + 1 === cfg.row || z !== 15).map((z) => (
+          <group key={`ag${x}${z}`} position={[x - 0.05, 0, z - 0.45]} rotation={[0, -Math.PI / 2, 0]}><CitizenAvatar look={lookOf(50 + i * 3 + DESK_Z.indexOf(z))} animation="idle" /></group>
+        )))}
+        {LANES.map((L, i) => <group key={`xo${L}`} position={[L + 2.2, 0, 35]} rotation={[0, 0, 0]}><CitizenAvatar look={lookOf(60 + i)} animation="idle" /></group>)}
+      </Suspense>
       {/* Each row's sign over its counters. */}
       {ISLANDS.map((x, i) => (
         <Sign key={x} at={[x, 3.4, 15]} size={[2.6, 1]} rotY={-Math.PI / 2} bg={i + 1 === cfg.row ? AIRLINE.colors.tail : "#334155"}
@@ -571,9 +659,17 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
           {/* The arch's frame round its gap. */}
           <mesh position={[x - 0.5 - GAP - 0.05, 1.1, 38]}><boxGeometry args={[0.12, 2.2, 0.5]} /><meshStandardMaterial color="#64748b" /></mesh>
           <mesh position={[x - 0.5 + GAP + 0.05, 1.1, 38]}><boxGeometry args={[0.12, 2.2, 0.5]} /><meshStandardMaterial color="#64748b" /></mesh>
-          <mesh position={[x - 0.5, 2.25, 38]}><boxGeometry args={[GAP * 2 + 0.25, 0.15, 0.5]} /><meshStandardMaterial color="#64748b" /></mesh>
-          {/* The X-ray tunnel over the belt. */}
-          <mesh position={[x + 1.3, 1.4, 38]}><boxGeometry args={[1.2, 1.2, 2.4]} /><meshStandardMaterial color="#e2e8f0" /></mesh>
+          <mesh ref={(m) => { archLights.current[LANES.indexOf(x)] = m; }} position={[x - 0.5, 2.25, 38]}><boxGeometry args={[GAP * 2 + 0.25, 0.15, 0.5]} /><meshStandardMaterial color="#64748b" emissiveIntensity={0.8} /></mesh>
+          {/* The X-ray machine: its belt running, the tunnel with lead curtains at both ends, and the screen. */}
+          <Belt x1={x + 0.8} x2={x + 1.8} z1={33.4} z2={43} h={0.85} speed={XRAY_SPEED} dir={1} />
+          <mesh position={[x + 1.3, 1.9, 38]}><boxGeometry args={[1.3, 0.12, 2.4]} /><meshStandardMaterial color="#e2e8f0" /></mesh>
+          {[0.68, 1.92].map((dx) => <mesh key={dx} position={[x + dx, 1.35, 38]}><boxGeometry args={[0.1, 1.0, 2.4]} /><meshStandardMaterial color="#e2e8f0" /></mesh>)}
+          {[36.8, 39.2].map((z) => Array.from({ length: 6 }, (_, k) => (
+            <mesh key={`${z}${k}`} position={[x + 0.85 + k * 0.18, 1.45, z]}><boxGeometry args={[0.15, 0.8, 0.02]} /><meshStandardMaterial color="#1e293b" transparent opacity={0.85} /></mesh>
+          )))}
+          <mesh position={[x + 1.3, 1.2, 37.6]}><boxGeometry args={[1.0, 0.3, 0.04]} /><meshBasicMaterial color="#facc15" /></mesh>
+          <mesh position={[x + 2.2, 0.6, 35.9]}><cylinderGeometry args={[0.05, 0.08, 1.2, 8]} /><meshStandardMaterial color="#334155" /></mesh>
+          <Sign at={[x + 2.2, 1.45, 35.9]} size={[0.7, 0.45]} rotY={Math.PI} bg="#020617" lines={[{ t: "X-RAY", c: "#38bdf8", s: 90 }, { t: "▣ ▤ ▥", c: "#f97316", s: 90 }]} />
         </group>
       ))}
       <Landmark kind={cfg.landmark} p={p} />
@@ -649,9 +745,7 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
   const toName = CITIES[to].name;
   const quality = useMemo(() => canvasQuality(), []);
   const controls = useRef<Controls>({ x: 0, y: 0 });
-  const live = useRef<Live>({ x: 0, z: 1.4, yaw: 0, moving: false, t: 0, step: 0, sec: "sort", carryBig: true, carrySmall: true, bigOnBelt: null, smallOnBelt: null, open: new Set(domestic ? PASSAGES.map((g) => g.id) : []), bumpCool: 0, bumps: 0, hint: false });
-  // TEMP-TEST-HOOK
-  useEffect(() => { (window as unknown as { __AW: unknown }).__AW = { live, gate }; }, [gate]);
+  const live = useRef<Live>({ x: 0, z: 1.4, yaw: 0, moving: false, t: 0, step: 0, sec: "sort", carryBig: true, carrySmall: true, bigOnBelt: null, smallOnBelt: null, bigOnScale: false, beepAt: -99, clearAt: -99, open: new Set(domestic ? PASSAGES.map((g) => g.id) : []), bumpCool: 0, bumps: 0, hint: false });
   const [step, setStep] = useState(0);
   const [near, setNear] = useState<string | null>(null);
   const [toast, setToast] = useState<{ text: string; tone: "info" | "bad" | "good" } | null>(null);
@@ -659,6 +753,7 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
   const [hintUsed, setHintUsed] = useState(false);
   const [quiz, setQuiz] = useState<"checkin" | "scale" | "security" | "desk" | null>(null);
   const deskSide = useRef<"l" | "r">("l");
+  const [onScale, setOnScale] = useState(false);
   // Check-in's scale: your suitcase (seeded, so the same trip weighs the same) against your cabin's allowance, and the
   // cabin bag you can repack into.
   const BAG = WALK.baggage;
@@ -719,7 +814,7 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
     if (!near) return;
     gameAudio.playClickSound();
     if (near === "board") { say(`Your flight: ${AIRLINE.code} 107 to ${toName}, check-in row ${cfg.row}.`, "good"); next(); return; }
-    if (near === "checkin") { setQuiz("checkin"); return; }
+    if (near === "checkin") { s.carryBig = false; s.bigOnScale = true; setOnScale(true); setQuiz("checkin"); return; }
     if (near === "egate-early") {
       gameAudio.sfx?.("error");
       const what = STEPS[s.step]?.id === "board" ? "First find your flight on the departures screen by the entrance, then check in your suitcase" : `First check in your suitcase at row ${cfg.row}`;
@@ -789,7 +884,7 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
   const bagAccepted = () => {
     const s = live.current;
     setQuiz(null);
-    s.carryBig = false; s.bigOnBelt = s.t;
+    s.carryBig = false; s.bigOnScale = false; s.bigOnBelt = s.t;
     setBoardingPass(true);
     say(`Bag tagged to ${airportOf(to).code} ✓ Boarding pass: gate ${cfg.gateLetter}${gate}, seat ${seat}.`, "good", 4200);
     next();
@@ -833,7 +928,7 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
   return (
     <main className="fixed inset-0 z-[60] bg-slate-950 select-none touch-none">
       <Canvas dpr={quality.dpr} camera={{ position: [0, 6.5, -7], fov: 60, near: 0.1, far: 600 }} gl={{ powerPreference: quality.powerPreference }}>
-        <World desk={desk} companions={companions} look={look} cfg={cfg} code={airportOf(from).code} gate={gate} gateDest={gateDest} to={toName} live={live} controls={controls} onNear={setNear} onEvent={onEvent} />
+        <World scaleText={onScale ? `${bagKg}.0 kg` : "0.0 kg"} desk={desk} companions={companions} look={look} cfg={cfg} code={airportOf(from).code} gate={gate} gateDest={gateDest} to={toName} live={live} controls={controls} onNear={setNear} onEvent={onEvent} />
       </Canvas>
 
       {/* Top: the step, the timer and the tip. */}
