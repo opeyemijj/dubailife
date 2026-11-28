@@ -411,6 +411,60 @@ function targetOf(s: Live, cfg: Cfg, gate: number, desk: boolean): [number, numb
   }
 }
 
+/** The places you can do something at for the step you're on (each gets a glowing circle): the departures screen,
+ *  every desk of your row, each e-gate or the officer's desk, each security lane's tray spot and belt, the arch, the
+ *  bag pickup, and your gate. */
+function spotsOf(s: Live, cfg: Cfg, gate: number, desk: boolean): Array<[number, number]> {
+  const ix = ISLANDS[cfg.row - 1];
+  switch (STEPS[s.step]?.id) {
+    case "board": return [[0, 4.6]];
+    case "checkin": return s.carryBig ? DESK_Z.map((z) => [ix - 1.6, z]) : [];
+    case "passport": {
+      const opened = PASSAGES.find((g) => s.open.has(g.id));
+      if (opened) return [[opened.x, 30]];
+      return desk ? DESKS.map((d) => [d.x, 27.7]) : EGATES.map((g) => [g, 27.7]);
+    }
+    case "security": {
+      if (s.sec === "sort" || s.sec === "drop") return LANES.map((L) => [L + 0.25, 34.4]);
+      const lane = s.smallOnBelt?.lane ?? LANES[1];
+      if (s.sec === "arch") return [[lane - 0.5, 37.2]];
+      return [[lane + 0.25, 43.6]];
+    }
+    case "gate": return [[gateX(gate), 79.8]];
+    default: return [];
+  }
+}
+
+/** A glowing circle with a beam of light over every place you can do something (`spots`, updated each frame by
+ *  the scene), so you can see where to go and that something happens there. */
+export function ActionSpots({ spots, color = "#facc15" }: { spots: React.RefObject<Array<[number, number]>>; color?: string }) {
+  const MAX = 8;
+  const groups = useRef<Array<THREE.Group | null>>([]);
+  const t = useRef(0);
+  useFrame((_, dt) => {
+    t.current += Math.min(dt, 0.05);
+    const list = spots.current ?? [];
+    const pulse = 1 + Math.sin(t.current * 4) * 0.12;
+    groups.current.forEach((g, i) => {
+      if (!g) return;
+      const at = list[i];
+      g.visible = !!at;
+      if (at) { g.position.set(at[0], 0, at[1]); g.scale.set(pulse, 1, pulse); }
+    });
+  });
+  return (
+    <group>
+      {Array.from({ length: MAX }, (_, i) => (
+        <group key={i} ref={(g) => { groups.current[i] = g; }} visible={false}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}><ringGeometry args={[0.62, 0.82, 40]} /><meshBasicMaterial color={color} transparent opacity={0.95} toneMapped={false} /></mesh>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.035, 0]}><circleGeometry args={[0.62, 40]} /><meshBasicMaterial color={color} transparent opacity={0.22} toneMapped={false} /></mesh>
+          <mesh position={[0, 1.3, 0]}><cylinderGeometry args={[0.72, 0.72, 2.6, 24, 1, true]} /><meshBasicMaterial color={color} transparent opacity={0.12} side={THREE.DoubleSide} depthWrite={false} toneMapped={false} /></mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
 function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, onEvent, companions, desk, scaleText }: {
   /** What your check-in scale's screen shows. */
   scaleText: string;
@@ -431,6 +485,7 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
   const walkers = useRef<Array<THREE.Group | null>>([]);
   const barriers = useRef<Record<string, THREE.Mesh | null>>({});
   const archLights = useRef<Array<THREE.Mesh | null>>([]);
+  const spots = useRef<Array<[number, number]>>([]);
   const tall = useRef<Array<THREE.Mesh | null>>([]);
   const signs = useRef(new Set<THREE.Mesh>());
   const addSign = useCallback((m: THREE.Mesh | null) => { if (m) signs.current.add(m); }, []);
@@ -579,6 +634,9 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
     // The ring where you're going is always shown (the arrow at your feet is the "Show me the way" help).
     if (ring.current) { ring.current.visible = s.step < STEPS.length; ring.current.position.set(tx, 0.05, tz); const sc = 1 + Math.sin(s.t * 4) * 0.12; ring.current.scale.set(sc, sc, sc); }
 
+    // Every place you can do something for this step gets a glowing circle (ActionSpots).
+    spots.current = spotsOf(s, cfg, gate, desk);
+
     // What you're next to: the action button for it.
     let near: string | null = null;
     const id = STEPS[s.step]?.id;
@@ -724,6 +782,7 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
       <group ref={small}><Suitcase big={false} color="#1e293b" /></group>
       <group ref={arrow}><mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 1.2]}><circleGeometry args={[0.45, 3]} /><meshBasicMaterial color="#10b981" /></mesh></group>
       <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.7, 0.95, 32]} /><meshBasicMaterial color="#10b981" transparent opacity={0.85} /></mesh>
+      <ActionSpots spots={spots} />
       <group ref={me}>
         <Suspense fallback={null}><CitizenAvatar look={look} animation={anim} pace={anim === "walk" ? WALK_SPEED : undefined} /></Suspense>
       </group>

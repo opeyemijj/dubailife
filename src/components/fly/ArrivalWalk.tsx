@@ -25,7 +25,7 @@ import { CITIES, type CityId } from "@/lib/city/cities";
 import { airportOf, AIRLINE } from "@/lib/flights";
 import { canvasQuality } from "@/lib/device";
 import { gameAudio } from "@/utils/gameAudio";
-import { FadeContext, FloorGuide, Followers, RESIDENT_OF, Sheet, Sign, Suitcase, countryOf, deskOf, styleOf, type Route } from "./AirportWalk";
+import { ActionSpots, FadeContext, FloorGuide, Followers, RESIDENT_OF, Sheet, Sign, Suitcase, countryOf, deskOf, styleOf, type Route } from "./AirportWalk";
 import { CitySkyline, Column, PalmColumn, Planting, Roof, type AirportStyleId, type Hall, type Planter } from "./AirportStyle";
 import type { Companion } from "./Flight";
 
@@ -141,6 +141,7 @@ function World({ look, mine, myBag, code, beltNo, to, live, controls, onNear, on
   const bags = useRef<Array<THREE.Group | null>>([]);
   const walkers = useRef<Array<THREE.Group | null>>([]);
   const barriers = useRef<Record<string, THREE.Mesh | null>>({});
+  const spots = useRef<Array<[number, number]>>([]);
   const tall = useRef<Array<THREE.Mesh | null>>([]);
   const signs = useRef(new Set<THREE.Mesh>());
   const addSign = useCallback((m: THREE.Mesh | null) => { if (m) signs.current.add(m); }, []);
@@ -249,6 +250,16 @@ function World({ look, mine, myBag, code, beltNo, to, live, controls, onNear, on
     if (arrow.current) { arrow.current.visible = s.hint; arrow.current.position.set(s.x, 0.06, s.z); arrow.current.rotation.y = Math.atan2(tx - s.x, tz - s.z); }
     if (ring.current) { ring.current.visible = s.hint; ring.current.position.set(tx, 0.05, tz); }
 
+    // Every place you can do something for this step gets a glowing circle (ActionSpots).
+    {
+      const opened = PASSAGES.find((g) => s.open.has(g.id));
+      const step = STEPS[s.step]?.id;
+      spots.current = step === "immigration" ? (opened ? [[opened.x, 15]] : desk ? DESKS.map((d) => [d.x, 12.2] as [number, number]) : EGATES.map((g) => [g, 12.2] as [number, number]))
+        : step === "baggage" ? [[BELTS[mine] - LOOP.x - 0.9, 28]]
+        : step === "customs" ? [s.quizDone ? [-4, 46.4] : [0, 40.8]]
+        : step === "exit" ? [[0, 60.5]] : [];
+    }
+
     let near: string | null = null;
     const id = STEPS[s.step]?.id;
     if (id === "immigration") {
@@ -333,6 +344,7 @@ function World({ look, mine, myBag, code, beltNo, to, live, controls, onNear, on
       <group ref={small}><Suitcase big={false} color="#1e293b" /></group>
       <group ref={arrow}><mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 1.2]}><circleGeometry args={[0.45, 3]} /><meshBasicMaterial color="#10b981" /></mesh></group>
       <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.7, 0.95, 32]} /><meshBasicMaterial color="#10b981" transparent opacity={0.85} /></mesh>
+      <ActionSpots spots={spots} />
       <group ref={me}><Suspense fallback={null}><CitizenAvatar look={look} animation={anim} pace={anim === "walk" ? WALK_SPEED : undefined} /></Suspense></group>
       <Followers companions={companions} live={live} walking={anim === "walk"} />
       <OrbitControls makeDefault enablePan={false} enableDamping minDistance={3.5} maxDistance={16} minPolarAngle={0.4} maxPolarAngle={1.35} />
