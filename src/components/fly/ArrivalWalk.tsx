@@ -25,7 +25,8 @@ import { CITIES, type CityId } from "@/lib/city/cities";
 import { airportOf, AIRLINE } from "@/lib/flights";
 import { canvasQuality } from "@/lib/device";
 import { gameAudio } from "@/utils/gameAudio";
-import { FadeContext, FloorGuide, Followers, Sheet, Sign, Suitcase, type Route } from "./AirportWalk";
+import { FadeContext, FloorGuide, Followers, RESIDENT_OF, Sheet, Sign, Suitcase, countryOf, deskOf, styleOf, type Route } from "./AirportWalk";
+import { CitySkyline, Column, PalmColumn, Planting, Roof, type AirportStyleId, type Hall, type Planter } from "./AirportStyle";
 import type { Companion } from "./Flight";
 
 type Look = Parameters<typeof CitizenAvatar>[0]["look"];
@@ -42,6 +43,12 @@ const R = 0.35, WALK_SPEED = 3.2, RUN_SPEED = 5.6, WALL_H = 6;
 const EGATES = [-4.5, -1.5, 1.5, 4.5];
 /** Half the width of an e-gate's way through: wide enough to walk through without lining up exactly. */
 const GAP = 0.75;
+/** The officers' desks either side of the e-gates (visitors are seen here): each officer opens the gate in their desk. */
+const DESKS = [{ id: "egate:desk-l", x: -10.85, side: "l" }, { id: "egate:desk-r", x: 10.85, side: "r" }] as const;
+const PASSAGES = [...EGATES.map((g) => ({ id: `egate:${g}`, x: g })), ...DESKS.map((d) => ({ id: d.id, x: d.x }))];
+/** The halls, for the roof: passport control, the baggage hall, customs, the arrivals hall. */
+const HALLS: Hall[] = [{ x1: -14, z1: 9, x2: 14, z2: 16 }, { x1: -22, z1: 16, x2: 22, z2: 40 }, { x1: -8, z1: 40, x2: 8, z2: 50 }, { x1: -20, z1: 50, x2: 20, z2: 62 }];
+type Palette = (typeof WALK.airports)["dubai"]["palette"];
 /** The three carousels (x of each; they run z 22–34), and the belt numbers on their screens. */
 const BELTS = [-12, 0, 12];
 const BELT = { z1: 22, z2: 34, half: 1.5 };
@@ -52,18 +59,20 @@ const BAG_COLOURS = ["#1e293b", "#b91c1c", "#334155", "#7c3aed", "#a16207", "#0f
 
 interface Box { x1: number; z1: number; x2: number; z2: number; h: number; c: string; id?: string; glass?: boolean }
 
-function layout() {
+function layout(p: Palette, style: AirportStyleId) {
   const boxes: Box[] = [];
-  const wall = "#f7f5f0";
+  const wall = p.wall;
   const add = (x1: number, z1: number, x2: number, z2: number, h = WALL_H, c = wall, extra: Partial<Box> = {}) => boxes.push({ x1, z1, x2, z2, h, c, ...extra });
   // The corridor from the plane (z 0–9).
-  add(-6, -0.4, 6, 0, WALL_H, "#9fc7dd", { glass: true }); add(-6.4, 0, -6, 9); add(6, 0, 6.4, 9);
+  add(-6, -0.4, 6, 0, WALL_H, p.glass, { glass: true }); add(-6.4, 0, -6, 9); add(6, 0, 6.4, 9);
   // Passport control (z 9–16): the e-gates across the middle and officers' desks either side (the gates' barriers open).
   add(-14, 9, -6, 9.4); add(6, 9, 14, 9.4); add(-14.4, 9, -14, 16); add(14, 9, 14.4, 16);
   let from = -8.1;
   for (const g of EGATES) { add(from, 12.8, g - GAP, 13.2, 1.3, "#94a3b8"); add(g - GAP, 12.9, g + GAP, 13.1, 1.0, "#7dd3fc", { id: `egate:${g}`, glass: true }); from = g + GAP; }
   add(from, 12.8, 8.1, 13.2, 1.3, "#94a3b8");
-  add(-14, 12.6, -8.1, 13.4, 1.2, "#cbd5e1"); add(8.1, 12.6, 14, 13.4, 1.2, "#cbd5e1");
+  // The officers' desks, each with its own gate.
+  add(-14, 12.6, -11.6, 13.4, 1.2, "#cbd5e1"); add(-11.6, 12.9, -10.1, 13.1, 1.0, "#fca5a5", { id: DESKS[0].id, glass: true }); add(-10.1, 12.6, -8.1, 13.4, 1.2, "#cbd5e1");
+  add(8.1, 12.6, 10.1, 13.4, 1.2, "#cbd5e1"); add(10.1, 12.9, 11.6, 13.1, 1.0, "#fca5a5", { id: DESKS[1].id, glass: true }); add(11.6, 12.6, 14, 13.4, 1.2, "#cbd5e1");
   // The baggage hall (z 16–40) and its carousels.
   add(-22, 16, -14, 16.4); add(14, 16, 22, 16.4); add(-22.4, 16, -22, 40); add(22, 16, 22.4, 40);
   for (const x of BELTS) add(x - BELT.half, BELT.z1, x + BELT.half, BELT.z2, 0.7, "#1f2937");
@@ -71,12 +80,19 @@ function layout() {
   add(-22, 40, -8, 40.4); add(8, 40, 22, 40.4); add(-8.4, 40, -8, 50); add(8, 40, 8.4, 50);
   add(-1, 42.5, 1, 50, 2.4, "#cbd5e1");
   add(-20, 50, -8.4, 50.4); add(8.4, 50, 20, 50.4); add(-20.4, 50, -20, 62); add(20, 50, 20.4, 62);
-  add(-20, 62, -3, 62.4); add(3, 62, 20, 62.4); add(-3, 62, 3, 62.4, WALL_H, "#9fc7dd", { glass: true });
+  add(-20, 62, -3, 62.4); add(3, 62, 20, 62.4); add(-3, 62, 3, 62.4, WALL_H, p.glass, { glass: true });
   // People waiting at the belts.
   for (const [x, z] of WAITING) add(x - 0.25, z - 0.25, x + 0.25, z + 0.25, 0, "#64748b", { id: "person" });
   const pillars: Array<[number, number]> = [[-17, 20], [17, 20], [-17, 36], [17, 36], [-12, 56], [12, 56]];
-  for (const [x, z] of pillars) boxes.push({ x1: x - 0.45, z1: z - 0.45, x2: x + 0.45, z2: z + 0.45, h: WALL_H, c: "#d9d2c3", id: "pillar" });
-  return { boxes, pillars };
+  for (const [x, z] of pillars) boxes.push({ x1: x - 0.45, z1: z - 0.45, x2: x + 0.45, z2: z + 0.45, h: WALL_H, c: p.pillar, id: "pillar" });
+  // The planting in the arrivals hall, clear of the walkways.
+  const beds: Planter[] = style === "doh"
+    ? [{ x1: 16.8, z1: 54, x2: 19.6, z2: 58.4 }, { x1: -19.6, z1: 54, x2: -16.8, z2: 58.4 }]
+    : style === "auh"
+      ? [{ x1: 17.2, z1: 54.6, x2: 19.6, z2: 57.4 }, { x1: -19.6, z1: 54.6, x2: -17.2, z2: 57.4 }]
+      : [[18.6, 54.6], [18.6, 57.6], [-18.6, 54.6], [-18.6, 57.6]].map(([x, z]) => ({ x1: x - 0.4, z1: z - 0.4, x2: x + 0.4, z2: z + 0.4 }));
+  for (const b of beds) boxes.push({ ...b, h: 0, c: "#000", id: "bed" });
+  return { boxes, pillars, beds };
 }
 const WAITING: Array<[number, number]> = [[-14.3, 25], [-14.3, 30], [2.3, 24], [-2.3, 31], [14.3, 27], [9.7, 32]];
 const WALKERS: Array<{ a: [number, number]; b: [number, number]; speed: number }> = [
@@ -100,9 +116,9 @@ function loopAt(x0: number, u: number) {
 
 interface Live { x: number; z: number; yaw: number; moving: boolean; t: number; step: number; carryBig: boolean; open: Set<string>; bumpCool: number; bumps: number; hint: boolean; quizDone: boolean; channel: "green" | "red" | null }
 
-function targetOf(s: Live, mine: number): [number, number] {
+function targetOf(s: Live, mine: number, desk: boolean): [number, number] {
   switch (STEPS[s.step]?.id) {
-    case "immigration": return s.z < 12.8 ? [-1.5, 12.2] : [-1.5, 15];
+    case "immigration": return desk ? (s.open.has(DESKS[0].id) ? [DESKS[0].x, 15] : [DESKS[0].x, 12.2]) : s.z < 12.8 ? [-1.5, 12.2] : [-1.5, 15];
     case "baggage": return [BELTS[mine] - LOOP.x - 0.9, 28];
     case "customs": return s.quizDone ? [-4, 49] : [0, 41.5];
     case "exit": return [0, 60.5];
@@ -110,11 +126,14 @@ function targetOf(s: Live, mine: number): [number, number] {
   }
 }
 
-function World({ look, mine, myBag, code, beltNo, to, live, controls, onNear, onEvent, companions }: {
+function World({ look, mine, myBag, code, beltNo, to, live, controls, onNear, onEvent, companions, palette, style, desk }: {
+  palette: Palette; style: AirportStyleId;
+  /** A visitor here: passport control is at the officer's desk (the e-gates are for residents). */
+  desk: boolean;
   look: Look; companions: Companion[]; mine: number; myBag: number; code: string; beltNo: number[]; to: string; live: React.RefObject<Live>; controls: React.RefObject<Controls>;
   onNear: (id: string | null) => void; onEvent: (e: { kind: "bump" | "pass" | "channel"; text?: string; channel?: "green" | "red" }) => void;
 }) {
-  const { boxes, pillars } = useMemo(() => layout(), []);
+  const { boxes, pillars, beds } = useMemo(() => layout(palette, style), [palette, style]);
   const camera = useThree((s) => s.camera);
   const orbit = useThree((s) => s.controls) as unknown as OrbitControlsImpl | null;
   const me = useRef<THREE.Group>(null), big = useRef<THREE.Group>(null), small = useRef<THREE.Group>(null);
@@ -163,7 +182,7 @@ function World({ look, mine, myBag, code, beltNo, to, live, controls, onNear, on
       if (!solid(s.x + vx * dt, s.z)) s.x += vx * dt;
       if (!solid(s.x, s.z + vz * dt)) s.z += vz * dt;
       // Close to an open e-gate: you're steered into the gap, so you don't snag on its edge.
-      const open = EGATES.find((g) => s.open.has(`egate:${g}`) && Math.abs(s.x - g) < 1.3 && s.z > 11.7 && s.z < 14.1);
+      const open = PASSAGES.find((g) => s.open.has(g.id) && Math.abs(s.x - g.x) < 1.3 && s.z > 11.7 && s.z < 14.1)?.x;
       if (open !== undefined) { const fx = s.x + (open - s.x) * Math.min(1, dt * 9); if (!solid(fx, s.z)) s.x = fx; }
       s.yaw = Math.atan2(vx, vz); moving = true;
       const id = STEPS[s.step]?.id;
@@ -226,22 +245,28 @@ function World({ look, mine, myBag, code, beltNo, to, live, controls, onNear, on
       mat.depthWrite = mat.opacity > 0.9;
     }
 
-    const [tx, tz] = targetOf(s, mine);
+    const [tx, tz] = targetOf(s, mine, desk);
     if (arrow.current) { arrow.current.visible = s.hint; arrow.current.position.set(s.x, 0.06, s.z); arrow.current.rotation.y = Math.atan2(tx - s.x, tz - s.z); }
     if (ring.current) { ring.current.visible = s.hint; ring.current.position.set(tx, 0.05, tz); }
 
     let near: string | null = null;
     const id = STEPS[s.step]?.id;
-    if (id === "immigration") { const g = EGATES.find((g) => Math.abs(s.x - g) < 1 && s.z > 11.6 && s.z < 12.8); if (g !== undefined && !s.open.has(`egate:${g}`)) near = `egate:${g}`; }
+    if (id === "immigration") {
+      const d = DESKS.find((d) => Math.abs(s.x - d.x) < 0.75 && s.z > 11.6 && s.z < 12.8);
+      const g = EGATES.find((g) => Math.abs(s.x - g) < 1 && s.z > 11.6 && s.z < 12.8);
+      if (d && !s.open.has(d.id)) near = `desk:${d.side}`;
+      else if (g !== undefined && !s.open.has(`egate:${g}`)) near = desk ? "egate-visitor" : `egate:${g}`;
+    }
     else if (id === "baggage" && nearBag !== null) near = `bag:${nearBag}`;
     else if (id === "customs" && !s.quizDone && Math.hypot(s.x, s.z - 41.5) < 2.2) near = "customs-sign";
     else if (id === "exit" && Math.hypot(s.x, s.z - 60.5) < 2) near = "exit";
     if (near !== nearId.current) { nearId.current = near; onNear(near); }
   });
 
+  const px = desk ? DESKS[0].x : -1.5;
   const routes: Route[] = [
-    { pts: [[0, 2], [0, 10.5], [-1.5, 12], [-1.5, 15.2]], color: "#2563eb", label: "PASSPORT CONTROL" },
-    { pts: [[-1.5, 15.2], [BELTS[mine] - LOOP.x - 1.1, 19.5], [BELTS[mine] - LOOP.x - 1.1, 28]], color: "#d97706", label: `BAGGAGE · BELT ${beltNo[mine]}` },
+    { pts: [[0, 2], [0, 10.5], [px, desk ? 11.4 : 12], [px, 15.2]], color: "#2563eb", label: desk ? "PASSPORT CONTROL · VISITORS" : "PASSPORT CONTROL" },
+    { pts: [[px, 15.2], [BELTS[mine] - LOOP.x - 1.1, 19.5], [BELTS[mine] - LOOP.x - 1.1, 28]], color: "#d97706", label: `BAGGAGE · BELT ${beltNo[mine]}` },
     { pts: [[BELTS[mine] - LOOP.x - 1.1, 35.5], [-4, 39.5], [-4, 49]], color: "#16a34a", label: "CUSTOMS" },
     { pts: [[-4, 50.5], [0, 54], [0, 60.5]], color: "#7c3aed", label: "EXIT · TAXIS" },
   ];
@@ -251,8 +276,8 @@ function World({ look, mine, myBag, code, beltNo, to, live, controls, onNear, on
       <color attach="background" args={["#dbeaf5"]} />
       <hemisphereLight args={["#ffffff", "#c7b9a0", 1.1]} />
       <directionalLight position={[20, 40, 10]} intensity={1.1} />
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 31]}><planeGeometry args={[46, 66]} /><meshStandardMaterial color="#ece6da" roughness={0.35} /></mesh>
-      {boxes.filter((b) => b.id !== "pillar" && b.id !== "person").map((b, i) => {
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 31]}><planeGeometry args={[46, 66]} /><meshStandardMaterial color={palette.floor} roughness={0.35} /></mesh>
+      {boxes.filter((b) => b.id !== "pillar" && b.id !== "person" && b.id !== "bed").map((b, i) => {
         const isBarrier = b.id?.startsWith("egate:");
         return (
           <mesh key={i} ref={isBarrier ? (m) => { barriers.current[b.id!] = m; } : b.h >= 2.2 ? (m) => { tall.current[i] = m; } : undefined} position={[(b.x1 + b.x2) / 2, b.h / 2, (b.z1 + b.z2) / 2]}>
@@ -261,7 +286,13 @@ function World({ look, mine, myBag, code, beltNo, to, live, controls, onNear, on
           </mesh>
         );
       })}
-      {pillars.map(([x, z], i) => <mesh key={`p${i}`} position={[x, WALL_H / 2, z]}><cylinderGeometry args={[0.45, 0.45, WALL_H, 16]} /><meshStandardMaterial color="#d9d2c3" /></mesh>)}
+      {pillars.map(([x, z], i) => style === "dxb" && z > 50
+        ? <PalmColumn key={`p${i}`} x={x} z={z} />
+        : <Column key={`p${i}`} style={style} x={x} z={z} color={palette.pillar} accent={palette.accent} />)}
+      {/* The city outside, through the doors to the taxis. */}
+      <CitySkyline style={style} at={[0, 0, 230]} rotY={Math.PI} />
+      <Roof style={style} halls={HALLS} accent={palette.accent} />
+      <Planting style={style} beds={beds} />
       <FloorGuide routes={routes} />
 
       <Sign at={[0, 4.6, 8.8]} size={[8, 1.1]} rotY={Math.PI} lines={[{ t: `Welcome to ${to} · Arrivals ↑`, s: 84 }]} bg="#0f172a" />
@@ -290,6 +321,8 @@ function World({ look, mine, myBag, code, beltNo, to, live, controls, onNear, on
             <group position={[0.4, 0, -0.2]}><Suitcase big={i % 2 === 0} color={BAG_COLOURS[i % BAG_COLOURS.length]} /></group>
           </group>
         ))}
+        {/* The officers at their desks. */}
+        {[-12.8, 12.8].map((x) => <group key={x} position={[x, 0, 13]} rotation={[0, Math.PI, 0]}><CitizenAvatar look={lookOf(40 + (x > 0 ? 1 : 0))} animation="idle" /></group>)}
         {WAITING.map(([x, z], i) => (
           <group key={`q${i}`} position={[x, 0, z]} rotation={[0, x < BELTS[Math.round((x + 12) / 12)] ? Math.PI / 2 : -Math.PI / 2, 0]}>
             <CitizenAvatar look={lookOf(i + 20)} animation={i % 2 ? "idle" : "talk"} />
@@ -307,10 +340,19 @@ function World({ look, mine, myBag, code, beltNo, to, live, controls, onNear, on
   );
 }
 
-export function ArrivalWalk({ city, look, seed, onDone, onSkip, companions = [] }: { city: CityId; look: Look; seed: number; onDone: () => void; onSkip: () => void;
+export function ArrivalWalk({ from, city, look, seed, onDone, onSkip, companions = [] }: { from?: CityId; city: CityId; look: Look; seed: number; onDone: () => void; onSkip: () => void;
   /** Who's travelling with you (family trips): they walk behind you. */
   companions?: Companion[] }) {
   const arr = (WALK.airports[city] as { arrival: Arr }).arrival;
+  const cfg = WALK.airports[city];
+  // The country's rules: residents of the UAE use its e-gates; elsewhere you're a visitor and see an officer. From
+  // the same country (Dubai to Abu Dhabi) it's a domestic flight: no passport control and no customs.
+  const country = countryOf(city);
+  const desk = country.id !== RESIDENT_OF;
+  const domestic = !!from && countryOf(from).id === country.id;
+  const deskInfo = deskOf((arr as { desk?: unknown }).desk);
+  const deskSide = useRef<"l" | "r">("l");
+  const [rules, setRules] = useState(!domestic);
   const cityName = CITIES[city].name;
   const code = airportOf(city).code;
   // Your flight's belt is the screens' highlighted one; the other two belts have other flights.
@@ -319,13 +361,13 @@ export function ArrivalWalk({ city, look, seed, onDone, onSkip, companions = [] 
   const myBag = mine * PER_BELT + (Math.abs(seed) % PER_BELT);
   const quality = useMemo(() => canvasQuality(), []);
   const controls = useRef<Controls>({ x: 0, y: 0 });
-  const live = useRef<Live>({ x: 0, z: 2, yaw: 0, moving: false, t: 0, step: 0, carryBig: false, open: new Set(), bumpCool: 0, bumps: 0, hint: false, quizDone: false, channel: null });
+  const live = useRef<Live>({ x: 0, z: 2, yaw: 0, moving: false, t: 0, step: 0, carryBig: false, open: new Set(domestic ? PASSAGES.map((g) => g.id) : []), bumpCool: 0, bumps: 0, hint: false, quizDone: domestic, channel: null });
   const [step, setStep] = useState(0);
   const [near, setNear] = useState<string | null>(null);
   const [toast, setToast] = useState<{ text: string; tone: "info" | "bad" | "good" } | null>(null);
   const [hint, setHint] = useState(false);
   const [hintUsed, setHintUsed] = useState(false);
-  const [quiz, setQuiz] = useState(false);
+  const [quiz, setQuiz] = useState<false | true | "desk">(false);
   const [mistakes, setMistakes] = useState(0);
   const [bumps, setBumps] = useState(0);
   const [done, setDone] = useState<number | null>(null);
@@ -354,9 +396,21 @@ export function ArrivalWalk({ city, look, seed, onDone, onSkip, companions = [] 
     const s = live.current;
     if (!near) return;
     gameAudio.playClickSound();
+    if (near === "egate-visitor") {
+      gameAudio.sfx?.("error");
+      say(`✋ The e-gates won't read your passport: they're for ${country.name} residents. As a visitor, go to the officer's desk on the left.`, "bad", 5200);
+      setHint(true); s.hint = true;
+      return;
+    }
+    if (near.startsWith("desk:")) {
+      deskSide.current = near.endsWith("r") ? "r" : "l";
+      if (deskInfo.quiz) { setQuiz("desk"); return; }
+      openDesk();
+      return;
+    }
     if (near.startsWith("egate:")) {
       say("📷 Look at the camera…", "info", 1400);
-      setTimeout(() => { s.open.add(near); gameAudio.sfx?.("open"); say("✓ Passport read. Walk through.", "good"); }, 1300);
+      setTimeout(() => { s.open.add(near); gameAudio.sfx?.("open"); say("✓ Emirates ID read. Welcome back: walk through.", "good"); }, 1300);
       return;
     }
     if (near.startsWith("bag:")) {
@@ -373,6 +427,15 @@ export function ArrivalWalk({ city, look, seed, onDone, onSkip, companions = [] 
       setDone(Math.max(1, stars));
     }
   };
+  const openDesk = () => {
+    const d = DESKS.find((d) => d.side === deskSide.current)!;
+    live.current.open.add(d.id); gameAudio.sfx?.("open");
+    say(`🛂 ${deskInfo.say} Walk through the gate in the desk.`, "good", 5200);
+  };
+  const answerDesk = (right: boolean) => {
+    if (!right) { setMistakes((m) => m + 1); gameAudio.sfx?.("error"); say(deskInfo.quiz?.why ?? "", "bad", 5600); return; }
+    gameAudio.playClickSound(); setQuiz(false); openDesk();
+  };
   const answer = (right: boolean) => {
     if (!right) { setMistakes((m) => m + 1); gameAudio.sfx?.("error"); say(arr.customsQuiz.why, "bad", 5600); return; }
     gameAudio.playClickSound(); setQuiz(false); live.current.quizDone = true;
@@ -380,17 +443,17 @@ export function ArrivalWalk({ city, look, seed, onDone, onSkip, companions = [] 
   };
 
   const cur = STEPS[step];
-  const tip = cur ? (arr.tips as Record<StepId, string>)[cur.id] : "";
-  const instruction = cur?.id === "immigration" ? "Step into an e-gate and scan your passport."
+  const tip = cur ? (domestic && (cur.id === "immigration" || cur.id === "customs") ? country.domestic : (arr.tips as Record<StepId, string>)[cur.id]) : "";
+  const instruction = cur?.id === "immigration" ? (domestic ? `Domestic flight (inside ${country.name}): no passport control. Walk straight through.` : desk ? `You're a visitor in ${country.name}: go to the officer's desk on the left with your passport.` : "You live in the UAE: step into an e-gate and scan your Emirates ID or passport.")
     : cur?.id === "baggage" ? `Go to belt ${arr.belt} and take your bag: the teal case with the yellow tag.`
-    : cur?.id === "customs" ? "Read the customs sign, then pick your channel."
+    : cur?.id === "customs" ? (domestic ? "Domestic flight: no customs. Walk through the green channel." : "Read the customs sign, then pick your channel.")
     : cur?.id === "exit" ? "Out through the arrivals hall to the taxis." : "";
-  const label = !near ? null : near.startsWith("egate:") ? "🛂 Scan your passport" : near.startsWith("bag:") ? "🧳 Take this bag" : near === "customs-sign" ? "🛃 Read the customs sign" : near === "exit" ? "🚕 Out to the taxis" : null;
+  const label = !near ? null : near === "egate-visitor" ? "🛂 Scan your passport" : near.startsWith("desk:") ? "🛂 Hand your passport to the officer" : near.startsWith("egate:") ? "🛂 Scan your passport" : near.startsWith("bag:") ? "🧳 Take this bag" : near === "customs-sign" ? "🛃 Read the customs sign" : near === "exit" ? "🚕 Out to the taxis" : null;
 
   return (
     <main className="fixed inset-0 z-[60] bg-slate-950 select-none touch-none">
       <Canvas dpr={quality.dpr} camera={{ position: [0, 6.5, -6], fov: 60, near: 0.1, far: 400 }} gl={{ powerPreference: quality.powerPreference }}>
-        <World companions={companions} look={look} mine={mine} myBag={myBag} code={code} beltNo={beltNo} to={cityName} live={live} controls={controls} onNear={setNear} onEvent={onEvent} />
+        <World palette={cfg.palette} style={styleOf(cfg)} desk={desk && !domestic} companions={companions} look={look} mine={mine} myBag={myBag} code={code} beltNo={beltNo} to={cityName} live={live} controls={controls} onNear={setNear} onEvent={onEvent} />
       </Canvas>
       <div className="absolute top-[max(0.75rem,env(safe-area-inset-top))] inset-x-3 flex flex-col gap-2 pointer-events-none">
         <div className="flex items-start justify-between gap-2">
@@ -412,13 +475,28 @@ export function ArrivalWalk({ city, look, seed, onDone, onSkip, companions = [] 
         )}
         {toast && <p className={`self-center max-w-md rounded-2xl px-4 py-2 text-sm font-bold text-white shadow-lg ${toast.tone === "bad" ? "bg-rose-600" : toast.tone === "good" ? "bg-emerald-600" : "bg-slate-900"}`}>{toast.text}</p>}
       </div>
-      {done === null && !quiz && (
+      {done === null && !quiz && !rules && (
         <>
           <div className="absolute left-4 bottom-[max(1.25rem,env(safe-area-inset-bottom))]"><MoveStick controls={controls} /></div>
           {label && <button onClick={act} className="absolute right-4 bottom-[calc(max(1.25rem,env(safe-area-inset-bottom))+11rem)] sm:bottom-[max(2rem,env(safe-area-inset-bottom))] max-w-[60%] min-h-14 py-2 px-5 rounded-2xl bg-teal-600 text-white font-black shadow-xl animate-pulse">{label}</button>}
         </>
       )}
-      {quiz && (
+      {rules && (
+        <Sheet title={`${country.flag} Welcome to ${country.name}`} sub={`${cityName} · the country's rules for visitors and residents`}>
+          <ul className="space-y-2">
+            {country.rules.map((r) => <li key={r.text} className="flex gap-2 text-sm text-slate-700"><span className="text-lg leading-5">{r.icon}</span><span>{r.text}</span></li>)}
+          </ul>
+          <p className="text-[11px] text-slate-500">General guidance: check the official rules before you travel.</p>
+          <button onClick={() => { gameAudio.playClickSound(); setRules(false); }} className="w-full h-12 rounded-2xl bg-teal-700 text-white font-black">Got it ›</button>
+        </Sheet>
+      )}
+      {quiz === "desk" && deskInfo.quiz && (
+        <Sheet title={`🛂 Passport control · ${country.flag} ${code}`} sub={deskInfo.say}>
+          <p className="font-black">{deskInfo.quiz.q}</p>
+          {deskInfo.quiz.options.map((o) => <button key={o.text} onClick={() => answerDesk(o.right)} className="w-full min-h-12 py-2 rounded-2xl bg-slate-100 font-black text-slate-900">{o.text}</button>)}
+        </Sheet>
+      )}
+      {quiz === true && (
         <Sheet title="🛃 Customs" sub="You're carrying your own laptop and phone, and a duty-free perfume.">
           <p className="font-black">{arr.customsQuiz.q}</p>
           {arr.customsQuiz.options.map((o) => <button key={o.text} onClick={() => answer(o.right)} className="w-full h-12 rounded-2xl bg-slate-100 font-black text-slate-900">{o.text}</button>)}

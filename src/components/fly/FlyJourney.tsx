@@ -176,6 +176,7 @@ export function FlyJourney({ from: fromCity, to: toCity, dev, trip }: { from: Ci
   const [booking, setBooking] = useState<Booking | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [landFailed, setLandFailed] = useState(false);
   // A family trip already booked: straight to the airport walk with my seat.
   useEffect(() => {
     if (!trip) return;
@@ -202,10 +203,11 @@ export function FlyJourney({ from: fromCity, to: toCity, dev, trip }: { from: Ci
   // Touchdown: the server records the landing (that's what puts you in the other city: public.player_city), then
   // you're outside arrivals. It needs the flight's time in the air, so a tab left in the background is retried.
   const land = async () => {
+    setError(null); setLandFailed(false);
     for (let attempt = 0; booking && attempt < 4; attempt++) {
       const r = await flightProgress(booking.id, "landed");
       if (!r.error) break;
-      if (attempt === 3) { setError(`We couldn't record your landing (${r.error}). Try the flight again.`); return; }
+      if (attempt === 3) { setError(`We couldn't record your landing: ${r.error}`); setLandFailed(true); return; }
       await new Promise((ok) => setTimeout(ok, 5000));
     }
     await arriveIn(to);
@@ -263,7 +265,8 @@ export function FlyJourney({ from: fromCity, to: toCity, dev, trip }: { from: Ci
   const toGate = () => { setStage("gate"); walker.walkTo([[0, 62], [4, 72], [9.6, 74], SPOTS.gate]); };
   const board = () => {
     gameAudio.playClickSound();
-    if (booking) void flightProgress(booking.id, "boarded");
+    // Recorded as boarded (landing no longer needs it: *_landing_without_boarding.sql; retried once if it drops).
+    if (booking) void flightProgress(booking.id, "boarded").then((r) => { if (r.error) setTimeout(() => void flightProgress(booking.id, "boarded"), 3000); });
     setStage("boarding");
     bridge.current = 1;
     // Past the gate desk (x 10.5–11.5, z 78.5–81.5), through the doorway in the glass and down the jet bridge.
@@ -276,7 +279,7 @@ export function FlyJourney({ from: fromCity, to: toCity, dev, trip }: { from: Ci
   const hereHotels = hotelsIn(to).slice(0, 8);
 
   if (stage === "arrival") {
-    return <ArrivalWalk companions={companions} city={to} look={look} seed={booking?.id ?? 7} onDone={() => setStage("arrived")} onSkip={() => setStage("arrived")} />;
+    return <ArrivalWalk companions={companions} from={from} city={to} look={look} seed={booking?.id ?? 7} onDone={() => setStage("arrived")} onSkip={() => setStage("arrived")} />;
   }
   if (stage === "walk" && booking) {
     return <AirportWalk companions={companions} from={from} to={to} seat={booking.seat} seed={booking.id} cabin={booking.class} look={look} onDone={walkDone} onSkip={walkSkipped} />;
@@ -311,6 +314,12 @@ export function FlyJourney({ from: fromCity, to: toCity, dev, trip }: { from: Ci
       <div className="absolute inset-x-3 bottom-[max(1rem,env(safe-area-inset-bottom))] flex justify-center pointer-events-none">
         <div className="w-full max-w-md pointer-events-auto">
           {error && <p className="mb-2 rounded-xl bg-rose-600 text-white text-sm font-bold px-3 py-2">{error}</p>}
+          {landFailed && (
+            <div className="mb-2 flex gap-2">
+              <button onClick={() => void land()} className="flex-1 h-11 rounded-xl bg-white text-slate-900 text-sm font-black">↻ Try landing again</button>
+              <button onClick={() => router.replace("/home")} className="flex-1 h-11 rounded-xl bg-slate-800 text-white text-sm font-black">Back to {CITIES[from].name}</button>
+            </div>
+          )}
 
           {stage === "checkin" && !walker.walking && (
             <Panel title={`Check in · ${dep.code} to ${arr.code}`} sub={`${flightNumber(from, to)} · ${route.minutes} min · choose where and your cabin`}>

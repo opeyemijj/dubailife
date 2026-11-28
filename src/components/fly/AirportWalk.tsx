@@ -28,11 +28,24 @@ import { MoveStick, type Controls } from "@/components/street/StreetWorld";
 import { CITIES, type CityId } from "@/lib/city/cities";
 import { airportOf, AIRLINE, type CabinClass } from "@/lib/flights";
 import { adjustBalance, useCitizen } from "@/lib/citizenStore";
+import { CitySkyline, Column, PalmColumn, Planting, Roof, type AirportStyleId, type Hall, type Planter } from "./AirportStyle";
 import { canvasQuality } from "@/lib/device";
 import { gameAudio } from "@/utils/gameAudio";
 
 type Look = Parameters<typeof CitizenAvatar>[0]["look"];
 type Cfg = (typeof WALK.airports)["dubai"];
+export interface Quiz { q: string; options: Array<{ text: string; right: boolean }>; why: string }
+/** The officer's desk at passport control: what they say, and (as a visitor) what they ask. */
+export interface Desk { say: string; quiz: Quiz | null }
+export const deskOf = (d: unknown) => d as Desk;
+export const styleOf = (c: { style?: string }) => (c.style ?? "dxb") as AirportStyleId;
+/** The country an airport's in, and its rules. */
+export const countryOf = (city: CityId) => {
+  const id = (WALK.airports[city] as { country: string }).country as keyof typeof WALK.countries;
+  return { id, ...WALK.countries[id] };
+};
+/** You live in the UAE: its e-gates read your Emirates ID. Anywhere else you're a visitor, and see an officer. */
+export const RESIDENT_OF = "UAE";
 type StepId = "board" | "checkin" | "passport" | "security" | "gate";
 const STEPS: { id: StepId; title: string; icon: string }[] = [
   { id: "board", title: "Find your flight", icon: "🖥️" },
@@ -51,11 +64,17 @@ const gateX = (n: number) => (n <= 10 ? -9 - (n - 1) * 6 : 9 + (n - 11) * 6);
 const BELT_SECONDS = 5;
 /** Half the width of an e-gate's (and the arch's) way through: wide enough to walk through without lining up exactly. */
 const GAP = 0.75;
+/** The officers' desks either side of the e-gates: each officer opens the gate beside their desk. */
+const DESKS = [{ id: "egate:desk-l", x: -7.35, side: "l" }, { id: "egate:desk-r", x: 7.35, side: "r" }] as const;
+/** Every way through passport control (the e-gates and the officers' gates), for steering you into the gap. */
+/** The terminal's halls, for the roof: check-in, passport control and security, duty free, the concourse. */
+const HALLS: Hall[] = [{ x1: -20, z1: 0, x2: 20, z2: 26 }, { x1: -8.1, z1: 26, x2: 8.1, z2: 44 }, { x1: -22, z1: 44, x2: 22, z2: 70 }, { x1: -70, z1: 70, x2: 70, z2: 82 }];
+const PASSAGES = [...EGATES.map((g) => ({ id: `egate:${g}`, x: g })), ...DESKS.map((d) => ({ id: d.id, x: d.x }))];
 
 /** A solid box on the floor: you can't walk into it. `id` marks the e-gate barriers, which open. */
 interface Box { x1: number; z1: number; x2: number; z2: number; h: number; c: string; id?: string; glass?: boolean }
 
-function layout(p: Cfg["palette"]) {
+function layout(p: Cfg["palette"], style: AirportStyleId) {
   const boxes: Box[] = [];
   const add = (x1: number, z1: number, x2: number, z2: number, h = WALL_H, c = p.wall, extra: Partial<Box> = {}) => boxes.push({ x1, z1, x2, z2, h, c, ...extra });
   // The check-in hall (z 0–26): the entrance wall, its sides, the end wall with the way through to passport control.
@@ -73,10 +92,13 @@ function layout(p: Cfg["palette"]) {
   // People queueing at the other counters.
   for (const [x, z] of QUEUE) add(x - 0.25, z - 0.25, x + 0.25, z + 0.25, 0, "#64748b", { id: "person" });
   // Passport control: officers' booths, and the e-gates (cabinets between the gates; each gate's barrier opens).
-  add(-7.2, 26.6, -6, 27.8, 2.2, "#cbd5e1"); add(6, 26.6, 7.2, 27.8, 2.2, "#cbd5e1");
-  let from = -8.1;
+  // Each officer's booth sits beside their own gate (at the ends of the row), so the way through isn't blocked.
+  add(-6.4, 26.6, -5.4, 27.8, 1.1, "#cbd5e1"); add(5.4, 26.6, 6.4, 27.8, 1.1, "#cbd5e1");
+  add(-8.1, 28.5, -6.6, 28.7, 1.0, "#fca5a5", { id: DESKS[0].id, glass: true });
+  let from = -6.6;
   for (const g of EGATES) { add(from, 28.4, g - GAP, 28.8, 1.3, "#94a3b8"); add(g - GAP, 28.5, g + GAP, 28.7, 1.0, "#7dd3fc", { id: `egate:${g}`, glass: true }); from = g + GAP; }
-  add(from, 28.4, 8.1, 28.8, 1.3, "#94a3b8");
+  add(from, 28.4, 6.6, 28.8, 1.3, "#94a3b8");
+  add(6.6, 28.5, 8.1, 28.7, 1.0, "#fca5a5", { id: DESKS[1].id, glass: true });
   // Security: three lanes, each with its X-ray belt and the walk-through arch (only the arch's gap lets you past).
   add(-2.8, 32, -2.6, 44, 1.2, "#cbd5e1"); add(2.6, 32, 2.8, 44, 1.2, "#cbd5e1");
   for (const L of LANES) {
@@ -93,7 +115,15 @@ function layout(p: Cfg["palette"]) {
   for (const x of [12, 30, 48, 64]) pillars.push([x, 73.2], [-x, 73.2]);
   for (const [x, z] of SEATED) add(x - 0.3, z - 0.3, x + 0.3, z + 0.3, 0, "#64748b", { id: "person" });
   for (const [x, z] of pillars) boxes.push({ x1: x - 0.45, z1: z - 0.45, x2: x + 0.45, z2: z + 0.45, h: WALL_H, c: p.pillar, id: "pillar" });
-  return { boxes, pillars };
+  // The planting, clear of the walkways, carts and pillars: palms in pots (DXB), desert planters (AUH), the indoor
+  // garden's beds in the duty-free hall (DOH).
+  const beds: Planter[] = style === "doh"
+    ? [{ x1: 17, z1: 53.5, x2: 21, z2: 60.5 }, { x1: -21, z1: 53.5, x2: -17, z2: 60.5 }]
+    : style === "auh"
+      ? [{ x1: 18, z1: 54, x2: 20.6, z2: 56.4 }, { x1: -20.6, z1: 54, x2: -18, z2: 56.4 }, { x1: 18, z1: 58, x2: 20.6, z2: 60.4 }, { x1: -20.6, z1: 58, x2: -18, z2: 60.4 }]
+      : [[19.2, 8], [19.2, 13], [19.2, 19.5], [-19.2, 8], [-19.2, 13], [-19.2, 19.5], [19, 55], [19, 60], [-19, 55], [-19, 60]].map(([x, z]) => ({ x1: x - 0.4, z1: z - 0.4, x2: x + 0.4, z2: z + 0.4 }));
+  for (const b of beds) boxes.push({ ...b, h: 0, c: "#000", id: "bed" });
+  return { boxes, pillars, beds };
 }
 
 /** People queueing at the other counters, and travellers waiting at the gates (solid; drawn as real people). */
@@ -236,20 +266,22 @@ function FloorLabel({ text, color, at, toward }: { text: string; color: string; 
 /** The departures routes, in the order you do them: up to the departures screen, round it to your airline's check-in
  *  row (down the aisle beside it, clear of the other counters' queues), then to an e-gate, down a security lane and its
  *  arch, round the duty-free landmark to the concourse, then left and right to the gates. */
-function departureRoutes(row: number): Route[] {
+function departureRoutes(row: number, desk: boolean): Route[] {
   const ix = ISLANDS[row - 1], aisle = ix - 4, side = ix > 0 ? 3.6 : -3.6;
+  // A visitor goes to the officer's desk on the left; a resident through an e-gate.
+  const px = desk ? DESKS[0].x : -1.5;
   return [
     { pts: [[0, 1.6], [0, 4.4]], color: "#0f172a", label: "DEPARTURES SCREEN" },
     { pts: [[0, 4.4], [side, 4.6], [side, 7.8], [aisle, 8.4], [aisle, 13.2], [ix - 1.6, 15]], color: "#0d9488", label: `CHECK-IN ROW ${row}` },
-    { pts: [[ix - 1.6, 15], [aisle, 16.8], [aisle, 22.2], [-1.5, 22.2], [-1.5, 27.2], [-1.5, 30.4]], color: "#2563eb", label: "PASSPORT CONTROL" },
-    { pts: [[-1.5, 30.4], [-0.5, 32.6], [-0.5, 44.2]], color: "#d97706", label: "SECURITY" },
+    { pts: [[ix - 1.6, 15], [aisle, 16.8], [aisle, 22.2], [-1.5, 22.2], ...(desk ? [[px, 25.4]] as Array<[number, number]> : []), [px, 27.2], [px, 30.4]], color: "#2563eb", label: desk ? "PASSPORT CONTROL · OFFICER" : "PASSPORT CONTROL" },
+    { pts: [[px, 30.4], [-0.5, 32.6], [-0.5, 44.2]], color: "#d97706", label: "SECURITY" },
     { pts: [[-0.5, 44.2], [-3.4, 48.5], [-3.4, 64.5], [0, 69], [0, 71.4]], color: "#7c3aed", label: "GATES" },
     { pts: [[0, 71.4], [-5, 72.6], [-14, 74.6]], color: "#7c3aed" },
     { pts: [[0, 71.4], [5, 72.6], [14, 74.6]], color: "#7c3aed" },
   ];
 }
 
-function Landmark({ kind, p }: { kind: string; p: Cfg["palette"] }) {
+export function Landmark({ kind, p }: { kind: string; p: Cfg["palette"] }) {
   if (kind === "bear") return (
     // A giant yellow teddy bear sitting under a desk lamp.
     <group position={[0, 0.6, 57]}>
@@ -289,12 +321,12 @@ interface Live {
 }
 
 /** Where the next thing to do is. */
-function targetOf(s: Live, cfg: Cfg, gate: number): [number, number] {
+function targetOf(s: Live, cfg: Cfg, gate: number, desk: boolean): [number, number] {
   const ix = ISLANDS[cfg.row - 1];
   switch (STEPS[s.step]?.id) {
     case "board": return [0, 4.6];
     case "checkin": return [ix - 1.6, 15];
-    case "passport": return s.z < 28.4 ? [-1.5, 27.8] : [0, 31];
+    case "passport": return desk ? (s.open.has(DESKS[0].id) ? [DESKS[0].x, 30] : [DESKS[0].x, 27.6]) : s.z < 28.4 ? [-1.5, 27.8] : [0, 31];
     case "security": {
       const lane = s.smallOnBelt?.lane ?? LANES.reduce((a, l) => (Math.abs(l - s.x) < Math.abs(a - s.x) ? l : a), LANES[1]);
       if (s.sec === "sort" || s.sec === "drop") return [lane + 0.25, 34.4];
@@ -306,12 +338,15 @@ function targetOf(s: Live, cfg: Cfg, gate: number): [number, number] {
   }
 }
 
-function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, onEvent, companions }: {
+function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, onEvent, companions, desk }: {
+  /** A visitor here: passport control is at the officer's desk (the e-gates are for residents). */
+  desk: boolean;
   look: Look; cfg: Cfg; code: string; companions: Companion[]; gate: number; gateDest: Record<number, string>; to: string; live: React.RefObject<Live>; controls: React.RefObject<Controls>;
   onNear: (id: string | null) => void; onEvent: (e: { kind: "bump" | "beep" | "clear" | "board" | "pass"; text?: string }) => void;
 }) {
   const p = cfg.palette;
-  const { boxes, pillars } = useMemo(() => layout(p), [p]);
+  const style = styleOf(cfg);
+  const { boxes, pillars, beds } = useMemo(() => layout(p, style), [p, style]);
   const camera = useThree((s) => s.camera);
   const orbit = useThree((s) => s.controls) as unknown as OrbitControlsImpl | null;
   const me = useRef<THREE.Group>(null);
@@ -329,7 +364,7 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
   const nearId = useRef<string | null>(null);
   const [anim, setAnim] = useState<AvatarAnimation>("idle");
   const ix = ISLANDS[cfg.row - 1];
-  const routes = useMemo(() => departureRoutes(cfg.row), [cfg.row]);
+  const routes = useMemo(() => departureRoutes(cfg.row, desk), [cfg.row, desk]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => keys.current.add(e.key.toLowerCase());
@@ -367,7 +402,7 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
       if (!solid(nx, s.z)) s.x = nx;
       if (!solid(s.x, nz)) s.z = nz;
       // Close to an open e-gate or an arch: you're steered into the gap, so you don't snag on its edge.
-      const open = EGATES.find((g) => s.open.has(`egate:${g}`) && Math.abs(s.x - g) < 1.3 && s.z > 27.3 && s.z < 29.6);
+      const open = PASSAGES.find((g) => s.open.has(g.id) && Math.abs(s.x - g.x) < 1.3 && s.z > 27.3 && s.z < 29.6)?.x;
       const arch = LANES.find((L) => Math.abs(s.x - (L - 0.5)) < 1.1 && s.z > 37.1 && s.z < 38.9);
       const mid = open ?? (arch !== undefined ? arch - 0.5 : undefined);
       if (mid !== undefined) { const fx = s.x + (mid - s.x) * Math.min(1, dt * 9); if (!solid(fx, s.z)) s.x = fx; }
@@ -450,7 +485,7 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
     }
 
     // Show the way: an arrow at your feet, and a ring where you're going.
-    const [tx, tz] = targetOf(s, cfg, gate);
+    const [tx, tz] = targetOf(s, cfg, gate, desk);
     if (arrow.current) { arrow.current.visible = s.hint; arrow.current.position.set(s.x, 0.06, s.z); arrow.current.rotation.y = Math.atan2(tx - s.x, tz - s.z); }
     if (ring.current) { ring.current.visible = s.hint; ring.current.position.set(tx, 0.05, tz); const sc = 1 + Math.sin(s.t * 4) * 0.12; ring.current.scale.set(sc, sc, sc); }
 
@@ -458,11 +493,17 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
     let near: string | null = null;
     const id = STEPS[s.step]?.id;
     const close = (x: number, z: number, r = NEAR) => Math.hypot(s.x - x, s.z - z) < r;
-    const atEgate = EGATES.some((g) => Math.abs(s.x - g) < 1 && s.z > 26.6 && s.z < 28.4);
+    const atEgate = PASSAGES.some((g) => !s.open.has(g.id) && Math.abs(s.x - g.x) < 1 && s.z > 26.6 && s.z < 28.4);
     if ((id === "board" || id === "checkin") && atEgate) near = "egate-early";
     else if (id === "board" && close(0, 4.6, 1.8)) near = "board";
     else if (id === "checkin" && close(ix - 1.6, 15)) near = "checkin";
-    else if (id === "passport") { const g = EGATES.find((g) => Math.abs(s.x - g) < 1 && s.z > 27.2 && s.z < 28.4); if (g !== undefined && !s.open.has(`egate:${g}`)) near = `egate:${g}`; }
+    else if (id === "passport") {
+      // The officer's desks (anyone), and the e-gates (residents: a visitor is sent to the desk).
+      const d = DESKS.find((d) => Math.abs(s.x - d.x) < 0.75 && s.z > 26.6 && s.z < 28.4);
+      const g = EGATES.find((g) => Math.abs(s.x - g) < 1 && s.z > 27.2 && s.z < 28.4);
+      if (d && !s.open.has(d.id)) near = `desk:${d.side}`;
+      else if (g !== undefined && !s.open.has(`egate:${g}`)) near = desk ? "egate-visitor" : `egate:${g}`;
+    }
     else if (id === "security") {
       const lane = LANES.find((L) => close(L + 0.25, 34.4, 1.2));
       if ((s.sec === "sort" || s.sec === "drop") && lane !== undefined) near = `${s.sec}:${lane}`;
@@ -482,7 +523,7 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
       {/* The floor, and the apron outside the glass. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 41]}><planeGeometry args={[142, 84]} /><meshStandardMaterial color={p.floor} roughness={0.35} metalness={0.05} /></mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 110]}><planeGeometry args={[300, 56]} /><meshStandardMaterial color="#9ca3af" /></mesh>
-      {boxes.filter((b) => b.id !== "pillar" && b.id !== "person").map((b, i) => {
+      {boxes.filter((b) => b.id !== "pillar" && b.id !== "person" && b.id !== "bed").map((b, i) => {
         const isBarrier = b.id?.startsWith("egate:");
         return (
           <mesh key={i} ref={isBarrier ? (m) => { barriers.current[b.id!] = m; } : b.h >= 2.2 ? (m) => { tall.current[i] = m; } : undefined} position={[(b.x1 + b.x2) / 2, b.h / 2, (b.z1 + b.z2) / 2]}>
@@ -491,7 +532,17 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
           </mesh>
         );
       })}
-      {pillars.map(([x, z], i) => <mesh key={`p${i}`} position={[x, WALL_H / 2, z]}><cylinderGeometry args={[0.45, 0.45, WALL_H, 16]} /><meshStandardMaterial color={p.pillar} /></mesh>)}
+      {pillars.map(([x, z], i) => style === "dxb" && z > 44 && z < 70
+        ? <PalmColumn key={`p${i}`} x={x} z={z} />
+        : <Column key={`p${i}`} style={style} x={x} z={z} color={p.pillar} accent={p.accent} />)}
+      {/* The city beyond the apron. */}
+      <CitySkyline style={style} at={[0, 0, 260]} rotY={Math.PI} />
+      <Roof style={style} halls={HALLS} accent={p.accent} />
+      <Planting style={style} beds={beds} />
+      {/* The officers in their booths. */}
+      <Suspense fallback={null}>
+        {[-5.75, 5.75].map((x, i) => <group key={x} position={[x, 0, 27.2]} rotation={[0, i ? Math.PI / 2 : -Math.PI / 2, 0]}><CitizenAvatar look={lookOf(30 + i)} animation="idle" /></group>)}
+      </Suspense>
 
       {/* The departures board. */}
       <Sign at={[0, 2.2, 5.55]} size={[5.8, 3]} rotY={Math.PI} lines={[
@@ -580,18 +631,25 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
   cabin?: CabinClass;
 }) {
   const cfg = WALK.airports[from] as Cfg;
+  // The country's rules: you live in the UAE, so its e-gates are yours; elsewhere you're a visitor and see an officer.
+  // Inside one country (Dubai to Abu Dhabi) the flight is domestic: no passport control at all.
+  const country = countryOf(from);
+  const desk = country.id !== RESIDENT_OF;
+  const domestic = country.id === countryOf(to).id;
+  const deskInfo = deskOf(cfg.desk);
   const gate = (Math.abs(seed) % 20) + 1;
   const gateDest = useMemo(() => Object.fromEntries(Array.from({ length: 20 }, (_, i) => [i + 1, DESTS[(i * 7 + seed) % DESTS.length]])), [seed]);
   const toName = CITIES[to].name;
   const quality = useMemo(() => canvasQuality(), []);
   const controls = useRef<Controls>({ x: 0, y: 0 });
-  const live = useRef<Live>({ x: 0, z: 1.4, yaw: 0, moving: false, t: 0, step: 0, sec: "sort", carryBig: true, carrySmall: true, bigOnBelt: null, smallOnBelt: null, open: new Set(), bumpCool: 0, bumps: 0, hint: false });
+  const live = useRef<Live>({ x: 0, z: 1.4, yaw: 0, moving: false, t: 0, step: 0, sec: "sort", carryBig: true, carrySmall: true, bigOnBelt: null, smallOnBelt: null, open: new Set(domestic ? PASSAGES.map((g) => g.id) : []), bumpCool: 0, bumps: 0, hint: false });
   const [step, setStep] = useState(0);
   const [near, setNear] = useState<string | null>(null);
   const [toast, setToast] = useState<{ text: string; tone: "info" | "bad" | "good" } | null>(null);
   const [hint, setHint] = useState(false);
   const [hintUsed, setHintUsed] = useState(false);
-  const [quiz, setQuiz] = useState<"checkin" | "scale" | "security" | null>(null);
+  const [quiz, setQuiz] = useState<"checkin" | "scale" | "security" | "desk" | null>(null);
+  const deskSide = useRef<"l" | "r">("l");
   // Check-in's scale: your suitcase (seeded, so the same trip weighs the same) against your cabin's allowance, and the
   // cabin bag you can repack into.
   const BAG = WALK.baggage;
@@ -660,6 +718,18 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
       setHint(true); s.hint = true;
       return;
     }
+    if (near === "egate-visitor") {
+      gameAudio.sfx?.("error");
+      say(`✋ The e-gates won't read your passport: they're for ${country.name} residents. As a visitor, go to the officer's desk on the left.`, "bad", 5200);
+      setHint(true); s.hint = true;
+      return;
+    }
+    if (near.startsWith("desk:")) {
+      deskSide.current = near.endsWith("r") ? "r" : "l";
+      if (deskInfo.quiz) { setQuiz("desk"); return; }
+      openDesk();
+      return;
+    }
     if (near.startsWith("egate:")) {
       say("📷 Look at the camera…", "info", 1400);
       setTimeout(() => { s.open.add(near); gameAudio.sfx?.("open"); say("✓ Passport read. The gate is open: walk through.", "good"); }, 1300);
@@ -680,6 +750,16 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
       say("Boarding pass scanned ✓ Enjoy your flight!", "good");
       finish();
     }
+  };
+  /** The officer's done: they open the gate beside their desk. */
+  const openDesk = () => {
+    const d = DESKS.find((d) => d.side === deskSide.current)!;
+    live.current.open.add(d.id); gameAudio.sfx?.("open");
+    say(`🛂 ${deskInfo.say} Walk through the gate beside the desk.`, "good", 5200);
+  };
+  const answerDesk = (right: boolean) => {
+    if (!right) { setMistakes((m) => m + 1); gameAudio.sfx?.("error"); say(deskInfo.quiz?.why ?? "", "bad", 5600); return; }
+    gameAudio.playClickSound(); setQuiz(null); openDesk();
   };
   const answerCheckin = (right: boolean) => {
     if (!right) { setMistakes((m) => m + 1); gameAudio.sfx?.("error"); say(WALK.checkinQuiz.why, "bad", 5200); return; }
@@ -715,13 +795,15 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
   };
 
   const cur = STEPS[step];
-  const tip = cur ? (cfg.tips as Record<StepId, string>)[cur.id] : "";
+  const tip = cur ? (cur.id === "passport" && domestic ? country.domestic : (cfg.tips as Record<StepId, string>)[cur.id]) : "";
   const instruction = (() => {
     const s = { sec };
     switch (cur?.id) {
       case "board": return "Walk to the departures screen ahead and find your flight.";
       case "checkin": return `Take your suitcase to row ${cfg.row}, ${AIRLINE.name}'s counters.`;
-      case "passport": return `Step into one of the ${cfg.eGates} and scan your passport.`;
+      case "passport": return domestic ? `Domestic flight (inside ${country.name}): no passport control. Walk straight through to security.`
+        : desk ? `You're a visitor in ${country.name}: take your passport to the officer's desk on the left.`
+        : `You live in the UAE: step into one of the ${cfg.eGates} and scan your Emirates ID or passport.`;
       case "security": return s.sec === "sort" ? "Go to a security lane and get your things ready for the tray." : s.sec === "drop" ? "Put your bag on the X-ray belt." : s.sec === "arch" ? "Walk through the arch (without your bag)." : "Pick up your bag at the end of the belt.";
       case "gate": return `Find gate ${cfg.gateLetter}${gate}: follow the signs for gates ${gate <= 10 ? `${cfg.gateLetter}1–${cfg.gateLetter}10, left` : `${cfg.gateLetter}11–${cfg.gateLetter}20, right`}.`;
       default: return "";
@@ -731,6 +813,8 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
     : near === "board" ? "🖥️ Read the departures screen"
     : near === "checkin" ? "🧳 Put your suitcase on the scale"
     : near === "egate-early" ? "🛂 Why won't the gate open?"
+    : near === "egate-visitor" ? "🛂 Scan your passport"
+    : near.startsWith("desk:") ? "🛂 Hand your passport to the officer"
     : near.startsWith("egate:") ? "🛂 Scan your passport"
     : near.startsWith("sort:") ? "🧺 Get your things ready"
     : near.startsWith("drop:") ? "🛄 Put your bag on the belt"
@@ -740,7 +824,7 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
   return (
     <main className="fixed inset-0 z-[60] bg-slate-950 select-none touch-none">
       <Canvas dpr={quality.dpr} camera={{ position: [0, 6.5, -7], fov: 60, near: 0.1, far: 600 }} gl={{ powerPreference: quality.powerPreference }}>
-        <World companions={companions} look={look} cfg={cfg} code={airportOf(from).code} gate={gate} gateDest={gateDest} to={toName} live={live} controls={controls} onNear={setNear} onEvent={onEvent} />
+        <World desk={desk} companions={companions} look={look} cfg={cfg} code={airportOf(from).code} gate={gate} gateDest={gateDest} to={toName} live={live} controls={controls} onNear={setNear} onEvent={onEvent} />
       </Canvas>
 
       {/* Top: the step, the timer and the tip. */}
@@ -808,6 +892,14 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
             </>
           )}
           <p className="text-[11px] text-slate-500">💡 {BAG.tip}</p>
+        </Sheet>
+      )}
+      {quiz === "desk" && deskInfo.quiz && (
+        <Sheet title={`🛂 Passport control · ${country.flag} ${airportOf(from).code}`} sub={deskInfo.say}>
+          <p className="font-black">{deskInfo.quiz.q}</p>
+          {deskInfo.quiz.options.map((o) => (
+            <button key={o.text} onClick={() => answerDesk(o.right)} className="w-full min-h-12 py-2 rounded-2xl bg-slate-100 font-black text-slate-900">{o.text}</button>
+          ))}
         </Sheet>
       )}
       {quiz === "security" && (

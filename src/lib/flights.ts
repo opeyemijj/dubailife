@@ -36,6 +36,7 @@ const ERRORS: Record<string, string> = {
   not_in_city: "You can only do that in the city you're in.",
   not_signed_in: "Please log in first.",
   no_flight: "That booking isn't open any more.",
+  flight_replaced: "You booked another flight after this one (maybe in another tab), so this booking was replaced.",
 };
 async function call<T>(fn: string, args: Record<string, unknown>): Promise<{ data?: T; error?: string }> {
   const { data, error } = await supabase().rpc(fn, args);

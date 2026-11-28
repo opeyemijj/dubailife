@@ -10,6 +10,16 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import FLIGHTS from "@/data/flights/flights.json";
 import { Airliner, DOOR_HEIGHT, FRONT_DOOR } from "./Airliner";
+import WALK from "@/data/flights/airport-walk.json";
+import { CitySkyline, Column, PalmColumn, type AirportStyleId } from "./AirportStyle";
+import { Landmark } from "./AirportWalk";
+
+/** Each airport's look (components/fly/AirportStyle), by its code. */
+const AIRPORT_BY_CODE: Record<string, keyof typeof WALK.airports> = { DXB: "dubai", AUH: "abu-dhabi", DOH: "doha" };
+const lookOfAirport = (code: string) => {
+  const cfg = WALK.airports[AIRPORT_BY_CODE[code.toUpperCase()] ?? "dubai"];
+  return { style: ((cfg as { style?: string }).style ?? "dxb") as AirportStyleId, palette: cfg.palette, landmark: cfg.landmark };
+};
 
 export const FLOOR = DOOR_HEIGHT;
 const W = 16, H = 9, END = 92;
@@ -92,7 +102,7 @@ function Floor() {
 }
 
 /** The building: walls, the wave roof on white tree columns, skylights and the glass wall at the gate. */
-function Shell() {
+function Shell({ style }: { style: AirportStyleId }) {
   const cols = useMemo(() => Array.from({ length: 8 }, (_, i) => 6 + i * 12), []);
   return (
     <group>
@@ -122,15 +132,12 @@ function Shell() {
       {[-6, 6].map((x) => (
         <mesh key={`sk${x}`} position={[x, FLOOR + H - 0.05, END / 2]}><boxGeometry args={[2, 0.04, END - 4]} /><meshBasicMaterial color="#fef9c3" /></mesh>
       ))}
-      {/* Tree columns: a white trunk branching into the roof */}
+      {/* The columns, in the airport's style (Dubai's gold palms in the duty-free hall). */}
       {cols.map((z) => [-8, 8].map((x) => (
-        <group key={`c${x}${z}`} position={[x, FLOOR, z]}>
-          <mesh position={[0, H / 2 - 0.7, 0]}><cylinderGeometry args={[0.32, 0.45, H - 1.4, 14]} /><meshStandardMaterial color="#f8fafc" roughness={0.5} /></mesh>
-          {[0, 1, 2, 3].map((k) => (
-            <mesh key={k} position={[Math.cos(k * Math.PI / 2) * 0.8, H - 0.9, Math.sin(k * Math.PI / 2) * 0.8]} rotation={[Math.sin(k * Math.PI / 2) * 0.7, 0, -Math.cos(k * Math.PI / 2) * 0.7]}>
-              <cylinderGeometry args={[0.12, 0.22, 1.9, 8]} /><meshStandardMaterial color="#f8fafc" />
-            </mesh>
-          ))}
+        <group key={`c${x}${z}`} position={[0, FLOOR, 0]}>
+          {style === "dxb" && z > 36 && z < 64
+            ? <PalmColumn x={x} z={z} h={H} />
+            : <group scale={[1, H / 6, 1]}><Column style={style} x={x} z={z} color="#f8fafc" accent="#c9a24a" /></group>}
         </group>
       )))}
     </group>
@@ -224,7 +231,7 @@ function PassportControl({ open }: { open: React.RefObject<number> }) {
 }
 
 /** Duty free: lit shopfronts down both sides, and the gold palm in the middle. */
-function DutyFree() {
+function DutyFree({ style, palette, landmark }: ReturnType<typeof lookOfAirport>) {
   const shops = [
     { name: "PERFUMES & OUD", color: "#7c2d12" }, { name: "GOLD & WATCHES", color: "#a16207" }, { name: "SUNGLASSES", color: "#0f172a" },
     { name: "DATES & SWEETS", color: "#14532d" }, { name: "ELECTRONICS", color: "#1e3a8a" }, { name: "FASHION", color: "#831843" },
@@ -247,8 +254,9 @@ function DutyFree() {
           </group>
         );
       })}
-      {/* The gold palm in the atrium */}
-      <group position={[0, FLOOR, 50]}>
+      {/* The atrium's centrepiece: Doha's giant teddy bear, Abu Dhabi's arch, or Dubai's gold palm. */}
+      {style !== "dxb" && <group position={[0, FLOOR - 0.6, 50 - 57]}><Landmark kind={landmark} p={palette} /></group>}
+      {style === "dxb" && <group position={[0, FLOOR, 50]}>
         <mesh position={[0, 0.3, 0]}><cylinderGeometry args={[2.2, 2.4, 0.6, 32]} /><meshStandardMaterial color="#f8fafc" roughness={0.3} /></mesh>
         <mesh position={[0, 3, 0]}><cylinderGeometry args={[0.25, 0.4, 5, 12]} /><meshStandardMaterial color={C.accent} metalness={0.35} roughness={0.35} emissive={C.accent} emissiveIntensity={0.15} /></mesh>
         {Array.from({ length: 9 }, (_, i) => (
@@ -256,7 +264,7 @@ function DutyFree() {
             <boxGeometry args={[0.5, 0.06, 3.4]} /><meshStandardMaterial color={C.accent} metalness={0.35} roughness={0.35} emissive={C.accent} emissiveIntensity={0.15} />
           </mesh>
         ))}
-      </group>
+      </group>}
     </group>
   );
 }
@@ -328,16 +336,19 @@ function Apron({ spin }: { spin: React.RefObject<number> }) {
 
 /** The whole terminal and what's outside it. */
 export function Terminal({ from, to, gatesOpen, bridge, spin }: { from: string; to: string; gatesOpen: React.RefObject<number>; bridge: React.RefObject<number>; spin: React.RefObject<number> }) {
+  const look = lookOfAirport(from);
   return (
     <group>
       {/* The ground floor under the departures level (the arrivals road and the forecourt) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-40, 0, 40]}><planeGeometry args={[80, 200]} /><meshStandardMaterial color="#d6c7a6" roughness={1} /></mesh>
       <mesh position={[0, FLOOR / 2, END / 2]}><boxGeometry args={[W * 2, FLOOR, END]} /><meshStandardMaterial color="#cbd5e1" roughness={0.8} /></mesh>
       <Floor />
-      <Shell />
+      <Shell style={look.style} />
+      {/* The city beyond the apron, out of the gate's glass wall. */}
+      <CitySkyline style={look.style} at={[W + 280, 0, 46]} rotY={-Math.PI / 2} />
       <CheckIn from={from} to={to} />
       <PassportControl open={gatesOpen} />
-      <DutyFree />
+      <DutyFree {...look} />
       <Gate bridge={bridge} />
       <Apron spin={spin} />
       {/* Lighting: the hall is bright and even, like an airport by day */}
