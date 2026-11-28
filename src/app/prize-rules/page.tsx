@@ -41,7 +41,7 @@ const sections: Section[] = [
     body: (
       <>
         <p>
-          The {DRAW.title} is a free prize draw for one cash prize of <strong>AED {DRAW.prizeAed.toLocaleString()}</strong>. No purchase or payment
+          The {DRAW.title} is a free prize draw for one cash prize of <strong>AED {DRAW.prizeAed.toLocaleString()} in real money</strong> (not the game's virtual AED), paid by bank transfer. No purchase or payment
           is needed to enter or to win. It runs from {new Date(DRAW.startsAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Dubai" })} to
           {" "}{DRAW.drawDate} (23:59:59 GST), and the winner is drawn after it closes.
         </p>

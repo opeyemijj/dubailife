@@ -64,14 +64,21 @@ function DrawSheet({ data, username, onClose }: { data: MyDraw | null; username:
   const later = () => { logInvite("later"); onClose(); };
   return (
     <ModalPortal>
-      <div className="fixed inset-0 z-[320] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-label={`Invite ${DRAW.target} friends and win AED ${DRAW.prizeAed.toLocaleString()}`}>
+      <div className="fixed inset-0 z-[320] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-label={`Invite ${DRAW.target} friends and win AED ${DRAW.prizeAed.toLocaleString()} in real money`}>
         <div className="relative w-full sm:max-w-md max-h-[94dvh] overflow-y-auto rounded-t-[2rem] sm:rounded-[2rem] bg-gradient-to-b from-emerald-950 via-slate-950 to-slate-950 text-white shadow-2xl px-5 pt-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-center">
           <button onClick={later} aria-label="Close" className="absolute right-4 top-4 w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"><X className="w-4 h-4" /></button>
-          <p className="text-6xl">🎟️</p>
+          <p className="text-6xl">💵</p>
           <p className="mt-2 text-xs font-black tracking-[0.25em] text-emerald-300">{DRAW.title.toUpperCase()}</p>
           <h2 className="mt-2 text-[1.9rem] leading-[1.1] font-black">
             Invite {DRAW.target} friends via WhatsApp and win <span className="text-amber-300">AED {DRAW.prizeAed.toLocaleString()}</span>
           </h2>
+          {/* Real money, not the game's AED: say so as loudly as the prize. */}
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-amber-300 text-slate-950 px-4 py-1.5 text-sm font-black shadow-lg shadow-amber-500/30">
+            💰 REAL MONEY · not game money
+          </div>
+          <p className="mt-2 text-sm font-bold text-amber-100">
+            The winner gets AED {DRAW.prizeAed.toLocaleString()} in real cash, paid by bank transfer to their own account.
+          </p>
           <p className="mt-2 text-sm text-slate-300">Every {DRAW.target} friends who join Dubai Life with your link is one entry in our {DRAW.title}, drawn on {DRAW.drawDate}. More friends, more entries.</p>
 
           {/* Your progress to the next entry. */}

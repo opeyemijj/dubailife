@@ -162,7 +162,7 @@ function MapRail() {
   const bigLeft = leftToEarn(big);
   // The invite draw (returning players): its progress to the next entry, first on the rail.
   const draw = useDraw(citizen && isReturning(citizen.createdAt) ? citizen.id : null);
-  if (citizen && draw && drawOpen()) items.push({ key: "draw", icon: "🎟️", badge: `${draw.joined % DRAW.target}/${DRAW.target}`, label: `${DRAW.title}: invite ${DRAW.target} friends, win AED ${DRAW.prizeAed.toLocaleString()}`, tone: "bg-gradient-to-br from-emerald-400 to-green-600 text-white", alert: true, go: openDraw });
+  if (citizen && draw && drawOpen()) items.push({ key: "draw", icon: "🎟️", badge: `${draw.joined % DRAW.target}/${DRAW.target}`, label: `${DRAW.title}: invite ${DRAW.target} friends, win AED ${DRAW.prizeAed.toLocaleString()} real money`, tone: "bg-gradient-to-br from-emerald-400 to-green-600 text-white", alert: true, go: openDraw });
   if (citizen && big && bigLeft > 0) items.push({ key: "big", icon: "💰", badge: millions(bigLeft).replace("AED ", ""), label: `Big Missions: earn ${millions(bigLeft)}`, tone: "bg-gradient-to-br from-amber-300 to-yellow-500 text-slate-950", alert: true, go: openBigMissions });
   if (missions && !missions.box.claimed) {
     const done = missions.missions.filter((m) => m.done).length;
