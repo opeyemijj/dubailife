@@ -452,7 +452,9 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
     let near: string | null = null;
     const id = STEPS[s.step]?.id;
     const close = (x: number, z: number, r = NEAR) => Math.hypot(s.x - x, s.z - z) < r;
-    if (id === "board" && close(0, 4.6, 1.8)) near = "board";
+    const atEgate = EGATES.some((g) => Math.abs(s.x - g) < 1 && s.z > 26.6 && s.z < 28.4);
+    if ((id === "board" || id === "checkin") && atEgate) near = "egate-early";
+    else if (id === "board" && close(0, 4.6, 1.8)) near = "board";
     else if (id === "checkin" && close(ix - 1.6, 15)) near = "checkin";
     else if (id === "passport") { const g = EGATES.find((g) => Math.abs(s.x - g) < 1 && s.z > 27.2 && s.z < 28.4); if (g !== undefined && !s.open.has(`egate:${g}`)) near = `egate:${g}`; }
     else if (id === "security") {
@@ -645,6 +647,13 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
     gameAudio.playClickSound();
     if (near === "board") { say(`Your flight: ${AIRLINE.code} 107 to ${toName}, check-in row ${cfg.row}.`, "good"); next(); return; }
     if (near === "checkin") { setQuiz("checkin"); return; }
+    if (near === "egate-early") {
+      gameAudio.sfx?.("error");
+      const what = STEPS[s.step]?.id === "board" ? "First find your flight on the departures screen by the entrance, then check in your suitcase" : `First check in your suitcase at row ${cfg.row}`;
+      say(`✋ Not yet: the e-gate needs your boarding pass. ${what}. Follow the 🧭 arrow.`, "bad", 5200);
+      setHint(true); s.hint = true;
+      return;
+    }
     if (near.startsWith("egate:")) {
       say("📷 Look at the camera…", "info", 1400);
       setTimeout(() => { s.open.add(near); gameAudio.sfx?.("open"); say("✓ Passport read. The gate is open: walk through.", "good"); }, 1300);
@@ -715,6 +724,7 @@ export function AirportWalk({ from, to, seat, seed, look, onDone, onSkip, cabin 
   const actionLabel = !near ? null
     : near === "board" ? "🖥️ Read the departures screen"
     : near === "checkin" ? "🧳 Put your suitcase on the scale"
+    : near === "egate-early" ? "🛂 Why won't the gate open?"
     : near.startsWith("egate:") ? "🛂 Scan your passport"
     : near.startsWith("sort:") ? "🧺 Get your things ready"
     : near.startsWith("drop:") ? "🛄 Put your bag on the belt"
