@@ -233,16 +233,21 @@ function FloorLabel({ text, color, at, toward }: { text: string; color: string; 
   );
 }
 
-/** The departures routes: round the board to the check-in rows, through an e-gate, down a security lane and its
+/** The departures routes, in the order you do them: up to the departures screen, round it to your airline's check-in
+ *  row (down the aisle beside it, clear of the other counters' queues), then to an e-gate, down a security lane and its
  *  arch, round the duty-free landmark to the concourse, then left and right to the gates. */
-const DEPARTURE_ROUTES: Route[] = [
-  { pts: [[0, 2.2], [-3.6, 3.8], [-3.6, 7.6], [0, 8.6], [0, 25.4]], color: "#0d9488", label: "CHECK-IN" },
-  { pts: [[0, 25.4], [-1.5, 27.2], [-1.5, 30.4]], color: "#2563eb", label: "PASSPORT CONTROL" },
-  { pts: [[-1.5, 30.4], [-0.5, 32.6], [-0.5, 44.2]], color: "#d97706", label: "SECURITY" },
-  { pts: [[-0.5, 44.2], [-3.4, 48.5], [-3.4, 64.5], [0, 69], [0, 71.4]], color: "#7c3aed", label: "GATES" },
-  { pts: [[0, 71.4], [-5, 72.6], [-14, 74.6]], color: "#7c3aed" },
-  { pts: [[0, 71.4], [5, 72.6], [14, 74.6]], color: "#7c3aed" },
-];
+function departureRoutes(row: number): Route[] {
+  const ix = ISLANDS[row - 1], aisle = ix - 4, side = ix > 0 ? 3.6 : -3.6;
+  return [
+    { pts: [[0, 1.6], [0, 4.4]], color: "#0f172a", label: "DEPARTURES SCREEN" },
+    { pts: [[0, 4.4], [side, 4.6], [side, 7.8], [aisle, 8.4], [aisle, 13.2], [ix - 1.6, 15]], color: "#0d9488", label: `CHECK-IN ROW ${row}` },
+    { pts: [[ix - 1.6, 15], [aisle, 16.8], [aisle, 22.2], [-1.5, 22.2], [-1.5, 27.2], [-1.5, 30.4]], color: "#2563eb", label: "PASSPORT CONTROL" },
+    { pts: [[-1.5, 30.4], [-0.5, 32.6], [-0.5, 44.2]], color: "#d97706", label: "SECURITY" },
+    { pts: [[-0.5, 44.2], [-3.4, 48.5], [-3.4, 64.5], [0, 69], [0, 71.4]], color: "#7c3aed", label: "GATES" },
+    { pts: [[0, 71.4], [-5, 72.6], [-14, 74.6]], color: "#7c3aed" },
+    { pts: [[0, 71.4], [5, 72.6], [14, 74.6]], color: "#7c3aed" },
+  ];
+}
 
 function Landmark({ kind, p }: { kind: string; p: Cfg["palette"] }) {
   if (kind === "bear") return (
@@ -324,6 +329,7 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
   const nearId = useRef<string | null>(null);
   const [anim, setAnim] = useState<AvatarAnimation>("idle");
   const ix = ISLANDS[cfg.row - 1];
+  const routes = useMemo(() => departureRoutes(cfg.row), [cfg.row]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => keys.current.add(e.key.toLowerCase());
@@ -513,7 +519,7 @@ function World({ look, cfg, code, gate, gateDest, to, live, controls, onNear, on
         </group>
       ))}
       <Landmark kind={cfg.landmark} p={p} />
-      <FloorGuide routes={DEPARTURE_ROUTES} />
+      <FloorGuide routes={routes} />
       {[[-10.5, 53.2, "Perfume"], [10.5, 53.2, "Chocolates"], [-10.5, 61.2, "Electronics"], [10.5, 61.2, "Gold & watches"]].map(([x, z, t]) => (
         <Sign key={t as string} at={[x as number, 3, z as number]} size={[3, 0.7]} lines={[{ t: `Duty free · ${t}`, s: 90 }]} bg="#111827" rotY={Math.PI} />
       ))}
