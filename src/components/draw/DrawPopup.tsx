@@ -27,7 +27,7 @@ export function DrawPopupHost() {
   const [asked, setAsked] = useState(false);
   // Opened from the rail's button (the popup's own turn opens it by itself).
   const [manual, setManual] = useState(false);
-  const eligible = !!citizen && drawOpen() && isReturning(citizen.createdAt) && path !== "/" && !QUIET.test(path);
+  const eligible = !!citizen && drawOpen() && isReturning(citizen.createdAt) && !QUIET.test(path);
 
   // Once a visit, a moment after you're in, while you haven't got all your entries yet... and it's the only one up.
   useEffect(() => {
